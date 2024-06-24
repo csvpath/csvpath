@@ -7,13 +7,18 @@ CsvPath is a declarative syntax for identifying rows and column values and updat
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
 
 # Usage
-See the unit tests in tests/test_scanner.py or tests/test_matcher.py. In brief, do:
-csvpath = CsvPath()
-scanner = csvpath.parse(f'$test.csv[2-5][#0="Frog" #lastname="Bats" count()=2]')
+Today, only the scanning and matching parts of csvpath are complete. The modification part is a todo.
+
+For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py). In brief, do:
+    from csvpath.csvpath import CsvPath
+    csvpath = CsvPath()
+    scanner = csvpath.parse(f'$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]')
+    for line in scanner.next():
+        print(f"a {line}")
 
 This path says:
 - open test.csv
-- scan lines 2 through 5
+- scan lines 5 through 25
 - match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
 
 The scanner is enumerable. For each line enumerated the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
@@ -39,10 +44,33 @@ The match part is also bracketed. The rules are:
 - @people denotes a variable named "people"
 - Functions can include functions and equality tests
 
-At this time the functions are:
+At this time the working functions are:
 - count()
 - regex()
 
+Planned functions include:
+
+    | Function                      | What it does                                  |
+    | ------------------------------|-----------------------------------------------|
+    | count()                       | number of matches                             |
+    | count(value)                  | count matches of value                        |
+    | regex(regex-string)           | match on a regular expression                 |
+    | now()                         | a date                                        |
+    | not(value)                    | negates a value                               |
+    | type()                        | returns the type of a field                   |
+    | length(value)                 | returns the length of the value               |
+    | count-scanned()               | count lines we checked for match              |
+    | count-lines()                 | count lines to this point in the file         |
+    | lower(value)                  | makes value lowercase                         |
+    | upper(value)                  | makes value uppercase                         |
+    | after(value)                  | finds things after a date, number, string     |
+    | before(value)                 | finds things before a date, number, string    |
+    | between(from, to)             | between dates, numbers, strings, %, $         |
+    | random(type, from, to)        | random number, string, or date within a range |
+    | random(list)                  | pick from a list                              |
+    | in(list-source)               | match in a list from a file                   |
+    | or(value, value...)           | match one                                     |
+    | every(number, value)          | match every n times a value is seen           |
 
 
 
