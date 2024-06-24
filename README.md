@@ -9,12 +9,9 @@ CsvPath is a declarative syntax for identifying rows and column values and updat
 # Usage
 Today, only the scanning and matching parts of csvpath are complete. The modification part is a todo.
 
-For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py). In brief, do:
-    `    from csvpath.csvpath import CsvPath`
-    `    csvpath = CsvPath()`
-    `    scanner = csvpath.parse(f'$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]')`
-    `    for line in scanner.next():`
-    `        print(f"a {line}")`
+For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py).
+
+Paths look like `$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]`
 
 This path says:
 - open test.csv
