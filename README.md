@@ -10,11 +10,11 @@ CsvPath is a declarative syntax for identifying rows and column values and updat
 Today, only the scanning and matching parts of csvpath are complete. The modification part is a todo.
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py). In brief, do:
->    from csvpath.csvpath import CsvPath
->    csvpath = CsvPath()
->    scanner = csvpath.parse(f'$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]')
->    for line in scanner.next():
->        print(f"a {line}")
+`    from csvpath.csvpath import CsvPath`
+`    csvpath = CsvPath()`
+`    scanner = csvpath.parse(f'$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]')`
+`    for line in scanner.next():`
+`        print(f"a {line}")`
 
 This path says:
 - open test.csv
@@ -72,7 +72,7 @@ The full set of planned functions is:
 | or(value, value...)           | match one                                     |
 | every(number, value)          | match every Nth time a value is seen          |
 
-#Coming Soon: Modification
+#Modification (coming soon!)
 The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. The basics are:
 - `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
 - variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
