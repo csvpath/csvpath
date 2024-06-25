@@ -18,7 +18,7 @@ This path says:
 - scan lines 5 through 25
 - match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
 
-The scanner is enumerable. For each line enumerated the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
+The scanner is enumerable. For each line returned the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
 
 The path syntax is broken into three parts:
 - The scan part
@@ -52,7 +52,10 @@ The full set of planned functions is:
 | count()                       | counts the number of matches                  |
 | count(value)                  | count matches of value                        |
 | regex(regex-string)           | match on a regular expression                 |
-| now()                         | a date                                        |
+| now(format)                   | a datetime, optionally formatted              |
+| increment(var, n)             | increments a variable by n each time seen     |
+| then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted              |
+| this(line|scan|match)         | returns line number, or scan or match count   |
 | not(value)                    | negates a value                               |
 | type()                        | returns the type of a field                   |
 | length(value)                 | returns the length of the value               |
@@ -73,15 +76,21 @@ The full set of planned functions is:
 The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. The basics are:
 - `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
 - variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
-- `$[@line]#3="cactus"` means a set the 3rd column value to "cactus" in the row indicated by the variable @line in the current file, indicated with the '$'
-- `#1>"n/a"` adds a new column following the 2nd column (zero-based!) with the value in that row being 'n/a'
+- `$[@line]#3="cactus"` means a set the 4th column (zero-based) value to "cactus" in the row indicated by the variable @line in the current file, indicated with the '$'
+- `#1>"n/a"` adds a new column following the 2nd column (zero-based) with the value in that row being 'n/a'
 - `#firstname>#lastname="fred"` adds a "lastname" column after the "firstname" column and gives the matched row the value "fred"
-- `#NumberOfFreds="this is fred @n"` means set the column with the header "NumberOfFreds" to the value of the @n variable. Presumably in the matching part we had declared something like `[#firstname="fred" @n=count()]`.
+- `#NumberOfFreds="this is fred @n"` means set the column with the header "NumberOfFreds" to the string using value of the @n variable. Presumably in the matching part we had declared something like `[#firstname="fred" @n=count()]`.
 - `#|>#cactus=""` means add a column after the last column, whatever number column it may be, with the header "cactus" and no value entered. The "|" indicates the ending column. The ">" say add a column. #cactus is the header given to the new column. And ="" says don't assign a value. Or you could simply say: `#|>#cactus` to do the same
-- .^>#cactus="prickly pear" does the same but creating a new first column named "cactus" and setting the value of matched rows to "prickly pear". This new column is the new #0 column and the old #0 column is now #1.
+- `#^>#cactus="prickly pear"` does the same but creating a new first column named "cactus" and setting the value of matched rows to "prickly pear". This new column is the new #0 column and the old #0 column is now #1.
+- `_|>#0="fussy bug" #1="furry fly" #3=4.45 #|="last column"` says add a new row and set the columns to the values indicated with the last column, whatever number it might be, to the value "last column".
+- `=1^>` or `=^>` mean add a new blank row above this row.
+- `=2v>` means add two new blank rows below this row.
 
-#All that could change!!
-In fact, anything could change. This project hobby.
+CsvPath is a copy-on-write system. It creates a copy of the file you are reading rows from. The copy has any modifications you make. In order to do this, CsvPath needs a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows.
+
+
+#All that could change!
+In fact, anything could change. This project is a hobby.
 
 
 
