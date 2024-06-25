@@ -80,11 +80,11 @@ The modification part of a CsvPath is not wrapped in brackets. This part of the 
 - `#1>"n/a"` adds a new column following the 2nd column (zero-based) with the value in that row being 'n/a'
 - `#firstname>#lastname="fred"` adds a "lastname" column after the "firstname" column and gives the matched row the value "fred"
 - `#NumberOfFreds="this is fred @n"` means set the column with the header "NumberOfFreds" to the string using value of the @n variable. Presumably in the matching part we had declared something like `[#firstname="fred" @n=count()]`.
-- `#|>#cactus=""` means add a column after the last column, whatever number column it may be, with the header "cactus" and no value entered. The "|" indicates the ending column. The ">" say add a column. #cactus is the header given to the new column. And ="" says don't assign a value. Or you could simply say: `#|>#cactus` to do the same
-- `#^>#cactus="prickly pear"` does the same but creating a new first column named "cactus" and setting the value of matched rows to "prickly pear". This new column is the new #0 column and the old #0 column is now #1.
-- `_|>#0="fussy bug" #1="furry fly" #3=4.45 #|="last column"` says add a new row and set the columns to the values indicated with the last column, whatever number it might be, to the value "last column".
-- `=1^>` or `=^>` mean add a new blank row above this row.
-- `=2v>` means add two new blank rows below this row.
+- `#|=>#cactus=""` means add a column after the last column, whatever number column it may be, with the header "cactus" and no value entered. The "|" indicates the ending column. The "=>" says add a column. #cactus is the header given to the new column. And ="" says don't assign a value. Or you could simply say: `#|=>#cactus` to do the same
+- `#^=>#cactus="prickly pear"` does the same but creating a new first column named "cactus" and setting the value of matched rows to "prickly pear". This new column is the new #0 column and the old #0 column is now #1.
+- `_|=>#0="fussy bug" #1="furry fly" #3=4.45 #|=>"last column"` says add a new row, `=>`, at the end of the file, `_|` and set the columns to the values indicated with the last column, whatever number it might be, to the value "last column".
+- `1^=>` or `^=>` mean add a new blank row above this row.
+- `2v=>` means add two new blank rows below this row.
 
 CsvPath is a copy-on-write system. It creates a copy of the file you are reading rows from. The copy has any modifications you make. In order to do this, CsvPath needs a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows.
 
