@@ -1,7 +1,7 @@
 import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from csvpath.parser_utility import ParserUtility
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 class UnexpectedException(Exception):
     pass
@@ -33,6 +33,9 @@ class Scanner(object):
             these: {self.these}
         """
 
+    #===================
+    # parse
+    #===================
 
     def parse(self, data):
         self.path = data
@@ -101,6 +104,8 @@ class Scanner(object):
         else:
             p[0] = [p[1]]
 
+    #===================
+    # production support
     #===================
 
     def _add_two_lines(self, p):

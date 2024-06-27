@@ -77,18 +77,22 @@ class Term(Valued):
         return self.value
 
 
-@dataclass
+
 class Variable(Valued):
     matcher:Any
     name:Any
     parent:Any = None
+
+    def __init__(self, matcher, name) -> None:
+        self.matcher = matcher
+        self.name = name
 
     def __str__(self) -> str:
         return f"""Var: {self.name} """
 
     def to_value(self) -> Any:
         # need a way to auto increment vars - e.g. count(x=y)
-        var = matcher.get_variable(self.name)
+        var = self.matcher.get_variable(self.name)
         return var
 
 @dataclass

@@ -6,25 +6,29 @@ import re
 
 class Count(Function):
 
+    # [@b = count(#name = 'fish')]
     def to_value(self) -> Any:
         if self.function_or_equality:
-            #
-            # need to apply this count function to the contained obj's value
-            #
-            b = self.function_or_equality.matches()
-            val = self.matcher.csvpath.get_variable(self.get_id())
-            val = val+1
-            self.matcher.csvpath.set_variable(self.get_id(), val)
-            return val
-        # add 1 so that if we are a match we match on the
-        # right number of matches, and if we don't we'll check the same way next time
-        mc = 0
-        if not self.matcher.csvpath:
-            print("WARNING: csvpath is None. are we unit testing?!")
-            mc = 1
+            return self.get_contained_value()
         else:
-            mc = self.matcher.csvpath.match_count + 1
-        return mc
+            if not self.matcher.csvpath:
+                print("WARNING: no csvpath. are we testing?")
+                return
+            self.matcher.csvpath.match_count + 1 # we're eager to +1 because we don't
+                                                 # contribute to if there's a match
+                                                 # or not. we have to act as if.
+
+    def get_contained_value():
+        #
+        # need to apply this count function to the contained obj's value
+        #
+        b = self.function_or_equality.matches()
+        myid = self.get_id(self.function_or_equality)
+        tracked_value = self.function_or_equality.to_value()
+        cnt = self.matcher.get_variable(myid, tracking=tracked_value)
+        cnt = cnt + 1
+        self.matcher.set_variable(myid, tracking=tracked_value, count=cnt)
+        return val
 
 class Regex(Function):
 

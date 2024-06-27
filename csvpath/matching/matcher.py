@@ -44,11 +44,11 @@ class Matcher:
                 return False
         return True
 
-    def get_variable(self, name:str) -> Any:
-        return self.csvpath.get_variable(name)
+    def get_variable(self, name:str,*, tracking=None) -> Any:
+        return self.csvpath.get_variable(name, tracking=tracking)
 
-    def set_variable(self, name:str, value:Any) -> None:
-        return self.csvpath.set_variable(name, value)
+    def set_variable(self, name:str, *, value:Any, tracking=None) -> None:
+        return self.csvpath.set_variable(name, value=value, tracking=tracking)
 
 
     #===================
@@ -110,12 +110,12 @@ class Matcher:
 
     def p_equality(self, p):
         '''equality : function EQUALS term
+                    | function EQUALS var_or_header
+                    | var_or_header EQUALS function
                     | var_or_header EQUALS term
                     | var_or_header EQUALS var_or_header
                     | term EQUALS var_or_header
                     | term EQUALS function
-                    | var_or_header EQUALS function
-                    | var EQUALS header
         '''
         ParserUtility().print_production(p,         '''equality : function EQUALS term
                     | var_or_header EQUALS term
@@ -128,7 +128,11 @@ class Matcher:
         e = Equality(self, p[1], p[3])
         p[0] = e
         p[1].parent = e
+        if isinstance(p[1], Variable):
+            self.csvpath.set_variable(p[1].name, value=p[3].to_value())
         p[3].parent = e
+        if isinstance(p[3],Variable):
+            self.csvpath.set_variable(p[3].name, value=p[1].to_value())
 
     def p_term(self, p):
         '''term : QUOTE NAME QUOTE

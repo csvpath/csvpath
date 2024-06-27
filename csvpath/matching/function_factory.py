@@ -13,10 +13,8 @@ class FunctionFactory:
         f = None
         if name == 'count':
             #count()                # number of matches (assuming the current also matches)
-            #count(value)           # number of times seen
+            #count(value)           # p[3] is equality or function to track number of times seen
             f = Count(matcher, p[1], p[3] if len(p) == 5 else None)
-            if len(p) == 5:
-                p[3].parent = f
 
         elif name == 'scanned':     # count lines we checked for match
             pass

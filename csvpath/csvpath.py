@@ -1,5 +1,5 @@
 import csv
-from typing import List
+from typing import List, Dict, Any
 from collections.abc import Iterator
 from csvpath.matching.matcher import Matcher
 from csvpath.scanning.scanner import Scanner
@@ -20,6 +20,7 @@ class CsvPath:
         self.line_number = 0
         self.scan_count = 0
         self.match_count = 0
+        self.variables:Dict[str,Any] = {}
 
     def parse(self, data):
         self.scanner = Scanner()
@@ -117,15 +118,40 @@ class CsvPath:
         if not self.match:
             return True
         matcher = Matcher(csvpath=self, data=self.match, line=line, headers=self.headers)
-        return matcher.matches()
+        matched = matcher.matches()
+        return matched
 
-    def get_variable(self, name):
-        if name not in self.variables:
-            self.variables[name] = None
-        return self.variables[name]
+    def set_variable(self, name:str, *, value:Any, tracking:Any=None) -> None:
+        if not name:
+            raise Exception("name cannot be None")
+        print(f"set var: {name} = {value}")
+        if name in self.variables:
+            print(f"set var: existing: {self.variables[name]}")
+        if tracking:
+            instances = self.variables[name]
+            if tracking in instances:
+                return instances[tracking]
+            else:
+                return None
+        else:
+            self.variables[name] = value
 
-    def set_variable(self, name, value):
-        self.variables[name] = value
+    def get_variable(self, name:str,*,tracking:Any=None) -> Any:
+        if not name:
+            raise Exception("name cannot be None")
+        thedict = None
+        if tracking:
+            if name in self.variables:
+                thedict = self.variables[name]
+            else:
+                thedict = {}
+        else:
+            thedict = self.variables
+        if name in thedict:
+            print(f"get var: {name}: {self.variables[name]}")
+            return thedict[name]
+        print(f"get var: unknown var: {name}")
+        return None
 
     def includes(self, line:int) -> bool:
         from_line = self.scanner.from_line

@@ -5,6 +5,8 @@ import logging
 import inspect
 from csvpath.csvpath import CsvPath
 
+PATH = "tests/test_resources/test.csv"
+
 class TestCsvPath(unittest.TestCase):
 
 
@@ -45,6 +47,12 @@ class TestCsvPath(unittest.TestCase):
 
 
 
-
+    def test_variables(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2-4][@me = count()]')
+        print(f"{scanner}")
+        for i, ln in enumerate(path.next()):
+                assert path.get_variable("me") == i
+                print(f'...{i} = {path.get_variable("me")}')
 
 
