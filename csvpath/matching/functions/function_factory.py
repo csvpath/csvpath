@@ -1,20 +1,28 @@
-from dataclasses import dataclass
-from typing import Any
-from csvpath.matching.expression import Function
-from csvpath.matching.functions import Count, Regex
+from csvpath.matching.functions.function import Function
+from csvpath.matching.functions.count import Count
+from csvpath.matching.functions.regex import Regex
+from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
+    pass
+
+class InvalidChildException(Exception):
     pass
 
 class FunctionFactory:
 
     @classmethod
-    def get_function(cls, matcher, name, p) -> Function:
+    def get_function(cls, matcher, *, name:str, child:Matchable=None ) -> Function:
+        if child and not isinstance(child, Matchable):
+            raise InvalidChildException(f"{child} is not a valid child")
         f = None
         if name == 'count':
             #count()                # number of matches (assuming the current also matches)
             #count(value)           # p[3] is equality or function to track number of times seen
-            f = Count(matcher, p[1], p[3] if len(p) == 5 else None)
+            f = Count(matcher, name, child)
+
+        elif name == 'regex':
+            f = Regex(matcher, name, child)
 
         elif name == 'scanned':     # count lines we checked for match
             pass
@@ -46,11 +54,6 @@ class FunctionFactory:
         elif name == 'in':
             #(list-source)          # match in a list from a file
             pass
-        elif name == 'regex':
-            #(regex-string)         # match on a regular expression
-            f = Regex(matcher, p[1], p[3])
-            p[3].parent = f
-
         elif name == 'or':
             #(value, value...)      # match one
             pass
@@ -58,13 +61,9 @@ class FunctionFactory:
             #(number, value)        # match every n times a value is seen
             pass
         else:
-            pass
-            # generic function. ultimately we want an error here
-            #raise UnknownFunctionException(f"no match for {name}")
-        if f is None:
-            print(f"WARNING: returning default function because no match for {name}")
-            f = Function(matcher, p[1], p[3] if len(p) == 5 else None)
-            if len(p) == 5:
-                p[3].parent = f
+            raise UnknownFunctionException(f"{name}")
+
+        if child:
+            child.parent = f
         return f
 

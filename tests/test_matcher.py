@@ -1,5 +1,9 @@
 import unittest
 from csvpath.matching.matcher import Matcher
+from csvpath.matching.productions.expression import Expression
+from csvpath.matching.productions.equality import Equality
+from csvpath.matching.productions.header import Header
+from csvpath.matching.productions.term import Term
 from csvpath.csvpath import CsvPath
 
 HEADERS =  ['abc' ,'aheader','crows','d']
@@ -13,7 +17,16 @@ class TestMatcher(unittest.TestCase):
     def test_match_one_header(self):
         matcher = Matcher(csvpath=None, data='[#2="alert"]', line=LINE, headers=HEADERS)
         print(f"{matcher}")
-        assert matcher.matches()
+        assert len(matcher.expressions) == 1
+        assert isinstance( matcher.expressions[0], Expression)
+        assert len( matcher.expressions[0].children) == 1
+        assert isinstance( matcher.expressions[0].children[0], Equality)
+        assert len( matcher.expressions[0].children[0].children) == 2
+        assert isinstance( matcher.expressions[0].children[0].children[0], Header)
+        assert isinstance( matcher.expressions[0].children[0].children[1], Term)
+        assert matcher.expressions[0].children[0].matches()
+        assert matcher.expressions[0].matches()
+        assert matcher.matches(syntax_only=True)
 
     def test_match_regex_function(self):
         matcher = Matcher(csvpath=None, data='[regex(#2 = /a.+ert/)]', line=LINE, headers=HEADERS)
@@ -23,7 +36,7 @@ class TestMatcher(unittest.TestCase):
     def test_match_count_function(self):
         matcher = Matcher(csvpath=None, data="[count()=1]", line=LINE, headers=HEADERS)
         print(f"{matcher}")
-        assert matcher.matches()
+        assert matcher.matches(syntax_only=True)
 
     def test_match_function_arg(self):
         matcher = Matcher(csvpath=None, data="[count(#aheader=10)]", line=LINE, headers=HEADERS)
@@ -47,7 +60,7 @@ class TestMatcher(unittest.TestCase):
 
 #============= SCAN AND MATCH ================
 
-    def test_match_one_header_match(self):
+    def test_match_a_header_match(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2-4][#0="Frog"]')
         # test properties

@@ -52,7 +52,7 @@ class TestCsvPath(unittest.TestCase):
         scanner = path.parse(f'${PATH}[2-4][@me = count()]')
         print(f"{scanner}")
         for i, ln in enumerate(path.next()):
-                assert path.get_variable("me") == i
-                print(f'...{i} = {path.get_variable("me")}')
+            assert path.get_variable("me") == i+1
+            print(f'...{i} = {path.get_variable("me")}')
 
 

@@ -124,7 +124,8 @@ class CsvPath:
     def set_variable(self, name:str, *, value:Any, tracking:Any=None) -> None:
         if not name:
             raise Exception("name cannot be None")
-        print(f"set var: {name} = {value}")
+        print(f"CsvPath.set_variable: {name} = {value} for {tracking}")
+        print(f"CsvPath.set_variable: {self.variables}")
         if name in self.variables:
             print(f"set var: existing: {self.variables[name]}")
         if tracking:
