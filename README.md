@@ -77,7 +77,18 @@ The full set of planned functions is:
 | every(number, value)          | match every Nth time a value is seen          |
 
 # Modification (coming soon!)
-The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. The basics are:
+The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. A modifying path looks like:
+
+`$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2] #1="make my speed 6 #zipcode>#last_four #last_four=random(int, 4)`
+
+This path's modification part says:
+- set the first column to 'make my speed 6'
+- add a last_four column after zipcode (this obviously affects all rows, not just the matched ones)
+- set the value of the last_four column where the path matches to a random 4-character integer
+
+Note that the creating of the last_four column and setting its value may be order-dependent. That has not been decided yet. It may needed to involve multiple paths.
+
+The basics are:
 - `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
 - variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
 - `$[@line]#3="cactus"` means a set the 4th column (zero-based) value to "cactus" in the row indicated by the variable @line in the current file, indicated with the '$'
