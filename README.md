@@ -6,8 +6,10 @@ CsvPath is a declarative syntax for identifying rows and column values and updat
 - Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath can be used as validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
 
+CsvPath is intended as a compliment to other DataOps, data quality, and data engineering tools.
+
 # Usage
-Today, only the scanning and matching parts of csvpath are complete. The modification part is a todo.
+Today, only the scanning and matching parts of csvpath are functional. The modification part is a todo.
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py).
 
@@ -18,7 +20,8 @@ This path says:
 - scan lines 5 through 25
 - match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
 
-The scanner is enumerable. For each line returned the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
+# Scanning
+The scanner is an enumeration. For each line returned the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
 
 The path syntax is broken into three parts:
 - The scan part
@@ -33,6 +36,7 @@ The scan part of the path starts with '$' to indicate the root, meaning the file
 - `[1+3]` means lines 1 and line 3
 - `[1+3-8]` means line 1 and lines 3 through eight
 
+# Matching
 The match part is also bracketed. The rules are:
 - `#animal` indicates a header named "animal". Headers are the values in the 0th line.
 - `#2` means the 3rd column, counting from 0
@@ -72,7 +76,7 @@ The full set of planned functions is:
 | or(value, value...)           | match one                                     |
 | every(number, value)          | match every Nth time a value is seen          |
 
-#Modification (coming soon!)
+# Modification (coming soon!)
 The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. The basics are:
 - `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
 - variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
@@ -89,7 +93,7 @@ The modification part of a CsvPath is not wrapped in brackets. This part of the 
 CsvPath is a copy-on-write system. It creates a copy of the file you are reading rows from. The copy has any modifications you make. In order to do this, CsvPath needs a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows.
 
 
-#All that could change!
+# All that could change!
 In fact, anything could change. This project is a hobby.
 
 
