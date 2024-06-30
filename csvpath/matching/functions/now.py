@@ -6,21 +6,21 @@ class Now(Function):
 
     def to_value(self) -> Any:
         if len(self.children) > 1:
-            print(f"Now.to_value: should be 0 or 1 children: {self.children}")
+            self.matcher.print(f"Now.to_value: should be 0 or 1 children: {self.children}")
             ChildrenException("now function may have only a single child that gives a format")
         format = None
         if self.children and len(self.children) == 1:
             format = self.children[0].to_value()
-            print(f"Now.to_value: format: {format}")
+            self.matcher.print(f"Now.to_value: format: {format}")
         x = datetime.datetime.now()
-        print(f"Now.to_value: x: {x}")
+        self.matcher.print(f"Now.to_value: x: {x}")
         xs = None
         if format:
             xs = x.strftime(format)
-            print(f"Now.to_value: format: {format}, xs: {xs}")
+            self.matcher.print(f"Now.to_value: format: {format}, xs: {xs}")
         else:
             xs = f"{x}"
-        print(f"Now.to_value: returning: {xs}")
+        self.matcher.print(f"Now.to_value: returning: {xs}")
         return xs
 
     def matches(self) -> bool:

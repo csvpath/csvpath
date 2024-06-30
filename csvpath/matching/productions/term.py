@@ -8,6 +8,7 @@ class Term(Matchable):
         return f"""{self.__class__}: {self.value} """
 
     def to_value(self) -> Any:
-        return self.value
+        v = self.value
+        return v
 
 

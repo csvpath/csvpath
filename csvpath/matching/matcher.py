@@ -29,9 +29,9 @@ class Matcher:
         self.headers = headers
         self.expressions = []
         self.lexer = MatchingLexer()
+        self.block_print = csvpath.block_print
         self.parser = yacc.yacc(module=self, start='match_part' )
         value = self.parser.parse(data, lexer=self.lexer.lexer)
-
 
     def __str__(self):
         return f"""
@@ -41,18 +41,20 @@ class Matcher:
             lexer: {self.lexer}
         """
 
+    def print(self, msg:str) -> None:
+        self.csvpath.print(msg)
+
     def header_index(self, name:str) -> int:
         if not self.headers:
             return None
         for i, n in enumerate(self.headers):
-            print(f" ...header {i} = {n} ?= {name}")
+            self.csvpath.print(f" ...header {i} = {n} ?= {name}")
             if n == name:
                 return i
         return None
 
     def matches(self, *, syntax_only=False) -> bool:
         for i, e in enumerate( self.expressions ):
-            #print(f" ...{i}: {e}")
             if not e.matches() and not syntax_only:
                 return False
         return True
@@ -61,7 +63,7 @@ class Matcher:
         return self.csvpath.get_variable(name, tracking=tracking, set_if_none=set_if_none)
 
     def set_variable(self, name:str, *, value:Any, tracking=None) -> None:
-        print(f"Matcher.set_variable: {name} = {value} for {tracking}")
+        self.csvpath.print(f"Matcher.set_variable: {name} = {value} for {tracking}")
         return self.csvpath.set_variable(name, value=value, tracking=tracking)
 
 
@@ -79,24 +81,16 @@ class Matcher:
         '''match_part : LEFT_BRACKET expression RIGHT_BRACKET
                       | LEFT_BRACKET expressions RIGHT_BRACKET
         '''
-        ParserUtility().print_production(p, '''match_part : LEFT_BRACKET expression RIGHT_BRACKET
-                      | LEFT_BRACKET expressions RIGHT_BRACKET
-        ''')
 
     def p_expressions(self, p):
         '''expressions : expression
                        | expressions expression
         '''
-        ParserUtility().print_production(p, '''expressions : expression
-                       | expressions expression
-        ''')
 
     def p_expression(self, p):
         '''expression : function
                         | equality
                         | header '''
-        ParserUtility().print_production(p, '''expression : function | equality | header ''')
-        ParserUtility.enumerate_p("IN p_expression", p)
         e = Expression(self)
         e.add_child(p[1])
         self.expressions.append(e)
@@ -109,10 +103,6 @@ class Matcher:
                     | NAME OPEN_PAREN var_or_header CLOSE_PAREN
                     | NAME OPEN_PAREN term CLOSE_PAREN
         '''
-        ParserUtility().print_production(p, '''function : NAME OPEN_PAREN CLOSE_PAREN
-                    | NAME OPEN_PAREN equality CLOSE_PAREN
-                    | NAME OPEN_PAREN function CLOSE_PAREN
-        ''')
         name = p[1]
         child = p[3] if p and len(p)==5 else None
         f = FunctionFactory.get_function(self, name=name, child=child)
@@ -148,7 +138,6 @@ class Matcher:
                 | NUMBER
                 | REGEX
         '''
-        ParserUtility().print_production(p, '''term : QUOTE NAME QUOTE | NUMBER | REGEX ''')
         if len(p) == 4:
             p[0] = Term(self, value=p[2])
         else:
@@ -158,12 +147,10 @@ class Matcher:
         '''var_or_header : header
                          | var
         '''
-        ParserUtility().print_production(p, '''var_or_header : header | var ''')
         p[0] = p[1]
 
     def p_var(self, p):
         '''var : VAR_SYM NAME '''
-        ParserUtility().print_production(p, '''var : VAR_SYM NAME ''')
         v = Variable(self, name=p[2])
         p[0] = v
 
@@ -171,7 +158,6 @@ class Matcher:
         '''header : HEADER_SYM NAME
                   | HEADER_SYM NUMBER
         '''
-        ParserUtility().print_production(p, '''header : HEADER_SYM NAME | HEADER_SYM NUMBER ''')
         h = Header(self, name=p[2])
         p[0] = h
 

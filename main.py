@@ -1,103 +1,24 @@
 from csvpath.csvpath import CsvPath
 
-filepath = "tests/test_resources/test.csv"
+#filepath = "tests/test_resources/test.csv"
+
+filepath = '/Users/davidkershaw/Desktop/csvs/pipe_delimited.csv'
 
 def one():
-    path = CsvPath()
-    pathstr = f"${filepath}[*]"
-    print(pathstr)
+    path = CsvPath(delimiter="|")
+    pathstr = f'${filepath}[4000-5000+22949][count(in(#statecode,"LA|MA|CT")=12)]'
+
+    #print(pathstr)
     result = path.parse(pathstr)
-    print(f"{result}")
+    #print(f"{result}")
 
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
+    for i, line in enumerate( path.next() ):
+        print(f" {path.current_line_number()} {i}: {line}")
 
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def two():
-    path = CsvPath()
-    pathstr = f"${filepath}[2-4]"
-    print(pathstr)
-    result = path.parse(pathstr)
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def three():
-    path = CsvPath()
-    pathstr = f"${filepath}[3*]"
-    print(pathstr)
-    result = path.parse(pathstr)
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def four():
-    path = CsvPath()
-    pathstr = f"${filepath}[3]"
-    print(pathstr)
-    result = path.parse(pathstr)
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def five():
-    path = CsvPath()
-    pathstr = f"${filepath}[1+3+5]"
-    print(pathstr)
-    result = path.parse(pathstr)
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def six():
-    path = CsvPath()
-    result = path.parse("$[3]")
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
-def seven():
-    path = CsvPath()
-    pathstr = f"${filepath}[4-2]"
-    print(pathstr)
-    result = path.parse(pathstr)
-    print(f"{result}")
-
-    for ln in result.line_numbers():
-        print(f"including line number: {ln}")
-
-    for line in result.next():
-        print(f"line: {line.strip()}")
-
+    print(f"path vars: {path.variables}")
 
 
 if __name__ == "__main__":
-    #one()
-    #two()
-    #three()
-    #four()
-    #five()
-    #six()
-    seven()
+    one()
+
+

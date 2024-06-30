@@ -43,10 +43,6 @@ class TestCsvPath(unittest.TestCase):
         assert [3] == csvpath._collect_line_numbers(from_line=3)
         assert ["0..3"] == csvpath._collect_line_numbers(to_line=3)
 
-
-
-
-
     def test_variables(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2-4][@me = count()]')

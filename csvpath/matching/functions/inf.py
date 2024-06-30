@@ -6,7 +6,7 @@ class In(Function):
 
     def to_value(self) -> Any:
         if len(self.children) != 1:
-            print(f"In.to_value: must have 1 equality child: {self.children}")
+            self.matcher.print(f"In.to_value: must have 1 equality child: {self.children}")
             raise ChildrenException("In function must have 1 child")
         if self.children[0].op != ",":
             raise ChildrenException(f"In function must have an equality with the ',' operation, not {self.children[0].op}")
@@ -15,11 +15,11 @@ class In(Function):
 
         mylist = []
         liststr = lchild.to_value()
-        print(f"In.to_value: list str: {liststr}")
+        self.matcher.print(f"In.to_value: list str: {liststr}")
         mylist = liststr.split("|")
         v = vchild.to_value()
 
-        print(f"In.to_value: list: {mylist}, value: {v}")
+        self.matcher.print(f"In.to_value: list: {mylist}, value: {v}")
         if v in mylist:
             return True
         elif v.__class__ != str and f"{v}" in mylist:

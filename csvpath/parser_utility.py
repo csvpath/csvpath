@@ -6,6 +6,8 @@ class ParserUtility:
         self._quiet = quiet
 
     def error(self, parser, p:YaccProduction) -> None:
+        if self._quiet:
+            return
         if p:
             print(f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}")
             print(f"unexpected token: {p.value}")
@@ -19,7 +21,6 @@ class ParserUtility:
             return
         if label:
             label = f" at {label}"
-        #label = ""
         print(f"production array{label} is:")
         for _ in p:
             print(f"\t{_} \t-> {_.__class__}")

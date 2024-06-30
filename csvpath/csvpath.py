@@ -9,7 +9,7 @@ class NoFileException(Exception):
 
 class CsvPath:
 
-    def __init__(self, *, filename=None):
+    def __init__(self, *, filename=None, delimiter=',', quotechar='"', block_print=True):
         self.filename = filename
         self.scanner = None
         self.value = None
@@ -21,6 +21,9 @@ class CsvPath:
         self.scan_count = 0
         self.match_count = 0
         self.variables:Dict[str,Any] = {}
+        self.delimiter=delimiter
+        self.quotechar=quotechar
+        self.block_print = block_print
 
     def parse(self, data):
         self.scanner = Scanner()
@@ -33,8 +36,8 @@ class CsvPath:
         return self.scanner
 
     def _load_headers(self) -> None:
-        with open(self.scanner.filename) as file:
-            reader = csv.reader(file, delimiter=',', quotechar='"')
+        with open(self.scanner.filename, "r") as file:
+            reader = csv.reader(file, delimiter=self.delimiter, quotechar=self.quotechar)
             for row in reader:
                 self.headers = row
                 break
@@ -115,20 +118,24 @@ class CsvPath:
             lines.append(_)
         return lines
 
+    def print(self, msg:str) -> None:
+        if not self.block_print:
+            print(msg)
+
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
-        with open(self.scanner.filename) as file:
+        with open(self.scanner.filename, "r") as file:
             #
             # TODO: delimiter, quotechar, other things? need config
             #
-            reader = csv.reader(file, delimiter=',', quotechar='"')
+            reader = csv.reader(file, delimiter=self.delimiter, quotechar=self.quotechar)
             for line in reader:
                 #if self.line_number == 0:
                 #    self.headers = line
                 if self.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
-                    print(f"CsvPath.next: line:{line}")
+                    self.print(f"CsvPath.next: line:{line}")
                     if self.matches(line):
                         self.match_count = self.match_count + 1
                         yield line
@@ -146,7 +153,7 @@ class CsvPath:
     def matches(self, line) -> bool:
         if not self.match:
             return True
-        print(f"CsvPath.matches: the match path: {self.match}")
+        self.print(f"CsvPath.matches: the match path: {self.match}")
 
         matcher = Matcher(csvpath=self, data=self.match, line=line, headers=self.headers)
         matched = matcher.matches()
@@ -155,12 +162,12 @@ class CsvPath:
     def set_variable(self, name:str, *, value:Any, tracking:Any=None) -> None:
         if not name:
             raise Exception("name cannot be None")
-        print(f"CsvPath.set_variable: {name} = {value} for {tracking}")
-        print(f"CsvPath.set_variable: current vars: {self.variables}")
+        self.print(f"CsvPath.set_variable: {name} = {value} for {tracking}")
+        self.print(f"CsvPath.set_variable: current vars: {self.variables}")
         if name in self.variables:
-            print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
+            self.print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
         else:
-            print("CsvPath.set_variable: no existing value")
+            self.print("CsvPath.set_variable: no existing value")
         if tracking:
             instances = self.variables[name]
             instances[tracking] = value
@@ -170,7 +177,8 @@ class CsvPath:
     def get_variable(self, name:str,*,tracking:Any=None, set_if_none:Any=None) -> Any:
         if not name:
             raise Exception("name cannot be None")
-        print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, set_if_none: {set_if_none}")
+        self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, set_if_none: {set_if_none}")
+        self.print(f"CsvPath.get_variable: variables: {self.variables}")
         thevalue = None
         if tracking:
             thedict = None
@@ -188,13 +196,13 @@ class CsvPath:
             if not thevalue and set_if_none:
                 thedict[tracking] = set_if_none
                 thevalue = set_if_none
-            print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
+            self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
         else:
             if not name in self.variables:
                 self.variables[name] = set_if_none
                 thevalue = set_if_none
             thevalue = self.variables[name]
-        print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
+        self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
         return thevalue
 
 

@@ -10,6 +10,8 @@ class Matchable:
         self.value = value
         self.name = name
         self._id:str = None
+        if self.name and self.name.__class__ == str:
+            self.name = self.name.strip()
 
     def __str__(self) -> str:
         return f"""{self.__class__}"""

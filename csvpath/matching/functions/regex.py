@@ -13,7 +13,7 @@ class Regex(Function):
         left = self._function_or_equality.left
         right = self._function_or_equality.right
 
-        print(f"Regex.matches: equality.left: {left} .right: {right}")
+        self.matcher.print(f"Regex.matches: equality.left: {left} .right: {right}")
 
         regex = None
         value = None
@@ -31,7 +31,7 @@ class Regex(Function):
         if theregex[len(theregex)-1] == '/':
             theregex = theregex[0:len(theregex)-1]
 
-        print(f"regex.matches: thevalue: {thevalue}, the regex: {theregex}")
+        self.matcher.print(f"regex.matches: thevalue: {thevalue}, the regex: {theregex}")
         return re.fullmatch(theregex, thevalue)
 
 

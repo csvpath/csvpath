@@ -24,7 +24,7 @@ class MatchingLexer(object):
     t_VAR_SYM = r'@'
     t_LEFT_BRACKET = r'\['
     t_RIGHT_BRACKET = r'\]'
-    t_NAME = r'[A-Za-z0-9\.%_|]+'
+    t_NAME = r'[A-Za-z0-9\.%_| ]+'
     #t_NAME = r'[A-Za-z0-9][A-Za-z0-9\.%_]*'
     t_REGEX = r'/(?:[^/\\]|\\.)*/'
 

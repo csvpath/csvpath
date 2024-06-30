@@ -19,7 +19,8 @@ class Scanner(object):
         self.to_line = None
         self.path = None
         self.quiet = True
-        print(f"initialized CsvPath: {self}")
+        self.block_print = True
+        self.print(f"initialized Scanner: {self}")
 
     def __str__(self):
         return f"""
@@ -32,6 +33,10 @@ class Scanner(object):
             all_lines: {self.all_lines}
             these: {self.these}
         """
+
+    def print(self, msg:str) -> None:
+        if not self.block_print:
+            print(msg)
 
     #===================
     # parse
@@ -53,20 +58,17 @@ class Scanner(object):
     def p_root(self, p):
         '''root : ROOT |
                   ROOT filename'''
-        ParserUtility().print_production(p, 'root')
+
 
     def p_root(self, p):
         'root : ROOT filename'
-        ParserUtility().print_production(p, 'root : filename')
 
     def p_filename(self, p):
         'filename : FILENAME'
-        ParserUtility().print_production(p, 'filename : FILENAME')
         self.filename = p[1]
 
     def p_path(self, p):
         'path : root LEFT_BRACKET expression RIGHT_BRACKET'
-        ParserUtility().print_production(p, 'path : ROOT LEFT_BRACKET expression RIGHT_BRACKET')
         p[0] = p[3]
 
     #===================
@@ -75,9 +77,6 @@ class Scanner(object):
         '''expression : expression PLUS term
                       | expression MINUS term
                       | term'''
-        ParserUtility().print_production(p, '''expression : expression PLUS term
-                      | expression MINUS term
-                      | term''')
         if len(p) == 4:
             if p[2] == '+':
                 self._add_two_lines(p)
@@ -92,9 +91,6 @@ class Scanner(object):
         '''term : NUMBER
                 | NUMBER ALL_LINES
                 | ALL_LINES'''
-        ParserUtility().print_production(p, '''term : NUMBER
-                | NUMBER ALL_LINES
-                | ALL_LINES''' )
 
         if len(p) == 3:
             self.from_line = p[1]

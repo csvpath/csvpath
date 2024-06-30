@@ -164,3 +164,13 @@ class TestMatcher(unittest.TestCase):
         for i, ln in enumerate(path.next()):
             raise Exception("We should not get here!")
 
+    def test_match_string_with_space(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][#2="sniffle sniffle..."]')
+        # test properties
+        print(f"{scanner}")
+        # test lines returned
+        lines = path.collect()
+        assert len(lines) ==1
+
+
