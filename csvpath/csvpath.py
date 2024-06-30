@@ -29,7 +29,25 @@ class CsvPath:
         self.match = mat
         self.modify = mod
         self.scanner.parse(s)
+        self._load_headers()
         return self.scanner
+
+    def _load_headers(self) -> None:
+        with open(self.scanner.filename) as file:
+            reader = csv.reader(file, delimiter=',', quotechar='"')
+            for row in reader:
+                self.headers = row
+                break
+        hs = self.headers[:]
+        self.headers = []
+        for header in hs:
+            header = header.strip()
+            header = header.replace(';','')
+            header = header.replace(',','')
+            header = header.replace('|','')
+            header = header.replace('\t','')
+            header = header.replace('`','')
+            self.headers.append(header)
 
     def _find_scan_match_modify(self, data):
         scan = ""
@@ -90,14 +108,24 @@ class CsvPath:
     def filename(self, f):
         self.file_name = f
 
+    def collect(self) -> List[List[Any]]:
+        lines = []
+        for _ in self.next():
+            _ = _[:]
+            lines.append(_)
+        return lines
+
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
         with open(self.scanner.filename) as file:
-            reader = csv.reader(file, delimiter=' ', quotechar='|')
+            #
+            # TODO: delimiter, quotechar, other things? need config
+            #
+            reader = csv.reader(file, delimiter=',', quotechar='"')
             for line in reader:
-                if self.line_number == 0:
-                    self.headers = line
+                #if self.line_number == 0:
+                #    self.headers = line
                 if self.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
                     if self.matches(line):
@@ -125,34 +153,47 @@ class CsvPath:
         if not name:
             raise Exception("name cannot be None")
         print(f"CsvPath.set_variable: {name} = {value} for {tracking}")
-        print(f"CsvPath.set_variable: {self.variables}")
+        print(f"CsvPath.set_variable: current vars: {self.variables}")
         if name in self.variables:
-            print(f"set var: existing: {self.variables[name]}")
+            print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
+        else:
+            print("CsvPath.set_variable: no existing value")
         if tracking:
             instances = self.variables[name]
-            if tracking in instances:
-                return instances[tracking]
-            else:
-                return None
+            instances[tracking] = value
         else:
             self.variables[name] = value
 
-    def get_variable(self, name:str,*,tracking:Any=None) -> Any:
+    def get_variable(self, name:str,*,tracking:Any=None, set_if_none:Any=None) -> Any:
         if not name:
             raise Exception("name cannot be None")
-        thedict = None
+        print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, set_if_none: {set_if_none}")
+        thevalue = None
         if tracking:
+            thedict = None
             if name in self.variables:
                 thedict = self.variables[name]
+                if not thedict:
+                    thedict = {}
+                    self.variables[name] = thedict
+                    thedict[tracking] = set_if_none
             else:
                 thedict = {}
+                thedict[tracking] = set_if_none
+                self.variables[name] = thedict
+            thevalue = thedict[tracking]
+            if not thevalue and set_if_none:
+                thedict[tracking] = set_if_none
+                thevalue = set_if_none
+            print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
         else:
-            thedict = self.variables
-        if name in thedict:
-            print(f"get var: {name}: {self.variables[name]}")
-            return thedict[name]
-        print(f"get var: unknown var: {name}")
-        return None
+            if not name in self.variables:
+                self.variables[name] = set_if_none
+                thevalue = set_if_none
+            thevalue = self.variables[name]
+        print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
+        return thevalue
+
 
     def includes(self, line:int) -> bool:
         from_line = self.scanner.from_line

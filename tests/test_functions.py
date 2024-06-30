@@ -21,10 +21,10 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_count_equality(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[*][count(#0="David")=1]')
-
-        for i, ln in enumerate(path.next()):
-            print(f"\n\n\n>>>>>>>>>>>>>>>>>>>>>> {i} = {ln}")
-            assert i == 1
+        scanner = path.parse(f'${PATH}[*][count(#lastname="Bat")=7]')
+        lines = path.collect()
+        print(f"test_function_count_equality: lines: {lines}")
+        assert len(lines) == 1
+        assert lines[0][0] == "Frog"
 
 

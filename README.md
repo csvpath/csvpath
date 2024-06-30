@@ -77,9 +77,9 @@ The full set of planned functions is:
 | every(number, value)          | match every Nth time a value is seen          |
 
 # Modification (coming soon!)
-The modification part of a CsvPath is not wrapped in brackets. This part of the path modifies any matching row. A modifying path looks like:
+The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path looks like:
 
-`$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2] #1="make my speed 6 #zipcode>#last_four #last_four=random(int, 4)`
+`$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2][#1="make my speed 6" #zipcode>#last_four #last_four=random(int, 4)]
 
 This path's modification part says:
 - set the first column to 'make my speed 6'

@@ -37,12 +37,14 @@ class Count(Function):
             #
             tracked_value = self._function_or_equality.to_value()
             print(f"Count._get_contained_value: tracked_value: {tracked_value}")
-            cnt = self.matcher.get_variable(self._id, tracking=tracked_value)
-            print(f"Count._get_contained_value: 1st cnt: {cnt}")
-            self._value = cnt + 1 if b else cnt
+            cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
+            print(f"Count._get_contained_value: 1st cnt: {cnt}, b: {b}")
+            if b:
+                cnt += 1
+            self.value = cnt
             print(f"Count._get_contained_value: 2nd cnt: {cnt}")
-            self.matcher.set_variable(self._id, tracking=tracked_value, value=self._value)
-        return self._value
+            self.matcher.set_variable(self._id, tracking=tracked_value, value=self.value)
+        return self.value
 
 
 

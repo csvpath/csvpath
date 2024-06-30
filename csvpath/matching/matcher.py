@@ -19,6 +19,7 @@ class Matcher:
 
     def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
         if not headers:
+            #raise Exception("no headers!")
             print("\nWARNING: no headers available. this is only Ok for unit testing.")
         if not data:
             raise InputException(f"need data input: data: {data}")
@@ -43,6 +44,7 @@ class Matcher:
         if not self.headers:
             return None
         for i, n in enumerate(self.headers):
+            print(f" ...header {i} = {n} ?= {name}")
             if n == name:
                 return i
         return None
@@ -54,8 +56,8 @@ class Matcher:
                 return False
         return True
 
-    def get_variable(self, name:str,*, tracking=None) -> Any:
-        return self.csvpath.get_variable(name, tracking=tracking)
+    def get_variable(self, name:str,*, tracking=None, set_if_none=None) -> Any:
+        return self.csvpath.get_variable(name, tracking=tracking, set_if_none=set_if_none)
 
     def set_variable(self, name:str, *, value:Any, tracking=None) -> None:
         print(f"Matcher.set_variable: {name} = {value} for {tracking}")

@@ -60,6 +60,21 @@ class TestMatcher(unittest.TestCase):
 
 #============= SCAN AND MATCH ================
 
+
+    def test_match_header_includes(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2-4][#0="Frog"]')
+        # test properties
+        headers = path.headers
+        print(f"test_match_header_includes: headers: {headers}")
+        assert headers
+        assert len(headers) == 3
+        assert "lastname" in headers
+        assert headers.index("lastname") == 1
+
+
+#============= SCAN AND MATCH ================
+
     def test_match_a_header_match(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2-4][#0="Frog"]')
