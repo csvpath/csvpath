@@ -9,6 +9,8 @@ from csvpath.matching.functions.concat import Concat
 from csvpath.matching.functions.lower import Lower
 from csvpath.matching.functions.upper import Upper
 from csvpath.matching.functions.percent import Percent
+from csvpath.matching.functions.below import Below
+from csvpath.matching.functions.above import Above
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -47,31 +49,10 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == 'percent':
             f = Percent(matcher, name, child)
-        elif name == 'scanned':     # count lines we checked for match
-            pass
-        elif name == 'lines':       # count lines to this point in the file
-            pass
-        elif name == 'after':
-            #(value)                # finds things after a date, number, string
-            pass
-        elif name == 'before':
-            #(value)                # finds things before a date, number, string
-            pass
-        elif name == 'between':
-            #(from, to)             # between dates, numbers, strings
-            pass
-        elif name == 'type':        # returns the type of a field
-            pass
-        elif name == 'random':
-            #(type, from, to)       # returns a random number, string date within a range
-            #(list)                 # pick from a list
-            pass
-        elif name == 'or':
-            #(value, value...)      # match one
-            pass
-        elif name == 'every':
-            #(number, value)        # match every n times a value is seen
-            pass
+        elif name == 'below':
+            f = Below(matcher, name, child)
+        elif name == 'above':
+            f = Above(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
 

@@ -12,13 +12,16 @@ class Percent(Function):
 
         if which not in ["scan", "match", "line"]:
             raise Exception("must be scan or match or line")
-        if which == "line":
-            value = self.matcher.csvpath.current_line_number() / self.matcher.csvpath.get_total_lines()
-        elif which == "scan":
-            value = self.matcher.csvpath.current_scan_count() /  self.matcher.csvpath.get_total_lines()
-        else:
-            value = self.matcher.csvpath.current_match_count() /  self.matcher.csvpath.get_total_lines()
 
+        if which == "line":
+            count = self.matcher.csvpath.current_line_number()
+        elif which == "scan":
+            count = self.matcher.csvpath.current_scan_count()
+        else:
+            count = self.matcher.csvpath.current_match_count()
+        total = self.matcher.csvpath.get_total_lines()
+        value = count / total
+        #print(f"Percent.to_value: count/total: {count}/{total} = {value}")
         return value
 
     def matches(self) -> bool:

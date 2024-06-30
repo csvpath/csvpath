@@ -30,8 +30,14 @@ class MatchingLexer(object):
 
 
     def t_NUMBER(self, t):
-        r'\d+'
-        t.value = int(t.value)
+        r'\.?\d+'
+        try:
+            t.value = int(t.value)
+        except ValueError:
+            try:
+                t.value = float(t.value)
+            except ValueError:
+                raise Exception(f"matching_lexer.t_NUMBER: cannot convert {t}: {t.value}")
         return t
 
     def t_error(self, t):

@@ -56,6 +56,8 @@ At this time the working functions are:
 - `lower(value)`
 - `upper(value)`
 - `percent(scan|match|line)`
+- `above(is-this-value,above-this-value)`
+- `below(is-this-value,below-this-value)`
 
 The full set of planned functions is:
 
