@@ -38,16 +38,29 @@ class TestFunctions(unittest.TestCase):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][not(length(#lastname)=3)]')
         lines = path.collect()
-        print(f"test_function_length: lines: {len(lines)}")
+        print(f"test_function_not: lines: {len(lines)}")
         assert len(lines) == 2
 
     def test_function_now(self):
         path = CsvPath()
-        # obviously this will break and need updating
+        # obviously this will break and need updating 1x a year
         scanner = path.parse(f'${PATH}[*][now("%Y") = "2024"]')
         lines = path.collect()
-        print(f"test_function_length: lines: {len(lines)}")
+        print(f"test_function_now: lines: {len(lines)}")
         assert len(lines) == 9
 
+    def test_function_in(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][in( #0 , "Bug|Bird|Ants" )]')
+        lines = path.collect()
+        print(f"test_function_in: lines: {len(lines)}")
+        assert len(lines) == 3
+
+    def test_function_concat(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ #0 = concat("B" , "ird") ]')
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        assert len(lines) == 1
 
 

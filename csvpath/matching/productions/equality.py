@@ -7,6 +7,8 @@ class Equality(Matchable):
         super().__init__(matcher)
         left:Any = None
         right:Any = None
+        op:str = "=" # we assume = but if a function or other containing production
+                     # wants to check we might have a different op
 
     def set_left(self, left):
         self.left = left
@@ -17,6 +19,9 @@ class Equality(Matchable):
         self.right = right
         if self.right:
             self.add_child(self.right)
+
+    def set_operation(self, op):
+        self.op = op
 
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.left}={self.right}"""

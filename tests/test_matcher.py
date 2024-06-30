@@ -100,7 +100,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_miss_because_header(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2-4][#0="Frog", #1="Kermit"]')
+        scanner = path.parse(f'${PATH}[2-4][#0="Frog" #1="Kermit"]')
         # test properties
         print(f"{scanner}")
         assert scanner.from_line == 2
@@ -116,6 +116,7 @@ class TestMatcher(unittest.TestCase):
         assert 2 in lns and 3 in lns and 4 in lns
         # test lines returned
         for i, ln in enumerate(path.next()):
+            print(f"test_match_miss_because_header: {i}:{ln}")
             raise Exception("we should not have matched!")
 
 

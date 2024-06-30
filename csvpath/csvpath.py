@@ -128,6 +128,7 @@ class CsvPath:
                 #    self.headers = line
                 if self.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
+                    print(f"CsvPath.next: line:{line}")
                     if self.matches(line):
                         self.match_count = self.match_count + 1
                         yield line
@@ -145,6 +146,8 @@ class CsvPath:
     def matches(self, line) -> bool:
         if not self.match:
             return True
+        print(f"CsvPath.matches: the match path: {self.match}")
+
         matcher = Matcher(csvpath=self, data=self.match, line=line, headers=self.headers)
         matched = matcher.matches()
         return matched

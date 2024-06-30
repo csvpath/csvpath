@@ -51,33 +51,36 @@ At this time the working functions are:
 - `length(value)`
 - `not(value)`
 - `now(format-str)`
+- `in(value,|-separated-list-str)`
+- `concat(value,value)`
 
 The full set of planned functions is:
 
 | Function                      | What it does                                  |
 | ------------------------------|-----------------------------------------------|
-| count()                       | counts the number of matches                  |
-| count(value)                  | count matches of value                        |
-| regex(regex-string)           | match on a regular expression                 |
-| now(format)                   | a datetime, optionally formatted              |
-| increment(var, n)             | increments a variable by n each time seen     |
-| then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted              |
-| this(line|scan|match)         | returns line number, or scan or match count   |
-| not(value)                    | negates a value                               |
-| type()                        | returns the type of a field                   |
-| length(value)                 | returns the length of the value               |
-| count-scanned()               | count lines we checked for match              |
-| count-lines()                 | count lines to this point in the file         |
-| lower(value)                  | makes value lowercase                         |
-| upper(value)                  | makes value uppercase                         |
 | after(value)                  | finds things after a date, number, string     |
 | before(value)                 | finds things before a date, number, string    |
-| between(value, from, to)             | between dates, numbers, strings, %, $         |
-| random(type, from, to)        | random number, string, or date within a range |
-| random(list)                  | pick from a list                              |
-| in(value, list)               | match in a list                               |
-| or(value, value...)           | match one                                     |
+| between(value, from, to)      | between dates, numbers, strings, %, $         |
+| concat(value, value)          | counts the number of matches                  |
+| count()                       | counts the number of matches                  |
+| count(value)                  | count matches of value                        |
+| count-lines()                 | count lines to this point in the file         |
+| count-scanned()               | count lines we checked for match              |
 | every(number, value)          | match every Nth time a value is seen          |
+| in(value, list)               | match in a list                               |
+| increment(var, n)             | increments a variable by n each time seen     |
+| length(value)                 | returns the length of the value               |
+| lower(value)                  | makes value lowercase                         |
+| not(value)                    | negates a value                               |
+| now(format)                   | a datetime, optionally formatted              |
+| or(value, value...)           | match one                                     |
+| random(list)                  | pick from a list                              |
+| random(type, from, to)        | random number, string, or date within a range |
+| regex(regex-string)           | match on a regular expression                 |
+| then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted              |
+| this(line|scan|match)         | returns line number, or scan or match count   |
+| type()                        | returns the type of a field                   |
+| upper(value)                  | makes value uppercase                         |
 
 # Modification (coming soon!)
 The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path (line breaks are permitted between parts) looks like:

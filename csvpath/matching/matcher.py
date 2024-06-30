@@ -23,6 +23,7 @@ class Matcher:
             print("\nWARNING: no headers available. this is only Ok for unit testing.")
         if not data:
             raise InputException(f"need data input: data: {data}")
+        self.path = data
         self.csvpath = csvpath
         self.line = line
         self.headers = headers
@@ -125,18 +126,12 @@ class Matcher:
                     | var_or_header EQUALS term
                     | var_or_header EQUALS var_or_header
                     | term EQUALS var_or_header
+                    | term EQUALS term
                     | term EQUALS function
         '''
-        ParserUtility().print_production(p,         '''equality : function EQUALS term
-                    | var_or_header EQUALS term
-                    | var_or_header EQUALS var_or_header
-                    | term EQUALS var_or_header
-                    | term EQUALS function
-                    | var_or_header EQUALS function
-                    | var EQUALS header
-        ''')
         e = Equality(self)
         e.set_left(p[1])
+        e.set_operation(p[2])
         e.set_right(p[3])
         p[0] = e
 

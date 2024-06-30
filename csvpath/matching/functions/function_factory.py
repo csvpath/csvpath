@@ -4,6 +4,8 @@ from csvpath.matching.functions.regex import Regex
 from csvpath.matching.functions.length import Length
 from csvpath.matching.functions.notf import Not
 from csvpath.matching.functions.now import Now
+from csvpath.matching.functions.inf import In
+from csvpath.matching.functions.concat import Concat
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -32,6 +34,12 @@ class FunctionFactory:
             f = Not(matcher, name, child)
         elif name == 'now':         # a date
             f = Now(matcher, name, child)
+        elif name == 'in':
+            f = In(matcher, name, child)
+            pass
+        elif name == 'concat':
+            f = Concat(matcher, name, child)
+            pass
 
         elif name == 'scanned':     # count lines we checked for match
             pass
@@ -51,9 +59,6 @@ class FunctionFactory:
         elif name == 'random':
             #(type, from, to)       # returns a random number, string date within a range
             #(list)                 # pick from a list
-            pass
-        elif name == 'in':
-            #(list-source)          # match in a list from a file
             pass
         elif name == 'or':
             #(value, value...)      # match one
