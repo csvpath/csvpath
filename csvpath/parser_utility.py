@@ -17,9 +17,9 @@ class ParserUtility:
     def print_production(self, p:YaccProduction, label:str=None, override=True) -> None:
         if self._quiet and not override:
             return
-        #if label:
-        #    label = f" at {label}"
-        label = ""
+        if label:
+            label = f" at {label}"
+        #label = ""
         print(f"production array{label} is:")
         for _ in p:
             print(f"\t{_} \t-> {_.__class__}")

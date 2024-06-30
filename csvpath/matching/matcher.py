@@ -105,6 +105,8 @@ class Matcher:
         '''function : NAME OPEN_PAREN CLOSE_PAREN
                     | NAME OPEN_PAREN equality CLOSE_PAREN
                     | NAME OPEN_PAREN function CLOSE_PAREN
+                    | NAME OPEN_PAREN var_or_header CLOSE_PAREN
+                    | NAME OPEN_PAREN term CLOSE_PAREN
         '''
         ParserUtility().print_production(p, '''function : NAME OPEN_PAREN CLOSE_PAREN
                     | NAME OPEN_PAREN equality CLOSE_PAREN
@@ -147,6 +149,7 @@ class Matcher:
 
     def p_term(self, p):
         '''term : QUOTE NAME QUOTE
+                | QUOTE NUMBER QUOTE
                 | NUMBER
                 | REGEX
         '''

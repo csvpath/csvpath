@@ -27,4 +27,27 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 1
         assert lines[0][0] == "Frog"
 
+    def test_function_length(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][length(#lastname)=3]')
+        lines = path.collect()
+        print(f"test_function_length: lines: {len(lines)}")
+        assert len(lines) == 7
+
+    def test_function_not(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][not(length(#lastname)=3)]')
+        lines = path.collect()
+        print(f"test_function_length: lines: {len(lines)}")
+        assert len(lines) == 2
+
+    def test_function_now(self):
+        path = CsvPath()
+        # obviously this will break and need updating
+        scanner = path.parse(f'${PATH}[*][now("%Y") = "2024"]')
+        lines = path.collect()
+        print(f"test_function_length: lines: {len(lines)}")
+        assert len(lines) == 9
+
+
 

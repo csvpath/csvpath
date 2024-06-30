@@ -48,6 +48,9 @@ The match part is also bracketed. The rules are:
 At this time the working functions are:
 - `count()` and `count(value)`
 - `regex()`
+- `length(value)`
+- `not(value)`
+- `now(format-str)`
 
 The full set of planned functions is:
 
@@ -69,10 +72,10 @@ The full set of planned functions is:
 | upper(value)                  | makes value uppercase                         |
 | after(value)                  | finds things after a date, number, string     |
 | before(value)                 | finds things before a date, number, string    |
-| between(from, to)             | between dates, numbers, strings, %, $         |
+| between(value, from, to)             | between dates, numbers, strings, %, $         |
 | random(type, from, to)        | random number, string, or date within a range |
 | random(list)                  | pick from a list                              |
-| in(list)                      | match in a list                               |
+| in(value, list)               | match in a list                               |
 | or(value, value...)           | match one                                     |
 | every(number, value)          | match every Nth time a value is seen          |
 
