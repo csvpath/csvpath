@@ -47,12 +47,15 @@ The match part is also bracketed. The rules are:
 
 At this time the working functions are:
 - `count()` and `count(value)`
-- `regex()`
+- `regex(regex-pattern)`
 - `length(value)`
 - `not(value)`
 - `now(format-str)`
 - `in(value,|-separated-list-str)`
 - `concat(value,value)`
+- `lower(value)`
+- `upper(value)`
+- `percent(scan|match|line)`
 
 The full set of planned functions is:
 
@@ -74,6 +77,7 @@ The full set of planned functions is:
 | not(value)                    | negates a value                               |
 | now(format)                   | a datetime, optionally formatted              |
 | or(value, value...)           | match one                                     |
+| percent(scan|match|line)      | % of total lines scanned, matched, passed     |
 | random(list)                  | pick from a list                              |
 | random(type, from, to)        | random number, string, or date within a range |
 | regex(regex-string)           | match on a regular expression                 |

@@ -24,6 +24,7 @@ class CsvPath:
         self.delimiter=delimiter
         self.quotechar=quotechar
         self.block_print = block_print
+        self.total_lines = -1
 
     def parse(self, data):
         self.scanner = Scanner()
@@ -33,6 +34,7 @@ class CsvPath:
         self.modify = mod
         self.scanner.parse(s)
         self._load_headers()
+        self.get_total_lines()
         return self.scanner
 
     def _load_headers(self) -> None:
@@ -140,6 +142,14 @@ class CsvPath:
                         self.match_count = self.match_count + 1
                         yield line
                 self.line_number = self.line_number + 1
+
+    def get_total_lines(self) -> int:
+        if self.total_lines == -1:
+            with open(self.scanner.filename, "r") as file:
+                reader = csv.reader(file, delimiter=self.delimiter, quotechar=self.quotechar)
+                for line in reader:
+                    self.total_lines += 1
+        return self.total_lines
 
     def current_line_number(self) -> int:
         return self.line_number

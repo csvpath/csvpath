@@ -29,7 +29,7 @@ class Matcher:
         self.headers = headers
         self.expressions = []
         self.lexer = MatchingLexer()
-        self.block_print = csvpath.block_print
+        self.block_print = csvpath.block_print if csvpath else True
         self.parser = yacc.yacc(module=self, start='match_part' )
         value = self.parser.parse(data, lexer=self.lexer.lexer)
 
@@ -42,13 +42,14 @@ class Matcher:
         """
 
     def print(self, msg:str) -> None:
-        self.csvpath.print(msg)
+        if self.csvpath:
+            self.csvpath.print(msg)
 
     def header_index(self, name:str) -> int:
         if not self.headers:
             return None
         for i, n in enumerate(self.headers):
-            self.csvpath.print(f" ...header {i} = {n} ?= {name}")
+            self.print(f" ...header {i} = {n} ?= {name}")
             if n == name:
                 return i
         return None
@@ -63,7 +64,7 @@ class Matcher:
         return self.csvpath.get_variable(name, tracking=tracking, set_if_none=set_if_none)
 
     def set_variable(self, name:str, *, value:Any, tracking=None) -> None:
-        self.csvpath.print(f"Matcher.set_variable: {name} = {value} for {tracking}")
+        self.print(f"Matcher.set_variable: {name} = {value} for {tracking}")
         return self.csvpath.set_variable(name, value=value, tracking=tracking)
 
 

@@ -28,13 +28,48 @@ class TestFunctions(unittest.TestCase):
 
 
 
-    def test_function_count_in(self):
+    def test_function_header_in(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants")=3)]')
+        scanner = path.parse(f'${PATH}[*][in(#firstname,"Bug|Bird|Ants")]')
         lines = path.collect()
-        print(f"test_function_count_equality: lines: {lines}")
+        print(f"test_function_count_in: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_count_in: line: {line}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 3
+
+    def test_function_count_header_in(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants"))=2]')
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_count_in: line: {line}")
+        print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 1
-        assert lines[0][0] == "Frog"
+
+    def test_function_percent(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][@p = percent("match") #lastname="Bat"]')
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_count_in: line: {line}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 7
+        assert path.variables["p"] == .75
+
+
+    def test_function_upper_and_lower(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ @upper = upper(#firstname) @lower = lower(#firstname) ]')
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {len(lines)}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "upper" in path.variables
+        assert "lower" in path.variables
+        assert path.variables["lower"] == "frog"
+        assert path.variables["upper"] == "FROG"
 
 
     def test_function_length(self):

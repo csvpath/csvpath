@@ -6,6 +6,9 @@ from csvpath.matching.functions.notf import Not
 from csvpath.matching.functions.now import Now
 from csvpath.matching.functions.inf import In
 from csvpath.matching.functions.concat import Concat
+from csvpath.matching.functions.lower import Lower
+from csvpath.matching.functions.upper import Upper
+from csvpath.matching.functions.percent import Percent
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -36,11 +39,14 @@ class FunctionFactory:
             f = Now(matcher, name, child)
         elif name == 'in':
             f = In(matcher, name, child)
-            pass
         elif name == 'concat':
             f = Concat(matcher, name, child)
-            pass
-
+        elif name == 'lower':
+            f = Lower(matcher, name, child)
+        elif name == 'upper':
+            f = Upper(matcher, name, child)
+        elif name == 'percent':
+            f = Percent(matcher, name, child)
         elif name == 'scanned':     # count lines we checked for match
             pass
         elif name == 'lines':       # count lines to this point in the file

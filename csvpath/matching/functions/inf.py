@@ -15,11 +15,13 @@ class In(Function):
 
         mylist = []
         liststr = lchild.to_value()
-        self.matcher.print(f"In.to_value: list str: {liststr}")
+        #print(f"In.to_value: list str: {liststr}")
         mylist = liststr.split("|")
+        #print(f"In.to_value: child: {vchild}, a {vchild.__class__}")
         v = vchild.to_value()
+        #print(f"In.to_value: self.matcher.csvpath.headers: {self.matcher.csvpath.headers}")
 
-        self.matcher.print(f"In.to_value: list: {mylist}, value: {v}")
+        #print(f"In.to_value: list: {mylist}, value: {v}")
         if v in mylist:
             return True
         elif v.__class__ != str and f"{v}" in mylist:

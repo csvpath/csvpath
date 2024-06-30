@@ -15,10 +15,11 @@ class Header(Matchable):
                 return self.matcher.line[self.name]
         else:
             n = self.matcher.header_index(self.name)
-            if not n:
-                self.matcher.print(f"Header.to_value: no such header {self.name}")
+            #print(f"Header.to_value: n: {n}, a {n.__class__}")
+            if n is None:
+                #print(f"Header.to_value: no such header {self.name}")
                 return None
-            self.matcher.print(f"Header: header index: {self.name} = {n}, line: {self.matcher.line}")
+            #print(f"Header: header index: {self.name} = {n}, line: {self.matcher.line}")
             return self.matcher.line[n]
 
     def matches(self) -> bool:
