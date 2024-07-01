@@ -1,7 +1,7 @@
 
 # CsvPath
 
-CsvPath is a declarative syntax for identifying rows and column values and updating them. It is similar to:
+CsvPath is a declarative syntax for identifying rows and column values and updating them. It is similar, though much simpler, to:
 - XPath: CsvPath is to a CSV file like XPath is to an XML file
 - Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath can be used as validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
@@ -13,20 +13,20 @@ Today, only the scanning and matching parts of csvpath are functional. The modif
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py).
 
+The path syntax is broken into three parts:
+- The scan part
+- The match part, and
+- The modify part (not yet started)
+
 Paths look like `$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]`
 
-This path says:
+This scanning and matching path says:
 - open test.csv
 - scan lines 5 through 25
 - match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
 
 # Scanning
 The scanner is an enumeration. For each line returned the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
-
-The path syntax is broken into three parts:
-- The scan part
-- The match part (not yet complete), and
-- The modify part (not yet started)
 
 The scan part of the path starts with '$' to indicate the root, meaning the file from the top. After the '$' comes the file path. The scanning instructions are in a bracket. The rules are:
 - `[*]` means all
@@ -58,6 +58,7 @@ At this time the working functions are:
 - `percent(scan|match|line)`
 - `above(is-this-value,above-this-value)`
 - `below(is-this-value,below-this-value)`
+- `first(value)`
 
 The full set of planned functions is:
 
@@ -72,6 +73,7 @@ The full set of planned functions is:
 | count-lines()                 | count lines to this point in the file         |
 | count-scanned()               | count lines we checked for match              |
 | every(number, value)          | match every Nth time a value is seen          |
+| first(value)                  | match the first occurance and capture line    |
 | in(value, list)               | match in a list                               |
 | increment(var, n)             | increments a variable by n each time seen     |
 | length(value)                 | returns the length of the value               |
@@ -115,7 +117,7 @@ The basics are:
 - `1^=>` or `^=>` mean add a new blank row above this row.
 - `2v=>` means add two new blank rows below this row.
 
-CsvPath is a copy-on-write system. It creates a copy of the file you are reading rows from. The copy has any modifications you make. In order to do this, CsvPath needs a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows.
+CsvPath is a copy-on-write system. When you make a modification, it creates a copy of the file you are reading rows from. The copy has any modifications you make while the original is untouched. In order to do this, CsvPath needs to set a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows of the currently matched row.
 
 
 # All that could change!

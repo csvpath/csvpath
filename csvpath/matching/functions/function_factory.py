@@ -11,6 +11,7 @@ from csvpath.matching.functions.upper import Upper
 from csvpath.matching.functions.percent import Percent
 from csvpath.matching.functions.below import Below
 from csvpath.matching.functions.above import Above
+from csvpath.matching.functions.first import First
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -53,6 +54,8 @@ class FunctionFactory:
             f = Below(matcher, name, child)
         elif name == 'above':
             f = Above(matcher, name, child)
+        elif name == 'first':
+            f = First(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
 

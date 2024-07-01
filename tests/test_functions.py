@@ -69,6 +69,30 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 3
         assert path.variables["p"] == .375
 
+
+
+    def test_function_first(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][first(#lastname)]')
+        lines = path.collect()
+        print(f"test_function_first: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_first: line: {line}")
+        print(f"test_function_first: path vars: {path.variables}")
+        assert len(lines) == 3
+        print(f'test_function_first: lastname vars: {path.variables.get("lastname")}' )
+
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][first(#firstname)]')
+        lines = path.collect()
+        print(f"test_function_first: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_first: line: {line}")
+        print(f"test_function_first: path vars: {path.variables}")
+        assert len(lines) == 8
+        print(f'test_function_first: firstname vars: {path.variables.get("lastname")}' )
+
+
     def test_function_above_percent(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][@p = percent("line")  above(@p,.35) #lastname="Bat"]')
