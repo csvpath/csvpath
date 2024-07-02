@@ -1,5 +1,6 @@
 from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
+from csvpath.matching.productions.equality import Equality
 import datetime
 
 class First(Function):
@@ -13,8 +14,15 @@ class First(Function):
             self.matcher.print(f"Firt.to_value: must have 1 child: {self.children}")
             raise ChildrenException("First function must have 1 child")
         if self._my_value_or_none == -9999:
+
             child = self.children[0]
-            value = f"{child.to_value()}"
+            value = ""
+            if isinstance(child, Equality):
+                for _ in child.commas_to_list():
+                    value += f"{_.to_value()}"
+            else:
+                value = f"{child.to_value()}"
+
             my_id = self.get_id()
             v = self.matcher.get_variable(my_id, tracking=value )
             if v is None:

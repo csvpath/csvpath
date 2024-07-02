@@ -119,6 +119,8 @@ class Matcher:
                     | term EQUALS var_or_header
                     | term EQUALS term
                     | term EQUALS function
+                    | equality EQUALS equality
+                    | equality EQUALS term
         '''
         e = Equality(self)
         e.set_left(p[1])

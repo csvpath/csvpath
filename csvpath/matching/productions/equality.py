@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 from csvpath.matching.productions.expression import Matchable
 from csvpath.matching.productions.variable import Variable
 
@@ -6,10 +6,23 @@ class Equality(Matchable):
 
     def __init__(self, matcher):
         super().__init__(matcher)
-        left:Any = None
-        right:Any = None
-        op:str = "=" # we assume = but if a function or other containing production
+        self.left:Any = None
+        self.right:Any = None
+        self.op:str = "=" # we assume = but if a function or other containing production
                      # wants to check we might have a different op
+
+    def commas_to_list(self) -> List[Any]:
+        ls = []
+        self._to_list(ls, self)
+        return ls
+
+    def _to_list(self, ls:List, p) :
+        if isinstance(p, Equality) and p.op == ',':
+            self._to_list(ls, p.left)
+            self._to_list(ls, p.right)
+        else:
+            ls.append(p)
+
 
     def set_left(self, left):
         self.left = left

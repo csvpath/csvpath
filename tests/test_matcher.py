@@ -2,6 +2,7 @@ import unittest
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.productions.expression import Expression
 from csvpath.matching.productions.equality import Equality
+from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
 from csvpath.csvpath import CsvPath
@@ -27,6 +28,31 @@ class TestMatcher(unittest.TestCase):
         assert matcher.expressions[0].children[0].matches()
         assert matcher.expressions[0].matches()
         assert matcher.matches(syntax_only=True)
+
+    def test_match_equality_to_list(self):
+        matcher = Matcher(csvpath=None, data='[first("alert", "test", "abc", "xyz")]', line=LINE, headers=HEADERS)
+        print(f"{matcher}")
+        assert len(matcher.expressions) == 1
+        assert isinstance( matcher.expressions[0], Expression)
+        assert len( matcher.expressions[0].children) == 1
+        print( f"children m.e[0].c         : {matcher.expressions[0].children}")
+        print( f"children m.e[0].c[0].c    : {matcher.expressions[0].children[0].children}")
+        print( f"children m.e[0].c[0].c[0] : {matcher.expressions[0].children[0].children[0]}")
+        eq = matcher.expressions[0].children[0].children[0]
+        ls = eq.commas_to_list()
+        print(f"ls: {len(ls)}: {ls}")
+        assert len(ls) == 4
+
+        matcher = Matcher(csvpath=None, data='[first("alert", "test", "abc")]', line=LINE, headers=HEADERS)
+        print(f"{matcher}")
+        eq = matcher.expressions[0].children[0].children[0]
+        ls = eq.commas_to_list()
+        print(f"ls: {len(ls)}: {ls}")
+        assert len(ls) == 3
+
+
+
+
 
     def test_match_regex_function(self):
         matcher = Matcher(csvpath=None, data='[regex(#2 = /a.+ert/)]', line=LINE, headers=HEADERS)
