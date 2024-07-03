@@ -123,6 +123,41 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["lower"] == "frog"
         assert path.variables["upper"] == "FROG"
 
+    def test_function_count_lines(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ #firstname="David" @david=count_lines() ]')
+        lines = path.collect()
+        assert len(lines) == 1
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["david"] == 8
+
+    def test_function_count_scans(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ #firstname="Frog" @frogs_seen=count() @scanned_for_frogs=count_scans()  ]')
+        lines = path.collect()
+        assert len(lines) == 2
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["frogs_seen"] == 2
+        assert path.variables["scanned_for_frogs"] == 9
+
+
+
+    def test_function_isinstance(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance(count(), "int") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        print(f"test_function_length: lines: {lines}")
+
+        """
+        # TODO: identifies date correctly but doesn't match correctly
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("11-23-2024", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        print(f"test_function_length: lines: {lines}")
+        """
+
 
     def test_function_length(self):
         path = CsvPath()

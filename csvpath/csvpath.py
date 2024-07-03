@@ -25,6 +25,7 @@ class CsvPath:
         self.quotechar=quotechar
         self.block_print = block_print
         self.total_lines = -1
+        self._verbose = False
 
     def parse(self, data):
         self.scanner = Scanner()
@@ -36,6 +37,19 @@ class CsvPath:
         self._load_headers()
         self.get_total_lines()
         return self.scanner
+
+    def verbose(self, set_verbose:bool=True) -> None:
+        self._verbose = set_verbose
+
+    # prints what the user needs to see
+    def verbosity(self, msg:Any) -> None:
+        if self._verbose:
+            print(f"{msg}")
+
+    # prints what the developer needs to see
+    def print(self, msg:str) -> None:
+        if not self.block_print:
+            print(msg)
 
     def _load_headers(self) -> None:
         with open(self.scanner.filename, "r") as file:
@@ -53,6 +67,7 @@ class CsvPath:
             header = header.replace('\t','')
             header = header.replace('`','')
             self.headers.append(header)
+            self.verbosity(f"header: {header}")
 
     def _find_scan_match_modify(self, data):
         scan = ""
@@ -69,9 +84,15 @@ class CsvPath:
             if c == "]":
                 p = p+1
         scan = scan.strip()
+        scan = scan if len(scan) > 0 else None
         matches = matches.strip()
+        matches = matches if len(matches) > 0 else None
         modify = modify.strip()
-        return scan if len(scan) > 0 else None, matches if len(matches) > 0 else None, modify if len(modify) > 0 else None
+        modify = modify if len(modify) > 0 else None
+        self.verbosity(f"scan: {scan}")
+        self.verbosity(f"matches: {matches}")
+        self.verbosity(f"modify: {modify}")
+        return scan, matches, modify
 
 
     def __str__(self):
@@ -120,26 +141,26 @@ class CsvPath:
             lines.append(_)
         return lines
 
-    def print(self, msg:str) -> None:
-        if not self.block_print:
-            print(msg)
-
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
+        self.verbosity(f"filename: {self.scanner.filename}")
+        total_lines = -1
+        if self._verbose:
+            total_lines = self.get_total_lines()
+            self.verbosity(f"total lines: {total_lines}")
+
         with open(self.scanner.filename, "r") as file:
-            #
-            # TODO: delimiter, quotechar, other things? need config
-            #
             reader = csv.reader(file, delimiter=self.delimiter, quotechar=self.quotechar)
             for line in reader:
-                #if self.line_number == 0:
-                #    self.headers = line
+                self.verbosity(f"line number: {self.line_number} of {total_lines}")
                 if self.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
                     self.print(f"CsvPath.next: line:{line}")
+                    self.verbosity(f"scan count: {self.scan_count}")
                     if self.matches(line):
                         self.match_count = self.match_count + 1
+                        self.verbosity(f"match count: {self.match_count}")
                         yield line
                 self.line_number = self.line_number + 1
 

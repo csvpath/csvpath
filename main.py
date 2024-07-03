@@ -6,6 +6,7 @@ filepath = '/Users/davidkershaw/Desktop/csvs/pipe_delimited.csv'
 
 def one():
     path = CsvPath(delimiter="|")
+    path.verbose(True)
     pathstr = f'${filepath}[*][#statecode="MA"]'
     #pathstr = f'${filepath}[*][#statecode="MA" first(#city, #statecode)]'
     #pathstr = f'${filepath}[4000-5000+22949][@test=#4 count(in(#statecode,"LA|MA|CT"))=12]'

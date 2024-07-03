@@ -2,6 +2,7 @@ import ply.lex as lex
 
 class MatchingLexer(object):
     tokens = [
+                'DATE',
                 'NUMBER',
                 'EQUALS',
                 'LEFT_BRACKET',
@@ -24,10 +25,13 @@ class MatchingLexer(object):
     t_VAR_SYM = r'@'
     t_LEFT_BRACKET = r'\['
     t_RIGHT_BRACKET = r'\]'
-    t_NAME = r'[A-Za-z0-9\.%_| ]+'
-    #t_NAME = r'[A-Za-z0-9][A-Za-z0-9\.%_]*'
+    t_NAME = r'[A-Za-z0-9\.%_| \-]+'
     t_REGEX = r'/(?:[^/\\]|\\.)*/'
 
+
+    def t_DATE(self, t):
+        r'\d+-\d+-\d+'
+        return t
 
     def t_NUMBER(self, t):
         r'\.?\d+'

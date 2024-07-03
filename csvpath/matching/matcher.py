@@ -137,6 +137,7 @@ class Matcher:
 
     def p_term(self, p):
         '''term : QUOTE NAME QUOTE
+                | QUOTE DATE QUOTE
                 | QUOTE NUMBER QUOTE
                 | NUMBER
                 | REGEX

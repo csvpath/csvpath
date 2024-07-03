@@ -6,7 +6,7 @@ class ParserUtility:
         self._quiet = quiet
 
     def error(self, parser, p:YaccProduction) -> None:
-        if self._quiet:
+        if self._quiet and False:
             return
         if p:
             print(f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}")

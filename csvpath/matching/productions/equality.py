@@ -64,6 +64,7 @@ class Equality(Matchable):
                 self.matcher.print("Equality.matches: left,right value classes are ?/?. doing str compare.")
                 b = f"{left}" == f"{right}"
             self.matcher.print(f"Equality.matches: b: {b}")
+        print(f"equality! {b}")
         return b
 
     def to_value(self) -> Any:

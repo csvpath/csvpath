@@ -47,6 +47,8 @@ The match part is also bracketed. The rules are:
 
 At this time the working functions are:
 - `count()` and `count(value)`
+- `count_lines()`
+- `count_scans()`
 - `regex(regex-pattern)`
 - `length(value)`
 - `not(value)`
@@ -70,8 +72,8 @@ The full set of planned functions is:
 | concat(value, value)          | counts the number of matches                  |
 | count()                       | counts the number of matches                  |
 | count(value)                  | count matches of value                        |
-| count-lines()                 | count lines to this point in the file         |
-| count-scanned()               | count lines we checked for match              |
+| count_lines()                 | count lines to this point in the file         |
+| count_scans()                 | count lines we checked for match              |
 | every(number, value)          | match every Nth time a value is seen          |
 | first(value)                  | match the first occurance and capture line    |
 | in(value, list)               | match in a list                               |
@@ -86,7 +88,6 @@ The full set of planned functions is:
 | random(type, from, to)        | random number, string, or date within a range |
 | regex(regex-string)           | match on a regular expression                 |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted              |
-| this(line|scan|match)         | returns line number, or scan or match count   |
 | type()                        | returns the type of a field                   |
 | upper(value)                  | makes value uppercase                         |
 
@@ -104,7 +105,19 @@ This path's modification part says:
 
 Note that the creating of the last_four column and setting its value may be order-dependent. That has not been decided yet. It may needed to involve multiple paths.
 
-The basics are:
+To output a new file, either with or without making a modified copy of the original, do something like:
+
+`$test.csv[5-25]`
+`[#0="Frog" #lastname="Bats"]`
+`[out($newfile.csv, #1=Firstname=#firstname)
+  out($newfile.csv, #0=Surname=#lastname)
+  out($newfile.csv, #2=ID=random("int")
+  out($newfile.csv, #3=Line=count-lines())
+ ]`
+
+This path creates a file with 4 columns, in this order: {Surname, Firstname, ID, Line}, and fills it using the matched lines in the original file. The out() function sends its output to the referenced file, in this case $newfile.csv. Any changes to the existing file's copy-on-write update are done after the out() function outputs the existing information. That allows us to change the file we are scanning and also keep a record of the changes we make.
+
+The modification basics are:
 - `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
 - variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
 - `$[@line]#3="cactus"` means a set the 4th column (zero-based) value to "cactus" in the row indicated by the variable @line in the current file, indicated with the '$'
