@@ -61,6 +61,7 @@ At this time the working functions are:
 - `above(is-this-value,above-this-value)`
 - `below(is-this-value,below-this-value)`
 - `first(value)`
+- `isinstance(value, typestr)`
 
 The full set of planned functions is:
 
@@ -77,7 +78,8 @@ The full set of planned functions is:
 | every(number, value)          | match every Nth time a value is seen          |
 | first(value)                  | match the first occurance and capture line    |
 | in(value, list)               | match in a list                               |
-| increment(var, n)             | increments a variable by n each time seen     |
+| increment(value, n)           | increments a variable by n each time seen     |
+| isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"|
 | length(value)                 | returns the length of the value               |
 | lower(value)                  | makes value lowercase                         |
 | not(value)                    | negates a value                               |
