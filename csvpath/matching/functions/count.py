@@ -22,7 +22,6 @@ class Count(Function):
         if not self.matcher or not self.matcher.csvpath:
             print("WARNING: no csvpath. are we testing?")
             return -1
-        self.print(f"Count: to_value: {self.matcher.csvpath.current_match_count() + 1}")
         return self.matcher.csvpath.current_match_count()
 
     def _get_contained_value(self, *, skip=[]) -> Any:
@@ -36,7 +35,6 @@ class Count(Function):
         # but in a case like: count(now('yyyy-mm-dd')) it would not be
         #
         tracked_value = self._function_or_equality.to_value(skip=skip)
-
         cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
         if b:
             cnt += 1

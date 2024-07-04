@@ -189,6 +189,7 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["say"] == 'oozeeee...'
         assert path.variables["line"] == 7
 
+    # set a var without matching the lines
     def test_function_count_any_match(self):
         path = CsvPath()
         scanner = path.parse(
@@ -201,9 +202,118 @@ class TestFunctions(unittest.TestCase):
                 no()
             ]''')
         lines = path.collect()
-        #print(f"test_function_count_in: lines: {lines}")
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["interesting"] == 3
+        assert len(lines) == 0
+
+    def test_function_end(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @end = end()
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["end"] == "growl"
+        assert len(lines) == 0
+
+
+    def test_function_max(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @the_max = max(#firstname)
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_max"] == "Slug"
+        assert len(lines) == 0
+
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @the_max = max(#0)
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_max"] == "firstname"
+        assert len(lines) == 0
+
+
+    def test_function_min(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @the_min = min(#firstname)
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_min"] == "Ants"
+        assert len(lines) == 0
+
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[3-5]
+            [
+                @the_min = min(#firstname, "scan")
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_min"] == "Bird"
+        assert len(lines) == 0
+
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[3-5]
+            [
+                @the_min = min(#firstname, "match")
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_min: path vars: {path.variables}")
+        assert path.variables["the_min"] == None
+        assert len(lines) == 0
+
+    def test_function_average(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[3-5]
+            [
+                @the_average = average(count(), "match")
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_average"] == None
+        assert len(lines) == 0
+
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[3-5]
+            [
+                @the_average = average(count(#lastname), "scan")
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_average"] == 2
         assert len(lines) == 0
 
 

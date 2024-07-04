@@ -17,6 +17,8 @@ from csvpath.matching.functions.count_scans import CountScans
 from csvpath.matching.functions.is_instance import IsInstance
 from csvpath.matching.functions.orf import Or
 from csvpath.matching.functions.no import No
+from csvpath.matching.functions.minf import Min, Max, Average
+from csvpath.matching.functions.end import End
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -71,6 +73,14 @@ class FunctionFactory:
             f = Or(matcher, name, child)
         elif name == 'no':
             f = No(matcher, name, child)
+        elif name == 'max':
+            f = Max(matcher, name, child)
+        elif name == 'min':
+            f = Min(matcher, name, child)
+        elif name == 'average':
+            f = Average(matcher, name, child)
+        elif name == 'end':
+            f = End(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

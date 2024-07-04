@@ -198,6 +198,8 @@ class CsvPath:
         else:
             self.print("CsvPath.set_variable: no existing value")
         if tracking:
+            if name not in self.variables:
+                self.variables[name] = {}
             instances = self.variables[name]
             instances[tracking] = value
         else:
@@ -220,14 +222,12 @@ class CsvPath:
                 thedict[tracking] = set_if_none
                 self.variables[name] = thedict
             thevalue = thedict.get(tracking)
-            if not thevalue and set_if_none:
+            if not thevalue and set_if_none is not None:
                 thedict[tracking] = set_if_none
                 thevalue = set_if_none
-            self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
         else:
             if not name in self.variables:
                 self.variables[name] = set_if_none
-                thevalue = set_if_none
             thevalue = self.variables[name]
         return thevalue
 

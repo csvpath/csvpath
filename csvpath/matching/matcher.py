@@ -54,6 +54,15 @@ class Matcher:
                 return i
         return None
 
+    def header_value(self, name:str) -> Any:
+        n = self.header_index(name)
+        ret = None
+        if n is None:
+            pass
+        else:
+            ret = self.line[n]
+        return ret
+
     def matches(self, *, syntax_only=False) -> bool:
         ret = True
         for i, et in enumerate( self.expressions ):
@@ -75,9 +84,17 @@ class Matcher:
         return self.csvpath.get_variable(name, tracking=tracking, set_if_none=set_if_none)
 
     def set_variable(self, name:str, *, value:Any, tracking=None) -> None:
-        self.print(f"Matcher.set_variable: {name} = {value} for {tracking}")
         return self.csvpath.set_variable(name, value=value, tracking=tracking)
 
+    def last_header_index(self) -> int:
+        if self.line and len(self.line) > 0:
+            return len( self.line ) -1
+        return None
+
+    def last_header_name(self) -> str:
+        if self.headers and len(self.headers) > 0:
+            return self.headers[self.last_header_index()]
+        return None
 
     #===================
     # productions
