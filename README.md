@@ -60,6 +60,7 @@ At this time the working functions are:
 - `length(value)`
 - `lower(value)`
 - `max(value, type)`
+- `median(value, type)`
 - `min(value, type)`
 - `no()`
 - `not(value)`
@@ -74,7 +75,7 @@ The full set of planned functions is:
 | Function                      | What it does                                              |
 |-------------------------------|-----------------------------------------------------------|
 | after(value)                  | finds things after a date, number, string                 |
-| average(number, type)         | returns the average                                       |
+| average(number, type)         | returns the average up to current "line", "scan", "match" |
 | before(value)                 | finds things before a date, number, string                |
 | between(value, from, to)      | between dates, numbers, strings, %, $                     |
 | concat(value, value)          | counts the number of matches                              |
@@ -90,8 +91,9 @@ The full set of planned functions is:
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            |
 | length(value)                 | returns the length of the value                           |
 | lower(value)                  | makes value lowercase                                     |
-| max(value, type)              | largest value see up to current "line", "scan", "match"   |
-| min(value, type)              | smallest value see up to current "line", "scan", "match"  |
+| max(value, type)              | largest value seen up to current "line", "scan", "match"  |
+| median(value, type)           | median value up to current "line", "scan", "match"        |
+| min(value, type)              | smallest value seen up to current "line", "scan", "match" |
 | no(value)                     | always false                                              |
 | not(value)                    | negates a value                                           |
 | now(format)                   | a datetime, optionally formatted                          |

@@ -316,6 +316,20 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["the_average"] == 2
         assert len(lines) == 0
 
+    def test_function_median(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @the_median = median(count(#lastname), "line")
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["the_median"] == 3
+        assert len(lines) == 0
+
 
     def test_function_isinstance(self):
         path = CsvPath()

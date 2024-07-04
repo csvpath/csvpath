@@ -78,7 +78,9 @@ class FunctionFactory:
         elif name == 'min':
             f = Min(matcher, name, child)
         elif name == 'average':
-            f = Average(matcher, name, child)
+            f = Average(matcher, name, child, "average")
+        elif name == 'median':
+            f = Average(matcher, name, child, "median")
         elif name == 'end':
             f = End(matcher, name, child)
         else:

@@ -2,15 +2,15 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.productions.expression import Matchable
+from statistics import mean, median
 
 class MinMax(Function):
 
     """
             // longest value
             // quintile
+            // median
             // decile
-            // average
-            // mean
             // std div
     """
 
@@ -126,8 +126,9 @@ class Max(MinMax):
 
 class Average(MinMax):
 
-    def __init__(self, matcher:Any, name:str, child:Matchable=None)->None:
+    def __init__(self, matcher:Any, name:str, child:Matchable=None, ave_or_med="average")->None:
         super().__init__(matcher, name, child)
+        self.ave_or_med = ave_or_med
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
@@ -140,10 +141,10 @@ class Average(MinMax):
                 return self.value
             if self.is_match() and not self.line_matches():
                 return self.value
-            self.matcher.set_variable("average",
+            self.matcher.set_variable(self.ave_or_med,
                                 tracking=f"{self.get_the_line()}",
                                 value=v )
-            all_values = self.matcher.get_variable("average")
+            all_values = self.matcher.get_variable(self.ave_or_med)
             m = []
             for k, v in enumerate(all_values.items()):
                 v = v[1]
@@ -152,9 +153,10 @@ class Average(MinMax):
                     m.append(v)
                 except:
                     return self.value
-            from statistics import mean
-            self.value = mean(m)
-            #self.value = m
+            if self.ave_or_med == "average":
+                self.value = mean(m)
+            else:
+                self.value = median(m)
         return self.value
 
     def matches(self,*, skip=[]) -> bool:
