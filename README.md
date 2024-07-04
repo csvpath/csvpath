@@ -45,32 +45,7 @@ The match part is also bracketed. The rules are:
 - `@people` denotes a variable named "people"
 - Functions can include functions and/or equality tests and/or literals, all represented by the word "value" in the table below
 
-At this time the working functions are:
-- `above(is-this-value,above-this-value)`
-- `average(value, type)`
-- `below(is-this-value,below-this-value)`
-- `concat(value,value)`
-- `count()` and `count(value)`
-- `count_lines()`
-- `count_scans()`
-- `end()`
-- `first(value)`
-- `in(value,|-separated-list-str)`
-- `isinstance(value, typestr)`
-- `length(value)`
-- `lower(value)`
-- `max(value, type)`
-- `median(value, type)`
-- `min(value, type)`
-- `no()`
-- `not(value)`
-- `now(format-str)`
-- `or(value,value,...)`
-- `percent(scan|match|line)`
-- `regex(regex-pattern)`
-- `upper(value)`
-
-The full set of planned functions is:
+The match functions are:
 
 | Function                      | What it does                                              |Done|
 |-------------------------------|-----------------------------------------------------------|----|
@@ -98,7 +73,7 @@ The full set of planned functions is:
 | not(value)                    | negates a value                                           | X  |
 | now(format)                   | a datetime, optionally formatted                          | X  |
 | or(value, value,...)          | match any one                                             | X  |
-| percent(scan|match|line)      | % of total lines scanned, matched, passed                 | X  |
+| percent(type)                 | % of total lines for "scan", "match", "line"              | X  |
 | random(list)                  | pick from a list                                          |    |
 | random(type, from, to)        | random number, string, or date within a range             |    |
 | regex(regex-string)           | match on a regular expression                             | X  |
