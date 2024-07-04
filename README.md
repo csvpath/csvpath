@@ -11,7 +11,7 @@ CsvPath is intended as a compliment to other DataOps, data quality, and data eng
 # Usage
 Today, only the scanning and matching parts of csvpath are functional. The modification part is a todo.
 
-For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py) or [tests/test_matcher.py](tests/test_matcher.py).
+For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
 The path syntax is broken into three parts:
 - The scan part
