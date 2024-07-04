@@ -2,13 +2,17 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 import json
+from dateutil import parser
+from numbers import Number
 
 class IsInstance(Function):
 
-    def to_value(self) -> Any:
-        return self.matches()
+    def to_value(self, *, skip=[]) -> Any:
+        return self.matches(skip=skip)
 
-    def matches(self) -> bool:
+    def matches(self,*, skip=[]) -> bool:
+        if self in skip:
+            return True
         if len(self.children) != 1:
             raise ChildrenException("no children. there must be 1 equality child with 2 non-equality children")
         child = self.children[0]
@@ -16,85 +20,75 @@ class IsInstance(Function):
             raise ChildrenException("must be 1 equality child with 2 non-equality children")
         left = child.left
         right = child.right
-        thevalue = left.to_value()
-        thetype = right.to_value()
+        thevalue = left.to_value(skip=skip)
+        thetype = right.to_value(skip=skip)
 
-        print(f"IsInstance.to_value: {thevalue}, {thetype}")
+        ret = False
         if thetype == "int":
-            return self.to_int(thevalue)
+            try :
+                v = int(thevalue)
+                ret = f"{v}" == f"{thevalue}"
+            except:
+                pass
         elif thetype == "float":
-            return self.to_fload(thevalue)
+            try:
+                v = float(thevalue)
+                ret = f"{v}" == f"{thevalue}"
+            except:
+                pass
         elif thetype == "str":
-            return self.to_str(thevalue)
+            v = str(thevalue)
+            ret = f"{v}" == f"{thevalue}"
         elif thetype == "complex":
-            return self.to_complex(thevalue)
+            try:
+                v = complex(thevalue)
+                ret = f"{v}" == f"{thevalue}"
+            except:
+                pass
         elif thetype == "bool":
-            return self.to_bool(thevalue)
-        elif thetype == "json":
-            return self.to_json(thevalue)
+            v = isinstance( thevalue, bool)
+            if not v:
+                if thevalue == 1 or thevalue == 0:
+                    v = True
+                if thevalue == "None":
+                    v = True
+            ret = v
+            """
+            # improving the lexer to support JSON isn't worth it at this time.
+            elif thetype == "json":
+                try:
+                    json.loads(thevalue)
+                except:
+                    ret = False
+                ret = True
+            """
         elif thetype == "usd":
-            return self.to_usd(thevalue)
+            ret = self.to_usd(thevalue)
         elif thetype == "datetime":
-            ret =  self.to_usd(thevalue)
-            print (f"datetime is good!")
-            return ret
+            ret =  self.to_datetime(thevalue)
         else:
             raise Exception(f'''the type must one of:
                                 "int","float","str","bool",
                                 "complex","json","usd",
                                 "datetime, not {right}"
                                 ''')
-
-    def to_int(self, v) -> bool:
-        try:
-            int(v)
-        except:
-            return False
-        return True
-
-    def to_float(self, v) -> bool:
-        try:
-            float(v)
-        except:
-            return False
-        return True
-
-    def to_str(self, v) -> bool:
-        return isinstance(v, str)
-
-    def to_complex(self, v) -> int:
-        try:
-            complex(v)
-        except:
-            return False
-        return True
-
-    def to_bool(self, v) -> bool:
-        try:
-            bool(v)
-        except:
-            return False
-        return True
-
-    def to_json(self, v) -> bool:
-        try:
-            json.loads(v)
-        except:
-            return False
-        return True
+        return ret
 
     def to_usd(self, v) -> bool:
+        if isinstance(v, Number):
+            return False
         try:
             float(f"{v}".replace('$', '').replace(',', ''))
         except:
             return False
-        return True
+        v = v.strip().lower()
+        if v[0] == '$':
+            return True
+        return False
 
     def to_datetime(self, v) -> bool:
         try:
-            print(f"IsInstance.to_datetime: {v}")
-            dateutil.parser.parse(f"{v}")
-            print(f"ok date!")
+            parser.parse(f"{v}")
         except Exception as e:
             print(e)
             return False

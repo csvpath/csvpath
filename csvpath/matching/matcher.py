@@ -55,10 +55,25 @@ class Matcher:
         return None
 
     def matches(self, *, syntax_only=False) -> bool:
-        for i, e in enumerate( self.expressions ):
-            if not e.matches() and not syntax_only:
-                return False
-        return True
+        if self.csvpath:
+            print(f"Matcher.match: line: {self.csvpath.current_line_number()}")
+        ret = True
+        for i, et in enumerate( self.expressions ):
+            if et[1] is True:
+                continue
+            elif et[1] is False:
+                ret = False
+            elif not et[0].matches(skip=[]) and not syntax_only:
+                et[1] = False
+                ret = False
+            else:
+                et[1] = True
+                ret = True
+            if not ret:
+                break
+        if self.csvpath:
+            print(f"Matcher.match: line: {self.csvpath.current_line_number()}: ret: {ret}")
+        return ret
 
     def get_variable(self, name:str,*, tracking=None, set_if_none=None) -> Any:
         return self.csvpath.get_variable(name, tracking=tracking, set_if_none=set_if_none)
@@ -94,7 +109,7 @@ class Matcher:
                         | header '''
         e = Expression(self)
         e.add_child(p[1])
-        self.expressions.append(e)
+        self.expressions.append([e,None])
         p[0] = e
 
     def p_function(self, p):
@@ -128,12 +143,13 @@ class Matcher:
         e.set_right(p[3])
         p[0] = e
 
+        """
         if isinstance(p[1], Variable):
             self.csvpath.set_variable(p[1].name, value=p[3].to_value())
 
         if isinstance(p[3],Variable):
             self.csvpath.set_variable(p[3].name, value=p[1].to_value())
-
+        """
 
     def p_term(self, p):
         '''term : QUOTE NAME QUOTE

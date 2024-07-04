@@ -23,7 +23,6 @@ class Equality(Matchable):
         else:
             ls.append(p)
 
-
     def set_left(self, left):
         self.left = left
         if self.left:
@@ -40,23 +39,25 @@ class Equality(Matchable):
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.left}={self.right}"""
 
-    def matches(self) -> bool:
+    def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return True
         if not self.left or not self.right:
             return False
         b = None
         if isinstance( self.left, Variable):
-            self.matcher.print(f"Equality.matches: setting variable: {self.left.name} to {self.right.to_value()}")
-            self.matcher.set_variable(self.left.name, value=self.right.to_value())
+            self.matcher.print(f"Equality.matches: setting variable: {self.left.name} to {self.right.to_value(skip=skip)}")
+            self.matcher.set_variable(self.left.name, value=self.right.to_value(skip=skip))
             b = True
         else:
-            self.matcher.print(f"Equality.matches: {self.left.to_value()} == {self.right.to_value()}")
+            self.matcher.print(f"Equality.matches: {self.left.to_value(skip=skip)} == {self.right.to_value(skip=skip)}")
             self.matcher.print(f"Equality.matches: left,right classes: {self.left.__class__} == {self.right.__class__}")
-            self.matcher.print(f"Equality.matches: left,right value classes: {self.left.to_value().__class__} == {self.right.to_value().__class__}")
-            left = self.left.to_value()
-            right = self.right.to_value()
+            self.matcher.print(f"Equality.matches: left,right value classes: {self.left.to_value(skip=skip).__class__} == {self.right.to_value(skip=skip).__class__}")
+            left = self.left.to_value(skip=skip)
+            right = self.right.to_value(skip=skip)
             if left.__class__ == right.__class__:
                 self.matcher.print("Equality.matches: left,right value classes are same")
-                b = self.left.to_value() == self.right.to_value()
+                b = self.left.to_value(skip=skip) == self.right.to_value(skip=skip)
             elif (left.__class__ == str and right.__class__==int) or (right.__class__ == str and left.__class__==int):
                 self.matcher.print("Equality.matches: left,right value classes are int/str. doing str compare.")
                 b = f"{left}" == f"{right}"
@@ -64,10 +65,9 @@ class Equality(Matchable):
                 self.matcher.print("Equality.matches: left,right value classes are ?/?. doing str compare.")
                 b = f"{left}" == f"{right}"
             self.matcher.print(f"Equality.matches: b: {b}")
-        print(f"equality! {b}")
         return b
 
-    def to_value(self) -> Any:
-        return self.matches()
+    def to_value(self, *, skip=[]) -> Any:
+        return self.matches(skip=skip)
 
 

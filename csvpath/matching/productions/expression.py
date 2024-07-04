@@ -16,10 +16,10 @@ class Matchable:
     def __str__(self) -> str:
         return f"""{self.__class__}"""
 
-    def matches(self) -> bool:
+    def matches(self, *, skip=[]) -> bool:
         return True # leave this for now for testing
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
         return None
 
     def set_parent(self, parent):
@@ -41,9 +41,13 @@ class Matchable:
 
 class Expression(Matchable):
 
-    def matches(self) -> bool:
-        for child in self.children:
-            if not child.matches():
+    def matches(self, *, skip=[]) -> bool:
+        if not skip:
+            skip = []
+        if self in skip:
+            return True
+        for i, child in enumerate(self.children):
+            if not child.matches(skip=skip):
                 return False
         return True
 

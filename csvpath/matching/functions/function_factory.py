@@ -15,6 +15,7 @@ from csvpath.matching.functions.first import First
 from csvpath.matching.functions.count_lines import CountLines
 from csvpath.matching.functions.count_scans import CountScans
 from csvpath.matching.functions.is_instance import IsInstance
+from csvpath.matching.functions.orf import Or
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -65,6 +66,8 @@ class FunctionFactory:
             f = CountScans(matcher, name, child)
         elif name == 'isinstance':
             f = IsInstance(matcher, name, child)
+        elif name == 'or':
+            f = Or(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

@@ -4,7 +4,9 @@ import datetime
 
 class In(Function):
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         if len(self.children) != 1:
             self.matcher.print(f"In.to_value: must have 1 equality child: {self.children}")
             raise ChildrenException("In function must have 1 child")
@@ -14,7 +16,7 @@ class In(Function):
         lchild = self.children[0].children[1]
 
         mylist = []
-        liststr = lchild.to_value()
+        liststr = lchild.to_value(skip=skip)
         #print(f"In.to_value: list str: {liststr}")
         mylist = liststr.split("|")
         #print(f"In.to_value: child: {vchild}, a {vchild.__class__}")
@@ -29,8 +31,8 @@ class In(Function):
         else:
             return False
 
-    def matches(self) -> bool:
-        return self.to_value()
+    def matches(self,*, skip=[]) -> bool:
+        return self.to_value(skip=skip)
 
 
 

@@ -129,7 +129,7 @@ class TestFunctions(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
         print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["david"] == 8
+        assert path.variables["david"] == 1
 
     def test_function_count_scans(self):
         path = CsvPath()
@@ -141,22 +141,105 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["scanned_for_frogs"] == 9
 
 
+    """
+    TODO: need a way to only count complete path matches
+    """
+    def test_function_first_two_lines(self):
+        path = CsvPath()
+        # this returns the first two lines because first collects
+        # the first instance of every value matched, so 0 and 1 for False and True
+        scanner = path.parse(f'${PATH}[*][ first(count()=1)]')
+        lines = path.collect()
+        print(f"test_function_first_two_lines: path vars: {path.variables}")
+        assert len(lines) == 2
+
+
+    def test_function_first_line(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                count(#firstname="Frog")=1
+                @say=#say
+                @line=count_lines()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {lines}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["say"] == 'ribbit...'
+        assert path.variables["line"] == 3
+
+    def test_function_any_match(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                or(#firstname="Fish", #lastname="Kermit", #say="oozeeee...")
+                @say=#say
+                @line=count_lines()
+
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {lines}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 3
+        assert path.variables["say"] == 'oozeeee...'
+        assert path.variables["line"] == 7
+
 
     def test_function_isinstance(self):
         path = CsvPath()
+        print("checking ints")
         scanner = path.parse(f'${PATH}[*][ isinstance(count(), "int") ]')
         lines = path.collect()
         assert len(lines) == 9
         print(f"test_function_length: lines: {lines}")
-
-        """
-        # TODO: identifies date correctly but doesn't match correctly
+        print("checking dates")
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][ isinstance("11-23-2024", "datetime") ]')
         lines = path.collect()
         assert len(lines) == 9
-        print(f"test_function_length: lines: {lines}")
-        """
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("2024-11-23", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("2024-1-3", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("2024-59-23", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 0
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("1000-1-1", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("1/12/2024", "datetime") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        print("checking $$$")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("$1000.59", "usd") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        print("checking float")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("11.59", "float") ]')
+        lines = path.collect()
+        assert len(lines) == 9
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("11.59", "int") ]')
+        lines = path.collect()
+        assert len(lines) == 0
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[*][ isinstance("11.59", "usd") ]')
+        lines = path.collect()
+        assert len(lines) == 0
 
 
     def test_function_length(self):

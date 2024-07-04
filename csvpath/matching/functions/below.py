@@ -4,7 +4,9 @@ import datetime
 
 class Below(Function):
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         if len(self.children) != 1:
             self.matcher.print(f"In.to_value: must have 1 equality child: {self.children}")
             raise ChildrenException("Below function must have 1 child")
@@ -13,8 +15,8 @@ class Below(Function):
         thischild = self.children[0].children[0]
         belowthatchild = self.children[0].children[1]
 
-        this_is = thischild.to_value()
-        below_that = belowthatchild.to_value()
+        this_is = thischild.to_value(skip=skip)
+        below_that = belowthatchild.to_value(skip=skip)
         this = -1
         that = -1
         try:
@@ -25,8 +27,8 @@ class Below(Function):
         b = this < that
         return b
 
-    def matches(self) -> bool:
-        return self.to_value()
+    def matches(self,*, skip=[]) -> bool:
+        return self.to_value(skip=skip)
 
 
 

@@ -4,13 +4,15 @@ import datetime
 
 class Now(Function):
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         if len(self.children) > 1:
             self.matcher.print(f"Now.to_value: should be 0 or 1 children: {self.children}")
             ChildrenException("now function may have only a single child that gives a format")
         format = None
         if self.children and len(self.children) == 1:
-            format = self.children[0].to_value()
+            format = self.children[0].to_value(skip=skip)
             self.matcher.print(f"Now.to_value: format: {format}")
         x = datetime.datetime.now()
         self.matcher.print(f"Now.to_value: x: {x}")
@@ -23,7 +25,7 @@ class Now(Function):
         self.matcher.print(f"Now.to_value: returning: {xs}")
         return xs
 
-    def matches(self) -> bool:
+    def matches(self,*, skip=[]) -> bool:
         return True # always matches because not internally matchable
 
 

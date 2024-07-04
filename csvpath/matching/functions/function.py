@@ -18,12 +18,14 @@ class Function(Matchable):
             self.add_child(child)
 
     def __str__(self) -> str:
-        return f"""\nFunc: {self.name}({self._function_or_equality}) """
+        return f"""\n{self.__class__}{self.name}({self._function_or_equality})"""
 
-    def to_value(self) -> bool:
+    def to_value(self, *, skip=[]) -> bool:
+        if self in skip:
+            return True
         id = self.get_id()
         if self._function_or_equality:
-            if not self._function_or_equality.matches():
+            if not self._function_or_equality.matches(skip=skip):
                 return False
         print("WARNING: function getting to_value defaulting to True")
         return True # leave this for now for testing

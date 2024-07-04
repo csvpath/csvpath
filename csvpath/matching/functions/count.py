@@ -7,10 +7,12 @@ class Count(Function):
         if self.matcher:
             self.matcher.print(msg)
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         self.print(f"Count: to_value: {self._function_or_equality}: {self._function_or_equality.__class__}")
         if self._function_or_equality:
-            return self._get_contained_value()
+            return self._get_contained_value(skip=skip)
         else:
             return self._get_match_count() + 1   # we're eager to +1 because we don't
                                                  # contribute to if there's a match
@@ -23,14 +25,14 @@ class Count(Function):
         self.print(f"Count: to_value: {self.matcher.csvpath.current_match_count() + 1}")
         return self.matcher.csvpath.current_match_count()
 
-    def _get_contained_value(self) -> Any:
+    def _get_contained_value(self, *, skip=[]) -> Any:
         #
         # need to apply this count function to the contained obj's value
         #
 
         self.print(f"\nCount._get_contained_value: value: {self.value}")
         if not self.value:
-            b = self._function_or_equality.matches()
+            b = self._function_or_equality.matches(skip=skip)
             self.print(f"Count._get_contained_value: func or equ matches: {b}")
             self._id = self.get_id(self._function_or_equality)
             self.print(f"Count._get_contained_value: id: {self._id}")
@@ -38,7 +40,7 @@ class Count(Function):
             # to_value() is often going to be a bool based on matches().
             # but in a case like: count(now('yyyy-mm-dd')) it would not be
             #
-            tracked_value = self._function_or_equality.to_value()
+            tracked_value = self._function_or_equality.to_value(skip=skip)
             self.print(f"Count._get_contained_value: tracked_value: {tracked_value}")
             cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
             self.print(f"Count._get_contained_value: 1st cnt: {cnt}, b: {b}")

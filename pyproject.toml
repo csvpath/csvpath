@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 pytest = "^8.2.2"
 ply = "^3.11"
+python-dateutil = "^2.9.0.post0"
 
 
 [build-system]

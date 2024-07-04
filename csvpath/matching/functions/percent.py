@@ -4,7 +4,9 @@ import datetime
 
 class Percent(Function):
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         if len(self.children) != 1:
             self.matcher.print(f"Lower.to_value: must have 1 child: {self.children}")
             raise ChildrenException("Lower function must have 1 child: line|scan|match")
@@ -24,8 +26,8 @@ class Percent(Function):
         #print(f"Percent.to_value: count/total: {count}/{total} = {value}")
         return value
 
-    def matches(self) -> bool:
-        v = self.to_value()
+    def matches(self,*, skip=[]) -> bool:
+        v = self.to_value(skip=skip)
         return v is not None
 
 

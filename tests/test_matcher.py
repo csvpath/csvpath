@@ -19,33 +19,34 @@ class TestMatcher(unittest.TestCase):
         matcher = Matcher(csvpath=None, data='[#2="alert"]', line=LINE, headers=HEADERS)
         print(f"{matcher}")
         assert len(matcher.expressions) == 1
-        assert isinstance( matcher.expressions[0], Expression)
-        assert len( matcher.expressions[0].children) == 1
-        assert isinstance( matcher.expressions[0].children[0], Equality)
-        assert len( matcher.expressions[0].children[0].children) == 2
-        assert isinstance( matcher.expressions[0].children[0].children[0], Header)
-        assert isinstance( matcher.expressions[0].children[0].children[1], Term)
-        assert matcher.expressions[0].children[0].matches()
-        assert matcher.expressions[0].matches()
+        print(f"test_match_one_header: 0th: { matcher.expressions[0]}")
+        assert isinstance( matcher.expressions[0][0], Expression)
+        assert len( matcher.expressions[0][0].children) == 1
+        assert isinstance( matcher.expressions[0][0].children[0], Equality)
+        assert len( matcher.expressions[0][0].children[0].children) == 2
+        assert isinstance( matcher.expressions[0][0].children[0].children[0], Header)
+        assert isinstance( matcher.expressions[0][0].children[0].children[1], Term)
+        assert matcher.expressions[0][0].children[0].matches()
+        assert matcher.expressions[0][0].matches()
         assert matcher.matches(syntax_only=True)
 
     def test_match_equality_to_list(self):
         matcher = Matcher(csvpath=None, data='[first("alert", "test", "abc", "xyz")]', line=LINE, headers=HEADERS)
         print(f"{matcher}")
         assert len(matcher.expressions) == 1
-        assert isinstance( matcher.expressions[0], Expression)
-        assert len( matcher.expressions[0].children) == 1
-        print( f"children m.e[0].c         : {matcher.expressions[0].children}")
-        print( f"children m.e[0].c[0].c    : {matcher.expressions[0].children[0].children}")
-        print( f"children m.e[0].c[0].c[0] : {matcher.expressions[0].children[0].children[0]}")
-        eq = matcher.expressions[0].children[0].children[0]
+        assert isinstance( matcher.expressions[0][0], Expression)
+        assert len( matcher.expressions[0][0].children) == 1
+        print( f"children m.e[0].c         : {matcher.expressions[0][0].children}")
+        print( f"children m.e[0].c[0].c    : {matcher.expressions[0][0].children[0].children}")
+        print( f"children m.e[0].c[0].c[0] : {matcher.expressions[0][0].children[0].children[0]}")
+        eq = matcher.expressions[0][0].children[0].children[0]
         ls = eq.commas_to_list()
         print(f"ls: {len(ls)}: {ls}")
         assert len(ls) == 4
 
         matcher = Matcher(csvpath=None, data='[first("alert", "test", "abc")]', line=LINE, headers=HEADERS)
         print(f"{matcher}")
-        eq = matcher.expressions[0].children[0].children[0]
+        eq = matcher.expressions[0][0].children[0].children[0]
         ls = eq.commas_to_list()
         print(f"ls: {len(ls)}: {ls}")
         assert len(ls) == 3

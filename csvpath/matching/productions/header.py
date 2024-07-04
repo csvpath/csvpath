@@ -7,7 +7,9 @@ class Header(Matchable):
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name} """
 
-    def to_value(self) -> Any:
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return True
         if isinstance(self.name, int):
             if self.name >= len(self.matcher.line) :
                 return None
@@ -25,7 +27,7 @@ class Header(Matchable):
                 ret = self.matcher.line[n]
             return ret
 
-    def matches(self) -> bool:
-        return not self.to_value is None
+    def matches(self, *, skip=[]) -> bool:
+        return not self.to_value(skip=skip) is None
 
 

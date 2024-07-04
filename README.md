@@ -52,6 +52,7 @@ At this time the working functions are:
 - `regex(regex-pattern)`
 - `length(value)`
 - `not(value)`
+- `or(value,value,...)`
 - `now(format-str)`
 - `in(value,|-separated-list-str)`
 - `concat(value,value)`
@@ -84,7 +85,7 @@ The full set of planned functions is:
 | lower(value)                  | makes value lowercase                         |
 | not(value)                    | negates a value                               |
 | now(format)                   | a datetime, optionally formatted              |
-| or(value, value...)           | match one                                     |
+| or(value, value,...)          | match any one                                 |
 | percent(scan|match|line)      | % of total lines scanned, matched, passed     |
 | random(list)                  | pick from a list                              |
 | random(type, from, to)        | random number, string, or date within a range |
