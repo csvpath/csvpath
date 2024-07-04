@@ -72,39 +72,39 @@ At this time the working functions are:
 
 The full set of planned functions is:
 
-| Function                      | What it does                                              |
-|-------------------------------|-----------------------------------------------------------|
-| after(value)                  | finds things after a date, number, string                 |
-| average(number, type)         | returns the average up to current "line", "scan", "match" |
-| before(value)                 | finds things before a date, number, string                |
-| between(value, from, to)      | between dates, numbers, strings, %, $                     |
-| concat(value, value)          | counts the number of matches                              |
-| count()                       | counts the number of matches                              |
-| count(value)                  | count matches of value                                    |
-| count_lines()                 | count lines to this point in the file                     |
-| count_scans()                 | count lines we checked for match                          |
-| end()                         | returns the value of the last column                      |
-| every(number, value)          | match every Nth time a value is seen                      |
-| first(value)                  | match the first occurance and capture line                |
-| in(value, list)               | match in a list                                           |
-| increment(value, n)           | increments a variable by n each time seen                 |
-| isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            |
-| length(value)                 | returns the length of the value                           |
-| lower(value)                  | makes value lowercase                                     |
-| max(value, type)              | largest value seen up to current "line", "scan", "match"  |
-| median(value, type)           | median value up to current "line", "scan", "match"        |
-| min(value, type)              | smallest value seen up to current "line", "scan", "match" |
-| no(value)                     | always false                                              |
-| not(value)                    | negates a value                                           |
-| now(format)                   | a datetime, optionally formatted                          |
-| or(value, value,...)          | match any one                                             |
-| percent(scan|match|line)      | % of total lines scanned, matched, passed                 |
-| random(list)                  | pick from a list                                          |
-| random(type, from, to)        | random number, string, or date within a range             |
-| regex(regex-string)           | match on a regular expression                             |
-| then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |
-| type()                        | returns the type of a field                               |
-| upper(value)                  | makes value uppercase                                     |
+| Function                      | What it does                                              |Done|
+|-------------------------------|-----------------------------------------------------------|----|
+| after(value)                  | finds things after a date, number, string                 | X  |
+| average(number, type)         | returns the average up to current "line", "scan", "match" | X  |
+| before(value)                 | finds things before a date, number, string                | X  |
+| between(value, from, to)      | between dates, numbers, strings, %, $                     |    |
+| concat(value, value)          | counts the number of matches                              | X  |
+| count()                       | counts the number of matches                              | X  |
+| count(value)                  | count matches of value                                    | X  |
+| count_lines()                 | count lines to this point in the file                     | X  |
+| count_scans()                 | count lines we checked for match                          | X  |
+| end()                         | returns the value of the last column                      | X  |
+| every(number, value)          | match every Nth time a value is seen                      |    |
+| first(value)                  | match the first occurance and capture line                | X  |
+| in(value, list)               | match in a list                                           | X  |
+| increment(value, n)           | increments a variable by n each time seen                 |    |
+| isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
+| length(value)                 | returns the length of the value                           |    |
+| lower(value)                  | makes value lowercase                                     | X  |
+| max(value, type)              | largest value seen up to current "line", "scan", "match"  | X  |
+| median(value, type)           | median value up to current "line", "scan", "match"        | X  |
+| min(value, type)              | smallest value seen up to current "line", "scan", "match" | X  |
+| no(value)                     | always false                                              | X  |
+| not(value)                    | negates a value                                           | X  |
+| now(format)                   | a datetime, optionally formatted                          | X  |
+| or(value, value,...)          | match any one                                             | X  |
+| percent(scan|match|line)      | % of total lines scanned, matched, passed                 | X  |
+| random(list)                  | pick from a list                                          |    |
+| random(type, from, to)        | random number, string, or date within a range             |    |
+| regex(regex-string)           | match on a regular expression                             | X  |
+| then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
+| type()                        | returns the type of a field                               |    |
+| upper(value)                  | makes value uppercase                                     | X  |
 
 # Modification (coming soon!)
 The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path (line breaks are permitted between parts) looks like:
