@@ -189,6 +189,23 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["say"] == 'oozeeee...'
         assert path.variables["line"] == 7
 
+    def test_function_count_any_match(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @interesting = count(
+                    or(#firstname="Fish", #lastname="Kermit", #say="oozeeee...")
+                )
+                no()
+            ]''')
+        lines = path.collect()
+        #print(f"test_function_count_in: lines: {lines}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["interesting"] == 3
+        assert len(lines) == 0
+
 
     def test_function_isinstance(self):
         path = CsvPath()

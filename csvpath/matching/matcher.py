@@ -55,12 +55,10 @@ class Matcher:
         return None
 
     def matches(self, *, syntax_only=False) -> bool:
-        if self.csvpath:
-            print(f"Matcher.match: line: {self.csvpath.current_line_number()}")
         ret = True
         for i, et in enumerate( self.expressions ):
             if et[1] is True:
-                continue
+                ret = True
             elif et[1] is False:
                 ret = False
             elif not et[0].matches(skip=[]) and not syntax_only:
@@ -71,8 +69,6 @@ class Matcher:
                 ret = True
             if not ret:
                 break
-        if self.csvpath:
-            print(f"Matcher.match: line: {self.csvpath.current_line_number()}: ret: {ret}")
         return ret
 
     def get_variable(self, name:str,*, tracking=None, set_if_none=None) -> Any:

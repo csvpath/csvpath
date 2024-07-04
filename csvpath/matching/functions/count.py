@@ -10,13 +10,13 @@ class Count(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
-        self.print(f"Count: to_value: {self._function_or_equality}: {self._function_or_equality.__class__}")
-        if self._function_or_equality:
-            return self._get_contained_value(skip=skip)
-        else:
-            return self._get_match_count() + 1   # we're eager to +1 because we don't
-                                                 # contribute to if there's a match
-                                                 # or not. we have to act as if.
+        if self.value is None:
+            if self._function_or_equality:
+                self.value = self._get_contained_value(skip=skip)
+            else:
+                self.value = self._get_match_count() + 1   # we're eager to +1 because we don't
+                                                           # contribute to if there's a match
+        return self.value                                  # or not. we have to act as if.
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:
@@ -29,27 +29,19 @@ class Count(Function):
         #
         # need to apply this count function to the contained obj's value
         #
+        b = self._function_or_equality.matches(skip=skip)
+        self._id = self.get_id(self._function_or_equality)
+        #
+        # to_value() is often going to be a bool based on matches().
+        # but in a case like: count(now('yyyy-mm-dd')) it would not be
+        #
+        tracked_value = self._function_or_equality.to_value(skip=skip)
 
-        self.print(f"\nCount._get_contained_value: value: {self.value}")
-        if not self.value:
-            b = self._function_or_equality.matches(skip=skip)
-            self.print(f"Count._get_contained_value: func or equ matches: {b}")
-            self._id = self.get_id(self._function_or_equality)
-            self.print(f"Count._get_contained_value: id: {self._id}")
-            #
-            # to_value() is often going to be a bool based on matches().
-            # but in a case like: count(now('yyyy-mm-dd')) it would not be
-            #
-            tracked_value = self._function_or_equality.to_value(skip=skip)
-            self.print(f"Count._get_contained_value: tracked_value: {tracked_value}")
-            cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
-            self.print(f"Count._get_contained_value: 1st cnt: {cnt}, b: {b}")
-            if b:
-                cnt += 1
-            self.value = cnt
-            self.print(f"Count._get_contained_value: 2nd cnt: {cnt}")
-            self.matcher.set_variable(self._id, tracking=tracked_value, value=self.value)
-        return self.value
+        cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
+        if b:
+            cnt += 1
+        self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
+        return cnt
 
 
 

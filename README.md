@@ -46,23 +46,24 @@ The match part is also bracketed. The rules are:
 - Functions can include functions and/or equality tests and/or literals, all represented by the word "value" in the table below
 
 At this time the working functions are:
+- `above(is-this-value,above-this-value)`
+- `below(is-this-value,below-this-value)`
+- `concat(value,value)`
 - `count()` and `count(value)`
 - `count_lines()`
 - `count_scans()`
-- `regex(regex-pattern)`
-- `length(value)`
-- `not(value)`
-- `or(value,value,...)`
-- `now(format-str)`
-- `in(value,|-separated-list-str)`
-- `concat(value,value)`
-- `lower(value)`
-- `upper(value)`
-- `percent(scan|match|line)`
-- `above(is-this-value,above-this-value)`
-- `below(is-this-value,below-this-value)`
 - `first(value)`
+- `in(value,|-separated-list-str)`
 - `isinstance(value, typestr)`
+- `length(value)`
+- `lower(value)`
+- `no()`
+- `not(value)`
+- `now(format-str)`
+- `or(value,value,...)`
+- `percent(scan|match|line)`
+- `regex(regex-pattern)`
+- `upper(value)`
 
 The full set of planned functions is:
 
@@ -83,6 +84,7 @@ The full set of planned functions is:
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"|
 | length(value)                 | returns the length of the value               |
 | lower(value)                  | makes value lowercase                         |
+| no()                          | always false                                  |
 | not(value)                    | negates a value                               |
 | now(format)                   | a datetime, optionally formatted              |
 | or(value, value,...)          | match any one                                 |

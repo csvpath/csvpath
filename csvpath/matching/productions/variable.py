@@ -8,7 +8,8 @@ class Variable(Matchable):
         return f"""{self.__class__}: {self.name}"""
 
     def to_value(self, *, skip=[]) -> Any:
-        v = self.matcher.get_variable(self.name)
-        return v
+        if not self.value:
+            self.value = self.matcher.get_variable(self.name)
+        return self.value
 
 

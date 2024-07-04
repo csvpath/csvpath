@@ -46,9 +46,12 @@ class Expression(Matchable):
             skip = []
         if self in skip:
             return True
-        for i, child in enumerate(self.children):
-            if not child.matches(skip=skip):
-                return False
-        return True
+        if not self.value:
+            ret = True
+            for i, child in enumerate(self.children):
+                if not child.matches(skip=skip):
+                    ret=False
+            self.value = ret
+        return self.value
 
 

@@ -193,8 +193,6 @@ class CsvPath:
     def set_variable(self, name:str, *, value:Any, tracking:Any=None) -> None:
         if not name:
             raise Exception("name cannot be None")
-        self.print(f"CsvPath.set_variable: {name} = {value} for {tracking}")
-        self.print(f"CsvPath.set_variable: current vars: {self.variables}")
         if name in self.variables:
             self.print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
         else:
@@ -208,8 +206,6 @@ class CsvPath:
     def get_variable(self, name:str,*,tracking:Any=None, set_if_none:Any=None) -> Any:
         if not name:
             raise Exception("name cannot be None")
-        self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, set_if_none: {set_if_none}")
-        self.print(f"CsvPath.get_variable: variables: {self.variables}")
         thevalue = None
         if tracking:
             thedict = None
@@ -233,7 +229,6 @@ class CsvPath:
                 self.variables[name] = set_if_none
                 thevalue = set_if_none
             thevalue = self.variables[name]
-        self.print(f"CsvPath.get_variable: name: {name}, tracking: {tracking}, thevalue: {thevalue}")
         return thevalue
 
 
