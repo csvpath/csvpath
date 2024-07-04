@@ -52,7 +52,6 @@ The match functions are:
 | after(value)                  | finds things after a date, number, string                 | X  |
 | average(number, type)         | returns the average up to current "line", "scan", "match" | X  |
 | before(value)                 | finds things before a date, number, string                | X  |
-| between(value, from, to)      | between dates, numbers, strings, %, $                     |    |
 | concat(value, value)          | counts the number of matches                              | X  |
 | count()                       | counts the number of matches                              | X  |
 | count(value)                  | count matches of value                                    | X  |
@@ -75,7 +74,7 @@ The match functions are:
 | or(value, value,...)          | match any one                                             | X  |
 | percent(type)                 | % of total lines for "scan", "match", "line"              | X  |
 | random(list)                  | pick from a list                                          |    |
-| random(type, from, to)        | random number, string, or date within a range             |    |
+| random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
 | type()                        | returns the type of a field                               |    |
