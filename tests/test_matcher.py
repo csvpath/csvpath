@@ -104,8 +104,7 @@ class TestMatcher(unittest.TestCase):
 
     ###
     ### math is experimental. two types of expression tree manipulations
-    ### are available. However, they don't run by default and aren't well
-    ### tested.
+    ### are available. math can be disabled with the do_math() toggle
     ###
     def test_equality_math(self):
         path = CsvPath()
@@ -117,7 +116,7 @@ class TestMatcher(unittest.TestCase):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2][ 3 + 3]')
         #
-        # unless switched on by default, no math happens
+        # unless switched on no math happens
         # without this toggle method call. math is on by default.
         #
         #path.do_math()
