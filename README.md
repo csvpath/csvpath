@@ -43,7 +43,7 @@ The match part is also bracketed. The rules are:
 - A column reference with no equals or function is an existence test
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
-- Functions can include functions, equality tests, and/or literals
+- Functions can contain functions, equality tests, and/or literals
 - Limited arithmetic is available. For e.g. `@number_of_cars = 4 + count() + 2`. `+`, `-`, `*`, and `/` are supported. Arithmetic is enabled by default but can be switched off on a case-by-case, pending further testing.
 
 The match functions are:
@@ -64,7 +64,7 @@ The match functions are:
 | in(value, list)               | match in a list                                           | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
-| length(value)                 | returns the length of the value                           |    |
+| length(value)                 | returns the length of the value                           | X  |
 | lower(value)                  | makes value lowercase                                     | X  |
 | max(value, type)              | largest value seen up to current "line", "scan", "match"  | X  |
 | median(value, type)           | median value up to current "line", "scan", "match"        | X  |
@@ -78,8 +78,7 @@ The match functions are:
 | random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
-| type()                        | returns the type of a field                               |    |
-| upper(value)                  | makes value uppercase                                     | X  |
+ upper(value)                  | makes value uppercase                                     | X  |
 
 # Modification (coming soon!)
 The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path (line breaks are permitted between parts) looks like:

@@ -20,6 +20,7 @@ from csvpath.matching.functions.no import No
 from csvpath.matching.functions.minf import Min, Max, Average
 from csvpath.matching.functions.end import End
 from csvpath.matching.functions.random import Random
+from csvpath.matching.functions.length import Length
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -86,6 +87,8 @@ class FunctionFactory:
             f = Random(matcher, name, child)
         elif name == 'end':
             f = End(matcher, name, child)
+        elif name == 'length':
+            f = Length(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
