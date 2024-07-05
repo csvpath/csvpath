@@ -19,6 +19,7 @@ from csvpath.matching.functions.orf import Or
 from csvpath.matching.functions.no import No
 from csvpath.matching.functions.minf import Min, Max, Average
 from csvpath.matching.functions.end import End
+from csvpath.matching.functions.random import Random
 from csvpath.matching.productions.expression import Matchable
 
 class UnknownFunctionException(Exception):
@@ -81,6 +82,8 @@ class FunctionFactory:
             f = Average(matcher, name, child, "average")
         elif name == 'median':
             f = Average(matcher, name, child, "median")
+        elif name == 'random':
+            f = Random(matcher, name, child)
         elif name == 'end':
             f = End(matcher, name, child)
         else:

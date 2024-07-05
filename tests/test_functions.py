@@ -70,7 +70,6 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["p"] == .375
 
 
-
     def test_function_first(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][first(#lastname)]')
@@ -328,6 +327,20 @@ class TestFunctions(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["the_median"] == 3
+        assert len(lines) == 0
+
+    def test_function_random(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[*]
+            [
+                @r = random(0, 1)
+                no()
+            ]''')
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["r"] == 1 or path.variables["r"] == 0
         assert len(lines) == 0
 
 

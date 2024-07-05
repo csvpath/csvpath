@@ -2,7 +2,10 @@ import csv
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from csvpath.matching.matcher import Matcher
+from csvpath.matching.expression_encoder import ExpressionEncoder
+from csvpath.matching.expression_math import ExpressionMath
 from csvpath.scanning.scanner import Scanner
+import json
 
 class NoFileException(Exception):
     pass
@@ -26,6 +29,13 @@ class CsvPath:
         self.block_print = block_print
         self.total_lines = -1
         self._verbose = False
+        self._dump_json = False
+        self._do_math = False
+        self._collect_matchers = False
+        self.matchers = []
+
+    def dump_json(self):
+        self._dump_json = not self._dump_json
 
     def parse(self, data):
         self.scanner = Scanner()
@@ -181,13 +191,32 @@ class CsvPath:
     def current_match_count(self) -> int:
         return self.match_count
 
+    def do_math(self):
+        self._do_math = not self._do_math
+
+    def collect_matchers(self):
+        self._collect_matchers = not self._collect_matchers
+
     def matches(self, line) -> bool:
         if not self.match:
             return True
         self.print(f"CsvPath.matches: the match path: {self.match}")
 
         matcher = Matcher(csvpath=self, data=self.match, line=line, headers=self.headers)
+
+        if self._do_math:
+            em = ExpressionMath(matcher)
+            for e in matcher.expressions:
+                em.do_math(e[0])
+        if self._dump_json:
+            json = ExpressionEncoder().valued_list_to_json(matcher.expressions)
+            print(f"{json}\n")
+
         matched = matcher.matches()
+
+        if matched and self._collect_matchers:
+            self.matchers.append(matcher)
+
         return matched
 
     def set_variable(self, name:str, *, value:Any, tracking:Any=None) -> None:

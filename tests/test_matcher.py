@@ -5,7 +5,9 @@ from csvpath.matching.productions.equality import Equality
 from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
+from csvpath.matching.productions.variable import Variable
 from csvpath.csvpath import CsvPath
+import json
 
 HEADERS =  ['abc' ,'aheader','crows','d']
 LINE =     ['fish',10,        'alert','fum']
@@ -100,7 +102,62 @@ class TestMatcher(unittest.TestCase):
         assert headers.index("lastname") == 1
 
 
-#============= SCAN AND MATCH ================
+    ###
+    ### math is experimental. two types of expression tree manipulations
+    ### are available. However, they don't run by default and aren't well
+    ### tested.
+    ###
+    def test_equality_math(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2][ 3 + 3]')
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        print("^^^^^^^^^^!!!!vvvvvvvvvvvv")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2][ 3 + 3]')
+        #
+        # no math happens without this method call.
+        #
+        path.do_math()
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        m = path.matchers[0]
+        print(f"test_equality_math: m.expressions: {m.expressions}")
+        eq = m.expressions[0][0].children[0]
+        print(f"test_equality_math: eq: {eq}")
+        assert isinstance(eq, Term)
+        assert eq.value == 6
+
+        print("==========================")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2][ @t = 3 + 3]')
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        print(f"test_equality_math: path vars: {path.variables}")
+        print("^^^^^^^^^^!!!!vvvvvvvvvvvv")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[2][ @t = 3 + 3]')
+        path.do_math()
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+
+        m = path.matchers[0]
+        print(f"test_equality_math: m.expressions: {m.expressions}")
+        eq = m.expressions[0][0].children[0]
+        assert isinstance(eq, Equality)
+        left = eq.left
+        right = eq.right
+        print(f"test_equality_math: left: {left}, right: {right}")
+        assert isinstance(left, Variable)
+        assert isinstance(right, Term)
+
+
+
+
 
     def test_match_a_header_match(self):
         path = CsvPath()

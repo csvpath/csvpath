@@ -1,3 +1,4 @@
+import hashlib
 
 class ExpressionUtility:
 
@@ -12,10 +13,7 @@ class ExpressionUtility:
                 p = p.parent
             else:
                 break
-        import hashlib
-        #print(f"ExpUtil: get_id: {id}")
-        id = hashlib.sha256(id.encode('utf-8')).hexdigest()
-        return id
+        return hashlib.sha256(id.encode('utf-8')).hexdigest()
 
 
 

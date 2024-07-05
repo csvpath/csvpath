@@ -31,7 +31,7 @@ class Matcher:
         self.lexer = MatchingLexer()
         self.block_print = csvpath.block_print if csvpath else True
         self.parser = yacc.yacc(module=self, start='match_part' )
-        value = self.parser.parse(data, lexer=self.lexer.lexer)
+        self.parser.parse(data, lexer=self.lexer.lexer)
 
     def __str__(self):
         return f"""

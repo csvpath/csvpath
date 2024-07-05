@@ -1,5 +1,5 @@
 from typing import Any
-from csvpath.matching.productions.expression import Matchable
+from csvpath.matching.productions.matchable import Matchable
 
 class Header(Matchable):
 

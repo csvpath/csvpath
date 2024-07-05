@@ -43,7 +43,8 @@ The match part is also bracketed. The rules are:
 - A column reference with no equals or function is an existence test
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
-- Functions can include functions and/or equality tests and/or literals, all represented by the word "value" in the table below
+- Functions can include functions, equality tests, and/or literals
+- Limited arithmetic is available. For e.g. @sun = count() + 2. Arithmetic is currently disabled by default pending more testing.
 
 The match functions are:
 
