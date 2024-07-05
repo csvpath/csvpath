@@ -26,7 +26,10 @@ class ExpressionMath:
         if isinstance(child.left, Equality) and self.is_terminal(child.right):
             # value of  -> child.left.left.value
             v = child.right.to_value()
-            child.left.right.to_value()
+            v_left_right = child.left.right.to_value()
+            if v_left_right is None:
+                # cannot math a None. exit leaving the expression tree unchanged.
+                return
             child.left.right.value = self.math(child.op, child.left.right.value, v)
             # parent[i] = child.right
             parent.children[i] = child.left
@@ -37,11 +40,16 @@ class ExpressionMath:
         if isinstance( child, Equality ) and child.op in ['-','+','*','/']:
             self.try_2_terms(parent, i, child)
             self.try_mathy_left_term_right(parent, i, child)
+            print(f"done with math strategies: {i}: {parent.children}")
+            if isinstance(parent.children[i], Equality):
+                self.pull_up(parent, i, parent.children[i])
         else:
             for j, desc in enumerate(child.children):
                 self.pull_up(child, j, desc)
 
     def math(self, op, left, right ):
+        if left is None or right is None:
+            raise Exception(f"ExpresionMath.math: operands cannot be None: {left}, {right}")
         if op == '+':
             return left+right
         elif op == '-':

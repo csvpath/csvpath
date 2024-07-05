@@ -117,9 +117,10 @@ class TestMatcher(unittest.TestCase):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2][ 3 + 3]')
         #
-        # no math happens without this method call.
+        # unless switched on by default, no math happens
+        # without this toggle method call. math is on by default.
         #
-        path.do_math()
+        #path.do_math()
         path.dump_json()
         path.collect_matchers()
         lines = path.collect()
@@ -140,7 +141,11 @@ class TestMatcher(unittest.TestCase):
         print("^^^^^^^^^^!!!!vvvvvvvvvvvv")
         path = CsvPath()
         scanner = path.parse(f'${PATH}[2][ @t = 3 + 3]')
-        path.do_math()
+        #
+        # unless switched on by default, no math happens
+        # without this toggle method call. math is on by default.
+        #
+        #path.do_math()
         path.dump_json()
         path.collect_matchers()
         lines = path.collect()
@@ -154,6 +159,45 @@ class TestMatcher(unittest.TestCase):
         print(f"test_equality_math: left: {left}, right: {right}")
         assert isinstance(left, Variable)
         assert isinstance(right, Term)
+
+    def test_function_math(self ):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[1][ @t = count() + 3]')
+        #
+        # unless switched on by default, no math happens
+        # without this toggle method call. math is on by default.
+        #
+        #path.do_math()
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        m = path.matchers[0]
+        print(f"test_equality_math: m.expressions: {m.expressions}")
+        eq = m.expressions[0][0].children[0]
+        assert isinstance(eq, Equality)
+        left = eq.left
+        right = eq.right
+        print(f"test_equality_math: left: {left}, right: {right}")
+        assert isinstance(left, Variable)
+        assert isinstance(right, Function)
+        assert right.to_value() == 4
+
+
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[1][3 + count() + 2]')
+        #
+        # unless switched on by default, no math happens
+        # without this toggle method call. math is on by default.
+        #
+        #path.do_math()
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        m = path.matchers[0]
+        print(f"test_equality_math: m.expressions: {m.expressions}")
+        eq = m.expressions[0][0].children[0]
+        assert isinstance(eq, Term)
+        assert eq.value == 6
 
 
 

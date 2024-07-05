@@ -44,7 +44,7 @@ The match part is also bracketed. The rules are:
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
 - Functions can include functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. @sun = count() + 2. Arithmetic is currently disabled by default pending more testing.
+- Limited arithmetic is available. For e.g. `@sun = 4 + count() + 2`. `+`, `-`, `*`, and `/` are supported. Arithmetic is enabled by default but can be switched off on a case-by-case, pending further testing.
 
 The match functions are:
 

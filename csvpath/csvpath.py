@@ -30,9 +30,10 @@ class CsvPath:
         self.total_lines = -1
         self._verbose = False
         self._dump_json = False
-        self._do_math = False
+        self._do_math = True # on by default, but still a bit experimental
         self._collect_matchers = False
         self.matchers = []
+        self.jsons = []
 
     def dump_json(self):
         self._dump_json = not self._dump_json
@@ -211,6 +212,7 @@ class CsvPath:
         if self._dump_json:
             json = ExpressionEncoder().valued_list_to_json(matcher.expressions)
             print(f"{json}\n")
+            self.jsons.append(json)
 
         matched = matcher.matches()
 
