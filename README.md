@@ -1,22 +1,17 @@
 
 # CsvPath
 
-CsvPath is a declarative syntax for identifying rows and column values and updating them. It is similar, though much simpler, to:
+CsvPath defines a declarative syntax for inspecting and updating CSV files. It is similar, though much simpler, to:
 - XPath: CsvPath is to a CSV file like XPath is to an XML file
 - Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath can be used as validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
 
-CsvPath is intended as a compliment to other DataOps, data quality, and data engineering tools.
+CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
-Today, only the scanning and matching parts of csvpath are functional. The modification part is a todo.
+CsvPath paths have three parts, scanning, matching, and modifying. Today, only the scanning and matching parts of csvpath are functional. The modification part is a todo.
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
-
-The path syntax is broken into three parts:
-- The scan part
-- The match part, and
-- The modify part (not yet started)
 
 Paths look like `$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]`
 
@@ -26,7 +21,7 @@ This scanning and matching path says:
 - match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
 
 # Scanning
-The scanner is an enumeration. For each line returned the line number, the scanned line count, and the match count are available. The set of line numbers scanned are also available.
+The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
 
 The scan part of the path starts with '$' to indicate the root, meaning the file from the top. After the '$' comes the file path. The scanning instructions are in a bracket. The rules are:
 - `[*]` means all
@@ -122,8 +117,8 @@ The modification basics are:
 CsvPath is a copy-on-write system. When you make a modification, it creates a copy of the file you are reading rows from. The copy has any modifications you make while the original is untouched. In order to do this, CsvPath needs to set a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows of the currently matched row.
 
 
-# All that could change!
-In fact, anything could change. This project is a hobby.
+# Not Ready For Production
+Anything could change. This project is a hobby.
 
 
 
