@@ -1,3 +1,4 @@
+from csvpath.matching.productions.expression import Matchable
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.count import Count
 from csvpath.matching.functions.regex import Regex
@@ -21,7 +22,10 @@ from csvpath.matching.functions.minf import Min, Max, Average
 from csvpath.matching.functions.end import End
 from csvpath.matching.functions.random import Random
 from csvpath.matching.functions.length import Length
-from csvpath.matching.productions.expression import Matchable
+from csvpath.matching.functions.add import Add
+from csvpath.matching.functions.subtract import Subtract
+from csvpath.matching.functions.multiply import Multiply
+from csvpath.matching.functions.divide import Divide
 
 class UnknownFunctionException(Exception):
     pass
@@ -89,6 +93,15 @@ class FunctionFactory:
             f = End(matcher, name, child)
         elif name == 'length':
             f = Length(matcher, name, child)
+        elif name == 'add':
+            f = Add(matcher, name, child)
+        elif name == 'subtract':
+            f = Subtract(matcher, name, child)
+        elif name == 'multiply':
+            f = Multiply(matcher, name, child)
+        elif name == 'divide':
+            f = Divide(matcher, name, child)
+
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

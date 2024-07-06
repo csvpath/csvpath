@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'match_partCLOSE_PAREN DATE EQUALS HEADER_SYM LEFT_BRACKET NAME NUMBER OPEN_PAREN QUOTE REGEX RIGHT_BRACKET VAR_SYMmatch_part : LEFT_BRACKET expression RIGHT_BRACKET\n                      | LEFT_BRACKET expressions RIGHT_BRACKET\n        expressions : expression\n                       | expressions expression\n        expression : function\n                        | equality\n                        | header function : NAME OPEN_PAREN CLOSE_PAREN\n                    | NAME OPEN_PAREN equality CLOSE_PAREN\n                    | NAME OPEN_PAREN function CLOSE_PAREN\n                    | NAME OPEN_PAREN var_or_header CLOSE_PAREN\n                    | NAME OPEN_PAREN term CLOSE_PAREN\n        equality : function EQUALS term\n                    | function EQUALS var_or_header\n                    | var_or_header EQUALS function\n                    | var_or_header EQUALS term\n                    | var_or_header EQUALS var_or_header\n                    | term EQUALS var_or_header\n                    | term EQUALS term\n                    | term EQUALS function\n                    | equality EQUALS equality\n                    | equality EQUALS term\n        term : QUOTE NAME QUOTE\n                | QUOTE DATE QUOTE\n                | QUOTE NUMBER QUOTE\n                | NUMBER\n                | REGEX\n        var_or_header : header\n                         | var\n        var : VAR_SYM NAME header : HEADER_SYM NAME\n                  | HEADER_SYM NUMBER\n        '
+_lr_signature = 'match_partCLOSE_PAREN DATE EQUALS HEADER_SYM LEFT_BRACKET NAME NUMBER OPEN_PAREN QUOTE REGEX RIGHT_BRACKET VAR_SYMmatch_part : LEFT_BRACKET expression RIGHT_BRACKET\n                      | LEFT_BRACKET expressions RIGHT_BRACKET\n        expressions : expression\n                       | expressions expression\n        expression : function\n                        | equality\n                        | header function : NAME OPEN_PAREN CLOSE_PAREN\n                    | NAME OPEN_PAREN equality CLOSE_PAREN\n                    | NAME OPEN_PAREN function CLOSE_PAREN\n                    | NAME OPEN_PAREN var_or_header CLOSE_PAREN\n                    | NAME OPEN_PAREN term CLOSE_PAREN\n        equality : function EQUALS term\n                    | function EQUALS function\n                    | function EQUALS var_or_header\n                    | var_or_header EQUALS function\n                    | var_or_header EQUALS term\n                    | var_or_header EQUALS var_or_header\n                    | term EQUALS var_or_header\n                    | term EQUALS term\n                    | term EQUALS function\n                    | equality EQUALS equality\n                    | equality EQUALS term\n                    | equality EQUALS function\n        term : QUOTE NAME QUOTE\n                | QUOTE DATE QUOTE\n                | QUOTE NUMBER QUOTE\n                | NUMBER\n                | REGEX\n        var_or_header : header\n                         | var\n        var : VAR_SYM NAME header : HEADER_SYM NAME\n                  | HEADER_SYM NUMBER\n        '
     
-_lr_action_items = {'LEFT_BRACKET':([0,],[2,]),'$end':([1,17,18,],[0,-1,-2,]),'NAME':([2,3,4,5,6,7,11,12,13,14,15,16,19,21,22,23,24,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[8,-3,8,-5,-6,-7,25,-26,-29,27,-27,30,-4,8,8,8,8,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'HEADER_SYM':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[11,-3,11,-5,-6,-7,-26,-29,-27,-4,11,11,11,11,11,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'QUOTE':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[14,-3,14,-5,-6,-7,-26,-29,-27,-4,14,14,14,14,14,-31,-32,48,49,50,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'NUMBER':([2,3,4,5,6,7,11,12,13,14,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[12,-3,12,-5,-6,-7,26,-26,-29,29,-27,-4,12,12,12,12,12,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'REGEX':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[15,-3,15,-5,-6,-7,-26,-29,-27,-4,15,15,15,15,15,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'VAR_SYM':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[16,-3,16,-5,-6,-7,-26,-29,-27,-4,16,16,16,16,16,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'RIGHT_BRACKET':([3,4,5,6,7,12,13,15,19,25,26,30,31,32,33,34,35,37,42,43,44,45,46,47,48,49,50,51,52,53,54,],[17,18,-5,-6,-7,-26,-29,-27,-4,-31,-32,-30,-13,-14,-28,-21,-22,-8,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'EQUALS':([5,6,7,9,10,12,13,15,25,26,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,],[20,21,-28,23,24,-26,-29,-27,-31,-32,-30,-13,-14,-28,21,24,20,-8,21,20,23,24,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'OPEN_PAREN':([8,],[22,]),'CLOSE_PAREN':([12,13,15,22,25,26,30,31,32,33,34,35,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,],[-26,-29,-27,37,-31,-32,-30,-13,-14,-28,-21,-22,-8,51,52,53,54,-17,-15,-16,-19,-18,-20,-23,-24,-25,-9,-10,-11,-12,]),'DATE':([14,],[28,]),}
+_lr_action_items = {'LEFT_BRACKET':([0,],[2,]),'$end':([1,17,18,],[0,-1,-2,]),'NAME':([2,3,4,5,6,7,11,12,13,14,15,16,19,20,21,22,23,24,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[8,-3,8,-5,-6,-7,25,-28,-31,27,-29,30,-4,8,8,8,8,8,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'HEADER_SYM':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[11,-3,11,-5,-6,-7,-28,-31,-29,-4,11,11,11,11,11,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'QUOTE':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[14,-3,14,-5,-6,-7,-28,-31,-29,-4,14,14,14,14,14,-33,-34,49,50,51,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'NUMBER':([2,3,4,5,6,7,11,12,13,14,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[12,-3,12,-5,-6,-7,26,-28,-31,29,-29,-4,12,12,12,12,12,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'REGEX':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[15,-3,15,-5,-6,-7,-28,-31,-29,-4,15,15,15,15,15,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'VAR_SYM':([2,3,4,5,6,7,12,13,15,19,20,21,22,23,24,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[16,-3,16,-5,-6,-7,-28,-31,-29,-4,16,16,16,16,16,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'RIGHT_BRACKET':([3,4,5,6,7,12,13,15,19,25,26,30,31,32,33,34,35,36,37,38,43,44,45,46,47,48,49,50,51,52,53,54,55,],[17,18,-5,-6,-7,-28,-31,-29,-4,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'EQUALS':([5,6,7,9,10,12,13,15,25,26,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,],[20,21,-30,23,24,-28,-31,-29,-33,-34,-32,-14,-13,-15,-30,21,24,20,-8,21,20,23,24,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'OPEN_PAREN':([8,],[22,]),'CLOSE_PAREN':([12,13,15,22,25,26,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,],[-28,-31,-29,38,-33,-34,-32,-14,-13,-15,-30,-22,-23,-24,-8,52,53,54,55,-18,-16,-17,-20,-19,-21,-25,-26,-27,-9,-10,-11,-12,]),'DATE':([14,],[28,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -17,7 +17,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'match_part':([0,],[1,]),'expression':([2,4,],[3,19,]),'expressions':([2,],[4,]),'function':([2,4,21,22,23,24,],[5,5,36,39,43,47,]),'equality':([2,4,21,22,],[6,6,34,38,]),'header':([2,4,20,21,22,23,24,],[7,7,33,33,33,33,33,]),'var_or_header':([2,4,20,21,22,23,24,],[9,9,32,9,40,42,46,]),'term':([2,4,20,21,22,23,24,],[10,10,31,35,41,44,45,]),'var':([2,4,20,21,22,23,24,],[13,13,13,13,13,13,13,]),}
+_lr_goto_items = {'match_part':([0,],[1,]),'expression':([2,4,],[3,19,]),'expressions':([2,],[4,]),'function':([2,4,20,21,22,23,24,],[5,5,31,37,40,44,48,]),'equality':([2,4,21,22,],[6,6,35,39,]),'header':([2,4,20,21,22,23,24,],[7,7,34,34,34,34,34,]),'var_or_header':([2,4,20,21,22,23,24,],[9,9,33,9,41,43,47,]),'term':([2,4,20,21,22,23,24,],[10,10,32,36,42,45,46,]),'var':([2,4,20,21,22,23,24,],[13,13,13,13,13,13,13,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -27,36 +27,38 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> match_part","S'",1,None,None,None),
-  ('match_part -> LEFT_BRACKET expression RIGHT_BRACKET','match_part',3,'p_match_part','matcher.py',82),
-  ('match_part -> LEFT_BRACKET expressions RIGHT_BRACKET','match_part',3,'p_match_part','matcher.py',83),
-  ('expressions -> expression','expressions',1,'p_expressions','matcher.py',87),
-  ('expressions -> expressions expression','expressions',2,'p_expressions','matcher.py',88),
-  ('expression -> function','expression',1,'p_expression','matcher.py',92),
-  ('expression -> equality','expression',1,'p_expression','matcher.py',93),
-  ('expression -> header','expression',1,'p_expression','matcher.py',94),
-  ('function -> NAME OPEN_PAREN CLOSE_PAREN','function',3,'p_function','matcher.py',101),
-  ('function -> NAME OPEN_PAREN equality CLOSE_PAREN','function',4,'p_function','matcher.py',102),
-  ('function -> NAME OPEN_PAREN function CLOSE_PAREN','function',4,'p_function','matcher.py',103),
-  ('function -> NAME OPEN_PAREN var_or_header CLOSE_PAREN','function',4,'p_function','matcher.py',104),
-  ('function -> NAME OPEN_PAREN term CLOSE_PAREN','function',4,'p_function','matcher.py',105),
-  ('equality -> function EQUALS term','equality',3,'p_equality','matcher.py',114),
-  ('equality -> function EQUALS var_or_header','equality',3,'p_equality','matcher.py',115),
-  ('equality -> var_or_header EQUALS function','equality',3,'p_equality','matcher.py',116),
-  ('equality -> var_or_header EQUALS term','equality',3,'p_equality','matcher.py',117),
-  ('equality -> var_or_header EQUALS var_or_header','equality',3,'p_equality','matcher.py',118),
-  ('equality -> term EQUALS var_or_header','equality',3,'p_equality','matcher.py',119),
-  ('equality -> term EQUALS term','equality',3,'p_equality','matcher.py',120),
-  ('equality -> term EQUALS function','equality',3,'p_equality','matcher.py',121),
-  ('equality -> equality EQUALS equality','equality',3,'p_equality','matcher.py',122),
-  ('equality -> equality EQUALS term','equality',3,'p_equality','matcher.py',123),
-  ('term -> QUOTE NAME QUOTE','term',3,'p_term','matcher.py',139),
-  ('term -> QUOTE DATE QUOTE','term',3,'p_term','matcher.py',140),
-  ('term -> QUOTE NUMBER QUOTE','term',3,'p_term','matcher.py',141),
-  ('term -> NUMBER','term',1,'p_term','matcher.py',142),
-  ('term -> REGEX','term',1,'p_term','matcher.py',143),
-  ('var_or_header -> header','var_or_header',1,'p_var_or_header','matcher.py',151),
-  ('var_or_header -> var','var_or_header',1,'p_var_or_header','matcher.py',152),
-  ('var -> VAR_SYM NAME','var',2,'p_var','matcher.py',157),
-  ('header -> HEADER_SYM NAME','header',2,'p_header','matcher.py',162),
-  ('header -> HEADER_SYM NUMBER','header',2,'p_header','matcher.py',163),
+  ('match_part -> LEFT_BRACKET expression RIGHT_BRACKET','match_part',3,'p_match_part','matcher.py',110),
+  ('match_part -> LEFT_BRACKET expressions RIGHT_BRACKET','match_part',3,'p_match_part','matcher.py',111),
+  ('expressions -> expression','expressions',1,'p_expressions','matcher.py',115),
+  ('expressions -> expressions expression','expressions',2,'p_expressions','matcher.py',116),
+  ('expression -> function','expression',1,'p_expression','matcher.py',120),
+  ('expression -> equality','expression',1,'p_expression','matcher.py',121),
+  ('expression -> header','expression',1,'p_expression','matcher.py',122),
+  ('function -> NAME OPEN_PAREN CLOSE_PAREN','function',3,'p_function','matcher.py',129),
+  ('function -> NAME OPEN_PAREN equality CLOSE_PAREN','function',4,'p_function','matcher.py',130),
+  ('function -> NAME OPEN_PAREN function CLOSE_PAREN','function',4,'p_function','matcher.py',131),
+  ('function -> NAME OPEN_PAREN var_or_header CLOSE_PAREN','function',4,'p_function','matcher.py',132),
+  ('function -> NAME OPEN_PAREN term CLOSE_PAREN','function',4,'p_function','matcher.py',133),
+  ('equality -> function EQUALS term','equality',3,'p_equality','matcher.py',142),
+  ('equality -> function EQUALS function','equality',3,'p_equality','matcher.py',143),
+  ('equality -> function EQUALS var_or_header','equality',3,'p_equality','matcher.py',144),
+  ('equality -> var_or_header EQUALS function','equality',3,'p_equality','matcher.py',145),
+  ('equality -> var_or_header EQUALS term','equality',3,'p_equality','matcher.py',146),
+  ('equality -> var_or_header EQUALS var_or_header','equality',3,'p_equality','matcher.py',147),
+  ('equality -> term EQUALS var_or_header','equality',3,'p_equality','matcher.py',148),
+  ('equality -> term EQUALS term','equality',3,'p_equality','matcher.py',149),
+  ('equality -> term EQUALS function','equality',3,'p_equality','matcher.py',150),
+  ('equality -> equality EQUALS equality','equality',3,'p_equality','matcher.py',151),
+  ('equality -> equality EQUALS term','equality',3,'p_equality','matcher.py',152),
+  ('equality -> equality EQUALS function','equality',3,'p_equality','matcher.py',153),
+  ('term -> QUOTE NAME QUOTE','term',3,'p_term','matcher.py',170),
+  ('term -> QUOTE DATE QUOTE','term',3,'p_term','matcher.py',171),
+  ('term -> QUOTE NUMBER QUOTE','term',3,'p_term','matcher.py',172),
+  ('term -> NUMBER','term',1,'p_term','matcher.py',173),
+  ('term -> REGEX','term',1,'p_term','matcher.py',174),
+  ('var_or_header -> header','var_or_header',1,'p_var_or_header','matcher.py',182),
+  ('var_or_header -> var','var_or_header',1,'p_var_or_header','matcher.py',183),
+  ('var -> VAR_SYM NAME','var',2,'p_var','matcher.py',188),
+  ('header -> HEADER_SYM NAME','header',2,'p_header','matcher.py',193),
+  ('header -> HEADER_SYM NUMBER','header',2,'p_header','matcher.py',194),
 ]

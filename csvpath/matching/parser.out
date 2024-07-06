@@ -16,53 +16,55 @@ Rule 10    function -> NAME OPEN_PAREN function CLOSE_PAREN
 Rule 11    function -> NAME OPEN_PAREN var_or_header CLOSE_PAREN
 Rule 12    function -> NAME OPEN_PAREN term CLOSE_PAREN
 Rule 13    equality -> function EQUALS term
-Rule 14    equality -> function EQUALS var_or_header
-Rule 15    equality -> var_or_header EQUALS function
-Rule 16    equality -> var_or_header EQUALS term
-Rule 17    equality -> var_or_header EQUALS var_or_header
-Rule 18    equality -> term EQUALS var_or_header
-Rule 19    equality -> term EQUALS term
-Rule 20    equality -> term EQUALS function
-Rule 21    equality -> equality EQUALS equality
-Rule 22    equality -> equality EQUALS term
-Rule 23    term -> QUOTE NAME QUOTE
-Rule 24    term -> QUOTE DATE QUOTE
-Rule 25    term -> QUOTE NUMBER QUOTE
-Rule 26    term -> NUMBER
-Rule 27    term -> REGEX
-Rule 28    var_or_header -> header
-Rule 29    var_or_header -> var
-Rule 30    var -> VAR_SYM NAME
-Rule 31    header -> HEADER_SYM NAME
-Rule 32    header -> HEADER_SYM NUMBER
+Rule 14    equality -> function EQUALS function
+Rule 15    equality -> function EQUALS var_or_header
+Rule 16    equality -> var_or_header EQUALS function
+Rule 17    equality -> var_or_header EQUALS term
+Rule 18    equality -> var_or_header EQUALS var_or_header
+Rule 19    equality -> term EQUALS var_or_header
+Rule 20    equality -> term EQUALS term
+Rule 21    equality -> term EQUALS function
+Rule 22    equality -> equality EQUALS equality
+Rule 23    equality -> equality EQUALS term
+Rule 24    equality -> equality EQUALS function
+Rule 25    term -> QUOTE NAME QUOTE
+Rule 26    term -> QUOTE DATE QUOTE
+Rule 27    term -> QUOTE NUMBER QUOTE
+Rule 28    term -> NUMBER
+Rule 29    term -> REGEX
+Rule 30    var_or_header -> header
+Rule 31    var_or_header -> var
+Rule 32    var -> VAR_SYM NAME
+Rule 33    header -> HEADER_SYM NAME
+Rule 34    header -> HEADER_SYM NUMBER
 
 Terminals, with rules where they appear
 
 CLOSE_PAREN          : 8 9 10 11 12
-DATE                 : 24
-EQUALS               : 13 14 15 16 17 18 19 20 21 22
-HEADER_SYM           : 31 32
+DATE                 : 26
+EQUALS               : 13 14 15 16 17 18 19 20 21 22 23 24
+HEADER_SYM           : 33 34
 LEFT_BRACKET         : 1 2
-NAME                 : 8 9 10 11 12 23 30 31
-NUMBER               : 25 26 32
+NAME                 : 8 9 10 11 12 25 32 33
+NUMBER               : 27 28 34
 OPEN_PAREN           : 8 9 10 11 12
-QUOTE                : 23 23 24 24 25 25
-REGEX                : 27
+QUOTE                : 25 25 26 26 27 27
+REGEX                : 29
 RIGHT_BRACKET        : 1 2
-VAR_SYM              : 30
+VAR_SYM              : 32
 error                : 
 
 Nonterminals, with rules where they appear
 
-equality             : 6 9 21 21 22
+equality             : 6 9 22 22 23 24
 expression           : 1 3 4
 expressions          : 2 4
-function             : 5 10 13 14 15 20
-header               : 7 28
+function             : 5 10 13 14 14 15 16 21 24
+header               : 7 30
 match_part           : 0
-term                 : 12 13 16 18 19 19 20 22
-var                  : 29
-var_or_header        : 11 14 15 16 17 17 18
+term                 : 12 13 17 19 20 20 21 23
+var                  : 31
+var_or_header        : 11 15 16 17 18 18 19
 
 Parsing method: LALR
 
@@ -97,25 +99,27 @@ state 2
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
     (13) equality -> . function EQUALS term
-    (14) equality -> . function EQUALS var_or_header
-    (15) equality -> . var_or_header EQUALS function
-    (16) equality -> . var_or_header EQUALS term
-    (17) equality -> . var_or_header EQUALS var_or_header
-    (18) equality -> . term EQUALS var_or_header
-    (19) equality -> . term EQUALS term
-    (20) equality -> . term EQUALS function
-    (21) equality -> . equality EQUALS equality
-    (22) equality -> . equality EQUALS term
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
-    (30) var -> . VAR_SYM NAME
+    (14) equality -> . function EQUALS function
+    (15) equality -> . function EQUALS var_or_header
+    (16) equality -> . var_or_header EQUALS function
+    (17) equality -> . var_or_header EQUALS term
+    (18) equality -> . var_or_header EQUALS var_or_header
+    (19) equality -> . term EQUALS var_or_header
+    (20) equality -> . term EQUALS term
+    (21) equality -> . term EQUALS function
+    (22) equality -> . equality EQUALS equality
+    (23) equality -> . equality EQUALS term
+    (24) equality -> . equality EQUALS function
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
+    (32) var -> . VAR_SYM NAME
 
     NAME            shift and go to state 8
     HEADER_SYM      shift and go to state 11
@@ -163,25 +167,27 @@ state 4
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
     (13) equality -> . function EQUALS term
-    (14) equality -> . function EQUALS var_or_header
-    (15) equality -> . var_or_header EQUALS function
-    (16) equality -> . var_or_header EQUALS term
-    (17) equality -> . var_or_header EQUALS var_or_header
-    (18) equality -> . term EQUALS var_or_header
-    (19) equality -> . term EQUALS term
-    (20) equality -> . term EQUALS function
-    (21) equality -> . equality EQUALS equality
-    (22) equality -> . equality EQUALS term
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
-    (30) var -> . VAR_SYM NAME
+    (14) equality -> . function EQUALS function
+    (15) equality -> . function EQUALS var_or_header
+    (16) equality -> . var_or_header EQUALS function
+    (17) equality -> . var_or_header EQUALS term
+    (18) equality -> . var_or_header EQUALS var_or_header
+    (19) equality -> . term EQUALS var_or_header
+    (20) equality -> . term EQUALS term
+    (21) equality -> . term EQUALS function
+    (22) equality -> . equality EQUALS equality
+    (23) equality -> . equality EQUALS term
+    (24) equality -> . equality EQUALS function
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
+    (32) var -> . VAR_SYM NAME
 
     RIGHT_BRACKET   shift and go to state 18
     NAME            shift and go to state 8
@@ -203,7 +209,8 @@ state 5
 
     (5) expression -> function .
     (13) equality -> function . EQUALS term
-    (14) equality -> function . EQUALS var_or_header
+    (14) equality -> function . EQUALS function
+    (15) equality -> function . EQUALS var_or_header
 
     RIGHT_BRACKET   reduce using rule 5 (expression -> function .)
     NAME            reduce using rule 5 (expression -> function .)
@@ -218,8 +225,9 @@ state 5
 state 6
 
     (6) expression -> equality .
-    (21) equality -> equality . EQUALS equality
-    (22) equality -> equality . EQUALS term
+    (22) equality -> equality . EQUALS equality
+    (23) equality -> equality . EQUALS term
+    (24) equality -> equality . EQUALS function
 
     RIGHT_BRACKET   reduce using rule 6 (expression -> equality .)
     NAME            reduce using rule 6 (expression -> equality .)
@@ -234,7 +242,7 @@ state 6
 state 7
 
     (7) expression -> header .
-    (28) var_or_header -> header .
+    (30) var_or_header -> header .
 
     RIGHT_BRACKET   reduce using rule 7 (expression -> header .)
     NAME            reduce using rule 7 (expression -> header .)
@@ -243,7 +251,7 @@ state 7
     NUMBER          reduce using rule 7 (expression -> header .)
     REGEX           reduce using rule 7 (expression -> header .)
     VAR_SYM         reduce using rule 7 (expression -> header .)
-    EQUALS          reduce using rule 28 (var_or_header -> header .)
+    EQUALS          reduce using rule 30 (var_or_header -> header .)
 
 
 state 8
@@ -259,26 +267,26 @@ state 8
 
 state 9
 
-    (15) equality -> var_or_header . EQUALS function
-    (16) equality -> var_or_header . EQUALS term
-    (17) equality -> var_or_header . EQUALS var_or_header
+    (16) equality -> var_or_header . EQUALS function
+    (17) equality -> var_or_header . EQUALS term
+    (18) equality -> var_or_header . EQUALS var_or_header
 
     EQUALS          shift and go to state 23
 
 
 state 10
 
-    (18) equality -> term . EQUALS var_or_header
-    (19) equality -> term . EQUALS term
-    (20) equality -> term . EQUALS function
+    (19) equality -> term . EQUALS var_or_header
+    (20) equality -> term . EQUALS term
+    (21) equality -> term . EQUALS function
 
     EQUALS          shift and go to state 24
 
 
 state 11
 
-    (31) header -> HEADER_SYM . NAME
-    (32) header -> HEADER_SYM . NUMBER
+    (33) header -> HEADER_SYM . NAME
+    (34) header -> HEADER_SYM . NUMBER
 
     NAME            shift and go to state 25
     NUMBER          shift and go to state 26
@@ -286,39 +294,39 @@ state 11
 
 state 12
 
-    (26) term -> NUMBER .
+    (28) term -> NUMBER .
 
-    EQUALS          reduce using rule 26 (term -> NUMBER .)
-    RIGHT_BRACKET   reduce using rule 26 (term -> NUMBER .)
-    NAME            reduce using rule 26 (term -> NUMBER .)
-    HEADER_SYM      reduce using rule 26 (term -> NUMBER .)
-    QUOTE           reduce using rule 26 (term -> NUMBER .)
-    NUMBER          reduce using rule 26 (term -> NUMBER .)
-    REGEX           reduce using rule 26 (term -> NUMBER .)
-    VAR_SYM         reduce using rule 26 (term -> NUMBER .)
-    CLOSE_PAREN     reduce using rule 26 (term -> NUMBER .)
+    EQUALS          reduce using rule 28 (term -> NUMBER .)
+    RIGHT_BRACKET   reduce using rule 28 (term -> NUMBER .)
+    NAME            reduce using rule 28 (term -> NUMBER .)
+    HEADER_SYM      reduce using rule 28 (term -> NUMBER .)
+    QUOTE           reduce using rule 28 (term -> NUMBER .)
+    NUMBER          reduce using rule 28 (term -> NUMBER .)
+    REGEX           reduce using rule 28 (term -> NUMBER .)
+    VAR_SYM         reduce using rule 28 (term -> NUMBER .)
+    CLOSE_PAREN     reduce using rule 28 (term -> NUMBER .)
 
 
 state 13
 
-    (29) var_or_header -> var .
+    (31) var_or_header -> var .
 
-    EQUALS          reduce using rule 29 (var_or_header -> var .)
-    RIGHT_BRACKET   reduce using rule 29 (var_or_header -> var .)
-    NAME            reduce using rule 29 (var_or_header -> var .)
-    HEADER_SYM      reduce using rule 29 (var_or_header -> var .)
-    QUOTE           reduce using rule 29 (var_or_header -> var .)
-    NUMBER          reduce using rule 29 (var_or_header -> var .)
-    REGEX           reduce using rule 29 (var_or_header -> var .)
-    VAR_SYM         reduce using rule 29 (var_or_header -> var .)
-    CLOSE_PAREN     reduce using rule 29 (var_or_header -> var .)
+    EQUALS          reduce using rule 31 (var_or_header -> var .)
+    RIGHT_BRACKET   reduce using rule 31 (var_or_header -> var .)
+    NAME            reduce using rule 31 (var_or_header -> var .)
+    HEADER_SYM      reduce using rule 31 (var_or_header -> var .)
+    QUOTE           reduce using rule 31 (var_or_header -> var .)
+    NUMBER          reduce using rule 31 (var_or_header -> var .)
+    REGEX           reduce using rule 31 (var_or_header -> var .)
+    VAR_SYM         reduce using rule 31 (var_or_header -> var .)
+    CLOSE_PAREN     reduce using rule 31 (var_or_header -> var .)
 
 
 state 14
 
-    (23) term -> QUOTE . NAME QUOTE
-    (24) term -> QUOTE . DATE QUOTE
-    (25) term -> QUOTE . NUMBER QUOTE
+    (25) term -> QUOTE . NAME QUOTE
+    (26) term -> QUOTE . DATE QUOTE
+    (27) term -> QUOTE . NUMBER QUOTE
 
     NAME            shift and go to state 27
     DATE            shift and go to state 28
@@ -327,22 +335,22 @@ state 14
 
 state 15
 
-    (27) term -> REGEX .
+    (29) term -> REGEX .
 
-    EQUALS          reduce using rule 27 (term -> REGEX .)
-    RIGHT_BRACKET   reduce using rule 27 (term -> REGEX .)
-    NAME            reduce using rule 27 (term -> REGEX .)
-    HEADER_SYM      reduce using rule 27 (term -> REGEX .)
-    QUOTE           reduce using rule 27 (term -> REGEX .)
-    NUMBER          reduce using rule 27 (term -> REGEX .)
-    REGEX           reduce using rule 27 (term -> REGEX .)
-    VAR_SYM         reduce using rule 27 (term -> REGEX .)
-    CLOSE_PAREN     reduce using rule 27 (term -> REGEX .)
+    EQUALS          reduce using rule 29 (term -> REGEX .)
+    RIGHT_BRACKET   reduce using rule 29 (term -> REGEX .)
+    NAME            reduce using rule 29 (term -> REGEX .)
+    HEADER_SYM      reduce using rule 29 (term -> REGEX .)
+    QUOTE           reduce using rule 29 (term -> REGEX .)
+    NUMBER          reduce using rule 29 (term -> REGEX .)
+    REGEX           reduce using rule 29 (term -> REGEX .)
+    VAR_SYM         reduce using rule 29 (term -> REGEX .)
+    CLOSE_PAREN     reduce using rule 29 (term -> REGEX .)
 
 
 state 16
 
-    (30) var -> VAR_SYM . NAME
+    (32) var -> VAR_SYM . NAME
 
     NAME            shift and go to state 30
 
@@ -377,58 +385,23 @@ state 19
 state 20
 
     (13) equality -> function EQUALS . term
-    (14) equality -> function EQUALS . var_or_header
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (30) var -> . VAR_SYM NAME
-
-    QUOTE           shift and go to state 14
-    NUMBER          shift and go to state 12
-    REGEX           shift and go to state 15
-    HEADER_SYM      shift and go to state 11
-    VAR_SYM         shift and go to state 16
-
-    term                           shift and go to state 31
-    var_or_header                  shift and go to state 32
-    header                         shift and go to state 33
-    var                            shift and go to state 13
-
-state 21
-
-    (21) equality -> equality EQUALS . equality
-    (22) equality -> equality EQUALS . term
-    (13) equality -> . function EQUALS term
-    (14) equality -> . function EQUALS var_or_header
-    (15) equality -> . var_or_header EQUALS function
-    (16) equality -> . var_or_header EQUALS term
-    (17) equality -> . var_or_header EQUALS var_or_header
-    (18) equality -> . term EQUALS var_or_header
-    (19) equality -> . term EQUALS term
-    (20) equality -> . term EQUALS function
-    (21) equality -> . equality EQUALS equality
-    (22) equality -> . equality EQUALS term
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
+    (14) equality -> function EQUALS . function
+    (15) equality -> function EQUALS . var_or_header
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
     (8) function -> . NAME OPEN_PAREN CLOSE_PAREN
     (9) function -> . NAME OPEN_PAREN equality CLOSE_PAREN
     (10) function -> . NAME OPEN_PAREN function CLOSE_PAREN
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (30) var -> . VAR_SYM NAME
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (32) var -> . VAR_SYM NAME
 
     QUOTE           shift and go to state 14
     NUMBER          shift and go to state 12
@@ -437,11 +410,57 @@ state 21
     HEADER_SYM      shift and go to state 11
     VAR_SYM         shift and go to state 16
 
-    equality                       shift and go to state 34
-    term                           shift and go to state 35
-    function                       shift and go to state 36
+    function                       shift and go to state 31
+    term                           shift and go to state 32
+    var_or_header                  shift and go to state 33
+    header                         shift and go to state 34
+    var                            shift and go to state 13
+
+state 21
+
+    (22) equality -> equality EQUALS . equality
+    (23) equality -> equality EQUALS . term
+    (24) equality -> equality EQUALS . function
+    (13) equality -> . function EQUALS term
+    (14) equality -> . function EQUALS function
+    (15) equality -> . function EQUALS var_or_header
+    (16) equality -> . var_or_header EQUALS function
+    (17) equality -> . var_or_header EQUALS term
+    (18) equality -> . var_or_header EQUALS var_or_header
+    (19) equality -> . term EQUALS var_or_header
+    (20) equality -> . term EQUALS term
+    (21) equality -> . term EQUALS function
+    (22) equality -> . equality EQUALS equality
+    (23) equality -> . equality EQUALS term
+    (24) equality -> . equality EQUALS function
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
+    (8) function -> . NAME OPEN_PAREN CLOSE_PAREN
+    (9) function -> . NAME OPEN_PAREN equality CLOSE_PAREN
+    (10) function -> . NAME OPEN_PAREN function CLOSE_PAREN
+    (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
+    (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (32) var -> . VAR_SYM NAME
+
+    QUOTE           shift and go to state 14
+    NUMBER          shift and go to state 12
+    REGEX           shift and go to state 15
+    NAME            shift and go to state 8
+    HEADER_SYM      shift and go to state 11
+    VAR_SYM         shift and go to state 16
+
+    equality                       shift and go to state 35
+    term                           shift and go to state 36
+    function                       shift and go to state 37
     var_or_header                  shift and go to state 9
-    header                         shift and go to state 33
+    header                         shift and go to state 34
     var                            shift and go to state 13
 
 state 22
@@ -452,32 +471,34 @@ state 22
     (11) function -> NAME OPEN_PAREN . var_or_header CLOSE_PAREN
     (12) function -> NAME OPEN_PAREN . term CLOSE_PAREN
     (13) equality -> . function EQUALS term
-    (14) equality -> . function EQUALS var_or_header
-    (15) equality -> . var_or_header EQUALS function
-    (16) equality -> . var_or_header EQUALS term
-    (17) equality -> . var_or_header EQUALS var_or_header
-    (18) equality -> . term EQUALS var_or_header
-    (19) equality -> . term EQUALS term
-    (20) equality -> . term EQUALS function
-    (21) equality -> . equality EQUALS equality
-    (22) equality -> . equality EQUALS term
+    (14) equality -> . function EQUALS function
+    (15) equality -> . function EQUALS var_or_header
+    (16) equality -> . var_or_header EQUALS function
+    (17) equality -> . var_or_header EQUALS term
+    (18) equality -> . var_or_header EQUALS var_or_header
+    (19) equality -> . term EQUALS var_or_header
+    (20) equality -> . term EQUALS term
+    (21) equality -> . term EQUALS function
+    (22) equality -> . equality EQUALS equality
+    (23) equality -> . equality EQUALS term
+    (24) equality -> . equality EQUALS function
     (8) function -> . NAME OPEN_PAREN CLOSE_PAREN
     (9) function -> . NAME OPEN_PAREN equality CLOSE_PAREN
     (10) function -> . NAME OPEN_PAREN function CLOSE_PAREN
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (30) var -> . VAR_SYM NAME
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (32) var -> . VAR_SYM NAME
 
-    CLOSE_PAREN     shift and go to state 37
+    CLOSE_PAREN     shift and go to state 38
     NAME            shift and go to state 8
     QUOTE           shift and go to state 14
     NUMBER          shift and go to state 12
@@ -485,33 +506,33 @@ state 22
     HEADER_SYM      shift and go to state 11
     VAR_SYM         shift and go to state 16
 
-    equality                       shift and go to state 38
-    function                       shift and go to state 39
-    var_or_header                  shift and go to state 40
-    term                           shift and go to state 41
-    header                         shift and go to state 33
+    equality                       shift and go to state 39
+    function                       shift and go to state 40
+    var_or_header                  shift and go to state 41
+    term                           shift and go to state 42
+    header                         shift and go to state 34
     var                            shift and go to state 13
 
 state 23
 
-    (15) equality -> var_or_header EQUALS . function
-    (16) equality -> var_or_header EQUALS . term
-    (17) equality -> var_or_header EQUALS . var_or_header
+    (16) equality -> var_or_header EQUALS . function
+    (17) equality -> var_or_header EQUALS . term
+    (18) equality -> var_or_header EQUALS . var_or_header
     (8) function -> . NAME OPEN_PAREN CLOSE_PAREN
     (9) function -> . NAME OPEN_PAREN equality CLOSE_PAREN
     (10) function -> . NAME OPEN_PAREN function CLOSE_PAREN
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (30) var -> . VAR_SYM NAME
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (32) var -> . VAR_SYM NAME
 
     NAME            shift and go to state 8
     QUOTE           shift and go to state 14
@@ -520,32 +541,32 @@ state 23
     HEADER_SYM      shift and go to state 11
     VAR_SYM         shift and go to state 16
 
-    var_or_header                  shift and go to state 42
-    function                       shift and go to state 43
-    term                           shift and go to state 44
-    header                         shift and go to state 33
+    var_or_header                  shift and go to state 43
+    function                       shift and go to state 44
+    term                           shift and go to state 45
+    header                         shift and go to state 34
     var                            shift and go to state 13
 
 state 24
 
-    (18) equality -> term EQUALS . var_or_header
-    (19) equality -> term EQUALS . term
-    (20) equality -> term EQUALS . function
-    (28) var_or_header -> . header
-    (29) var_or_header -> . var
-    (23) term -> . QUOTE NAME QUOTE
-    (24) term -> . QUOTE DATE QUOTE
-    (25) term -> . QUOTE NUMBER QUOTE
-    (26) term -> . NUMBER
-    (27) term -> . REGEX
+    (19) equality -> term EQUALS . var_or_header
+    (20) equality -> term EQUALS . term
+    (21) equality -> term EQUALS . function
+    (30) var_or_header -> . header
+    (31) var_or_header -> . var
+    (25) term -> . QUOTE NAME QUOTE
+    (26) term -> . QUOTE DATE QUOTE
+    (27) term -> . QUOTE NUMBER QUOTE
+    (28) term -> . NUMBER
+    (29) term -> . REGEX
     (8) function -> . NAME OPEN_PAREN CLOSE_PAREN
     (9) function -> . NAME OPEN_PAREN equality CLOSE_PAREN
     (10) function -> . NAME OPEN_PAREN function CLOSE_PAREN
     (11) function -> . NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (12) function -> . NAME OPEN_PAREN term CLOSE_PAREN
-    (31) header -> . HEADER_SYM NAME
-    (32) header -> . HEADER_SYM NUMBER
-    (30) var -> . VAR_SYM NAME
+    (33) header -> . HEADER_SYM NAME
+    (34) header -> . HEADER_SYM NUMBER
+    (32) var -> . VAR_SYM NAME
 
     QUOTE           shift and go to state 14
     NUMBER          shift and go to state 12
@@ -554,79 +575,94 @@ state 24
     HEADER_SYM      shift and go to state 11
     VAR_SYM         shift and go to state 16
 
-    term                           shift and go to state 45
-    var_or_header                  shift and go to state 46
-    function                       shift and go to state 47
-    header                         shift and go to state 33
+    term                           shift and go to state 46
+    var_or_header                  shift and go to state 47
+    function                       shift and go to state 48
+    header                         shift and go to state 34
     var                            shift and go to state 13
 
 state 25
 
-    (31) header -> HEADER_SYM NAME .
+    (33) header -> HEADER_SYM NAME .
 
-    RIGHT_BRACKET   reduce using rule 31 (header -> HEADER_SYM NAME .)
-    NAME            reduce using rule 31 (header -> HEADER_SYM NAME .)
-    HEADER_SYM      reduce using rule 31 (header -> HEADER_SYM NAME .)
-    QUOTE           reduce using rule 31 (header -> HEADER_SYM NAME .)
-    NUMBER          reduce using rule 31 (header -> HEADER_SYM NAME .)
-    REGEX           reduce using rule 31 (header -> HEADER_SYM NAME .)
-    VAR_SYM         reduce using rule 31 (header -> HEADER_SYM NAME .)
-    EQUALS          reduce using rule 31 (header -> HEADER_SYM NAME .)
-    CLOSE_PAREN     reduce using rule 31 (header -> HEADER_SYM NAME .)
+    RIGHT_BRACKET   reduce using rule 33 (header -> HEADER_SYM NAME .)
+    NAME            reduce using rule 33 (header -> HEADER_SYM NAME .)
+    HEADER_SYM      reduce using rule 33 (header -> HEADER_SYM NAME .)
+    QUOTE           reduce using rule 33 (header -> HEADER_SYM NAME .)
+    NUMBER          reduce using rule 33 (header -> HEADER_SYM NAME .)
+    REGEX           reduce using rule 33 (header -> HEADER_SYM NAME .)
+    VAR_SYM         reduce using rule 33 (header -> HEADER_SYM NAME .)
+    EQUALS          reduce using rule 33 (header -> HEADER_SYM NAME .)
+    CLOSE_PAREN     reduce using rule 33 (header -> HEADER_SYM NAME .)
 
 
 state 26
 
-    (32) header -> HEADER_SYM NUMBER .
+    (34) header -> HEADER_SYM NUMBER .
 
-    RIGHT_BRACKET   reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    NAME            reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    HEADER_SYM      reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    QUOTE           reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    NUMBER          reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    REGEX           reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    VAR_SYM         reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    EQUALS          reduce using rule 32 (header -> HEADER_SYM NUMBER .)
-    CLOSE_PAREN     reduce using rule 32 (header -> HEADER_SYM NUMBER .)
+    RIGHT_BRACKET   reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    NAME            reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    HEADER_SYM      reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    QUOTE           reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    NUMBER          reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    REGEX           reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    VAR_SYM         reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    EQUALS          reduce using rule 34 (header -> HEADER_SYM NUMBER .)
+    CLOSE_PAREN     reduce using rule 34 (header -> HEADER_SYM NUMBER .)
 
 
 state 27
 
-    (23) term -> QUOTE NAME . QUOTE
-
-    QUOTE           shift and go to state 48
-
-
-state 28
-
-    (24) term -> QUOTE DATE . QUOTE
+    (25) term -> QUOTE NAME . QUOTE
 
     QUOTE           shift and go to state 49
 
 
-state 29
+state 28
 
-    (25) term -> QUOTE NUMBER . QUOTE
+    (26) term -> QUOTE DATE . QUOTE
 
     QUOTE           shift and go to state 50
 
 
+state 29
+
+    (27) term -> QUOTE NUMBER . QUOTE
+
+    QUOTE           shift and go to state 51
+
+
 state 30
 
-    (30) var -> VAR_SYM NAME .
+    (32) var -> VAR_SYM NAME .
 
-    EQUALS          reduce using rule 30 (var -> VAR_SYM NAME .)
-    RIGHT_BRACKET   reduce using rule 30 (var -> VAR_SYM NAME .)
-    NAME            reduce using rule 30 (var -> VAR_SYM NAME .)
-    HEADER_SYM      reduce using rule 30 (var -> VAR_SYM NAME .)
-    QUOTE           reduce using rule 30 (var -> VAR_SYM NAME .)
-    NUMBER          reduce using rule 30 (var -> VAR_SYM NAME .)
-    REGEX           reduce using rule 30 (var -> VAR_SYM NAME .)
-    VAR_SYM         reduce using rule 30 (var -> VAR_SYM NAME .)
-    CLOSE_PAREN     reduce using rule 30 (var -> VAR_SYM NAME .)
+    EQUALS          reduce using rule 32 (var -> VAR_SYM NAME .)
+    RIGHT_BRACKET   reduce using rule 32 (var -> VAR_SYM NAME .)
+    NAME            reduce using rule 32 (var -> VAR_SYM NAME .)
+    HEADER_SYM      reduce using rule 32 (var -> VAR_SYM NAME .)
+    QUOTE           reduce using rule 32 (var -> VAR_SYM NAME .)
+    NUMBER          reduce using rule 32 (var -> VAR_SYM NAME .)
+    REGEX           reduce using rule 32 (var -> VAR_SYM NAME .)
+    VAR_SYM         reduce using rule 32 (var -> VAR_SYM NAME .)
+    CLOSE_PAREN     reduce using rule 32 (var -> VAR_SYM NAME .)
 
 
 state 31
+
+    (14) equality -> function EQUALS function .
+
+    EQUALS          reduce using rule 14 (equality -> function EQUALS function .)
+    RIGHT_BRACKET   reduce using rule 14 (equality -> function EQUALS function .)
+    NAME            reduce using rule 14 (equality -> function EQUALS function .)
+    HEADER_SYM      reduce using rule 14 (equality -> function EQUALS function .)
+    QUOTE           reduce using rule 14 (equality -> function EQUALS function .)
+    NUMBER          reduce using rule 14 (equality -> function EQUALS function .)
+    REGEX           reduce using rule 14 (equality -> function EQUALS function .)
+    VAR_SYM         reduce using rule 14 (equality -> function EQUALS function .)
+    CLOSE_PAREN     reduce using rule 14 (equality -> function EQUALS function .)
+
+
+state 32
 
     (13) equality -> function EQUALS term .
 
@@ -641,86 +677,100 @@ state 31
     CLOSE_PAREN     reduce using rule 13 (equality -> function EQUALS term .)
 
 
-state 32
-
-    (14) equality -> function EQUALS var_or_header .
-
-    EQUALS          reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    RIGHT_BRACKET   reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    NAME            reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    HEADER_SYM      reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    QUOTE           reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    NUMBER          reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    REGEX           reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    VAR_SYM         reduce using rule 14 (equality -> function EQUALS var_or_header .)
-    CLOSE_PAREN     reduce using rule 14 (equality -> function EQUALS var_or_header .)
-
-
 state 33
 
-    (28) var_or_header -> header .
+    (15) equality -> function EQUALS var_or_header .
 
-    EQUALS          reduce using rule 28 (var_or_header -> header .)
-    RIGHT_BRACKET   reduce using rule 28 (var_or_header -> header .)
-    NAME            reduce using rule 28 (var_or_header -> header .)
-    HEADER_SYM      reduce using rule 28 (var_or_header -> header .)
-    QUOTE           reduce using rule 28 (var_or_header -> header .)
-    NUMBER          reduce using rule 28 (var_or_header -> header .)
-    REGEX           reduce using rule 28 (var_or_header -> header .)
-    VAR_SYM         reduce using rule 28 (var_or_header -> header .)
-    CLOSE_PAREN     reduce using rule 28 (var_or_header -> header .)
+    EQUALS          reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    RIGHT_BRACKET   reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    NAME            reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    HEADER_SYM      reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    QUOTE           reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    NUMBER          reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    REGEX           reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    VAR_SYM         reduce using rule 15 (equality -> function EQUALS var_or_header .)
+    CLOSE_PAREN     reduce using rule 15 (equality -> function EQUALS var_or_header .)
 
 
 state 34
 
-    (21) equality -> equality EQUALS equality .
-    (21) equality -> equality . EQUALS equality
-    (22) equality -> equality . EQUALS term
+    (30) var_or_header -> header .
 
-  ! shift/reduce conflict for EQUALS resolved as shift
-    RIGHT_BRACKET   reduce using rule 21 (equality -> equality EQUALS equality .)
-    NAME            reduce using rule 21 (equality -> equality EQUALS equality .)
-    HEADER_SYM      reduce using rule 21 (equality -> equality EQUALS equality .)
-    QUOTE           reduce using rule 21 (equality -> equality EQUALS equality .)
-    NUMBER          reduce using rule 21 (equality -> equality EQUALS equality .)
-    REGEX           reduce using rule 21 (equality -> equality EQUALS equality .)
-    VAR_SYM         reduce using rule 21 (equality -> equality EQUALS equality .)
-    CLOSE_PAREN     reduce using rule 21 (equality -> equality EQUALS equality .)
-    EQUALS          shift and go to state 21
-
-  ! EQUALS          [ reduce using rule 21 (equality -> equality EQUALS equality .) ]
+    EQUALS          reduce using rule 30 (var_or_header -> header .)
+    RIGHT_BRACKET   reduce using rule 30 (var_or_header -> header .)
+    NAME            reduce using rule 30 (var_or_header -> header .)
+    HEADER_SYM      reduce using rule 30 (var_or_header -> header .)
+    QUOTE           reduce using rule 30 (var_or_header -> header .)
+    NUMBER          reduce using rule 30 (var_or_header -> header .)
+    REGEX           reduce using rule 30 (var_or_header -> header .)
+    VAR_SYM         reduce using rule 30 (var_or_header -> header .)
+    CLOSE_PAREN     reduce using rule 30 (var_or_header -> header .)
 
 
 state 35
 
-    (22) equality -> equality EQUALS term .
-    (18) equality -> term . EQUALS var_or_header
-    (19) equality -> term . EQUALS term
-    (20) equality -> term . EQUALS function
+    (22) equality -> equality EQUALS equality .
+    (22) equality -> equality . EQUALS equality
+    (23) equality -> equality . EQUALS term
+    (24) equality -> equality . EQUALS function
 
   ! shift/reduce conflict for EQUALS resolved as shift
-    RIGHT_BRACKET   reduce using rule 22 (equality -> equality EQUALS term .)
-    NAME            reduce using rule 22 (equality -> equality EQUALS term .)
-    HEADER_SYM      reduce using rule 22 (equality -> equality EQUALS term .)
-    QUOTE           reduce using rule 22 (equality -> equality EQUALS term .)
-    NUMBER          reduce using rule 22 (equality -> equality EQUALS term .)
-    REGEX           reduce using rule 22 (equality -> equality EQUALS term .)
-    VAR_SYM         reduce using rule 22 (equality -> equality EQUALS term .)
-    CLOSE_PAREN     reduce using rule 22 (equality -> equality EQUALS term .)
-    EQUALS          shift and go to state 24
+    RIGHT_BRACKET   reduce using rule 22 (equality -> equality EQUALS equality .)
+    NAME            reduce using rule 22 (equality -> equality EQUALS equality .)
+    HEADER_SYM      reduce using rule 22 (equality -> equality EQUALS equality .)
+    QUOTE           reduce using rule 22 (equality -> equality EQUALS equality .)
+    NUMBER          reduce using rule 22 (equality -> equality EQUALS equality .)
+    REGEX           reduce using rule 22 (equality -> equality EQUALS equality .)
+    VAR_SYM         reduce using rule 22 (equality -> equality EQUALS equality .)
+    CLOSE_PAREN     reduce using rule 22 (equality -> equality EQUALS equality .)
+    EQUALS          shift and go to state 21
 
-  ! EQUALS          [ reduce using rule 22 (equality -> equality EQUALS term .) ]
+  ! EQUALS          [ reduce using rule 22 (equality -> equality EQUALS equality .) ]
 
 
 state 36
 
-    (13) equality -> function . EQUALS term
-    (14) equality -> function . EQUALS var_or_header
+    (23) equality -> equality EQUALS term .
+    (19) equality -> term . EQUALS var_or_header
+    (20) equality -> term . EQUALS term
+    (21) equality -> term . EQUALS function
 
-    EQUALS          shift and go to state 20
+  ! shift/reduce conflict for EQUALS resolved as shift
+    RIGHT_BRACKET   reduce using rule 23 (equality -> equality EQUALS term .)
+    NAME            reduce using rule 23 (equality -> equality EQUALS term .)
+    HEADER_SYM      reduce using rule 23 (equality -> equality EQUALS term .)
+    QUOTE           reduce using rule 23 (equality -> equality EQUALS term .)
+    NUMBER          reduce using rule 23 (equality -> equality EQUALS term .)
+    REGEX           reduce using rule 23 (equality -> equality EQUALS term .)
+    VAR_SYM         reduce using rule 23 (equality -> equality EQUALS term .)
+    CLOSE_PAREN     reduce using rule 23 (equality -> equality EQUALS term .)
+    EQUALS          shift and go to state 24
+
+  ! EQUALS          [ reduce using rule 23 (equality -> equality EQUALS term .) ]
 
 
 state 37
+
+    (24) equality -> equality EQUALS function .
+    (13) equality -> function . EQUALS term
+    (14) equality -> function . EQUALS function
+    (15) equality -> function . EQUALS var_or_header
+
+  ! shift/reduce conflict for EQUALS resolved as shift
+    RIGHT_BRACKET   reduce using rule 24 (equality -> equality EQUALS function .)
+    NAME            reduce using rule 24 (equality -> equality EQUALS function .)
+    HEADER_SYM      reduce using rule 24 (equality -> equality EQUALS function .)
+    QUOTE           reduce using rule 24 (equality -> equality EQUALS function .)
+    NUMBER          reduce using rule 24 (equality -> equality EQUALS function .)
+    REGEX           reduce using rule 24 (equality -> equality EQUALS function .)
+    VAR_SYM         reduce using rule 24 (equality -> equality EQUALS function .)
+    CLOSE_PAREN     reduce using rule 24 (equality -> equality EQUALS function .)
+    EQUALS          shift and go to state 20
+
+  ! EQUALS          [ reduce using rule 24 (equality -> equality EQUALS function .) ]
+
+
+state 38
 
     (8) function -> NAME OPEN_PAREN CLOSE_PAREN .
 
@@ -735,184 +785,186 @@ state 37
     CLOSE_PAREN     reduce using rule 8 (function -> NAME OPEN_PAREN CLOSE_PAREN .)
 
 
-state 38
-
-    (9) function -> NAME OPEN_PAREN equality . CLOSE_PAREN
-    (21) equality -> equality . EQUALS equality
-    (22) equality -> equality . EQUALS term
-
-    CLOSE_PAREN     shift and go to state 51
-    EQUALS          shift and go to state 21
-
-
 state 39
 
-    (10) function -> NAME OPEN_PAREN function . CLOSE_PAREN
-    (13) equality -> function . EQUALS term
-    (14) equality -> function . EQUALS var_or_header
+    (9) function -> NAME OPEN_PAREN equality . CLOSE_PAREN
+    (22) equality -> equality . EQUALS equality
+    (23) equality -> equality . EQUALS term
+    (24) equality -> equality . EQUALS function
 
     CLOSE_PAREN     shift and go to state 52
-    EQUALS          shift and go to state 20
+    EQUALS          shift and go to state 21
 
 
 state 40
 
-    (11) function -> NAME OPEN_PAREN var_or_header . CLOSE_PAREN
-    (15) equality -> var_or_header . EQUALS function
-    (16) equality -> var_or_header . EQUALS term
-    (17) equality -> var_or_header . EQUALS var_or_header
+    (10) function -> NAME OPEN_PAREN function . CLOSE_PAREN
+    (13) equality -> function . EQUALS term
+    (14) equality -> function . EQUALS function
+    (15) equality -> function . EQUALS var_or_header
 
     CLOSE_PAREN     shift and go to state 53
-    EQUALS          shift and go to state 23
+    EQUALS          shift and go to state 20
 
 
 state 41
 
-    (12) function -> NAME OPEN_PAREN term . CLOSE_PAREN
-    (18) equality -> term . EQUALS var_or_header
-    (19) equality -> term . EQUALS term
-    (20) equality -> term . EQUALS function
+    (11) function -> NAME OPEN_PAREN var_or_header . CLOSE_PAREN
+    (16) equality -> var_or_header . EQUALS function
+    (17) equality -> var_or_header . EQUALS term
+    (18) equality -> var_or_header . EQUALS var_or_header
 
     CLOSE_PAREN     shift and go to state 54
-    EQUALS          shift and go to state 24
+    EQUALS          shift and go to state 23
 
 
 state 42
 
-    (17) equality -> var_or_header EQUALS var_or_header .
+    (12) function -> NAME OPEN_PAREN term . CLOSE_PAREN
+    (19) equality -> term . EQUALS var_or_header
+    (20) equality -> term . EQUALS term
+    (21) equality -> term . EQUALS function
 
-    EQUALS          reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    RIGHT_BRACKET   reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    NAME            reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    HEADER_SYM      reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    QUOTE           reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    NUMBER          reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    REGEX           reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    VAR_SYM         reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
-    CLOSE_PAREN     reduce using rule 17 (equality -> var_or_header EQUALS var_or_header .)
+    CLOSE_PAREN     shift and go to state 55
+    EQUALS          shift and go to state 24
 
 
 state 43
 
-    (15) equality -> var_or_header EQUALS function .
+    (18) equality -> var_or_header EQUALS var_or_header .
 
-    EQUALS          reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    RIGHT_BRACKET   reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    NAME            reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    HEADER_SYM      reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    QUOTE           reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    NUMBER          reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    REGEX           reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    VAR_SYM         reduce using rule 15 (equality -> var_or_header EQUALS function .)
-    CLOSE_PAREN     reduce using rule 15 (equality -> var_or_header EQUALS function .)
+    EQUALS          reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    RIGHT_BRACKET   reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    NAME            reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    HEADER_SYM      reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    QUOTE           reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    NUMBER          reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    REGEX           reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    VAR_SYM         reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
+    CLOSE_PAREN     reduce using rule 18 (equality -> var_or_header EQUALS var_or_header .)
 
 
 state 44
 
-    (16) equality -> var_or_header EQUALS term .
+    (16) equality -> var_or_header EQUALS function .
 
-    EQUALS          reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    RIGHT_BRACKET   reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    NAME            reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    HEADER_SYM      reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    QUOTE           reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    NUMBER          reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    REGEX           reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    VAR_SYM         reduce using rule 16 (equality -> var_or_header EQUALS term .)
-    CLOSE_PAREN     reduce using rule 16 (equality -> var_or_header EQUALS term .)
+    EQUALS          reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    RIGHT_BRACKET   reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    NAME            reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    HEADER_SYM      reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    QUOTE           reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    NUMBER          reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    REGEX           reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    VAR_SYM         reduce using rule 16 (equality -> var_or_header EQUALS function .)
+    CLOSE_PAREN     reduce using rule 16 (equality -> var_or_header EQUALS function .)
 
 
 state 45
 
-    (19) equality -> term EQUALS term .
+    (17) equality -> var_or_header EQUALS term .
 
-    EQUALS          reduce using rule 19 (equality -> term EQUALS term .)
-    RIGHT_BRACKET   reduce using rule 19 (equality -> term EQUALS term .)
-    NAME            reduce using rule 19 (equality -> term EQUALS term .)
-    HEADER_SYM      reduce using rule 19 (equality -> term EQUALS term .)
-    QUOTE           reduce using rule 19 (equality -> term EQUALS term .)
-    NUMBER          reduce using rule 19 (equality -> term EQUALS term .)
-    REGEX           reduce using rule 19 (equality -> term EQUALS term .)
-    VAR_SYM         reduce using rule 19 (equality -> term EQUALS term .)
-    CLOSE_PAREN     reduce using rule 19 (equality -> term EQUALS term .)
+    EQUALS          reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    RIGHT_BRACKET   reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    NAME            reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    HEADER_SYM      reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    QUOTE           reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    NUMBER          reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    REGEX           reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    VAR_SYM         reduce using rule 17 (equality -> var_or_header EQUALS term .)
+    CLOSE_PAREN     reduce using rule 17 (equality -> var_or_header EQUALS term .)
 
 
 state 46
 
-    (18) equality -> term EQUALS var_or_header .
+    (20) equality -> term EQUALS term .
 
-    EQUALS          reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    RIGHT_BRACKET   reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    NAME            reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    HEADER_SYM      reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    QUOTE           reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    NUMBER          reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    REGEX           reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    VAR_SYM         reduce using rule 18 (equality -> term EQUALS var_or_header .)
-    CLOSE_PAREN     reduce using rule 18 (equality -> term EQUALS var_or_header .)
+    EQUALS          reduce using rule 20 (equality -> term EQUALS term .)
+    RIGHT_BRACKET   reduce using rule 20 (equality -> term EQUALS term .)
+    NAME            reduce using rule 20 (equality -> term EQUALS term .)
+    HEADER_SYM      reduce using rule 20 (equality -> term EQUALS term .)
+    QUOTE           reduce using rule 20 (equality -> term EQUALS term .)
+    NUMBER          reduce using rule 20 (equality -> term EQUALS term .)
+    REGEX           reduce using rule 20 (equality -> term EQUALS term .)
+    VAR_SYM         reduce using rule 20 (equality -> term EQUALS term .)
+    CLOSE_PAREN     reduce using rule 20 (equality -> term EQUALS term .)
 
 
 state 47
 
-    (20) equality -> term EQUALS function .
+    (19) equality -> term EQUALS var_or_header .
 
-    EQUALS          reduce using rule 20 (equality -> term EQUALS function .)
-    RIGHT_BRACKET   reduce using rule 20 (equality -> term EQUALS function .)
-    NAME            reduce using rule 20 (equality -> term EQUALS function .)
-    HEADER_SYM      reduce using rule 20 (equality -> term EQUALS function .)
-    QUOTE           reduce using rule 20 (equality -> term EQUALS function .)
-    NUMBER          reduce using rule 20 (equality -> term EQUALS function .)
-    REGEX           reduce using rule 20 (equality -> term EQUALS function .)
-    VAR_SYM         reduce using rule 20 (equality -> term EQUALS function .)
-    CLOSE_PAREN     reduce using rule 20 (equality -> term EQUALS function .)
+    EQUALS          reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    RIGHT_BRACKET   reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    NAME            reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    HEADER_SYM      reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    QUOTE           reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    NUMBER          reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    REGEX           reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    VAR_SYM         reduce using rule 19 (equality -> term EQUALS var_or_header .)
+    CLOSE_PAREN     reduce using rule 19 (equality -> term EQUALS var_or_header .)
 
 
 state 48
 
-    (23) term -> QUOTE NAME QUOTE .
+    (21) equality -> term EQUALS function .
 
-    EQUALS          reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    RIGHT_BRACKET   reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    NAME            reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    HEADER_SYM      reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    QUOTE           reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    NUMBER          reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    REGEX           reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    VAR_SYM         reduce using rule 23 (term -> QUOTE NAME QUOTE .)
-    CLOSE_PAREN     reduce using rule 23 (term -> QUOTE NAME QUOTE .)
+    EQUALS          reduce using rule 21 (equality -> term EQUALS function .)
+    RIGHT_BRACKET   reduce using rule 21 (equality -> term EQUALS function .)
+    NAME            reduce using rule 21 (equality -> term EQUALS function .)
+    HEADER_SYM      reduce using rule 21 (equality -> term EQUALS function .)
+    QUOTE           reduce using rule 21 (equality -> term EQUALS function .)
+    NUMBER          reduce using rule 21 (equality -> term EQUALS function .)
+    REGEX           reduce using rule 21 (equality -> term EQUALS function .)
+    VAR_SYM         reduce using rule 21 (equality -> term EQUALS function .)
+    CLOSE_PAREN     reduce using rule 21 (equality -> term EQUALS function .)
 
 
 state 49
 
-    (24) term -> QUOTE DATE QUOTE .
+    (25) term -> QUOTE NAME QUOTE .
 
-    EQUALS          reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    RIGHT_BRACKET   reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    NAME            reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    HEADER_SYM      reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    QUOTE           reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    NUMBER          reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    REGEX           reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    VAR_SYM         reduce using rule 24 (term -> QUOTE DATE QUOTE .)
-    CLOSE_PAREN     reduce using rule 24 (term -> QUOTE DATE QUOTE .)
+    EQUALS          reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    RIGHT_BRACKET   reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    NAME            reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    HEADER_SYM      reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    QUOTE           reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    NUMBER          reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    REGEX           reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    VAR_SYM         reduce using rule 25 (term -> QUOTE NAME QUOTE .)
+    CLOSE_PAREN     reduce using rule 25 (term -> QUOTE NAME QUOTE .)
 
 
 state 50
 
-    (25) term -> QUOTE NUMBER QUOTE .
+    (26) term -> QUOTE DATE QUOTE .
 
-    EQUALS          reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    RIGHT_BRACKET   reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    NAME            reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    HEADER_SYM      reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    QUOTE           reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    NUMBER          reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    REGEX           reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    VAR_SYM         reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
-    CLOSE_PAREN     reduce using rule 25 (term -> QUOTE NUMBER QUOTE .)
+    EQUALS          reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    RIGHT_BRACKET   reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    NAME            reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    HEADER_SYM      reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    QUOTE           reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    NUMBER          reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    REGEX           reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    VAR_SYM         reduce using rule 26 (term -> QUOTE DATE QUOTE .)
+    CLOSE_PAREN     reduce using rule 26 (term -> QUOTE DATE QUOTE .)
 
 
 state 51
+
+    (27) term -> QUOTE NUMBER QUOTE .
+
+    EQUALS          reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    RIGHT_BRACKET   reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    NAME            reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    HEADER_SYM      reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    QUOTE           reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    NUMBER          reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    REGEX           reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    VAR_SYM         reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+    CLOSE_PAREN     reduce using rule 27 (term -> QUOTE NUMBER QUOTE .)
+
+
+state 52
 
     (9) function -> NAME OPEN_PAREN equality CLOSE_PAREN .
 
@@ -927,7 +979,7 @@ state 51
     CLOSE_PAREN     reduce using rule 9 (function -> NAME OPEN_PAREN equality CLOSE_PAREN .)
 
 
-state 52
+state 53
 
     (10) function -> NAME OPEN_PAREN function CLOSE_PAREN .
 
@@ -942,7 +994,7 @@ state 52
     CLOSE_PAREN     reduce using rule 10 (function -> NAME OPEN_PAREN function CLOSE_PAREN .)
 
 
-state 53
+state 54
 
     (11) function -> NAME OPEN_PAREN var_or_header CLOSE_PAREN .
 
@@ -957,7 +1009,7 @@ state 53
     CLOSE_PAREN     reduce using rule 11 (function -> NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
 
 
-state 54
+state 55
 
     (12) function -> NAME OPEN_PAREN term CLOSE_PAREN .
 
@@ -975,5 +1027,6 @@ WARNING:
 WARNING: Conflicts:
 WARNING: 
 WARNING: shift/reduce conflict for RIGHT_BRACKET in state 3 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 34 resolved as shift
 WARNING: shift/reduce conflict for EQUALS in state 35 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 36 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 37 resolved as shift

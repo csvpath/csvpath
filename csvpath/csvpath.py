@@ -30,7 +30,7 @@ class CsvPath:
         self.total_lines = -1
         self._verbose = False
         self._dump_json = False
-        self._do_math = True # on by default, but still a bit experimental
+        self._do_math = False # off by default, still experimental
         self._collect_matchers = False
         self.matchers = []
         self.jsons = []

@@ -1,28 +1,48 @@
 from csvpath.csvpath import CsvPath
+import sys
 
-#filepath = "tests/test_resources/test.csv"
-
-filepath = '/Users/davidkershaw/Desktop/csvs/pipe_delimited.csv'
-
-def one():
-    path = CsvPath(delimiter="|")
-    path.verbose(True)
-    pathstr = f'${filepath}[*][#statecode="MA"]'
-    #pathstr = f'${filepath}[*][#statecode="MA" first(#city, #statecode)]'
-    #pathstr = f'${filepath}[4000-5000+22949][@test=#4 count(in(#statecode,"LA|MA|CT"))=12]'
+        #pathstr = f'${filepath}[*][#statecode="MA"]'
+        #pathstr = f'${filepath}[*][#statecode="MA" first(#city, #statecode)]'
+        #pathstr = f'${filepath}[4000-5000+22949][@test=#4 count(in(#statecode,"LA|MA|CT"))=12]'
 
 
-    #print(pathstr)
-    result = path.parse(pathstr)
-    #print(f"{result}")
+class Repl():
 
-    for i, line in enumerate( path.next() ):
-        print(f" {path.current_line_number()} {i}: {line}")
+    def __init__(self):
+        self.filepath = "tests/test_resources/test.csv"
 
-    print(f"path vars: {path.variables}")
+
+    def take_input(self):
+        while ( True ):
+            resp = self._input( ">> ")
+            if not resp or resp.strip() == '':
+                continue
+            self.do_path(resp)
+
+
+    def _response(self, text:str) -> None:
+        sys.stdout.write(f"\033[92m {text}\033[0m\n")
+
+    def _input(self, prompt:str) -> str:
+        try:
+            response = input(f"{prompt}\033[93m")
+            sys.stdout.write("\033[0m")
+            return response.strip()
+        except KeyboardInterrupt:
+            return "quit"
+
+
+    def do_path(self, pathstr):
+        path = CsvPath(delimiter=",")
+        path.verbose(True)
+        scanner = path.parse(pathstr)
+        for i, line in enumerate( path.next() ):
+            self._response(line)
+
+        print(f"path vars: {path.variables}")
 
 
 if __name__ == "__main__":
-    one()
-
+    repl = Repl()
+    repl.take_input()
 

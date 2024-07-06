@@ -140,6 +140,7 @@ class Matcher:
 
     def p_equality(self, p):
         '''equality : function EQUALS term
+                    | function EQUALS function
                     | function EQUALS var_or_header
                     | var_or_header EQUALS function
                     | var_or_header EQUALS term
@@ -149,6 +150,7 @@ class Matcher:
                     | term EQUALS function
                     | equality EQUALS equality
                     | equality EQUALS term
+                    | equality EQUALS function
         '''
         e = Equality(self)
         e.set_left(p[1])

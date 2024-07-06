@@ -44,12 +44,13 @@ The match part is also bracketed. The rules are:
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
 - Functions can contain functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is enabled by default but can be switched off in CsvPath on a case-by-case, pending further testing.
+- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is not fully baked and is off by default. The `add()`, `subtract()`, `multiply()` and `divide()` functions should be preferred.
 
 The match functions are:
 
 | Function                      | What it does                                              |Done|
 |-------------------------------|-----------------------------------------------------------|----|
+| add(value, value, ...)        | adds numbers                                              | X  |
 | after(value)                  | finds things after a date, number, string                 | X  |
 | average(number, type)         | returns the average up to current "line", "scan", "match" | X  |
 | before(value)                 | finds things before a date, number, string                | X  |
@@ -58,9 +59,10 @@ The match functions are:
 | count(value)                  | count matches of value                                    | X  |
 | count_lines()                 | count lines to this point in the file                     | X  |
 | count_scans()                 | count lines we checked for match                          | X  |
+| divide(value, value, ...)     | divides numbers                                           | X  |
 | end()                         | returns the value of the last column                      | X  |
 | every(number, value)          | match every Nth time a value is seen                      |    |
-| first(value)                  | match the first occurrence and capture line                | X  |
+| first(value)                  | match the first occurrence and capture line               | X  |
 | in(value, list)               | match in a list                                           | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
@@ -69,6 +71,7 @@ The match functions are:
 | max(value, type)              | largest value seen up to current "line", "scan", "match"  | X  |
 | median(value, type)           | median value up to current "line", "scan", "match"        | X  |
 | min(value, type)              | smallest value seen up to current "line", "scan", "match" | X  |
+| multiply(value, value, ...)   | multiplies numbers                                        | X  |
 | no(value)                     | always false                                              | X  |
 | not(value)                    | negates a value                                           | X  |
 | now(format)                   | a datetime, optionally formatted                          | X  |
@@ -77,8 +80,9 @@ The match functions are:
 | random(list)                  | pick from a list                                          |    |
 | random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
+| subtract(value, value, ...)   | subtracts numbers                                         | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
- upper(value)                  | makes value uppercase                                     | X  |
+| upper(value)                  | makes value uppercase                                     | X  |
 
 # Modification (coming soon!)
 The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path (line breaks are permitted between parts) looks like:

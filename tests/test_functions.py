@@ -193,14 +193,213 @@ class TestFunctions(unittest.TestCase):
         scanner = path.parse(
         f'''
             ${PATH}[1]
-            [
-                @l = length("this")
-            ]''')
+            [ @l = length("this") ]''')
         lines = path.collect()
-        print(f"test_function_count_in: lines: {lines}")
-        print(f"test_function_count_in: path vars: {path.variables}")
+        print(f"test_function_length: lines: {lines}")
+        print(f"test_function_length: path vars: {path.variables}")
         assert len(lines) == 1
-        assert path.variables["l"] == 'oozeeee...'
+        assert path.variables["l"] == 4
+
+
+    def test_function_add(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = add( 4, length("this")) ]''')
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 8
+
+    def test_function_add2(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = add( count(), length("this") ) ]''')
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 5
+
+    def test_function_add3(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = add( count(), length("this"), 5 ) ]''')
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 10
+
+    def test_function_add4(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = add( count(), length("this"), 5, 5 ) ]''')
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 15
+
+
+
+    def test_function_subtract(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = subtract( count(), length("this") ) ]''')
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == -3
+
+    def test_function_subtract2(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = subtract( 10, count(), length("this") ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 5
+
+    def test_function_subtract3(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[1]
+            [ @l = subtract( 10, count(), length("this"), add( 2, 3) ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 0
+
+
+    def test_function_multiply(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2-5]
+            [ @l = multiply( count(#lastname), 100 ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 4
+        assert path.variables["l"] == 400
+
+    def test_function_multiply2(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2-3]
+            [ @l = multiply( count(), 100 ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["l"] == 200
+
+    def test_function_multiply3(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2+3]
+            [ @l = multiply( count(), add(50,50,50,50) ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["l"] == 400
+
+    def test_function_multiply4(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2+3]
+            [ @l = multiply( count(), add(50,50,50), 50 ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["l"] == 15000
+
+    def test_function_divide(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2]
+            [ @l = divide( 100, 10 ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["l"] == 10
+
+    def test_function_divide2(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2-3]
+            [ @l = divide( 100, count() ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["l"] == 50
+
+    def test_function_divide3(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2-3]
+            [ @l = divide( 100, count(), add(2,3) ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["l"] == 10
+
+    def test_function_divide4(self):
+        path = CsvPath()
+        scanner = path.parse(
+        f'''
+            ${PATH}[2-3]
+            [ @l = divide( 100, 0 ) ]'''
+        )
+        lines = path.collect()
+        print(f"test_function_add: lines: {lines}")
+        print(f"test_function_add: path vars: {path.variables}")
+        assert len(lines) == 2
+        import math
+        assert math.isnan(path.variables["l"])
+
+
+
+
+
+
 
     # set a var without matching the lines
     def test_function_count_any_match(self):
@@ -364,7 +563,7 @@ class TestFunctions(unittest.TestCase):
         scanner = path.parse(f'${PATH}[*][ isinstance(count(), "int") ]')
         lines = path.collect()
         assert len(lines) == 9
-        print(f"test_function_length: lines: {lines}")
+        print(f"test_function_isinstance: lines: {lines}")
         print("checking dates")
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][ isinstance("11-23-2024", "datetime") ]')
@@ -410,11 +609,11 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 0
 
 
-    def test_function_length(self):
+    def test_function_match_length(self):
         path = CsvPath()
         scanner = path.parse(f'${PATH}[*][length(#lastname)=3]')
         lines = path.collect()
-        print(f"test_function_length: lines: {len(lines)}")
+        print(f"test_function_match_length: lines: {len(lines)}")
         assert len(lines) == 7
 
     def test_function_not(self):
