@@ -3,49 +3,18 @@ from csvpath.matching.productions.variable import Variable
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.header import Header
 from csvpath.matching.functions.function import Function
+from csvpath.matching.expression_encoder import ExpressionEncoder
+from csvpath.matching.expression_utility import ExpressionUtility
 
 class ExpressionMath:
-
-    def __init__(self, matcher):
-        self._matcher = matcher
 
     def is_terminal(self, o):
         return isinstance( o, Variable) or isinstance( o, Term) or isinstance( o, Header) or isinstance( o, Function)
 
     def do_math(self, expression):
         for i, _ in enumerate(expression.children):
-            self.pull_up(expression, i, _)
+            self.drop_down_pull_up(expression, i, _)
 
-    def try_2_terms(self, parent, i, child):
-        if self.is_terminal(child.left) and self.is_terminal(child.right):
-            term = Term(self._matcher)
-            term.value = self.math( child.op, child.left.to_value(), child.right.to_value())
-            parent.children[i] = term
-
-    def try_mathy_left_term_right(self, parent, i, child):
-        if isinstance(child.left, Equality) and self.is_terminal(child.right):
-            # value of  -> child.left.left.value
-            v = child.right.to_value()
-            v_left_right = child.left.right.to_value()
-            if v_left_right is None:
-                # cannot math a None. exit leaving the expression tree unchanged.
-                return
-            child.left.right.value = self.math(child.op, child.left.right.value, v)
-            # parent[i] = child.right
-            parent.children[i] = child.left
-            child.left.parent = parent
-            # child.right.parent = parent
-
-    def pull_up(self, parent, i, child):
-        if isinstance( child, Equality ) and child.op in ['-','+','*','/']:
-            self.try_2_terms(parent, i, child)
-            self.try_mathy_left_term_right(parent, i, child)
-            print(f"done with math strategies: {i}: {parent.children}")
-            if isinstance(parent.children[i], Equality):
-                self.pull_up(parent, i, parent.children[i])
-        else:
-            for j, desc in enumerate(child.children):
-                self.pull_up(child, j, desc)
 
     def math(self, op, left, right ):
         if left is None or right is None:
@@ -56,5 +25,82 @@ class ExpressionMath:
             return left-right
         elif op == '*':
             return left*right
-        else:
+        elif op == '/':
             return left/right
+        else:
+            raise Exception(f"op cannot be {op}")
+
+#
+# why is this not combining the last two terms?
+#
+    def combine_terms( self, parent, i, child ):
+        if isinstance( child, Equality ) and child.op in ['-','+','*','/']:
+            lv = child.left.to_value()
+            if child.right is not None:
+                rv = child.right.to_value()
+                term = Term(parent.matcher)
+                term.value = self.math(child.op, lv,rv)
+                parent.children[i] = term
+                term.parent = parent
+                json2 = ExpressionEncoder().simple_list_to_json([parent])
+                return term, i
+            else:
+                print("not combining terms")
+                return child, i
+        else:
+            print("not an equality with math")
+            return child, i
+
+    def push_down_right_terminal(self, parent, i, child):
+        eq = isinstance( parent, Equality )
+        op = parent.op in ['-','+','*','/'] if eq else None
+        """
+        print(f"@ push_down_right_terminal: child {ExpressionUtility._dotted('', child)}")
+        json2 = ExpressionEncoder().simple_list_to_json([child])
+        print(f"@ push_down_right_terminal: child: {json2}")
+        """
+        if eq and op:
+            second = self.is_terminal(child)
+            if second:
+                third = isinstance( child.parent, Equality) and isinstance( child.parent.left, Equality) #and child.parent.left.op == '='
+                if third:
+                    # move child down to left
+                    term = Term(child.matcher)
+                    try:
+                        term.value = self.math( parent.op, child.value, child.parent.left.right.value)
+                        child.parent.left.right = term
+                        term.parent = child.parent.left
+                        # remove child from it's original place now that term includes its value
+                        child.parent.right = None
+                        replace_me = child.parent.parent.index_of_child(child.parent)
+                        child.parent.parent.children[replace_me] = child.parent.left
+                    except Exception as ex:
+                        print(f"problems? or maybe just mathed out. ex: {ex}")
+
+    def drop_down_pull_up(self, parent, i, child):
+        # work right to left
+        cs = child.children[:]
+        cs.reverse()
+        for j, _ in enumerate( cs ):
+            self.drop_down_pull_up(child, j, _)
+
+        # if we're a terminal within an equality with math and another terminal
+        # we want to reduce ourselves before anything else. to do that we need to
+        # shortcut to the parent equality
+        choose = isinstance(parent, Equality) and parent.op in ['-','+','*','/']
+        if choose and child.parent.both_terminal():
+            try:
+                x = child.parent.parent.children.index(parent)
+                child, i = self.combine_terms(parent.parent, x, parent)
+            except:
+                print("no such child anymore. presumably mathed out")
+                pass
+        else:
+            # this won't combine terms in this equality, but might
+            # do a pull-up-push-down below. do we need to make this call?
+            child, i = self.combine_terms(parent, i, child)
+
+        self.push_down_right_terminal(parent, i, child)
+
+
+

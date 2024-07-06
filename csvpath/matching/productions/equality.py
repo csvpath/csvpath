@@ -1,15 +1,59 @@
 from typing import Any, List
 from csvpath.matching.productions.variable import Variable
 from csvpath.matching.productions.matchable import Matchable
+from csvpath.matching.productions.header import Header
+from csvpath.matching.productions.term import Term
+from csvpath.matching.functions.function import Function
 
 class Equality(Matchable):
 
     def __init__(self, matcher):
         super().__init__(matcher)
-        self.left:Any = None
-        self.right:Any = None
         self.op:str = "=" # we assume = but if a function or other containing production
                      # wants to check we might have a different op
+
+    @property
+    def left(self):
+        return self.children[0]
+
+    @left.setter
+    def left(self, o):
+        if not self.children:
+            self.children = [None,None]
+        while len(self.children) < 2:
+            self.children.append(None)
+        else:
+            self.children[0] = o
+
+    @property
+    def right(self):
+        return self.children[1]
+
+    @right.setter
+    def right(self, o):
+        if not self.children:
+            self.children = [None,None]
+        while len(self.children) < 2:
+            self.children.append(None)
+        self.children[1] = o
+
+    def other_child(self, o):
+        if self.left == o:
+            return (self.right, 1)
+        elif self.right == o:
+            return (self.left, 0)
+        else:
+            return None
+
+    def is_terminal(self, o):
+        return (isinstance( o, Variable)
+                or isinstance( o, Term)
+                or isinstance( o, Header)
+                or isinstance( o, Function)
+                or o is None )
+
+    def both_terminal(self):
+        return self.is_terminal(self.left) and self.is_terminal(self.right)
 
     def commas_to_list(self) -> List[Any]:
         ls = []

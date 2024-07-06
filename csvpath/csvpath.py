@@ -206,17 +206,16 @@ class CsvPath:
         matcher = Matcher(csvpath=self, data=self.match, line=line, headers=self.headers)
 
         if self._do_math:
-            em = ExpressionMath(matcher)
+            em = ExpressionMath()
             for e in matcher.expressions:
                 em.do_math(e[0])
+
         if self._dump_json:
             json = ExpressionEncoder().valued_list_to_json(matcher.expressions)
-            print(f"{json}\n")
             self.jsons.append(json)
 
         matched = matcher.matches()
-
-        if matched and self._collect_matchers:
+        if self._collect_matchers: #and matched
             self.matchers.append(matcher)
 
         return matched

@@ -15,5 +15,16 @@ class ExpressionUtility:
                 break
         return hashlib.sha256(id.encode('utf-8')).hexdigest()
 
-
+    @classmethod
+    def _dotted(self, s, o):
+        if o == None:
+            return s
+        cs = str(o.__class__)
+        cs = cs[cs.rfind("."):]
+        c = cs[0:cs.find("'")]
+        s = f"{c}{s}"
+        try:
+            return self._dotted(s, o.parent)
+        except:
+            return s
 

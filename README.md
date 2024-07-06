@@ -39,7 +39,7 @@ The match part is also bracketed. The rules are:
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
 - Functions can contain functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. `@number_of_cars = 4 + count() + 2`. `+`, `-`, `*`, and `/` are supported. Arithmetic is enabled by default but can be switched off on a case-by-case, pending further testing.
+- Limited arithmetic is available. For e.g. `@number_of_cars = 4 + count() + 2`. `+`, `-`, `*`, and `/` are supported. Arithmetic is enabled by default but can be switched off in CsvPath on a case-by-case, pending further testing.
 
 The match functions are:
 

@@ -16,6 +16,15 @@ class ExpressionEncoder():
         json = f'{json} ] '
         return json
 
+    def simple_list_to_json(self, l:List[Any]) -> str:
+        json = "[ "
+        for i, _ in enumerate(l):
+            json = f'{json} {self.to_json(_)} '
+            if i < len(l)-1:
+                json = f'{json}, '
+        json = f'{json} ] '
+        return json
+
     def valued_list_to_json(self, l:List[List[Any]]) -> str:
         json = "[ "
         for i, _ in enumerate(l):
@@ -44,6 +53,10 @@ class ExpressionEncoder():
             return self.variable(json, o)
         elif isinstance(o, Term):
             return self.term(json, o)
+        elif o is None:
+            return f'{json} "None" '
+        else:
+            raise Exception(f"what am I {o}")
 
     def matchable(self, json:str, m) -> str:
         json = f'{json} "base_class":"matchable", '
@@ -51,7 +64,6 @@ class ExpressionEncoder():
         json = f'{json} "value":"{m.value}", '
         json = f'{json} "name":"{m.name}", '
         json = f'{json} "children": [ '
-        #    self._id:str = None
         for i, _ in enumerate(m.children):
             json = self._encode(json, _)
             if i < len(m.children)-1:

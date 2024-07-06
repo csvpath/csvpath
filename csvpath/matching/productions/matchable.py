@@ -22,6 +22,10 @@ class Matchable:
     def to_value(self, *, skip=[]) -> Any:
         return None
 
+    def index_of_child(self, o) :
+        return self.children.index(o)
+
+
     def set_parent(self, parent):
         self.parent = parent
 

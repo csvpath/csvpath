@@ -7,6 +7,8 @@ from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.variable import Variable
 from csvpath.csvpath import CsvPath
+from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.expression_encoder import ExpressionEncoder
 import json
 
 HEADERS =  ['abc' ,'aheader','crows','d']
@@ -130,34 +132,52 @@ class TestMatcher(unittest.TestCase):
         assert isinstance(eq, Term)
         assert eq.value == 6
 
-        print("==========================")
+
+
+    def test_equality_math2(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2][ @t = 3 + 3]')
-        path.dump_json()
-        path.collect_matchers()
-        lines = path.collect()
-        print(f"test_equality_math: path vars: {path.variables}")
-        print("^^^^^^^^^^!!!!vvvvvvvvvvvv")
-        path = CsvPath()
-        scanner = path.parse(f'${PATH}[2][ @t = 3 + 3]')
-        #
-        # unless switched on by default, no math happens
-        # without this toggle method call. math is on by default.
-        #
-        #path.do_math()
+        scanner = path.parse(f'${PATH}[1][ @t = 3 + 3]')
         path.dump_json()
         path.collect_matchers()
         lines = path.collect()
 
         m = path.matchers[0]
-        print(f"test_equality_math: m.expressions: {m.expressions}")
-        eq = m.expressions[0][0].children[0]
-        assert isinstance(eq, Equality)
-        left = eq.left
-        right = eq.right
-        print(f"test_equality_math: left: {left}, right: {right}")
-        assert isinstance(left, Variable)
-        assert isinstance(right, Term)
+        e = m.expressions[0][0].children[0]
+
+        print(f"\ntest_equality_math1: {ExpressionUtility._dotted('',e)}")
+        print(f"test_equality_math2: {m.expressions[0][0]}")
+        print(f"test_equality_math3: {m.expressions[0][0].children}")
+        json2 = ExpressionEncoder().simple_list_to_json([m.expressions[0][0]])
+        print(f"test_equality_math4: {json2}\n")
+
+        assert isinstance(e, Equality)
+        assert e.op == '='
+        assert isinstance(e.left, Variable)
+        assert isinstance(e.right, Term)
+        assert e.right.value == 6
+
+
+    def test_equality_math3(self):
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[1][ @t = 3 + 3 + 3 ]')
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+
+        m = path.matchers[0]
+        e = m.expressions[0][0].children[0]
+
+        print(f"\ntest_equality_math1: {ExpressionUtility._dotted('',e)}")
+        print(f"test_equality_math2: {m.expressions[0][0]}")
+        print(f"test_equality_math3: {m.expressions[0][0].children}")
+        json2 = ExpressionEncoder().simple_list_to_json([m.expressions[0][0]])
+        print(f"test_equality_math4: {json2}\n")
+
+        #assert isinstance(e.left, Variable)
+        #assert isinstance(e.right, Term)
+        assert path.variables["t"] == 9
+
+
 
     def test_function_math(self ):
         path = CsvPath()
@@ -172,14 +192,13 @@ class TestMatcher(unittest.TestCase):
         lines = path.collect()
         m = path.matchers[0]
         print(f"test_equality_math: m.expressions: {m.expressions}")
-        eq = m.expressions[0][0].children[0]
-        assert isinstance(eq, Equality)
-        left = eq.left
-        right = eq.right
-        print(f"test_equality_math: left: {left}, right: {right}")
-        assert isinstance(left, Variable)
-        assert isinstance(right, Function)
-        assert right.to_value() == 4
+        t = m.expressions[0][0].children[0]
+        print(f"test_function_math: {ExpressionUtility._dotted('', t)}")
+        json2 = ExpressionEncoder().simple_list_to_json([t])
+        print(f"test_function_math: t: {json2}\n")
+
+        assert isinstance(t, Term)
+        assert t.to_value() == 4
 
 
         path = CsvPath()
@@ -192,13 +211,27 @@ class TestMatcher(unittest.TestCase):
         path.dump_json()
         path.collect_matchers()
         lines = path.collect()
-        m = path.matchers[0]
-        print(f"test_equality_math: m.expressions: {m.expressions}")
-        eq = m.expressions[0][0].children[0]
-        assert isinstance(eq, Term)
-        assert eq.value == 6
+
+        print(f"matchers: {path.matchers}")
+        es = path.matchers[0].expressions
+        json2 = ExpressionEncoder().simple_list_to_json([es[0][0]])
+        print(f"test_function_math: FINAL: {json2}\n")
+
+        #assert isinstance(eq, Term)
+        #assert eq.value == 6
 
 
+    def test_math_max_recursion(self):
+        print("\n")
+        path = CsvPath()
+        scanner = path.parse(f'${PATH}[1][@lines=3+2+1]')
+        path.dump_json()
+        path.collect_matchers()
+        lines = path.collect()
+        #m = path.matchers[0]
+        #eq = m.expressions[0][0].children[0]
+        #assert isinstance(eq, Term)
+        assert path.variables["lines"] == 6
 
 
 
