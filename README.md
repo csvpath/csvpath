@@ -9,9 +9,7 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. It i
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
-CsvPath paths have three parts, scanning, matching, and modifying. Today, only the scanning and matching parts of CsvPath are functional. The modification part is a todo.
-
-For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
+CsvPath paths have two parts, scanning and matching. For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
     path = CsvPath(delimiter=",")
     path.parse("$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]")
@@ -83,48 +81,6 @@ The match functions are:
 | subtract(value, value, ...)   | subtracts numbers                                         | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
 | upper(value)                  | makes value uppercase                                     | X  |
-
-# Modification (coming soon!)
-The modification part of a CsvPath is also wrapped in brackets. This part of the path modifies any matching row. A modifying path (line breaks are permitted between parts) looks like:
-
-`$test.csv[5-25]`
-`[#0="Frog" #lastname="Bats" count()=2]`
-`[#1="make my speed 6" #zipcode>#last_four #last_four=random(int, 4)]`
-
-This path's modification part says:
-- set the first column to 'make my speed 6'
-- add a last_four column after zipcode (this obviously affects all rows, not just the matched ones)
-- set the value of the last_four column where the path matches to a random 4-character integer
-
-Note that the creating of the last_four column and setting its value may be order-dependent. That has not been decided yet. It may needed to involve multiple paths.
-
-To output a new file, either with or without making a modified copy of the original, do something like:
-
-`$test.csv[5-25]`
-`[#0="Frog" #lastname="Bats"]`
-`[out($newfile.csv, #1=Firstname=#firstname)
-  out($newfile.csv, #0=Surname=#lastname)
-  out($newfile.csv, #2=ID=random("int")
-  out($newfile.csv, #3=Line=count-lines())
- ]`
-
-This path creates a file with 4 columns, in this order: {Surname, Firstname, ID, Line}, and fills it using the matched lines in the original file. The out() function sends its output to the referenced file, in this case $newfile.csv. Any changes to the existing file's copy-on-write update are done after the out() function outputs the existing information. That allows us to change the file we are scanning and also keep a record of the changes we make.
-
-The modification basics are:
-- `#say='hoo!'` means set the value of the column with the "say" header to "hoo!"
-- variables, indicated by a leading '@', that were set in the matching part can be used in the modification part
-- `$[@line]#3="cactus"` means a set the 4th column (zero-based) value to "cactus" in the row indicated by the variable @line in the current file, indicated with the '$'
-- `#1>"n/a"` adds a new column following the 2nd column (zero-based) with the value in that row being 'n/a'
-- `#firstname>#lastname="fred"` adds a "lastname" column after the "firstname" column and gives the matched row the value "fred"
-- `#NumberOfFreds="this is fred @n"` means set the column with the header "NumberOfFreds" to the string using value of the @n variable. Presumably in the matching part we had declared something like `[#firstname="fred" @n=count()]`.
-- `#|=>#cactus=""` means add a column after the last column, whatever number column it may be, with the header "cactus" and no value entered. The "|" indicates the ending column. The "=>" says add a column. #cactus is the header given to the new column. And ="" says don't assign a value. Or you could simply say: `#|=>#cactus` to do the same
-- `#^=>#cactus="prickly pear"` does the same but creating a new first column named "cactus" and setting the value of matched rows to "prickly pear". This new column is the new #0 column and the old #0 column is now #1.
-- `_|=>#0="fussy bug" #1="furry fly" #3=4.45 #|=>"last column"` says add a new row, `=>`, at the end of the file, `_|` and set the columns to the values indicated with the last column, whatever number it might be, to the value "last column".
-- `1^=>` or `^=>` mean add a new blank row above this row.
-- `2v=>` means add two new blank rows below this row.
-
-CsvPath is a copy-on-write system. When you make a modification, it creates a copy of the file you are reading rows from. The copy has any modifications you make while the original is untouched. In order to do this, CsvPath needs to set a window around the current row. If you open a CsvPath using a 10-line window, the changes you make must be within 10 rows of the currently matched row.
-
 
 # Not Ready For Production
 Anything could change. This project is a hobby.
