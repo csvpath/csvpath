@@ -12,6 +12,11 @@ ply = "^3.11"
 python-dateutil = "^2.9.0.post0"
 
 
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.1.0"
+black = "^24.4.2"
+pre-commit = "^3.7.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
