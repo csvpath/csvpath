@@ -3,13 +3,13 @@
 
 CsvPath defines a declarative syntax for inspecting and updating CSV files. It is similar, though much simpler, to:
 - XPath: CsvPath is to a CSV file like XPath is to an XML file
-- Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath can be used as validation rules.
+- Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath can be used to create validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
-CsvPath paths have three parts, scanning, matching, and modifying. Today, only the scanning and matching parts of csvpath are functional. The modification part is a todo.
+CsvPath paths have three parts, scanning, matching, and modifying. Today, only the scanning and matching parts of CsvPath are functional. The modification part is a todo.
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
@@ -39,7 +39,7 @@ The match part is also bracketed. The rules are:
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
 - Functions can contain functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. `@number_of_cars = 4 + count() + 2`. `+`, `-`, `*`, and `/` are supported. Arithmetic is enabled by default but can be switched off in CsvPath on a case-by-case, pending further testing.
+- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is enabled by default but can be switched off in CsvPath on a case-by-case, pending further testing.
 
 The match functions are:
 
@@ -55,7 +55,7 @@ The match functions are:
 | count_scans()                 | count lines we checked for match                          | X  |
 | end()                         | returns the value of the last column                      | X  |
 | every(number, value)          | match every Nth time a value is seen                      |    |
-| first(value)                  | match the first occurance and capture line                | X  |
+| first(value)                  | match the first occurrence and capture line                | X  |
 | in(value, list)               | match in a list                                           | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
