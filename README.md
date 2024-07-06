@@ -13,6 +13,15 @@ CsvPath paths have three parts, scanning, matching, and modifying. Today, only t
 
 For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
+    path = CsvPath(delimiter=",")
+    path.parse(pathstr)
+    for i, line in enumerate( path.next() ):
+        print(f"{i}: {line}")
+
+    print(f"path vars: {path.variables}")
+
+
+
 Paths look like `$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]`
 
 This scanning and matching path says:
