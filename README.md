@@ -42,31 +42,53 @@ The match part is also bracketed. A match part component is one of several types
 <td>Returns</td>
 <td>Matches</td>
 <td>Description</td>
+<td>Examples</td>
 </tr>
     <tr>
-        <td>term </td><td> Value </td><td> True </td>
-        <td> A quoted string or date, optionally quoted number, or
-        regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>                                                               |
+        <td>Term </td><td> Value </td><td> True </td>
+        <td>A quoted string or date, optionally quoted number, or
+        regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>
+        <td>
+            <li/> "Massachusetts"
+            <li/> 89.7
+        </td>
     </tr>
     <tr>
-        <td> function </td><td> Calculated   </td><td> Calculated </td>
-        <td> A function name followed by parentheses. Functions can
+        <td>Function </td><td> Calculated   </td><td> Calculated </td>
+        <td>A function name followed by parentheses. Functions can
 contain terms, variables, headers and other  functions. Some functions
 take a specific or  unlimited number of types as arguments.     </td>
+        <td>
+            <li/> not(count()=2)
+        </td>
     </tr>
     <tr>
-        <td> variable </td><td> Value    </td><td> Existence</td>
-        <td>  An @ followed by a name. Variables can be entries in a named dict.                                                                                                                            |
+        <td>Variable </td>
+        <td>Value when tested, True when set, True/False when used alone    </td>
+        <td>True/False when value tested. True when set, True/False existence when used alone</td>
+        <td>An @ followed by a name. Variables can be entries in a named dict. A variable is
+            set or depending on the usage. By itself, it is an existence test. When used as
+            the left hand side of an equality not contained by another type its value is set.
+            When it is used within another type it is an equality test.                                                                                                |
+        <td>
+            <li/> @weather="cloudy"
+            <li/> count(@weather="sunny")
+            <li/> @weather
+        </td>
     </tr>
     <tr>
-        <td> header   </td><td> Value     </td><td>  Existence    </td>
-        <td> # followed by a name or integer. The name references a value in line 0, the header
- row. A number   references a column by the 0-based columns order.   </td>                                       |
+        <td>Header   </td>
+        <td>Value     </td>
+        <td>Existence    </td>
+        <td>A # followed by a name or integer. The name references a value in line 0, the header
+ row. A number references a column by the 0-based column order.   </td>
+        <td></td>
     </tr>
     <tr>
-        <td> equality </td><td> Calculated    </td><td> Calculated   </td>
-        <td>  Two of the other types joined with an "=".</td>
-    </tr>                                                                                                                                                |
+        <td>Equality </td><td> Calculated    </td><td> Calculated   </td>
+        <td>Two of the other types joined with an "=".</td>
+        <td></td>
+    </tr>
 <table>
 
 The rules are:
