@@ -39,18 +39,10 @@ The match part is also bracketed. A match part component is one of several types
 
 | Type      | Returns       | Matches       | Description                                           |
 -----------------------------------------------------------------------------------------------------
-| term      | Value         | True          | A quoted string or date, optionally quoted number, or |
-                                              regex. Regex features are limited. A regex is wrapped
-                                              in "/" characters.
-| function  | Calculated    | Calculated    | A function name followed by parentheses. Functions    |
-                                              can contain terms, variables, headers and other
-                                              functions. Some functions take a specific or
-                                              unlimited number of types as arguments.
-| variable  | Value         | Existence     | An @ followed by a name. Variables can be entries in  |
-                                              a named dict.
-| header    | Value         | Existence     | # followed by a name or integer. The name references  |
-                                              a value in line 0, the header row. A number
-                                              references a column by the 0-based columns order.
+| term      | Value         | True          | A quoted string or date, optionally quoted number, or <br/> regex. Regex features are limited. A regex is wrapped <br/> in "/" characters. |
+| function  | Calculated    | Calculated    | A function name followed by parentheses. Functions <br/> can contain terms, variables, headers and other <br/> functions. Some functions take a specific or <br/> unlimited number of types as arguments. |
+| variable  | Value         | Existence     | An @ followed by a name. Variables can be entries in  <br/> a named dict. |
+| header    | Value         | Existence     | # followed by a name or integer. The name references  <br/> a value in line 0, the header row. A number  <br/> references a column by the 0-based columns order. |
 | equality  | Calculated    | Calculated    | Two of the other types joined with an "=".            |
 
 The rules are:
