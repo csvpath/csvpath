@@ -75,14 +75,15 @@ take a specific or  unlimited number of types as arguments.     </td>
             may handle variables in different ways, but usually they are an argument that supplies an
             input to the function.
         <td>
-            <ol/> @weather="cloudy"
-            <ol/> count(@weather="sunny")
-            <ol/> @weather
-            <ol/> #summer=@weather
-            #1 is an assignment that sets the variable and returns True.
-            #2 is an argument used as a test in a way that is specific to the function.
-            #3 is an existence test.
-            #4 is a test.
+            <li/> @weather="cloudy"
+            <li/> count(@weather="sunny")
+            <li/> @weather
+            <li/> #summer=@weather
+
+- #1 is an assignment that sets the variable and returns True.
+- #2 is an argument used as a test in a way that is specific to the function.
+- #3 is an existence test.
+- #4 is a test.
         </td>
     </tr>
     <tr>
