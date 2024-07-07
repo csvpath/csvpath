@@ -35,7 +35,8 @@ The scan part of the path starts with '$' to indicate the root, meaning the file
 - `[1+3-8]` means line 1 and lines 3 through eight
 
 # Matching
-The match part is also bracketed. A match part component is one of several types:
+The match part is also bracketed. Matches have space separated
+components that are ANDed together. A match component is one of several types:
 <table>
 <tr>
 <td>Type</td>
@@ -51,6 +52,7 @@ The match part is also bracketed. A match part component is one of several types
         <td>
             <li/> "Massachusetts"
             <li/> 89.7
+            <li/> /[0-9a-zA-Z]+!/
         </td>
     </tr>
     <tr>
@@ -66,14 +68,21 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>Variable </td>
         <td>Value when tested, True when set, True/False when used alone    </td>
         <td>True/False when value tested. True when set, True/False existence when used alone</td>
-        <td>An @ followed by a name. Variables can be entries in a named dict. A variable is
-            set or depending on the usage. By itself, it is an existence test. When used as
+        <td>An @ followed by a name. A variable is
+            set or tested depending on the usage. By itself, it is an existence test. When used as
             the left hand side of an equality not contained by another type its value is set.
-            When it is used within another type it is an equality test.
+            When it is used on the right hand side of an "=" it is an equality test. A function
+            may handle variables in different ways, but usually they are an argument that supplies an
+            input to the function.
         <td>
-            <li/> @weather="cloudy"
-            <li/> count(@weather="sunny")
-            <li/> @weather
+            <ol/> @weather="cloudy"
+            <ol/> count(@weather="sunny")
+            <ol/> @weather
+            <ol/> #summer=@weather
+            #1 is an assignment that sets the variable and returns True.
+            #2 is an argument used as a test in a way that is specific to the function.
+            #3 is an existence test.
+            #4 is a test.
         </td>
     </tr>
     <tr>
@@ -98,16 +107,17 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
 <table>
 
-The rules are:
-- `#animal` indicates a header named "animal". Headers are the values in the 0th line.
+    [ #common_name #0="field" @tail=end() not(in(@tail, 'short|medium')) ]
+
+In the path above, the rules applied are:
+- `#common_name` indicates a header named "common_name". Headers are the values in the 0th line.
 - `#2` means the 3rd column, counting from 0
 - A column reference with no equals or function is an existence test
 - Functions and column references are ANDed together
-- `@people` denotes a variable named "people"
+- `@tail` creates a variable named "tail" and sets it to the value of the last column
 - Functions can contain functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is not fully baked and is turned off by default. The `add()`, `subtract()`, `multiply()` and `divide()` functions should be preferred.
 
-The match functions are:
+Most of the work of matching is done in functions. The match functions are:
 
 | Function                      | What it does                                              |Done|
 |-------------------------------|-----------------------------------------------------------|----|
