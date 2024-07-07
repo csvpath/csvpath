@@ -82,12 +82,19 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>Existence    </td>
         <td>A # followed by a name or integer. The name references a value in line 0, the header
  row. A number references a column by the 0-based column order.   </td>
-        <td></td>
+        <td>
+            <li/> #firstname
+            </li> #3
+        </td>
     </tr>
     <tr>
-        <td>Equality </td><td> Calculated    </td><td> Calculated   </td>
+        <td>Equality</td>
+        <td>Calculated when inside another type, otherwise True at assignment </td>
+        <td>True at assignment, otherwise calculated   </td>
         <td>Two of the other types joined with an "=".</td>
-        <td></td>
+        <td>
+            @type_of_tree="Oak"
+        </td>
     </tr>
 <table>
 
