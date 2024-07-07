@@ -36,14 +36,38 @@ The scan part of the path starts with '$' to indicate the root, meaning the file
 
 # Matching
 The match part is also bracketed. A match part component is one of several types:
-
-| Type      | Returns       | Matches       | Description                                                                                                                                                                                   |
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-| term      | Value         | True          | A quoted string or date, optionally quoted number, or regex. Regex features are limited. A regex is wrapped  in "/" characters.                                                               |
-| function  | Calculated    | Calculated    | A function name followed by parentheses. Functions can contain terms, variables, headers and other  functions. Some functions take a specific or  unlimited number of types as arguments.     |
-| variable  | Value         | Existence     | An @ followed by a name. Variables can be entries in a named dict.                                                                                                                            |
-| header    | Value         | Existence     | # followed by a name or integer. The name references a value in line 0, the header row. A number   references a column by the 0-based columns order.                                          |
-| equality  | Calculated    | Calculated    | Two of the other types joined with an "=".                                                                                                                                                    |
+<table>
+<tr>
+<td>Type</td>
+<td>Returns</td>
+<td>Matches</td>
+<td>Description</td>
+</tr>
+    <tr>
+        <td>term </td><td> Value </td><td> True </td>
+        <td> A quoted string or date, optionally quoted number, or
+        regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>                                                               |
+    </tr>
+    <tr>
+        <td> function </td><td> Calculated   </td><td> Calculated </td>
+        <td> A function name followed by parentheses. Functions can
+contain terms, variables, headers and other  functions. Some functions
+take a specific or  unlimited number of types as arguments.     </td>
+    </tr>
+    <tr>
+        <td> variable </td><td> Value    </td><td> Existence</td>
+        <td>  An @ followed by a name. Variables can be entries in a named dict.                                                                                                                            |
+    </tr>
+    <tr>
+        <td> header   </td><td> Value     </td><td>  Existence    </td>
+        <td> # followed by a name or integer. The name references a value in line 0, the header
+ row. A number   references a column by the 0-based columns order.   </td>                                       |
+    </tr>
+    <tr>
+        <td> equality </td><td> Calculated    </td><td> Calculated   </td>
+        <td>  Two of the other types joined with an "=".</td>
+    </tr>                                                                                                                                                |
+<table>
 
 The rules are:
 - `#animal` indicates a header named "animal". Headers are the values in the 0th line.
