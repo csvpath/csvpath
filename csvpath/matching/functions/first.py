@@ -10,7 +10,7 @@ class First(Function):
 
     def to_value(self, *, skip=[]) -> Any:
         if len(self.children) != 1:
-            self.matcher.print(f"Firt.to_value: must have 1 child: {self.children}")
+            self.matcher.print(f"First.to_value: must have 1 child: {self.children}")
             raise ChildrenException("First function must have 1 child")
         if self._my_value_or_none == -9999:
 

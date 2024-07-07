@@ -67,6 +67,19 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 3
         assert path.variables["p"] == 0.375
 
+    def test_function_tally(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[*][tally(#lastname)] ")
+        path.collect()
+        print(f"test_function_tally: path vars: {path.variables}")
+        assert path.variables["lastname"]["Bat"] == 7
+
+        path = CsvPath()
+        path.parse(f"${PATH}[*][tally(#firstname, #lastname)] ")
+        path.collect()
+        print(f"test_function_tally: path vars: {path.variables}")
+        assert path.variables["tally"]["FrogBat"] == 2
+
     def test_function_first(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][first(#lastname)]")

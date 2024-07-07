@@ -1,7 +1,7 @@
 
 # CsvPath
 
-CsvPath defines a declarative syntax for inspecting and updating CSV files. It is similar, though much simpler, to:
+CsvPath defines a declarative syntax for inspecting and updating CSV files. Though much simpler, it is similar to:
 - XPath: CsvPath is to a CSV file like XPath is to an XML file
 - Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath paths can be used as validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
@@ -79,6 +79,7 @@ The match functions are:
 | random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
 | subtract(value, value, ...)   | subtracts numbers                                         | X  |
+| tally(value, value, ...)      | counts times values are seen, including as a set          |    |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
 | upper(value)                  | makes value uppercase                                     | X  |
 
