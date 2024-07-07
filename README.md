@@ -69,7 +69,7 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>An @ followed by a name. Variables can be entries in a named dict. A variable is
             set or depending on the usage. By itself, it is an existence test. When used as
             the left hand side of an equality not contained by another type its value is set.
-            When it is used within another type it is an equality test.                                                                                                |
+            When it is used within another type it is an equality test.
         <td>
             <li/> @weather="cloudy"
             <li/> count(@weather="sunny")
