@@ -50,9 +50,9 @@ components that are ANDed together. A match component is one of several types:
         <td>A quoted string or date, optionally quoted number, or
         regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>
         <td>
-            <li/> "Massachusetts"
-            <li/> 89.7
-            <li/> /[0-9a-zA-Z]+!/
+            <li/> `"Massachusetts"`
+            <li/> `89.7`
+            <li/> `/[0-9a-zA-Z]+!/`
         </td>
     </tr>
     <tr>
@@ -61,7 +61,7 @@ components that are ANDed together. A match component is one of several types:
 contain terms, variables, headers and other  functions. Some functions
 take a specific or  unlimited number of types as arguments.     </td>
         <td>
-            <li/> not(count()=2)
+            <li/> `not(count()=2)`
         </td>
     </tr>
     <tr>
@@ -75,10 +75,10 @@ take a specific or  unlimited number of types as arguments.     </td>
             may handle variables in different ways, but usually they are an argument that supplies an
             input to the function.
         <td>
-            <li/> @weather="cloudy"
-            <li/> count(@weather="sunny")
-            <li/> @weather
-            <li/> #summer=@weather
+            <li/> `@weather="cloudy"`
+            <li/> `count(@weather="sunny")`
+            <li/> `@weather`
+            <li/> `#summer=@weather`
 
 #1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is an existence test. #4 is a test.
         </td>
@@ -90,8 +90,8 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>A # followed by a name or integer. The name references a value in line 0, the header
  row. A number references a column by the 0-based column order.   </td>
         <td>
-            <li/> #firstname
-            </li> #3
+            <li/> `#firstname`
+            <li/> `#3`
         </td>
     </tr>
     <tr>
@@ -100,7 +100,7 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>True at assignment, otherwise calculated   </td>
         <td>Two of the other types joined with an "=".</td>
         <td>
-            @type_of_tree="Oak"
+            `@type_of_tree="Oak"`
         </td>
     </tr>
 <table>
