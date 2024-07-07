@@ -35,14 +35,32 @@ The scan part of the path starts with '$' to indicate the root, meaning the file
 - `[1+3-8]` means line 1 and lines 3 through eight
 
 # Matching
-The match part is also bracketed. The rules are:
+The match part is also bracketed. A match part component is one of several types:
+
+| Type      | Returns       | Matches       | Description                                           |
+-----------------------------------------------------------------------------------------------------
+| term      | Value         | True          | A quoted string or date, optionally quoted number, or |
+                                              regex. Regex features are limited. A regex is wrapped
+                                              in "/" characters.
+| function  | Calculated    | Calculated    | A function name followed by parentheses. Functions    |
+                                              can contain terms, variables, headers and other
+                                              functions. Some functions take a specific or
+                                              unlimited number of types as arguments.
+| variable  | Value         | Existence     | An @ followed by a name. Variables can be entries in  |
+                                              a named dict.
+| header    | Value         | Existence     | # followed by a name or integer. The name references  |
+                                              a value in line 0, the header row. A number
+                                              references a column by the 0-based columns order.
+| equality  | Calculated    | Calculated    | Two of the other types joined with an "=".            |
+
+The rules are:
 - `#animal` indicates a header named "animal". Headers are the values in the 0th line.
 - `#2` means the 3rd column, counting from 0
 - A column reference with no equals or function is an existence test
 - Functions and column references are ANDed together
 - `@people` denotes a variable named "people"
 - Functions can contain functions, equality tests, and/or literals
-- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is not fully baked and is off by default. The `add()`, `subtract()`, `multiply()` and `divide()` functions should be preferred.
+- Limited arithmetic is available. For e.g. `@number_of_cars = 2 + count() + @people`. Four operations are supported: `+`, `-`, `*`, and `/`. Arithmetic is not fully baked and is turned off by default. The `add()`, `subtract()`, `multiply()` and `divide()` functions should be preferred.
 
 The match functions are:
 
