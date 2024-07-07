@@ -1,9 +1,8 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 
+
 class Variable(Matchable):
-
-
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name}"""
 
@@ -11,5 +10,3 @@ class Variable(Matchable):
         if not self.value:
             self.value = self.matcher.get_variable(self.name)
         return self.value
-
-

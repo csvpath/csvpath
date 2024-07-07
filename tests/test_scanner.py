@@ -1,15 +1,10 @@
 import unittest
-import os
-import shutil
-import logging
-import inspect
-from csvpath.scanning.scanner import Scanner
 from csvpath.csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
-class TestScanner(unittest.TestCase):
 
+class TestScanner(unittest.TestCase):
     def test_scan_all(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[*]")
@@ -20,7 +15,7 @@ class TestScanner(unittest.TestCase):
         assert scanner.all_lines
         assert len(scanner.these) == 0
         # test line numbers included
-        for i in range(0,8):
+        for i in range(0, 8):
             assert path.includes(i)
         # test lines returned
         for i, ln in enumerate(path.next()):
@@ -83,8 +78,6 @@ class TestScanner(unittest.TestCase):
             elif i == 4:
                 assert ln[0][0:4] == "Slug"
         assert i == 5
-
-
 
     def test_scan_one_line(self):
         path = CsvPath()
@@ -187,7 +180,6 @@ class TestScanner(unittest.TestCase):
                 assert ln[0][0:3] == "Bug"
         assert i == 2
 
-
     def test_scan_from_to_plus_from_to(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[1-3+6-7]")
@@ -219,8 +211,3 @@ class TestScanner(unittest.TestCase):
             elif i == 4:
                 assert ln[0][0:4] == "Slug"
         assert i == 4
-
-
-
-
-

@@ -2,8 +2,8 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 
-class Subtract(Function):
 
+class Subtract(Function):
     def to_value(self, *, skip=[]) -> Any:
         if not self.value:
             if len(self.children) != 1:
@@ -26,13 +26,3 @@ class Subtract(Function):
 
     def matches(self, *, skip=[]) -> bool:
         return True
-
-
-
-
-
-
-
-
-
-

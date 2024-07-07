@@ -1,13 +1,8 @@
 import unittest
-import os
-import shutil
-import logging
-import inspect
 from csvpath.csvpath import CsvPath
 
+
 class TestSegments(unittest.TestCase):
-
-
     def test_segments_3(self):
         t1 = "$test1[*]"
         t2 = "[test2]"
@@ -46,7 +41,3 @@ class TestSegments(unittest.TestCase):
         assert scan == t1
         assert not match
         assert not modify
-
-
-
-

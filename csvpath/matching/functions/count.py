@@ -1,8 +1,8 @@
 from typing import Any
 from csvpath.matching.functions.function import Function
 
-class Count(Function):
 
+class Count(Function):
     def print(self, msg):
         if self.matcher:
             self.matcher.print(msg)
@@ -14,9 +14,11 @@ class Count(Function):
             if self._function_or_equality:
                 self.value = self._get_contained_value(skip=skip)
             else:
-                self.value = self._get_match_count() + 1   # we're eager to +1 because we don't
-                                                           # contribute to if there's a match
-        return self.value                                  # or not. we have to act as if.
+                self.value = (
+                    self._get_match_count() + 1
+                )  # we're eager to +1 because we don't
+                # contribute to if there's a match
+        return self.value  # or not. we have to act as if.
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:
@@ -40,9 +42,3 @@ class Count(Function):
             cnt += 1
         self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
         return cnt
-
-
-
-
-
-

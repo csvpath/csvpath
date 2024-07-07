@@ -21,90 +21,88 @@ from csvpath.matching.functions.no import No
 from csvpath.matching.functions.minf import Min, Max, Average
 from csvpath.matching.functions.end import End
 from csvpath.matching.functions.random import Random
-from csvpath.matching.functions.length import Length
 from csvpath.matching.functions.add import Add
 from csvpath.matching.functions.subtract import Subtract
 from csvpath.matching.functions.multiply import Multiply
 from csvpath.matching.functions.divide import Divide
 
+
 class UnknownFunctionException(Exception):
     pass
+
 
 class InvalidChildException(Exception):
     pass
 
-class FunctionFactory:
 
+class FunctionFactory:
     @classmethod
-    def get_function(cls, matcher, *, name:str, child:Matchable=None ) -> Function:
+    def get_function(  # noqa: C901
+        cls, matcher, *, name: str, child: Matchable = None
+    ) -> Function:
         if child and not isinstance(child, Matchable):
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
-        if name == 'count':
-            #count()                # number of matches (assuming the current also matches)
-            #count(value)           # p[3] is equality or function to track number of times seen
+        if name == "count":
             f = Count(matcher, name, child)
-        elif name == 'length':
-            #(value)                # returns the length of the value
+        elif name == "length":
             f = Length(matcher, name, child)
-        elif name == 'regex':
+        elif name == "regex":
             f = Regex(matcher, name, child)
-        elif name == 'not':
+        elif name == "not":
             f = Not(matcher, name, child)
-        elif name == 'now':         # a date
+        elif name == "now":
             f = Now(matcher, name, child)
-        elif name == 'in':
+        elif name == "in":
             f = In(matcher, name, child)
-        elif name == 'concat':
+        elif name == "concat":
             f = Concat(matcher, name, child)
-        elif name == 'lower':
+        elif name == "lower":
             f = Lower(matcher, name, child)
-        elif name == 'upper':
+        elif name == "upper":
             f = Upper(matcher, name, child)
-        elif name == 'percent':
+        elif name == "percent":
             f = Percent(matcher, name, child)
-        elif name == 'below':
+        elif name == "below":
             f = Below(matcher, name, child)
-        elif name == 'above':
+        elif name == "above":
             f = Above(matcher, name, child)
-        elif name == 'first':
+        elif name == "first":
             f = First(matcher, name, child)
-        elif name == 'count_lines':
+        elif name == "count_lines":
             f = CountLines(matcher, name, child)
-        elif name == 'count_scans':
+        elif name == "count_scans":
             f = CountScans(matcher, name, child)
-        elif name == 'isinstance':
+        elif name == "isinstance":
             f = IsInstance(matcher, name, child)
-        elif name == 'or':
+        elif name == "or":
             f = Or(matcher, name, child)
-        elif name == 'no':
+        elif name == "no":
             f = No(matcher, name, child)
-        elif name == 'max':
+        elif name == "max":
             f = Max(matcher, name, child)
-        elif name == 'min':
+        elif name == "min":
             f = Min(matcher, name, child)
-        elif name == 'average':
+        elif name == "average":
             f = Average(matcher, name, child, "average")
-        elif name == 'median':
+        elif name == "median":
             f = Average(matcher, name, child, "median")
-        elif name == 'random':
+        elif name == "random":
             f = Random(matcher, name, child)
-        elif name == 'end':
+        elif name == "end":
             f = End(matcher, name, child)
-        elif name == 'length':
+        elif name == "length":
             f = Length(matcher, name, child)
-        elif name == 'add':
+        elif name == "add":
             f = Add(matcher, name, child)
-        elif name == 'subtract':
+        elif name == "subtract":
             f = Subtract(matcher, name, child)
-        elif name == 'multiply':
+        elif name == "multiply":
             f = Multiply(matcher, name, child)
-        elif name == 'divide':
+        elif name == "divide":
             f = Divide(matcher, name, child)
-
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
             child.parent = f
         return f
-

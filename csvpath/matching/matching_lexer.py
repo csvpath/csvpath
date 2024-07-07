@@ -1,47 +1,49 @@
 import ply.lex as lex
 
+
 class MatchingLexer(object):
     tokens = [
-                'DATE',
-                'NAME',
-                'NUMBER',
-                'EQUALS',
-                'LEFT_BRACKET',
-                'RIGHT_BRACKET',
-                'OPEN_PAREN',
-                'CLOSE_PAREN',
-                'HEADER_SYM',
-                'VAR_SYM',
-                'REGEX',
-                'QUOTE'
-             ]
+        "DATE",
+        "NAME",
+        "NUMBER",
+        "EQUALS",
+        "LEFT_BRACKET",
+        "RIGHT_BRACKET",
+        "OPEN_PAREN",
+        "CLOSE_PAREN",
+        "HEADER_SYM",
+        "VAR_SYM",
+        "REGEX",
+        "QUOTE",
+    ]
 
-    t_ignore = ' \t\n\r'
+    t_ignore = " \t\n\r"
     t_QUOTE = r'"'
-    t_OPEN_PAREN = r'\('
-    t_CLOSE_PAREN = r'\)'
-    t_HEADER_SYM = r'\#'
-    t_EQUALS = r'[=><,\*\+\-]'
-    t_VAR_SYM = r'@'
-    t_LEFT_BRACKET = r'\['
-    t_RIGHT_BRACKET = r'\]'
-    t_NAME = r'[\$A-Za-z0-9\.%_|\s \-]+'
-    t_REGEX = r'/(?:[^/\\]|\\.)*/'
-
+    t_OPEN_PAREN = r"\("
+    t_CLOSE_PAREN = r"\)"
+    t_HEADER_SYM = r"\#"
+    t_EQUALS = r"[=><,\*\+\-]"
+    t_VAR_SYM = r"@"
+    t_LEFT_BRACKET = r"\["
+    t_RIGHT_BRACKET = r"\]"
+    t_NAME = r"[\$A-Za-z0-9\.%_|\s \-]+"
+    t_REGEX = r"/(?:[^/\\]|\\.)*/"
 
     def t_DATE(self, t):
-        r'\d+[/-]\d+[/-]\d+'
+        r"\d+[/-]\d+[/-]\d+"
         return t
 
     def t_NUMBER(self, t):
-        r'\d*\.?\d+'
+        r"\d*\.?\d+"
         try:
             t.value = int(t.value)
         except ValueError:
             try:
                 t.value = float(t.value)
             except ValueError:
-                raise Exception(f"matching_lexer.t_NUMBER: cannot convert {t}: {t.value}")
+                raise Exception(
+                    f"matching_lexer.t_NUMBER: cannot convert {t}: {t.value}"
+                )
         return t
 
     def t_error(self, t):

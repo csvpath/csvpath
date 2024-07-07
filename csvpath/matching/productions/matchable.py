@@ -1,15 +1,15 @@
 from typing import Any
 from csvpath.matching.expression_utility import ExpressionUtility
 
-class Matchable:
 
-    def __init__(self, matcher, *, value:Any=None, name:str=None):
+class Matchable:
+    def __init__(self, matcher, *, value: Any = None, name: str = None):
         self.parent = None
         self.children = []
         self.matcher = matcher
         self.value = value
         self.name = name
-        self._id:str = None
+        self._id: str = None
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
 
@@ -17,14 +17,13 @@ class Matchable:
         return f"""{self.__class__}"""
 
     def matches(self, *, skip=[]) -> bool:
-        return True # leave this for now for testing
+        return True  # leave this for now for testing
 
     def to_value(self, *, skip=[]) -> Any:
         return None
 
-    def index_of_child(self, o) :
+    def index_of_child(self, o):
         return self.children.index(o)
-
 
     def set_parent(self, parent):
         self.parent = parent
@@ -38,8 +37,5 @@ class Matchable:
     def get_id(self, child=None):
         if not self._id:
             thing = self if not child else child
-            self._id = ExpressionUtility.get_id( thing=thing )
+            self._id = ExpressionUtility.get_id(thing=thing)
         return self._id
-
-
-

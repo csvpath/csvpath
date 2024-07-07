@@ -2,8 +2,8 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 
-class Add(Function):
 
+class Add(Function):
     def to_value(self, *, skip=[]) -> Any:
         if not self.value:
             if len(self.children) != 1:
@@ -22,13 +22,3 @@ class Add(Function):
 
     def matches(self, *, skip=[]) -> bool:
         return True
-
-
-
-
-
-
-
-
-
-

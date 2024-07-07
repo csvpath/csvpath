@@ -1,9 +1,8 @@
 from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
-import datetime
+
 
 class Percent(Function):
-
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
@@ -23,13 +22,8 @@ class Percent(Function):
             count = self.matcher.csvpath.current_match_count()
         total = self.matcher.csvpath.get_total_lines()
         value = count / total
-        #print(f"Percent.to_value: count/total: {count}/{total} = {value}")
         return value
 
-    def matches(self,*, skip=[]) -> bool:
+    def matches(self, *, skip=[]) -> bool:
         v = self.to_value(skip=skip)
         return v is not None
-
-
-
-

@@ -2,8 +2,8 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 
-class Divide(Function):
 
+class Divide(Function):
     def to_value(self, *, skip=[]) -> Any:
         if not self.value:
             if len(self.children) != 1:
@@ -19,8 +19,8 @@ class Divide(Function):
                 if i == 0:
                     ret = v
                 else:
-                    if ret == float('nan') or v == 0:
-                        ret = float('nan')
+                    if ret == float("nan") or v == 0:
+                        ret = float("nan")
                     else:
                         ret = ret / v
             self.value = ret
@@ -28,13 +28,3 @@ class Divide(Function):
 
     def matches(self, *, skip=[]) -> bool:
         return True
-
-
-
-
-
-
-
-
-
-

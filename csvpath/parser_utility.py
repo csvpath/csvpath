@@ -1,23 +1,27 @@
 from ply.yacc import YaccProduction
 
-class ParserUtility:
 
+class ParserUtility:
     def __init__(self, quiet=True):
         self._quiet = quiet
 
-    def error(self, parser, p:YaccProduction) -> None:
+    def error(self, parser, p: YaccProduction) -> None:
         if self._quiet and False:
             return
-        #print(f"ParserUtility.error: {p}")
+        # print(f"ParserUtility.error: {p}")
         if p:
-            print(f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}")
+            print(
+                f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}"
+            )
             print(f"unexpected token: {p.value}")
             stack = parser.symstack
             print(f"symbol stack: {stack}")
         else:
             print("syntax error at EOF")
 
-    def print_production(self, p:YaccProduction, label:str=None, override=True) -> None:
+    def print_production(
+        self, p: YaccProduction, label: str = None, override=True
+    ) -> None:
         if self._quiet and not override:
             return
         if label:
@@ -33,5 +37,3 @@ class ParserUtility:
         print(f"Enumerate {p}: {message}:")
         for i, _ in enumerate(p):
             print(f"   p[{i}]: {_}")
-
-

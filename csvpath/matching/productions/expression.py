@@ -1,8 +1,7 @@
-from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 
-class Expression(Matchable):
 
+class Expression(Matchable):
     def matches(self, *, skip=[]) -> bool:
         if not skip:
             skip = []
@@ -12,8 +11,6 @@ class Expression(Matchable):
             ret = True
             for i, child in enumerate(self.children):
                 if not child.matches(skip=skip):
-                    ret=False
+                    ret = False
             self.value = ret
         return self.value
-
-

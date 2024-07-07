@@ -2,8 +2,8 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
 
-class Or(Function):
 
+class Or(Function):
     def to_value(self, *, skip=[]) -> Any:
         return self.matches(skip=skip)
 
@@ -26,12 +26,3 @@ class Or(Function):
                     ret = True
             self.value = ret
         return self.value
-
-
-
-
-
-
-
-
-
