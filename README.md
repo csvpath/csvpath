@@ -19,9 +19,9 @@ CsvPath paths have two parts, scanning and matching. For usage, see the unit tes
     print(f"path vars: {path.variables}")
 
 This scanning and matching path says:
-- open test.csv
-- scan lines 5 through 25
-- match the second time we see a line where the first column equals "Frog" set the variable called  "lastname" to "Bats"
+- Open test.csv
+- Scan lines 5 through 25
+- Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
 
 # Scanning
 The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
