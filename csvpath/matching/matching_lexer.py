@@ -7,6 +7,8 @@ class MatchingLexer(object):
         "NAME",
         "NUMBER",
         "EQUALS",
+        "OPERATION",
+        "ASSIGNMENT",
         "LEFT_BRACKET",
         "RIGHT_BRACKET",
         "OPEN_PAREN",
@@ -22,7 +24,9 @@ class MatchingLexer(object):
     t_OPEN_PAREN = r"\("
     t_CLOSE_PAREN = r"\)"
     t_HEADER_SYM = r"\#"
-    t_EQUALS = r"[=><,\*\+\-]"
+    t_EQUALS = r"=="
+    t_OPERATION = r"[><,\*\+\-]"
+    t_ASSIGNMENT = r"="
     t_VAR_SYM = r"@"
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"

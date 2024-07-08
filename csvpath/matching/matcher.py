@@ -118,7 +118,7 @@ class Matcher:
 
     def p_expression(self, p):
         """expression : function
-        | equality
+        | assignment_or_equality
         | header"""
         e = Expression(self)
         e.add_child(p[1])
@@ -138,19 +138,45 @@ class Matcher:
         ParserUtility.enumerate_p("IN p_function", p)
         p[0] = f
 
+    def p_assignment_or_equality(self, p):
+        """assignment_or_equality : equality
+        | assignment
+        """
+        p[0] = p[1]
+
     def p_equality(self, p):
-        """equality : function EQUALS term
-        | function EQUALS function
-        | function EQUALS var_or_header
-        | var_or_header EQUALS function
-        | var_or_header EQUALS term
-        | var_or_header EQUALS var_or_header
-        | term EQUALS var_or_header
-        | term EQUALS term
-        | term EQUALS function
-        | equality EQUALS equality
-        | equality EQUALS term
-        | equality EQUALS function
+        """
+        equality : function op term
+                 | function op function
+                 | function op var_or_header
+                 | var_or_header op function
+                 | var_or_header op term
+                 | var_or_header op var_or_header
+                 | term op var_or_header
+                 | term op term
+                 | term op function
+                 | equality op equality
+                 | equality op term
+                 | equality op function
+        """
+        e = Equality(self)
+        e.set_left(p[1])
+        e.set_operation(p[2])
+        e.set_right(p[3])
+        p[0] = e
+
+    def p_op(self, p):
+        """op : EQUALS
+        | OPERATION
+        """
+        p[0] = p[1]
+
+    def p_assignment(self, p):
+        """
+        assignment : var ASSIGNMENT var
+                 | var ASSIGNMENT term
+                 | var ASSIGNMENT function
+                 | var ASSIGNMENT header
         """
         e = Equality(self)
         e.set_left(p[1])

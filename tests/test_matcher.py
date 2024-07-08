@@ -16,7 +16,9 @@ class TestMatcher(unittest.TestCase):
     # ============= JUST SYNTAX MOSTLY ================
 
     def test_match_one_header(self):
-        matcher = Matcher(csvpath=None, data='[#2="alert"]', line=LINE, headers=HEADERS)
+        matcher = Matcher(
+            csvpath=None, data='[#2=="alert"]', line=LINE, headers=HEADERS
+        )
         print(f"{matcher}")
         assert len(matcher.expressions) == 1
         print(f"test_match_one_header: 0th: {matcher.expressions[0]}")
@@ -67,33 +69,33 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_regex_function(self):
         matcher = Matcher(
-            csvpath=None, data="[regex(#2 = /a.+ert/)]", line=LINE, headers=HEADERS
+            csvpath=None, data="[regex(#2 == /a.+ert/)]", line=LINE, headers=HEADERS
         )
         print(f"{matcher}")
         assert matcher.matches()
 
     def test_match_count_function(self):
-        matcher = Matcher(csvpath=None, data="[count()=1]", line=LINE, headers=HEADERS)
+        matcher = Matcher(csvpath=None, data="[count()==1]", line=LINE, headers=HEADERS)
         print(f"{matcher}")
         assert matcher.matches(syntax_only=True)
 
     def test_match_function_arg(self):
         matcher = Matcher(
-            csvpath=None, data="[count(#aheader=10)]", line=LINE, headers=HEADERS
+            csvpath=None, data="[count(#aheader==10)]", line=LINE, headers=HEADERS
         )
         print(f"{matcher}")
         assert matcher.matches(syntax_only=True)
 
     def test_match_nested_function_arg(self):
         matcher = Matcher(
-            csvpath=None, data="[count(not(#aheader=10))]", line=LINE, headers=HEADERS
+            csvpath=None, data="[count(not(#aheader==10))]", line=LINE, headers=HEADERS
         )
         print(f"{matcher}")
         assert matcher.matches(syntax_only=True)
 
     def test_match_twice(self):
         matcher = Matcher(
-            csvpath=None, data='[count()=1 #abc="fish"]', line=LINE, headers=HEADERS
+            csvpath=None, data='[count()==1 #abc=="fish"]', line=LINE, headers=HEADERS
         )
         print(f"{matcher}")
         assert matcher.matches(syntax_only=True)
@@ -101,7 +103,7 @@ class TestMatcher(unittest.TestCase):
     def test_match_thrice(self):
         matcher = Matcher(
             csvpath=None,
-            data='[count()=1 #abc="fish" not(#crows="tired")]',
+            data='[count()==1 #abc=="fish" not(#crows=="tired")]',
             line=LINE,
             headers=HEADERS,
         )
@@ -112,7 +114,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_header_includes(self):
         path = CsvPath()
-        path.parse(f'${PATH}[2-4][#0="Frog"]')
+        path.parse(f'${PATH}[2-4][#0=="Frog"]')
         # test properties
         headers = path.headers
         print(f"test_match_header_includes: headers: {headers}")
@@ -123,7 +125,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_a_header_match(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2-4][#0="Frog"]')
+        scanner = path.parse(f'${PATH}[2-4][#0=="Frog"]')
         # test properties
         print(f"{scanner}")
         assert scanner.from_line == 2
@@ -146,7 +148,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_miss_because_header(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2-4][#0="Frog" #1="Kermit"]')
+        scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #1=="Kermit"]')
         # test properties
         print(f"{scanner}")
         assert scanner.from_line == 2
@@ -167,7 +169,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_two_headers_count(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2-4][#0="Frog" #lastname="Bats" count()=2]')
+        scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #lastname=="Bats" count()==2]')
         # test properties
         print(f"{scanner}")
         assert scanner.from_line == 2
@@ -190,7 +192,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_two_headers_wrong_count(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[2-4][#0="Frog" #lastname="Bats" count()=3]')
+        scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #lastname=="Bats" count()==3]')
         # test properties
         print(f"{scanner}")
         assert scanner.from_line == 2
@@ -211,7 +213,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_string_with_space(self):
         path = CsvPath()
-        scanner = path.parse(f'${PATH}[*][#2="sniffle sniffle..."]')
+        scanner = path.parse(f'${PATH}[*][#2=="sniffle sniffle..."]')
         # test properties
         print(f"{scanner}")
         # test lines returned

@@ -19,7 +19,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_count_equality(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][count(#lastname="Bat")=7]')
+        path.parse(f'${PATH}[*][count(#lastname=="Bat")==7]')
         lines = path.collect()
         print(f"test_function_count_equality: lines: {lines}")
         assert len(lines) == 1
@@ -37,7 +37,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_count_header_in(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants"))=2]')
+        path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants"))==2]')
         lines = path.collect()
         print(f"test_function_count_in: lines: {len(lines)}")
         for line in lines:
@@ -47,7 +47,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_percent(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][@p = percent("match") #lastname="Bat"]')
+        path.parse(f'${PATH}[*][@p = percent("match") #lastname=="Bat"]')
         lines = path.collect()
         print(f"test_function_count_in: lines: {len(lines)}")
         for line in lines:
@@ -58,7 +58,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_below_percent(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][@p = percent("match")  below(@p,.35) #lastname="Bat"]')
+        path.parse(f'${PATH}[*][@p = percent("match")  below(@p,.35) #lastname=="Bat"]')
         lines = path.collect()
         print(f"test_function_below_percent: lines: {len(lines)}")
         for line in lines:
@@ -110,7 +110,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_above_percent(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][@p = percent("line")  above(@p,.35) #lastname="Bat"]')
+        path.parse(f'${PATH}[*][@p=percent("line")  above(@p,.35) #lastname=="Bat"]')
         lines = path.collect()
         print(f"test_function_above_percent: lines: {len(lines)}")
         for line in lines:
@@ -134,7 +134,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_count_lines(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][ #firstname="David" @david=count_lines() ]')
+        path.parse(f'${PATH}[*][ #firstname=="David" @david=count_lines() ]')
         lines = path.collect()
         assert len(lines) == 1
         print(f"test_function_count_in: path vars: {path.variables}")
@@ -143,7 +143,7 @@ class TestFunctions(unittest.TestCase):
     def test_function_count_scans(self):
         path = CsvPath()
         path.parse(
-            f'${PATH}[*][ #firstname="Frog" @frogs_seen=count() @scanned_for_frogs=count_scans()  ]'
+            f'${PATH}[*][ #firstname=="Frog" @frogs_seen=count() @scanned_for_frogs=count_scans()  ]'
         )
         lines = path.collect()
         assert len(lines) == 2
@@ -159,7 +159,7 @@ class TestFunctions(unittest.TestCase):
         path = CsvPath()
         # this returns the first two lines because first collects
         # the first instance of every value matched, so 0 and 1 for False and True
-        path.parse(f"${PATH}[*][ first(count()=1)]")
+        path.parse(f"${PATH}[*][ first(count()==1)]")
         lines = path.collect()
         print(f"test_function_first_two_lines: path vars: {path.variables}")
         assert len(lines) == 2
@@ -170,7 +170,7 @@ class TestFunctions(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                count(#firstname="Frog")=1
+                count(#firstname=="Frog")==1
                 @say=#say
                 @line=count_lines()
             ]"""
@@ -188,7 +188,7 @@ class TestFunctions(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                or(#firstname="Fish", #lastname="Kermit", #say="oozeeee...")
+                or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
                 @say=#say
                 @line=count_lines()
 
@@ -419,7 +419,7 @@ class TestFunctions(unittest.TestCase):
             ${PATH}[*]
             [
                 @interesting = count(
-                    or(#firstname="Fish", #lastname="Kermit", #say="oozeeee...")
+                    or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
                 )
                 no()
             ]"""
@@ -628,14 +628,14 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_match_length(self):
         path = CsvPath()
-        path.parse(f"${PATH}[*][length(#lastname)=3]")
+        path.parse(f"${PATH}[*][length(#lastname)==3]")
         lines = path.collect()
         print(f"test_function_match_length: lines: {len(lines)}")
         assert len(lines) == 7
 
     def test_function_not(self):
         path = CsvPath()
-        path.parse(f"${PATH}[*][not(length(#lastname)=3)]")
+        path.parse(f"${PATH}[*][not(length(#lastname)==3)]")
         lines = path.collect()
         print(f"test_function_not: lines: {len(lines)}")
         assert len(lines) == 2
@@ -643,7 +643,7 @@ class TestFunctions(unittest.TestCase):
     def test_function_now(self):
         path = CsvPath()
         # obviously this will break and need updating 1x a year
-        path.parse(f'${PATH}[*][now("%Y") = "2024"]')
+        path.parse(f'${PATH}[*][now("%Y") == "2024"]')
         lines = path.collect()
         print(f"test_function_now: lines: {len(lines)}")
         assert len(lines) == 9
@@ -657,7 +657,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_concat(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][ #0 = concat("B" , "ird") ]')
+        path.parse(f'${PATH}[*][ #0 == concat("B" , "ird") ]')
         lines = path.collect()
         print(f"test_function_concat: lines: {len(lines)}")
         assert len(lines) == 1

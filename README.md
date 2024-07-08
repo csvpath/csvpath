@@ -12,7 +12,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 CsvPath paths have two parts, scanning and matching. For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
     path = CsvPath(delimiter=",")
-    path.parse("$test.csv[5-25][#0="Frog" #lastname="Bats" count()=2]")
+    path.parse("$test.csv[5-25][#0=="Frog" @lastname=="Bats" count()==2]")
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
 
@@ -21,7 +21,7 @@ CsvPath paths have two parts, scanning and matching. For usage, see the unit tes
 This scanning and matching path says:
 - open test.csv
 - scan lines 5 through 25
-- match the second time we see a line where the first column equals "Frog" and the column called  "lastname" equals "Bats"
+- match the second time we see a line where the first column equals "Frog" set the variable called  "lastname" to "Bats"
 
 # Scanning
 The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
@@ -61,7 +61,7 @@ components that are ANDed together. A match component is one of several types:
 contain terms, variables, headers and other  functions. Some functions
 take a specific or  unlimited number of types as arguments.     </td>
         <td>
-            <li/> `not(count()=2)`
+            <li/> `not(count()==2)`
         </td>
     </tr>
     <tr>
@@ -70,15 +70,13 @@ take a specific or  unlimited number of types as arguments.     </td>
         <td>True/False when value tested. True when set, True/False existence when used alone</td>
         <td>An @ followed by a name. A variable is
             set or tested depending on the usage. By itself, it is an existence test. When used as
-            the left hand side of an equality not contained by another type its value is set.
-            When it is used on the right hand side of an "=" it is an equality test. A function
-            may handle variables in different ways, but usually they are an argument that supplies an
-            input to the function.
+            the left hand side of an "=" its value is set.
+            When it is used on either side of an "==" it is an equality test.
         <td>
             <li/> `@weather="cloudy"`
-            <li/> `count(@weather="sunny")`
+            <li/> `count(@weather=="sunny")`
             <li/> `@weather`
-            <li/> `#summer=@weather`
+            <li/> `#summer==@weather`
 
 #1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is an existence test. #4 is a test.
         </td>
@@ -105,12 +103,11 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
 <table>
 
-    [ #common_name #0="field" @tail=end() not(in(@tail, 'short|medium')) ]
+    [ #common_name #0=="field" @tail=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
-- `#common_name` indicates a header named "common_name". Headers are the values in the 0th line.
+- `#common_name` indicates a header named "common_name". Headers are the values in the 0th line. This component of the match is an existence test.
 - `#2` means the 3rd column, counting from 0
-- A column reference with no equals or function is an existence test
 - Functions and column references are ANDed together
 - `@tail` creates a variable named "tail" and sets it to the value of the last column
 - Functions can contain functions, equality tests, and/or literals

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 from csvpath.matching.expression_utility import ExpressionUtility
 
 
@@ -22,19 +22,19 @@ class Matchable:
     def to_value(self, *, skip=[]) -> Any:
         return None
 
-    def index_of_child(self, o):
+    def index_of_child(self, o) -> int:
         return self.children.index(o)
 
-    def set_parent(self, parent):
+    def set_parent(self, parent: Self) -> None:
         self.parent = parent
 
-    def add_child(self, child):
+    def add_child(self, child: Self) -> None:
         if child:
             child.set_parent(self)
             if child not in self.children:
                 self.children.append(child)
 
-    def get_id(self, child=None):
+    def get_id(self, child: Self = None) -> str:
         if not self._id:
             thing = self if not child else child
             self._id = ExpressionUtility.get_id(thing=thing)
