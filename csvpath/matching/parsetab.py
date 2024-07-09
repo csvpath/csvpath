@@ -5,7 +5,7 @@ _tabversion = "3.10"
 
 _lr_method = "LALR"
 
-_lr_signature = "match_partASSIGNMENT CLOSE_PAREN DATE EQUALS HEADER_SYM LEFT_BRACKET NAME NUMBER OPEN_PAREN OPERATION QUOTE REGEX RIGHT_BRACKET VAR_SYMmatch_part : LEFT_BRACKET expression RIGHT_BRACKET\n        | LEFT_BRACKET expressions RIGHT_BRACKET\n        expressions : expression\n        | expressions expression\n        expression : function\n        | assignment_or_equality\n        | headerfunction : NAME OPEN_PAREN CLOSE_PAREN\n        | NAME OPEN_PAREN equality CLOSE_PAREN\n        | NAME OPEN_PAREN function CLOSE_PAREN\n        | NAME OPEN_PAREN var_or_header CLOSE_PAREN\n        | NAME OPEN_PAREN term CLOSE_PAREN\n         assignment_or_equality : equality\n                                   | assignment\n        \n        equality : function op term\n                 | function op function\n                 | function op var_or_header\n                 | var_or_header op function\n                 | var_or_header op term\n                 | var_or_header op var_or_header\n                 | term op var_or_header\n                 | term op term\n                 | term op function\n                 | equality op equality\n                 | equality op term\n                 | equality op function\n         op : EQUALS\n               | OPERATION\n        \n        assignment : var ASSIGNMENT var\n                 | var ASSIGNMENT term\n                 | var ASSIGNMENT function\n                 | var ASSIGNMENT header\n        term : QUOTE NAME QUOTE\n        | QUOTE DATE QUOTE\n        | QUOTE NUMBER QUOTE\n        | NUMBER\n        | REGEX\n        var_or_header : header\n        | var\n        var : VAR_SYM NAMEheader : HEADER_SYM NAME\n        | HEADER_SYM NUMBER\n        "
+_lr_signature = "match_partASSIGNMENT CLOSE_PAREN DATE EQUALS HEADER_SYM LEFT_BRACKET NAME NUMBER OPEN_PAREN OPERATION QUOTE REGEX RIGHT_BRACKET VAR_SYMmatch_part : LEFT_BRACKET expression RIGHT_BRACKET\n        | LEFT_BRACKET expressions RIGHT_BRACKET\n        expressions : expression\n        | expressions expression\n        expression : function\n        | assignment_or_equality\n        | headerfunction : NAME OPEN_PAREN CLOSE_PAREN\n        | NAME OPEN_PAREN equality CLOSE_PAREN\n        | NAME OPEN_PAREN function CLOSE_PAREN\n        | NAME OPEN_PAREN var_or_header CLOSE_PAREN\n        | NAME OPEN_PAREN term CLOSE_PAREN\n        assignment_or_equality : equality\n        | assignment\n        \n        equality : function op term\n                 | function op function\n                 | function op var_or_header\n                 | var_or_header op function\n                 | var_or_header op term\n                 | var_or_header op var_or_header\n                 | term op var_or_header\n                 | term op term\n                 | term op function\n                 | equality op equality\n                 | equality op term\n                 | equality op function\n        op : EQUALS\n        | OPERATION\n        \n        assignment : var ASSIGNMENT var\n                 | var ASSIGNMENT term\n                 | var ASSIGNMENT function\n                 | var ASSIGNMENT header\n        term : QUOTE NAME QUOTE\n        | QUOTE DATE QUOTE\n        | QUOTE NUMBER QUOTE\n        | NUMBER\n        | REGEX\n        var_or_header : header\n        | var\n        var : VAR_SYM NAMEheader : HEADER_SYM NAME\n        | HEADER_SYM NUMBER\n        "
 
 _lr_action_items = {
     "LEFT_BRACKET": (
@@ -1407,21 +1407,21 @@ _lr_productions = [
         "matcher.py",
         179,
     ),
-    ("term -> QUOTE NAME QUOTE", "term", 3, "p_term", "matcher.py", 191),
-    ("term -> QUOTE DATE QUOTE", "term", 3, "p_term", "matcher.py", 192),
-    ("term -> QUOTE NUMBER QUOTE", "term", 3, "p_term", "matcher.py", 193),
-    ("term -> NUMBER", "term", 1, "p_term", "matcher.py", 194),
-    ("term -> REGEX", "term", 1, "p_term", "matcher.py", 195),
+    ("term -> QUOTE NAME QUOTE", "term", 3, "p_term", "matcher.py", 188),
+    ("term -> QUOTE DATE QUOTE", "term", 3, "p_term", "matcher.py", 189),
+    ("term -> QUOTE NUMBER QUOTE", "term", 3, "p_term", "matcher.py", 190),
+    ("term -> NUMBER", "term", 1, "p_term", "matcher.py", 191),
+    ("term -> REGEX", "term", 1, "p_term", "matcher.py", 192),
     (
         "var_or_header -> header",
         "var_or_header",
         1,
         "p_var_or_header",
         "matcher.py",
-        203,
+        200,
     ),
-    ("var_or_header -> var", "var_or_header", 1, "p_var_or_header", "matcher.py", 204),
-    ("var -> VAR_SYM NAME", "var", 2, "p_var", "matcher.py", 209),
-    ("header -> HEADER_SYM NAME", "header", 2, "p_header", "matcher.py", 214),
-    ("header -> HEADER_SYM NUMBER", "header", 2, "p_header", "matcher.py", 215),
+    ("var_or_header -> var", "var_or_header", 1, "p_var_or_header", "matcher.py", 201),
+    ("var -> VAR_SYM NAME", "var", 2, "p_var", "matcher.py", 206),
+    ("header -> HEADER_SYM NAME", "header", 2, "p_header", "matcher.py", 211),
+    ("header -> HEADER_SYM NUMBER", "header", 2, "p_header", "matcher.py", 212),
 ]

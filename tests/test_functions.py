@@ -411,6 +411,14 @@ class TestFunctions(unittest.TestCase):
 
         assert math.isnan(path.variables["l"])
 
+    #
+    # could we do:
+    #
+    #     @interesting.onmatch = count(...
+    #
+    # to limit if a var is set every scanned line no matter what?
+    #
+
     # set a var without matching the lines
     def test_function_count_any_match(self):
         path = CsvPath()
@@ -428,6 +436,20 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["interesting"] == 3
         assert len(lines) == 0
+
+    def test_function_every(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                every(#lastname=="Bat", 3 )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_every: path vars: {path.variables}")
+        print(f"lines: {lines}")
+        assert len(lines) == 2
 
     def test_function_end(self):
         path = CsvPath()

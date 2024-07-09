@@ -26,6 +26,7 @@ from csvpath.matching.functions.subtract import Subtract
 from csvpath.matching.functions.multiply import Multiply
 from csvpath.matching.functions.divide import Divide
 from csvpath.matching.functions.tally import Tally
+from csvpath.matching.functions.every import Every
 
 
 class UnknownFunctionException(Exception):
@@ -104,6 +105,8 @@ class FunctionFactory:
             f = Divide(matcher, name, child)
         elif name == "tally":
             f = Tally(matcher, name, child)
+        elif name == "every":
+            f = Every(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

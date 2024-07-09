@@ -127,9 +127,9 @@ Most of the work of matching is done in functions. The match functions are:
 | count_scans()                 | count lines we checked for match                          | X  |
 | divide(value, value, ...)     | divides numbers                                           | X  |
 | end()                         | returns the value of the last column                      | X  |
-| every(number, value)          | match every Nth time a value is seen                      |    |
+| every(value, number)          | match every Nth time a value is seen                      | X  |
 | first(value)                  | match the first occurrence and capture line               | X  |
-| in(value, list)               | match in a list                                           | X  |
+| in(value, list)               | match in a pipe-delimited list                            | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
 | length(value)                 | returns the length of the value                           | X  |
@@ -138,7 +138,7 @@ Most of the work of matching is done in functions. The match functions are:
 | median(value, type)           | median value up to current "line", "scan", "match"        | X  |
 | min(value, type)              | smallest value seen up to current "line", "scan", "match" | X  |
 | multiply(value, value, ...)   | multiplies numbers                                        | X  |
-| no(value)                     | always false                                              | X  |
+| no()                          | always false                                              | X  |
 | not(value)                    | negates a value                                           | X  |
 | now(format)                   | a datetime, optionally formatted                          | X  |
 | or(value, value,...)          | match any one                                             | X  |

@@ -236,7 +236,7 @@ class CsvPath:
             self.print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
         else:
             self.print("CsvPath.set_variable: no existing value")
-        if tracking:
+        if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}
             instances = self.variables[name]
@@ -250,7 +250,7 @@ class CsvPath:
         if not name:
             raise Exception("name cannot be None")
         thevalue = None
-        if tracking:
+        if tracking is not None:
             thedict = None
             if name in self.variables:
                 thedict = self.variables[name]
