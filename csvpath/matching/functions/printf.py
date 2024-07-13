@@ -49,7 +49,33 @@ class Print(Function):
 
     def make_string(self, string: str) -> str:
         for token in Print.TOKENS:
-            string = string.replace(token, self.value_of_token(token))
+            if token == Print.TOKENS[8]:
+                string = self.handle_variables(string)
+            else:
+                string = string.replace(token, self.value_of_token(token))
+        return string
+
+    def handle_variables(self, string) -> str:
+        ret = ""
+        start = string.find(Print.TOKENS[8])
+        while start > -1:
+            varname = None
+            for _ in string[start + len(Print.TOKENS[8]) :]:
+                if _ in (" ", ",", ";", "?"):
+                    break
+                elif _ == ".":
+                    varname = ""
+                elif varname is not None:
+                    varname += _
+            if varname is None:
+                print("varname is None!!!")
+                ret = str(self.matcher.csvpath.variables)
+                string = string.replace(f"{Print.TOKENS[8]}", ret)
+            else:
+                print(f"varname is $.variables.{varname}")
+                ret = f"{self.matcher.csvpath.variables.get(varname)}"
+                string = string.replace(f"{Print.TOKENS[8]}.{varname}", ret)
+            start = string.find(Print.TOKENS[8])
         return string
 
     def value_of_token(self, token) -> str:
@@ -70,8 +96,6 @@ class Print(Function):
             ret = self.matcher.line
         elif token == Print.TOKENS[7]:
             ret = ExpressionEncoder().valued_list_to_json(self.matcher.expressions)
-        elif token == Print.TOKENS[8]:
-            ret = str(self.matcher.csvpath.variables)
         elif token == Print.TOKENS[9]:
             ret = str(self.matcher.expressions)
         elif token == Print.TOKENS[10]:

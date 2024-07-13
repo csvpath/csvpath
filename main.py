@@ -13,30 +13,25 @@ class Main:
                         [
                             @code=#statecode
                             @test=count(in(#statecode,"LA|MA|CT"))
-                            print(#statecode=="MA", " THIS IS A MATCH  $.name\n
-                                             $.delimiter \n
-                                             $.quotechar \n
-                                             $.match_count\n
-                                             $.line_count\n
-                                             $.scan_count\n
-                                             $.line\n
-                                             $.match_json\n
-                                             $.expressions\n
-                                             $.headers\n
-                                             $.scan_part\n
-                                             $.match_part\n
-                                             $.variables\n\n\n")
+                            print(no(), " THIS IS A MATCH  $.name\n
+                                             delimiter: $.delimiter \n
+                                             quotechar: $.quotechar \n
+                                             match count: $.match_count\n
+                                             line count: $.line_count\n
+                                             scan count: $.scan_count\n
+                                             headers: $.headers\n
+                                             scan part: $.scan_part\n
+                                             the test var: $.variables.test\n\n\n")
                         ]"""
 
         path = CsvPath(delimiter="|")
-        path.verbose(True)
         path.parse(pathstr)
-        matched = 0
-        for i, line in enumerate(path.next()):
-            matched += 1
-
+        print("calling next")
+        for line in path.next():
+            # print(f"line: {line}")
+            pass
+        print("done with next")
         print(f"path vars: {path.variables}")
-        print(f"matched: {matched}")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,8 @@ python = "^3.12"
 pytest = "^8.2.2"
 ply = "^3.11"
 python-dateutil = "^2.9.0.post0"
+polars = "^1.1.0"
+pandas = "^2.2.2"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -30,7 +30,6 @@ class Repl:
 
     def do_path(self, pathstr):
         path = CsvPath(delimiter=",")
-        path.verbose(True)
         path.parse(pathstr)
         for i, line in enumerate(path.next()):
             self._response(line)

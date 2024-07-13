@@ -12,6 +12,7 @@ class Matchable:
         self._id: str = None
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
+        # self.flag = matcher.next_flag()
 
     def __str__(self) -> str:
         return f"""{self.__class__}"""

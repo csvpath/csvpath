@@ -20,6 +20,9 @@ class Count(Function):
                 # contribute to if there's a match
         return self.value  # or not. we have to act as if.
 
+    def matches(self, *, skip=[]) -> bool:
+        return self.value
+
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:
             print("WARNING: no csvpath. are we testing?")
@@ -31,6 +34,8 @@ class Count(Function):
         # need to apply this count function to the contained obj's value
         #
         b = self._function_or_equality.matches(skip=skip)
+        if not b:
+            return False
         self._id = self.get_id(self._function_or_equality)
         #
         # to_value() is often going to be a bool based on matches().
@@ -38,6 +43,7 @@ class Count(Function):
         #
         tracked_value = self._function_or_equality.to_value(skip=skip)
         cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
+        # print(f"count: cnt: {cnt}, b: {b}, tracked value: {tracked_value}")
         if b:
             cnt += 1
         self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)

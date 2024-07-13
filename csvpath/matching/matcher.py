@@ -29,9 +29,11 @@ class Matcher:
         self.headers = headers
         self.expressions = []
         self.lexer = MatchingLexer()
-        self.block_print = csvpath.block_print if csvpath else True
         self.parser = yacc.yacc(module=self, start="match_part")
         self.parser.parse(data, lexer=self.lexer.lexer)
+        self.header_dict = None
+        # self.flags = []
+        self.if_all_match = []
 
     def __str__(self):
         return f"""
@@ -40,6 +42,18 @@ class Matcher:
             parser: {self.parser}
             lexer: {self.lexer}
         """
+
+    """
+    def next_flag(self) -> int:
+        #
+        # -1 not set
+        # 0 = False
+        # 1 = True
+        # 2 = match if all other not 2s are True
+        #
+        self.flags.append(-1)
+        return len(self.flags) -1
+    """
 
     def reset(self):
         for expression in self.expressions:
@@ -53,11 +67,11 @@ class Matcher:
     def header_index(self, name: str) -> int:
         if not self.headers:
             return None
-        for i, n in enumerate(self.headers):
-            self.print(f" ...header {i} = {n} ?= {name}")
-            if n == name:
-                return i
-        return None
+        if not self.header_dict:
+            self.header_dict = {}
+            for i, n in enumerate(self.headers):
+                self.header_dict[n] = i
+        return self.header_dict.get(name)
 
     def header_value(self, name: str) -> Any:
         n = self.header_index(name)
@@ -83,7 +97,19 @@ class Matcher:
                 ret = True
             if not ret:
                 break
+        if ret is True:
+            self.do_set_if_all_match()
         return ret
+
+    def do_set_if_all_match(self) -> None:
+        for _ in self.if_all_match:
+            name = _[0]
+            value = _[1]
+            self.set_variable(name, value=value)
+        self.if_all_match = []
+
+    def set_if_all_match(self, name: str, value: Any) -> None:
+        self.if_all_match.append((name, value))
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         return self.csvpath.get_variable(

@@ -5,6 +5,7 @@ from csvpath.matching.matcher import Matcher
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from csvpath.matching.expression_math import ExpressionMath
 from csvpath.scanning.scanner import Scanner
+import time
 
 
 class NoFileException(Exception):
@@ -36,7 +37,6 @@ class CsvPath:
         self.quotechar = quotechar
         self.block_print = block_print
         self.total_lines = -1
-        self._verbose = False
         self._dump_json = False
         self._do_math = False  # off by default, still experimental
         self._collect_matchers = False
@@ -49,48 +49,22 @@ class CsvPath:
         self._dump_json = not self._dump_json
 
     def parse(self, data):
+        start = time.time()
         self.scanner = Scanner()
         s, mat, mod = self._find_scan_match_modify(data)
         self.scan = s
         self.match = mat
         self.modify = mod
         self.scanner.parse(s)
-        self._load_headers()
-        self.get_total_lines()
+        end = time.time()
+        print(f"parsed: {end - start}")
+        self.get_total_lines_and_headers()
         return self.scanner
-
-    def verbose(self, set_verbose: bool = True) -> None:
-        self._verbose = set_verbose
-
-    # prints what the user needs to see
-    def verbosity(self, msg: Any) -> None:
-        if self._verbose:
-            print(f"{msg}")
 
     # prints what the developer needs to see
     def print(self, msg: str) -> None:
         if not self.block_print:
             print(msg)
-
-    def _load_headers(self) -> None:
-        with open(self.scanner.filename, "r") as file:
-            reader = csv.reader(
-                file, delimiter=self.delimiter, quotechar=self.quotechar
-            )
-            for row in reader:
-                self.headers = row
-                break
-        hs = self.headers[:]
-        self.headers = []
-        for header in hs:
-            header = header.strip()
-            header = header.replace(";", "")
-            header = header.replace(",", "")
-            header = header.replace("|", "")
-            header = header.replace("\t", "")
-            header = header.replace("`", "")
-            self.headers.append(header)
-            self.verbosity(f"header: {header}")
 
     def _find_scan_match_modify(self, data):
         scan = ""
@@ -112,9 +86,6 @@ class CsvPath:
         matches = matches if len(matches) > 0 else None
         modify = modify.strip()
         modify = modify if len(modify) > 0 else None
-        self.verbosity(f"scan: {scan}")
-        self.verbosity(f"matches: {matches}")
-        self.verbosity(f"modify: {modify}")
         return scan, matches, modify
 
     def __str__(self):
@@ -166,38 +137,80 @@ class CsvPath:
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
-        total_lines = -1
-        if self._verbose:
-            total_lines = self.get_total_lines()
-            self.verbosity(f"total lines: {total_lines}")
-
         with open(self.scanner.filename, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
+            start = time.time()
             for line in reader:
                 if self.skip_blank_lines and len(line) == 0:
                     continue
-                # self.verbosity(f"line number: {self.line_number} of {total_lines}")
                 if self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
-                    self.print(f"CsvPath.next: line:{line}")
-                    # self.verbosity(f"scan count: {self.scan_count}")
-                    if self.matches(line):
+                    # from datetime import timedelta
+                    # startmatch = time.perf_counter()
+                    b = self.matches(line)
+                    # endmatch = time.time()
+                    # duration = timedelta(seconds=time.perf_counter()-startmatch)
+                    if b:
                         self.match_count = self.match_count + 1
-                        # self.verbosity(f"match count: {self.match_count}")
                         yield line
+                    # if self.scan_count < 100:
+                    #    print(f"match {self.scan_count}: {duration}")
                 self.line_number = self.line_number + 1
+            end = time.time()
+            print(f"iterated: {end - start}")
 
     def get_total_lines(self) -> int:
         if self.total_lines == -1:
+            return self.get_total_lines_and_headers()
+        return self.total_lines
+
+    def get_total_lines_and_headers(self) -> int:
+        if self.total_lines == -1:
+            start = time.time()
             with open(self.scanner.filename, "r") as file:
                 reader = csv.reader(
                     file, delimiter=self.delimiter, quotechar=self.quotechar
                 )
+                i = 0
                 for line in reader:
+                    if i == 0:
+                        self.headers = line
+                        i += 1
                     self.total_lines += 1
+            hs = self.headers[:]
+            self.headers = []
+            for header in hs:
+                header = header.strip()
+                header = header.replace(";", "")
+                header = header.replace(",", "")
+                header = header.replace("|", "")
+                header = header.replace("\t", "")
+                header = header.replace("`", "")
+                self.headers.append(header)
+            end = time.time()
+            print(f"lines and headers: {end - start}")
         return self.total_lines
+
+    def _load_headers(self) -> None:
+        with open(self.scanner.filename, "r") as file:
+            reader = csv.reader(
+                file, delimiter=self.delimiter, quotechar=self.quotechar
+            )
+            for row in reader:
+                self.headers = row
+                break
+        hs = self.headers[:]
+        self.headers = []
+        for header in hs:
+            header = header.strip()
+            header = header.replace(";", "")
+            header = header.replace(",", "")
+            header = header.replace("|", "")
+            header = header.replace("\t", "")
+            header = header.replace("`", "")
+            self.headers.append(header)
 
     def current_line_number(self) -> int:
         return self.line_number
@@ -217,8 +230,6 @@ class CsvPath:
     def matches(self, line) -> bool:
         if not self.match:
             return True
-        self.print(f"CsvPath.matches: the match path: {self.match}")
-
         if self.matcher is None:
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers

@@ -104,14 +104,24 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
 <table>
 
-    [ #common_name #0=="field" @tail=end() not(in(@tail, 'short|medium')) ]
+    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
 - `#common_name` indicates a header named "common_name". Headers are the values in the 0th line. This component of the match is an existence test.
 - `#2` means the 3rd column, counting from 0
 - Functions and column references are ANDed together
-- `@tail` creates a variable named "tail" and sets it to the value of the last column
+- `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
 - Functions can contain functions, equality tests, and/or literals
+
+Variables are always set unless they are flagged with `.onmatch`. That means:
+
+    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
+
+will never set `imcounting`, but:
+
+    $file.csv[*][ @imcounting = count_lines() no()]
+
+will always set it.
 
 Most of the work of matching is done in functions. The match functions are:
 

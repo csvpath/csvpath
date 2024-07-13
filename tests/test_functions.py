@@ -415,30 +415,71 @@ class TestFunctions(unittest.TestCase):
 
         assert math.isnan(path.variables["l"])
 
-    #
-    # could we do:
-    #
-    #     @interesting.onmatch = count(...
-    #
-    # to limit if a var is set every scanned line no matter what?
-    #
-
-    # set a var without matching the lines
     def test_function_count_any_match(self):
         path = CsvPath()
         path.parse(
             f"""
             ${PATH}[*]
             [
-                @interesting = count(
-                    or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
-                )
-                no()
+                @interesting.onmatch = count()
+                or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
             ]"""
         )
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["interesting"] == 3
+        assert len(lines) == 3
+
+    def test_function_nocount(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*][ @imcounting = count() no()]
+            """
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "imcounting" not in path.variables
+        assert len(lines) == 0
+
+    def test_function_allcount(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*][ @imcounting = count() yes()]
+            """
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "imcounting" in path.variables
+        assert path.variables["imcounting"] == 9
+        assert len(lines) == 9
+
+    def test_function_linecount(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*][ @imcounting = count_lines() no()]
+            """
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "imcounting" in path.variables
+        # lines are zero-based, unlike match counts
+        assert path.variables["imcounting"] == 8
+        assert len(lines) == 0
+
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*][ @imcounting.onmatch = count_lines() no()]
+            """
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "imcounting" not in path.variables
+        # lines are zero-based, unlike match counts
+        # assert path.variables["imcounting"] == 0
         assert len(lines) == 0
 
     def test_function_every(self):
