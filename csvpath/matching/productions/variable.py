@@ -6,6 +6,10 @@ class Variable(Matchable):
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name}"""
 
+    def reset(self) -> None:
+        self.value = None
+        super().reset()
+
     def matches(self, *, skip=[]) -> bool:
         return self.value is not None
 

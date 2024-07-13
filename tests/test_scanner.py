@@ -16,7 +16,7 @@ class TestScanner(unittest.TestCase):
         assert len(scanner.these) == 0
         # test line numbers included
         for i in range(0, 8):
-            assert path.includes(i)
+            assert scanner.includes(i)
         # test lines returned
         for i, ln in enumerate(path.next()):
             pass

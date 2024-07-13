@@ -21,6 +21,10 @@ class Function(Matchable):
     def __str__(self) -> str:
         return f"""\n{self.__class__}{self.name}({self._function_or_equality})"""
 
+    def reset(self) -> None:
+        self.value = None
+        super().reset()
+
     def to_value(self, *, skip=[]) -> bool:
         if self in skip:
             return True

@@ -16,6 +16,12 @@ class Matchable:
     def __str__(self) -> str:
         return f"""{self.__class__}"""
 
+    def reset(self) -> None:
+        # let the subclasses handle value
+        # self.value = None
+        for child in self.children:
+            child.reset()
+
     def matches(self, *, skip=[]) -> bool:
         return True  # leave this for now for testing
 

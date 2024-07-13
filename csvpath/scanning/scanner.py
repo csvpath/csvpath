@@ -40,6 +40,38 @@ class Scanner(object):
         if not self.block_print:
             print(msg)
 
+    def includes(
+        self,
+        line: int,
+        *,
+        from_line: int = -1,
+        to_line: int = -1,
+        all_lines: bool = None,
+        these: List[int] = None,
+    ) -> bool:
+        from_line = self.from_line if from_line == -1 else from_line
+        to_line = self.to_line if to_line == -1 else to_line
+        all_lines = self.all_lines if all_lines is None else all_lines
+        these = self.these if these is None else these
+
+        if line is None:
+            return False
+        elif from_line is None and all_lines:
+            return True
+        elif from_line is not None and all_lines:
+            return line >= from_line
+        elif from_line == line:
+            return True
+        elif from_line is not None and to_line is not None and from_line > to_line:
+            return line >= to_line and line <= from_line
+        elif from_line is not None and to_line is not None:
+            return line >= from_line and line <= to_line
+        elif line in these:
+            return True
+        elif to_line is not None:
+            return line < to_line
+        return False
+
     # ===================
     # parse
     # ===================

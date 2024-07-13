@@ -36,6 +36,7 @@ class CsvPath:
         self._collect_matchers = False
         self.matchers = []
         self.jsons = []
+        self.matcher = None
 
     def dump_json(self):
         self._dump_json = not self._dump_json
@@ -158,7 +159,6 @@ class CsvPath:
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
-        self.verbosity(f"filename: {self.scanner.filename}")
         total_lines = -1
         if self._verbose:
             total_lines = self.get_total_lines()
@@ -169,14 +169,14 @@ class CsvPath:
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
             for line in reader:
-                self.verbosity(f"line number: {self.line_number} of {total_lines}")
-                if self.includes(self.line_number):
+                # self.verbosity(f"line number: {self.line_number} of {total_lines}")
+                if self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
                     self.print(f"CsvPath.next: line:{line}")
-                    self.verbosity(f"scan count: {self.scan_count}")
+                    # self.verbosity(f"scan count: {self.scan_count}")
                     if self.matches(line):
                         self.match_count = self.match_count + 1
-                        self.verbosity(f"match count: {self.match_count}")
+                        # self.verbosity(f"match count: {self.match_count}")
                         yield line
                 self.line_number = self.line_number + 1
 
@@ -210,9 +210,14 @@ class CsvPath:
             return True
         self.print(f"CsvPath.matches: the match path: {self.match}")
 
-        matcher = Matcher(
-            csvpath=self, data=self.match, line=line, headers=self.headers
-        )
+        if self.matcher is None:
+            self.matcher = Matcher(
+                csvpath=self, data=self.match, line=line, headers=self.headers
+            )
+        else:
+            self.matcher.reset()
+            self.matcher.line = line
+        matcher = self.matcher
 
         if self._do_math:
             em = ExpressionMath()
@@ -271,42 +276,6 @@ class CsvPath:
                 self.variables[name] = set_if_none
             thevalue = self.variables[name]
         return thevalue
-
-    def includes(self, line: int) -> bool:
-        from_line = self.scanner.from_line
-        to_line = self.scanner.to_line
-        all_lines = self.scanner.all_lines
-        these = self.scanner.these
-        return self._includes(
-            line, from_line=from_line, to_line=to_line, all_lines=all_lines, these=these
-        )
-
-    def _includes(
-        self,
-        line: int,
-        *,
-        from_line: int = None,
-        to_line: int = None,
-        all_lines: bool = None,
-        these: List[int] = [],
-    ) -> bool:
-        if line is None:
-            return False
-        if from_line is None and all_lines:
-            return True
-        if from_line is not None and all_lines:
-            return line >= from_line
-        if from_line == line:
-            return True
-        if from_line is not None and to_line is not None and from_line > to_line:
-            return line >= to_line and line <= from_line
-        if from_line is not None and to_line is not None:
-            return line >= from_line and line <= to_line
-        if line in these:
-            return True
-        if to_line is not None:
-            return line < to_line
-        return False
 
     def line_numbers(self) -> Iterator[int | str]:
         these = self.scanner.these

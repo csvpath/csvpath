@@ -1,34 +1,36 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from csvpath.scanning.scanner import Scanner
 
 PATH = "tests/test_resources/test.csv"
 
 
 class TestCsvPath(unittest.TestCase):
     def test_includes(self):
-        csvpath = CsvPath()
+        # csvpath = CsvPath()
         # pass line number = None probably in error
-        assert not csvpath._includes(None)
+        scanner = Scanner()
+        assert not scanner.includes(None)
         # is 3 in all lines?
-        assert csvpath._includes(3, from_line=None, to_line=None, all_lines=True)
+        assert scanner.includes(3, from_line=None, to_line=None, all_lines=True)
         # is 3 >= 2?
-        assert csvpath._includes(3, from_line=2, to_line=None, all_lines=True)
+        assert scanner.includes(3, from_line=2, to_line=None, all_lines=True)
         # is 1 >= 2?
-        assert not csvpath._includes(1, from_line=2, to_line=None, all_lines=True)
+        assert not scanner.includes(1, from_line=2, to_line=None, all_lines=True)
         # 3 = 3
-        assert csvpath._includes(3, from_line=3)
+        assert scanner.includes(3, from_line=3)
         # 3 is within 2 - 4
-        assert csvpath._includes(3, from_line=2, to_line=4)
+        assert scanner.includes(3, from_line=2, to_line=4)
         # 1 is not within 2 - 4
-        assert not csvpath._includes(1, from_line=2, to_line=4)
+        assert not scanner.includes(1, from_line=2, to_line=4)
         # 3 is in (3,5,8)
-        assert csvpath._includes(3, these=[3, 5, 8])
+        assert scanner.includes(3, these=[3, 5, 8])
         # 4 is not in (3,5,8)
-        assert not csvpath._includes(4, these=[3, 5, 8])
+        assert not scanner.includes(4, these=[3, 5, 8])
         # 3 is in 0 - 4
-        assert csvpath._includes(3, to_line=4)
+        assert scanner.includes(3, to_line=4)
         # 5 is not in 0 - 4
-        assert not csvpath._includes(5, to_line=4)
+        assert not scanner.includes(5, to_line=4)
 
     def test_line_numbers(self):
         csvpath = CsvPath()

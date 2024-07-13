@@ -41,6 +41,11 @@ class Matcher:
             lexer: {self.lexer}
         """
 
+    def reset(self):
+        for expression in self.expressions:
+            expression[1] = None
+            expression[0].reset()
+
     def print(self, msg: str) -> None:
         if self.csvpath:
             self.csvpath.print(msg)
@@ -160,9 +165,11 @@ class Matcher:
                  | equality op function
         """
         e = Equality(self)
-        e.set_left(p[1])
+        e.left = p[1]
+        # e.set_left(p[1])
         e.set_operation(p[2])
-        e.set_right(p[3])
+        e.right = p[3]
+        # e.set_right(p[3])
         p[0] = e
 
     def p_op(self, p):
@@ -179,9 +186,11 @@ class Matcher:
                  | var ASSIGNMENT header
         """
         e = Equality(self)
-        e.set_left(p[1])
+        e.left = p[1]
+        # e.set_left(p[1])
         e.set_operation(p[2])
-        e.set_right(p[3])
+        e.right = p[3]
+        # e.set_right(p[3])
         p[0] = e
 
     def p_term(self, p):

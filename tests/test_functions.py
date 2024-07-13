@@ -88,6 +88,10 @@ class TestFunctions(unittest.TestCase):
         for line in lines:
             print(f"test_function_first: line: {line}")
         print(f"test_function_first: path vars: {path.variables}")
+        for _ in path.variables:
+            print(f"  ..._:{_}")
+            for k, v in enumerate(path.variables[_].items()):
+                print(f"     ... {k} = {v}")
         assert len(lines) == 3
 
         path = CsvPath()
@@ -155,7 +159,7 @@ class TestFunctions(unittest.TestCase):
     TODO: need a way to only count complete path matches
     """
 
-    def test_function_first_two_lines(self):
+    def test_function_the_first_two_lines(self):
         path = CsvPath()
         # this returns the first two lines because first collects
         # the first instance of every value matched, so 0 and 1 for False and True
@@ -164,7 +168,7 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_first_two_lines: path vars: {path.variables}")
         assert len(lines) == 2
 
-    def test_function_first_line(self):
+    def test_function_the_first_line(self):
         path = CsvPath()
         path.parse(
             f"""

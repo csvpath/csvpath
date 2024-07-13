@@ -14,6 +14,10 @@ class Equality(Matchable):
         )
         # wants to check we might have a different op
 
+    def reset(self) -> None:
+        self.value = None
+        super().reset()
+
     @property
     def left(self):
         return self.children[0]
@@ -70,16 +74,6 @@ class Equality(Matchable):
             self._to_list(ls, p.right)
         else:
             ls.append(p)
-
-    def set_left(self, left):
-        self.left = left
-        if self.left:
-            self.add_child(self.left)
-
-    def set_right(self, right):
-        self.right = right
-        if self.right:
-            self.add_child(self.right)
 
     def set_operation(self, op):
         self.op = op

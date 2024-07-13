@@ -46,7 +46,7 @@ components that are ANDed together. A match component is one of several types:
 <td>Examples</td>
 </tr>
     <tr>
-        <td>Term </td><td> Value </td><td> True </td>
+        <td>Term </td><td> Value </td><td> True when used alone, otherwise calculated </td>
         <td>A quoted string or date, optionally quoted number, or
         regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>
         <td>
@@ -66,7 +66,7 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
     <tr>
         <td>Variable </td>
-        <td>Value when tested, True when set, True/False when used alone    </td>
+        <td>Value</td>
         <td>True/False when value tested. True when set, True/False existence when used alone</td>
         <td>An @ followed by a name. A variable is
             set or tested depending on the usage. By itself, it is an existence test. When used as
@@ -84,7 +84,7 @@ take a specific or  unlimited number of types as arguments.     </td>
     <tr>
         <td>Header   </td>
         <td>Value     </td>
-        <td>Existence    </td>
+        <td>True/False existence when used alone, otherwise calculated</td>
         <td>A # followed by a name or integer. The name references a value in line 0, the header
  row. A number references a column by the 0-based column order.   </td>
         <td>
@@ -94,11 +94,12 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
     <tr>
         <td>Equality</td>
-        <td>Calculated when inside another type, otherwise True at assignment </td>
+        <td>Calculated   </td>
         <td>True at assignment, otherwise calculated   </td>
-        <td>Two of the other types joined with an "=".</td>
+        <td>Two of the other types joined with an "=" or "==".</td>
         <td>
-            `@type_of_tree="Oak"`
+            <li/> `@type_of_tree="Oak"`
+            <li/> `#name == @type_of_tree`
         </td>
     </tr>
 <table>

@@ -6,6 +6,10 @@ class Header(Matchable):
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name} """
 
+    def reset(self) -> None:
+        self.value = None
+        super().reset()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
