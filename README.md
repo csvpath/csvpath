@@ -150,7 +150,7 @@ Most of the work of matching is done in functions. The match functions are:
 | median(value, type)           | median value up to current "line", "scan", "match"        | X  |
 | min(value, type)              | smallest value seen up to current "line", "scan", "match" | X  |
 | multiply(value, value, ...)   | multiplies numbers                                        | X  |
-| no()                          | always false                                              | X  |
+| [no()](csvpath/matching/functions/no.md)                          | always false                                              | X  |
 | not(value)                    | negates a value                                           | X  |
 | now(format)                   | a datetime, optionally formatted                          | X  |
 | or(value, value,...)          | match any one                                             | X  |
