@@ -455,6 +455,20 @@ class TestFunctions(unittest.TestCase):
         print(f"lines: {lines}")
         assert len(lines) == 2
 
+    def test_function_yes(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                yes()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_every: path vars: {path.variables}")
+        print(f"lines: {lines}")
+        assert len(lines) == 9
+
     def test_function_end(self):
         path = CsvPath()
         path.parse(

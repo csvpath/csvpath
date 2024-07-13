@@ -144,6 +144,7 @@ Most of the work of matching is done in functions. The match functions are:
 | now(format)                   | a datetime, optionally formatted                          | X  |
 | or(value, value,...)          | match any one                                             | X  |
 | percent(type)                 | % of total lines for "scan", "match", "line"              | X  |
+| print(value, str)             | when matches prints the interpolated string               | X  |
 | random(list)                  | pick from a list                                          |    |
 | random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
@@ -151,9 +152,10 @@ Most of the work of matching is done in functions. The match functions are:
 | tally(value, value, ...)      | counts times values are seen, including as a set          | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
 | upper(value)                  | makes value uppercase                                     | X  |
+| yes()                         | always true                                               | X  |
 
 # Not Ready For Production
-Anything could change. This project is a hobby.
+Anything could change and performance could be better. This project is a hobby.
 
 
 

@@ -13,7 +13,13 @@ class NoFileException(Exception):
 
 class CsvPath:
     def __init__(
-        self, *, filename=None, delimiter=",", quotechar='"', block_print=True
+        self,
+        *,
+        filename=None,
+        delimiter=",",
+        quotechar='"',
+        block_print=True,
+        skip_blank_lines=True,
     ):
         self.filename = filename
         self.scanner = None
@@ -37,6 +43,7 @@ class CsvPath:
         self.matchers = []
         self.jsons = []
         self.matcher = None
+        self.skip_blank_lines = skip_blank_lines
 
     def dump_json(self):
         self._dump_json = not self._dump_json
@@ -169,6 +176,8 @@ class CsvPath:
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
             for line in reader:
+                if self.skip_blank_lines and len(line) == 0:
+                    continue
                 # self.verbosity(f"line number: {self.line_number} of {total_lines}")
                 if self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1

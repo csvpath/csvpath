@@ -5,42 +5,46 @@ from csvpath.csvpath import CsvPath
 # pathstr = f'${filepath}[4000-5000+22949][@test=#4 count(in(#statecode,"LA|MA|CT"))=12]'
 
 
-from cProfile import Profile
-from pstats import SortKey, Stats
-
-
 class Main:
     @classmethod
     def do_path(self):
         pathstr = """$/Users/davidkershaw/Desktop/csvs/pipe_delimited.csv
-                        [4000-5000]
-                        [@test=#4 count( in(#statecode,"LA|MA|CT") )]"""
+                        [1*]
+                        [
+                            @code=#statecode
+                            @test=count(in(#statecode,"LA|MA|CT"))
+                            print(#statecode=="MA", " THIS IS A MATCH  $.name\n
+                                             $.delimiter \n
+                                             $.quotechar \n
+                                             $.match_count\n
+                                             $.line_count\n
+                                             $.scan_count\n
+                                             $.line\n
+                                             $.match_json\n
+                                             $.expressions\n
+                                             $.headers\n
+                                             $.scan_part\n
+                                             $.match_part\n
+                                             $.variables\n\n\n")
+                        ]"""
 
-        path = CsvPath(delimiter=",")
+        path = CsvPath(delimiter="|")
         path.verbose(True)
         path.parse(pathstr)
+        matched = 0
         for i, line in enumerate(path.next()):
-            pass
+            matched += 1
 
         print(f"path vars: {path.variables}")
+        print(f"matched: {matched}")
 
 
 if __name__ == "__main__":
 
+    """
     import cProfile
-
     cProfile.run("Main.do_path()", sort="cumtime")
-
-    """
-    with Profile() as profile:
-        cProfile.run('main()')
-        print(f"{Main.do_path() = }")(
-            Stats(profile)
-            .strip_dirs()
-            .sort_stats(SortKey.CALLS)
-            .print_stats()
-        )
     """
 
-    # main = Main()
-    # main.do_path()
+    main = Main()
+    main.do_path()
