@@ -104,6 +104,7 @@ take a specific or  unlimited number of types as arguments.     </td>
     </tr>
 <table>
 
+## Example
     [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
