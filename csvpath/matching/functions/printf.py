@@ -50,7 +50,19 @@ class Print(Function):
     def make_string(self, string: str) -> str:
         for token in Print.TOKENS:
             if token == Print.TOKENS[8]:
-                string = self.handle_variables(string)
+                tstring = self.handle_variables(string)
+                if tstring != string:
+                    print(f"make string: tstring != string: {tstring}")
+                    string = tstring
+                    tstring = self.handle_variables(tstring)
+                print(f"make string: tstring == string: {tstring}")
+                string = tstring
+            elif token == Print.TOKENS[10]:
+                tstring = self.handle_headers(string)
+                while tstring != string:
+                    string = tstring
+                    tstring = self.handle_headers(tstring)
+                string = tstring
             else:
                 string = string.replace(token, self.value_of_token(token))
         return string
@@ -58,24 +70,50 @@ class Print(Function):
     def handle_variables(self, string) -> str:
         ret = ""
         start = string.find(Print.TOKENS[8])
-        while start > -1:
+        if start > -1:
             varname = None
-            for _ in string[start + len(Print.TOKENS[8]) :]:
-                if _ in (" ", ",", ";", "?"):
+            i = start + len(Print.TOKENS[8])
+            for _ in string[i:]:
+                if _ in (" ", ",", ";", "?") or ord(_) in (10, 13, 9):
+                    break
+                elif _ == "." and varname is not None:
                     break
                 elif _ == ".":
                     varname = ""
                 elif varname is not None:
                     varname += _
             if varname is None:
-                print("varname is None!!!")
                 ret = str(self.matcher.csvpath.variables)
-                string = string.replace(f"{Print.TOKENS[8]}", ret)
+                string = string.replace(f"{Print.TOKENS[8]}", ret, 1)
             else:
-                print(f"varname is $.variables.{varname}")
                 ret = f"{self.matcher.csvpath.variables.get(varname)}"
-                string = string.replace(f"{Print.TOKENS[8]}.{varname}", ret)
-            start = string.find(Print.TOKENS[8])
+                string = string.replace(f"{Print.TOKENS[8]}.{varname}", ret, 1)
+        return string
+
+    def handle_headers(self, string) -> str:
+        ret = ""
+        start = string.find(Print.TOKENS[10])
+        if start > -1:
+            hname = None
+            i = start + len(Print.TOKENS[10])
+            for _ in string[i:]:
+                if _ in (" ", ",", ";", "?") or ord(_) in (10, 13, 9):
+                    break
+                elif _ == "." and hname is not None:
+                    break
+                elif _ == ".":
+                    hname = ""
+                elif hname is not None:
+                    hname += _
+            if hname is None:
+                retlist = []
+                for h in self.matcher.csvpath.headers:
+                    retlist.append(h)
+                ret = f"{retlist}"
+                string = string.replace(f"{Print.TOKENS[10]}", ret, 1)
+            else:
+                ret = f"{self.matcher.header_value(hname)}"
+                string = string.replace(f"{Print.TOKENS[10]}.{hname}", ret, 1)
         return string
 
     def value_of_token(self, token) -> str:

@@ -13,15 +13,18 @@ class Main:
                         [
                             @code=#statecode
                             @test=count(in(#statecode,"LA|MA|CT"))
-                            print(no(), " THIS IS A MATCH  $.name\n
+                            print(yes(), " THIS IS A MATCH  $.name\n
                                              delimiter: $.delimiter \n
                                              quotechar: $.quotechar \n
                                              match count: $.match_count\n
                                              line count: $.line_count\n
                                              scan count: $.scan_count\n
+                                             headers.city: $.headers.city\n
                                              headers: $.headers\n
-                                             scan part: $.scan_part\n
-                                             the test var: $.variables.test\n\n\n")
+                                             variables: $.variables\n
+                                             variables.test: $.variables.test\n
+                                             scan part: $.scan_part\n\n\n "
+                                )
                         ]"""
 
         path = CsvPath(delimiter="|")

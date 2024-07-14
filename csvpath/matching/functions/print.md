@@ -15,10 +15,12 @@ Print strings can include the following variables.
 |match_count        | The current number of matches                                         |
 |line_count         | The current line being processed                                      |
 |scan_count         | The current number of lines scanned                                   |
-|headers            | The list of header names. (Or first line, if headers not used).       |
+|headers            | The list of header values                                             |
+|headers.headername | The value of the named header                                         |
 |scan_part          | The scan pattern                                                      |
 |match_part         | The match pattern                                                     |
-|variables.varname  | A variable named `varname`                                            |
+|variables          | The value of variables                                                |
+|variables.varname  | The value of the named variable                                       |
 |match_json         | A JSON dump of the match part parse tree                              |
 |line               | The list of values that is the current line being processed           |
 
