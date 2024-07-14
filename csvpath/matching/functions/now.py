@@ -19,7 +19,6 @@ class Now(Function):
             format = self.children[0].to_value(skip=skip)
             self.matcher.print(f"Now.to_value: format: {format}")
         x = datetime.datetime.now()
-        self.matcher.print(f"Now.to_value: x: {x}")
         xs = None
         if format:
             xs = x.strftime(format)
