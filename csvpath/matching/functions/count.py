@@ -36,7 +36,11 @@ class Count(Function):
         b = self._function_or_equality.matches(skip=skip)
         if not b:
             return False
-        self._id = self.get_id(self._function_or_equality)
+        self._id = (
+            self.qualifier
+            if self.qualifier is not None
+            else self.get_id(self._function_or_equality)
+        )
         #
         # to_value() is often going to be a bool based on matches().
         # but in a case like: count(now('yyyy-mm-dd')) it would not be

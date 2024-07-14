@@ -5,6 +5,9 @@ from csvpath.matching.productions.matchable import Matchable
 class Variable(Matchable):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
+        #
+        # onmatch is a qualifier, but it was created first, so is more specific.
+        #
         self.onmatch = False
         dot = name.find(".")
         if dot > -1:

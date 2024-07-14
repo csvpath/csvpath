@@ -18,7 +18,9 @@ class Every(Function):
             tracked_value = self.children[0].left.matches(skip=skip)
             if tracked_value:
                 every = self.children[0].right.to_value()
-                self._id = self.get_id(self)
+                self._id = (
+                    self.qualifier if self.qualifier is not None else self.get_id(self)
+                )
                 cnt = self.matcher.get_variable(
                     self._id, tracking=tracked_value, set_if_none=0
                 )

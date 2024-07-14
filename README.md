@@ -133,7 +133,7 @@ Most of the work of matching is done in functions. The match functions are:
 | average(number, type)         | returns the average up to current "line", "scan", "match" | X  |
 | before(value)                 | finds things before a date, number, string                | X  |
 | concat(value, value)          | counts the number of matches                              | X  |
-| count()                       | counts the number of matches                              | X  |
+| [count()](csvpath/matching/functions/count.md)                       | counts the number of matches                              | X  |
 | count(value)                  | count matches of value                                    | X  |
 | count_lines()                 | count lines to this point in the file                     | X  |
 | count_scans()                 | count lines we checked for match                          | X  |

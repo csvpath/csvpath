@@ -35,15 +35,43 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 3
 
+    def test_function_qualifier(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}
+                        [*]
+                        [
+                            @t.onmatch=count.firstname_match(#firstname=="Ants")
+                            #firstname=="Ants"
+                        ]
+                   """
+        )
+        lines = path.collect()
+        print(f"test_function_qualifier: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_qualifier: line: {line}")
+        print(f"test_function_qualifier: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert "firstname_match" in path.variables
+        assert path.variables["firstname_match"][True] == 1
+
     def test_function_count_header_in_2(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants"))==2]')
+        path.parse(
+            f"""
+                        ${PATH}
+                        [*]
+                        [count.firstname_is_one(in(#firstname,"Bug|Bird|Ants"))==2]
+                   """
+        )
         lines = path.collect()
         print(f"test_function_count_in: lines: {len(lines)}")
         for line in lines:
             print(f"test_function_count_in: line: {line}")
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 1
+        assert "firstname_is_one" in path.variables
+        assert path.variables["firstname_is_one"][True] == 3
 
     def test_function_count_header_in_ever(self):
         path = CsvPath()

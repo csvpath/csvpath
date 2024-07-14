@@ -41,12 +41,25 @@ class InvalidChildException(Exception):
 
 class FunctionFactory:
     @classmethod
+    def get_name_and_qualifier(self, name: str):
+        aname = name
+        qualifier = None
+        dot = name.find(".")
+        if dot > -1:
+            aname = name[0:dot]
+            qualifier = name[dot + 1 :]
+            qualifier = qualifier.strip()
+        return aname, qualifier
+
+    @classmethod
     def get_function(  # noqa: C901
         cls, matcher, *, name: str, child: Matchable = None
     ) -> Function:
         if child and not isinstance(child, Matchable):
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
+        name, qualifier = cls.get_name_and_qualifier(name)
+        print(f"FunctionFactory.get_function: {name}, {qualifier}")
         if name == "count":
             f = Count(matcher, name, child)
         elif name == "length":
@@ -117,4 +130,6 @@ class FunctionFactory:
             raise UnknownFunctionException(f"{name}")
         if child:
             child.parent = f
+        if qualifier:
+            f.qualifier = qualifier
         return f

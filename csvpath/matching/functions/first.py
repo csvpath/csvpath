@@ -26,7 +26,7 @@ class First(Function):
             else:
                 value = f"{child.to_value(skip=skip)}"
 
-            my_id = self.get_id()
+            my_id = self.qualifier if self.qualifier is not None else self.get_id(self)
             v = self.matcher.get_variable(my_id, tracking=value)
             if v is None:
                 self.matcher.set_variable(
