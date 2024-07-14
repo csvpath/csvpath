@@ -139,7 +139,7 @@ Most of the work of matching is done in functions. The match functions are:
 | count_scans()                 | count lines we checked for match                          | X  |
 | divide(value, value, ...)     | divides numbers                                           | X  |
 | end()                         | returns the value of the last column                      | X  |
-| every(value, number)          | match every Nth time a value is seen                      | X  |
+| [every(value, number)](csvpath/matching/functions/every.md)          | match every Nth time a value is seen                      | X  |
 | [first(value, value, ...)](csvpath/matching/functions/first.md)       | match the first occurrence and capture line               | X  |
 | [in(value, list)](csvpath/matching/functions/in.md)               | match in a pipe-delimited list                            | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |

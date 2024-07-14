@@ -55,7 +55,7 @@ class TestFunctions(unittest.TestCase):
         assert "firstname_match" in path.variables
         assert path.variables["firstname_match"][True] == 1
 
-    def test_function_every_qualifier(self):
+    def test_function_every_qualifier1(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}
@@ -63,6 +63,7 @@ class TestFunctions(unittest.TestCase):
                         [
                             @t.onmatch=count()
                             every.fish(#lastname=="Bat", 2)
+                            #lastname=="Bat"
                         ]
                    """
         )
@@ -75,12 +76,12 @@ class TestFunctions(unittest.TestCase):
         for line in lines:
             print(f"test_function_every_qualifier: line: {line}")
         print(f"test_function_every_qualifier: path vars: {path.variables}")
-        assert len(lines) == 4
-        assert path.variables["t"] == 4
+        assert len(lines) == 3
+        assert path.variables["t"] == 3
         assert "fish" in path.variables
         assert path.variables["fish"][True] == 4
 
-    def test_function_every_qualifier_x(self):
+    def test_function_every_qualifier2(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}

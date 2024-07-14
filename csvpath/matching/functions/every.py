@@ -23,7 +23,7 @@ class Every(Function):
             self._id = (
                 self.qualifier if self.qualifier is not None else self.get_id(self)
             )
-            allcount = f"{self.get_id(self)}_"
+            allcount = f"{self.get_id(self)}_{'every'}"
             tracked_value = self.children[0].left.to_value(skip=skip)
             print(f"Every.matches: tracked_value: {tracked_value}")
             cnt = self.matcher.get_variable(
