@@ -160,7 +160,7 @@ Most of the work of matching is done in functions. The match functions are:
 | random(starting, ending)      | generates a random int from starting to ending            | X  |
 | regex(regex-string)           | match on a regular expression                             | X  |
 | subtract(value, value, ...)   | subtracts numbers                                         | X  |
-| tally(value, value, ...)      | counts times values are seen, including as a set          | X  |
+| [tally(value, value, ...)](csvpath/matching/functions/tally.md)      | counts times values are seen, including as a set          | X  |
 | then(y,m,d,hh,mm,ss,format)   | a datetime, optionally formatted                          |    |
 | upper(value)                  | makes value uppercase                                     | X  |
 | yes()                         | always true                                               | X  |

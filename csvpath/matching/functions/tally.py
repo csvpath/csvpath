@@ -18,7 +18,7 @@ class Tally(Function):
             if len(kids) > 1:
                 self._store("tally", tally)
 
-            self.value = "tally" if isinstance(child, Equality) else child.name
+            self.value = True  # "tally" if isinstance(child, Equality) else child.name
         return self.value
 
     def _store(self, name, value):
