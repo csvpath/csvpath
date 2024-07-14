@@ -141,7 +141,7 @@ Most of the work of matching is done in functions. The match functions are:
 | end()                         | returns the value of the last column                      | X  |
 | every(value, number)          | match every Nth time a value is seen                      | X  |
 | first(value)                  | match the first occurrence and capture line               | X  |
-| in(value, list)               | match in a pipe-delimited list                            | X  |
+| [in(value, list)](csvpath/matching/functions/in.md)               | match in a pipe-delimited list                            | X  |
 | increment(value, n)           | increments a variable by n each time seen                 |    |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
 | length(value)                 | returns the length of the value                           | X  |

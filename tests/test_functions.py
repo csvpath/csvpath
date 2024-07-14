@@ -35,7 +35,7 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 3
 
-    def test_function_count_header_in(self):
+    def test_function_count_header_in_2(self):
         path = CsvPath()
         path.parse(f'${PATH}[*][count(in(#firstname,"Bug|Bird|Ants"))==2]')
         lines = path.collect()
@@ -44,6 +44,27 @@ class TestFunctions(unittest.TestCase):
             print(f"test_function_count_in: line: {line}")
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 1
+
+    def test_function_count_header_in_ever(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+                ${PATH}
+                [*]
+                [
+                    @x.onmatch = count()
+                    in(#firstname,"Bug|Bird|Ants")
+                ]
+                   """
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_count_in: line: {line}")
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "x" in path.variables
+        assert path.variables["x"] == 3
+        assert len(lines) == 3
 
     def test_function_percent(self):
         path = CsvPath()
