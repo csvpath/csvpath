@@ -12,11 +12,11 @@ class Tally(Function):
             kids = child.commas_to_list() if isinstance(child, Equality) else [child]
             tally = ""
             for _ in kids:
-                tally += f"{_.to_value(skip=skip)}"
+                tally += f"{_.to_value(skip=skip)}|"
                 value = f"{_.to_value(skip=skip)}"
                 self._store(_.name, value)
             if len(kids) > 1:
-                self._store("tally", tally)
+                self._store("tally", tally[0 : len(tally) - 1])
 
             self.value = True  # "tally" if isinstance(child, Equality) else child.name
         return self.value

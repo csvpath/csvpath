@@ -179,7 +179,7 @@ class TestFunctions(unittest.TestCase):
         path.parse(f"${PATH}[*][tally(#firstname, #lastname)] ")
         path.collect()
         print(f"test_function_tally: path vars: {path.variables}")
-        assert path.variables["tally"]["FrogBat"] == 2
+        assert path.variables["tally"]["Frog|Bat"] == 2
 
     def test_function_first1(self):
         path = CsvPath()
