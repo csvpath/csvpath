@@ -3,32 +3,37 @@ from csvpath.matching.productions.matchable import Matchable
 
 
 class Header(Matchable):
+    NEVER = -9999999999
+
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name} """
 
+    def __init__(self, matcher, *, value: Any = None, name: str = None) -> None:
+        super().__init__(matcher, value=Header.NEVER, name=name)
+
     def reset(self) -> None:
-        self.value = None
+        self.value = Header.NEVER
         super().reset()
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
-        if isinstance(self.name, int):
-            if self.name >= len(self.matcher.line):
-                return None
+            return self.value
+        if self.value == Header.NEVER:
+            ret = Header.NEVER
+            if isinstance(self.name, int):
+                if self.name >= len(self.matcher.line):
+                    ret = None
+                else:
+                    ret = self.matcher.line[self.name]
             else:
-                return self.matcher.line[self.name]
-        else:
-            n = self.matcher.header_index(self.name)
-            # print(f"Header.to_value: n: {n}, a {n.__class__}")
-            if n is None:
-                # print(f"Header.to_value: no such header {self.name}")
-                return None
-            # print(f"Header: header index: {self.name} = {n}, line: {self.matcher.line}")
-            ret = None
-            if self.matcher.line and len(self.matcher.line) > n:
-                ret = self.matcher.line[n]
-            return ret
+                n = self.matcher.header_index(self.name)
+                if n is None:
+                    ret = None
+                if self.matcher.line and len(self.matcher.line) > n:
+                    ret = self.matcher.line[n]
+            self.value = ret
+        return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return not self.to_value(skip=skip) is None
+        v = self.to_value(skip=skip)
+        return v is not None

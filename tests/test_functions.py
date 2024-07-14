@@ -850,3 +850,16 @@ class TestFunctions(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_concat: lines: {len(lines)}")
         assert len(lines) == 1
+
+    def test_function_count_existance(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                #lastname
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
