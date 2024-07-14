@@ -152,7 +152,7 @@ Most of the work of matching is done in functions. The match functions are:
 | multiply(value, value, ...)   | multiplies numbers                                        | X  |
 | [no()](csvpath/matching/functions/no.md)                          | always false                                              | X  |
 | not(value)                    | negates a value                                           | X  |
-| now(format)                   | a datetime, optionally formatted                          | X  |
+| [now(format)](csvpath/matching/functions/now.md)                   | a datetime, optionally formatted                          | X  |
 | or(value, value,...)          | match any one                                             | X  |
 | percent(type)                 | % of total lines for "scan", "match", "line"              | X  |
 | print(value, str)             | when matches prints the interpolated string               | X  |
