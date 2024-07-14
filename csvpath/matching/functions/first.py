@@ -4,19 +4,21 @@ from csvpath.matching.productions.equality import Equality
 
 
 class First(Function):
+    NEVER = -9999999999
+
     def __init__(self, matcher, name: str = None, child: Any = None):
         super().__init__(matcher, child=child, name=name)
-        self._my_value_or_none = -9999  # when this var is None we match
+        self._my_value_or_none = First.NEVER  # when this var is None we match
 
     def reset(self) -> None:
         super().reset()
-        self._my_value_or_none = -9999
+        self._my_value_or_none = First.NEVER
 
     def to_value(self, *, skip=[]) -> Any:
         if len(self.children) != 1:
             self.matcher.print(f"First.to_value: must have 1 child: {self.children}")
             raise ChildrenException("First function must have 1 child")
-        if self._my_value_or_none == -9999:
+        if self._my_value_or_none == First.NEVER:
 
             child = self.children[0]
             value = ""
@@ -44,7 +46,7 @@ class First(Function):
         #
         # when there is no earlier value we match
         #
-        if self._my_value_or_none == -9999:
+        if self._my_value_or_none == First.NEVER:
             self.to_value(skip=skip)
         v = self._my_value_or_none
         return v is None

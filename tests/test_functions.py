@@ -55,6 +55,56 @@ class TestFunctions(unittest.TestCase):
         assert "firstname_match" in path.variables
         assert path.variables["firstname_match"][True] == 1
 
+    def test_function_every_qualifier(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}
+                        [*]
+                        [
+                            @t.onmatch=count()
+                            every.fish(#lastname=="Bat", 2)
+                        ]
+                   """
+        )
+        #
+        # we capture 1 #lastname!="Bat" because there are 2 such lines
+        # and we capture 3 #lastname=="Bat" because there are 7 such lines
+        #
+        lines = path.collect()
+        print(f"test_function_every_qualifier: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_every_qualifier: line: {line}")
+        print(f"test_function_every_qualifier: path vars: {path.variables}")
+        assert len(lines) == 4
+        assert path.variables["t"] == 4
+        assert "fish" in path.variables
+        assert path.variables["fish"][True] == 4
+
+    def test_function_every_qualifier_x(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}
+                        [*]
+                        [
+                            @t.onmatch=count()
+                            every.who(#lastname, 2)
+                        ]
+                   """
+        )
+        #
+        # we capture 3 #lastnames because there are 3 total in 9
+        # and we match on 3 #lastnames because there are 7 "Bat"
+        #
+        lines = path.collect()
+        print(f"test_function_every_qualifier: lines: {len(lines)}")
+        for line in lines:
+            print(f"test_function_every_qualifier: line: {line}")
+        print(f"test_function_every_qualifier: path vars: {path.variables}")
+        assert len(lines) == 3
+        assert path.variables["t"] == 3
+        assert "who" in path.variables
+        assert path.variables["who"][True] == 3
+
     def test_function_count_header_in_2(self):
         path = CsvPath()
         path.parse(
@@ -129,9 +179,9 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_tally: path vars: {path.variables}")
         assert path.variables["tally"]["FrogBat"] == 2
 
-    def test_function_first(self):
+    def test_function_first1(self):
         path = CsvPath()
-        path.parse(f"${PATH}[*][first(#lastname)]")
+        path.parse(f"${PATH}[*][first.surnames(#lastname)]")
         lines = path.collect()
         print(f"test_function_first: lines: {len(lines)}")
         for line in lines:
@@ -142,24 +192,32 @@ class TestFunctions(unittest.TestCase):
             for k, v in enumerate(path.variables[_].items()):
                 print(f"     ... {k} = {v}")
         assert len(lines) == 3
+        assert "surnames" in path.variables
+        assert path.variables["surnames"]["Bat"] == 2
 
+    def test_function_first2(self):
         path = CsvPath()
-        path.parse(f"${PATH}[*][first(#firstname)]")
+        path.parse(f"${PATH}[*][first.folks(#firstname)]")
         lines = path.collect()
         print(f"test_function_first: lines: {len(lines)}")
         for line in lines:
             print(f"test_function_first: line: {line}")
         print(f"test_function_first: path vars: {path.variables}")
         assert len(lines) == 8
+        assert "folks" in path.variables
+        assert path.variables["folks"]["Frog"] == 3
 
+    def test_function_first3(self):
         path = CsvPath()
-        path.parse(f"${PATH}[*][first(#firstname, #lastname)]")
+        path.parse(f"${PATH}[*][first.dude(#firstname, #lastname)]")
         lines = path.collect()
         print(f"test_function_first: lines: {len(lines)}")
         for line in lines:
             print(f"test_function_first: line: {line}")
         print(f"test_function_first: path vars: {path.variables}")
         assert len(lines) == 8
+        assert "dude" in path.variables
+        assert path.variables["dude"]["FrogBat"] == 3
 
     def test_function_above_percent(self):
         path = CsvPath()

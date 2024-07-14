@@ -15,21 +15,33 @@ class Every(Function):
             if not isinstance(child, Equality):
                 raise ChildrenException("must be 1 equality child")
 
-            tracked_value = self.children[0].left.matches(skip=skip)
-            if tracked_value:
-                every = self.children[0].right.to_value()
-                self._id = (
-                    self.qualifier if self.qualifier is not None else self.get_id(self)
-                )
-                cnt = self.matcher.get_variable(
-                    self._id, tracking=tracked_value, set_if_none=0
-                )
-                cnt += 1
-                self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
-                if cnt % every == 0:
-                    self.value = True
-                else:
-                    self.value = False
+            ###
+            # 1. we store a count of values under the ID of left. this is the value.to_value
+            # 2. we store the every-N-seen count under the qualifier or ID of every
+            # 3. we match based on count % n == 0
+            #
+            self._id = (
+                self.qualifier if self.qualifier is not None else self.get_id(self)
+            )
+            allcount = f"{self.get_id(self)}_"
+            tracked_value = self.children[0].left.to_value(skip=skip)
+            print(f"Every.matches: tracked_value: {tracked_value}")
+            cnt = self.matcher.get_variable(
+                allcount, tracking=tracked_value, set_if_none=0
+            )
+            cnt += 1
+            self.matcher.set_variable(allcount, tracking=tracked_value, value=cnt)
+            every = self.children[0].right.to_value()
+            print(
+                f"Every.matches: {self._id}: every: {every}, cnt: {cnt} % {every} = {cnt % every}"
+            )
+            if cnt % every == 0:
+                self.value = True
             else:
                 self.value = False
+            everycount = self.matcher.get_variable(
+                self._id, tracking=self.value, set_if_none=0
+            )
+            everycount += 1
+            self.matcher.set_variable(self._id, tracking=self.value, value=everycount)
         return self.value
