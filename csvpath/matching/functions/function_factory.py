@@ -29,6 +29,7 @@ from csvpath.matching.functions.divide import Divide
 from csvpath.matching.functions.tally import Tally
 from csvpath.matching.functions.every import Every
 from csvpath.matching.functions.printf import Print
+from csvpath.matching.functions.increment import Increment
 
 
 class UnknownFunctionException(Exception):
@@ -126,10 +127,12 @@ class FunctionFactory:
             f = Every(matcher, name, child)
         elif name == "print":
             f = Print(matcher, name, child)
+        elif name == "increment":
+            f = Increment(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
             child.parent = f
         if qualifier:
-            f.qualifier = qualifier
+            f.set_qualifiers(qualifier)
         return f

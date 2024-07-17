@@ -864,3 +864,22 @@ class TestFunctions(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 9
+
+    def test_function_increment(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @i = increment.test(yes(), 3)
+                @j = increment.double_check(yes(), 2)
+                @k = increment.rand(random(0,1)==1, 2)
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert path.variables["test"] == 9
+        assert path.variables["i"] == 3
+        assert path.variables["j"] == 4
+        assert path.variables["double_check.increment"] == 4

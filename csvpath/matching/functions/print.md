@@ -9,7 +9,7 @@ Print strings can include the following variables.
 
 | Variable name     | Description                                                           |
 |-------------------|-----------------------------------------------------------------------|
-|name               | The name of the file. E.g. for `$file.csv[*][no()]`, `file`.          |
+|name               | The name of the file. E.g. for `$file.csv[*][no()]` it is `file`.     |
 |delimiter          | The file's delimiter                                                  |
 |quotechar          | The quote character the file uses to quote columns                    |
 |match_count        | The current number of matches                                         |

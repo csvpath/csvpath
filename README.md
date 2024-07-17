@@ -12,7 +12,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 CsvPath paths have two parts, scanning and matching. For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
     path = CsvPath(delimiter=",")
-    path.parse("$test.csv[5-25][#0=="Frog" @lastname=="Bats" count()==2]")
+    path.parse("$test.csv[5-25][#0=="Frog" @lastname="Bats" count()==2]")
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
 
@@ -26,7 +26,7 @@ This scanning and matching path says:
 # Scanning
 The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
 
-The scan part of the path starts with '$' to indicate the root, meaning the file from the top. After the '$' comes the file path. The scanning instructions are in a bracket. The rules are:
+The scan part of the path starts with a dollar sign to indicate the root, meaning the file from the top. After the dollar sign comes the file path. The scanning instructions are in a bracket. The rules are:
 - `[*]` means all
 - `[3*]` means starting from line 3 and going to the end of the file
 - `[3]` by itself means just line 3
@@ -36,7 +36,7 @@ The scan part of the path starts with '$' to indicate the root, meaning the file
 
 # Matching
 The match part is also bracketed. Matches have space separated
-components that are ANDed together. A match component is one of several types:
+components or "values" that are ANDed together. A match component is one of several types:
 <table>
 <tr>
 <td>Type</td>
@@ -48,7 +48,8 @@ components that are ANDed together. A match component is one of several types:
     <tr>
         <td>Term </td><td> Value </td><td> True when used alone, otherwise calculated </td>
         <td>A quoted string or date, optionally quoted number, or
-        regex. Regex features are limited. A regex is wrapped  in "/" characters.</td>
+        regex. Regex features are limited. A regex is wrapped  in "/" characters and
+only has regex functionality when used in the regex() function.</td>
         <td>
             <li/> `"Massachusetts"`
             <li/> `89.7`
@@ -142,7 +143,7 @@ Most of the work of matching is done in functions. The match functions are:
 | [every(value, number)](csvpath/matching/functions/every.md)          | match every Nth time a value is seen                      | X  |
 | [first(value, value, ...)](csvpath/matching/functions/first.md)       | match the first occurrence and capture line               | X  |
 | [in(value, list)](csvpath/matching/functions/in.md)               | match in a pipe-delimited list                            | X  |
-| increment(value, n)           | increments a variable by n each time seen                 |    |
+| [increment(value, n)](csvpath/matching/functions/increment.md)           | increments a variable by n each time seen                 | X  |
 | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
 | length(value)                 | returns the length of the value                           | X  |
 | lower(value)                  | makes value lowercase                                     | X  |
