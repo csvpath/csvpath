@@ -156,20 +156,20 @@ Most of the work of matching is done in functions. The match functions are:
 |           | or(value, value,...)          | match any one                                             | X  |
 |           | yes()                         | always true                                               | X  |
 |           | [in(value, list)](csvpath/matching/functions/in.md)               | match in a pipe-delimited list                            | X  |
-| Math      |                               |                                                            |    |
+| Math      |                               |                                                           |    |
 |           | add(value, value, ...)        | adds numbers                                              | X  |
 |           | divide(value, value, ...)     | divides numbers                                           | X  |
 |           | multiply(value, value, ...)   | multiplies numbers                                        | X  |
 |           | subtract(value, value, ...)   | subtracts numbers                                         | X  |
 |           | after(value)                  | finds things after a date, number, string                 | X  |
 |           | before(value)                 | finds things before a date, number, string                | X  |
-| Stats     |                               |                                                            |    |
+| Stats     |                               |                                                           |    |
 |           | average(number, type)         | returns the average up to current "line", "scan", "match" | X  |
 |           | median(value, type)           | median value up to current "line", "scan", "match"        | X  |
 |           | max(value, type)              | largest value seen up to current "line", "scan", "match"  | X  |
 |           | min(value, type)              | smallest value seen up to current "line", "scan", "match" | X  |
 |           | percent(type)                 | % of total lines for "scan", "match", "line"              | X  |
-| Counting  |                               |                                                            |    |
+| Counting  |                               |                                                           |    |
 |           | [count()](csvpath/matching/functions/count.md)                       | counts the number of matches                              | X  |
 |           | [count(value)](csvpath/matching/functions/count.md)                  | count matches of value                                    | X  |
 |           | count_lines()                 | count lines to this point in the file                     | X  |
@@ -179,13 +179,13 @@ Most of the work of matching is done in functions. The match functions are:
 |           | [every(value, number)](csvpath/matching/functions/every.md)          | match every Nth time a value is seen                      | X  |
 |           | [tally(value, value, ...)](csvpath/matching/functions/tally.md)      | counts times values are seen, including as a set          | X  |
 
-| Strings   |                               |                                                            |    |
+| Strings   |                               |                                                           |    |
 |           | length(value)                 | returns the length of the value                           | X  |
 |           | lower(value)                  | makes value lowercase                                     | X  |
 |           | regex(regex-string)           | match on a regular expression                             | X  |
 |           | upper(value)                  | makes value uppercase                                     | X  |
 |           | concat(value, value)          | counts the number of matches                              | X  |
-| Other     |                               |                                                            |    |
+| Other     |                               |                                                           |    |
 |           | end()                         | returns the value of the last column                      | X  |
 |           | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            | X  |
 
