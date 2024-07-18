@@ -60,7 +60,11 @@ only has regex functionality when used in the regex() function.</td>
         <td>Function </td><td> Calculated   </td><td> Calculated </td>
         <td>A function name followed by parentheses. Functions can
 contain terms, variables, headers and other  functions. Some functions
-take a specific or  unlimited number of types as arguments.     </td>
+take a specific or  unlimited number of types as arguments.
+Certain functions can take qualifiers. An `onmatch` qualifier indicates that
+the function should be applied only when the whole path matches.
+Some functions optionally take an arbitrary name qualifier to better name a tracking variable.
+Qualifiers are described below.  </td>
         <td>
             <li/> `not(count()==2)`
         </td>
@@ -73,6 +77,8 @@ take a specific or  unlimited number of types as arguments.     </td>
             set or tested depending on the usage. By itself, it is an existence test. When used as
             the left hand side of an "=" its value is set.
             When it is used on either side of an "==" it is an equality test.
+            Variables can take an `onmatch` qualifier to indicate that the variable should
+only be set when the row matches all parts of the path.
         <td>
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
@@ -104,6 +110,18 @@ take a specific or  unlimited number of types as arguments.     </td>
         </td>
     </tr>
 <table>
+
+Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only two qualifiers:
+
+- `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
+- An arbitrary string to add a name for the function's internal use, typically to name a variable
+
+Qualifiers look like:
+
+    [ @myvar.onmatch = yes() ]
+    [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
+
+When multiple qualifiers are used order is not important.
 
 ## Example
     [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
