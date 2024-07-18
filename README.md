@@ -178,7 +178,6 @@ Most of the work of matching is done in functions. The match functions are:
 |           | [increment(value, n)](csvpath/matching/functions/increment.md)           | increments a variable by n each time seen                 |
 |           | [every(value, number)](csvpath/matching/functions/every.md)          | match every Nth time a value is seen                      |
 |           | [tally(value, value, ...)](csvpath/matching/functions/tally.md)      | counts times values are seen, including as a set          |
-
 | Strings   |                               |                                                           |
 |           | length(value)                 | returns the length of the value                           |
 |           | lower(value)                  | makes value lowercase                                     |
@@ -188,7 +187,6 @@ Most of the work of matching is done in functions. The match functions are:
 | Other     |                               |                                                           |
 |           | end()                         | returns the value of the last column                      |
 |           | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            |
-
 |           | [now(format)](csvpath/matching/functions/now.md)                   | a datetime, optionally formatted                          |
 |           | [print(value, str)](csvpath/matching/functions/print.md)             | when matches prints the interpolated string               |
 |           | random(starting, ending)      | generates a random int from starting to ending            |
