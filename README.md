@@ -119,6 +119,9 @@ Variables and some functions can take qualifiers on their name. A qualifier take
 Qualifiers look like:
 
     [ @myvar.onmatch = yes() ]
+
+Or:
+
     [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
 
 When multiple qualifiers are used order is not important.
