@@ -156,7 +156,7 @@ Most of the work of matching is done in functions. The match functions are:
 <tr><td>           </td><td> not(value)                    </td><td> negates a value                                           </td></tr>
 <tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>
 <tr><td>           </td><td> yes()                         </td><td> always true                                               </td></tr>
-<tr><td>           </td><td> [in(value, list)](csvpath/matching/functions/in.md)   </td><td> match in a pipe-delimited list    </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
 <tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>
 <tr><td>           </td><td> divide(value, value, ...)     </td><td> divides numbers                                           </td></tr>
@@ -171,14 +171,14 @@ Most of the work of matching is done in functions. The match functions are:
 <tr><td>           </td><td> min(value, type)              </td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> percent(type)                 </td><td> % of total lines for "scan", "match", "line"              </td></tr>
 <tr><td> Counting  </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> [count()](csvpath/matching/functions/count.md)  </td><td> counts the number of matches            </td></tr>
-<tr><td>           </td><td> [count(value)](csvpath/matching/functions/count.md) </td><td> count matches of value              </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/count.md'>count()</a> </td><td> counts the number of matches            </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/count.md'>count(value)</a> </td><td> count matches of value              </td></tr>
 <tr><td>           </td><td> count_lines()                 </td><td> count lines to this point in the file                     </td></tr>
 <tr><td>           </td><td> count_scans()                 </td><td> count lines we checked for match                          </td></tr>
-<tr><td>           </td><td> [first(value, value, ...)](csvpath/matching/functions/first.md) </td><td> match the first occurrence and capture line  </td></tr>
-<tr><td>           </td><td> [increment(value, n)](csvpath/matching/functions/increment.md) </td><td> increments a variable by n each time seen   </td></tr>
-<tr><td>           </td><td> [every(value, number)](csvpath/matching/functions/every.md) </td><td> match every Nth time a value is seen  </td></tr>
-<tr><td>           </td><td> [tally(value, value, ...)](csvpath/matching/functions/tally.md)</td><td> counts times values are seen, including as a set   </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/first.md'>first(value, value, ...)</a> </td><td> match the first occurrence and capture line  </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/increment.md'>increment(value, n)</a> </td><td> increments a variable by n each time seen   </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/tally.md'>tally(value, value, ...)</a></td><td> counts times values are seen, including as a set   </td></tr>
 <tr><td> Strings   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> concat(value, value)          </td><td> counts the number of matches                              </td></tr>
 <tr><td>           </td><td> length(value)                 </td><td> returns the length of the value                           </td></tr>
@@ -188,8 +188,8 @@ Most of the work of matching is done in functions. The match functions are:
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> end()                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> isinstance(value, typestr)    </td><td> tests for "int","float","complex","bool","usd"            </td></tr>
-<tr><td>           </td><td> [now(format)](csvpath/matching/functions/now.md) </td><td> a datetime, optionally formatted       </td></tr>
-<tr><td>           </td><td> [print(value, str)](csvpath/matching/functions/print.md) </td><td> when matches prints the interpolated string  </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/print.md'>print(value, str)</a></td><td> when matches prints the interpolated string  </td></tr>
 <tr><td>           </td><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>
 </tr>
 </table>
