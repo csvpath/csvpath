@@ -148,11 +148,9 @@ will always set it.
 
 Most of the work of matching is done in functions. The match functions are:
 
-<tr><td>fish!
 
 <table>
-<tr><td> Group     </td><td>Function                       </td><td> What it does                                              </td></tr>
-<tr><td>-------------------------------------------</td><td>-----------------------------------------------------------</td></tr>
+<tr><th> Group     </th><th>Function                       </th><th> What it does                                              </th></tr>
 <tr><td> Boolean   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> [no()](csvpath/matching/functions/no.md)  </td><td> always false                                  </td></tr>
 <tr><td>           </td><td> not(value)                    </td><td> negates a value                                           </td></tr>
