@@ -148,6 +148,11 @@ will always set it.
 
 Most of the work of matching is done in functions. The match functions are:
 
+<table>
+<tr><td>fish!
+</tr>
+</table>
+
 
 | Group     |Function                       | What it does                                              |
 |-------------------------------------------|-----------------------------------------------------------|
