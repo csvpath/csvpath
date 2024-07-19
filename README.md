@@ -148,14 +148,15 @@ will always set it.
 
 Most of the work of matching is done in functions. The match functions are:
 
+
 | Group     |Function                       | What it does                                              |
 |-------------------------------------------|-----------------------------------------------------------|
 | Boolean   |                               |                                                           |
-|           | [no()](csvpath/matching/functions/no.md)                          | always false                                              |
+|           | [no()](csvpath/matching/functions/no.md)  | always false                                  |
 |           | not(value)                    | negates a value                                           |
 |           | or(value, value,...)          | match any one                                             |
 |           | yes()                         | always true                                               |
-|           | [in(value, list)](csvpath/matching/functions/in.md)               | match in a pipe-delimited list                            |
+|           | [in(value, list)](csvpath/matching/functions/in.md)   | match in a pipe-delimited list    |
 | Math      |                               |                                                           |
 |           | add(value, value, ...)        | adds numbers                                              |
 |           | divide(value, value, ...)     | divides numbers                                           |
@@ -170,25 +171,25 @@ Most of the work of matching is done in functions. The match functions are:
 |           | min(value, type)              | smallest value seen up to current "line", "scan", "match" |
 |           | percent(type)                 | % of total lines for "scan", "match", "line"              |
 | Counting  |                               |                                                           |
-|           | [count()](csvpath/matching/functions/count.md)                       | counts the number of matches                              |
-|           | [count(value)](csvpath/matching/functions/count.md)                  | count matches of value                                    |
+|           | [count()](csvpath/matching/functions/count.md)  | counts the number of matches            |
+|           | [count(value)](csvpath/matching/functions/count.md) | count matches of value              |
 |           | count_lines()                 | count lines to this point in the file                     |
 |           | count_scans()                 | count lines we checked for match                          |
-|           | [first(value, value, ...)](csvpath/matching/functions/first.md)       | match the first occurrence and capture line               |
-|           | [increment(value, n)](csvpath/matching/functions/increment.md)           | increments a variable by n each time seen                 |
-|           | [every(value, number)](csvpath/matching/functions/every.md)          | match every Nth time a value is seen                      |
-|           | [tally(value, value, ...)](csvpath/matching/functions/tally.md)      | counts times values are seen, including as a set          |
+|           | [first(value, value, ...)](csvpath/matching/functions/first.md) | match the first occurrence and capture line  |
+|           | [increment(value, n)](csvpath/matching/functions/increment.md) | increments a variable by n each time seen   |
+|           | [every(value, number)](csvpath/matching/functions/every.md) | match every Nth time a value is seen  |
+|           | [tally(value, value, ...)](csvpath/matching/functions/tally.md)| counts times values are seen, including as a set   |
 | Strings   |                               |                                                           |
+|           | concat(value, value)          | counts the number of matches                              |
 |           | length(value)                 | returns the length of the value                           |
 |           | lower(value)                  | makes value lowercase                                     |
 |           | regex(regex-string)           | match on a regular expression                             |
 |           | upper(value)                  | makes value uppercase                                     |
-|           | concat(value, value)          | counts the number of matches                              |
 | Other     |                               |                                                           |
 |           | end()                         | returns the value of the last column                      |
 |           | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            |
-|           | [now(format)](csvpath/matching/functions/now.md)                   | a datetime, optionally formatted                          |
-|           | [print(value, str)](csvpath/matching/functions/print.md)             | when matches prints the interpolated string               |
+|           | [now(format)](csvpath/matching/functions/now.md) | a datetime, optionally formatted       |
+|           | [print(value, str)](csvpath/matching/functions/print.md) | when matches prints the interpolated string  |
 |           | random(starting, ending)      | generates a random int from starting to ending            |
 
 # Not Ready For Production
