@@ -127,7 +127,7 @@ Or:
 When multiple qualifiers are used order is not important.
 
 ## Example
-    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
+    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short</td><td>medium')) ]
 
 In the path above, the rules applied are:
 - `#common_name` indicates a header named "common_name". Headers are the values in the 0th line. This component of the match is an existence test.
@@ -148,54 +148,53 @@ will always set it.
 
 Most of the work of matching is done in functions. The match functions are:
 
-<table>
 <tr><td>fish!
+
+<table>
+<tr><td> Group     </td><td>Function                       </td><td> What it does                                              </td></tr>
+<tr><td>-------------------------------------------</td><td>-----------------------------------------------------------</td></tr>
+<tr><td> Boolean   </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> [no()](csvpath/matching/functions/no.md)  </td><td> always false                                  </td></tr>
+<tr><td>           </td><td> not(value)                    </td><td> negates a value                                           </td></tr>
+<tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>
+<tr><td>           </td><td> yes()                         </td><td> always true                                               </td></tr>
+<tr><td>           </td><td> [in(value, list)](csvpath/matching/functions/in.md)   </td><td> match in a pipe-delimited list    </td></tr>
+<tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>
+<tr><td>           </td><td> divide(value, value, ...)     </td><td> divides numbers                                           </td></tr>
+<tr><td>           </td><td> multiply(value, value, ...)   </td><td> multiplies numbers                                        </td></tr>
+<tr><td>           </td><td> subtract(value, value, ...)   </td><td> subtracts numbers                                         </td></tr>
+<tr><td>           </td><td> after(value)                  </td><td> finds things after a date, number, string                 </td></tr>
+<tr><td>           </td><td> before(value)                 </td><td> finds things before a date, number, string                </td></tr>
+<tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> average(number, type)         </td><td> returns the average up to current "line", "scan", "match" </td></tr>
+<tr><td>           </td><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
+<tr><td>           </td><td> max(value, type)              </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
+<tr><td>           </td><td> min(value, type)              </td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
+<tr><td>           </td><td> percent(type)                 </td><td> % of total lines for "scan", "match", "line"              </td></tr>
+<tr><td> Counting  </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> [count()](csvpath/matching/functions/count.md)  </td><td> counts the number of matches            </td></tr>
+<tr><td>           </td><td> [count(value)](csvpath/matching/functions/count.md) </td><td> count matches of value              </td></tr>
+<tr><td>           </td><td> count_lines()                 </td><td> count lines to this point in the file                     </td></tr>
+<tr><td>           </td><td> count_scans()                 </td><td> count lines we checked for match                          </td></tr>
+<tr><td>           </td><td> [first(value, value, ...)](csvpath/matching/functions/first.md) </td><td> match the first occurrence and capture line  </td></tr>
+<tr><td>           </td><td> [increment(value, n)](csvpath/matching/functions/increment.md) </td><td> increments a variable by n each time seen   </td></tr>
+<tr><td>           </td><td> [every(value, number)](csvpath/matching/functions/every.md) </td><td> match every Nth time a value is seen  </td></tr>
+<tr><td>           </td><td> [tally(value, value, ...)](csvpath/matching/functions/tally.md)</td><td> counts times values are seen, including as a set   </td></tr>
+<tr><td> Strings   </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> concat(value, value)          </td><td> counts the number of matches                              </td></tr>
+<tr><td>           </td><td> length(value)                 </td><td> returns the length of the value                           </td></tr>
+<tr><td>           </td><td> lower(value)                  </td><td> makes value lowercase                                     </td></tr>
+<tr><td>           </td><td> regex(regex-string)           </td><td> match on a regular expression                             </td></tr>
+<tr><td>           </td><td> upper(value)                  </td><td> makes value uppercase                                     </td></tr>
+<tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>           </td><td> end()                         </td><td> returns the value of the last column                      </td></tr>
+<tr><td>           </td><td> isinstance(value, typestr)    </td><td> tests for "int","float","complex","bool","usd"            </td></tr>
+<tr><td>           </td><td> [now(format)](csvpath/matching/functions/now.md) </td><td> a datetime, optionally formatted       </td></tr>
+<tr><td>           </td><td> [print(value, str)](csvpath/matching/functions/print.md) </td><td> when matches prints the interpolated string  </td></tr>
+<tr><td>           </td><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>
 </tr>
 </table>
-
-
-| Group     |Function                       | What it does                                              |
-|-------------------------------------------|-----------------------------------------------------------|
-| Boolean   |                               |                                                           |
-|           | [no()](csvpath/matching/functions/no.md)  | always false                                  |
-|           | not(value)                    | negates a value                                           |
-|           | or(value, value,...)          | match any one                                             |
-|           | yes()                         | always true                                               |
-|           | [in(value, list)](csvpath/matching/functions/in.md)   | match in a pipe-delimited list    |
-| Math      |                               |                                                           |
-|           | add(value, value, ...)        | adds numbers                                              |
-|           | divide(value, value, ...)     | divides numbers                                           |
-|           | multiply(value, value, ...)   | multiplies numbers                                        |
-|           | subtract(value, value, ...)   | subtracts numbers                                         |
-|           | after(value)                  | finds things after a date, number, string                 |
-|           | before(value)                 | finds things before a date, number, string                |
-| Stats     |                               |                                                           |
-|           | average(number, type)         | returns the average up to current "line", "scan", "match" |
-|           | median(value, type)           | median value up to current "line", "scan", "match"        |
-|           | max(value, type)              | largest value seen up to current "line", "scan", "match"  |
-|           | min(value, type)              | smallest value seen up to current "line", "scan", "match" |
-|           | percent(type)                 | % of total lines for "scan", "match", "line"              |
-| Counting  |                               |                                                           |
-|           | [count()](csvpath/matching/functions/count.md)  | counts the number of matches            |
-|           | [count(value)](csvpath/matching/functions/count.md) | count matches of value              |
-|           | count_lines()                 | count lines to this point in the file                     |
-|           | count_scans()                 | count lines we checked for match                          |
-|           | [first(value, value, ...)](csvpath/matching/functions/first.md) | match the first occurrence and capture line  |
-|           | [increment(value, n)](csvpath/matching/functions/increment.md) | increments a variable by n each time seen   |
-|           | [every(value, number)](csvpath/matching/functions/every.md) | match every Nth time a value is seen  |
-|           | [tally(value, value, ...)](csvpath/matching/functions/tally.md)| counts times values are seen, including as a set   |
-| Strings   |                               |                                                           |
-|           | concat(value, value)          | counts the number of matches                              |
-|           | length(value)                 | returns the length of the value                           |
-|           | lower(value)                  | makes value lowercase                                     |
-|           | regex(regex-string)           | match on a regular expression                             |
-|           | upper(value)                  | makes value uppercase                                     |
-| Other     |                               |                                                           |
-|           | end()                         | returns the value of the last column                      |
-|           | isinstance(value, typestr)    | tests for "int","float","complex","bool","usd"            |
-|           | [now(format)](csvpath/matching/functions/now.md) | a datetime, optionally formatted       |
-|           | [print(value, str)](csvpath/matching/functions/print.md) | when matches prints the interpolated string  |
-|           | random(starting, ending)      | generates a random int from starting to ending            |
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
