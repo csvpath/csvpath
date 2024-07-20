@@ -36,7 +36,7 @@ The scan part of the path starts with a dollar sign to indicate the root, meanin
 
 # Matching
 The match part is also bracketed. Matches have space separated
-components or "values" that are ANDed together. A match component is one of several types:
+components or "values" that are ANDed together. The components' order is important. A match component is one of several types:
 <table>
 <tr>
 <td>Type</td>
@@ -113,6 +113,14 @@ only be set when the row matches all parts of the path.
     </tr>
 <table>
 
+A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
+
+    [@a=#b #c==@a]
+
+Can also be written as:
+
+    [#c==#b]
+
 Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only two qualifiers:
 
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
@@ -186,6 +194,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> length(value)                 </td><td> returns the length of the value                           </td></tr>
 <tr><td>           </td><td> lower(value)                  </td><td> makes value lowercase                                     </td></tr>
 <tr><td>           </td><td> regex(regex-string, value)    </td><td> match on a regular expression                             </td></tr>
+<tr><td>           </td><td> substring(value, int)         </td><td> returns the first n chars from the value                  </td></tr>
 <tr><td>           </td><td> upper(value)                  </td><td> makes value uppercase                                     </td></tr>
 <tr><td> Columns   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> end()                         </td><td> returns the value of the last column                      </td></tr>

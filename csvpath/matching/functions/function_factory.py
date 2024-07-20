@@ -31,6 +31,7 @@ from csvpath.matching.functions.every import Every
 from csvpath.matching.functions.printf import Print
 from csvpath.matching.functions.increment import Increment
 from csvpath.matching.functions.column import Column
+from csvpath.matching.functions.substring import Substring
 
 
 class UnknownFunctionException(Exception):
@@ -131,6 +132,8 @@ class FunctionFactory:
             f = Increment(matcher, name, child)
         elif name == "column":
             f = Column(matcher, name, child)
+        elif name == "substring":
+            f = Substring(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

@@ -22,6 +22,7 @@ class Variable(Matchable):
 
     def reset(self) -> None:
         self.value = None
+        self.match = None
         super().reset()
 
     def matches(self, *, skip=[]) -> bool:

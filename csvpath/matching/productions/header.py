@@ -13,6 +13,7 @@ class Header(Matchable):
 
     def reset(self) -> None:
         self.value = Header.NEVER
+        self.match = None
         super().reset()
 
     def to_value(self, *, skip=[]) -> Any:

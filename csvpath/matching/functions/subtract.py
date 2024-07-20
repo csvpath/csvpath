@@ -16,7 +16,6 @@ class Subtract(Function):
             ret = 0
             for i, sib in enumerate(siblings):
                 v = sib.to_value(skip=skip)
-                print(f"Subtract.to_value: {ret} = {ret} - {v} == {ret - v}")
                 if i == 0:
                     ret = v
                 else:

@@ -23,6 +23,7 @@ class Function(Matchable):
 
     def reset(self) -> None:
         self.value = None
+        self.match = None
         super().reset()
 
     def to_value(self, *, skip=[]) -> bool:

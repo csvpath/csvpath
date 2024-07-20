@@ -60,10 +60,6 @@ class Matcher:
             expression[1] = None
             expression[0].reset()
 
-    def print(self, msg: str) -> None:
-        if self.csvpath:
-            self.csvpath.print(msg)
-
     def header_index(self, name: str) -> int:
         if not self.headers:
             return None
@@ -78,7 +74,8 @@ class Matcher:
             return None
         if i >= len(self.headers):
             return None
-        return self.headers[i]
+        n = self.headers[i]
+        return n
 
     def header_value(self, name: str) -> Any:
         n = self.header_index(name)

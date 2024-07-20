@@ -17,4 +17,5 @@ class Expression(Matchable):
 
     def reset(self) -> None:
         self.value = None
+        self.match = None
         super().reset()

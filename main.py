@@ -9,33 +9,43 @@ class Main:
     @classmethod
     def do_path(self):
         pathstr = """$/Users/davidkershaw/Desktop/csvs/exportedLogRecords.CSV
-                        [1*]
-                        [
-                        @col = column("level")
+                        [1*][
+                        @col20 = substring( #20, 45 )
                         @cntln = count_lines()
-                        @cnt = count()
-                        @cntall = count(yes())
-                        @t = yes()
                         print(
-                            not( #level=="WARN" ),
-                            "$.variables.col, $.variables.t, $.variables.cntall, $.variables.cntln, $.variables.cnt, $.headers.level, $.headers.message" )
-                        not( #level=="WARN" )
-                        ]"""
+                            regex(#20, /InvocationContext/),
+                            " $.variables.col20, $.variables.cntln, $.headers.level, $.headers.message" )
+
+                    ]"""
 
         path = CsvPath()
         path.parse(pathstr)
+        line = "______"
         for line in path.next():
             pass
             # print(f"line: {line}")
 
         print(f"variables: {path.variables}")
+        # print(f"headers: {path.headers}")
+        """
+        for i, h in enumerate(path.headers):
+            v = None
+            try:
+                v = f"{line[i]}"[0:20]
+            except:
+                pass
+            # print(f"{i}: {h} = {v}")
+        """
 
 
 if __name__ == "__main__":
 
     """
+                            regex(#message, /InvocationContext/)
+
+
     import cProfile
-    cProfile.run("Main.do_path()", sort="cumtime")
+        cProfile.run("Main.do_path()", sort="cumtime")
     """
 
     main = Main()
