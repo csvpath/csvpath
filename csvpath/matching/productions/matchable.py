@@ -43,6 +43,13 @@ class Matchable:
     def has_onmatch(self) -> bool:
         return Qualities.ONMATCH.value in self.qualifiers
 
+    def line_matches(self):
+        es = self.matcher.expressions
+        for e in es:
+            if not e[0].matches(skip=[self]):
+                return False
+        return True
+
     def reset(self) -> None:
         # let the subclasses handle value
         # self.value = None

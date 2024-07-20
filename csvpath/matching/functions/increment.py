@@ -4,12 +4,15 @@ from csvpath.matching.productions.equality import Equality
 
 
 class Increment(Function):
+
+    """
     def line_matches(self):
         es = self.matcher.expressions
         for e in es:
             if not e[0].matches(skip=[self]):
                 return False
         return True
+    """
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
