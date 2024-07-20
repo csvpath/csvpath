@@ -88,7 +88,9 @@ class Matcher:
 
     def matches(self, *, syntax_only=False) -> bool:
         ret = True
+        # print("")
         for i, et in enumerate(self.expressions):
+            # print(f"Matcher.matches: i: {i}, et: {et[0].children}")
             if et[1] is True:
                 ret = True
             elif et[1] is False:
@@ -170,7 +172,7 @@ class Matcher:
         name = p[1]
         child = p[3] if p and len(p) == 5 else None
         f = FunctionFactory.get_function(self, name=name, child=child)
-        ParserUtility.enumerate_p("IN p_function", p)
+        # ParserUtility.enumerate_p("IN p_function", p)
         p[0] = f
 
     def p_assignment_or_equality(self, p):

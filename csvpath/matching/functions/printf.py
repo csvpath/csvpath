@@ -33,7 +33,7 @@ class Print(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return None  # is this the right return val for this situtation?
+            return True  # is this the right return val for this situtation?
         if len(self.children) != 1:
             print(
                 f"Error: json of expressions: {ExpressionEncoder().valued_list_to_json(self.matcher.expressions)}"
@@ -45,7 +45,7 @@ class Print(Function):
             print(f"{self.to_value()}")
             return True
         else:
-            return False
+            return True  # always true because we aren't a test we're a side effect
 
     def make_string(self, string: str) -> str:
         for token in Print.TOKENS:
