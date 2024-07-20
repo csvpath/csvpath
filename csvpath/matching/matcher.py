@@ -73,6 +73,13 @@ class Matcher:
                 self.header_dict[n] = i
         return self.header_dict.get(name)
 
+    def header_name(self, i: int) -> str:
+        if not self.headers:
+            return None
+        if i >= len(self.headers):
+            return None
+        return self.headers[i]
+
     def header_value(self, name: str) -> Any:
         n = self.header_index(name)
         ret = None
@@ -192,10 +199,8 @@ class Matcher:
         """
         e = Equality(self)
         e.left = p[1]
-        # e.set_left(p[1])
         e.set_operation(p[2])
         e.right = p[3]
-        # e.set_right(p[3])
         p[0] = e
 
     def p_op(self, p):
@@ -213,14 +218,12 @@ class Matcher:
         """
         e = Equality(self)
         e.left = p[1]
-        # e.set_left(p[1])
         e.set_operation(p[2])
         e.right = p[3]
-        # e.set_right(p[3])
         p[0] = e
 
     def p_term(self, p):
-        """term : QUOTE NAME QUOTE
+        """term : QUOTED_NAME
         | QUOTE DATE QUOTE
         | QUOTE NUMBER QUOTE
         | NUMBER
@@ -238,13 +241,16 @@ class Matcher:
         p[0] = p[1]
 
     def p_var(self, p):
-        """var : VAR_SYM NAME"""
+        """var : VAR_SYM NAME
+        | VAR_SYM NAME_LINE
+        """
         v = Variable(self, name=p[2])
         p[0] = v
 
     def p_header(self, p):
         """header : HEADER_SYM NAME
         | HEADER_SYM NUMBER
+        | HEADER_SYM NAME_LINE
         """
         h = Header(self, name=p[2])
         p[0] = h

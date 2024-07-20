@@ -126,7 +126,6 @@ class Equality(Matchable):
             b = None
             if isinstance(self.left, Variable):
                 v = self.right.to_value(skip=skip)
-                print(f"Equality.matches: left var onmatch: {self.left.onmatch}")
                 if self.left.onmatch or (
                     self.right.name == "count" and len(self.right.children) == 0
                 ):
@@ -135,7 +134,6 @@ class Equality(Matchable):
                     #
                     self.matcher.set_if_all_match(self.left.name, value=v)
                 else:
-                    print(f"Equality.matches: left var: {self.left.name} = {v}")
                     self.matcher.set_variable(self.left.name, value=v)
                 b = True
             else:

@@ -770,50 +770,61 @@ class TestFunctions(unittest.TestCase):
         print("checking ints")
         path.parse(f'${PATH}[*][ isinstance(count(), "int") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 1: {len(lines)}")
         assert len(lines) == 9
         print(f"test_function_isinstance: lines: {lines}")
         print("checking dates")
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("11-23-2024", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 2: {len(lines)}")
         assert len(lines) == 9
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("2024-11-23", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 3: {len(lines)}")
         assert len(lines) == 9
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("2024-1-3", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 4: {len(lines)}")
         assert len(lines) == 9
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("2024-59-23", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 5: {len(lines)}")
         assert len(lines) == 0
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("1000-1-1", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 6: {len(lines)}")
         assert len(lines) == 9
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("1/12/2024", "datetime") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 7: {len(lines)}")
         assert len(lines) == 9
         print("checking $$$")
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("$1000.59", "usd") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 8: {len(lines)}")
         assert len(lines) == 9
         print("checking float")
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("11.59", "float") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 9: {len(lines)}")
         assert len(lines) == 9
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("11.59", "int") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 10: {len(lines)}")
         assert len(lines) == 0
         path = CsvPath()
         path.parse(f'${PATH}[*][ isinstance("11.59", "usd") ]')
         lines = path.collect()
+        print(f"test_function_isinstance 11: {len(lines)}")
         assert len(lines) == 0
 
     def test_function_match_length(self):
@@ -883,3 +894,41 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["i"] == 3
         assert path.variables["j"] == 4
         assert path.variables["double_check.increment"] == 4
+
+    def test_function_increment2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @i = increment.never.onmatch(yes(), 3)
+                @j = increment.always(yes(), 3)
+                @k = increment.onmatch.still_never(yes(), 3)
+                no()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 0
+        assert path.variables["j"] == 3
+        assert path.variables["i"] == 0
+        assert path.variables["k"] == 0
+        assert path.variables.get("still_never") is None
+
+    def test_function_column(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @i = column("firstname")
+                @j = column("lastname")
+                @n = column(2)
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert path.variables["j"] == 1
+        assert path.variables["i"] == 0
+        assert path.variables["n"] == "say"

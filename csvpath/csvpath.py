@@ -19,7 +19,7 @@ class CsvPath:
         filename=None,
         delimiter=",",
         quotechar='"',
-        block_print=True,
+        block_print=True,  # todo: remove
         skip_blank_lines=True,
     ):
         self.filename = filename
@@ -57,14 +57,9 @@ class CsvPath:
         self.modify = mod
         self.scanner.parse(s)
         end = time.time()
-        print(f"parsed: {end - start}")
+        end - start
         self.get_total_lines_and_headers()
         return self.scanner
-
-    # prints what the developer needs to see
-    def print(self, msg: str) -> None:
-        if not self.block_print:
-            print(msg)
 
     def _find_scan_match_modify(self, data):
         scan = ""
@@ -147,19 +142,16 @@ class CsvPath:
                     continue
                 if self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
-                    # from datetime import timedelta
-                    # startmatch = time.perf_counter()
+                    startmatch = time.perf_counter()
                     b = self.matches(line)
-                    # endmatch = time.time()
-                    # duration = timedelta(seconds=time.perf_counter()-startmatch)
+                    endmatch = time.time()
                     if b:
                         self.match_count = self.match_count + 1
                         yield line
-                    # if self.scan_count < 100:
-                    #    print(f"match {self.scan_count}: {duration}")
+                    endmatch - startmatch
                 self.line_number = self.line_number + 1
             end = time.time()
-            print(f"iterated: {end - start}")
+            end - start
 
     def get_total_lines(self) -> int:
         if self.total_lines == -1:
@@ -190,7 +182,7 @@ class CsvPath:
                 header = header.replace("`", "")
                 self.headers.append(header)
             end = time.time()
-            print(f"lines and headers: {end - start}")
+            end - start
         return self.total_lines
 
     def _load_headers(self) -> None:
@@ -257,10 +249,6 @@ class CsvPath:
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         if not name:
             raise Exception("name cannot be None")
-        if name in self.variables:
-            self.print(f"CsvPath.set_variable: existing value: {self.variables[name]}")
-        else:
-            self.print("CsvPath.set_variable: no existing value")
         if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}

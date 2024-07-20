@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.021"
+version = "0.0.022"
 description = ""
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"

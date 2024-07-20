@@ -29,7 +29,7 @@ class Header(Matchable):
                 n = self.matcher.header_index(self.name)
                 if n is None:
                     ret = None
-                if self.matcher.line and len(self.matcher.line) > n:
+                elif self.matcher.line and len(self.matcher.line) > n:
                     ret = self.matcher.line[n]
             self.value = ret
         return self.value

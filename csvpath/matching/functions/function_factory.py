@@ -30,6 +30,7 @@ from csvpath.matching.functions.tally import Tally
 from csvpath.matching.functions.every import Every
 from csvpath.matching.functions.printf import Print
 from csvpath.matching.functions.increment import Increment
+from csvpath.matching.functions.column import Column
 
 
 class UnknownFunctionException(Exception):
@@ -60,7 +61,6 @@ class FunctionFactory:
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
         name, qualifier = cls.get_name_and_qualifier(name)
-        print(f"FunctionFactory.get_function: {name}, {qualifier}")
         if name == "count":
             f = Count(matcher, name, child)
         elif name == "length":
@@ -129,6 +129,8 @@ class FunctionFactory:
             f = Print(matcher, name, child)
         elif name == "increment":
             f = Increment(matcher, name, child)
+        elif name == "column":
+            f = Column(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

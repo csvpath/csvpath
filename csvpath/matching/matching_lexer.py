@@ -17,6 +17,8 @@ class MatchingLexer(object):
         "VAR_SYM",
         "REGEX",
         "QUOTE",
+        "QUOTED_NAME",
+        "NAME_LINE",
     ]
 
     t_ignore = " \t\n\r"
@@ -31,6 +33,8 @@ class MatchingLexer(object):
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"
     t_NAME = r"[\$A-Za-z0-9\.%_|\s \-:]+"
+    t_NAME_LINE = r"[\$A-Za-z0-9\.%_|\s \-:]+\n"
+    t_QUOTED_NAME = r"\"[\$A-Za-z0-9\.,%_|\s \-:\\/]+\""
     t_REGEX = r"/(?:[^/\\]|\\.)*/"
 
     def t_DATE(self, t):

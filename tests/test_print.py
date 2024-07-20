@@ -6,6 +6,8 @@ from csvpath.matching.matcher import Term
 from csvpath.matching.matcher import Matcher
 from csvpath.csvpath import CsvPath
 
+PATH = "tests/test_resources/test.csv"
+
 
 class TestPrint(unittest.TestCase):
     def test_print_variables(self):
@@ -43,6 +45,37 @@ class TestPrint(unittest.TestCase):
         i = t.find("with a fish")
         assert i > -1
 
+    def test_print_variables3(self):
+        path = CsvPath()
+        matcher = Matcher(csvpath=path, data="[no()]")
+        path.set_variable("col", value="1115")
+        path.set_variable("cntln", value="3338")
+        path.set_variable("cnt", value="0015")
+        path.set_variable("t", value="True")
+        string = "$.variables.col, $.variables.t, $.variables.cntln, $.variables.cnt"
+        astr = Term(matcher, value=string, name="")
+        p = Print(matcher, "print", astr)
+        e = Equality(matcher)
+        e.left = Yes(matcher, name="yes")
+        e.right = p
+        t = p.handle_variables(string)
+        print(f"at 1 string is: {t}\n")
+        t = p.handle_variables(t)
+        print(f"at 2 string is: {t}\n")
+        t = p.handle_variables(t)
+        print(f"at 3 string is: {t}\n")
+        t = p.handle_variables(t)
+        print(f"at 4 string is: {t}\n")
+        i = t.find("1115")
+        assert i > -1
+        print(f"t: {t}")
+        i = t.find("3338")
+        assert i > -1
+        i = t.find("0015")
+        assert i > -1
+        i = t.find("True")
+        assert i > -1
+
     def test_print_headers(self):
         path = CsvPath()
         headers = ["fish", "bat"]
@@ -67,3 +100,17 @@ class TestPrint(unittest.TestCase):
         print(f"t: {t}")
         i = t.find("with a xx")
         assert i > -1
+
+    # this test only checks that the NAME_LINE token is handled correctly
+    def test_print_plus_header(self):
+        pathstr = f"""${PATH}
+                        [1-100]
+                        [
+                        @h = #level
+                        print(  @h=="WARN", "$.headers.level, $.headers.message" )
+
+                        ]"""
+
+        path = CsvPath()
+        path.parse(pathstr)
+        path.collect()

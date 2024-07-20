@@ -51,11 +51,9 @@ class Print(Function):
         for token in Print.TOKENS:
             if token == Print.TOKENS[8]:
                 tstring = self.handle_variables(string)
-                if tstring != string:
-                    print(f"make string: tstring != string: {tstring}")
+                while tstring != string:
                     string = tstring
                     tstring = self.handle_variables(tstring)
-                print(f"make string: tstring == string: {tstring}")
                 string = tstring
             elif token == Print.TOKENS[10]:
                 tstring = self.handle_headers(string)

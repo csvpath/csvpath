@@ -10,5 +10,9 @@ class Term(Matchable):
         super().reset()
 
     def to_value(self, *, skip=[]) -> Any:
+        if isinstance(self.value, str) and self.value[0] == '"':
+            self.value = self.value[1:]
+        if isinstance(self.value, str) and self.value[len(self.value) - 1] == '"':
+            self.value = self.value[0 : len(self.value) - 1]
         v = self.value
         return v
