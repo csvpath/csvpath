@@ -9,7 +9,12 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
-CsvPath paths have three parts, a root file name and parts for scanning and matching.
+CsvPath paths have three parts:
+- a "root" file name
+- a scanning part
+- a matching part
+
+The root starts with `$`. The match and scan parts are enclosed by brackets.
 
 A very simple csvpath might look like this:
 
@@ -25,7 +30,6 @@ For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py),
     path.parse("$test.csv[5-25][#0=="Frog" @lastname="Bats" count()==2]")
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
-
     print(f"path vars: {path.variables}")
 
 This path says:
