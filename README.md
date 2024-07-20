@@ -9,7 +9,17 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
-CsvPath paths have two parts, scanning and matching. For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
+CsvPath paths have three parts, a root file name and parts for scanning and matching.
+
+A very simple csvpath might look like this:
+
+    $filename[*][yes()]
+
+This path says open the file named `filename`, scan all the lines, and match every line scanned.
+
+The filename following the `$` can be an actual relative or absolute file path. In principle, it could be a logical identifier that does not point to a physical file. In the same way, a path that looked like `$[*][yes()]` would be approprate for any file that was provided. At this time CsvPath only supports absolute and relative file paths.
+
+For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
 
     path = CsvPath(delimiter=",")
     path.parse("$test.csv[5-25][#0=="Frog" @lastname="Bats" count()==2]")
@@ -18,7 +28,7 @@ CsvPath paths have two parts, scanning and matching. For usage, see the unit tes
 
     print(f"path vars: {path.variables}")
 
-This scanning and matching path says:
+This path says:
 - Open test.csv
 - Scan lines 5 through 25
 - Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
@@ -35,8 +45,7 @@ The scan part of the path starts with a dollar sign to indicate the root, meanin
 - `[1+3-8]` means line 1 and lines 3 through eight
 
 # Matching
-The match part is also bracketed. Matches have space separated
-components or "values" that are ANDed together. The components' order is important. A match component is one of several types:
+The match part is also bracketed. Matches have space separated components or "values" that are ANDed together. The components' order is important. A match component is one of several types:
 <table>
 <tr>
 <td>Type</td>
