@@ -33,6 +33,9 @@ from csvpath.matching.functions.increment import Increment
 from csvpath.matching.functions.column import Column
 from csvpath.matching.functions.substring import Substring
 from csvpath.matching.functions.stop import Stop
+from csvpath.matching.functions.any import Any
+from csvpath.matching.functions.variable import Variable
+from csvpath.matching.functions.header import Header
 
 
 class UnknownFunctionException(Exception):
@@ -137,6 +140,12 @@ class FunctionFactory:
             f = Substring(matcher, name, child)
         elif name == "stop":
             f = Stop(matcher, name, child)
+        elif name == "variable":
+            f = Variable(matcher, name, child)
+        elif name == "header":
+            f = Header(matcher, name, child)
+        elif name == "any":
+            f = Any(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

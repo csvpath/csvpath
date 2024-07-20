@@ -966,3 +966,61 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 3
         assert path.variables["i"] == "FishBat"
         assert path.variables["c"] == 2
+
+    def test_function_any_function1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[3]
+            [
+                @frog = any(header(), "Frog")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\ntest_function_any_function: lines: {lines}")
+        print(f"test_function_any_function: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["frog"] is True
+
+    def test_function_any_function2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[3]
+            [
+                @found = any()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\ntest_function_any_function: lines: {lines}")
+        print(f"test_function_any_function: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["found"] is True
+
+    def test_function_any_function3(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[3]
+            [
+                @v = any(variable())
+                @frog = any(header(), "Frog")
+                @found = any()
+                @slug = any("slug")
+                @bear = any(header(),"Bear")
+                @me = any("True")
+                @h = any(header())
+                @v2 = any(variable())
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\ntest_function_any_function: lines: {lines}")
+        print(f"test_function_any_function: path vars: {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["frog"] is True
+        assert path.variables["found"] is True
+        assert path.variables["slug"] is False
+        assert path.variables["bear"] is False
+        assert path.variables["v"] is False
+        assert path.variables["v2"] is True
+        assert path.variables["h"] is True
