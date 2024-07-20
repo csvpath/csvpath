@@ -32,6 +32,7 @@ from csvpath.matching.functions.printf import Print
 from csvpath.matching.functions.increment import Increment
 from csvpath.matching.functions.column import Column
 from csvpath.matching.functions.substring import Substring
+from csvpath.matching.functions.stop import Stop
 
 
 class UnknownFunctionException(Exception):
@@ -134,6 +135,8 @@ class FunctionFactory:
             f = Column(matcher, name, child)
         elif name == "substring":
             f = Substring(matcher, name, child)
+        elif name == "stop":
+            f = Stop(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

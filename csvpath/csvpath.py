@@ -44,6 +44,7 @@ class CsvPath:
         self.jsons = []
         self.matcher = None
         self.skip_blank_lines = skip_blank_lines
+        self.stopped = False
 
     def dump_json(self):
         self._dump_json = not self._dump_json
@@ -129,6 +130,9 @@ class CsvPath:
             lines.append(_)
         return lines
 
+    def stop(self) -> None:
+        self.stopped = True
+
     def next(self):
         if self.scanner.filename is None:
             raise NoFileException("there is no filename")
@@ -150,6 +154,8 @@ class CsvPath:
                         yield line
                     endmatch - startmatch
                 self.line_number = self.line_number + 1
+                if self.stopped:
+                    break
             end = time.time()
             end - start
 

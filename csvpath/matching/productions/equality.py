@@ -125,7 +125,7 @@ class Equality(Matchable):
             return False
         if not self.value:
             b = None
-            if isinstance(self.left, Variable):
+            if isinstance(self.left, Variable) and self.op == "=":
                 v = self.right.to_value(skip=skip)
                 if self.left.onmatch or (
                     self.right.name == "count" and len(self.right.children) == 0
