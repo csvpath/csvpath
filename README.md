@@ -202,7 +202,7 @@ Variables are always set unless they are flagged with `.onmatch`. That means:
 
     $file.csv[*][ @imcounting.onmatch = count_lines() no()]
 
-will never set `imcounting`, but:
+will never set `imcounting`, because of the `no()` function disallowing any matches, but:
 
     $file.csv[*][ @imcounting = count_lines() no()]
 
