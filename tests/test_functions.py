@@ -1062,3 +1062,21 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["found"] is False
         assert path.variables["found2"] is True
         assert path.variables["notfound"] is True
+
+    def test_function_when(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @ln = count_lines()
+                when(#0=="Frog", stop())
+                yes()
+            ]
+            """
+        )
+        lines = path.collect()
+        print(f"\ntest_function_any_function: lines: {lines}")
+        print(f"test_function_any_function: path vars: {path.variables}")
+        assert len(lines) == 4
+        assert path.variables["ln"] == 3

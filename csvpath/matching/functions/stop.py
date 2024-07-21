@@ -10,13 +10,14 @@ class Stop(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return False
-        if self.children and len(self.children) != 1:
-            ChildrenException("Stop must have a child")
+        if self.children and len(self.children) < 2:
+            ChildrenException("Stop must have 1 or 0 children")
         if self.match is None:
-            b = self.children[0].matches(skip=skip)
-            if b is True:
+            self.match = True
+            if len(self.children) == 1:
+                b = self.children[0].matches(skip=skip)
+                if b is True:
+                    self.matcher.csvpath.stop()
+            else:
                 self.matcher.csvpath.stop()
-            self.match = (
-                True  # we're always true, but we only stop if we calculated true
-            )
         return self.match

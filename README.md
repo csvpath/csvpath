@@ -219,7 +219,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='csvpath/matching/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/print.md'>print(value, str)</a></td><td> when matches prints the interpolated string  </td></tr>
 <tr><td>           </td><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>
-<tr><td>           </td><td> stop(value)                   </td><td> stops path scanning if a condition is met                 </td>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/stop.md'>stop(value)</a> </td><td> stops path scanning if a condition is met                 </td>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/when.md'>when(value, value)</a> </td><td> activate a value when a condition matches   </td>
 <tr><td>           </td><td> variable()                    </td><td> indicates to another function to look in variables       </td></tr>
 </tr>
 </table>

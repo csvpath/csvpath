@@ -36,6 +36,7 @@ from csvpath.matching.functions.stop import Stop
 from csvpath.matching.functions.any import Any
 from csvpath.matching.functions.variable import Variable
 from csvpath.matching.functions.header import Header
+from csvpath.matching.functions.when import When
 
 
 class UnknownFunctionException(Exception):
@@ -146,6 +147,8 @@ class FunctionFactory:
             f = Header(matcher, name, child)
         elif name == "any":
             f = Any(matcher, name, child)
+        elif name == "when":
+            f = When(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
