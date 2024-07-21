@@ -35,17 +35,18 @@ class Print(Function):
         if self in skip:
             return True  # is this the right return val for this situtation?
         if len(self.children) != 1:
-            print(
-                f"Error: json of expressions: {ExpressionEncoder().valued_list_to_json(self.matcher.expressions)}"
-            )
             raise ChildrenException(
                 "must be 1 equality child with a match and print string"
             )
-        if self.children[0].left.matches(skip=skip):
-            print(f"{self.to_value()}")
-            return True
-        else:
-            return True  # always true because we aren't a test we're a side effect
+        if self.match is None:
+            if self.children[0].left.matches(skip=skip):
+                print(f"{self.to_value()}")
+                self.match = True
+            else:
+                self.match = (
+                    True  # always true because we aren't a test we're a side effect
+                )
+        return self.match
 
     def make_string(self, string: str) -> str:
         for token in Print.TOKENS:

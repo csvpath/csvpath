@@ -4,6 +4,7 @@ from csvpath.csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
+NUMBERS = "tests/test_resources/numbers.csv"
 
 
 class TestFunctions(unittest.TestCase):
@@ -248,7 +249,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_count_lines(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][ #firstname=="David" @david=count_lines() ]')
+        path.parse(f'${PATH}[*][ #firstname=="David" @david.onmatch=count_lines() ]')
         lines = path.collect()
         assert len(lines) == 1
         print(f"test_function_count_in: path vars: {path.variables}")
@@ -285,8 +286,8 @@ class TestFunctions(unittest.TestCase):
             ${PATH}[*]
             [
                 count(#firstname=="Frog")==1
-                @say=#say
-                @line=count_lines()
+                @say.onmatch=#say
+                @line.onmatch=count_lines()
             ]"""
         )
         lines = path.collect()
@@ -303,8 +304,8 @@ class TestFunctions(unittest.TestCase):
             ${PATH}[*]
             [
                 or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
-                @say=#say
-                @line=count_lines()
+                @say.onmatch=#say
+                @line.onmatch=count_lines()
 
             ]"""
         )
@@ -718,7 +719,7 @@ class TestFunctions(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_count_in: path vars: {path.variables}")
+        print(f"\ntest_function_count_in: path vars: {path.variables}")
         assert path.variables["the_average"] is None
         assert len(lines) == 0
 
@@ -735,6 +736,32 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["the_average"] == 2
         assert len(lines) == 0
+
+    """
+    # non-deterministic test, but a good example to keep for now
+    def test_average_what_the(self):
+        path = CsvPath()
+        path.parse(
+            f""
+            ${NUMBERS}[1*]
+            [
+                @ave = average.test.onmatch(#count3, "line")
+                @r = random(0,1)
+                @c = count()
+                @c2 = count_scans()
+                @c3 = count_lines()
+                @r == 1
+                yes()
+                print(count_lines()==1, "match, scan, line, random, average")
+                print(yes(), "$.variables.c, $.variables.c2, $.variables.c3, $.variables.r, $.variables.ave")
+            ]""
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_average_what_the: path vars: {path.variables}")
+        #assert path.variables["the_average"] == 2
+        #assert len(lines) == 0
+        """
 
     def test_function_median(self):
         path = CsvPath()

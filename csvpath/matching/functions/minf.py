@@ -43,7 +43,9 @@ class MinMax(Function):
             return self.matcher.csvpath.current_line_number()
 
     def is_match(self) -> bool:
-        if isinstance(self.children[0], Equality):
+        if self.has_onmatch():
+            return True
+        elif isinstance(self.children[0], Equality):
             v = self.children[0].right.to_value()
             v = f"{v}".strip()
             return v == "match"
@@ -133,22 +135,25 @@ class Average(MinMax):
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self.value
         if self.children and len(self.children) == 1:
             ChildrenException("must have a child")
-        if not self.value:
+        if self.value is None:
             v = self.get_the_value()
+            # if we're watching a header and we're in the header row skip it.
             if (
                 self.get_the_name() in self.matcher.csvpath.headers
                 and self.matcher.csvpath.current_line_number() == 0
             ):
                 return self.value
+            # if the line must match and it doesn't stop here and return
             if self.is_match() and not self.line_matches():
                 return self.value
-            self.matcher.set_variable(
-                self.ave_or_med, tracking=f"{self.get_the_line()}", value=v
-            )
-            all_values = self.matcher.get_variable(self.ave_or_med)
+            n = self.first_non_term_qualifier(self.ave_or_med)
+            # set the "average" or "median" variable tracking the value by line, scan, or match count
+            self.matcher.set_variable(n, tracking=f"{self.get_the_line()}", value=v)
+            # get value for all the line counts
+            all_values = self.matcher.get_variable(n)
             m = []
             for k, v in enumerate(all_values.items()):
                 v = v[1]
@@ -156,11 +161,11 @@ class Average(MinMax):
                     v = float(v)
                     m.append(v)
                 except Exception:
-                    return self.value
-            if self.ave_or_med == "average":
-                self.value = mean(m)
-            else:
-                self.value = median(m)
+                    pass
+                if self.ave_or_med == "average":
+                    self.value = mean(m)
+                else:
+                    self.value = median(m)
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

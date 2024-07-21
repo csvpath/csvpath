@@ -89,6 +89,7 @@ class Matcher:
     def matches(self, *, syntax_only=False) -> bool:
         ret = True
         # print("")
+        failed = False
         for i, et in enumerate(self.expressions):
             # print(f"Matcher.matches: i: {i}, et: {et[0].children}")
             if et[1] is True:
@@ -98,11 +99,14 @@ class Matcher:
             elif not et[0].matches(skip=[]) and not syntax_only:
                 et[1] = False
                 ret = False
+
             else:
                 et[1] = True
                 ret = True
             if not ret:
-                break
+                failed = True
+            if failed:
+                ret = False
         if ret is True:
             self.do_set_if_all_match()
         return ret
