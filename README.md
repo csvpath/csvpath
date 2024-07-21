@@ -26,10 +26,15 @@ The filename following the `$` can be an actual relative or absolute file path. 
 
 This is a very basic use. For more usage, see the unit tests.
 
-    path = CsvPath(delimiter=",")
+    path = CsvPath()
     path.parse("""$test.csv
                     [5-25]
-                    [#0=="Frog" @lastname="Bats" count()==2]""")
+                    [
+                        #0=="Frog"
+                        @lastname.onmatch="Bats"
+                        count()==2
+                    ]
+               """)
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
     print(f"path vars: {path.variables}")
@@ -38,6 +43,21 @@ The csvpath says:
 - Open test.csv
 - Scan lines 5 through 25
 - Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
+
+Another path that does the same thing might look like:
+
+    path = CsvPath()
+    path.parse("""$test.csv
+                    [5-25]
+                    [
+                        #0=="Frog"
+                        @lastname.onmatch="Bats"
+                        count()==2
+                        print( count()==2, "$.match_count: $.line")
+                    ]
+               """)
+    path.fast_forward()
+
 
 You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
 - A JSON file with a dictionary of file paths under name keys
