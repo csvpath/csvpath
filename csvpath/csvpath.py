@@ -12,17 +12,20 @@ class NoFileException(Exception):
     pass
 
 
+class FormatException(Exception):
+    pass
+
+
 class CsvPath:
     def __init__(
         self,
         *,
-        filename=None,
+        csvpaths=None,
         delimiter=",",
         quotechar='"',
-        block_print=True,  # todo: remove
         skip_blank_lines=True,
     ):
-        self.filename = filename
+        self.csvpaths = csvpaths
         self.scanner = None
         self.value = None
         self.scan = None
@@ -35,7 +38,6 @@ class CsvPath:
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
         self.quotechar = quotechar
-        self.block_print = block_print
         self.total_lines = -1
         self._dump_json = False
         self._do_math = False  # off by default, still experimental
@@ -52,6 +54,7 @@ class CsvPath:
     def parse(self, data):
         start = time.time()
         self.scanner = Scanner()
+        data = self._update_file_path(data)
         s, mat, mod = self._find_scan_match_modify(data)
         self.scan = s
         self.match = mat
@@ -61,6 +64,33 @@ class CsvPath:
         end - start
         self.get_total_lines_and_headers()
         return self.scanner
+
+    def _update_file_path(self, data: str):
+        if data is None:
+            raise FormatException("data, the csvpath string, cannot be None")
+        if self.csvpaths is None:
+            return data
+        name = self._get_name(data)
+        path = self.csvpaths.update_file_path(name)
+        print(f"CsvPath._update_file_path: name: {name}, path: {path}, data: {data}")
+        if path is None:
+            return data
+        elif path == name:
+            return data
+        else:
+            return data.replace(name, path)
+
+    def _get_name(self, data: str):
+        if self.csvpaths is None:
+            return data
+        else:
+            data = data.strip()
+            if data[0] == "$":
+                name = data[1 : data.find("[")]
+                return name
+            else:
+                raise FormatException(f"Must start with '$', not {data[0]}")
+            return data
 
     def _find_scan_match_modify(self, data):
         scan = ""
@@ -87,7 +117,6 @@ class CsvPath:
     def __str__(self):
         return f"""
             path: {self.scanner.path}
-            filename: {self.filename}
             parser: {self.scanner}
             from_line: {self.scanner.from_line}
             to_line: {self.scanner.to_line}
@@ -115,20 +144,33 @@ class CsvPath:
     def these(self):
         return self.scanner.these
 
-    @property
-    def filename(self):
-        return self.file_name
-
-    @filename.setter
-    def filename(self, f):
-        self.file_name = f
-
-    def collect(self) -> List[List[Any]]:
+    def collect(self, nexts: int = -1) -> List[List[Any]]:
+        if nexts < -1:
+            raise Exception(
+                "nexts must be >= -1. -1 means collect to the end of the file"
+            )
         lines = []
         for _ in self.next():
             _ = _[:]
             lines.append(_)
+            if nexts == -1:
+                continue
+            elif nexts > 0:
+                nexts -= 1
+            if nexts == 0:
+                break
         return lines
+
+    def fast_forward(self, nexts: int = -1) -> None:
+        if nexts < -1:
+            raise Exception("nexts must be >= -1. -1 means ff to the end of the file")
+        while nexts > 0 or nexts == -1:
+            self.next()
+            if nexts == -1:
+                continue
+            elif nexts > 0:
+                nexts -= 1
+        return
 
     def stop(self) -> None:
         self.stopped = True

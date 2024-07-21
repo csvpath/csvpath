@@ -5,10 +5,11 @@ from enum import Enum
 
 class Qualities(Enum):
     ONMATCH = "onmatch"
+    IFEMPTY = "ifempty"
 
 
 class Matchable:
-    QUALIFIERS = [Qualities.ONMATCH.value]
+    QUALIFIERS = [Qualities.ONMATCH.value, Qualities.IFEMPTY.value]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         self.parent = None
@@ -42,6 +43,9 @@ class Matchable:
 
     def has_onmatch(self) -> bool:
         return Qualities.ONMATCH.value in self.qualifiers
+
+    def has_ifempty(self) -> bool:
+        return Qualities.IFEMPTY.value in self.qualifiers
 
     def line_matches(self):
         es = self.matcher.expressions

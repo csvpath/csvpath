@@ -3,7 +3,7 @@
 
 CsvPath defines a declarative syntax for inspecting and updating CSV files. Though much simpler, it is similar to:
 - XPath: CsvPath is to a CSV file like XPath is to an XML file
-- Schematron: Schematron is basically XPath rules applied using XSLT. CsvPath paths can be used as validation rules.
+- Schematron: Schematron validation is basically XPath rules applied using XSLT. CsvPath paths can be used as validation rules.
 - CSS selectors: CsvPath picks out structured data in a similar way to how CSS selectors pick out HTML structures.
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
@@ -22,9 +22,9 @@ A very simple csvpath might look like this:
 
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
-The filename following the `$` can be an actual relative or absolute file path. In principle, it could be a logical identifier that does not point to a physical file. In the same way, a path that looked like `$[*][yes()]` would be approprate for any file that was provided. At this time CsvPath only supports absolute and relative file paths.
+The filename following the `$` can be an actual relative or absolute file path. It could alternatively be a logical identifier that points indirectly to a physical file.
 
-For usage, see the unit tests in [tests/test_scanner.py](tests/test_scanner.py), [tests/test_matcher.py](tests/test_matcher.py) and [tests/test_functions.py](tests/test_functions.py).
+For usage, see the unit tests.
 
     path = CsvPath(delimiter=",")
     path.parse("$test.csv[5-25][#0=="Frog" @lastname="Bats" count()==2]")
@@ -36,6 +36,23 @@ This path says:
 - Open test.csv
 - Scan lines 5 through 25
 - Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
+
+You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
+- A JSON file with a dictionary of file paths under name keys
+- A dict object with the same named path structure
+- The path to a csv file that will be put into the named paths dict under it name minus extension
+- A file system path pointing to a directory that will be used to populate the named paths dict with all contined files
+
+You can then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in the CsvPaths object's dict. This is nearly transparent:
+
+    paths = CsvPaths(filename = "my_named_paths.json")
+    path = paths.csvpath()
+    path.parse( """$test[*][#firstname="Fred"]""" )
+    path.collect()
+
+Given a my_named_paths.json contains the following structure the name `test` will be used to find `tests/test_resources/test.csv`.
+
+   { "test":"test/test_resources/test.csv" }
 
 # Scanning
 The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
@@ -175,7 +192,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <table>
 <tr><th> Group     </th><th>Function                       </th><th> What it does                                              </th></tr>
 <tr><td> Boolean   </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> <a href='csvpath/matching/functions/any.md'>any(value, value)</a>  </td><td> existance test across a range of places </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/any.md'>any(value, value)</a>  </td><td> existence test across a range of places </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/no.md'>no()</a>  </td><td> always false                                  </td></tr>
 <tr><td>           </td><td> not(value)                    </td><td> negates a value                                           </td></tr>
 <tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>

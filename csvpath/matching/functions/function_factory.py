@@ -37,6 +37,7 @@ from csvpath.matching.functions.any import Any
 from csvpath.matching.functions.variable import Variable
 from csvpath.matching.functions.header import Header
 from csvpath.matching.functions.when import When
+from csvpath.matching.functions.nonef import Nonef
 
 
 class UnknownFunctionException(Exception):
@@ -149,6 +150,8 @@ class FunctionFactory:
             f = Any(matcher, name, child)
         elif name == "when":
             f = When(matcher, name, child)
+        elif name == "none":
+            f = Nonef(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
