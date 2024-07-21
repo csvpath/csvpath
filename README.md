@@ -27,7 +27,9 @@ The filename following the `$` can be an actual relative or absolute file path. 
 This is a very basic use. For more usage, see the unit tests.
 
     path = CsvPath(delimiter=",")
-    path.parse("$test.csv[5-25][#0=="Frog" @lastname="Bats" count()==2]")
+    path.parse("""$test.csv
+                    [5-25]
+                    [#0=="Frog" @lastname="Bats" count()==2]""")
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
     print(f"path vars: {path.variables}")
@@ -40,17 +42,17 @@ The csvpath says:
 You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
 - A JSON file with a dictionary of file paths under name keys
 - A dict object passed into the CsvPaths object containing the same named path structure
-- The path to a csv file that will be put into the named paths dict under it name minus extension
+- The path to a csv file that will be put into the named paths dict under its name minus extension
 - A file system path pointing to a directory that will be used to populate the named paths dict with all contined files
 
 You can then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in the CsvPaths object's named paths dict. This use is nearly transparent:
 
     paths = CsvPaths(filename = "my_named_paths.json")
     path = paths.csvpath()
-    path.parse( """$test[*][#firstname="Fred"]""" )
+    path.parse( """$test[*][#firstname=="Fred"]""" )
     path.collect()
 
-If my_named_paths.json contains the following structure, the name `test` will be used to find `tests/test_resources/test.csv`.
+If my_named_paths.json contains the following structure, the name `test` will be used to find `tests/test_resources/test.csv`. The parse method will apply the csvpath and the collect method will gather all the matched rows.
 
     { "test":"test/test_resources/test.csv" }
 
