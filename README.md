@@ -189,7 +189,7 @@ Or:
 When multiple qualifiers are used order is not important.
 
 ## Example
-    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short</td><td>medium')) ]
+    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
 - `#common_name` indicates a header named "common_name". Headers are the values in the 0th line. This component of the match is an existence test.
