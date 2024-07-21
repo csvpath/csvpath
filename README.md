@@ -189,7 +189,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> after(value)                  </td><td> finds things after a date, number, string                 </td></tr>
 <tr><td>           </td><td> before(value)                 </td><td> finds things before a date, number, string                </td></tr>
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> average(number, type)         </td><td> returns the average up to current "line", "scan", "match" </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
 <tr><td>           </td><td> max(value, type)              </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
 <tr><td>           </td><td> min(value, type)              </td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
