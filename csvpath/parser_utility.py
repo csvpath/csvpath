@@ -2,7 +2,7 @@ from ply.yacc import YaccProduction
 
 
 class ParserUtility:
-    def __init__(self, quiet=True):
+    def __init__(self, quiet=False):
         self._quiet = quiet
 
     def error(self, parser, p: YaccProduction) -> None:
@@ -14,8 +14,10 @@ class ParserUtility:
                 f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}"
             )
             print(f"unexpected token: {p.value}")
+            print("symbol stack: ")
             stack = parser.symstack
-            print(f"symbol stack: {stack}")
+            for _ in stack:
+                print(f"  {_}")
         else:
             print("syntax error at EOF")
 
@@ -26,7 +28,7 @@ class ParserUtility:
             return
         if label:
             label = f" at {label}"
-        print(f"production array{label} is:")
+        print(f"production array {label} is:")
         for _ in p:
             print(f"\t{_} \t-> {_.__class__}")
 

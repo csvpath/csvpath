@@ -19,10 +19,10 @@ class Divide(Function):
                 if i == 0:
                     ret = v
                 else:
-                    if ret == float("nan") or v == 0:
+                    if ret == float("nan") or float(v) == 0:
                         ret = float("nan")
                     else:
-                        ret = ret / v
+                        ret = float(ret) / float(v)
             self.value = ret
         return self.value
 

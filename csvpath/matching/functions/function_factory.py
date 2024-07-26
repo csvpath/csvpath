@@ -15,7 +15,6 @@ from csvpath.matching.functions.above import Above
 from csvpath.matching.functions.first import First
 from csvpath.matching.functions.count_lines import CountLines
 from csvpath.matching.functions.count_scans import CountScans
-from csvpath.matching.functions.is_instance import IsInstance
 from csvpath.matching.functions.orf import Or
 from csvpath.matching.functions.no import No
 from csvpath.matching.functions.yes import Yes
@@ -36,8 +35,9 @@ from csvpath.matching.functions.stop import Stop
 from csvpath.matching.functions.any import Any
 from csvpath.matching.functions.variable import Variable
 from csvpath.matching.functions.header import Header
-from csvpath.matching.functions.when import When
 from csvpath.matching.functions.nonef import Nonef
+from csvpath.matching.functions.last import Last
+from csvpath.matching.functions.exists import Exists
 
 
 class UnknownFunctionException(Exception):
@@ -98,8 +98,6 @@ class FunctionFactory:
             f = CountLines(matcher, name, child)
         elif name == "count_scans":
             f = CountScans(matcher, name, child)
-        elif name == "isinstance":
-            f = IsInstance(matcher, name, child)
         elif name == "or":
             f = Or(matcher, name, child)
         elif name == "no":
@@ -148,10 +146,12 @@ class FunctionFactory:
             f = Header(matcher, name, child)
         elif name == "any":
             f = Any(matcher, name, child)
-        elif name == "when":
-            f = When(matcher, name, child)
         elif name == "none":
             f = Nonef(matcher, name, child)
+        elif name == "last":
+            f = Last(matcher, name, child)
+        elif name == "exists":
+            f = Exists(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

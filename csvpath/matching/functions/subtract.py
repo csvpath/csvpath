@@ -19,7 +19,7 @@ class Subtract(Function):
                 if i == 0:
                     ret = v
                 else:
-                    ret = ret - v
+                    ret = float(ret) - float(v)
             self.value = ret
         return self.value
 

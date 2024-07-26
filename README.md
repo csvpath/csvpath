@@ -30,9 +30,7 @@ This is a very basic use. For more usage, see the unit tests.
     path.parse("""$test.csv
                     [5-25]
                     [
-                        #0=="Frog"
-                        @lastname.onmatch="Bats"
-                        count()==2
+                        #0=="Frog" @lastname.onmatch="Bats" count()==2
                     ]
                """)
     for i, line in enumerate( path.next() ):
@@ -46,18 +44,17 @@ The csvpath says:
 
 Another path that does the same thing might look like:
 
-    path = CsvPath()
-    path.parse("""$test.csv
-                    [5-25]
-                    [
-                        #0=="Frog"
-                        @lastname.onmatch="Bats"
-                        count()==2
-                        print( count()==2, "$.match_count: $.line")
-                    ]
-               """)
-    path.fast_forward()
+    """$test.csv
+        [5-25]
+        [
+            #0=="Frog"
+            @lastname.onmatch="Bats"
+            count()==2
+            count()==2 -> print( "$.match_count: $.line")
+        ]
+    """
 
+In this case we're using the "when" operator, `->`, to determine when to print.
 
 You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
 - A JSON file with a dictionary of file paths under name keys
@@ -126,9 +123,9 @@ Qualifiers are described below.  </td>
     <tr>
         <td>Variable </td>
         <td>Value</td>
-        <td>True/False when value tested. True when set, True/False existence when used alone</td>
+        <td>True/False when value tested. True when set</td>
         <td>An @ followed by a name. A variable is
-            set or tested depending on the usage. By itself, it is an existence test. When used as
+            set or tested depending on the usage. When used as
             the left hand side of an "=" its value is set.
             When it is used on either side of an "==" it is an equality test.
             Variables can take an `onmatch` qualifier to indicate that the variable should
@@ -136,16 +133,15 @@ only be set when the row matches all parts of the path.
         <td>
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
-            <li/> `@weather`
             <li/> `#summer==@weather`
 
-#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is an existence test. #4 is a test.
+#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #4 is a test.
         </td>
     </tr>
     <tr>
         <td>Header   </td>
         <td>Value     </td>
-        <td>A True/False existence test when used alone, otherwise calculated</td>
+        <td>Calculated</td>
         <td>A # followed by a name or integer. The name references a value in line 0, the header
  row. A number references a column by the 0-based column order.   </td>
         <td>
@@ -188,11 +184,21 @@ Or:
 
 When multiple qualifiers are used order is not important.
 
-## Example
-    [ #common_name #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
+`->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
+
+    [ last() -> print("this is the last line") ]
+
+Prints `this is the last line` just before the scan ends.
+
+    [ exists(#0) -> @firstname = #0 ]
+
+Says to set the `firstname` variable to the value of the first column when the first column has a value.
+
+## Another Example
+    [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
-- `#common_name` indicates a header named "common_name". Headers are the values in the 0th line. This component of the match is an existence test.
+- The exists test of `#common_name` checks if the header named "common_name" has a value. Headers are the values in the 0th line.
 - `#2` means the 3rd column, counting from 0
 - Functions and column references are ANDed together
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
@@ -219,6 +225,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> not(value)                    </td><td> negates a value                                           </td></tr>
 <tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>
 <tr><td>           </td><td> yes()                         </td><td> always true                                               </td></tr>
+<tr><td>           </td><td> exists(value)    </td><td> tests if the value exists            </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
 <tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>
@@ -254,7 +261,6 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> column(value)                 </td><td> returns column name for an index or index for a name      </td></tr>
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> header()                      </td><td> indicates to another function to look in headers       </td></tr>
-<tr><td>           </td><td> isinstance(value, typestr)    </td><td> tests for "int","float","complex","bool","usd"            </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/print.md'>print(value, str)</a></td><td> when matches prints the interpolated string  </td></tr>
 <tr><td>           </td><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>

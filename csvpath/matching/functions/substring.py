@@ -18,6 +18,7 @@ class Substring(Function):
                 raise ChildrenException(
                     "Substring function must have an int righthand child"
                 )
+            i = int(i)
             string = self.children[0].left.to_value()
             string = f"{string}"
             if i >= len(string):

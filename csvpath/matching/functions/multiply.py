@@ -19,7 +19,7 @@ class Multiply(Function):
                 if i == 0:
                     ret = v
                 else:
-                    ret = v * ret
+                    ret = float(v) * float(ret)
             self.value = ret
         return self.value
 

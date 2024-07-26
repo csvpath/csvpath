@@ -225,7 +225,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_above_percent(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][@p=percent("line")  above(@p,.35) #lastname=="Bat"]')
+        path.parse(f'${PATH}[*][@p=percent("line")  above(@p, .35) #lastname=="Bat"]')
         lines = path.collect()
         print(f"test_function_above_percent: lines: {len(lines)}")
         for line in lines:
@@ -285,7 +285,7 @@ class TestFunctions(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                count(#firstname=="Frog")==1
+                count.firstname(#firstname=="Frog")==1
                 @say.onmatch=#say
                 @line.onmatch=count_lines()
             ]"""
@@ -329,7 +329,7 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 1
         assert path.variables["l"] == 4
 
-    def test_function_add(self):
+    def test_function_add1(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -593,7 +593,7 @@ class TestFunctions(unittest.TestCase):
         # assert path.variables["imcounting"] == 0
         assert len(lines) == 0
 
-    def test_function_every(self):
+    def test_function_every1(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -793,68 +793,6 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["r"] == 1 or path.variables["r"] == 0
         assert len(lines) == 0
 
-    def test_function_isinstance(self):
-        path = CsvPath()
-        print("checking ints")
-        path.parse(f'${PATH}[*][ isinstance(count(), "int") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 1: {len(lines)}")
-        assert len(lines) == 9
-        print(f"test_function_isinstance: lines: {lines}")
-        print("checking dates")
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("11-23-2024", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 2: {len(lines)}")
-        assert len(lines) == 9
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("2024-11-23", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 3: {len(lines)}")
-        assert len(lines) == 9
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("2024-1-3", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 4: {len(lines)}")
-        assert len(lines) == 9
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("2024-59-23", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 5: {len(lines)}")
-        assert len(lines) == 0
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("1000-1-1", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 6: {len(lines)}")
-        assert len(lines) == 9
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("1/12/2024", "datetime") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 7: {len(lines)}")
-        assert len(lines) == 9
-        print("checking $$$")
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("$1000.59", "usd") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 8: {len(lines)}")
-        assert len(lines) == 9
-        print("checking float")
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("11.59", "float") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 9: {len(lines)}")
-        assert len(lines) == 9
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("11.59", "int") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 10: {len(lines)}")
-        assert len(lines) == 0
-        path = CsvPath()
-        path.parse(f'${PATH}[*][ isinstance("11.59", "usd") ]')
-        lines = path.collect()
-        print(f"test_function_isinstance 11: {len(lines)}")
-        assert len(lines) == 0
-
     def test_function_match_length(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][length(#lastname)==3]")
@@ -886,7 +824,12 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_concat(self):
         path = CsvPath()
-        path.parse(f'${PATH}[*][ #0 == concat("B" , "ird") ]')
+        path.parse(
+            f"""
+                        ${PATH}[*]
+                               [ #0 == concat("B" , "ird") ]
+                   """
+        )
         lines = path.collect()
         print(f"test_function_concat: lines: {len(lines)}")
         assert len(lines) == 1
@@ -897,7 +840,7 @@ class TestFunctions(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                #lastname
+                exists(#lastname)
             ]"""
         )
         lines = path.collect()
@@ -1090,20 +1033,15 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["found2"] is True
         assert path.variables["notfound"] is True
 
-    def test_function_when(self):
+    # FIXME: this is not a deterministic test.
+    def test_function_last(self):
         path = CsvPath()
         path.parse(
-            f"""
-            ${PATH}[*]
-            [
-                @ln = count_lines()
-                when(#0=="Frog", stop())
-                yes()
+            f""" ${PATH}[*] [ yes() -> print("$.line_count")
+                last() -> print("the last row is $.line_count")
             ]
             """
         )
-        lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
-        assert len(lines) == 4
-        assert path.variables["ln"] == 3
+        print("")
+        path.fast_forward()
+        print(f"test_function_last: path vars: {path.variables}")

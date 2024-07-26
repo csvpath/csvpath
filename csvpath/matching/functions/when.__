@@ -1,6 +1,7 @@
 from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.productions.equality import Equality
+from csvpath.matching.expression_encoder import ExpressionEncoder
 
 
 class When(Function):
@@ -16,6 +17,9 @@ class When(Function):
             raise ChildrenException(
                 "must be 1 equality child with a match and an action"
             )
+
+
+        print(f"json: \n{json}")
         if self.match is None:
             if self.children[0].left.matches(skip=skip):
                 self.children[0].right.matches(

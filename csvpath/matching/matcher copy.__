@@ -89,8 +89,10 @@ class Matcher:
 
     def matches(self, *, syntax_only=False) -> bool:
         ret = True
+        # print("")
         failed = False
         for i, et in enumerate(self.expressions):
+            # print(f"Matcher.matches: i: {i}, et: {et[0].children}")
             if et[1] is True:
                 ret = True
             elif et[1] is False:
@@ -98,6 +100,7 @@ class Matcher:
             elif not et[0].matches(skip=[]) and not syntax_only:
                 et[1] = False
                 ret = False
+
             else:
                 et[1] = True
                 ret = True
@@ -107,8 +110,6 @@ class Matcher:
                 ret = False
         if ret is True:
             self.do_set_if_all_match()
-        else:
-            pass
         return ret
 
     def do_set_if_all_match(self) -> None:
@@ -143,15 +144,12 @@ class Matcher:
     # productions
     # ===================
 
-    """
-    precedence = (
-        ('left', 'EQUALS', 'OPERATION'),
-        ('left', 'ASSIGNMENT'),
-    )
-    """
-
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
+        e = ExpressionEncoder()
+        print(f"Matcher.p_error: exps: {self.expressions}")
+        json = e.valued_list_to_json(self.expressions)
+        print(f"Matcher.p_error: json: {json}")
         raise InputException("halting for error")
 
     def p_match_part(self, p):
@@ -167,22 +165,23 @@ class Matcher:
     def p_expression(self, p):
         """expression : function
         | assignment_or_equality
-        """
+        | header"""
         e = Expression(self)
         e.add_child(p[1])
         self.expressions.append([e, None])
         p[0] = e
 
     def p_function(self, p):
-        """function : SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
+        """function : NAME OPEN_PAREN CLOSE_PAREN
+        | NAME OPEN_PAREN equality CLOSE_PAREN
+        | NAME OPEN_PAREN function CLOSE_PAREN
+        | NAME OPEN_PAREN var_or_header CLOSE_PAREN
+        | NAME OPEN_PAREN term CLOSE_PAREN
         """
         name = p[1]
         child = p[3] if p and len(p) == 5 else None
         f = FunctionFactory.get_function(self, name=name, child=child)
+        # ParserUtility.enumerate_p("IN p_function", p)
         p[0] = f
 
     def p_assignment_or_equality(self, p):
@@ -192,14 +191,11 @@ class Matcher:
         p[0] = p[1]
 
     def p_equality(self, p):
+         #        | function op equality
         """
         equality : function op term
                  | function op function
                  | function op var_or_header
-                 | function DO assignment_or_equality
-                 | function DO function
-                 | equality DO assignment_or_equality
-                 | equality DO function
                  | var_or_header op function
                  | var_or_header op term
                  | var_or_header op var_or_header
@@ -218,12 +214,7 @@ class Matcher:
 
     def p_op(self, p):
         """op : EQUALS
-        | LT
-        | GT
-        | STAR
-        | PLUS
-        | MINUS
-        | COMMA
+        | OPERATION
         """
         p[0] = p[1]
 
@@ -241,7 +232,7 @@ class Matcher:
         p[0] = e
 
     def p_term(self, p):
-        """term : QUOTED
+        """term : QUOTED_NAME
         | QUOTE DATE QUOTE
         | QUOTE NUMBER QUOTE
         | NUMBER
@@ -259,13 +250,16 @@ class Matcher:
         p[0] = p[1]
 
     def p_var(self, p):
-        """var : VAR_SYM SIMPLE_NAME"""
+        """var : VAR_SYM NAME
+        | VAR_SYM NAME_LINE
+        """
         v = Variable(self, name=p[2])
         p[0] = v
 
     def p_header(self, p):
-        """header : HEADER_SYM SIMPLE_NAME
+        """header : HEADER_SYM NAME
         | HEADER_SYM NUMBER
+        | HEADER_SYM NAME_LINE
         """
         h = Header(self, name=p[2])
         p[0] = h

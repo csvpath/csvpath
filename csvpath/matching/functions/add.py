@@ -16,7 +16,9 @@ class Add(Function):
             ret = 0
             for i, sib in enumerate(siblings):
                 v = sib.to_value(skip=skip)
-                ret = v + ret
+
+                ret = float(v) + float(ret)
+
             self.value = ret
         return self.value
 

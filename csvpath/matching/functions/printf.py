@@ -2,6 +2,7 @@ from typing import Any
 from csvpath.matching.functions.function import Function, ChildrenException
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from csvpath.matching.productions.equality import Equality
+from csvpath.matching.productions.term import Term
 
 
 class Print(Function):
@@ -24,10 +25,12 @@ class Print(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:
             if len(self.children) != 1:
-                raise ChildrenException(
-                    "must be 1 equality child with a match and print string"
-                )
-            string = self.children[0].right.to_value()
+                raise ChildrenException("must be 1 child")
+            string = None
+            if isinstance(self.children[0], Equality):
+                string = self.children[0].right.to_value()
+            else:
+                string = self.children[0].to_value()
             self.value = self.make_string(string)
         return self.value
 
@@ -35,11 +38,12 @@ class Print(Function):
         if self in skip:
             return True  # is this the right return val for this situtation?
         if len(self.children) != 1:
-            raise ChildrenException(
-                "must be 1 equality child with a match and print string"
-            )
+            raise ChildrenException("must be 1 child, equality or print string")
         if self.match is None:
             if self.children[0].left.matches(skip=skip):
+                print(f"{self.to_value()}")
+                self.match = True
+            elif isinstance(self.children[0], Term):
                 print(f"{self.to_value()}")
                 self.match = True
             else:
@@ -118,7 +122,7 @@ class Print(Function):
     def value_of_token(self, token) -> str:
         ret = None
         if token == Print.TOKENS[0]:
-            ret = self.matcher.csvpath.filename
+            ret = self.matcher.csvpath.scanner.filename
         elif token == Print.TOKENS[1]:
             ret = self.matcher.csvpath.delimiter
         elif token == Print.TOKENS[2]:

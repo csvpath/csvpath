@@ -32,6 +32,7 @@ class Every(Function):
             cnt += 1
             self.matcher.set_variable(allcount, tracking=tracked_value, value=cnt)
             every = self.children[0].right.to_value()
+            every = int(every)
             print(
                 f"Every.matches: {self._id}: every: {every}, cnt: {cnt} % {every} = {cnt % every}"
             )

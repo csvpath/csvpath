@@ -102,14 +102,14 @@ class TestPrint(unittest.TestCase):
         assert i > -1
 
     # this test only checks that the NAME_LINE token is handled correctly
-    def test_print_plus_header(self):
-        pathstr = f"""${PATH}
-                        [1-100]
-                        [
-                        @h = #level
-                        print(  @h=="WARN", "$.headers.level, $.headers.message" )
+    # print(  @h=="WARN", "$.headers.level, $.headers.message" )
 
-                        ]"""
+    def test_print_plus_header(self):
+        pathstr = f"""${PATH}[1-100]
+            [
+              @h = #level
+              @h == "WARN" -> print( "$.headers.level $.headers.message" )
+            ] """
 
         path = CsvPath()
         path.parse(pathstr)

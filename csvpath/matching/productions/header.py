@@ -21,11 +21,11 @@ class Header(Matchable):
             return self.value
         if self.value == Header.NEVER:
             ret = Header.NEVER
-            if isinstance(self.name, int):
-                if self.name >= len(self.matcher.line):
+            if isinstance(self.name, int) or self.name.isdecimal():
+                if int(self.name) >= len(self.matcher.line):
                     ret = None
                 else:
-                    ret = self.matcher.line[self.name]
+                    ret = self.matcher.line[int(self.name)]
             else:
                 n = self.matcher.header_index(self.name)
                 if n is None:

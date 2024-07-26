@@ -72,7 +72,6 @@ class CsvPath:
             return data
         name = self._get_name(data)
         path = self.csvpaths.update_file_path(name)
-        print(f"CsvPath._update_file_path: name: {name}, path: {path}, data: {data}")
         if path is None:
             return data
         elif path == name:
@@ -155,21 +154,22 @@ class CsvPath:
             lines.append(_)
             if nexts == -1:
                 continue
-            elif nexts > 0:
+            elif nexts > 1:
                 nexts -= 1
-            if nexts == 0:
+            else:
                 break
         return lines
 
     def fast_forward(self, nexts: int = -1) -> None:
         if nexts < -1:
             raise Exception("nexts must be >= -1. -1 means ff to the end of the file")
-        while nexts > 0 or nexts == -1:
-            self.next()
+        for _ in self.next():
             if nexts == -1:
                 continue
-            elif nexts > 0:
+            elif nexts > 1:
                 nexts -= 1
+            else:
+                break
         return
 
     def stop(self) -> None:
@@ -185,8 +185,8 @@ class CsvPath:
             start = time.time()
             for line in reader:
                 if self.skip_blank_lines and len(line) == 0:
-                    continue
-                if self.scanner.includes(self.line_number):
+                    pass
+                elif self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
                     startmatch = time.perf_counter()
                     b = self.matches(line)
@@ -207,6 +207,7 @@ class CsvPath:
         return self.total_lines
 
     def get_total_lines_and_headers(self) -> int:
+        # do we need a way to disable the line count to speed up big files?
         if self.total_lines == -1:
             start = time.time()
             with open(self.scanner.filename, "r") as file:

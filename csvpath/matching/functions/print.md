@@ -1,7 +1,7 @@
 
 # Print
 
-Prints to std.out. The function is intended for debugging, primarily. However, it can also be a quick way to create an output .csv or in another way capture the data generated during a run.
+Prints to std.out. The function is helpful for debugging. It is good for writing validation results. Print can also be a quick way to create an output .csv or in another way capture the data generated during a run.
 
 Print takes a value and a string. The value indicates if the print() is activated. The string is the output to write to sys.out.
 

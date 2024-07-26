@@ -13,8 +13,8 @@ class Column(Function):
             ChildrenException("Column child must be a term")
         if not self.value:
             v = self.children[0].to_value()
-            if isinstance(v, int):
-                self.value = self.matcher.header_name(v)
+            if isinstance(v, int) or v.isdigit():
+                self.value = self.matcher.header_name(int(v))
             else:
                 self.value = self.matcher.header_index(v)
         return self.value

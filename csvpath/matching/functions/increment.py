@@ -22,7 +22,10 @@ class Increment(Function):
         if not isinstance(self.children[0], Equality):
             ChildrenException("child must be an Equality")
         tv = self.children[0].right.to_value()
-        if not isinstance(tv, int) or tv <= 0:
+        if isinstance(tv, int):
+            ChildrenException("increment value must be a positive int")
+        tv = int(tv)
+        if tv <= 0:
             ChildrenException("increment value must be a positive int")
         if not self.value:
             varname = self.first_non_term_qualifier(self.name)
