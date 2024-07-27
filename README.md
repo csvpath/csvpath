@@ -204,6 +204,8 @@ will never set `imcounting`, because of the `no()` function disallowing any matc
 
 will always set it.
 
+As said above, a variable can be flagged with the `onchange` qualifier. The effect is that the row will only match if the variable qualified by `onchange` changes in value.
+
 ## The when operator
 
 `->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
