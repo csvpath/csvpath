@@ -166,14 +166,6 @@ A variable can also take an `onchange` qualifier to make its assignment only mat
     </tr>
 <table>
 
-A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
-
-    [@a=#b #c==@a]
-
-Can also be written as:
-
-    [#c==#b]
-
 ## Qualifiers
 
 Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only three qualifiers:
@@ -191,6 +183,26 @@ Or:
     [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
 
 When multiple qualifiers are used order is not important.
+
+## Variables
+
+A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
+
+    [@a=#b #c==@a]
+
+Can also be written as:
+
+    [#c==#b]
+
+Variables are always set unless they are flagged with the `.onmatch` qualifier. That means:
+
+    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
+
+will never set `imcounting`, because of the `no()` function disallowing any matches, but:
+
+    $file.csv[*][ @imcounting = count_lines() no()]
+
+will always set it.
 
 ## The when operator
 
@@ -271,16 +283,6 @@ In the path above, the rules applied are:
 - Functions and column references are ANDed together
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
 - Functions can contain functions, equality tests, and/or literals
-
-Variables are always set unless they are flagged with `.onmatch`. That means:
-
-    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
-
-will never set `imcounting`, because of the `no()` function disallowing any matches, but:
-
-    $file.csv[*][ @imcounting = count_lines() no()]
-
-will always set it.
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
