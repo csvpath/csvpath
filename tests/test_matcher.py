@@ -81,7 +81,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_function_arg(self):
         matcher = Matcher(
-            csvpath=None, data="[count(#aheader==10)]", line=LINE, headers=HEADERS
+            csvpath=CsvPath(), data="[count(#aheader==10)]", line=LINE, headers=HEADERS
         )
         print(f"{matcher}")
         assert matcher.matches(syntax_only=True)

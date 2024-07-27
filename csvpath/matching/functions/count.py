@@ -9,7 +9,7 @@ class Count(Function):
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self.value if self.value is not None else True
         if self.value is None:
             if self._function_or_equality:
                 self.value = self._get_contained_value(skip=skip)
@@ -21,7 +21,7 @@ class Count(Function):
         return self.value  # or not. we have to act as if.
 
     def matches(self, *, skip=[]) -> bool:
-        return self.value
+        return self.to_value() is not None
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:

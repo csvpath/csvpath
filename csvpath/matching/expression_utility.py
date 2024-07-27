@@ -21,14 +21,15 @@ class ExpressionUtility:
         else:
             ret = cls._is_underscored_or_simple(s)
 
-        print(
-            f"""
-            ExpressionUtility.is_simple_name: s: {s},
-                digit: {s.isdigit()}, dot: {s.find(".")},
-                underscored: {cls._is_underscored_or_simple(s)}
-                ret: {ret}
-                """
-        )
+        if False:
+            print(
+                f"""
+                ExpressionUtility.is_simple_name: s: {s},
+                    digit: {s.isdigit()}, dot: {s.find(".")},
+                    underscored: {cls._is_underscored_or_simple(s)}
+                    ret: {ret}
+                    """
+            )
         return ret
 
     @classmethod

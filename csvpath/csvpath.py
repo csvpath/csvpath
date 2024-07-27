@@ -115,12 +115,12 @@ class CsvPath:
 
     def __str__(self):
         return f"""
-            path: {self.scanner.path}
+            path: {self.scanner.path if self.scanner else None}
             parser: {self.scanner}
-            from_line: {self.scanner.from_line}
-            to_line: {self.scanner.to_line}
-            all_lines: {self.scanner.all_lines}
-            these: {self.scanner.these}
+            from_line: {self.scanner.from_line if self.scanner else None}
+            to_line: {self.scanner.to_line if self.scanner else None}
+            all_lines: {self.scanner.all_lines if self.scanner else None}
+            these: {self.scanner.these if self.scanner else None}
         """
 
     @property

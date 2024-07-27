@@ -49,8 +49,25 @@ class MatchingLexer(object):
     t_NAME_LINE = r"[\$A-Za-z0-9\.%_|\s, :]+\n"
     t_SIMPLE_NAME = r"[A-Za-z]+"
 
+    def t_NUMBER(self, t):
+        r"\d*\.?\d+"
+        try:
+            t.value = int(t.value)
+        except ValueError:
+            try:
+                t.value = float(t.value)
+            except ValueError:
+                raise Exception(
+                    f"matching_lexer.t_NUMBER: cannot convert {t}: {t.value}"
+                )
+        return t
+
     def t_REGEX(self, t):
         r"/(?:[^/\\]|\\.)*/"
+        return t
+
+    def t_QUOTED(self, t):
+        r'"[\$A-Za-z0-9\.%_|\s :\\/,]+"'
         return t
 
     def t_NAME(self, t):
@@ -81,19 +98,6 @@ class MatchingLexer(object):
 
     def t_DATE(self, t):
         r"\d+[/-]\d+[/-]\d+"
-        return t
-
-    def t_NUMBER(self, t):
-        r"\d*\.?\d+"
-        try:
-            t.value = int(t.value)
-        except ValueError:
-            try:
-                t.value = float(t.value)
-            except ValueError:
-                raise Exception(
-                    f"matching_lexer.t_NUMBER: cannot convert {t}: {t.value}"
-                )
         return t
 
     def t_error(self, t):

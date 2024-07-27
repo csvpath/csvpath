@@ -30,6 +30,6 @@ class Regex(Function):
             if theregex[len(theregex) - 1] == "/":
                 theregex = theregex[0 : len(theregex) - 1]
 
-            self.match = re.search(theregex, thevalue)
-            # print(f"Regex.matches: re: {theregex}, val: {thevalue}, self.match: {self.match}")
+            self.match = re.search(theregex, thevalue) is not None
+            # print(f"Regex.matches: theregex: {theregex}, thevalue: {thevalue}, self.match: {self.match}")
         return self.match

@@ -29,12 +29,12 @@ class Matcher:
         self.line = line
         self.headers = headers
         self.expressions = []
-        self.lexer = MatchingLexer()
-        self.parser = yacc.yacc(module=self, start="match_part")
-        self.parser.parse(data, lexer=self.lexer.lexer)
         self.header_dict = None
-        # self.flags = []
         self.if_all_match = []
+        if data is not None:
+            self.lexer = MatchingLexer()
+            self.parser = yacc.yacc(module=self, start="match_part")
+            self.parser.parse(data, lexer=self.lexer.lexer)
 
     def __str__(self):
         return f"""

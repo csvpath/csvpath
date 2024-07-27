@@ -79,51 +79,17 @@ class Equality(Matchable):
     def set_operation(self, op):
         self.op = op
 
-    # ------------------
-
-    def mathic(self):
-        return self.op != ","
-
-    def perform_math(self):
-        if self.op == "," or self.op == "=":
-            return
-        else:
-            if isinstance(self.left, Equality):
-                pass
-                # self.left.perform_math()
-            if isinstance(self.right, Equality) and self.mathic():
-                pass
-                # self.right.perform_math()
-            self.left.value = self.math(self.left.to_value(), self.right.to_value())
-            if isinstance(self.left, Variable):
-                v = self.left.value
-                self.matcher.set_variable(self.left.name, value=v)
-        self.value = None
-        self.to_value()
-
-    def math(self, lv, rv):
-        if self.op == "-":
-            return lv - rv
-        elif self.op == "+":
-            return lv + rv
-        elif self.op == "*":
-            return lv * rv
-        elif self.op == "/":
-            return lv / rv
-        else:
-            raise Exception(f"unknown op: {self.op}")
-
-    # ------------------
-
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.left}={self.right}"""
+
+    # ------------------
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return True
         if not self.left or not self.right:
             return False
-        if not self.value:
+        if not self.match:
             b = None
             if isinstance(self.left, Variable) and self.op == "=":
                 v = self.right.to_value(skip=skip)
@@ -137,6 +103,13 @@ class Equality(Matchable):
                 else:
                     self.matcher.set_variable(self.left.name, value=v)
                 b = True
+            elif self.op == "->":
+                # if left == True than right
+                if self.left.matches(skip=skip) is True:
+                    self.right.matches(skip=skip)
+                    b = True
+                else:
+                    b = False
             else:
                 left = self.left.to_value(skip=skip)
                 right = self.right.to_value(skip=skip)
@@ -148,13 +121,10 @@ class Equality(Matchable):
                     b = f"{left}" == f"{right}"
                 else:
                     b = f"{left}" == f"{right}"
-            self.value = b
-        return self.value
+            self.match = b
+        return self.match
 
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:
-            if self.mathic():
-                pass
-                # self.perform_math()
             self.value = self.matches(skip=skip)
         return self.value
