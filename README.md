@@ -138,8 +138,9 @@ A variable can also take an `onchange` qualifier to make its assignment only mat
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
             <li/> `#summer==@weather`
+            <li/> `@happy.onchange=@weather
 
-#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #4 is a test.
+#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is a test. #4 sets the `happy` variable to the value of the `weather` variable and fails the row matching until `happy`'s value changes.
         </td>
     </tr>
     <tr>
