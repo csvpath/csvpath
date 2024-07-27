@@ -138,9 +138,9 @@ A variable can also take an `onchange` qualifier to make its assignment only mat
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
             <li/> `#summer==@weather`
-            <li/> `@happy.onchange=@weather
+            <li/> `@happy.onchange=#weather`
 
-#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is a test. #4 sets the `happy` variable to the value of the `weather` variable and fails the row matching until `happy`'s value changes.
+#1 is an assignment that sets the variable and returns True. #2 is an argument used as a test in a way that is specific to the function. #3 is a test. #4 sets the `happy` variable to the value of the `weather` header and fails the row matching until `happy`'s value changes.
         </td>
     </tr>
     <tr>
@@ -174,9 +174,10 @@ Can also be written as:
 
     [#c==#b]
 
-Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only two qualifiers:
+Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only three qualifiers:
 
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
+- `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
 - An arbitrary string to add a name for the function's internal use, typically to name a variable
 
 Qualifiers look like:
