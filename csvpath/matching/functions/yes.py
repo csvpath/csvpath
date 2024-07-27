@@ -1,5 +1,5 @@
 from typing import Any
-from csvpath.matching.functions.function import Function
+from .function import Function
 
 
 class Yes(Function):

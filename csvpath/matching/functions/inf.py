@@ -1,5 +1,5 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
+from .function import Function, ChildrenException
 
 
 class In(Function):
@@ -20,13 +20,8 @@ class In(Function):
 
         mylist = []
         liststr = lchild.to_value(skip=skip)
-        # print(f"In.to_value: list str: {liststr}")
         mylist = liststr.split("|")
-        # print(f"In.to_value: child: {vchild}, a {vchild.__class__}")
         v = vchild.to_value()
-        # print(f"In.to_value: self.matcher.csvpath.headers: {self.matcher.csvpath.headers}")
-
-        # print(f"In.to_value: list: {mylist}, value: {v}")
         if v in mylist:
             return True
         elif v.__class__ != str and f"{v}" in mylist:

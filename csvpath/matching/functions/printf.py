@@ -1,8 +1,7 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
+from .function import Function, ChildrenException
+from ..productions import Equality, Term
 from csvpath.matching.expression_encoder import ExpressionEncoder
-from csvpath.matching.productions.equality import Equality
-from csvpath.matching.productions.term import Term
 
 
 class Print(Function):

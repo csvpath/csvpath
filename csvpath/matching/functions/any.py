@@ -1,9 +1,8 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.functions.header import Header
-from csvpath.matching.functions.variable import Variable
-from csvpath.matching.productions.equality import Equality
-from csvpath.matching.productions.term import Term
+from .header import Header
+from .variable import Variable
+from .function import Function, ChildrenException
+from ..productions import Equality, Term
 
 
 class Any(Function):
@@ -101,5 +100,5 @@ class Any(Function):
                     break
         else:
             raise ChildrenException(
-                "Left side of equality child of any() must be header() or variable()"
+                f"Left side of equality child of any() must be header() or variable(), not {self.children[0].left}"
             )

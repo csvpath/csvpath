@@ -1,6 +1,6 @@
 from typing import Any
-from csvpath.matching.productions.term import Term
-from csvpath.matching.functions.function import Function
+from ..productions import Term
+from .function import Function
 import re
 
 

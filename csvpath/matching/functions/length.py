@@ -1,5 +1,5 @@
 from typing import Any
-from csvpath.matching.functions.function import (
+from .function import (
     Function,
     NoChildrenException,
     ChildrenException,

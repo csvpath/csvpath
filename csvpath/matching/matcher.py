@@ -1,13 +1,9 @@
 import ply.yacc as yacc
 from csvpath.matching.matching_lexer import MatchingLexer
 from csvpath.parser_utility import ParserUtility
-from csvpath.matching.productions.expression import Expression
 from csvpath.matching.expression_encoder import ExpressionEncoder
-from csvpath.matching.productions.equality import Equality
-from csvpath.matching.productions.term import Term
-from csvpath.matching.productions.variable import Variable
-from csvpath.matching.productions.header import Header
-from csvpath.matching.functions.function_factory import FunctionFactory
+from .productions import *
+from .functions.function_factory import FunctionFactory
 from typing import Any
 
 

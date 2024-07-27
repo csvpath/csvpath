@@ -1,6 +1,6 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.productions.equality import Equality
+from .function import Function, ChildrenException
+from ..productions import Equality
 from csvpath.matching.productions.expression import Matchable
 from statistics import mean, median
 
@@ -9,7 +9,6 @@ class MinMax(Function):
     """
     // longest value
     // quintile
-    // median
     // decile
     // std div
     """

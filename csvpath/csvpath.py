@@ -1,10 +1,10 @@
 import csv
+import time
 from typing import List, Dict, Any
 from collections.abc import Iterator
-from csvpath.matching.matcher import Matcher
-from csvpath.matching.expression_encoder import ExpressionEncoder
-from csvpath.scanning.scanner import Scanner
-import time
+from . import Matcher
+from . import Scanner
+from . import ExpressionEncoder
 
 
 class NoFileException(Exception):

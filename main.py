@@ -1,4 +1,4 @@
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 
 
 class Main:

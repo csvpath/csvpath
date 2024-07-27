@@ -1,7 +1,6 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.productions.header import Header
-from csvpath.matching.productions.variable import Variable
+from .function import Function, ChildrenException
+from ..productions import Header, Variable
 
 
 class Exists(Function):

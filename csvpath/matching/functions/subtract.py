@@ -1,6 +1,6 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.productions.equality import Equality
+from .function import Function, ChildrenException
+from ..productions import Equality
 
 
 class Subtract(Function):

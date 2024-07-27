@@ -1,6 +1,6 @@
 from typing import Any
-from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.productions.term import Term
+from .function import Function, ChildrenException
+from ..productions import Term
 
 
 class Column(Function):
