@@ -15,7 +15,6 @@ class Equals(Function):
             ret = False
             left = self.children[0].left.to_value()
             right = self.children[0].right.to_value()
-            print(f"Equals.to_value: left: {left} ? {right}")
             if (left and not right) or (right and not left):
                 ret = False
             elif left is None and right is None:
@@ -25,9 +24,7 @@ class Equals(Function):
             elif f"{left}" == f"{right}":
                 ret = True
             else:
-                print(f"Equals.to_value: what is {left}, {right}?")
                 ret = False
-
             self.value = ret
         return self.value
 

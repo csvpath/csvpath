@@ -56,6 +56,35 @@ Another path that does the same thing might look like:
 
 In this case we're using the "when" operator, `->`, to determine when to print.
 
+## The print function
+
+The `print` function has several uses:
+- Debugging csvpaths
+- Validating CSV files
+- Creating new CSV files based on an existing file
+
+### Validating CSV
+
+CsvPath paths can be used for rules based validation. Rules based validation checks a file against content and structure rules but does not validate the file's structure against a schema. This validation approach is similar to XML's Schematron validation, where XPath rules are applied to XML.
+
+There is no "standard" way to do CsvPath validation. The way it works is that you create csvpaths that print a validation message when a rule fails. For example:
+
+    $test.csv[*][@failed = equals(#firstname, "Frog")
+                 @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")]
+
+Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule.
+
+### Creating new CSV files
+
+Csvpaths can use the `print` function to generate new file content on system out. Redirecting the output to a file is an easy way to create a new CSV file based on an existing file. For e.g.
+
+    $test.csv[*][ line_count()==0 -> print("lastname, firstname, say")
+                  above(line_count(), 0) -> print("$.headers.lastname, $.headers.firstname, $.headers.say")]
+
+This csvpath reorders the headers of the test file at `tests/test_resources/test.csv`. The output file will have a header row.
+
+## Named files
+
 You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
 - A JSON file with a dictionary of file paths under name keys
 - A dict object passed into the CsvPaths object containing the same named path structure

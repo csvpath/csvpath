@@ -4,7 +4,7 @@ from csvpath import CsvPath
 class Main:
     @classmethod
     def do_path(self):
-        pathstr = """$/Users/davidkershaw/Desktop/csvs/exportedLogRecords.CSV
+        pathstr1 = """$/Users/davidkershaw/Desktop/csvs/exportedLogRecords.CSV
                 [*][
                    @col20 = substring(#20, 40)
                    count_lines()==0 -> print( "error, line, level, message" )
@@ -12,9 +12,16 @@ class Main:
                      print("$.variables.col20, $.line_count, $.headers.level, $.headers.message" )
                 ]
                 """
-        # /InvocationContext/
+        pathstr1 = pathstr1
+        pathstr2 = """
+        $tests/test_resources/test.csv[*][
+            @failed = equals(#firstname, "Frog")
+            @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")
+        ] """
+
         path = CsvPath()
-        path.parse(pathstr)
+        # path.parse(pathstr1)
+        path.parse(pathstr2)
         path.fast_forward()
 
 
