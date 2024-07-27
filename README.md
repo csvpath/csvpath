@@ -124,13 +124,16 @@ Qualifiers are described below.  </td>
         <td>Variable </td>
         <td>Value</td>
         <td>True/False when value tested. True when set</td>
-        <td>An @ followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an "=" its value is set.  When it is used on either side of an "==" it is an equality test.
+        <td>
+<p>
+An @ followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an "=" its value is set.  When it is used on either side of an "==" it is an equality test.
+</p>
 <p>
 Variables can take an `onmatch` qualifier to indicate that the variable should only be set when the row matches all parts of the path.
 <p/>
 <p>
 A variable can also take an `onchange` qualifier to make its assignment only match when its value changes. In the usual case, a variable assignment always matches, making it not a factor in the row's matching or not matching. With `onchange` the assignment can determine if the row fails to match the csvpath.
-   </p>
+</p>
         <td>
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
