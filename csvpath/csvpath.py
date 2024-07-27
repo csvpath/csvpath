@@ -3,7 +3,8 @@ from typing import List, Dict, Any
 from collections.abc import Iterator
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.expression_encoder import ExpressionEncoder
-from csvpath.matching.expression_math import ExpressionMath
+
+# from csvpath.matching.expression_math import ExpressionMath
 from csvpath.scanning.scanner import Scanner
 import time
 
@@ -262,8 +263,10 @@ class CsvPath:
     def current_match_count(self) -> int:
         return self.match_count
 
+    """
     def do_math(self):
         self._do_math = not self._do_math
+    """
 
     def collect_matchers(self):
         self._collect_matchers = not self._collect_matchers
@@ -279,12 +282,12 @@ class CsvPath:
             self.matcher.reset()
             self.matcher.line = line
         matcher = self.matcher
-
+        """
         if self._do_math:
             em = ExpressionMath()
             for e in matcher.expressions:
                 em.do_math(e[0])
-
+        """
         if self._dump_json:
             jsonstr = ExpressionEncoder().valued_list_to_json(matcher.expressions)
             self.jsons.append(jsonstr)
