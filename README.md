@@ -174,6 +174,8 @@ Can also be written as:
 
     [#c==#b]
 
+## Qualifiers
+
 Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only three qualifiers:
 
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
@@ -189,6 +191,8 @@ Or:
     [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
 
 When multiple qualifiers are used order is not important.
+
+## The when operator
 
 `->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
 
