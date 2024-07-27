@@ -44,18 +44,6 @@ class Matcher:
             lexer: {self.lexer}
         """
 
-    """
-    def next_flag(self) -> int:
-        #
-        # -1 not set
-        # 0 = False
-        # 1 = True
-        # 2 = match if all other not 2s are True
-        #
-        self.flags.append(-1)
-        return len(self.flags) -1
-    """
-
     def reset(self):
         for expression in self.expressions:
             expression[1] = None
@@ -142,13 +130,6 @@ class Matcher:
     # ===================
     # productions
     # ===================
-
-    """
-    precedence = (
-        ('left', 'EQUALS', 'OPERATION'),
-        ('left', 'ASSIGNMENT'),
-    )
-    """
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)

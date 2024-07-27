@@ -134,6 +134,12 @@ Variables can take an `onmatch` qualifier to indicate that the variable should o
 <p>
 A variable can also take an `onchange` qualifier to make its assignment only match when its value changes. In the usual case, a variable assignment always matches, making it not a factor in the row's matching or not matching. With `onchange` the assignment can determine if the row fails to match the csvpath.
 </p>
+<p>
+Note that at present a variable assignment of an equality test is not possible using `==`. In the future the csvpath grammar may be improved to address this gap. In the interim, use the `equals(value,value)` function. I.e.instead of
+    @test = @cat == @hat
+use
+    @test = equals(@cat, @hat)
+</p>
         <td>
             <li/> `@weather="cloudy"`
             <li/> `count(@weather=="sunny")`
@@ -204,7 +210,7 @@ will never set `imcounting`, because of the `no()` function disallowing any matc
 
 will always set it.
 
-As said above, a variable can be flagged with the `onchange` qualifier. The effect is that the row will only match if the variable qualified by `onchange` changes in value.
+As noted above, a variable can be flagged with the `onchange` qualifier. The effect is that a row will only match if the variable qualified by `onchange` changes in value.
 
 ## The when operator
 

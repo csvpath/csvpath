@@ -101,7 +101,6 @@ class Equality(Matchable):
                         b = True
                     else:
                         b = False
-                # print(f"Equality.matches: oc: {oc}, b: {b}, ov: {ov}, v: {v}, om: {self.left.onmatch}")
                 if self.left.onmatch or (
                     self.right.name == "count" and len(self.right.children) == 0
                 ):
@@ -110,7 +109,6 @@ class Equality(Matchable):
                     # onchange
                     #
                     self.matcher.set_if_all_match(self.left.name, value=v)
-                    # print(f"Equality.matches: set if all match")
                     if not oc:
                         b = True
                 else:
@@ -135,7 +133,6 @@ class Equality(Matchable):
                 else:
                     b = f"{left}" == f"{right}"
             self.match = b
-            # print(f"Equality.matches: op: {self.op}, b: {b}")
         return self.match
 
     def to_value(self, *, skip=[]) -> Any:

@@ -6,7 +6,6 @@ from typing import Tuple
 class ExpressionUtility:
     @classmethod
     def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:
-        # print(f"ExpressionUtility.get_name_and_qualifiers: name: {name}")
         aname = name
         dot = f"{name}".find(".")
         quals = None

@@ -1166,3 +1166,20 @@ class TestFunctions(unittest.TestCase):
         assert "mytest" in quals
         assert "onmatch" in quals
         assert "onchange" in quals
+
+    def test_function_equals(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [
+                @m = mod(count_lines(), 2)
+                @c = count( equals( @m, 0) )
+                print.onmatch("printing: $.variables, count: $.match_count")
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_equals: path vars: {path.variables}")
+        print(f"test_function_equals: lines: {lines}")
+        assert path.variables["c"] == 5
+        assert len(lines) == 9
