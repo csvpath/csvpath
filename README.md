@@ -123,7 +123,7 @@ Qualifiers are described below.  </td>
     <tr>
         <td>Variable </td>
         <td>Value</td>
-        <td>True/False when value tested. True when set</td>
+        <td>True when set unless `onchange` determines True/False.</td>
         <td>
 <p>
 An @ followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an "=" its value is set.  When it is used on either side of an "==" it is an equality test.
