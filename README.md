@@ -204,26 +204,6 @@ Prints `this is the last line` just before the scan ends.
 
 Says to set the `firstname` variable to the value of the first column when the first column has a value.
 
-## Another Example
-    [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
-
-In the path above, the rules applied are:
-- The exists test of `#common_name` checks if the header named "common_name" has a value. Headers are the values in the 0th line.
-- `#2` means the 3rd column, counting from 0
-- Functions and column references are ANDed together
-- `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
-- Functions can contain functions, equality tests, and/or literals
-
-Variables are always set unless they are flagged with `.onmatch`. That means:
-
-    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
-
-will never set `imcounting`, because of the `no()` function disallowing any matches, but:
-
-    $file.csv[*][ @imcounting = count_lines() no()]
-
-will always set it.
-
 ## Match functions
 
 Most of the work of matching is done in functions. The match functions are the following.
@@ -281,6 +261,26 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> variable()                    </td><td> indicates to another function to look in variables       </td></tr>
 </tr>
 </table>
+
+## Another Example
+    [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
+
+In the path above, the rules applied are:
+- The exists test of `#common_name` checks if the header named "common_name" has a value. Headers are the values in the 0th line.
+- `#2` means the 3rd column, counting from 0
+- Functions and column references are ANDed together
+- `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
+- Functions can contain functions, equality tests, and/or literals
+
+Variables are always set unless they are flagged with `.onmatch`. That means:
+
+    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
+
+will never set `imcounting`, because of the `no()` function disallowing any matches, but:
+
+    $file.csv[*][ @imcounting = count_lines() no()]
+
+will always set it.
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
