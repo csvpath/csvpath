@@ -224,6 +224,8 @@ will never set `imcounting`, because of the `no()` function disallowing any matc
 
 will always set it.
 
+## Match functions
+
 Most of the work of matching is done in functions. The match functions are the following.
 
 
