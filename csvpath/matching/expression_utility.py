@@ -1,7 +1,33 @@
 import hashlib
 
+from typing import Tuple
+
 
 class ExpressionUtility:
+    @classmethod
+    def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:
+        # print(f"ExpressionUtility.get_name_and_qualifiers: name: {name}")
+        aname = name
+        dot = f"{name}".find(".")
+        quals = None
+        if dot > -1:
+            quals = []
+            aname = name[0:dot]
+            somequals = name[dot + 1 :]
+            cls._next_qual(quals, somequals)
+        return aname, quals
+
+    @classmethod
+    def _next_qual(cls, quals: list, name) -> None:
+        dot = name.find(".")
+        if dot > -1:
+            aqual = name[0:dot]
+            name = name[dot + 1 :]
+            quals.append(aqual)
+            cls._next_qual(quals, name)
+        else:
+            quals.append(name)
+
     @classmethod
     def is_simple_name(cls, s: str) -> bool:
         ret = False

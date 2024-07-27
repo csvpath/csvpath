@@ -36,8 +36,15 @@ class Print(Function):
         if len(self.children) != 1:
             raise ChildrenException("must be 1 child, equality or print string")
         if self.match is None:
-            print(f"{self.to_value()}")
-            self.match = True
+            om = self.has_onmatch()
+            if om:
+                lm = self.line_matches()
+                if lm:
+                    print(f"{self.to_value()}")
+                    self.match = True
+            else:
+                print(f"{self.to_value()}")
+                self.match = True
         return self.match
 
     def make_string(self, string: str) -> str:

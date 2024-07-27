@@ -93,18 +93,31 @@ class Equality(Matchable):
             b = None
             if isinstance(self.left, Variable) and self.op == "=":
                 v = self.right.to_value(skip=skip)
+                oc = self.left.has_onchange()
+                ov = ""
+                if oc:
+                    ov = self.matcher.get_variable(self.left.name)
+                    if f"{v}" != f"{ov}":
+                        b = True
+                    else:
+                        b = False
+                # print(f"Equality.matches: oc: {oc}, b: {b}, ov: {ov}, v: {v}, om: {self.left.onmatch}")
                 if self.left.onmatch or (
                     self.right.name == "count" and len(self.right.children) == 0
                 ):
                     #
-                    # register to set if all else matches
+                    # register to set if all else matches. doesn't matter if
+                    # onchange
                     #
                     self.matcher.set_if_all_match(self.left.name, value=v)
+                    # print(f"Equality.matches: set if all match")
+                    if not oc:
+                        b = True
                 else:
                     self.matcher.set_variable(self.left.name, value=v)
-                b = True
+                    if not oc:
+                        b = True
             elif self.op == "->":
-                # if left == True than right
                 if self.left.matches(skip=skip) is True:
                     self.right.matches(skip=skip)
                     b = True
@@ -122,6 +135,7 @@ class Equality(Matchable):
                 else:
                     b = f"{left}" == f"{right}"
             self.match = b
+            # print(f"Equality.matches: op: {self.op}, b: {b}")
         return self.match
 
     def to_value(self, *, skip=[]) -> Any:

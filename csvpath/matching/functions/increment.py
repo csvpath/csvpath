@@ -42,7 +42,7 @@ class Increment(Function):
                 elif not om:
                     v2 += 1
             r = 0
-            incname = f"{varname}.increment"
+            incname = f"{varname}_increment"
             if v != v2:
                 r = v2 % tv
                 self.match = r == 0

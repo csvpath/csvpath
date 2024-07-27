@@ -6,10 +6,15 @@ from enum import Enum
 class Qualities(Enum):
     ONMATCH = "onmatch"
     IFEMPTY = "ifempty"
+    ONCHANGE = "onchange"
 
 
 class Matchable:
-    QUALIFIERS = [Qualities.ONMATCH.value, Qualities.IFEMPTY.value]
+    QUALIFIERS = [
+        Qualities.ONMATCH.value,
+        Qualities.IFEMPTY.value,
+        Qualities.ONCHANGE.value,
+    ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         self.parent = None
@@ -22,8 +27,13 @@ class Matchable:
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
         self.qualifier = None
-        self.qualifiers = []
-        # self.flag = matcher.next_flag()
+        if name is None:
+            self.qualifiers = []
+        else:
+            n, qs = ExpressionUtility.get_name_and_qualifiers(name)
+            self.name = n
+            self.qualifiers = qs
+            # print(f"Matchable.init: name: {self.name}, quals: {self.qualifiers}")
 
     def __str__(self) -> str:
         return f"""{self.__class__}"""
@@ -37,15 +47,41 @@ class Matchable:
         return default
 
     def set_qualifiers(self, qs) -> None:
+        # print(f"Matchable.set_qualifiers: name: {self.name}, qs: {qs}")
         self.qualifier = qs
         if qs is not None:
             self.qualifiers = qs.split(".")
 
     def has_onmatch(self) -> bool:
-        return Qualities.ONMATCH.value in self.qualifiers
+        if self.qualifiers:
+            return Qualities.ONMATCH.value in self.qualifiers
+        return False
 
     def has_ifempty(self) -> bool:
-        return Qualities.IFEMPTY.value in self.qualifiers
+        if self.qualifiers:
+            return Qualities.IFEMPTY.value in self.qualifiers
+        return False
+
+    def has_onchange(self) -> bool:
+        # print(f"Matchable.has_onchange: name: {self.name}, quals: {self.qualifiers}")
+        if self.qualifiers:
+            return Qualities.ONCHANGE.value in self.qualifiers
+        return False
+
+    @property
+    def onmatch(self) -> bool:
+        return self.has_onmatch()
+
+    @property
+    def onchange(self) -> bool:
+        return self.has_onchange()
+
+    @onchange.setter
+    def onchange(self, oc: bool) -> None:
+        # print(f"Matchable.onchange: name: {self.name}, oc: {oc}")
+        if Qualities.ONCHANGE.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.ONCHANGE.value)
+        # print(f"Matchable.onchange: quals: {self.qualifiers}")
 
     def line_matches(self):
         es = self.matcher.expressions

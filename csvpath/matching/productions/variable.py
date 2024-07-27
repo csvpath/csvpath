@@ -1,5 +1,6 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
+from csvpath.matching.expression_utility import ExpressionUtility
 
 
 class Variable(Matchable):
@@ -7,15 +8,26 @@ class Variable(Matchable):
         super().__init__(matcher, value=value, name=name)
         #
         # onmatch is a qualifier, but it was created first, so is more specific.
+        # this handling of qualifiers is not like the Qualifiers enum. should be updated.
         #
-        self.onmatch = False
-        dot = name.find(".")
+        # self.onmatch = False
+        # dot = name.find(".")
+        # print(f"Variable.init: dot: {dot}, name: {name}")
+
+        n, qs = ExpressionUtility.get_name_and_qualifiers(name)
+        self.name = n
+        self.qualifiers = qs
+        """
         if dot > -1:
             self.name = name[0:dot]
             om = name[dot + 1 :]
             om = om.strip()
+            print(f"Variable.init: om: {om}")
             if om == "onmatch":
                 self.onmatch = True
+            elif om == "onchange":
+                self.onchange = True
+        """
 
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name}"""

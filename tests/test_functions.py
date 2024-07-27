@@ -2,6 +2,7 @@ import unittest
 from csvpath.matching.functions.function_factory import FunctionFactory
 from csvpath.csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
+from csvpath.matching.expression_utility import ExpressionUtility
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -865,7 +866,7 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["test"] == 9
         assert path.variables["i"] == 3
         assert path.variables["j"] == 4
-        assert path.variables["double_check.increment"] == 4
+        assert path.variables["double_check_increment"] == 4
 
     def test_function_increment2(self):
         path = CsvPath()
@@ -1082,7 +1083,7 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["last"] == 8
         assert path.variables["first"] == 0
 
-    # FIXME: this is not a deterministic test.
+    # FIXME: this is not really a deterministic test.
     def test_function_last3(self):
         path = CsvPath()
         path.parse(
@@ -1094,3 +1095,74 @@ class TestFunctions(unittest.TestCase):
         print("")
         path.fast_forward()
         print(f"test_function_last: path vars: {path.variables}")
+
+    def test_function_mod1(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [
+                @mod = mod(count_lines(), 2)
+                @mod == 0.0
+                print.onmatch("$.variables.mod")
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_last: path vars: {path.variables}")
+        print(f"test_function_last: lines: {lines}")
+        assert path.variables["mod"] == 0.0
+        assert len(lines) == 5
+
+    # @mod3 = @mod == @mod2
+
+    # FIXME: this works to show that @var.onchange correctly matches when set to a
+    # new value. it is not a deterministic test. there is a deterministic test in test_function_onchange2
+    # leaving this as an example, for now.
+    def test_function_onchange1(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [
+                increment.test( yes(), 3)
+                @oc.onchange = @test_increment
+                print.onmatch("printing: oc: $.variables.oc, test: $.variables.test, count: $.match_count")
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_last: path vars: {path.variables}")
+        print(f"test_function_last: lines: {lines}")
+        assert path.variables["oc"] == 3.0
+        assert len(lines) == 3
+
+    def test_function_onchange2(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [
+                @oc.onchange = in(#firstname, "Frog|Bug|Fish")
+                print.onmatch("printing: oc: $.variables.oc, count: $.match_count")
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_last: path vars: {path.variables}")
+        print(f"test_function_last: lines: {lines}")
+        assert path.variables["oc"] is True
+        assert len(lines) == 4
+
+    def test_exp_util_quals(self):
+        name, quals = ExpressionUtility.get_name_and_qualifiers("test.onmatch")
+        assert name == "test"
+        assert "onmatch" in quals
+        name, quals = ExpressionUtility.get_name_and_qualifiers("test.onchange.onmatch")
+        assert name == "test"
+        assert "onmatch" in quals
+        assert "onchange" in quals
+        name, quals = ExpressionUtility.get_name_and_qualifiers(
+            "test.mytest.onchange.onmatch"
+        )
+        assert name == "test"
+        assert "mytest" in quals
+        assert "onmatch" in quals
+        assert "onchange" in quals

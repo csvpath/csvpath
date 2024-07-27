@@ -47,7 +47,7 @@ class MatchingLexer(object):
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"
     t_NAME_LINE = r"[\$A-Za-z0-9\.%_|\s, :]+\n"
-    t_SIMPLE_NAME = r"[A-Za-z]+"
+    #   t_SIMPLE_NAME = r"[A-Za-z]+"
 
     def t_NUMBER(self, t):
         r"\d*\.?\d+"
@@ -68,6 +68,11 @@ class MatchingLexer(object):
 
     def t_QUOTED(self, t):
         r'"[\$A-Za-z0-9\.%_|\s :\\/,]+"'
+        return t
+
+    def t_SIMPLE_NAME(self, t):
+        r"[A-Za-z0-9_\.]+\n?"
+        t.value = t.value.strip()
         return t
 
     def t_NAME(self, t):

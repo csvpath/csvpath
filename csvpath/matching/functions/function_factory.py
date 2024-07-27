@@ -38,6 +38,7 @@ from csvpath.matching.functions.header import Header
 from csvpath.matching.functions.nonef import Nonef
 from csvpath.matching.functions.last import Last
 from csvpath.matching.functions.exists import Exists
+from csvpath.matching.functions.mod import Mod
 
 
 class UnknownFunctionException(Exception):
@@ -51,6 +52,7 @@ class InvalidChildException(Exception):
 class FunctionFactory:
     @classmethod
     def get_name_and_qualifier(self, name: str):
+        # print(f"FunctionFactory.get_name_and_qualifier: name: {name}")
         aname = name
         qualifier = None
         dot = name.find(".")
@@ -152,6 +154,8 @@ class FunctionFactory:
             f = Last(matcher, name, child)
         elif name == "exists":
             f = Exists(matcher, name, child)
+        elif name == "mod":
+            f = Mod(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
