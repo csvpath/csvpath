@@ -7,6 +7,7 @@ class Qualities(Enum):
     ONMATCH = "onmatch"
     IFEMPTY = "ifempty"
     ONCHANGE = "onchange"
+    ASBOOL = "asbool"
 
 
 class Matchable:
@@ -14,6 +15,7 @@ class Matchable:
         Qualities.ONMATCH.value,
         Qualities.IFEMPTY.value,
         Qualities.ONCHANGE.value,
+        Qualities.ASBOOL.value,
     ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
@@ -33,7 +35,6 @@ class Matchable:
             n, qs = ExpressionUtility.get_name_and_qualifiers(name)
             self.name = n
             self.qualifiers = qs
-            # print(f"Matchable.init: name: {self.name}, quals: {self.qualifiers}")
 
     def __str__(self) -> str:
         return f"""{self.__class__}"""
@@ -47,7 +48,6 @@ class Matchable:
         return default
 
     def set_qualifiers(self, qs) -> None:
-        # print(f"Matchable.set_qualifiers: name: {self.name}, qs: {qs}")
         self.qualifier = qs
         if qs is not None:
             self.qualifiers = qs.split(".")
@@ -63,10 +63,18 @@ class Matchable:
         return False
 
     def has_onchange(self) -> bool:
-        # print(f"Matchable.has_onchange: name: {self.name}, quals: {self.qualifiers}")
         if self.qualifiers:
             return Qualities.ONCHANGE.value in self.qualifiers
         return False
+
+    def has_asbool(self) -> bool:
+        if self.qualifiers:
+            return Qualities.ASBOOL.value in self.qualifiers
+        return False
+
+    @property
+    def asbool(self) -> bool:
+        return self.has_asbool()
 
     @property
     def onmatch(self) -> bool:

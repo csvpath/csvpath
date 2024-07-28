@@ -17,13 +17,13 @@ class Main:
         pathstr2 = """
         $tests/test_resources/test.csv[*][
             @failed = equals(#firstname, "Frog")
-            @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")
+            @failed.asbool -> print("Error: Check line $.line_count for a row with the name Frog")
         ] """
         pathstr2 = pathstr2
 
         path = CsvPath()
-        path.parse(pathstr1)
-        # path.parse(pathstr2)
+        # path.parse(pathstr1)
+        path.parse(pathstr2)
         path.fast_forward()
 
 

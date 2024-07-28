@@ -32,7 +32,7 @@ There are two classes that do all the work: CsvPath and CsvPaths. Each has very 
   - parse() applies a csvpath to a file
   - next() iterates over the matched rows
   - fast_forward() processes all rows
-  - collect() processes all rows and collecting the lines that matched as lists
+  - collect() processes all rows and collects the lines that matched as lists
 - CsvPaths
   - csvpath() gets a CsvPath that knows all the file names available
   - set_named_files() sets the file names as a Dict[str,str] of named paths
@@ -44,7 +44,9 @@ This is a very basic use of CsvPath. For more usage, see the unit tests.
     path.parse("""$test.csv
                     [5-25]
                     [
-                        #0=="Frog" @lastname.onmatch="Bats" count()==2
+                        #0=="Frog"
+                        @lastname.onmatch="Bats"
+                        count()==2
                     ]
                """)
     for i, line in enumerate( path.next() ):
@@ -83,7 +85,7 @@ CsvPath paths can be used for rules based validation. Rules based validation che
 There is no "standard" way to do CsvPath validation. The simplest way is to create csvpaths that print a validation message when a rule fails. For example:
 
     $test.csv[*][@failed = equals(#firstname, "Frog")
-                 @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")]
+                 @failed.asbool -> print("Error: Check line $.line_count for a row with the name Frog")]
 
 Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule.
 
@@ -216,10 +218,11 @@ use
 
 ## Qualifiers
 
-Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only three qualifiers:
+Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only four qualifiers:
 
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
 - `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
+- `asbool` set on a variable to have its value interpreted as a bool rather than just a simple `is not None` test
 - An arbitrary string to add a name for the function's internal use, typically to name a variable
 
 Qualifiers look like:

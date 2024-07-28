@@ -174,6 +174,8 @@ class Matcher:
                  | function op function
                  | function op var_or_header
                  | function DO assignment_or_equality
+                 | var DO assignment_or_equality
+                 | var DO function
                  | function DO function
                  | equality DO assignment_or_equality
                  | equality DO function
