@@ -1,9 +1,28 @@
 import hashlib
 
-from typing import Tuple
+from typing import Tuple, Any
 
 
 class ExpressionUtility:
+    @classmethod
+    def ascompariable(self, v: Any) -> Any:
+        if v is None:
+            return v
+        elif v is False or v is True:
+            return v
+        s = f"{v}".lower().strip()
+        if s == "true":
+            return True
+        elif s == "false":
+            return False
+        elif isinstance(v, int) or isinstance(v, float):
+            return v
+        else:
+            try:
+                return float(v)
+            except Exception:
+                return s
+
     @classmethod
     def asbool(cls, v) -> bool:
         ret = None

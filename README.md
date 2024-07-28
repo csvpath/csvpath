@@ -294,8 +294,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
-<tr><td>           </td><td> max(value, type)              </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
-<tr><td>           </td><td> min(value, type)              </td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/max.md'>max(value, type)</a> </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/max.md'>min(value, type)</a></td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> percent(type)                 </td><td> % of total lines for "scan", "match", "line"              </td></tr>
 <tr><td> Counting  </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='csvpath/matching/functions/count.md'>count()</a> </td><td> counts the number of matches            </td></tr>

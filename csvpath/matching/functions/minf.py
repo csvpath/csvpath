@@ -1,6 +1,7 @@
 from typing import Any
 from .function import Function, ChildrenException
 from ..productions import Equality
+from ..expression_utility import ExpressionUtility
 from csvpath.matching.productions.expression import Matchable
 from statistics import mean, median
 
@@ -13,6 +14,9 @@ class MinMax(Function):
     // std div
     """
 
+    MAX = True
+    MIN = False
+
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
@@ -21,6 +25,10 @@ class MinMax(Function):
             return self.children[0].left.to_value()
         else:
             return self.children[0].to_value()
+
+    def get_the_value_conformed(self) -> Any:
+        v = self.get_the_value()
+        return ExpressionUtility.ascompariable(v)
 
     def get_the_name(self) -> Any:
         if isinstance(self.children[0], Equality):
@@ -58,6 +66,28 @@ class MinMax(Function):
                 return False
         return True
 
+    def _ignore(self):
+        if (
+            self.get_the_name() in self.matcher.csvpath.headers
+            and self.matcher.csvpath.current_line_number() == 0
+        ):
+            return True
+        if self.is_match() and not self.line_matches():
+            return True
+        return False
+
+    def _store_and_compare(self, v, maxormin: bool) -> Any:
+        self.matcher.set_variable("min", tracking=f"{self.get_the_line()}", value=v)
+        all_values = self.matcher.get_variable(
+            "min" if maxormin is MinMax.MIN else "max"
+        )
+        m = None
+        for k, v in enumerate(all_values.items()):
+            v = v[1]
+            if not m or ((v < m) if maxormin is MinMax.MIN else (v > m)):
+                m = v
+        return m
+
 
 class Min(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
@@ -69,22 +99,13 @@ class Min(MinMax):
         if self.children and len(self.children) == 1:
             ChildrenException("must have a child")
         if not self.value:
-            v = self.get_the_value()
-            if (
-                self.get_the_name() in self.matcher.csvpath.headers
-                and self.matcher.csvpath.current_line_number() == 0
-            ):
+            # skip lines we should ignore
+            if self._ignore():
                 return self.value
-            if self.is_match() and not self.line_matches():
-                return self.value
+            # track and compare
+            v = self.get_the_value_conformed()
             self.matcher.set_variable("min", tracking=f"{self.get_the_line()}", value=v)
-            all_values = self.matcher.get_variable("min")
-            m = None
-            for k, v in enumerate(all_values.items()):
-                v = v[1]
-                if not m or v < m:
-                    m = v
-
+            m = self._store_and_compare(v, MinMax.MIN)
             self.value = m
         return self.value
 
@@ -102,22 +123,13 @@ class Max(MinMax):
         if self.children and len(self.children) == 1:
             ChildrenException("must have a child")
         if not self.value:
-            v = self.get_the_value()
-            if (
-                self.get_the_name() in self.matcher.csvpath.headers
-                and self.matcher.csvpath.current_line_number() == 0
-            ):
+            # skip lines we should ignore
+            if self._ignore():
                 return self.value
-            if self.is_match() and not self.line_matches():
-                return self.value
+            # track and compare
+            v = self.get_the_value_conformed()
             self.matcher.set_variable("max", tracking=f"{self.get_the_line()}", value=v)
-            all_values = self.matcher.get_variable("max")
-            m = None
-            for k, v in enumerate(all_values.items()):
-                v = v[1]
-                if not m or v > m:
-                    m = v
-
+            m = self._store_and_compare(v, MinMax.MAX)
             self.value = m
         return self.value
 

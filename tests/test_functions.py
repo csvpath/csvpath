@@ -638,7 +638,8 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["end"] == "growl"
         assert len(lines) == 0
 
-    def test_function_max(self):
+    def test_function_max1(self):
+        print("")
         path = CsvPath()
         path.parse(
             f"""
@@ -649,22 +650,26 @@ class TestFunctions(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["the_max"] == "Slug"
+        print(f"test_function_max: path vars: {path.variables}")
+        assert path.variables["the_max"] == "slug"
         assert len(lines) == 0
 
+    def test_function_max2(self):
+        print("")
         path = CsvPath()
         path.parse(
             f"""
             ${PATH}[*]
             [
-                @the_max = max(#0)
+                @the_max = max(#1)
                 no()
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["the_max"] == "firstname"
+        print(
+            f"test_function_max2: should not ignore header row. path vars: {path.variables}"
+        )
+        assert path.variables["the_max"] == "lastname"
         assert len(lines) == 0
 
     def test_function_min(self):
@@ -679,7 +684,7 @@ class TestFunctions(unittest.TestCase):
         )
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["the_min"] == "Ants"
+        assert path.variables["the_min"] == "ants"
         assert len(lines) == 0
 
         path = CsvPath()
@@ -693,7 +698,7 @@ class TestFunctions(unittest.TestCase):
         )
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["the_min"] == "Bird"
+        assert path.variables["the_min"] == "bird"
         assert len(lines) == 0
 
         path = CsvPath()
