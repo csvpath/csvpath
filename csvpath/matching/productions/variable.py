@@ -40,21 +40,8 @@ class Variable(Matchable):
     def matches(self, *, skip=[]) -> bool:
         if self.match is None:
             if self.asbool:
-                # do a boolean test against the value
                 v = self.to_value(skip=skip)
-                if v is None:
-                    self.match = False
-                elif v is False:
-                    self.match = False
-                elif f"{v}".lower().strip() == "false":
-                    self.match = False
-                elif f"{v}".lower().strip() == "true":
-                    self.match = True
-                else:
-                    try:
-                        self.match = bool(v)
-                    except Exception:
-                        self.match = True  # we're not None so we exist
+                self.match = ExpressionUtility.asbool(v)
             else:
                 self.match = self.value is not None
         return self.match

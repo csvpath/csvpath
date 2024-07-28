@@ -1,5 +1,6 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
+from ..expression_utility import ExpressionUtility
 
 
 class Header(Matchable):
@@ -36,5 +37,11 @@ class Header(Matchable):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        v = self.to_value(skip=skip)
-        return v is not None
+        if self.match is None:
+            v = self.to_value(skip=skip)
+            if self.asbool:
+                v = self.to_value(skip=skip)
+                self.match = ExpressionUtility.asbool(v)
+            else:
+                self.match = v is not None
+        return self.match

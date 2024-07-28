@@ -5,6 +5,24 @@ from typing import Tuple
 
 class ExpressionUtility:
     @classmethod
+    def asbool(cls, v) -> bool:
+        ret = None
+        if v is None:
+            ret = False
+        elif v is False:
+            ret = False
+        elif f"{v}".lower().strip() == "false":
+            ret = False
+        elif f"{v}".lower().strip() == "true":
+            ret = True
+        else:
+            try:
+                ret = bool(v)
+            except Exception:
+                ret = True  # we're not None so we exist
+        return ret
+
+    @classmethod
     def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:
         aname = name
         dot = f"{name}".find(".")
