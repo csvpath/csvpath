@@ -19,6 +19,9 @@ class Print(Function):
         "$.headers",
         "$.scan_part",
         "$.match_part",
+        "$.last_row_time",
+        "$.rows_time",
+        "$.total_lines",
     ]
 
     def to_value(self, *, skip=[]) -> Any:
@@ -115,6 +118,7 @@ class Print(Function):
 
     def value_of_token(self, token) -> str:
         ret = None
+        # print(f"printf.value_of_token: {token}")
         if token == Print.TOKENS[0]:
             ret = self.matcher.csvpath.scanner.filename
         elif token == Print.TOKENS[1]:
@@ -139,4 +143,10 @@ class Print(Function):
             ret = str(self.matcher.csvpath.scan)
         elif token == Print.TOKENS[12]:
             ret = str(self.matcher.csvpath.match)
+        elif token == Print.TOKENS[13]:
+            ret = str(self.matcher.csvpath.last_row_time)
+        elif token == Print.TOKENS[14]:
+            ret = str(self.matcher.csvpath.rows_time)
+        elif token == Print.TOKENS[15]:
+            ret = str(self.matcher.csvpath.total_lines)
         return f"{ret}"

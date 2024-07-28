@@ -23,6 +23,8 @@ Print strings can include the following variables.
 |variables.varname  | The value of the named variable                                       |
 |match_json         | A JSON dump of the match part parse tree                              |
 |line               | The list of values that is the current line being processed           |
+|last_row_time      | Time taken for the last row processed                                 |
+|rows_time          | Time taken for all rows processed so far                              |
 
 A variable is indicated as a qualifier off the root. The root is `$`, so the `delimiter` variable is referred to like this:
 

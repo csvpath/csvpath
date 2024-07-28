@@ -7,9 +7,10 @@ class Main:
         pathstr1 = """$/Users/davidkershaw/Desktop/csvs/exportedLogRecords.CSV
                 [*][
                    @col20 = substring(#20, 40)
-                   count_lines()==0 -> print( "error, line, level, message" )
+                   count_lines()==0 -> print( "time, error, line, level, message" )
                    regex(#20, /InvocationContext/) ->
-                     print("$.variables.col20, $.line_count, $.headers.level, $.headers.message" )
+                     print("$.rows_time, $.variables.col20, $.line_count, $.headers.level, $.headers.message" )
+                     last() -> print("Checked $.total_lines total lines in $.rows_time ms.,,,,")
                 ]
                 """
         pathstr1 = pathstr1
@@ -18,10 +19,11 @@ class Main:
             @failed = equals(#firstname, "Frog")
             @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")
         ] """
+        pathstr2 = pathstr2
 
         path = CsvPath()
-        # path.parse(pathstr1)
-        path.parse(pathstr2)
+        path.parse(pathstr1)
+        # path.parse(pathstr2)
         path.fast_forward()
 
 

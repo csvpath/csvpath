@@ -15,7 +15,7 @@ class CsvPaths:
         named_files: Dict[str, str] = {},
     ):
         self.named_files: Dict[str, str] = None
-        self.set_filename(filename)
+        self.set_file_path(filename)
         if self.named_files is None:
             self.named_files = {}
         if named_files is not None and not named_files == {}:
@@ -45,7 +45,7 @@ class CsvPaths:
     def set_named_files(self, nf: Dict[str, str]) -> None:
         self.named_files = nf
 
-    def set_filename(self, name: str) -> None:
+    def set_file_path(self, name: str) -> None:
         self.filename = None
         if name is None:
             return

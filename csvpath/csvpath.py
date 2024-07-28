@@ -45,12 +45,15 @@ class CsvPath:
         self.matcher = None
         self.skip_blank_lines = skip_blank_lines
         self.stopped = False
+        self.last_row_time = -1
+        self.rows_time = -1
+        self.total_iteration_time = -1
 
     def dump_json(self):
         self._dump_json = not self._dump_json
 
     def parse(self, data):
-        start = time.time()
+        # start = time.time()
         self.scanner = Scanner()
         data = self._update_file_path(data)
         s, mat, mod = self._find_scan_match_modify(data)
@@ -58,8 +61,8 @@ class CsvPath:
         self.match = mat
         self.modify = mod
         self.scanner.parse(s)
-        end = time.time()
-        end - start
+        # end = time.time()
+        # end - start
         self.get_total_lines_and_headers()
         return self.scanner
 
@@ -186,18 +189,20 @@ class CsvPath:
                     pass
                 elif self.scanner.includes(self.line_number):
                     self.scan_count = self.scan_count + 1
-                    startmatch = time.perf_counter()
+                    startmatch = time.perf_counter_ns()
                     b = self.matches(line)
-                    endmatch = time.time()
+                    endmatch = time.perf_counter_ns()
                     if b:
                         self.match_count = self.match_count + 1
                         yield line
-                    endmatch - startmatch
+                    t = (endmatch - startmatch) / 1000000
+                    self.last_row_time = t
+                    self.rows_time += t
                 self.line_number = self.line_number + 1
                 if self.stopped:
                     break
             end = time.time()
-            end - start
+            self.total_iteration_time = end - start
 
     def get_total_lines(self) -> int:
         if self.total_lines == -1:

@@ -9,6 +9,7 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
 # Usage
+
 CsvPath paths have three parts:
 - a "root" file name
 - a scanning part
@@ -24,7 +25,20 @@ This path says open the file named `filename`, scan all the lines, and match eve
 
 The filename following the `$` can be an actual relative or absolute file path. It could alternatively be a logical identifier that points indirectly to a physical file, as described below.
 
-This is a very basic use. For more usage, see the unit tests.
+## Running CsvPath
+
+There are two classes that do all the work: CsvPath and CsvPaths. Each has very few external methods.
+- CsvPath
+  - parse() applies a csvpath to a file
+  - next() iterates over the matched rows
+  - fast_forward() processes all rows
+  - collect() processes all rows and collecting the lines that matched as lists
+- CsvPaths
+  - csvpath() gets a CsvPath that knows all the file names available
+  - set_named_files() sets the file names as a Dict[str,str] of named paths
+  - set_file_path() sets the file names from a JSON file of named paths or a single .csv file or a directory of .csv files
+
+This is a very basic use of CsvPath. For more usage, see the unit tests.
 
     path = CsvPath()
     path.parse("""$test.csv
@@ -42,14 +56,13 @@ The csvpath says:
 - Scan lines 5 through 25
 - Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
 
-Another path that does the same thing might look like:
+Another path that does the same thing a bit more simply might look like:
 
     """$test.csv
         [5-25]
         [
             #0=="Frog"
             @lastname.onmatch="Bats"
-            count()==2
             count()==2 -> print( "$.match_count: $.line")
         ]
     """
@@ -58,7 +71,7 @@ In this case we're using the "when" operator, `->`, to determine when to print.
 
 ## The print function
 
-The `print` function has several uses:
+The `print` function has several uses, including:
 - Debugging csvpaths
 - Validating CSV files
 - Creating new CSV files based on an existing file
@@ -67,7 +80,7 @@ The `print` function has several uses:
 
 CsvPath paths can be used for rules based validation. Rules based validation checks a file against content and structure rules but does not validate the file's structure against a schema. This validation approach is similar to XML's Schematron validation, where XPath rules are applied to XML.
 
-There is no "standard" way to do CsvPath validation. The way it works is that you create csvpaths that print a validation message when a rule fails. For example:
+There is no "standard" way to do CsvPath validation. The simplest way is to create csvpaths that print a validation message when a rule fails. For example:
 
     $test.csv[*][@failed = equals(#firstname, "Frog")
                  @failed == "True" -> print("Error: Check line $.line_count for a row with the name Frog")]
