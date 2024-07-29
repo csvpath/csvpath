@@ -21,9 +21,22 @@ class Main:
         ] """
         pathstr2 = pathstr2
 
+        pathstr3 = """
+        $tests/test_resources/test.csv
+        [*]
+        [
+        #1=="Bat" ->
+                print("found Bat at $.line_count for a count of $.match_count")
+        last.nocontrib() ->
+                print("Total lines: $.line_count, matches: $.match_count")
+        ]
+        """
+
+        # @t.onmatch = #1
+
         path = CsvPath()
         # path.parse(pathstr1)
-        path.parse(pathstr2)
+        path.parse(pathstr3)
         path.fast_forward()
 
 

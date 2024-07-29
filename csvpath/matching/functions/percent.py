@@ -8,7 +8,9 @@ class Percent(Function):
             return True
         if len(self.children) != 1:
             self.matcher.print(f"Lower.to_value: must have 1 child: {self.children}")
-            raise ChildrenException("Lower function must have 1 child: line|scan|match")
+            raise ChildrenException(
+                "Percent function must have 1 child: line|scan|match"
+            )
         which = self.children[0].to_value()
 
         if which not in ["scan", "match", "line"]:

@@ -117,10 +117,13 @@ class Equality(Matchable):
                         b = True
             elif self.op == "->":
                 if self.left.matches(skip=skip) is True:
-                    self.right.matches(skip=skip)
                     b = True
+                    self.right.matches(skip=skip)
                 else:
-                    b = False
+                    if self._left_nocontrib(self.left):
+                        b = True
+                    else:
+                        b = False
             else:
                 left = self.left.to_value(skip=skip)
                 right = self.right.to_value(skip=skip)
@@ -134,6 +137,12 @@ class Equality(Matchable):
                     b = f"{left}" == f"{right}"
             self.match = b
         return self.match
+
+    def _left_nocontrib(self, m) -> bool:
+        if isinstance(m, Equality):
+            return self._left_nocontrib(m.left)
+        else:
+            return m.nocontrib
 
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:

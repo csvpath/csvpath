@@ -8,6 +8,7 @@ class Qualities(Enum):
     IFEMPTY = "ifempty"
     ONCHANGE = "onchange"
     ASBOOL = "asbool"
+    NOCONTRIB = "nocontrib"
 
 
 class Matchable:
@@ -16,6 +17,7 @@ class Matchable:
         Qualities.IFEMPTY.value,
         Qualities.ONCHANGE.value,
         Qualities.ASBOOL.value,
+        Qualities.NOCONTRIB.value,
     ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
@@ -71,6 +73,15 @@ class Matchable:
         if self.qualifiers:
             return Qualities.ASBOOL.value in self.qualifiers
         return False
+
+    def has_nocontrib(self) -> bool:
+        if self.qualifiers:
+            return Qualities.NOCONTRIB.value in self.qualifiers
+        return False
+
+    @property
+    def nocontrib(self) -> bool:
+        return self.has_nocontrib()
 
     @property
     def asbool(self) -> bool:

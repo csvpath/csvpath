@@ -31,18 +31,20 @@ There are two classes that do all the work: CsvPath and CsvPaths. Each has very 
 - CsvPath
   - parse() applies a csvpath to a file
   - next() iterates over the matched rows
-  - fast_forward() processes all rows
-  - collect() processes all rows and collects the lines that matched as lists
+  - fast_forward(int) processes n rows
+  - collect(int) processes n rows and collects the lines that matched as lists
 - CsvPaths
   - csvpath() gets a CsvPath that knows all the file names available
-  - set_named_files() sets the file names as a Dict[str,str] of named paths
-  - set_file_path() sets the file names from a JSON file of named paths or a single .csv file or a directory of .csv files
+  - set_named_files(Dict[str,str]) sets the file names as a dict of named paths
+  - set_file_path(str) sets the file names from:
+    - a JSON file of named paths or
+    - a single .csv file or
+    - a directory of .csv files
 
 This is a very basic use of CsvPath. For more usage, see the unit tests.
 
     path = CsvPath()
-    path.parse("""$test.csv
-                    [5-25]
+    path.parse("""$test.csv[5-25]
                     [
                         #0=="Frog"
                         @lastname.onmatch="Bats"
@@ -60,8 +62,7 @@ The csvpath says:
 
 Another path that does the same thing a bit more simply might look like:
 
-    """$test.csv
-        [5-25]
+    """$test.csv[5-25]
         [
             #0=="Frog"
             @lastname.onmatch="Bats"
@@ -73,7 +74,7 @@ In this case we're using the "when" operator, `->`, to determine when to print.
 
 ## The print function
 
-The `print` function has several uses, including:
+Before we get into the scanning and matching parts of paths, let's look at print. The `print` function is an easy concept and has several important uses, including:
 - Debugging csvpaths
 - Validating CSV files
 - Creating new CSV files based on an existing file
@@ -100,7 +101,7 @@ This csvpath reorders the headers of the test file at `tests/test_resources/test
 
 ## Named files
 
-You can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
+As noted above, you can use the `CsvPaths` class to set up a list of named file paths so that you can have more concise csvpaths. Named paths can take the form of:
 - A JSON file with a dictionary of file paths under name keys
 - A dict object passed into the CsvPaths object containing the same named path structure
 - The path to a csv file that will be put into the named paths dict under its name minus extension
@@ -141,7 +142,7 @@ The match part is also bracketed. Matches have space separated components or "va
     <tr>
         <td>Term </td><td> Value </td><td> True when used alone, otherwise calculated </td>
         <td>A quoted string or date, optionally quoted number, or
-        regex. Regex features are limited. A regex is wrapped  in "/" characters and
+        regex. Regex features are limited. A regex is wrapped  in `/` characters and
 only has regex functionality when used in the regex() function.</td>
         <td>
             <li/> `"Massachusetts"`
@@ -223,6 +224,7 @@ Variables and some functions can take qualifiers on their name. A qualifier take
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
 - `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
 - `asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
+- `nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. $test[*][yes() last.nocontrib() -> print("last line!")] will collect all rows but only print on the last.
 - An arbitrary string to add a name for the function's internal use, typically to name a variable
 
 Qualifiers look like:

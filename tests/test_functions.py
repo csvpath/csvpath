@@ -1101,6 +1101,20 @@ class TestFunctions(unittest.TestCase):
         path.fast_forward()
         print(f"test_function_last: path vars: {path.variables}")
 
+    def test_function_last4(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [ yes() -> print("$.line_count")
+                last.nocontrib() -> @me = count_lines()
+            ]
+            """
+        )
+        print("")
+        path.fast_forward()
+        print(f"test_function_last: path vars: {path.variables}")
+        assert "me" in path.variables
+        assert path.variables["me"] == 8
+
     def test_function_mod1(self):
         path = CsvPath()
         path.parse(
