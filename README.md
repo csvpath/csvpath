@@ -224,7 +224,7 @@ Variables and some functions can take qualifiers on their name. A qualifier take
 - `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
 - `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
 - `asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
-- `nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. $test[*][yes() last.nocontrib() -> print("last line!")] will collect all rows but only print on the last.
+- `nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. `$test[*][yes() last.nocontrib() -> print("last line!")]` will collect all rows but only print on the last.
 - An arbitrary string to add a name for the function's internal use, typically to name a variable
 
 Qualifiers look like:
