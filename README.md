@@ -237,6 +237,8 @@ Or:
 
 When multiple qualifiers are used order is not important.
 
+Qualifiers are actively being discovered and implementation is opportunistic. Eventually the feature will need to be formalized. Watch this space!
+
 ## Variables
 
 A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
