@@ -140,7 +140,9 @@ The match part is also bracketed. Matches have space separated components or "va
 <td>Examples</td>
 </tr>
     <tr>
-        <td>Term </td><td> Value </td><td> True when used alone, otherwise calculated </td>
+        <td>Term </td>
+        <td> Value </td>
+        <td> True when used alone, otherwise calculated </td>
         <td>A quoted string or date, optionally quoted number, or
         regex. Regex features are limited. A regex is wrapped  in `/` characters and
 only has regex functionality when used in the regex() function.</td>
@@ -151,7 +153,9 @@ only has regex functionality when used in the regex() function.</td>
         </td>
     </tr>
     <tr>
-        <td>Function </td><td> Calculated   </td><td> Calculated </td>
+        <td>Function </td>
+        <td> Calculated   </td>
+        <td> Calculated </td>
         <td>A function name followed by parentheses. Functions can
 contain terms, variables, headers and other  functions. Some functions
 take a specific or  unlimited number of types as arguments.
@@ -198,8 +202,7 @@ use
         <td>Header   </td>
         <td>Value     </td>
         <td>Calculated</td>
-        <td>A # followed by a name or integer. The name references a value in line 0, the header
- row. A number references a column by the 0-based column order.   </td>
+        <td>A # followed by a name or integer. The name references a column within the row being matched. Names of headers are whatever is found in line 0, the header row. A numbered header references a column by its 0-based column index.   </td>
         <td>
             <li/> `#firstname`
             <li/> `#3`
@@ -335,7 +338,7 @@ Most of the work of matching is done in functions. The match functions are the f
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
-- The exists test of `#common_name` checks if the header named "common_name" has a value. Headers are the values in the 0th line.
+- The exists test of `#common_name` checks if the column with the header "common_name" has a value. Headers are named for whatever values are found in the 0th row. They indicate a column in the row being checked for match.
 - `#2` means the 3rd column, counting from 0
 - Functions and column references are ANDed together
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
