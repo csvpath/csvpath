@@ -309,6 +309,7 @@ class CsvPath:
         thevalue = None
         if tracking is not None:
             thedict = None
+            thevalue = None
             if name in self.variables:
                 thedict = self.variables[name]
                 if not thedict:
@@ -319,7 +320,8 @@ class CsvPath:
                 thedict = {}
                 thedict[tracking] = set_if_none
                 self.variables[name] = thedict
-            thevalue = thedict.get(tracking)
+            if isinstance(thedict, dict):
+                thevalue = thedict.get(tracking)
             if not thevalue and set_if_none is not None:
                 thedict[tracking] = set_if_none
                 thevalue = set_if_none

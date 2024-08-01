@@ -187,6 +187,9 @@ Qualifiers are described below.  </td>
 An @ followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an "=" its value is set.  When it is used on either side of an "==" it is an equality test.
 </p>
 <p>
+    Variables may have "tracking values". A tracking value is a key into a dict stored as the variable. A csvpath can pull a tracking value by using a qualifier on the variable name. E.g. `@my_var.my_tracked_value`. The qualifier must not match any of the predefined qualifiers, like `asbool` or `onmatch`. Tracked value are often used by functions for internal bookkeeping.
+</p>
+<p>
 Variables can take an `onmatch` qualifier to indicate that the variable should only be set when the row matches all parts of the path.
 <p/>
 <p>

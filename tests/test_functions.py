@@ -1202,3 +1202,20 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_equals: lines: {lines}")
         assert path.variables["c"] == 5
         assert len(lines) == 9
+
+    def test_function_access_tracking(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*]
+                            [
+                                tally(#lastname) no()
+                                @hmmm = @lastname.Bat
+                                @ohhh = @hmmm.fish
+                            ]
+                   """
+        )
+        path.collect()
+        print(f"test_function_tally: path vars: {path.variables}")
+        assert path.variables["lastname"]["Bat"] == 7
+        assert path.variables["hmmm"] == 7
+        assert path.variables["ohhh"] is None
