@@ -112,7 +112,8 @@ class Equality(Matchable):
                     if not oc:
                         b = True
                 else:
-                    self.matcher.set_variable(self.left.name, value=v)
+                    t = self.left.first_non_term_qualifier(None)
+                    self.matcher.set_variable(self.left.name, value=v, tracking=t)
                     if not oc:
                         b = True
             elif self.op == "->":

@@ -1211,11 +1211,12 @@ class TestFunctions(unittest.TestCase):
                                 tally(#lastname) no()
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
+                                last() -> @lastname.Bat = "fred"
                             ]
                    """
         )
         path.collect()
         print(f"test_function_tally: path vars: {path.variables}")
-        assert path.variables["lastname"]["Bat"] == 7
+        assert path.variables["lastname"]["Bat"] == "fred"
         assert path.variables["hmmm"] == 7
         assert path.variables["ohhh"] is None
