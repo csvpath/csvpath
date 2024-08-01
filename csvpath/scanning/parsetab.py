@@ -5,131 +5,119 @@ _tabversion = "3.10"
 
 _lr_method = "LALR"
 
-_lr_signature = "pathALL_LINES ANY FILENAME LEFT_BRACKET MINUS NAME NUMBER PLUS RIGHT_BRACKET ROOTroot : ROOT filenamefilename : FILENAMEpath : root LEFT_BRACKET expression RIGHT_BRACKETexpression : expression PLUS term\n        | expression MINUS term\n        | termterm : NUMBER\n        | NUMBER ALL_LINES\n        | ALL_LINES"
+_lr_signature = "pathALL_LINES ANY FILENAME LEFT_BRACKET MINUS NAME NUMBER PLUS RIGHT_BRACKETpath : FILENAME LEFT_BRACKET expression RIGHT_BRACKETexpression : expression PLUS term\n                      | expression MINUS term\n                      | termterm : NUMBER\n        | NUMBER ALL_LINES\n        | ALL_LINES"
 
 _lr_action_items = {
-    "ROOT": (
+    "FILENAME": (
         [
             0,
         ],
         [
-            3,
+            2,
         ],
     ),
     "$end": (
         [
             1,
-            11,
+            8,
         ],
         [
             0,
-            -3,
+            -1,
         ],
     ),
     "LEFT_BRACKET": (
         [
             2,
-            5,
-            6,
         ],
-        [
-            4,
-            -1,
-            -2,
-        ],
-    ),
-    "FILENAME": (
         [
             3,
-        ],
-        [
-            6,
         ],
     ),
     "NUMBER": (
         [
-            4,
-            12,
-            13,
+            3,
+            9,
+            10,
         ],
         [
-            9,
-            9,
-            9,
+            6,
+            6,
+            6,
         ],
     ),
     "ALL_LINES": (
         [
-            4,
+            3,
+            6,
             9,
-            12,
-            13,
+            10,
         ],
         [
-            10,
-            14,
-            10,
-            10,
+            7,
+            11,
+            7,
+            7,
         ],
     ),
     "RIGHT_BRACKET": (
         [
+            4,
+            5,
+            6,
             7,
-            8,
-            9,
-            10,
-            14,
-            15,
-            16,
+            11,
+            12,
+            13,
         ],
         [
-            11,
-            -6,
-            -7,
-            -9,
-            -8,
+            8,
             -4,
             -5,
+            -7,
+            -6,
+            -2,
+            -3,
         ],
     ),
     "PLUS": (
         [
+            4,
+            5,
+            6,
             7,
-            8,
-            9,
-            10,
-            14,
-            15,
-            16,
+            11,
+            12,
+            13,
         ],
         [
-            12,
-            -6,
-            -7,
-            -9,
-            -8,
+            9,
             -4,
             -5,
+            -7,
+            -6,
+            -2,
+            -3,
         ],
     ),
     "MINUS": (
         [
+            4,
+            5,
+            6,
             7,
-            8,
-            9,
-            10,
-            14,
-            15,
-            16,
+            11,
+            12,
+            13,
         ],
         [
-            13,
-            -6,
-            -7,
-            -9,
-            -8,
+            10,
             -4,
             -5,
+            -7,
+            -6,
+            -2,
+            -3,
         ],
     ),
 }
@@ -151,40 +139,24 @@ _lr_goto_items = {
             1,
         ],
     ),
-    "root": (
-        [
-            0,
-        ],
-        [
-            2,
-        ],
-    ),
-    "filename": (
+    "expression": (
         [
             3,
         ],
         [
-            5,
-        ],
-    ),
-    "expression": (
-        [
             4,
-        ],
-        [
-            7,
         ],
     ),
     "term": (
         [
-            4,
-            12,
-            13,
+            3,
+            9,
+            10,
         ],
         [
-            8,
-            15,
-            16,
+            5,
+            12,
+            13,
         ],
     ),
 }
@@ -198,15 +170,13 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
     ("S' -> path", "S'", 1, None, None, None),
-    ("root -> ROOT filename", "root", 2, "p_root", "scanner.py", 64),
-    ("filename -> FILENAME", "filename", 1, "p_filename", "scanner.py", 67),
     (
-        "path -> root LEFT_BRACKET expression RIGHT_BRACKET",
+        "path -> FILENAME LEFT_BRACKET expression RIGHT_BRACKET",
         "path",
         4,
         "p_path",
         "scanner.py",
-        71,
+        95,
     ),
     (
         "expression -> expression PLUS term",
@@ -214,7 +184,7 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        77,
+        101,
     ),
     (
         "expression -> expression MINUS term",
@@ -222,10 +192,10 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        78,
+        102,
     ),
-    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 79),
-    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 90),
-    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 91),
-    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 92),
+    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 103),
+    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 114),
+    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 115),
+    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 116),
 ]

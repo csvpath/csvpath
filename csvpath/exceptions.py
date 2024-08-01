@@ -1,0 +1,2 @@
+class InputException(Exception):
+    pass

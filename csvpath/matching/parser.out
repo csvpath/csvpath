@@ -60,6 +60,7 @@ Rule 49    var_or_header -> var
 Rule 50    var -> VAR_SYM SIMPLE_NAME
 Rule 51    header -> HEADER_SYM SIMPLE_NAME
 Rule 52    header -> HEADER_SYM NUMBER
+Rule 53    header -> HEADER_SYM QUOTED
 
 Terminals, with rules where they appear
 
@@ -70,7 +71,7 @@ DATE                 : 44
 DO                   : 17 18 19 20 21 22
 EQUALS               : 32
 GT                   : 34
-HEADER_SYM           : 51 52
+HEADER_SYM           : 51 52 53
 LEFT_BRACKET         : 1 2
 LT                   : 33
 MINUS                : 37
@@ -80,7 +81,7 @@ NUMBER               : 45 46 52
 OPEN_PAREN           : 7 8 9 10 11
 PLUS                 : 36
 QUOTE                : 44 44 45 45
-QUOTED               : 43
+QUOTED               : 43 53
 REGEX                : 47
 RIGHT_BRACKET        : 1 2
 SIMPLE_NAME          : 7 8 9 10 11 50 51
@@ -168,6 +169,7 @@ state 2
     (47) term -> . REGEX
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 7
     VAR_SYM         shift and go to state 14
@@ -251,6 +253,7 @@ state 4
     (47) term -> . REGEX
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     RIGHT_BRACKET   shift and go to state 21
     SIMPLE_NAME     shift and go to state 7
@@ -586,9 +589,11 @@ state 19
 
     (51) header -> HEADER_SYM . SIMPLE_NAME
     (52) header -> HEADER_SYM . NUMBER
+    (53) header -> HEADER_SYM . QUOTED
 
     SIMPLE_NAME     shift and go to state 42
     NUMBER          shift and go to state 43
+    QUOTED          shift and go to state 44
 
 
 state 20
@@ -638,6 +643,7 @@ state 23
     (49) var_or_header -> . var
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
     (50) var -> . VAR_SYM SIMPLE_NAME
 
     QUOTED          shift and go to state 15
@@ -648,11 +654,11 @@ state 23
     HEADER_SYM      shift and go to state 19
     VAR_SYM         shift and go to state 14
 
-    function                       shift and go to state 44
-    term                           shift and go to state 45
-    var_or_header                  shift and go to state 46
+    function                       shift and go to state 45
+    term                           shift and go to state 46
+    var_or_header                  shift and go to state 47
     header                         shift and go to state 13
-    var                            shift and go to state 47
+    var                            shift and go to state 48
 
 state 24
 
@@ -697,6 +703,7 @@ state 24
     (47) term -> . REGEX
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 7
     VAR_SYM         shift and go to state 14
@@ -706,8 +713,8 @@ state 24
     REGEX           shift and go to state 18
     HEADER_SYM      shift and go to state 19
 
-    function                       shift and go to state 48
-    assignment_or_equality         shift and go to state 49
+    function                       shift and go to state 49
+    assignment_or_equality         shift and go to state 50
     equality                       shift and go to state 8
     assignment                     shift and go to state 11
     term                           shift and go to state 9
@@ -846,8 +853,9 @@ state 32
     (50) var -> . VAR_SYM SIMPLE_NAME
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
-    CLOSE_PAREN     shift and go to state 50
+    CLOSE_PAREN     shift and go to state 51
     SIMPLE_NAME     shift and go to state 7
     QUOTED          shift and go to state 15
     QUOTE           shift and go to state 16
@@ -856,11 +864,11 @@ state 32
     VAR_SYM         shift and go to state 14
     HEADER_SYM      shift and go to state 19
 
-    equality                       shift and go to state 51
-    function                       shift and go to state 52
-    term                           shift and go to state 53
-    var_or_header                  shift and go to state 54
-    var                            shift and go to state 55
+    equality                       shift and go to state 52
+    function                       shift and go to state 53
+    term                           shift and go to state 54
+    var_or_header                  shift and go to state 55
+    var                            shift and go to state 56
     header                         shift and go to state 13
 
 state 33
@@ -906,6 +914,7 @@ state 33
     (47) term -> . REGEX
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 7
     VAR_SYM         shift and go to state 14
@@ -916,8 +925,8 @@ state 33
     HEADER_SYM      shift and go to state 19
 
     equality                       shift and go to state 8
-    assignment_or_equality         shift and go to state 56
-    function                       shift and go to state 57
+    assignment_or_equality         shift and go to state 57
+    function                       shift and go to state 58
     assignment                     shift and go to state 11
     term                           shift and go to state 9
     var_or_header                  shift and go to state 10
@@ -962,6 +971,7 @@ state 34
     (49) var_or_header -> . var
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     QUOTED          shift and go to state 15
     QUOTE           shift and go to state 16
@@ -971,11 +981,11 @@ state 34
     VAR_SYM         shift and go to state 14
     HEADER_SYM      shift and go to state 19
 
-    equality                       shift and go to state 58
-    term                           shift and go to state 59
-    function                       shift and go to state 60
+    equality                       shift and go to state 59
+    term                           shift and go to state 60
+    function                       shift and go to state 61
     var_or_header                  shift and go to state 10
-    var                            shift and go to state 55
+    var                            shift and go to state 56
     header                         shift and go to state 13
 
 state 35
@@ -997,6 +1007,7 @@ state 35
     (11) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
     (50) var -> . VAR_SYM SIMPLE_NAME
 
     QUOTED          shift and go to state 15
@@ -1007,11 +1018,11 @@ state 35
     HEADER_SYM      shift and go to state 19
     VAR_SYM         shift and go to state 14
 
-    term                           shift and go to state 61
-    var_or_header                  shift and go to state 62
-    function                       shift and go to state 63
+    term                           shift and go to state 62
+    var_or_header                  shift and go to state 63
+    function                       shift and go to state 64
     header                         shift and go to state 13
-    var                            shift and go to state 47
+    var                            shift and go to state 48
 
 state 36
 
@@ -1032,6 +1043,7 @@ state 36
     (49) var_or_header -> . var
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
     (50) var -> . VAR_SYM SIMPLE_NAME
 
     SIMPLE_NAME     shift and go to state 7
@@ -1042,11 +1054,11 @@ state 36
     HEADER_SYM      shift and go to state 19
     VAR_SYM         shift and go to state 14
 
-    var_or_header                  shift and go to state 64
-    function                       shift and go to state 65
-    term                           shift and go to state 66
+    var_or_header                  shift and go to state 65
+    function                       shift and go to state 66
+    term                           shift and go to state 67
     header                         shift and go to state 13
-    var                            shift and go to state 47
+    var                            shift and go to state 48
 
 state 37
 
@@ -1091,6 +1103,7 @@ state 37
     (47) term -> . REGEX
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 7
     VAR_SYM         shift and go to state 14
@@ -1101,8 +1114,8 @@ state 37
     HEADER_SYM      shift and go to state 19
 
     var                            shift and go to state 12
-    assignment_or_equality         shift and go to state 67
-    function                       shift and go to state 68
+    assignment_or_equality         shift and go to state 68
+    function                       shift and go to state 69
     equality                       shift and go to state 8
     assignment                     shift and go to state 11
     term                           shift and go to state 9
@@ -1128,6 +1141,7 @@ state 38
     (11) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
     (51) header -> . HEADER_SYM SIMPLE_NAME
     (52) header -> . HEADER_SYM NUMBER
+    (53) header -> . HEADER_SYM QUOTED
 
     VAR_SYM         shift and go to state 14
     QUOTED          shift and go to state 15
@@ -1137,10 +1151,10 @@ state 38
     SIMPLE_NAME     shift and go to state 7
     HEADER_SYM      shift and go to state 19
 
-    var                            shift and go to state 69
-    term                           shift and go to state 70
-    function                       shift and go to state 71
-    header                         shift and go to state 72
+    var                            shift and go to state 70
+    term                           shift and go to state 71
+    function                       shift and go to state 72
+    header                         shift and go to state 73
 
 state 39
 
@@ -1170,14 +1184,14 @@ state 40
 
     (44) term -> QUOTE DATE . QUOTE
 
-    QUOTE           shift and go to state 73
+    QUOTE           shift and go to state 74
 
 
 state 41
 
     (45) term -> QUOTE NUMBER . QUOTE
 
-    QUOTE           shift and go to state 74
+    QUOTE           shift and go to state 75
 
 
 state 42
@@ -1228,6 +1242,29 @@ state 43
 
 state 44
 
+    (53) header -> HEADER_SYM QUOTED .
+
+    EQUALS          reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    LT              reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    GT              reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    STAR            reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    PLUS            reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    MINUS           reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    COMMA           reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    DO              reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    RIGHT_BRACKET   reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    SIMPLE_NAME     reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    VAR_SYM         reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    QUOTED          reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    QUOTE           reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    NUMBER          reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    REGEX           reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    HEADER_SYM      reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+    CLOSE_PAREN     reduce using rule 53 (header -> HEADER_SYM QUOTED .)
+
+
+state 45
+
     (15) equality -> function op function .
 
     DO              reduce using rule 15 (equality -> function op function .)
@@ -1249,7 +1286,7 @@ state 44
     CLOSE_PAREN     reduce using rule 15 (equality -> function op function .)
 
 
-state 45
+state 46
 
     (14) equality -> function op term .
 
@@ -1272,7 +1309,7 @@ state 45
     CLOSE_PAREN     reduce using rule 14 (equality -> function op term .)
 
 
-state 46
+state 47
 
     (16) equality -> function op var_or_header .
 
@@ -1295,7 +1332,7 @@ state 46
     CLOSE_PAREN     reduce using rule 16 (equality -> function op var_or_header .)
 
 
-state 47
+state 48
 
     (49) var_or_header -> var .
 
@@ -1318,7 +1355,7 @@ state 47
     CLOSE_PAREN     reduce using rule 49 (var_or_header -> var .)
 
 
-state 48
+state 49
 
     (20) equality -> function DO function .
     (14) equality -> function . op term
@@ -1371,7 +1408,7 @@ state 48
 
     op                             shift and go to state 23
 
-state 49
+state 50
 
     (17) equality -> function DO assignment_or_equality .
 
@@ -1394,7 +1431,7 @@ state 49
     CLOSE_PAREN     reduce using rule 17 (equality -> function DO assignment_or_equality .)
 
 
-state 50
+state 51
 
     (7) function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .
 
@@ -1417,7 +1454,7 @@ state 50
     CLOSE_PAREN     reduce using rule 7 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
 
 
-state 51
+state 52
 
     (8) function -> SIMPLE_NAME OPEN_PAREN equality . CLOSE_PAREN
     (21) equality -> equality . DO assignment_or_equality
@@ -1433,7 +1470,7 @@ state 51
     (37) op -> . MINUS
     (38) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 75
+    CLOSE_PAREN     shift and go to state 76
     DO              shift and go to state 33
     EQUALS          shift and go to state 25
     LT              shift and go to state 26
@@ -1445,7 +1482,7 @@ state 51
 
     op                             shift and go to state 34
 
-state 52
+state 53
 
     (9) function -> SIMPLE_NAME OPEN_PAREN function . CLOSE_PAREN
     (14) equality -> function . op term
@@ -1461,7 +1498,7 @@ state 52
     (37) op -> . MINUS
     (38) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 76
+    CLOSE_PAREN     shift and go to state 77
     DO              shift and go to state 24
     EQUALS          shift and go to state 25
     LT              shift and go to state 26
@@ -1473,37 +1510,12 @@ state 52
 
     op                             shift and go to state 23
 
-state 53
+state 54
 
     (10) function -> SIMPLE_NAME OPEN_PAREN term . CLOSE_PAREN
     (26) equality -> term . op var_or_header
     (27) equality -> term . op term
     (28) equality -> term . op function
-    (32) op -> . EQUALS
-    (33) op -> . LT
-    (34) op -> . GT
-    (35) op -> . STAR
-    (36) op -> . PLUS
-    (37) op -> . MINUS
-    (38) op -> . COMMA
-
-    CLOSE_PAREN     shift and go to state 77
-    EQUALS          shift and go to state 25
-    LT              shift and go to state 26
-    GT              shift and go to state 27
-    STAR            shift and go to state 28
-    PLUS            shift and go to state 29
-    MINUS           shift and go to state 30
-    COMMA           shift and go to state 31
-
-    op                             shift and go to state 35
-
-state 54
-
-    (11) function -> SIMPLE_NAME OPEN_PAREN var_or_header . CLOSE_PAREN
-    (23) equality -> var_or_header . op function
-    (24) equality -> var_or_header . op term
-    (25) equality -> var_or_header . op var_or_header
     (32) op -> . EQUALS
     (33) op -> . LT
     (34) op -> . GT
@@ -1521,9 +1533,34 @@ state 54
     MINUS           shift and go to state 30
     COMMA           shift and go to state 31
 
-    op                             shift and go to state 36
+    op                             shift and go to state 35
 
 state 55
+
+    (11) function -> SIMPLE_NAME OPEN_PAREN var_or_header . CLOSE_PAREN
+    (23) equality -> var_or_header . op function
+    (24) equality -> var_or_header . op term
+    (25) equality -> var_or_header . op var_or_header
+    (32) op -> . EQUALS
+    (33) op -> . LT
+    (34) op -> . GT
+    (35) op -> . STAR
+    (36) op -> . PLUS
+    (37) op -> . MINUS
+    (38) op -> . COMMA
+
+    CLOSE_PAREN     shift and go to state 79
+    EQUALS          shift and go to state 25
+    LT              shift and go to state 26
+    GT              shift and go to state 27
+    STAR            shift and go to state 28
+    PLUS            shift and go to state 29
+    MINUS           shift and go to state 30
+    COMMA           shift and go to state 31
+
+    op                             shift and go to state 36
+
+state 56
 
     (18) equality -> var . DO assignment_or_equality
     (19) equality -> var . DO function
@@ -1540,7 +1577,7 @@ state 55
     COMMA           reduce using rule 49 (var_or_header -> var .)
 
 
-state 56
+state 57
 
     (21) equality -> equality DO assignment_or_equality .
 
@@ -1563,7 +1600,7 @@ state 56
     CLOSE_PAREN     reduce using rule 21 (equality -> equality DO assignment_or_equality .)
 
 
-state 57
+state 58
 
     (22) equality -> equality DO function .
     (14) equality -> function . op term
@@ -1616,7 +1653,7 @@ state 57
 
     op                             shift and go to state 23
 
-state 58
+state 59
 
     (29) equality -> equality op equality .
     (21) equality -> equality . DO assignment_or_equality
@@ -1669,7 +1706,7 @@ state 58
 
     op                             shift and go to state 34
 
-state 59
+state 60
 
     (30) equality -> equality op term .
     (26) equality -> term . op var_or_header
@@ -1718,7 +1755,7 @@ state 59
 
     op                             shift and go to state 35
 
-state 60
+state 61
 
     (31) equality -> equality op function .
     (14) equality -> function . op term
@@ -1771,7 +1808,7 @@ state 60
 
     op                             shift and go to state 23
 
-state 61
+state 62
 
     (27) equality -> term op term .
 
@@ -1794,7 +1831,7 @@ state 61
     CLOSE_PAREN     reduce using rule 27 (equality -> term op term .)
 
 
-state 62
+state 63
 
     (26) equality -> term op var_or_header .
 
@@ -1817,7 +1854,7 @@ state 62
     CLOSE_PAREN     reduce using rule 26 (equality -> term op var_or_header .)
 
 
-state 63
+state 64
 
     (28) equality -> term op function .
 
@@ -1840,7 +1877,7 @@ state 63
     CLOSE_PAREN     reduce using rule 28 (equality -> term op function .)
 
 
-state 64
+state 65
 
     (25) equality -> var_or_header op var_or_header .
 
@@ -1863,7 +1900,7 @@ state 64
     CLOSE_PAREN     reduce using rule 25 (equality -> var_or_header op var_or_header .)
 
 
-state 65
+state 66
 
     (23) equality -> var_or_header op function .
 
@@ -1886,7 +1923,7 @@ state 65
     CLOSE_PAREN     reduce using rule 23 (equality -> var_or_header op function .)
 
 
-state 66
+state 67
 
     (24) equality -> var_or_header op term .
 
@@ -1909,7 +1946,7 @@ state 66
     CLOSE_PAREN     reduce using rule 24 (equality -> var_or_header op term .)
 
 
-state 67
+state 68
 
     (18) equality -> var DO assignment_or_equality .
 
@@ -1932,7 +1969,7 @@ state 67
     CLOSE_PAREN     reduce using rule 18 (equality -> var DO assignment_or_equality .)
 
 
-state 68
+state 69
 
     (19) equality -> var DO function .
     (14) equality -> function . op term
@@ -1985,7 +2022,7 @@ state 68
 
     op                             shift and go to state 23
 
-state 69
+state 70
 
     (39) assignment -> var ASSIGNMENT var .
 
@@ -2008,7 +2045,7 @@ state 69
     CLOSE_PAREN     reduce using rule 39 (assignment -> var ASSIGNMENT var .)
 
 
-state 70
+state 71
 
     (40) assignment -> var ASSIGNMENT term .
 
@@ -2031,7 +2068,7 @@ state 70
     CLOSE_PAREN     reduce using rule 40 (assignment -> var ASSIGNMENT term .)
 
 
-state 71
+state 72
 
     (41) assignment -> var ASSIGNMENT function .
 
@@ -2054,7 +2091,7 @@ state 71
     CLOSE_PAREN     reduce using rule 41 (assignment -> var ASSIGNMENT function .)
 
 
-state 72
+state 73
 
     (42) assignment -> var ASSIGNMENT header .
 
@@ -2077,7 +2114,7 @@ state 72
     CLOSE_PAREN     reduce using rule 42 (assignment -> var ASSIGNMENT header .)
 
 
-state 73
+state 74
 
     (44) term -> QUOTE DATE QUOTE .
 
@@ -2100,7 +2137,7 @@ state 73
     CLOSE_PAREN     reduce using rule 44 (term -> QUOTE DATE QUOTE .)
 
 
-state 74
+state 75
 
     (45) term -> QUOTE NUMBER QUOTE .
 
@@ -2123,7 +2160,7 @@ state 74
     CLOSE_PAREN     reduce using rule 45 (term -> QUOTE NUMBER QUOTE .)
 
 
-state 75
+state 76
 
     (8) function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .
 
@@ -2146,7 +2183,7 @@ state 75
     CLOSE_PAREN     reduce using rule 8 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
 
 
-state 76
+state 77
 
     (9) function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .
 
@@ -2169,7 +2206,7 @@ state 76
     CLOSE_PAREN     reduce using rule 9 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
 
 
-state 77
+state 78
 
     (10) function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .
 
@@ -2192,7 +2229,7 @@ state 77
     CLOSE_PAREN     reduce using rule 10 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
 
 
-state 78
+state 79
 
     (11) function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .
 
@@ -2226,22 +2263,14 @@ WARNING: shift/reduce conflict for STAR in state 8 resolved as shift
 WARNING: shift/reduce conflict for PLUS in state 8 resolved as shift
 WARNING: shift/reduce conflict for MINUS in state 8 resolved as shift
 WARNING: shift/reduce conflict for COMMA in state 8 resolved as shift
-WARNING: shift/reduce conflict for DO in state 48 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 48 resolved as shift
-WARNING: shift/reduce conflict for LT in state 48 resolved as shift
-WARNING: shift/reduce conflict for GT in state 48 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 48 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 48 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 48 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 48 resolved as shift
-WARNING: shift/reduce conflict for DO in state 57 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 57 resolved as shift
-WARNING: shift/reduce conflict for LT in state 57 resolved as shift
-WARNING: shift/reduce conflict for GT in state 57 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 57 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 57 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 57 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 57 resolved as shift
+WARNING: shift/reduce conflict for DO in state 49 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 49 resolved as shift
+WARNING: shift/reduce conflict for LT in state 49 resolved as shift
+WARNING: shift/reduce conflict for GT in state 49 resolved as shift
+WARNING: shift/reduce conflict for STAR in state 49 resolved as shift
+WARNING: shift/reduce conflict for PLUS in state 49 resolved as shift
+WARNING: shift/reduce conflict for MINUS in state 49 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 49 resolved as shift
 WARNING: shift/reduce conflict for DO in state 58 resolved as shift
 WARNING: shift/reduce conflict for EQUALS in state 58 resolved as shift
 WARNING: shift/reduce conflict for LT in state 58 resolved as shift
@@ -2250,6 +2279,7 @@ WARNING: shift/reduce conflict for STAR in state 58 resolved as shift
 WARNING: shift/reduce conflict for PLUS in state 58 resolved as shift
 WARNING: shift/reduce conflict for MINUS in state 58 resolved as shift
 WARNING: shift/reduce conflict for COMMA in state 58 resolved as shift
+WARNING: shift/reduce conflict for DO in state 59 resolved as shift
 WARNING: shift/reduce conflict for EQUALS in state 59 resolved as shift
 WARNING: shift/reduce conflict for LT in state 59 resolved as shift
 WARNING: shift/reduce conflict for GT in state 59 resolved as shift
@@ -2257,7 +2287,6 @@ WARNING: shift/reduce conflict for STAR in state 59 resolved as shift
 WARNING: shift/reduce conflict for PLUS in state 59 resolved as shift
 WARNING: shift/reduce conflict for MINUS in state 59 resolved as shift
 WARNING: shift/reduce conflict for COMMA in state 59 resolved as shift
-WARNING: shift/reduce conflict for DO in state 60 resolved as shift
 WARNING: shift/reduce conflict for EQUALS in state 60 resolved as shift
 WARNING: shift/reduce conflict for LT in state 60 resolved as shift
 WARNING: shift/reduce conflict for GT in state 60 resolved as shift
@@ -2265,11 +2294,19 @@ WARNING: shift/reduce conflict for STAR in state 60 resolved as shift
 WARNING: shift/reduce conflict for PLUS in state 60 resolved as shift
 WARNING: shift/reduce conflict for MINUS in state 60 resolved as shift
 WARNING: shift/reduce conflict for COMMA in state 60 resolved as shift
-WARNING: shift/reduce conflict for DO in state 68 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 68 resolved as shift
-WARNING: shift/reduce conflict for LT in state 68 resolved as shift
-WARNING: shift/reduce conflict for GT in state 68 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 68 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 68 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 68 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 68 resolved as shift
+WARNING: shift/reduce conflict for DO in state 61 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 61 resolved as shift
+WARNING: shift/reduce conflict for LT in state 61 resolved as shift
+WARNING: shift/reduce conflict for GT in state 61 resolved as shift
+WARNING: shift/reduce conflict for STAR in state 61 resolved as shift
+WARNING: shift/reduce conflict for PLUS in state 61 resolved as shift
+WARNING: shift/reduce conflict for MINUS in state 61 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 61 resolved as shift
+WARNING: shift/reduce conflict for DO in state 69 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 69 resolved as shift
+WARNING: shift/reduce conflict for LT in state 69 resolved as shift
+WARNING: shift/reduce conflict for GT in state 69 resolved as shift
+WARNING: shift/reduce conflict for STAR in state 69 resolved as shift
+WARNING: shift/reduce conflict for PLUS in state 69 resolved as shift
+WARNING: shift/reduce conflict for MINUS in state 69 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 69 resolved as shift

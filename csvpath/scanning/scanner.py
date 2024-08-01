@@ -2,6 +2,7 @@ import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from csvpath.parser_utility import ParserUtility
 from typing import List
+from ..exceptions import InputException
 
 
 class UnexpectedException(Exception):
@@ -87,17 +88,15 @@ class Scanner(object):
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-
-    # we'll want to use $name={ name: path} but for now we're treating filename as a file path
-    def p_root(self, p):
-        "root : ROOT filename"
-
-    def p_filename(self, p):
-        "filename : FILENAME"
-        self.filename = p[1]
+        raise InputException("halting for error")
 
     def p_path(self, p):
-        "path : root LEFT_BRACKET expression RIGHT_BRACKET"
+        "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"
+        filename = p[1].strip()
+        print(f"Scanner.p_path: filename: {filename}")
+        if filename[0] != "$":
+            raise InputException("Filename must begin with '$'")
+        self.filename = filename[1:]
         p[0] = p[3]
 
     # ===================

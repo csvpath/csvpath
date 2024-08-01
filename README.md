@@ -25,12 +25,21 @@ This path says open the file named `filename`, scan all the lines, and match eve
 
 The filename following the `$` can be an actual relative or absolute file path. It could alternatively be a logical identifier that points indirectly to a physical file, as described below.
 
+Filenames must match this regular expression `[A-Z,a-z,0-9\._/\-\\#&]+`. I.e. they have:
+- alphanums
+- forward and backward slashes
+- dots
+- hash marks
+- dashes
+- underscores, and
+- ampersands.
+
 ## Running CsvPath
 
 There are two classes that do all the work: CsvPath and CsvPaths. Each has very few external methods.
 - CsvPath
-  - parse() applies a csvpath to a file
-  - next() iterates over the matched rows
+  - parse(pathstring) applies a csvpath
+  - next() iterates over the matched rows returning each matched row as a list
   - fast_forward(int) processes n rows
   - collect(int) processes n rows and collects the lines that matched as lists
 - CsvPaths
@@ -41,7 +50,7 @@ There are two classes that do all the work: CsvPath and CsvPaths. Each has very 
     - a single .csv file or
     - a directory of .csv files
 
-This is a very basic use of CsvPath. For more usage, see the unit tests.
+This is a very basic use of CsvPath. For more examples, see the unit tests.
 
     path = CsvPath()
     path.parse("""$test.csv[5-25]
@@ -202,9 +211,10 @@ use
         <td>Header   </td>
         <td>Value     </td>
         <td>Calculated</td>
-        <td>A # followed by a name or integer. The name references a column within the row being matched. Names of headers are whatever is found in line 0, the header row. A numbered header references a column by its 0-based column index.   </td>
+        <td>A # followed by a name or integer. The name references a column within the row being matched. Names of headers are whatever is found in line 0, the header row. A numbered header references a column by its 0-based column index. If a header contains a space char it must be quoted. </td>
         <td>
             <li/> `#firstname`
+            <li/> `#"My firstname"`
             <li/> `#3`
         </td>
     </tr>

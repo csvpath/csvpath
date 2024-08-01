@@ -8,7 +8,7 @@ class ScanningLexer(object):
         "MINUS",
         "LEFT_BRACKET",
         "RIGHT_BRACKET",
-        "ROOT",
+        #   "ROOT",
         "ANY",
         "NAME",
         "FILENAME",
@@ -16,19 +16,23 @@ class ScanningLexer(object):
     ]
 
     t_ignore = " \t\n\r"
-    t_ROOT = r"\$"
+    # t_ROOT = r"\$"
     t_PLUS = r"\+"
     t_MINUS = r"-"
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"
     t_ANY = r"\*"  # not yet used
     t_NAME = r"[A-Z,a-z,0-9\._]+"
-    t_FILENAME = r"[A-Z,a-z,0-9\._/]+"
+    #    t_FILENAME = r"[A-Z,a-z,0-9\._/\-#&]+"
     t_ALL_LINES = r"\*"
 
     def t_NUMBER(self, t):
         r"\d+"
         t.value = int(t.value)
+        return t
+
+    def t_FILENAME(self, t):
+        r"\$[A-Z,a-z,0-9\._/\-\\#&]+"
         return t
 
     def t_error(self, t):

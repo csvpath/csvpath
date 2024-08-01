@@ -9,6 +9,7 @@ from csvpath.csvpath import CsvPath
 HEADERS = ["abc", "aheader", "crows", "d"]
 LINE = ["fish", 10, "alert", "fum"]
 PATH = "tests/test_resources/test.csv"
+PATH3 = "tests/test_resources/test-3.csv"
 
 
 class TestMatcher(unittest.TestCase):
@@ -219,3 +220,28 @@ class TestMatcher(unittest.TestCase):
         # test lines returned
         lines = path.collect()
         assert len(lines) == 1
+
+    def test_quoted_headers(self):
+        path = CsvPath()
+        scanner = path.parse(
+            f"""
+            ${PATH3}[2-4][#0=="Frog" #"My lastname"=="Bats" count()==3]
+        """
+        )
+        # test properties
+        print(f"{scanner}")
+        assert scanner.from_line == 2
+        assert scanner.to_line == 4
+        assert not scanner.all_lines
+        assert len(scanner.these) == 0
+        # test line numbers included
+        lns = []
+        print(f"check from line: {scanner.from_line}")
+        for ln in path.line_numbers():
+            lns.append(ln)
+        assert len(lns) == 3
+        assert 2 in lns and 3 in lns and 4 in lns
+        # test lines returned
+        i = 0
+        for i, ln in enumerate(path.next()):
+            raise Exception("We should not get here!")

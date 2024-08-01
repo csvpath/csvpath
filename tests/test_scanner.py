@@ -2,9 +2,28 @@ import unittest
 from csvpath.csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
+PATH2 = "tests/test_resources/test-2-with_-and&#.csv"
 
 
 class TestScanner(unittest.TestCase):
+    def test_scan_special_char_filename(self):
+        path = CsvPath()
+        scanner = path.parse(f"${PATH2}[*]")
+        print(f"{scanner}")
+        # test properties
+        assert scanner.from_line is None
+        assert scanner.to_line is None
+        assert scanner.all_lines
+        assert len(scanner.these) == 0
+        # test line numbers included
+        for i in range(0, 8):
+            assert scanner.includes(i)
+        # test lines returned
+        for i, ln in enumerate(path.next()):
+            pass
+        assert i == 8
+        print("special char filename worked")
+
     def test_scan_all(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[*]")

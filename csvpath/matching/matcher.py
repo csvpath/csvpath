@@ -4,11 +4,8 @@ from csvpath.parser_utility import ParserUtility
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from .productions import *
 from .functions.function_factory import FunctionFactory
+from ..exceptions import InputException
 from typing import Any
-
-
-class InputException(Exception):
-    pass
 
 
 class Matcher:
@@ -245,6 +242,7 @@ class Matcher:
     def p_header(self, p):
         """header : HEADER_SYM SIMPLE_NAME
         | HEADER_SYM NUMBER
+        | HEADER_SYM QUOTED
         """
         h = Header(self, name=p[2])
         p[0] = h
