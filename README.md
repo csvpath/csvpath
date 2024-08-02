@@ -165,13 +165,9 @@ only has regex functionality when used in the regex() function.</td>
         <td>Function </td>
         <td> Calculated   </td>
         <td> Calculated </td>
-        <td>A function name followed by parentheses. Functions can
-contain terms, variables, headers and other  functions. Some functions
-take a specific or  unlimited number of types as arguments.
-Certain functions can take qualifiers. An `onmatch` qualifier indicates that
-the function should be applied only when the whole path matches.
-Some functions optionally take an arbitrary name qualifier to better name a tracking variable.
-Qualifiers are described below.  </td>
+        <td>
+            <a href='docs/functions.md'>Read more about functions here</a>.
+        </td>
         <td>
             <li/> `not(count()==2)`
             <li/> `add( 5, 3, 1 )`
