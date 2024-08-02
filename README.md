@@ -27,7 +27,7 @@ Learn <a href='docs/files.md'>more about filenames</a>.
 
 ## Running CsvPath
 
-There are two classes that do all the work: CsvPath and CsvPaths. Each has very few external methods.
+Two classes do all the work: CsvPath and CsvPaths. Each has only a few external methods.
 - CsvPath
   - parse(pathstring) applies a csvpath
   - next() iterates over the matched rows returning each matched row as a list
