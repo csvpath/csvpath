@@ -129,9 +129,9 @@ The match part is also bracketed. Matches have space separated components or "va
         regex. Regex features are limited. A regex is wrapped  in `/` characters and
 only has regex functionality when used in the regex() function.</td>
         <td>
-            <li/> `"Massachusetts"`
-            <li/> `89.7`
-            <li/> `/[0-9a-zA-Z]+!/`
+            <li/> "Massachusetts"
+            <li/> 89.7
+            <li/> /[0-9a-zA-Z]+!/
         </td>
     </tr>
     <tr>
@@ -142,9 +142,9 @@ only has regex functionality when used in the regex() function.</td>
             <a href='docs/functions.md'>Read more about functions here</a>.
         </td>
         <td>
-            <li/> `not(count()==2)`
-            <li/> `add( 5, 3, 1 )`
-            <li/> `concat( end(), regex(#0, /[0-5]+abc/))`
+            <li/> not(count()==2)
+            <li/> add( 5, 3, 1 )
+            <li/> concat( end(), regex(#0, /[0-5]+abc/))
         </td>
     </tr>
     <tr>
@@ -155,10 +155,10 @@ only has regex functionality when used in the regex() function.</td>
             <a href='docs/variables.md'>Read more about variables here</a>.
         </p>
         <td>
-            <li/> `@weather="cloudy"`
-            <li/> `count(@weather=="sunny")`
-            <li/> `#summer==@weather`
-            <li/> `@happy.onchange=#weather`
+            <li/> @weather="cloudy"
+            <li/> count(@weather=="sunny")
+            <li/> #summer==@weather
+            <li/> @happy.onchange=#weather
         </td>
     </tr>
     <tr>
@@ -167,9 +167,9 @@ only has regex functionality when used in the regex() function.</td>
         <td>Calculated</td>
         <td>A # followed by a name or integer. The name references a column within the row being matched. Names of headers are whatever is found in line 0, the header row. A numbered header references a column by its 0-based column index. If a header contains a space char it must be quoted. </td>
         <td>
-            <li/> `#firstname`
-            <li/> `#"My firstname"`
-            <li/> `#3`
+            <li/> #firstname
+            <li/> #"My firstname"
+            <li/> #3
         </td>
     </tr>
     <tr>
@@ -217,7 +217,6 @@ Prints `this is the last line` just before the scan ends.
     [ exists(#0) -> @firstname = #0 ]
 
 Says to set the `firstname` variable to the value of the first column when the first column has a value.
-
 
 ## Another Example
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
