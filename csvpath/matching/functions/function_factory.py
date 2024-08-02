@@ -90,9 +90,9 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
-        elif name == "below":
+        elif name == "below" or name == "lt":
             f = Below(matcher, name, child)
-        elif name == "above":
+        elif name == "above" or name == "gt":
             f = Above(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)
@@ -122,7 +122,7 @@ class FunctionFactory:
             f = Length(matcher, name, child)
         elif name == "add":
             f = Add(matcher, name, child)
-        elif name == "subtract":
+        elif name == "subtract" or name == "minus":
             f = Subtract(matcher, name, child)
         elif name == "multiply":
             f = Multiply(matcher, name, child)

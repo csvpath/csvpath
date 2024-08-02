@@ -916,6 +916,7 @@ class TestFunctions(unittest.TestCase):
                 @i = column("firstname")
                 @j = column("lastname")
                 @n = column(2)
+                @m = column(minus(1))
             ]"""
         )
         lines = path.collect()
@@ -924,6 +925,7 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["j"] == 1
         assert path.variables["i"] == 0
         assert path.variables["n"] == "say"
+        assert path.variables["m"] == "lastname"
 
     def test_function_substring(self):
         path = CsvPath()

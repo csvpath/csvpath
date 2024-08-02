@@ -14,7 +14,14 @@ class Column(Function):
         if not self.value:
             v = self.children[0].to_value()
             if isinstance(v, int) or v.isdigit():
-                self.value = self.matcher.header_name(int(v))
+                i = int(v)
+                if i < 0:
+                    hlen = len(self.matcher.headers)
+                    c = hlen + i
+                    if i < 0:
+                        c = c - 1
+                    i = c
+                self.value = self.matcher.header_name(i)
             else:
                 self.value = self.matcher.header_index(v)
         return self.value
