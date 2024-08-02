@@ -37,6 +37,9 @@ class Matcher:
             lexer: {self.lexer}
         """
 
+    def to_json(self, e) -> str:
+        return ExpressionEncoder().to_json(e)
+
     def reset(self):
         for expression in self.expressions:
             expression[1] = None

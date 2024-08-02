@@ -185,6 +185,20 @@ class TestFunctions(unittest.TestCase):
         print(f"test_function_tally: path vars: {path.variables}")
         assert path.variables["tally"]["Frog|Bat"] == 2
 
+    def test_function_tally3(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                            or( #firstname == "Frog", #firstname == "Ants" )
+                            tally.sothere.onmatch(#firstname, #lastname)
+                        ]
+                    """
+        )
+        path.collect()
+        print(f"test_function_tally3: path vars: {path.variables}")
+        assert path.variables["sothere"]["Frog|Bat"] == 2
+        assert len(path.variables["firstname"]) == 2
+
     def test_function_first1(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][first.surnames(#lastname)]")
@@ -1216,7 +1230,7 @@ class TestFunctions(unittest.TestCase):
                    """
         )
         path.collect()
-        print(f"test_function_tally: path vars: {path.variables}")
+        print(f"test_function_access_tracking: path vars: {path.variables}")
         assert path.variables["lastname"]["Bat"] == "fred"
         assert path.variables["hmmm"] == 7
         assert path.variables["ohhh"] is None

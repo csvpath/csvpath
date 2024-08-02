@@ -1,5 +1,7 @@
 from typing import Any, Self, Optional
 from csvpath.matching.expression_utility import ExpressionUtility
+
+# from ..expression_encoder import ExpressionEncoder
 from enum import Enum
 
 
@@ -97,15 +99,14 @@ class Matchable:
 
     @onchange.setter
     def onchange(self, oc: bool) -> None:
-        # print(f"Matchable.onchange: name: {self.name}, oc: {oc}")
         if Qualities.ONCHANGE.value not in self.qualifiers:
             self.qualifiers.append(Qualities.ONCHANGE.value)
-        # print(f"Matchable.onchange: quals: {self.qualifiers}")
 
     def line_matches(self):
         es = self.matcher.expressions
         for e in es:
-            if not e[0].matches(skip=[self]):
+            m = e[0].matches(skip=[self])
+            if not m:
                 return False
         return True
 
