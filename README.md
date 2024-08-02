@@ -233,28 +233,6 @@ When multiple qualifiers are used order is not important.
 
 Qualifiers are actively being discovered and implementation is opportunistic. Eventually the feature will need to be formalized. Watch this space!
 
-## Variables
-
-A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
-
-    [@a=#b #c==@a]
-
-Can also be written as:
-
-    [#c==#b]
-
-Variables are always set unless they are flagged with the `.onmatch` qualifier. That means:
-
-    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
-
-will never set `imcounting`, because of the `no()` function disallowing any matches, but:
-
-    $file.csv[*][ @imcounting = count_lines() no()]
-
-will always set it.
-
-As noted above, a variable can be flagged with the `onchange` qualifier. The effect is that a row will only match if the variable qualified by `onchange` changes in value.
-
 ## The when operator
 
 `->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.

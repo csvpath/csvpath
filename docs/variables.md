@@ -14,6 +14,26 @@ Note that at present a variable assignment of an equality test is not possible u
 use
     @test = equals(@cat, @hat)
 
+
+A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
+
+    [@a=#b #c==@a]
+
+Can also be written as:
+
+    [#c==#b]
+
+Variables are always set unless they are flagged with the `.onmatch` qualifier. That means:
+
+    $file.csv[*][ @imcounting.onmatch = count_lines() no()]
+
+will never set `imcounting`, because of the `no()` function disallowing any matches, but:
+
+    $file.csv[*][ @imcounting = count_lines() no()]
+
+will always set it.
+
+
 # Examples
 - `@weather="cloudy"`
 - `count(@weather=="sunny")`
