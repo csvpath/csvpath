@@ -102,9 +102,9 @@ class FunctionFactory:
             f = CountScans(matcher, name, child)
         elif name == "or":
             f = Or(matcher, name, child)
-        elif name == "no":
+        elif name == "no" or name == "false":
             f = No(matcher, name, child)
-        elif name == "yes":
+        elif name == "yes" or name == "true":
             f = Yes(matcher, name, child)
         elif name == "max":
             f = Max(matcher, name, child)
