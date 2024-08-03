@@ -30,6 +30,24 @@ A variable is indicated as a qualifier off the root. The root is `$`, so the `de
 
     $.delimiter
 
+The print string must match this regular expression:
+
+    r'"[\$A-Za-z0-9\.%_|\s :\\/,]+"'
+
+I.e. it must be quoted with double quotes and be composed of only:
+- Alphanums
+- Dollar signs
+- Periods
+- Percents
+- Underscores
+- Pipes (the `|`)
+- Spaces
+- Colons
+- Forward slashes
+- Commas
+
+It would obviously be better to have more special characters. The grammar may improve in the future, but for now that what we get. Any value contained by a header or variable will print just fine, even if it doesn't match this limited set of characters.
+
 ## Examples
 
     "$.name's delimiter is $.delimiter."
