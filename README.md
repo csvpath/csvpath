@@ -24,9 +24,8 @@ A very simple csvpath might look like this:
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
     $people.csv[*][
-                        @two_names = count(not(#middle_name))
-                        last() -> print("There are $.variables.two_names people with only two names")
-                  ]
+         @two_names = count(not(#middle_name))
+         last() -> print("There are $.variables.two_names people with only two names")]
 
 This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
 
