@@ -3,7 +3,7 @@
 
 Functions perform work within a csvpath. A function is represented by a name followed by parentheses.
 
-There are dozens of functions that are outlined elsewhere. More functions can be easily created; although, at the moment there is not yet a simple way to incorporate external code as a new function without changing the CsvPath codebase.
+There are dozens of functions listed below. More functions can be easily created; although, at the moment there is not yet a simple way to incorporate external code as a new function without changing the CsvPath codebase.
 
 Functions can contain:
 - terms
