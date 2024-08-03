@@ -138,7 +138,9 @@ class Matcher:
 
     def p_expressions(self, p):
         """expressions : expression
+        | expression COMMENT
         | expressions expression
+        | COMMENT expressions
         """
 
     def p_expression(self, p):

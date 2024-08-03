@@ -1149,8 +1149,9 @@ class TestFunctions(unittest.TestCase):
     def test_function_mod1(self):
         path = CsvPath()
         path.parse(
-            f""" ${PATH}[*] [
+            f""" ${PATH}[*] [ ~this is a comment~
                 @mod = mod(count_lines(), 2)
+                ~another comment~
                 @mod == 0.0
                 print.onmatch("$.variables.mod")
             ]

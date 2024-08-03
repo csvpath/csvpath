@@ -179,6 +179,13 @@ Two of the other types joined with an "=" or "==".
 |--------|---------|---------------|
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
 
+## Comments
+
+You can comment out components of a csvpath's match part using wrapping `~`. E.g.
+
+    [ count() ~ this is a comment~ ]
+    [ ~this path is just experimental ~ any() ]
+
 
 ## The when operator
 
