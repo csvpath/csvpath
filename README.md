@@ -140,6 +140,7 @@ A string, number, or regular expression value.
 |--------|---------|---------------|
 |A value | Always true | `"a value"` |
 
+<a href='docs/terms.md'>Read about terms here</a>.
 
 ## Function
 A composable unit of functionality called once for every row scanned.
