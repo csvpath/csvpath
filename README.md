@@ -164,6 +164,18 @@ Two of the other types joined with an "=" or "==".
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
 
 
+## The when operator
+
+`->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
+
+    [ last() -> print("this is the last line") ]
+
+Prints `this is the last line` just before the scan ends.
+
+    [ exists(#0) -> @firstname = #0 ]
+
+Says to set the `firstname` variable to the value of the first column when the first column has a value.
+
 ## Qualifiers
 
 Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only four qualifiers:
@@ -186,19 +198,8 @@ When multiple qualifiers are used order is not important.
 
 Qualifiers are actively being discovered and implementation is opportunistic. Eventually the feature will need to be formalized. Watch this space!
 
-## The when operator
-
-`->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
-
-    [ last() -> print("this is the last line") ]
-
-Prints `this is the last line` just before the scan ends.
-
-    [ exists(#0) -> @firstname = #0 ]
-
-Says to set the `firstname` variable to the value of the first column when the first column has a value.
-
 ## Another Example
+
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
 In the path above, the rules applied are:
