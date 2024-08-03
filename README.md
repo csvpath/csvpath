@@ -8,14 +8,14 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
-# Usage
+# Description
 
 CsvPath paths have three parts:
 - a "root" file name
 - a scanning part
 - a matching part
 
-The root starts with `$`. The match and scan parts are enclosed by brackets.
+The root starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
 A very simple csvpath might look like this:
 
@@ -23,11 +23,17 @@ A very simple csvpath might look like this:
 
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
+A slightly more functional csvpath could look like this:
+
     $people.csv[*][
          @two_names = count(not(#middle_name))
          last() -> print("There are $.variables.two_names people with only two names")]
 
 This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
+
+There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and function of your paths.
+
+CsvPath was conceived as a testing and data extracting tool that would involve testing and automation. Interactive use can be valuable, too. There is a simple REPL (read–eval–print loop) script at the project's root (repl.py) that you can use to explore and test csvpaths.
 
 ## Running CsvPath
 
@@ -189,7 +195,7 @@ Qualifiers are tokens added to variable, header, and function names. They are se
 
 <a href='docs/qualifiers.md'>Read about qualifiers here.</a>
 
-## Another Example
+## More Examples
 
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
 
