@@ -31,6 +31,8 @@ A slightly more functional csvpath could look like this:
 
 This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
 
+See [more examples here](#examples).
+
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and function of your paths.
 
 CsvPath was conceived as a testing and data extraction tool that would involve testing paths and run-automation. Interactive use of csvpaths can be valuable, too, of course. There is a simple REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
@@ -196,6 +198,7 @@ Qualifiers are tokens added to variable, header, and function names. They are se
 
 <a href='docs/qualifiers.md'>Read about qualifiers here.</a>
 
+<a name="examples"></a>
 ## More Examples
 
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
