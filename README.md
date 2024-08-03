@@ -210,6 +210,8 @@ In the path above, the rules applied are:
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
 - Functions can contain functions, equality tests, and/or terms.
 
+<a href='docs/examples.md'>More examples here</a>.
+
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
 
