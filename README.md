@@ -139,7 +139,7 @@ only has regex functionality when used in the regex() function.</td>
         <td> Calculated   </td>
         <td> Calculated </td>
         <td>
-            <a href='docs/functions.md'>Read more about functions here</a>.
+            <a href='docs/functions.md'>Read about functions here</a>.
         </td>
         <td>
             <li/> not(count()==2)
@@ -152,7 +152,7 @@ only has regex functionality when used in the regex() function.</td>
         <td>Value</td>
         <td>True when set unless `onchange` determines True/False.</td>
         <td>
-            <a href='docs/variables.md'>Read more about variables here</a>.
+            <a href='docs/variables.md'>Read about variables here</a>.
         </p>
         <td>
             <li/> @weather="cloudy"
@@ -162,10 +162,12 @@ only has regex functionality when used in the regex() function.</td>
         </td>
     </tr>
     <tr>
-        <td>Header   </td>
-        <td>Value     </td>
-        <td>Calculated</td>
-        <td>A # followed by a name or integer. The name references a column within the row being matched. Names of headers are whatever is found in line 0, the header row. A numbered header references a column by its 0-based column index. If a header contains a space char it must be quoted. </td>
+        <td>Header     </td>
+        <td>Value      </td>
+        <td>Calculated </td>
+        <td>
+            <a href='docs/variables.md'>Read about headers here</a>.
+        </td>
         <td>
             <li/> #firstname
             <li/> #"My firstname"
