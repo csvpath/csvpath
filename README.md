@@ -41,6 +41,8 @@ Interactive use of csvpaths can be valuable, too, of course. There is a simple R
 
 ## Running CsvPath
 
+CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>.
+
 Two classes do all the work: CsvPath and CsvPaths. Each has only a few external methods.
 - CsvPath
   - parse(pathstring) applies a csvpath
