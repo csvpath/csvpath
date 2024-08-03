@@ -14,13 +14,17 @@ The name of a header can be found using the `column()`, as in:
 
 As another example, the name of the second to last column can be found using `column(minus(1))`
 
+Header values can be tested as a boolean (a Python bool) with the `asbool` qualifier.
+
+
 # Examples
 
 -`#0`
 -`#firstname`
 -`#"All Firstnames"`
 -`end()`
+-`#senior.asbool`
 
-All of these point to some value or a blank column.
+All of these point to some value in a row or to a blank column.
 
 

@@ -121,70 +121,49 @@ The match part is also bracketed. Matches have space separated components or "va
 <td>Description</td>
 <td>Examples</td>
 </tr>
-    <tr>
-        <td>Term </td>
-        <td> Value </td>
-        <td> True when used alone, otherwise calculated </td>
-        <td>A quoted string or date, optionally quoted number, or
-        regex. Regex features are limited. A regex is wrapped  in `/` characters and
-only has regex functionality when used in the `regex()` function.</td>
-        <td>
-            <li/> "Massachusetts"
-            <li/> 89.7
-            <li/> /[0-9a-zA-Z]+!/
-        </td>
-    </tr>
-    <tr>
-        <td>Function </td>
-        <td> Calculated   </td>
-        <td> Calculated </td>
-        <td>
-            <a href='docs/functions.md'>Read about functions here</a>.
-        </td>
-        <td>
-            <li/> not(count()==2)
-            <li/> add( 5, 3, 1 )
-            <li/> concat( end(), regex(#0, /[0-5]+abc/))
-        </td>
-    </tr>
-    <tr>
-        <td>Variable </td>
-        <td>Value</td>
-        <td>True when set unless `onchange`. Existence test when used alone, or with `asbool` the result is determined by treating the value as a bool.</td>
-        <td>
-            <a href='docs/variables.md'>Read about variables here</a>.
-        </p>
-        <td>
-            <li/> @weather="cloudy"
-            <li/> count(@weather=="sunny")
-            <li/> #summer==@weather
-            <li/> @happy.onchange=#weather
-        </td>
-    </tr>
-    <tr>
-        <td>Header     </td>
-        <td>Value      </td>
-        <td>Calculated. Used alone it is an existence test. The value can be tested as a bool value with `asbool` qualifier.  </td>
-        <td>
-            <a href='docs/variables.md'>Read about headers here</a>.
-        </td>
-        <td>
-            <li/> #firstname
-            <li/> #"My firstname"
-            <li/> #3
-        </td>
-    </tr>
-    <tr>
-        <td>Equality</td>
-        <td>Calculated   </td>
-        <td>True at assignment, otherwise calculated   </td>
-        <td>Two of the other types joined with an "=" or "==".</td>
-        <td>
-            <li/> `@type_of_tree="Oak"`
-            <li/> `#name == @type_of_tree`
-        </td>
-    </tr>
-<table>
+
+## Term
+A string, number, or regular expression value.
+
+|Returns | Matches | Examples      |
+------------------------------------
+|A value | Always true | `"a value"` |
+
+
+##Function
+A composable unit of functionality called once for every row scanned.
+
+|Returns | Matches | Examples      |
+------------------------------------
+|Calculated | Calculated | `count()` |
+
+<a href='docs/functions.md'>Read about functions here</a>.
+
+##Variable
+A stored value that is set or retrieved once per row scanned.
+
+|Returns | Matches | Examples      |
+------------------------------------
+|A value | True when set, unless `onchange`. Used alone it is an existence test. | `@firstname` |
+
+<a href='docs/variables.md'>Read about variables here</a>.
+
+##Header
+A named column or a column identified by 0-based index.
+
+|Returns | Matches | Examples      |
+------------------------------------
+|A value | Calculated. Used alone it is an existence test. | `#area_code` |
+
+<a href='docs/variables.md'>Read about headers here</a>.
+
+## Equality
+Two of the other types joined with an "=" or "==".
+
+|Returns | Matches | Examples      |
+------------------------------------
+|Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
+
 
 ## Qualifiers
 
