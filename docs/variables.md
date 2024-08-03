@@ -19,7 +19,7 @@ A variable value can be treated as a boolean (Python bool) by using the `asbool`
 Variables are assigned on the left-hand side of an `=` expression. For example:
 
 - `@name = #firstname`
-- `@time.onchange = gt(3, @hour)
+- `@time.onchange = gt(3, @hour)`
 
 At present, a variable assignment of an equality test is not possible using `==`. In the future the csvpath grammar may be improved to address this gap. In the interim, use the `equals(value,value)` function. I.e.instead of
     @test = @cat == @hat
