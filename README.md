@@ -126,33 +126,34 @@ The match part is also bracketed. Matches have space separated components or "va
 A string, number, or regular expression value.
 
 |Returns | Matches | Examples      |
-------------------------------------
+|--------|---------|---------------|
 |A value | Always true | `"a value"` |
 
 
-##Function
+## Function
 A composable unit of functionality called once for every row scanned.
 
 |Returns | Matches | Examples      |
-------------------------------------
+|--------|---------|---------------|
 |Calculated | Calculated | `count()` |
 
 <a href='docs/functions.md'>Read about functions here</a>.
 
-##Variable
+## Variable
 A stored value that is set or retrieved once per row scanned.
 
 |Returns | Matches | Examples      |
-------------------------------------
+|--------|---------|---------------|
 |A value | True when set, unless `onchange`. Used alone it is an existence test. | `@firstname` |
 
 <a href='docs/variables.md'>Read about variables here</a>.
 
-##Header
+## Header
+
 A named column or a column identified by 0-based index.
 
 |Returns | Matches | Examples      |
-------------------------------------
+|--------|---------|---------------|
 |A value | Calculated. Used alone it is an existence test. | `#area_code` |
 
 <a href='docs/variables.md'>Read about headers here</a>.
@@ -161,7 +162,7 @@ A named column or a column identified by 0-based index.
 Two of the other types joined with an "=" or "==".
 
 |Returns | Matches | Examples      |
-------------------------------------
+|--------|---------|---------------|
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
 
 
