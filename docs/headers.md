@@ -19,11 +19,11 @@ Header values can be tested as a boolean (a Python bool) with the `asbool` quali
 
 # Examples
 
--`#0`
--`#firstname`
--`#"All Firstnames"`
--`end()`
--`#senior.asbool`
+- `#0`
+- `#firstname`
+- `#"All Firstnames"`
+- `end()`
+- `#senior.asbool`
 
 All of these point to some value in a row or to a blank column.
 
