@@ -11,6 +11,9 @@ Or:
 
 When multiple qualifiers are used order is not important.
 
+Qualifiers are new and being added opportunistically. See the individual function docs for which qualifiers are available on a function.
+
+
 ## Well-known Qualifiers
 At the moment there are only four qualifiers.
 
@@ -28,7 +31,9 @@ At the moment there are only four qualifiers.
 
 
 ## Arbitrary Names
-You can also add an arbitrary string to a function name. This additional name is for the function's internal use, typically to name a variable. In the case of the `tally()` function, an internal variable is set under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
+You can also add an arbitrary string to a function name. This additional name is for the function's internal use, typically to name a variable.
+
+As an example, the `tally()` function sets an internal variable under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
 
     $test[*][ tally.my_tally(#firstname) tally.my_other_tally(#lastname)]
 
