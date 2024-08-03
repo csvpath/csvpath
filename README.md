@@ -33,7 +33,7 @@ This path reads `people.csv`, counting the people without a middle name and prin
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and function of your paths.
 
-CsvPath was conceived as a testing and data extracting tool that would involve testing and automation. Interactive use can be valuable, too. There is a simple REPL (read–eval–print loop) script at the project's root (repl.py) that you can use to explore and test csvpaths.
+CsvPath was conceived as a testing and data extraction tool that would involve testing paths and run automation. Interactive use of csvpaths can be valuable, too, of course. There is a simple REPL (read–eval–print loop) script at the project's root (repl.py) that you can use to explore and test csvpaths.
 
 ## Running CsvPath
 
