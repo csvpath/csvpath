@@ -35,7 +35,9 @@ See [more examples here](#examples).
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and function of your paths.
 
-CsvPath was conceived as a testing and data extraction tool that would involve testing paths and run-automation. Interactive use of csvpaths can be valuable, too, of course. There is a simple REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
+CsvPath was conceived as a data testing and extraction tool. The assumption was that using csvpaths would typically involve testing the paths in advance and then using them in automated runs.
+
+Interactive use of csvpaths can be valuable, too, of course. There is a simple REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
 
 ## Running CsvPath
 
@@ -183,7 +185,7 @@ Two of the other types joined with an "=" or "==".
 
 You can comment out components of a csvpath's match part using wrapping `~`. Comments can be multi-line. At the moment the only limitations are:
 
-- Comments cannot follow one after another
+- Comments cannot follow one directly after another
 - Comments cannot go within match components, only between them
 
 Examples:
