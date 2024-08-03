@@ -127,7 +127,7 @@ The match part is also bracketed. Matches have space separated components or "va
         <td> True when used alone, otherwise calculated </td>
         <td>A quoted string or date, optionally quoted number, or
         regex. Regex features are limited. A regex is wrapped  in `/` characters and
-only has regex functionality when used in the regex() function.</td>
+only has regex functionality when used in the `regex()` function.</td>
         <td>
             <li/> "Massachusetts"
             <li/> 89.7
@@ -150,7 +150,7 @@ only has regex functionality when used in the regex() function.</td>
     <tr>
         <td>Variable </td>
         <td>Value</td>
-        <td>True when set unless `onchange` determines True/False.</td>
+        <td>True when set unless `onchange`. Existence test when used alone, or with `asbool` the result is determined by treating the value as a bool.</td>
         <td>
             <a href='docs/variables.md'>Read about variables here</a>.
         </p>
@@ -164,7 +164,7 @@ only has regex functionality when used in the regex() function.</td>
     <tr>
         <td>Header     </td>
         <td>Value      </td>
-        <td>Calculated </td>
+        <td>Calculated. Used alone it is an existence test. The value can be tested as a bool value with `asbool` qualifier.  </td>
         <td>
             <a href='docs/variables.md'>Read about headers here</a>.
         </td>
