@@ -23,7 +23,12 @@ A very simple csvpath might look like this:
 
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
-Learn <a href='docs/files.md'>more about filenames</a>.
+    $people.csv[*][
+                        @two_names = count(not(#middle_name))
+                        last() -> print("There are $.variables.two_names people with only two names")
+                  ]
+
+This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
 
 ## Running CsvPath
 
@@ -41,7 +46,9 @@ Two classes do all the work: CsvPath and CsvPaths. Each has only a few external 
     - a single .csv file or
     - a directory of .csv files
 
-This is a very basic use of CsvPath. For more examples, see the unit tests.
+There are several ways to set up csvpath file references. Read <a href='docs/files.md'>more about filenames</a>.
+
+This is a very basic programmatic use of CsvPath. For lots more examples, see the unit tests.
 
     path = CsvPath()
     path.parse("""$test.csv[5-25]
@@ -71,6 +78,7 @@ Another path that does the same thing a bit more simply might look like:
     """
 
 In this case we're using the "when" operator, `->`, to determine when to print.
+
 
 ## The print function
 
@@ -191,7 +199,7 @@ In the path above, the rules applied are:
 - `#2` means the 3rd column, counting from 0
 - Functions and column references are ANDed together
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
-- Functions can contain functions, equality tests, and/or literals
+- Functions can contain functions, equality tests, and/or terms.
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
