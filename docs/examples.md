@@ -46,10 +46,11 @@ These are simple examples of csvpath match parts. Test them yourself before rely
 4. Find a first value
 <pre>
     [ ~ Find the first times fruit were the most popular and the most recent popular fruit ~
-        in( #food, "Apple|Pear|Blueberry")
-        print("$.headers.food $.headers.year")
+        @fruit = in( #food, "Apple|Pear|Blueberry")
+        exists( @fruit.asbool )
         first.year.onmatch( #year )
-        last.nocontrib() -> print("First years fruit was most popular: $.variables.year")
+        @fruit.asbool -> print("$.headers.food was the most popular food for the first time in $.headers.year")
+        last.nocontrib() -> print("First years for a type of fruit: $.variables.year")
     ]
 </pre>
 
