@@ -7,7 +7,7 @@ A term is just a scalar or token. Terms are limited to being:
 - Floats
 - Regular expressions
 
-The CsvPath libary's grammar is built up from regular expression-based. (It uses <a href='https://ply.readthedocs.io/en/latest/'>Ply</a>). The lexer is limited; although, a future release may expand the grammar and make certain elements, like terms, more flexible. Today the CsvPath lexer's term definition regexes are:
+The CsvPath libary's grammar is built up from regular expression-based tokens. (It uses <a href='https://ply.readthedocs.io/en/latest/'>Ply</a>). The lexer is limited; although, a future release may expand the grammar and make certain elements, like terms, more flexible. Today the CsvPath lexer's term definition regexes are:
 
 - Strings: r'"[\$A-Za-z0-9\.%_|\s :\\/,]+"'
 - Numbers: r"\d*\.?\d+"
@@ -19,10 +19,10 @@ The regex functionality term supports within csvpaths is limited. Regexes only a
 
 # Examples:
 
-- "a quoted string"
-- 3.5
-- .5
-- 3
-- /a [r|R]egex\??/
+- `"a quoted string"`
+- `3.5`
+- `.5`
+- `3`
+- `regex( /a [r|R]egex\??/ )`
 
 
