@@ -637,7 +637,7 @@ class TestFunctions(unittest.TestCase):
         print(f"lines: {lines}")
         assert len(lines) == 9
 
-    def test_function_end(self):
+    def test_function_end1(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -650,6 +650,21 @@ class TestFunctions(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_count_in: path vars: {path.variables}")
         assert path.variables["end"] == "growl"
+        assert len(lines) == 0
+
+    def test_function_end2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @end = end(2)
+                no()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert path.variables["end"] == "Frog"
         assert len(lines) == 0
 
     def test_function_max1(self):

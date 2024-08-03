@@ -72,7 +72,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> substring(value, int)         </td><td> returns the first n chars from the value                  </td></tr>
 <tr><td>           </td><td> upper(value)                  </td><td> makes value uppercase                                     </td></tr>
 <tr><td> Columns   </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> end()                         </td><td> returns the value of the last column                      </td></tr>
+<tr><td>           </td><td> <a href='csvpath/matching/functions/end.md'>end()</a>                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> column(value)                 </td><td> returns column name for an index or index for a name      </td></tr>
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> header()                      </td><td> indicates to another function to look in headers       </td></tr>
