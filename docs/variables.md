@@ -5,7 +5,7 @@ Variables are identified by an @ followed by a name. A variable is set or tested
 
 Variables may have "tracking values". A tracking value is a key into a dict stored as the variable. Tracked values are often used by functions for internal bookkeeping. A csvpath can get or set a tracking value by using a qualifier on the variable name. E.g. `@my_var.my_tracked_value`. The qualifier must not match any of the predefined qualifiers, like `asbool` or `onmatch`. As usual, the order and number of qualifiers is not important.
 
-_Note: as of Aug 2024 there is a grammar problem that may keep variables from being an existence test all on their own. In that situation use the `exists()` function as a work-around until this is fixed. The problem should not be seen in using the when operator (`->`)._
+_Note: as of Aug 2024 there is a grammar problem that may keep variables from being used as an existence test all on their own. In that situation use the `exists()` function as a work-around until this bug is fixed. The problem should not be seen in using the when operator (`->`)._
 
 ## Qualifiers
 Variables can take an `onmatch` qualifier to indicate that the variable should only be set when the row matches all parts of the path.
