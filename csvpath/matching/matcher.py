@@ -141,7 +141,10 @@ class Matcher:
         | expression COMMENT
         | expressions expression
         | COMMENT expressions
+        | expressions COMMENT
         """
+
+    #        | COMMENT expression
 
     def p_expression(self, p):
         """expression : function

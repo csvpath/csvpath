@@ -1174,6 +1174,9 @@ class TestFunctions(unittest.TestCase):
         path.parse(
             f""" ${PATH}[*] [
                 increment.test( yes(), 3)
+                ~comment
+                 on lines
+                ~
                 @oc.onchange = @test_increment
                 print.onmatch("printing: oc: $.variables.oc, test: $.variables.test, count: $.match_count")
             ]
@@ -1225,6 +1228,7 @@ class TestFunctions(unittest.TestCase):
                 @m = mod(count_lines(), 2)
                 @c = count( equals( @m, 0) )
                 print.onmatch("printing: $.variables, count: $.match_count")
+                ~ comment ~
             ]
             """
         )

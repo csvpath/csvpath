@@ -47,7 +47,7 @@ class MatchingLexer(object):
     t_VAR_SYM = r"@"
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"
-    t_COMMENT = r"~.+~"
+    t_COMMENT = r"\~[^\~]*\~"
     t_NAME_LINE = r"[\$A-Za-z0-9\.%_|\s, :]+\n"
 
     def t_NUMBER(self, t):

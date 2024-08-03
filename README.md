@@ -181,10 +181,16 @@ Two of the other types joined with an "=" or "==".
 
 ## Comments
 
-You can comment out components of a csvpath's match part using wrapping `~`. E.g.
+You can comment out components of a csvpath's match part using wrapping `~`. Comments can be multi-line. At the moment the only limitations are:
+
+- Comments cannot follow one after another
+- Comments cannot go within match components, only between them
+
+Examples:
 
     [ count() ~ this is a comment~ ]
-    [ ~this path is just experimental ~ any() ]
+    [ ~this path is
+       just experimental ~ any() ]
 
 
 ## The when operator
