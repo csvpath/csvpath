@@ -114,6 +114,12 @@ The scan part of the path starts with a dollar sign to indicate the root, meanin
 # Matching
 The match part is also bracketed. Matches have space separated components or "values" that are ANDed together. The components' order is important. A match component is one of several types:
 
+- Term
+- Function
+- Variable
+- Header
+- Equality
+
 ## Term
 A string, number, or regular expression value.
 
