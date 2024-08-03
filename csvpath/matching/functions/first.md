@@ -3,6 +3,8 @@
 
 Matches the first time a value is seen. A variable tracks the first line numbers for each value. First tracks None and other values that could be hard to interpret. Internally, the magic number First.NEVER = -9999999999 indicates an unset value.
 
+First can take the `onmatch` qualifier.
+
 ## Examples
 
     $file.csv[*][first.folks(#firstname)]

@@ -9,7 +9,7 @@ These are simple examples of csvpath match parts. Test them yourself before rely
         gt(#age, 4)
         lt(#age, 86)
         @average_age.onmatch = average(#age, "match")
-        last() -> print("The average age between 5 and 85 is $.variables.average_age")
+        last.nocontrib() -> print("The average age between 5 and 85 is $.variables.average_age")
     ]
 </pre>
 
@@ -43,7 +43,15 @@ These are simple examples of csvpath match parts. Test them yourself before rely
     ]
 </pre>
 
-
+4. Find a first value
+<pre>
+    [ ~ Find the first times fruit were the most popular and the most recent popular fruit ~
+        in( #food, "Apple|Pear|Blueberry")
+        print("$.headers.food $.headers.year")
+        first.year.onmatch( #year )
+        last.nocontrib() -> print("First years fruit was most popular: $.variables.year")
+    ]
+</pre>
 
 
 

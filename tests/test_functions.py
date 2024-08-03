@@ -7,6 +7,7 @@ from csvpath.matching.expression_utility import ExpressionUtility
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
 NUMBERS = "tests/test_resources/numbers.csv"
+FOOD = "tests/test_resources/food.csv"
 
 
 class TestFunctions(unittest.TestCase):
@@ -238,6 +239,25 @@ class TestFunctions(unittest.TestCase):
         assert len(lines) == 8
         assert "dude" in path.variables
         assert path.variables["dude"]["FrogBat"] == 3
+
+    def test_function_first4(self):
+        path = CsvPath()
+        path.parse(
+            f"""${FOOD}[*]
+                        [ ~ Find the first time fruit were the most popular ~
+                            @fruit = in( #food, "Apple|Pear|Blueberry")
+                            ~@food.onmatch = #food~
+                            @fruit.asbool -> print("$.headers.food $.headers.year")
+                            first.year.onmatch( #year )
+                            exists( @fruit.asbool )
+                            last.nocontrib() -> print("First years most popular: $.variables.year")
+                        ]
+                    """
+        )
+        path.fast_forward()
+        print(f"test_function_first: path vars: {path.variables}")
+        assert "year" in path.variables
+        assert path.variables["year"]["1643"] == 4
 
     def test_function_above_percent(self):
         path = CsvPath()

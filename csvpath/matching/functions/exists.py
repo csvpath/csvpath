@@ -14,13 +14,20 @@ class Exists(Function):
             return True
         if self.children and len(self.children) != 1:
             raise ChildrenException("Exists must have a header or variable child")
+        if not isinstance(self.children[0], Header) and not isinstance(
+            self.children[0], Variable
+        ):
+            raise ChildrenException("Exists must have a header or variable child")
         if self.match is None:
             v = self.children[0].to_value()
-            if not isinstance(self.children[0], Header) and not isinstance(
-                self.children[0], Variable
-            ):
-                raise ChildrenException("Exists must have a header or variable child")
-            if v is not None and v.strip() != "":
+            ab = self.children[0].asbool
+            if ab:
+                try:
+                    v = bool(v)
+                    self.match = v
+                except Exception:
+                    self.match = False
+            elif v is not None and v.strip() != "":
                 self.match = True
             else:
                 self.match = False
