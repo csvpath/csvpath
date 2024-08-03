@@ -1,16 +1,7 @@
 
 # Qualifiers
 
-
-Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. At the moment there are only four qualifiers:
-
-- `onmatch` to indicate that action on the variable or function only happens when the whole path matches a row
-- `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
-- `asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
-- `nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. `$test[*][yes() last.nocontrib() -> print("last line!")]` will collect all rows but only print on the last; whereas, without `nocontrib` only the last line would be collected.
-- An arbitrary string to add a name for the function's internal use, typically to name a variable
-
-Qualifiers look like:
+Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. Qualifiers look like:
 
     [ @myvar.onmatch = yes() ]
 
@@ -20,7 +11,29 @@ Or:
 
 When multiple qualifiers are used order is not important.
 
-Qualifiers are actively being discovered and implementation is opportunistic. Eventually the feature will need to be formalized. Watch this space!
+## Well-known Qualifiers
+At the moment there are only four qualifiers.
+
+### onmatch
+`onmatch` indicates that action on the variable or function only happens when the whole path matches a row
+
+### onchange
+`onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
+
+### asbool
+`asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
+
+### nocontrib
+`nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. `$test[*][yes() last.nocontrib() -> print("last line!")]` will collect all rows but only print on the last; whereas, without `nocontrib` only the last line would be collected.
+
+
+## Arbitrary Names
+You can also add an arbitrary string to a function name. This additional name is for the function's internal use, typically to name a variable. In the case of the `tally()` function, an internal variable is set under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
+
+    $test[*][ tally.my_tally(#firstname) tally.my_other_tally(#lastname)]
+
+
+
 
 
 
