@@ -97,8 +97,8 @@ class Min(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
-        if self.children and len(self.children) == 1:
-            ChildrenException("must have a child")
+        if self.children and not len(self.children) == 1:
+            raise ChildrenException("must have a child")
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -121,8 +121,8 @@ class Max(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
-        if self.children and len(self.children) == 1:
-            ChildrenException("must have a child")
+        if self.children and not len(self.children) == 1:
+            raise ChildrenException("must have a child")
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -148,8 +148,8 @@ class Average(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return self.value
-        if self.children and len(self.children) == 1:
-            ChildrenException("must have a child")
+        if self.children and not len(self.children) == 1:
+            raise ChildrenException("must have a child")
         if self.value is None:
             v = self.get_the_value()
             # if we're watching a header and we're in the header row skip it.

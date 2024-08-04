@@ -10,8 +10,8 @@ class Stop(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return False
-        if self.children and len(self.children) < 2:
-            ChildrenException("Stop must have 1 or 0 children")
+        if self.children and len(self.children) >= 2:
+            raise ChildrenException("Stop must have 1 or 0 children")
         if self.match is None:
             self.match = True
             if len(self.children) == 1:

@@ -1095,12 +1095,13 @@ class TestFunctions(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1]
+            ${PATH}[*]
             [
                 @has_firstname = header("firstname")
                 @has_space_aliens = header("it is aliens")
             ]"""
         )
+        path.fast_forward()
         print(f"test_function_any_function: path vars: {path.variables}")
         assert path.variables["has_firstname"] is True
         assert path.variables["has_space_aliens"] is False

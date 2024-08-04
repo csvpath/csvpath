@@ -8,7 +8,7 @@ class Now(Function):
         if self in skip:
             return True
         if len(self.children) > 1:
-            ChildrenException(
+            raise ChildrenException(
                 "now function may have only a single child that gives a format"
             )
         format = None

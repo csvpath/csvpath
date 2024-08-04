@@ -20,4 +20,6 @@ class Header(Function):
                         self.match = True
                 else:
                     self.match = self.matcher.header_index(v) is not None
+            else:
+                self.match = True
         return self.match

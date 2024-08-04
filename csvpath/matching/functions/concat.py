@@ -16,7 +16,6 @@ class Concat(Function):
             left = self.children[0].children[0]
             right = self.children[0].children[1]
             value = f"{left.to_value(skip=skip)}{right.to_value(skip=skip)}"
-            print(f"Concat.to_value: value: {value}")
             self.value = value
         return self.value
 

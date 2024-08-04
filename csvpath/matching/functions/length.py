@@ -1,7 +1,6 @@
 from typing import Any
 from .function import (
     Function,
-    NoChildrenException,
     ChildrenException,
 )
 
@@ -11,11 +10,11 @@ class Length(Function):
         if self in skip:
             return True
         if not self.children:
-            NoChildrenException(
+            raise ChildrenException(
                 "length function must have a child that produces a value"
             )
         if not len(self.children) == 1:
-            ChildrenException(
+            raise ChildrenException(
                 "length function must have a single child that produces a value"
             )
         val = self.children[0].to_value(skip=skip)

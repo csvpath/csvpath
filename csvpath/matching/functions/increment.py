@@ -7,16 +7,16 @@ class Increment(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return True
-        if self.children and len(self.children) == 1:
-            ChildrenException("must have a child")
+        if self.children and not len(self.children) == 1:
+            raise ChildrenException("must have a child")
         if not isinstance(self.children[0], Equality):
-            ChildrenException("child must be an Equality")
+            raise ChildrenException("child must be an Equality")
         tv = self.children[0].right.to_value()
-        if isinstance(tv, int):
-            ChildrenException("increment value must be a positive int")
+        if not isinstance(tv, int):
+            raise ChildrenException("increment value must be a positive int")
         tv = int(tv)
         if tv <= 0:
-            ChildrenException("increment value must be a positive int")
+            raise ChildrenException("increment value must be a positive int")
         if not self.value:
             varname = self.first_non_term_qualifier(self.name)
             v = self.matcher.get_variable(varname)

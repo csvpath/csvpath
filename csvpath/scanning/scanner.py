@@ -93,7 +93,6 @@ class Scanner(object):
     def p_path(self, p):
         "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"
         filename = p[1].strip()
-        print(f"Scanner.p_path: filename: {filename}")
         if filename[0] != "$":
             raise InputException("Filename must begin with '$'")
         self.filename = filename[1:]

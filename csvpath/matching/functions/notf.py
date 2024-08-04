@@ -1,7 +1,6 @@
 from typing import Any
 from .function import (
     Function,
-    NoChildrenException,
     ChildrenException,
 )
 
@@ -11,9 +10,11 @@ class Not(Function):
         if self in skip:
             return True
         if not self.children:
-            NoChildrenException("Not function must have a child that produces a value")
+            raise ChildrenException(
+                "Not function must have a child that produces a value"
+            )
         if not len(self.children) == 1:
-            ChildrenException(
+            raise ChildrenException(
                 "not function must have a single child that produces a value"
             )
         m = self.children[0].matches(skip=skip)

@@ -1,9 +1,10 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 
-
+"""
 class NoChildrenException(Exception):
     pass
+"""
 
 
 class ChildrenException(Exception):
