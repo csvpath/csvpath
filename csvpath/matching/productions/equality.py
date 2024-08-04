@@ -82,6 +82,12 @@ class Equality(Matchable):
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.left}={self.right}"""
 
+    def _left_nocontrib(self, m) -> bool:
+        if isinstance(m, Equality):
+            return self._left_nocontrib(m.left)
+        else:
+            return m.nocontrib
+
     # ------------------
 
     def _do_assignment(self, *, skip=[]) -> bool:
@@ -130,6 +136,35 @@ class Equality(Matchable):
         else:
             raise ChildrenException("Left must be a variable and op must be =")
 
+    def _do_when(self, *, skip=[]) -> bool:
+        b = None
+        if self.op == "->":
+            if self.left.matches(skip=skip) is True:
+                b = True
+                self.right.matches(skip=skip)
+            else:
+                if self._left_nocontrib(self.left):
+                    b = True
+                else:
+                    b = False
+        else:
+            raise ChildrenException("Not a when operation")  # this can't really happen
+        return b
+
+    def _do_equality(self, *, skip=[]) -> bool:
+        b = None
+        left = self.left.to_value(skip=skip)
+        right = self.right.to_value(skip=skip)
+        if left.__class__ == right.__class__:
+            b = self.left.to_value(skip=skip) == self.right.to_value(skip=skip)
+        elif (left.__class__ == str and right.__class__ == int) or (
+            right.__class__ == str and left.__class__ == int
+        ):
+            b = f"{left}" == f"{right}"
+        else:
+            b = f"{left}" == f"{right}"
+        return b
+
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return True
@@ -140,33 +175,11 @@ class Equality(Matchable):
             if isinstance(self.left, Variable) and self.op == "=":
                 b = self._do_assignment(skip=skip)
             elif self.op == "->":
-                if self.left.matches(skip=skip) is True:
-                    b = True
-                    self.right.matches(skip=skip)
-                else:
-                    if self._left_nocontrib(self.left):
-                        b = True
-                    else:
-                        b = False
+                b = self._do_when(skip=skip)
             else:
-                left = self.left.to_value(skip=skip)
-                right = self.right.to_value(skip=skip)
-                if left.__class__ == right.__class__:
-                    b = self.left.to_value(skip=skip) == self.right.to_value(skip=skip)
-                elif (left.__class__ == str and right.__class__ == int) or (
-                    right.__class__ == str and left.__class__ == int
-                ):
-                    b = f"{left}" == f"{right}"
-                else:
-                    b = f"{left}" == f"{right}"
+                b = self._do_equality(skip=skip)
             self.match = b
         return self.match
-
-    def _left_nocontrib(self, m) -> bool:
-        if isinstance(m, Equality):
-            return self._left_nocontrib(m.left)
-        else:
-            return m.nocontrib
 
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:
