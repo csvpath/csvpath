@@ -75,7 +75,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> column(value)                 </td><td> returns column name for an index or index for a name      </td></tr>
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> header()                      </td><td> indicates to another function to look in headers       </td></tr>
+<tr><td>           </td><td> <a href='../csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/print.md'>print(value, str)</a></td><td> when matches prints the interpolated string  </td></tr>
 <tr><td>           </td><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>
