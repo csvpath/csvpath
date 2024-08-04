@@ -1,10 +1,11 @@
 
 # CsvPath
 
-CsvPath defines a declarative syntax for inspecting and updating CSV files. Though much simpler, it is similar to:
-- XPath: CsvPath is to a CSV file like XPath is to an XML file
-- Schematron: Schematron validation is basically XPath rules applied using XSLT. CsvPath paths can be used as validation rules.
-- CSS selectors: CsvPath picks out structured data in a conceptually similar way to how CSS selectors pick out HTML structures.
+CsvPath defines a declarative syntax for inspecting and updating CSV files. Though much simpler, it is inspired by:
+
+- XPath. CsvPath is to CSV files like XPath is to XML files.
+- Validation of XML using Schematron rules
+- The way CSS selectors pick out HTML structures
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
