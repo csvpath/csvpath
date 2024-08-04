@@ -9,8 +9,6 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
-<a href='docs/examples.md'>See more examples here</a>.
-
 # Description
 
 CsvPath paths have three parts:
