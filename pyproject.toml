@@ -1,9 +1,25 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.43"
-description = ""
+version = "0.0.45"
+description = "A declarative language for data extraction and validation of CSV files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Topic :: File Formats",
+    "Topic :: Office/Business :: Financial :: Spreadsheet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Text Processing",
+    "Topic :: Utilities",
+]
+
+[tool.poetry.urls]
+"Github" = "https://github.com/dk107dk/csvpath"
 
 [tool.poetry.dependencies]
 python = "^3.12"
