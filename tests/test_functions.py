@@ -1106,6 +1106,21 @@ class TestFunctions(unittest.TestCase):
         assert path.variables["has_firstname"] is True
         assert path.variables["has_space_aliens"] is False
 
+    def test_function_latch(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                @my_firstname.latch = #firstname
+                @other_firstname = #firstname
+            ]"""
+        )
+        path.fast_forward()
+        print(f"test_function_any_function: path vars: {path.variables}")
+        assert path.variables["my_firstname"] == "David"
+        assert path.variables["other_firstname"] == "Frog"
+
     def test_function_last1(self):
         path = CsvPath()
         matchpart = """

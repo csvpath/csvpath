@@ -10,6 +10,7 @@ class Qualities(Enum):
     IFEMPTY = "ifempty"
     ONCHANGE = "onchange"
     ASBOOL = "asbool"
+    LATCH = "latch"
     NOCONTRIB = "nocontrib"
 
 
@@ -20,6 +21,7 @@ class Matchable:
         Qualities.ONCHANGE.value,
         Qualities.ASBOOL.value,
         Qualities.NOCONTRIB.value,
+        Qualities.LATCH.value,
     ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
@@ -80,6 +82,15 @@ class Matchable:
         if self.qualifiers:
             return Qualities.NOCONTRIB.value in self.qualifiers
         return False
+
+    def has_latch(self) -> bool:
+        if self.qualifiers:
+            return Qualities.LATCH.value in self.qualifiers
+        return False
+
+    @property
+    def latch(self) -> bool:
+        return self.has_latch()
 
     @property
     def nocontrib(self) -> bool:

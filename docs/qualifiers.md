@@ -17,17 +17,44 @@ Qualifiers are new and being added opportunistically. See the individual functio
 ## Well-known Qualifiers
 At the moment there are only four qualifiers.
 
-### onmatch
-`onmatch` indicates that action on the variable or function only happens when the whole path matches a row
+### asbool
+`asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | Yes     | Yes       |
+
+
+### latch
+`latch` on a variable makes the variable only set one time. The variable "latches" or locks on the first value. Subsequent attempts to update the variable do nothing, give no error or warning, and return `True` for matching, in order to not affect other components' matching.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
+
+
+### nocontrib
+`nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. `$test[*][yes() last.nocontrib() -> print("last line!")]` will collect all rows but only print on the last; whereas, without `nocontrib` only the last line would be collected.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| Yes      | No      | No        |
+
 
 ### onchange
 `onchange` set on a variable to indicate that a row should only match when the variable is set to a new value
 
-### asbool
-`asbool` set on a variable or header to have its value interpreted as a bool rather than just a simple `is not None` test
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
 
-### nocontrib
-`nocontrib` set on the left hand side of a `->` to indicate that there should be no impact on the row match. E.g. `$test[*][yes() last.nocontrib() -> print("last line!")]` will collect all rows but only print on the last; whereas, without `nocontrib` only the last line would be collected.
+
+### onmatch
+`onmatch` indicates that action on the variable or function only happens when the whole path matches a row
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| Yes      | No      | Yes       |
 
 
 ## Arbitrary Names

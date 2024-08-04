@@ -3,7 +3,7 @@ from csvpath.matching.productions.variable import Variable
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
-from csvpath.matching.functions.function import Function
+from csvpath.matching.functions.function import Function, ChildrenException
 
 
 class Equality(Matchable):
@@ -84,6 +84,52 @@ class Equality(Matchable):
 
     # ------------------
 
+    def _do_assignment(self, *, skip=[]) -> bool:
+        if isinstance(self.left, Variable) and self.op == "=":
+            b = None
+            v = self.right.to_value(skip=skip)
+            oc = self.left.has_onchange()
+            ov = ""
+            if oc:
+                ov = self.matcher.get_variable(self.left.name)
+                if f"{v}" != f"{ov}":
+                    b = True
+                else:
+                    b = False
+            #
+            # we can be both onmatch and latch, and
+            # also onchange, though that adds no value given latch
+            if self.left.onmatch or (
+                self.right.name == "count" and len(self.right.children) == 0
+            ):
+                if (
+                    self.left.latch
+                    and self.matcher.get_variable(self.left.name) is not None
+                ):
+                    b = True
+                else:
+                    #
+                    # register to set if all else matches. doesn't matter if
+                    # onchange
+                    #
+                    self.matcher.set_if_all_match(self.left.name, value=v)
+                    if not oc:
+                        b = True
+            else:
+                if (
+                    self.left.latch
+                    and self.matcher.get_variable(self.left.name) is not None
+                ):
+                    b = True
+                else:
+                    t = self.left.first_non_term_qualifier(None)
+                    self.matcher.set_variable(self.left.name, value=v, tracking=t)
+                    if not oc:
+                        b = True
+            return b
+        else:
+            raise ChildrenException("Left must be a variable and op must be =")
+
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return True
@@ -92,30 +138,7 @@ class Equality(Matchable):
         if not self.match:
             b = None
             if isinstance(self.left, Variable) and self.op == "=":
-                v = self.right.to_value(skip=skip)
-                oc = self.left.has_onchange()
-                ov = ""
-                if oc:
-                    ov = self.matcher.get_variable(self.left.name)
-                    if f"{v}" != f"{ov}":
-                        b = True
-                    else:
-                        b = False
-                if self.left.onmatch or (
-                    self.right.name == "count" and len(self.right.children) == 0
-                ):
-                    #
-                    # register to set if all else matches. doesn't matter if
-                    # onchange
-                    #
-                    self.matcher.set_if_all_match(self.left.name, value=v)
-                    if not oc:
-                        b = True
-                else:
-                    t = self.left.first_non_term_qualifier(None)
-                    self.matcher.set_variable(self.left.name, value=v, tracking=t)
-                    if not oc:
-                        b = True
+                b = self._do_assignment(skip=skip)
             elif self.op == "->":
                 if self.left.matches(skip=skip) is True:
                     b = True
