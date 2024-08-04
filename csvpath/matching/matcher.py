@@ -57,10 +57,9 @@ class Matcher:
     def header_name(self, i: int) -> str:
         if not self.headers:
             return None
-        if i >= len(self.headers):
+        if i < 0 or i >= len(self.headers):
             return None
-        n = self.headers[i]
-        return n
+        return self.headers[i]
 
     def header_value(self, name: str) -> Any:
         n = self.header_index(name)

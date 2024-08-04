@@ -8,9 +8,7 @@ class Column(Function):
         if self in skip:
             return True
         if self.children and len(self.children) != 1:
-            ChildrenException("Column must have a child")
-        if not isinstance(self.children[0], Term):
-            ChildrenException("Column child must be a term")
+            raise ChildrenException("Column must have a child")
         if not self.value:
             v = self.children[0].to_value()
             if isinstance(v, int) or v.isdigit():
