@@ -230,7 +230,7 @@ In the path above, the rules applied are:
 - `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
 - Functions can contain functions, equality tests, and/or terms.
 
-<a href='docs/examples.md'>See more examples here</a>.
+There are more examples scattered throughout the documentation, particularly in <a href='docs/functions.md'>the function descriptions</a>. The <a href='tests'>unit tests</a> are not realistic, but they are a good source of ideas. <a href='docs/examples.md'>And see more real-looking examples here</a>.
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
