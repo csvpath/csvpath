@@ -1,7 +1,7 @@
 
 # Jinja
 
-Renders a <a href='https://palletsprojects.com/p/jinja/'>Jinja</a> template to an output path.
+`jinja(inpath, outpath)` renders a <a href='https://palletsprojects.com/p/jinja/'>Jinja</a> template at a path to an output path.
 
 The context includes the same variables as the `print()` function.
 
@@ -44,7 +44,7 @@ These are added to the context as:
     tokens["article"] = self._article
 
 
-Use, for e.g., `{{plural("elephant")}}` to get the plural `elephants` in your output file.
+For e.g., use `{{plural("elephant")}}` to get the plural `elephants` in your output file.
 
 Be aware that using `jinja()` may impose a high startup cost that you pay at template render time. 1 to 2 seconds latency would not be surprising.
 
