@@ -7,9 +7,6 @@ class Lower(Function):
         if self in skip:
             return True
         if len(self.children) != 1:
-            self.matcher.print(
-                f"Lower.to_value: must have 1 equality child: {self.children}"
-            )
             raise ChildrenException("Lower function must have 1 child")
 
         value = self.children[0].to_value(skip=skip)

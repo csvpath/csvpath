@@ -114,3 +114,21 @@ class TestPrint(unittest.TestCase):
         path = CsvPath()
         path.parse(pathstr)
         path.collect()
+
+    def test_function_jinja(self):
+        path = CsvPath()
+        out = "tests/test_resources/out.txt"
+        inf = "tests/test_resources/in.txt"
+        path.parse(
+            f""" ${PATH}[*][ yes()
+                             last.nocontrib() -> jinja("{inf}", "{out}")
+            ]
+            """
+        )
+        print("")
+        path.fast_forward()
+        print(f"test_function_last: path vars: {path.variables}")
+        with open(out, "r") as file:
+            txt = file.read()
+            i = txt.find("scan count: 9")
+            assert i >= 0

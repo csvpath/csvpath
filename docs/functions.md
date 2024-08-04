@@ -65,7 +65,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/tally.md'>tally(value, value, ...)</a></td><td> counts times values are seen, including as a set   </td></tr>
 <tr><td> Strings   </td><td>                               </td><td>                                                           </td></tr>
-<tr><td>           </td><td> concat(value, value)          </td><td> joins two values                 </td></tr>
+<tr><td>           </td><td> concat(value, value, ...)          </td><td> joins any number of values                 </td></tr>
 <tr><td>           </td><td> length(value)                 </td><td> returns the length of the value                           </td></tr>
 <tr><td>           </td><td> lower(value)                  </td><td> makes value lowercase                                     </td></tr>
 <tr><td>           </td><td> regex(regex-string, value)    </td><td> match on a regular expression                             </td></tr>

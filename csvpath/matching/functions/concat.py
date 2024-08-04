@@ -13,10 +13,12 @@ class Concat(Function):
                 f"In function must have an equality with the ',' operation, not {self.children[0].op}"
             )
         if self.value is None:
-            left = self.children[0].children[0]
-            right = self.children[0].children[1]
-            value = f"{left.to_value(skip=skip)}{right.to_value(skip=skip)}"
-            self.value = value
+            child = self.children[0]
+            siblings = child.commas_to_list()
+            v = ""
+            for s in siblings:
+                v = f"{v}{s.to_value(skip=skip)}"
+            self.value = v
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

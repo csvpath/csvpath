@@ -41,6 +41,7 @@ from .exists import Exists
 from .mod import Mod
 from .equals import Equals
 from .strip import Strip
+from .jinjaf import Jinjaf
 
 
 class UnknownFunctionException(Exception):
@@ -161,6 +162,8 @@ class FunctionFactory:
             f = Equals(matcher, name, child)
         elif name == "strip":
             f = Strip(matcher, name, child)
+        elif name == "jinja":
+            f = Jinjaf(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

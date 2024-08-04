@@ -64,7 +64,9 @@ class Print(Function):
                     tstring = self.handle_headers(tstring)
                 string = tstring
             else:
-                string = string.replace(token, self.value_of_token(token))
+                string = string.replace(
+                    token, Print.value_of_token(self.matcher, token)
+                )
         return string
 
     def handle_variables(self, string) -> str:
@@ -116,37 +118,44 @@ class Print(Function):
                 string = string.replace(f"{Print.TOKENS[10]}.{hname}", ret, 1)
         return string
 
-    def value_of_token(self, token) -> str:
+    @classmethod
+    def tokens(self, matcher) -> list:
+        ts = {}
+        for t in Print.TOKENS:
+            ts[t] = self.value_of_token(matcher, t)
+        return ts
+
+    @classmethod
+    def value_of_token(self, matcher, token) -> str:
         ret = None
-        # print(f"printf.value_of_token: {token}")
         if token == Print.TOKENS[0]:
-            ret = self.matcher.csvpath.scanner.filename
+            ret = matcher.csvpath.scanner.filename
         elif token == Print.TOKENS[1]:
-            ret = self.matcher.csvpath.delimiter
+            ret = matcher.csvpath.delimiter
         elif token == Print.TOKENS[2]:
-            ret = self.matcher.csvpath.quotechar
+            ret = matcher.csvpath.quotechar
         elif token == Print.TOKENS[3]:
-            ret = self.matcher.csvpath.match_count
+            ret = matcher.csvpath.match_count
         elif token == Print.TOKENS[4]:
-            ret = self.matcher.csvpath.line_number
+            ret = matcher.csvpath.line_number
         elif token == Print.TOKENS[5]:
-            ret = self.matcher.csvpath.scan_count
+            ret = matcher.csvpath.scan_count
         elif token == Print.TOKENS[6]:
-            ret = self.matcher.line
+            ret = matcher.line
         elif token == Print.TOKENS[7]:
-            ret = ExpressionEncoder().valued_list_to_json(self.matcher.expressions)
+            ret = ExpressionEncoder().valued_list_to_json(matcher.expressions)
         elif token == Print.TOKENS[9]:
-            ret = str(self.matcher.expressions)
+            ret = str(matcher.expressions)
         elif token == Print.TOKENS[10]:
-            ret = str(self.matcher.headers)
+            ret = str(matcher.headers)
         elif token == Print.TOKENS[11]:
-            ret = str(self.matcher.csvpath.scan)
+            ret = str(matcher.csvpath.scan)
         elif token == Print.TOKENS[12]:
-            ret = str(self.matcher.csvpath.match)
+            ret = str(matcher.csvpath.match)
         elif token == Print.TOKENS[13]:
-            ret = str(self.matcher.csvpath.last_row_time)
+            ret = str(matcher.csvpath.last_row_time)
         elif token == Print.TOKENS[14]:
-            ret = str(self.matcher.csvpath.rows_time)
+            ret = str(matcher.csvpath.rows_time)
         elif token == Print.TOKENS[15]:
-            ret = str(self.matcher.csvpath.total_lines)
+            ret = str(matcher.csvpath.total_lines)
         return f"{ret}"
