@@ -51,6 +51,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> before(value)                 </td><td> finds things before a date, number, string                </td></tr>
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
+<tr><td>           </td><td> <a href='../csvpath/matching/functions/correlate.md'>correlate(value, value)</a> </td><td> gives the running correlation between two values </td></tr>
 <tr><td>           </td><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/max.md'>max(value, type)</a> </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
 <tr><td>           </td><td> <a href='../csvpath/matching/functions/max.md'>min(value, type)</a></td><td> smallest value seen up to current "line", "scan", "match" </td></tr>

@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
     "Topic :: Text Processing",
-    "Topic :: Utilities",
+    "Topic :: Utilities"
 ]
 
 [tool.poetry.urls]

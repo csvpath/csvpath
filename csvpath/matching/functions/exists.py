@@ -27,7 +27,7 @@ class Exists(Function):
                     self.match = v
                 except Exception:
                     self.match = False
-            elif v is not None and v.strip() != "":
+            elif v is not None and f"{v}".strip() != "":
                 self.match = True
             else:
                 self.match = False

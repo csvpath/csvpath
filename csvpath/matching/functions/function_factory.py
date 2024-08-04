@@ -42,6 +42,7 @@ from .mod import Mod
 from .equals import Equals
 from .strip import Strip
 from .jinjaf import Jinjaf
+from .correlate import Correlate
 
 
 class UnknownFunctionException(Exception):
@@ -164,6 +165,8 @@ class FunctionFactory:
             f = Strip(matcher, name, child)
         elif name == "jinja":
             f = Jinjaf(matcher, name, child)
+        elif name == "correlate":
+            f = Correlate(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
