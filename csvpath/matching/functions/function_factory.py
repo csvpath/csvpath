@@ -40,6 +40,7 @@ from .last import Last
 from .exists import Exists
 from .mod import Mod
 from .equals import Equals
+from .strip import Strip
 
 
 class UnknownFunctionException(Exception):
@@ -158,6 +159,8 @@ class FunctionFactory:
             f = Mod(matcher, name, child)
         elif name == "equals":
             f = Equals(matcher, name, child)
+        elif name == "strip":
+            f = Strip(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:
