@@ -1,5 +1,5 @@
 from typing import Any
-from csvpath.matching.productions.matchable import Matchable
+from .matchable import Matchable
 from ..expression_utility import ExpressionUtility
 
 

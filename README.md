@@ -8,6 +8,8 @@ CsvPath defines a declarative syntax for inspecting and updating CSV files. Thou
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
+<a href='docs/examples.md'>See more examples here</a>.
+
 # Description
 
 CsvPath paths have three parts:
@@ -33,7 +35,7 @@ This path reads `people.csv`, counting the people without a middle name and prin
 
 See [more examples here](#examples).
 
-There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and function of your paths.
+There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths.
 
 CsvPath was conceived as a data testing and extraction tool. The assumption was that using csvpaths would typically involve testing the paths in advance and then using them in automated runs.
 
@@ -93,7 +95,8 @@ In this case we're using the "when" operator, `->`, to determine when to print.
 
 ## The print function
 
-Before we get into the scanning and matching parts of paths, including all the functions, let's look at print. The `print` function has several important uses, including:
+Before we get into the details of the scanning and matching parts of paths, including all the functions, let's look at print. The `print` function has several important uses, including:
+
 - Debugging csvpaths
 - Validating CSV files
 - Creating new CSV files based on an existing file
