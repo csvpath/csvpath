@@ -58,7 +58,7 @@ Two classes do all the work: CsvPath and CsvPaths. Each has only a few external 
     - a single .csv file or
     - a directory of .csv files
 
-There are several ways to set up csvpath file references. Read <a href='docs/files.md'>more about filenames</a>.
+There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
 
 This is a very basic programmatic use of CsvPath. For lots more examples, see the unit tests.
 
@@ -148,7 +148,7 @@ A string, number, or regular expression value.
 |--------|---------|---------------|
 |A value | Always true | `"a value"` |
 
-<a href='docs/terms.md'>Read about terms here</a>.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/terms.md'>Read about terms here</a>.
 
 ## Function
 A composable unit of functionality called once for every row scanned.
@@ -157,7 +157,7 @@ A composable unit of functionality called once for every row scanned.
 |--------|---------|---------------|
 |Calculated | Calculated | `count()` |
 
-<a href='docs/functions.md'>Read about functions here</a>.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>Read about functions here</a>.
 
 ## Variable
 A stored value that is set or retrieved once per row scanned.
@@ -166,7 +166,7 @@ A stored value that is set or retrieved once per row scanned.
 |--------|---------|---------------|
 |A value | True when set, unless `onchange`. Used alone it is an existence test. | `@firstname` |
 
-<a href='docs/variables.md'>Read about variables here</a>.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/variables.md'>Read about variables here</a>.
 
 ## Header
 
@@ -176,7 +176,7 @@ A named column or a column identified by 0-based index.
 |--------|---------|---------------|
 |A value | Calculated. Used alone it is an existence test. | `#area_code` |
 
-<a href='docs/variables.md'>Read about headers here</a>.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/variables.md'>Read about headers here</a>.
 
 ## Equality
 Two of the other types joined with an "=" or "==".
@@ -215,7 +215,7 @@ Says to set the `firstname` variable to the value of the first column when the f
 
 Qualifiers are tokens added to variable, header, and function names. They are separated from the names and each other with `.` characters. Each qualifier causes the qualified match component to behave in a different way than it otherwise would.
 
-<a href='docs/qualifiers.md'>Read about qualifiers here.</a>
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
 <a name="examples"></a>
 ## More Examples
@@ -231,9 +231,9 @@ In the path above, the rules applied are:
 
 There are more examples scattered throughout the documentation. Good places to look include:
 
-- The individual <a href='docs/functions.md'>function descriptions</a>
-- The <a href='tests'>unit tests</a> _(not realistic, but a good source of ideas)_
-- A few <a href='docs/examples.md'>more real-looking examples</a>
+- The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
+- The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> _(not realistic, but a good source of ideas)_
+- A few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
 
 # Not Ready For Production
 Anything could change and performance could be better. This project is a hobby.
