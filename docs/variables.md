@@ -14,6 +14,8 @@ A variable can also take an `onchange` qualifier to make its assignment only mat
 
 A variable value can be treated as a boolean (Python bool) by using the `asbool` qualifier. Without `asbool` a variable used alone is an existence test.
 
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
+
 ## Assignment
 
 Variables are assigned on the left-hand side of an `=` expression. For example:

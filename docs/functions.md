@@ -19,7 +19,7 @@ Certain functions have qualifiers. An `onmatch` qualifier indicates that
 the function should be applied only when the whole path matches.
 
 Some functions optionally will make use of an arbitrary name qualifier to better name a tracking variable.
-Qualifiers are described elsewhere.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
 # Examples
 - `not(count()==2)`

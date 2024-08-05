@@ -176,7 +176,7 @@ A named column or a column identified by 0-based index.
 |--------|---------|---------------|
 |A value | Calculated. Used alone it is an existence test. | `#area_code` |
 
-<a href='https://github.com/dk107dk/csvpath/blob/main/docs/variables.md'>Read about headers here</a>.
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/headers.md'>Read about headers here</a>.
 
 ## Equality
 Two of the other types joined with an "=" or "==".
