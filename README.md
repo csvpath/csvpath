@@ -15,7 +15,7 @@ CsvPath' goal is to make it easy to:
 
 And do it all in an automation-friendly way.
 
-CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
+CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 
 # Description
 
