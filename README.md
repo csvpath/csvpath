@@ -1,11 +1,19 @@
 
 # CsvPath
 
-CsvPath defines a declarative syntax for inspecting and updating CSV files. Though much simpler, it is inspired by:
+CsvPath defines a declarative syntax for inspecting and validating CSV files. Though much simpler, it is inspired by:
 
 - XPath. CsvPath is to CSV files like XPath is to XML files.
 - Validation of XML using Schematron rules
 - The way CSS selectors pick out HTML structures
+
+CsvPath' goal is to make it easy to:
+- Analyze the content and structure of a CSV
+- Validate that the file matches expectations
+- Report on the content or validity
+- Create new derived CSV files
+
+And do it all in an automation-friendly way.
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Custom functions can be added.
 
@@ -16,7 +24,7 @@ CsvPath paths have three parts:
 - a scanning part
 - a matching part
 
-The root starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
+The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
 A very simple csvpath might look like this:
 
