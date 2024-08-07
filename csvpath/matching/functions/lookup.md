@@ -5,11 +5,11 @@ Looks up values to find alternate values. The lookup uses a named path in CsvPat
 
     $employees[1*][ @lookedup = lookup("friends", #my_people, 0, 1) ]
 
-This path says that we lookup the value of the #my_header column in the named path `my_people`. The values we lookup against are in the set of matched lines found by the `friends` named path. The comparison value is in the first column. The replacement value is in the second column.
+This path says that we lookup the value of the `#my_people` column. The values we lookup against are in the matched lines found by the `friends` named path. The comparison value is in the first column of `friends`. The replacement value is in the second column of `friends`.
 
 A named path creates a list of matched rows held in memory. The named path also has a named CsvPath instance that offers variables, header names, etc.
 
-After you are done with the path that uses `lookup()` you can drop the named path's collection of matched rows.
+After you are done with the path that uses `lookup()` you can drop the named path's collection of matched rows to reduce memory usage. If the lookup table is needed again it will be recreated.
 
 ## Examples
 
