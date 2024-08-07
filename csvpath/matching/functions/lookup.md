@@ -21,9 +21,9 @@ First we identify our lookup table:
 
 Then we configure our CsvPaths instance:
 
-    nfiles = {"addresses": PATH, "numbers": NUMBERS, "food": FOOD}
-    npaths = {"lookup_table": f"""${LOOKUP}[*][yes()] """}
-    paths = CsvPaths(named_files=nfiles, named_paths=npaths)
+    named_files = {"addresses": PATH, "numbers": NUMBERS, "food": FOOD}
+    named_paths = {"lookup_table": f"""${LOOKUP}[*][yes()] """}
+    paths = CsvPaths(named_files=named_files, named_paths=named_paths)
     path = paths.csvpath()
 
 We then parse our csvpath and collect the matching rows in the usual way:
@@ -35,7 +35,7 @@ We then parse our csvpath and collect the matching rows in the usual way:
     path.parse(thepath)
     lines = path.collect()
 
-1. The `mypath` csvpath uses a `food` file
+1. The `mypath` csvpath uses a `food` named file from the CsvPaths
 2. It does a `lookup()` using the `lookup_table` named path in the CsvPaths
 3. That path, `lookup_table`, used the filename in the `LOOKUP` variable to do a scan and match of all rows in the lookup file
 4. Those rows where column `#1` in the `food` file matched the first column in `lookup_table` resulted in the `@t` variable being set to the replacement value in column two of `lookup_table`
