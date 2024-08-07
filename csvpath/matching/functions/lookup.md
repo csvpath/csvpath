@@ -36,8 +36,8 @@ We then parse our csvpath and collect the matching rows in the usual way:
     lines = path.collect()
 
 1 The `mypath` csvpath uses a `food` file
-1 It does a `lookup()` using the `lookup_table` named path in the CsvPaths
-1 That path, `lookup_table`, used the filename in the LOOKUP variable to do a scan and match of all rows in the lookup file
-1 Those rows where column `#1` in the `food` file matched the first column in `lookup_table` resulted in the `@t` variable being set to the replacement value in column two of `lookup_table`
+2 It does a `lookup()` using the `lookup_table` named path in the CsvPaths
+3 That path, `lookup_table`, used the filename in the LOOKUP variable to do a scan and match of all rows in the lookup file
+4 Those rows where column `#1` in the `food` file matched the first column in `lookup_table` resulted in the `@t` variable being set to the replacement value in column two of `lookup_table`
 
 
