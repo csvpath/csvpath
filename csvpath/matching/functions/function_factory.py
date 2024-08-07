@@ -43,6 +43,7 @@ from .equals import Equals
 from .strip import Strip
 from .jinjaf import Jinjaf
 from .correlate import Correlate
+from .lookup import Lookup
 
 
 class UnknownFunctionException(Exception):
@@ -167,6 +168,8 @@ class FunctionFactory:
             f = Jinjaf(matcher, name, child)
         elif name == "correlate":
             f = Correlate(matcher, name, child)
+        elif name == "lookup":
+            f = Lookup(matcher, name, child)
         else:
             raise UnknownFunctionException(f"{name}")
         if child:

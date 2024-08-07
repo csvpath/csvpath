@@ -2,13 +2,39 @@ import unittest
 from csvpath.csvpaths import CsvPaths
 
 PATH = "tests/test_resources/test.csv"
+LOOKUP = "tests/test_resources/lookup.csv"
 NUMBERS = "tests/test_resources/numbers.csv"
+FOOD = "tests/test_resources/food.csv"
 JSON = "tests/test_resources/named_files.json"
 DIR = "tests/test_resources"
 DIR2 = "tests/test_resources/"
 
 
 class TestCsvPaths(unittest.TestCase):
+    def test_lookup(self):
+        print("")
+        nfiles = {"test": PATH, "numbers": NUMBERS, "food": FOOD}
+        npaths = {"lookup": f"""${LOOKUP}[*][yes()] """}
+        paths = CsvPaths(named_files=nfiles, named_paths=npaths)
+
+        path = paths.csvpath()
+        #
+        # name of collection
+        # value to look_up
+        # column index to look to
+        # column index with the new value, if found
+        #
+        thepath = """$food[1*][
+            @t = lookup("lookup", #1, 0, 1)
+            print("t is $.variables.t")
+        ]"""
+        path.parse(thepath)
+        lines = path.collect()
+        print(f"\ntest_lookup: lines: {lines} ")
+        print(f"\ntest_lookup: variables: {path.variables} ")
+        assert lines is not None
+        assert path.variables["t"] == "Sweets"
+
     def test_dict(self):
         print("")
         d = {"test": PATH, "numbers": NUMBERS}

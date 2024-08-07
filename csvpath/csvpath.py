@@ -389,3 +389,21 @@ class CsvPath:
         ):
             collect.append(i)
         return collect
+
+    def header_index(self, name: str) -> int:
+        if not self.headers:
+            return None
+        i = -1
+        for i, n in enumerate(self.headers):
+            if n == name:
+                return i
+        return i
+
+    """
+    def header_name(self, i: int) -> str:
+        if not self.headers:
+            return None
+        if i < 0 or i >= len(self.headers):
+            return None
+        return self.headers[i]
+    """

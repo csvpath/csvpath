@@ -57,9 +57,9 @@ class CsvPaths:
         return self.named_collections[name]
 
     def get_named_collector(self, name) -> CsvPath:
-        if name not in self.named_collector:
+        if name not in self.named_collectors:
             self.collect_named_path(name)
-        return self.named_collector[name]
+        return self.named_collectors[name]
 
     def collect_named_path(self, name: str) -> None:
         if name in self.named_paths:
