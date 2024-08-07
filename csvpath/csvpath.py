@@ -398,12 +398,3 @@ class CsvPath:
             if n == name:
                 return i
         return i
-
-    """
-    def header_name(self, i: int) -> str:
-        if not self.headers:
-            return None
-        if i < 0 or i >= len(self.headers):
-            return None
-        return self.headers[i]
-    """
