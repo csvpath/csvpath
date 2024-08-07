@@ -15,21 +15,27 @@ After you are done with the path that uses `lookup()` you can drop the named pat
 
 Setup the CsvPaths instance and get a CsvPath. The example will use the food CSV file.
 
+First we identify our lookup table:
+
+    LOOKUP = "tests/test_resources/lookup.csv"
+
+Then we configure our CsvPaths instance:
+
     nfiles = {"addresses": PATH, "numbers": NUMBERS, "food": FOOD}
     npaths = {"lookup_table": f"""${LOOKUP}[*][yes()] """}
     paths = CsvPaths(named_files=nfiles, named_paths=npaths)
     path = paths.csvpath()
 
-Then parse the csvpath and collect the matching rows in the usual way:
+We then parse our csvpath and collect the matching rows in the usual way:
 
-    thepath = """$food[1*][
+    mypath = """$food[1*][
         @t = lookup("lookup_table", #1, 0, 1)
         print("The food category is $.variables.t")
     ]"""
     path.parse(thepath)
     lines = path.collect()
 
-1 The `thepath` csvpath uses a `food` file
+1 The `mypath` csvpath uses a `food` file
 1 It does a `lookup()` using the `lookup_table` named path in the CsvPaths
 1 That path, `lookup_table`, used the filename in the LOOKUP variable to do a scan and match of all rows in the lookup file
 1 Those rows where column `#1` in the `food` file matched the first column in `lookup_table` resulted in the `@t` variable being set to the replacement value in column two of `lookup_table`
