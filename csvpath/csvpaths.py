@@ -1,5 +1,5 @@
 from csvpath.csvpath import CsvPath, NoFileException
-from typing import Dict
+from typing import Dict, List, Any
 import os
 import json
 
@@ -13,6 +13,7 @@ class CsvPaths:
         quotechar='"',
         skip_blank_lines=True,
         named_files: Dict[str, str] = {},
+        named_paths: Dict[str, str] = {},
     ):
         self.named_files: Dict[str, str] = None
         self.set_file_path(filename)
@@ -23,6 +24,50 @@ class CsvPaths:
         self.delimiter = delimiter
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
+        self.named_paths = named_paths
+        self.named_collections = {}
+        self.named_collectors = {}
+
+    def add_named_paths_from_json(self, filename: str) -> None:
+        try:
+            with open(filename) as f:
+                j = json.load(f)
+                self.named_paths = j
+                self.named_collections = {}
+        except Exception:
+            print(f"Error: cannot load {filename}")
+
+    def add_named_path(self, name: str, path: str) -> None:
+        self.named_paths[name] = path
+
+    def remove_named_path(self, name: str) -> None:
+        if name in self.named_paths:
+            del self.named_paths[name]
+        if name in self.named_collections:
+            del self.named_collections[name]
+
+    def remove_named_collection(self, name: str) -> None:
+        if name in self.named_collections:
+            del self.named_collections[name]
+            del self.named_collectors[name]
+
+    def get_named_collection(self, name) -> List[List[Any]]:
+        if name not in self.named_collections:
+            self.collect_named_path(name)
+        return self.named_collections[name]
+
+    def get_named_collector(self, name) -> CsvPath:
+        if name not in self.named_collector:
+            self.collect_named_path(name)
+        return self.named_collector[name]
+
+    def collect_named_path(self, name: str) -> None:
+        if name in self.named_paths:
+            path = self.csvpath()
+            path.parse(self.named_paths[name])
+            lines = path.collect()
+            self.named_collections[name] = lines
+            self.named_collectors[name] = path
 
     def update_file_path(self, name_or_path: str) -> str:
         ret = None
@@ -60,6 +105,8 @@ class CsvPaths:
             except Exception:
                 # expected exception
                 self._set_from_file(name)
+
+    # =======================
 
     def _set_from_dir(self, name):
         if self.named_files is None:
