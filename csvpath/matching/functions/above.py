@@ -32,4 +32,6 @@ class Above(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return True
         return self.to_value(skip=skip)

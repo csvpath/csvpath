@@ -1,7 +1,9 @@
 alias pytest='poetry run pytest'
 alias flake8='poetry run flake8'
-alias run='poetry run python'
+alias run='poetry run python '
 alias black='poetry run black .'
+alias coverage='poetry run coverage run -m pytest'
+alias report='poetry run coverage report -m'
 alias run-pre-commit='poetry run pre-commit run --all-files'
 
 echo ''
