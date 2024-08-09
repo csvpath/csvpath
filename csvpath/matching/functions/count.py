@@ -18,7 +18,6 @@ class Count(Function):
         return self.value  # or not. we have to act as if.
 
     def matches(self, *, skip=[]) -> bool:
-        # return self.to_value() is not None
         return self._noop_match()
 
     def _get_match_count(self) -> int:
