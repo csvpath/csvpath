@@ -11,7 +11,7 @@ class Any(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True
+            return self._noop_match()
         if self.children and len(self.children) > 1:
             raise ChildrenException("Stop must have only 1 or 0 children")
         if self.match is None:

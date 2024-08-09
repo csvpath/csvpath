@@ -5,7 +5,7 @@ from .function import Function, ChildrenException
 class Above(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Above function must have 1 child")
         if self.children[0].op != ",":
@@ -33,5 +33,5 @@ class Above(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True
+            return self._noop_match()
         return self.to_value(skip=skip)

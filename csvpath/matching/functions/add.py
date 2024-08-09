@@ -5,6 +5,9 @@ from ..productions import Equality
 
 class Add(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
+
         if not self.value:
             if len(self.children) != 1:
                 raise ChildrenException("no children. there must be 1 equality child")
@@ -23,4 +26,4 @@ class Add(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_match()

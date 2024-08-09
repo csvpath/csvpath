@@ -5,7 +5,8 @@ from .function import Function, ChildrenException
 class Below(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
+
         if len(self.children) != 1:
             self.matcher.print(
                 f"In.to_value: must have 1 equality child: {self.children}"
@@ -34,5 +35,5 @@ class Below(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True
+            return self._noop_match()
         return self.to_value(skip=skip)

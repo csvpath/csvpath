@@ -22,6 +22,12 @@ class Function(Matchable):
         self.match = None
         super().reset()
 
+    def _noop_match(self) -> bool:
+        return self.match if self.match is not None else True
+
+    def _noop_value(self) -> bool:
+        return self.value if self.value is not None else self._noop_match()
+
     def to_value(self, *, skip=[]) -> bool:
         if self in skip:
             return True

@@ -31,7 +31,8 @@ A very simple function might look like:
     class MyFunction(Function):
         def to_value(self, skip=[]):
             if self in skip:
-                return self.value
+                return self._noop_value()
+
             if self.value is None:
                 #
                 self.calculate_stuff()
@@ -40,12 +41,14 @@ A very simple function might look like:
 
         def matches(self, skip=[]):
             if self in skip:
-                return True
+                return self._noop_match()
             if self.match is None:
                 #
                 self.calculate_stuff()
                 #
             return self.match
+
+In the common case the match depends on the value. In some cases, however, the value depends on the match. When the value is dependent and your function finds itself in the skip list return a call to `self.match()`; otherwise, call `self._noop_value()`. In either case when the match finds `self` in the skip list it should return `self._noop_match()`.
 
 To register your function add it to the FunctionFactory like this:
 
@@ -53,7 +56,7 @@ To register your function add it to the FunctionFactory like this:
 
 To use your function do something like:
 
-        $test[*][ @t = iamafunction() ]
+        "$test[*][ @t = iamafunction() ]"
 
 Behind the scenes an instance of your function will be retrieved with:
 
