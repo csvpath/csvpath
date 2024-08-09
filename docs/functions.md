@@ -21,6 +21,10 @@ the function should be applied only when the whole path matches.
 Some functions optionally will make use of an arbitrary name qualifier to better name a tracking variable.
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
+Creating your own function is easy. Once you create it, you register it with the `FunctionFactory` class. You must register your functions each time you run CsvPath. Use it in your csvpaths by simply referring to it by name like any other function.
+
+<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/implementing_functions.md'>Read more about implementing your own functions here.</a>
+
 # Examples
 - `not(count()==2)`
 - `add( 5, 3, 1 )`
