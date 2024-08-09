@@ -5,6 +5,9 @@ from ..productions import Equality
 
 class Equals(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
+
         if not self.value:
             if len(self.children) != 1:
                 raise ChildrenException("no children. there must be 1 equality child")
@@ -29,7 +32,7 @@ class Equals(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_match()
 
     def _is_float(self, fs) -> bool:
         try:

@@ -5,13 +5,16 @@ from ..productions import Header, Variable
 
 class Exists(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
+
         if self.value is None:
             self.value = self.matches(skip=skip)
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True
+            return self._noop_match()
         if self.children and len(self.children) != 1:
             raise ChildrenException("Exists must have a header or variable child")
         if not isinstance(self.children[0], Header) and not isinstance(

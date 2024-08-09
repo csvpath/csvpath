@@ -6,11 +6,14 @@ import re
 
 class Regex(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
         self.matches(skip=skip)
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True
+            return self._noop_match()
+
         if self.match is None:
             left = self._function_or_equality.left
             right = self._function_or_equality.right
@@ -31,5 +34,4 @@ class Regex(Function):
                 theregex = theregex[0 : len(theregex) - 1]
 
             self.match = re.search(theregex, thevalue) is not None
-            # print(f"Regex.matches: theregex: {theregex}, thevalue: {thevalue}, self.match: {self.match}")
         return self.match

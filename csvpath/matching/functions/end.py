@@ -6,7 +6,7 @@ from ..productions.term import Term
 class End(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if self.children and len(self.children) > 1:
             raise ChildrenException("end must have 0 or 1 child")
         if len(self.children) > 0 and not isinstance(self.children[0], Term):
@@ -23,10 +23,11 @@ class End(Function):
                     raise ChildrenException(
                         "Value of end function term must be a positive int"
                     )
-
             if i >= 0 and i < len(self.matcher.line):
                 self.value = self.matcher.line[i]
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
         return self.to_value(skip=skip) is not None

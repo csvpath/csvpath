@@ -6,7 +6,7 @@ from random import randrange
 class Random(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if len(self.children) != 1:
             self.matcher.print(
                 f"Random.to_value: must have 1 equality child: {self.children}"
@@ -30,4 +30,4 @@ class Random(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_value()

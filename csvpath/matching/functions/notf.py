@@ -8,7 +8,7 @@ from .function import (
 class Not(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if not self.children:
             raise ChildrenException(
                 "Not function must have a child that produces a value"
@@ -22,4 +22,6 @@ class Not(Function):
         return m
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
         return self.to_value(skip=skip)

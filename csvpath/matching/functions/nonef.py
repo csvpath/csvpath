@@ -7,4 +7,4 @@ class Nonef(Function):
         return None
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_match()

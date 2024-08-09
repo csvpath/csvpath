@@ -7,7 +7,8 @@ from .printf import Print
 class Jinjaf(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
+
         if len(self.children) != 1:
             raise ChildrenException("Jinja function must have 1 child")
         if not isinstance(self.children[0], Equality):
@@ -34,6 +35,9 @@ class Jinjaf(Function):
         return True
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
+
         v = self.to_value(skip=skip)
         return v
 

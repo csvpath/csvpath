@@ -9,7 +9,7 @@ class ChildrenException(Exception):
 class Function(Matchable):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name)
-        self.matcher = matcher  # atm, circular dep
+        self.matcher = matcher
         self._function_or_equality = child
         if child:
             self.add_child(child)

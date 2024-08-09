@@ -25,6 +25,8 @@ class Print(Function):
     ]
 
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
         if self.value is None:
             if len(self.children) != 1:
                 raise ChildrenException("must be 1 term child")
@@ -34,7 +36,7 @@ class Print(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True  # is this the right return val for this situtation?
+            return self._noop_match()
         if len(self.children) != 1:
             raise ChildrenException("must be 1 child, equality or print string")
         if self.match is None:

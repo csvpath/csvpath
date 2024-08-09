@@ -5,7 +5,7 @@ from .function import Function, ChildrenException
 class Strip(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("In function must have 1 child")
         if self.value is None:
@@ -15,5 +15,7 @@ class Strip(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
         self.to_value(skip=skip)
         return True

@@ -60,13 +60,6 @@ class MinMax(Function):
         else:
             return False
 
-    def line_matches(self):
-        es = self.matcher.expressions
-        for e in es:
-            if not e[0].matches(skip=[self]):
-                return False
-        return True
-
     def _ignore(self):
         if (
             self.get_the_name() in self.matcher.csvpath.headers
@@ -90,13 +83,16 @@ class MinMax(Function):
         return m
 
 
+# ===========================
+
+
 class Min(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
         if not self.value:
@@ -111,7 +107,7 @@ class Min(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_match()
 
 
 class Max(MinMax):
@@ -120,7 +116,7 @@ class Max(MinMax):
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
         if not self.value:
@@ -135,7 +131,7 @@ class Max(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_match()
 
 
 class Average(MinMax):
@@ -147,7 +143,7 @@ class Average(MinMax):
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return self.value
+            return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
         if self.value is None:
@@ -181,4 +177,4 @@ class Average(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return True
+        return self._noop_value()

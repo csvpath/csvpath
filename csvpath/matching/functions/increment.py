@@ -6,7 +6,8 @@ from ..productions import Equality
 class Increment(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
+            # return True
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
         if not isinstance(self.children[0], Equality):

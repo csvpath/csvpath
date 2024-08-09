@@ -5,7 +5,7 @@ from .function import Function, ChildrenException
 class Upper(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if len(self.children) != 1:
             self.matcher.print(
                 f"Upper.to_value: must have 1 equality child: {self.children}"
@@ -17,5 +17,7 @@ class Upper(Function):
         return value
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
         v = self.to_value(skip=skip)
         return v is not None

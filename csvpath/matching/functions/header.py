@@ -4,11 +4,13 @@ from .function import Function
 
 class Header(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
         return self.matches(skip=skip)
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
-            return True if self.match is None else self.match
+            return self._noop_match()
         if self.match is None:
             if len(self.children) == 1:
                 v = self.children[0].to_value()

@@ -5,6 +5,8 @@ from ..productions import Equality
 
 class Tally(Function):
     def to_value(self, *, skip=[]) -> Any:
+        if self in skip:
+            return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Tally function must have 1 child")
         if self.value is not None:
@@ -44,4 +46,6 @@ class Tally(Function):
         )
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
         return self.to_value(skip=skip)

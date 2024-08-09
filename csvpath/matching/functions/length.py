@@ -8,7 +8,7 @@ from .function import (
 class Length(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if not self.children:
             raise ChildrenException(
                 "length function must have a child that produces a value"
@@ -24,4 +24,7 @@ class Length(Function):
         return ret
 
     def matches(self, *, skip=[]) -> bool:
+        if self in skip:
+            return self._noop_match()
+
         return self.to_value(skip=skip) > 0

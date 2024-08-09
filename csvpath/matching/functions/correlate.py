@@ -12,7 +12,7 @@ class Correlate(Function):
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return self.value
+            return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Correlate function must have 1 child")
         if self.children[0].op != ",":
@@ -109,4 +109,4 @@ class Correlate(Function):
 
     def matches(self, *, skip=[]) -> bool:
         self.to_value(skip=skip)
-        return True
+        return self._noop_match()

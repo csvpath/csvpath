@@ -5,7 +5,7 @@ from .function import Function, ChildrenException
 class Concat(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
-            return True
+            return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("In function must have 1 child")
         if self.children[0].op != ",":
@@ -22,5 +22,5 @@ class Concat(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        v = self.to_value(skip=skip)
-        return v is not None
+        self.to_value(skip=skip)
+        return self._noop_match()
