@@ -3,10 +3,6 @@ from .function import Function
 
 
 class Count(Function):
-    def print(self, msg):
-        if self.matcher:
-            self.matcher.print(msg)
-
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:
             return self._noop_value()
