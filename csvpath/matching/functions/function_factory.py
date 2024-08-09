@@ -50,13 +50,42 @@ class UnknownFunctionException(Exception):
     pass
 
 
+class InvalidNameException(Exception):
+    pass
+
+
 class InvalidChildException(Exception):
     pass
 
 
 class FunctionFactory:
+
+    NOT_MY_FUNCTION = {}
+
     @classmethod
-    def get_name_and_qualifier(self, name: str):
+    def add_function(cls, name: str, function: Function) -> None:
+        if name is None:
+            raise InvalidNameException("Name passed in with function cannot be None")
+        if not isinstance(name, str):
+            raise InvalidNameException("Name must be a string")
+        name = name.strip()
+        if name == "":
+            raise InvalidNameException("Name must not be an empty string")
+        if not name.isalpha():
+            raise InvalidNameException("Name must alpha characters only")
+        if cls.get_function(None, name=name, find_external_functions=False) is not None:
+            raise InvalidNameException("Built-in functions cannot be overriden")
+        if not isinstance(function, Function):
+            #
+            # pass as an instance, not a class, for specificity. good to do?
+            #
+            raise InvalidChildException(
+                "Function being registered must be passed as an instance"
+            )
+        cls.NOT_MY_FUNCTION[name] = function.__class__
+
+    @classmethod
+    def get_name_and_qualifier(cls, name: str):
         aname = name
         qualifier = None
         dot = name.find(".")
@@ -68,8 +97,16 @@ class FunctionFactory:
 
     @classmethod
     def get_function(  # noqa: C901
-        cls, matcher, *, name: str, child: Matchable = None
+        cls,
+        matcher,
+        *,
+        name: str,
+        child: Matchable = None,
+        find_external_functions: bool = True,
     ) -> Function:
+        #
+        # matcher must be Noneable for add_function
+        #
         if child and not isinstance(child, Matchable):
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
@@ -171,9 +208,21 @@ class FunctionFactory:
         elif name == "lookup":
             f = Lookup(matcher, name, child)
         else:
-            raise UnknownFunctionException(f"{name}")
+            if (
+                f is None
+                and find_external_functions
+                and name in FunctionFactory.NOT_MY_FUNCTION
+            ):
+                f = cls.NOT_MY_FUNCTION[name]
+                f = f(matcher, name, child)
+            if not find_external_functions:
+                return None
+            if f is None:
+                raise UnknownFunctionException(f"{name}")
         if child:
             child.parent = f
         if qualifier:
             f.set_qualifiers(qualifier)
+        if f.matcher is None:
+            f.matcher = matcher
         return f

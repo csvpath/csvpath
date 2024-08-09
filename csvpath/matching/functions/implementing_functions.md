@@ -16,6 +16,8 @@ Usually you want to cache the result of calculating `to_value` and `matches`. Tw
 - self.value
 - self.match
 
+Your function must inherit from Function. It may implement `__init__` and take a `Matcher` object and a string name.
+
 A very simple function might look like:
 
     class MyFunction(Function):
