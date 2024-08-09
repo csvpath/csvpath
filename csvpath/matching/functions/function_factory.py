@@ -65,6 +65,8 @@ class FunctionFactory:
     @classmethod
     def add_function(cls, name: str, function: Function) -> None:
         if name is None:
+            name = function.name
+        if name is None:
             raise InvalidNameException("Name passed in with function cannot be None")
         if not isinstance(name, str):
             raise InvalidNameException("Name must be a string")

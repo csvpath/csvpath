@@ -1,6 +1,15 @@
 
 # How to create a function
 
+You can easily create your own function, register it for use, and use it in your csvpaths.
+
+Functions extend the Function class using:
+
+    from csvpath.matching.functions.function_factory import FunctionFactory
+    from csvpath.matching.functions.function import Function
+    class MyFunction(Function):
+        ...
+
 Function classes have two implementation overridden methods:
 
 - `to_value(self, skip=[])` - produces the value of the function
@@ -39,4 +48,17 @@ A very simple function might look like:
                 #
             return self.match
 
+To register your function add it to the FunctionFactory like this:
+
+        FunctionFactory.add_function(name='iamafunction', function=my_function_instance)
+
+To use your function do something like:
+
+        $test[*][ @t = iamafunction() ]
+
+Behind the scenes an instance of your function will be retrieved with:
+
+        f = FunctionFactory.get_function(matcher=None, name="iamafunction")
+
+The name you set on FunctionFactory must match the name passed in when a function is requested.
 
