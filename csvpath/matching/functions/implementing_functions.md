@@ -5,7 +5,6 @@ You can easily create your own function, register it for use, and use it in your
 
 Functions extend the Function class using:
 
-    from csvpath.matching.functions.function_factory import FunctionFactory
     from csvpath.matching.functions.function import Function
     class MyFunction(Function):
         ...
