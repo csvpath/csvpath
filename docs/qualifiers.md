@@ -3,11 +3,15 @@
 
 Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. Qualifiers look like:
 
+```bash
     [ @myvar.onmatch = yes() ]
+```
 
 Or:
 
+```bash
     [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
+```
 
 When multiple qualifiers are used order is not important.
 
