@@ -56,12 +56,13 @@ Interactive use of csvpaths can be valuable, too, of course. There is a simple R
 
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/dk107dk/csvpath'>git repo is here</a>.
 
-Two classes do all the work: CsvPath and CsvPaths. Each has only a few external methods.
+Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
 
 ### CsvPath
 |method               |function              |
 |---------------------|----------------------|
 |parse(csvpath)       | applies a csvpath    |
+|parse_named_path(pathname) | applies a csvpath registered with a CsvPaths by its name    |
 |next()               | iterates over matched rows returning each matched row as a list|
 |fast_forward()       | iterates over the file collecting variables and side effects |
 |advance(n)           | skips forward n rows from within a `for row in path.next()` loop|
@@ -75,6 +76,8 @@ Two classes do all the work: CsvPath and CsvPaths. Each has only a few external 
 |set_file_path(str)   | sets the file names from a JSON file of named paths or a single .csv file or a directory of .csv files |
 
 There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
+
+You also have options for providing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named paths here</a>.
 
 This is a very basic programmatic use of CsvPath. For lots more examples, see the unit tests.
 
