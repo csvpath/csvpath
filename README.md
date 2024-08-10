@@ -28,13 +28,13 @@ The root of a csvpath starts with `$`. The match and scan parts are enclosed by 
 
 A very simple csvpath might look like this:
 
-```$filename[*][yes()]```
+```bash $filename[*][yes()]```
 
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
 A slightly more functional csvpath could look like this:
 
-```typescript
+```bash
         $people.csv[*][
            @two_names = count(not(#middle_name))
            last() -> print("There are $.variables.two_names people with only two names")]
