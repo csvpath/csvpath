@@ -53,18 +53,22 @@ Interactive use of csvpaths can be valuable, too, of course. There is a simple R
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/dk107dk/csvpath'>git repo is here</a>.
 
 Two classes do all the work: CsvPath and CsvPaths. Each has only a few external methods.
-- CsvPath
-  - parse(pathstring) applies a csvpath
-  - next() iterates over the matched rows returning each matched row as a list
-  - fast_forward(int) processes n rows
-  - collect(int) processes n rows and collects the lines that matched as lists
-- CsvPaths
-  - csvpath() gets a CsvPath that knows all the file names available
-  - set_named_files(Dict[str,str]) sets the file names as a dict of named paths
-  - set_file_path(str) sets the file names from:
-    - a JSON file of named paths or
-    - a single .csv file or
-    - a directory of .csv files
+
+### CsvPath
+|method               |function              |
+|---------------------|----------------------|
+|parse(csvpath)       | applies a csvpath    |
+|next()               | iterates over matched rows returning each matched row as a list|
+|fast_forward()       | iterates over the file collecting variables and side effects |
+|advance(n)           | skips forward n rows from within a `for row in path.next()` loop|
+|collect(int)         | processes n rows and collects the lines that matched as lists |
+
+### CsvPaths
+|method               |function              |
+|---------------------|----------------------|
+|csvpath()            | gets a CsvPath that knows all the file names available |
+|set_named_files(Dict[str,str])| sets the file names as a dict of named paths |
+|set_file_path(str)   | sets the file names from a JSON file of named paths or a single .csv file or a directory of .csv files |
 
 There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
 

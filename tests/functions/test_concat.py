@@ -25,6 +25,6 @@ class TestFunctionsConcat(unittest.TestCase):
                                [ @bs = concat("B" , "ird", "s") ]
                    """
         )
-        path.fast_forward()
+        path.collect()
         print(f"test_function_concat: variables: {path.variables}")
         assert path.variables["bs"] == "Birds"

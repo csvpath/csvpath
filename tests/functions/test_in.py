@@ -69,7 +69,7 @@ class TestFunctionsIn(unittest.TestCase):
                         ]
                     """
         )
-        path.fast_forward()
+        path.collect()
         print(f"test_function_first: path vars: {path.variables}")
         assert "year" in path.variables
         assert path.variables["year"]["1643"] == 4

@@ -38,8 +38,6 @@ class CsvPath:
         self.delimiter = delimiter
         self.quotechar = quotechar
         self.total_lines = -1
-        self._dump_json = False
-        self._collect_matchers = False
         self.matchers = []
         self.jsons = []
         self.matcher = None
@@ -48,9 +46,7 @@ class CsvPath:
         self.last_row_time = -1
         self.rows_time = -1
         self.total_iteration_time = -1
-
-    def dump_json(self):
-        self._dump_json = not self._dump_json
+        self._advance = 0
 
     def parse(self, data):
         # start = time.time()
@@ -127,39 +123,42 @@ class CsvPath:
         """
 
     @property
-    def from_line(self):
+    def from_line(self):  # pragma: no cover
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.from_line
 
     @property
-    def to_line(self):
+    def to_line(self):  # pragma: no cover
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.to_line
 
     @property
-    def all_lines(self):
+    def all_lines(self):  # pragma: no cover
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.all_lines
 
     @property
-    def path(self):
+    def path(self):  # pragma: no cover
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.path
 
     @property
-    def these(self):
+    def these(self):  # pragma: no cover
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.these
 
+    def stop(self) -> None:
+        self.stopped = True
+
     def collect(self, nexts: int = -1) -> List[List[Any]]:
         if nexts < -1:
             raise ProcessingException(
-                "nexts must be >= -1. -1 means collect to the end of the file"
+                "Input must be >= -1. -1 means collect to the end of the file."
             )
         lines = []
         for _ in self.next():
@@ -173,26 +172,27 @@ class CsvPath:
                 break
         return lines
 
-    def fast_forward(self, nexts: int = -1) -> None:
-        if nexts < -1:
-            raise ProcessingException(
-                "Input must be >= -1. -1 means ff to the end of the file"
-            )
-        for _ in self.next():
-            if nexts == -1:
-                continue
-            elif nexts > 1:
-                nexts -= 1
-            else:
-                break
-        return
+    def advance(self, ff: int = -1) -> None:
+        """Advances the iteration by ff rows. The rows will be seen and
+        variables and side effects will happen.
+        """
+        if ff == -1:
+            self._advance = self.total_lines - self.line_number - self._advance
+        else:
+            self._advance += ff
+        if self._advance > self.total_lines:
+            self._advance = self.total_lines
 
-    def stop(self) -> None:
-        self.stopped = True
+    def fast_forward(self) -> None:
+        """Runs the path for all rows of the file. Variables are collected
+        and side effects like print happen. No lines are collected.
+        """
+        for _ in self.next():
+            pass
 
     def next(self):
         if self.scanner.filename is None:
-            raise FileException("there is no filename")
+            raise FileException("There is no filename")
         with open(self.scanner.filename, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
@@ -208,7 +208,10 @@ class CsvPath:
                     endmatch = time.perf_counter_ns()
                     if b:
                         self.match_count = self.match_count + 1
-                        yield line
+                        if self._advance != 0:
+                            self._advance -= 1
+                        else:
+                            yield line
                     t = (endmatch - startmatch) / 1000000
                     self.last_row_time = t
                     self.rows_time += t
@@ -279,9 +282,6 @@ class CsvPath:
     def current_match_count(self) -> int:
         return self.match_count
 
-    def collect_matchers(self):
-        self._collect_matchers = not self._collect_matchers
-
     def matches(self, line) -> bool:
         if not self.match:
             return True
@@ -292,21 +292,12 @@ class CsvPath:
         else:
             self.matcher.reset()
             self.matcher.line = line
-        matcher = self.matcher
-
-        if self._dump_json:
-            jsonstr = ExpressionEncoder().valued_list_to_json(matcher.expressions)
-            self.jsons.append(jsonstr)
-
-        matched = matcher.matches()
-        if self._collect_matchers:
-            self.matchers.append(matcher)
-
+        matched = self.matcher.matches()
         return matched
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         if not name:
-            raise VariableException("name cannot be None")
+            raise VariableException("Name cannot be None")
         if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}
@@ -319,7 +310,7 @@ class CsvPath:
         self, name: str, *, tracking: Any = None, set_if_none: Any = None
     ) -> Any:
         if not name:
-            raise VariableException("name cannot be None")
+            raise VariableException("Name cannot be None")
         thevalue = None
         if tracking is not None:
             thedict = None
@@ -381,6 +372,8 @@ class CsvPath:
                 yield f"0..{to_line}"
 
     def collect_line_numbers(self) -> List[int | str]:
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         these = self.scanner.these
         from_line = self.scanner.from_line
         to_line = self.scanner.to_line

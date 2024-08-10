@@ -47,3 +47,72 @@ class TestCsvPath(unittest.TestCase):
         for i, ln in enumerate(path.next()):
             assert path.get_variable("me") == i + 1
             print(f'...{i} = {path.get_variable("me")}')
+
+    def test_header_counting(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[2-4][@me = count()]")
+        assert path.header_index("lastname") == 1
+
+    def test_collect_line_numbers(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[2-4][@me = count()]")
+        lns = path.collect_line_numbers()
+        print(f"test_collect_line_numbers: lns: {lns}")
+        assert lns == [2, 3, 4]
+
+        path = CsvPath()
+        path.parse(f"${PATH}[2*][@me = count()]")
+        lns = path.collect_line_numbers()
+        print(f"test_collect_line_numbers: lns: {lns}")
+        assert lns == ["2..."]
+
+        path = CsvPath()
+        path.parse(f"${PATH}[3-0][@me = count()]")
+        lns = path.collect_line_numbers()
+        print(f"test_collect_line_numbers: lns: {lns}")
+        assert lns == [0, 1, 2, 3]
+
+        path = CsvPath()
+        path.parse(f"${PATH}[3+0+5+1][@me = count()]")
+        lns = path.collect_line_numbers()
+        print(f"test_collect_line_numbers: lns: {lns}")
+        assert lns == [3, 0, 5, 1]
+
+    def test_ff(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[*][@me = count()]")
+        print("")
+
+        assert path._advance == 0
+        path.advance(1)
+        assert path._advance == 1
+        for _ in path.next():
+            print(f"test_ff: _: {_}")
+            assert _[0] == "David"
+            break
+
+        i = 0
+        for _ in path.next():
+            if i == 0:
+                print(f"test_ff: _: {_}")
+                assert _[0] == "firstname"
+                i += 1
+                path.advance(4)
+            elif i == 1:
+                assert _[0] == "Bird"
+                i += 1
+            else:
+                pass
+
+        for _ in path.next():
+            path.advance(14)
+            assert path._advance == 8
+
+        path = CsvPath()
+        path.parse(f"${PATH}[*][@me = count()]")
+        i = 0
+        for _ in path.next():
+            path.advance(-1)
+            assert path._advance == 8
+            i += 1
+        assert i == 1
