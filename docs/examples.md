@@ -15,7 +15,8 @@ These are simple examples of csvpath match parts. Test them yourself before rely
 ```
 
 2. Create a file
-<pre>
+
+```bash
     [ ~Create a new CSV file sampling sales greater than $2000 in a region~
         #region == or( "emea", "us" )
         @r = random(0,1)
@@ -28,10 +29,11 @@ These are simple examples of csvpath match parts. Test them yourself before rely
         @r == 1 ->
                 print("$.variables.line, $.headers.region, $.variables.ave, $.headers.sale, $.headers.seller")
     ]
-</pre>
+```
 
 3. Validate a file
-<pre>
+
+```bash
     [ ~Apply five rules to check if this file meets expectations~
         @last_age.onchange = @current_age
         @current_age = #age
@@ -42,10 +44,11 @@ These are simple examples of csvpath match parts. Test them yourself before rely
         not(in(#title, "ceo|minon"))    -> print( "$.line_count: title cannot be $.headers.title")
         gt(@last_age, @current_age)     -> print( "$.line_count: check age, it went down!")
     ]
-</pre>
+```
 
 4. Find a first value
-<pre>
+
+```bash
     [ ~ Find the first times fruit were the most popular and the most recent popular fruit ~
         @fruit = in( #food, "Apple|Pear|Blueberry")
         exists( @fruit.asbool )
@@ -53,8 +56,7 @@ These are simple examples of csvpath match parts. Test them yourself before rely
         @fruit.asbool -> print("$.headers.food was the most popular food for the first time in $.headers.year")
         last.nocontrib() -> print("First years for a type of fruit: $.variables.year")
     ]
-</pre>
-
+```
 
 
 
