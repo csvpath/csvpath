@@ -32,6 +32,8 @@ class ExpressionUtility:
             ret = False
         elif f"{v}".lower().strip() == "false":
             ret = False
+        elif v is True:
+            ret = True
         elif f"{v}".lower().strip() == "true":
             ret = True
         else:
@@ -75,11 +77,10 @@ class ExpressionUtility:
             dotted = True
             dots = s.split(".")
             for d in dots:
-                if not cls._is_underscored_or_simple(d):
-                    dotted = False
+                dotted = cls._is_underscored_or_simple(d)
+                if dotted is False:
                     break
-            if dotted:
-                ret = dotted
+            ret = dotted
         else:
             ret = cls._is_underscored_or_simple(s)
         return ret
@@ -89,6 +90,8 @@ class ExpressionUtility:
         us = s.split("_")
         ret = True
         for u in us:
+            if u.strip() == "":
+                continue
             if not u.isalnum():
                 ret = False
                 break
@@ -106,16 +109,3 @@ class ExpressionUtility:
             else:
                 break
         return hashlib.sha256(id.encode("utf-8")).hexdigest()
-
-    @classmethod
-    def _dotted(self, s, o):
-        if o is None:
-            return s
-        cs = str(o.__class__)
-        cs = cs[cs.rfind(".") :]
-        c = cs[0 : cs.find("'")]
-        s = f"{c}{s}"
-        try:
-            return self._dotted(s, o.parent)
-        except Exception:
-            return s

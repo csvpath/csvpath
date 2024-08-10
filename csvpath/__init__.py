@@ -1,3 +1,11 @@
+from csvpath.exceptions import (
+    InputException,
+    ParsingException,
+    FormatException,
+    FileException,
+    ProcessingException,
+    VariableException,
+)
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from csvpath.scanning.scanner import Scanner

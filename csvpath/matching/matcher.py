@@ -4,7 +4,7 @@ from csvpath.parser_utility import ParserUtility
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from .productions import *
 from .functions.function_factory import FunctionFactory
-from ..exceptions import InputException
+from .exceptions import MatchException
 from typing import Any
 
 
@@ -16,7 +16,7 @@ class Matcher:
             # raise Exception("no headers!")
             print("\nWARNING: no headers available. this is only Ok for unit testing.")
         if not data:
-            raise InputException(f"need data input: data: {data}")
+            raise MatchException(f"need data input: data: {data}")
         self.path = data
         self.csvpath = csvpath
         self.line = line
@@ -128,7 +128,7 @@ class Matcher:
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-        raise InputException("halting for error")
+        raise MatchException("Halting matching for error")
 
     def p_match_part(self, p):
         """match_part : LEFT_BRACKET expression RIGHT_BRACKET

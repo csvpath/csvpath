@@ -1,7 +1,8 @@
-from csvpath.csvpath import CsvPath, NoFileException
 from typing import Dict, List, Any
 import os
 import json
+from . import CsvPath
+from . import FileException
 
 
 class CsvPaths:

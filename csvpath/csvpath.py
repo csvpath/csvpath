@@ -5,14 +5,14 @@ from collections.abc import Iterator
 from . import Matcher
 from . import Scanner
 from . import ExpressionEncoder
-
-
-class NoFileException(Exception):
-    pass
-
-
-class FormatException(Exception):
-    pass
+from . import (
+    VariableException,
+    InputException,
+    FileException,
+    ParsingException,
+    FormatException,
+    ProcessingException,
+)
 
 
 class CsvPath:
@@ -68,7 +68,7 @@ class CsvPath:
 
     def _update_file_path(self, data: str):
         if data is None:
-            raise FormatException("data, the csvpath string, cannot be None")
+            raise InputException("The csvpath string cannot be None")
         if self.csvpaths is None:
             return data
         name = self._get_name(data)
@@ -93,6 +93,8 @@ class CsvPath:
             return data
 
     def _find_scan_match_modify(self, data):
+        if data is None or not isinstance(data, str):
+            raise InputException("Not a csvpath string")
         scan = ""
         matches = ""
         modify = ""
@@ -126,27 +128,37 @@ class CsvPath:
 
     @property
     def from_line(self):
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.from_line
 
     @property
     def to_line(self):
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.to_line
 
     @property
     def all_lines(self):
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.all_lines
 
     @property
     def path(self):
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.path
 
     @property
     def these(self):
+        if self.scanner is None:
+            raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.these
 
     def collect(self, nexts: int = -1) -> List[List[Any]]:
         if nexts < -1:
-            raise Exception(
+            raise ProcessingException(
                 "nexts must be >= -1. -1 means collect to the end of the file"
             )
         lines = []
@@ -163,7 +175,9 @@ class CsvPath:
 
     def fast_forward(self, nexts: int = -1) -> None:
         if nexts < -1:
-            raise Exception("nexts must be >= -1. -1 means ff to the end of the file")
+            raise ProcessingException(
+                "Input must be >= -1. -1 means ff to the end of the file"
+            )
         for _ in self.next():
             if nexts == -1:
                 continue
@@ -178,7 +192,7 @@ class CsvPath:
 
     def next(self):
         if self.scanner.filename is None:
-            raise NoFileException("there is no filename")
+            raise FileException("there is no filename")
         with open(self.scanner.filename, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
@@ -292,7 +306,7 @@ class CsvPath:
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         if not name:
-            raise Exception("name cannot be None")
+            raise VariableException("name cannot be None")
         if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}
@@ -305,7 +319,7 @@ class CsvPath:
         self, name: str, *, tracking: Any = None, set_if_none: Any = None
     ) -> Any:
         if not name:
-            raise Exception("name cannot be None")
+            raise VariableException("name cannot be None")
         thevalue = None
         if tracking is not None:
             thedict = None

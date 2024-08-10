@@ -2,11 +2,7 @@ import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from csvpath.parser_utility import ParserUtility
 from typing import List
-from ..exceptions import InputException
-
-
-class UnexpectedException(Exception):
-    pass
+from .exceptions import ScanException, UnexpectedException
 
 
 class Scanner(object):
@@ -88,13 +84,13 @@ class Scanner(object):
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-        raise InputException("halting for error")
+        raise ScanException("Halting for scanner parsing error")
 
     def p_path(self, p):
         "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"
         filename = p[1].strip()
         if filename[0] != "$":
-            raise InputException("Filename must begin with '$'")
+            raise ScanException("Filename must begin with '$'")
         self.filename = filename[1:]
         p[0] = p[3]
 
@@ -139,10 +135,7 @@ class Scanner(object):
 
     def _collect_a_line_range(self, p):
         if not isinstance(p[1], list):
-            raise UnexpectedException("non array in p[1]")
-        #
-        # if we continue to not raise unexpected exception we should remove the array tests!
-        #
+            raise UnexpectedException("Non array in p[1]. You should fix this.")
         if self.from_line and self.to_line:
             # we have a from and to range. we have to move the range into
             # these, then add this new range to these too
@@ -158,13 +151,13 @@ class Scanner(object):
             elif isinstance(p[1], list):
                 pass  # this is a list of several items -- i.e. it is self.these
             else:
-                raise UnexpectedException("non array in p[1]")
+                raise UnexpectedException("Non array in p[1]. You should fix this.")
                 self.from_line = p[1]  # does this ever happen?
 
             if isinstance(p[3], list):
                 self.to_line = p[3][0]
             else:
-                raise UnexpectedException("non array in p[3]")
+                raise UnexpectedException("Non array in p[3]. You should fix this.")
                 self.to_line = p[3]  # does this ever happen?
             # if we have a multi-element list on the left we set a range
             # using the last item in the list as the from_line and
