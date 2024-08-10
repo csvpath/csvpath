@@ -4,7 +4,7 @@
 These are simple examples of csvpath match parts. Test them yourself before relying on them. See the unit test for more simple path ideas.
 
 1. Find a value
-<pre>
+
 ```bash
     [ ~A running average of ages between 5 and 85~
         gt(#age, 4)
@@ -13,7 +13,6 @@ These are simple examples of csvpath match parts. Test them yourself before rely
         last.nocontrib() -> print("The average age between 5 and 85 is $.variables.average_age")
     ]
 ```
-</pre>
 
 2. Create a file
 <pre>
