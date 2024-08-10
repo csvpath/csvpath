@@ -100,13 +100,12 @@ The csvpath says:
 Another path that does the same thing a bit more simply might look like:
 
 ```bash
-    """$test.csv[5-25]
+    $test.csv[5-25]
         [
             #0=="Frog"
             @lastname.onmatch="Bats"
             count()==2 -> print( "$.match_count: $.line")
         ]
-    """
 ```
 
 In this case we're using the "when" operator, `->`, to determine when to print.
