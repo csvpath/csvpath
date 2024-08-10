@@ -8,9 +8,6 @@ class Random(Function):
         if self in skip:
             return self._noop_value()
         if len(self.children) != 1:
-            self.matcher.print(
-                f"Random.to_value: must have 1 equality child: {self.children}"
-            )
             raise ChildrenException("Random function must have 1 child")
         if self.value is None:
             lower = self.children[0].left.to_value()
