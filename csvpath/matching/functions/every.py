@@ -5,12 +5,12 @@ from ..productions import Equality
 
 class Every(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         return self.matches(skip=skip)
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
 
         if self.value is None:

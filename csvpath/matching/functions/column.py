@@ -5,7 +5,7 @@ from ..productions import Term
 
 class Column(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.children and len(self.children) != 1:
             raise ChildrenException("Column must have a child")
@@ -25,4 +25,4 @@ class Column(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover

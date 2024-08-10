@@ -5,7 +5,7 @@ from ..productions import Equality
 
 class Increment(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
             # return True
         if self.children and not len(self.children) == 1:

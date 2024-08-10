@@ -4,7 +4,7 @@ from .function import Function
 
 class Count(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
             # return self.value if self.value is not None else True
         if self.value is None:
@@ -18,7 +18,7 @@ class Count(Function):
         return self.value  # or not. we have to act as if.
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:

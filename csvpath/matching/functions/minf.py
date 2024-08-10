@@ -91,7 +91,7 @@ class Min(MinMax):
         super().__init__(matcher, name, child)
 
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
@@ -107,7 +107,7 @@ class Min(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover
 
 
 class Max(MinMax):
@@ -115,7 +115,7 @@ class Max(MinMax):
         super().__init__(matcher, name, child)
 
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
@@ -131,7 +131,7 @@ class Max(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover
 
 
 class Average(MinMax):
@@ -142,7 +142,7 @@ class Average(MinMax):
         self.ave_or_med = ave_or_med
 
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.children and not len(self.children) == 1:
             raise ChildrenException("must have a child")
@@ -177,4 +177,4 @@ class Average(MinMax):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_value()
+        return self._noop_value()  # pragma: no cover

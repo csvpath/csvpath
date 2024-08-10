@@ -5,9 +5,8 @@ import datetime
 
 class Now(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
-            # return True
         if len(self.children) > 1:
             raise ChildrenException(
                 "now function may have only a single child that gives a format"
@@ -24,5 +23,4 @@ class Now(Function):
         return xs
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
-        # return True  # always matches because not internally matchable
+        return self._noop_match()  # pragma: no cover

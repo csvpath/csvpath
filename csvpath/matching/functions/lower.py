@@ -4,7 +4,7 @@ from .function import Function, ChildrenException
 
 class Lower(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Lower function must have 1 child")

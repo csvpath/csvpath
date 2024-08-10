@@ -4,7 +4,7 @@ from .function import Function, ChildrenException
 
 class PercentUnique(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Percent function must have 1 header child")
@@ -31,7 +31,7 @@ class PercentUnique(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         return v is not None

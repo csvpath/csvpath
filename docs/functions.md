@@ -76,11 +76,11 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> concat(value, value, ...)          </td><td> joins any number of values                 </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/jinja.md'>jinja(value, value)</a>  </td><td> applies a Jinja2 template                           </td></tr>
 <tr><td>           </td><td> length(value)                 </td><td> returns the length of the value                           </td></tr>
-<tr><td>           </td><td> lower(value)                  </td><td> makes value lowercase                                     </td></tr>
+<tr><td>           </td><td> lower(value)                  </td><td> makes a value lowercase                                     </td></tr>
 <tr><td>           </td><td> regex(regex-string, value)    </td><td> match on a regular expression                             </td></tr>
 <tr><td>           </td><td> strip(value)                  </td><td> trims off whitespace     </td></tr>
 <tr><td>           </td><td> substring(value, int)         </td><td> returns the first n chars from the value                  </td></tr>
-<tr><td>           </td><td> upper(value)                  </td><td> makes value uppercase                                     </td></tr>
+<tr><td>           </td><td> upper(value)                  </td><td> makes a value uppercase                                     </td></tr>
 <tr><td> Columns   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> column(value)                 </td><td> returns column name for an index or index for a name      </td></tr>

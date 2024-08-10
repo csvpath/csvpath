@@ -29,10 +29,15 @@ class Function(Matchable):
         return self.value if self.value is not None else self._noop_match()
 
     def to_value(self, *, skip=[]) -> bool:
+        #
+        # in most cases, even trivial ones, a function overrides this method.
+        #
         if self in skip:
             return True
         if self._function_or_equality:
             if not self._function_or_equality.matches(skip=skip):
                 return False
-        print("WARNING: function getting to_value defaulting to True")
-        return True  # leave this for now for testing
+        print(
+            "WARNING: Function.to_value defaulting to True. You should probably override this method."
+        )
+        return True

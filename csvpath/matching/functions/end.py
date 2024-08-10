@@ -5,7 +5,7 @@ from ..productions.term import Term
 
 class End(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.children and len(self.children) > 1:
             raise ChildrenException("end must have 0 or 1 child")
@@ -28,6 +28,6 @@ class End(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
         return self.to_value(skip=skip) is not None

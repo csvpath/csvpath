@@ -5,7 +5,7 @@ from random import randrange
 
 class Random(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException("Random function must have 1 child")
@@ -27,4 +27,4 @@ class Random(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_value()
+        return self._noop_value()  # pragma: no cover

@@ -5,7 +5,7 @@ from ..productions import Equality
 
 class Divide(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             if len(self.children) != 1:
@@ -29,4 +29,4 @@ class Divide(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover

@@ -4,7 +4,7 @@ from .function import Function, ChildrenException
 
 class Percent(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
             raise ChildrenException(
@@ -26,7 +26,7 @@ class Percent(Function):
         return value
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         return v is not None

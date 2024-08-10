@@ -15,7 +15,7 @@ class First(Function):
         self._my_value_or_none = First.NEVER
 
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._my_value_or_none
         if len(self.children) != 1:
             self.matcher.print(f"First.to_value: must have 1 child: {self.children}")
@@ -48,7 +48,7 @@ class First(Function):
         return self._my_value_or_none
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return True
         om = self.has_onmatch()
         if om and not self.line_matches():

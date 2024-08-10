@@ -5,14 +5,13 @@ from ..productions import Equality
 
 class Or(Function):
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         return self.matches(skip=skip)
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
-            # return True
         else:
             skip.append(self)
         if not self.value:

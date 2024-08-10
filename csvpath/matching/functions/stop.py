@@ -8,7 +8,7 @@ class Stop(Function):
         return self.matches(skip=skip)
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return False
         if self.children and len(self.children) >= 2:
             raise ChildrenException("Stop must have 1 or 0 children")

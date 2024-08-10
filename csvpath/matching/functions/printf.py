@@ -25,7 +25,7 @@ class Print(Function):
     ]
 
     def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             if len(self.children) != 1:
@@ -35,7 +35,7 @@ class Print(Function):
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+        if self in skip:  # pragma: no cover
             return self._noop_match()
         if len(self.children) != 1:
             raise ChildrenException("must be 1 child, equality or print string")
