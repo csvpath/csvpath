@@ -26,7 +26,7 @@ Every other item of data is considered a match
     [ @a.asbool = all() ]
 ```
 
-This csvpath matches when `all()` returns True. The test depends on `all()`'s result because the variable being assigned has the `asbool` qualifier.
+This csvpath matches when `all()` returns True. The row match depends on `all()`'s result because the variable being assigned has the `asbool` qualifier. Without the `asbool` the assignment would allow the row to match, regardless of the value `a` is set to.
 
 ```bash
     [ all(#firstname, #middlename, #lastname) ]
