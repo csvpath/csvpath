@@ -22,15 +22,18 @@ As noted above, you can use the `CsvPaths` class to set up a list of named file 
 
 You can then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in the CsvPaths object's named paths dict. This use is nearly transparent:
 
+```python
     paths = CsvPaths(filename = "my_named_paths.json")
     path = paths.csvpath()
     path.parse( """$test[*][#firstname=="Fred"]""" )
     path.collect()
+```
 
 If my_named_paths.json contains the following structure, the name `test` will be used to find `tests/test_resources/test.csv`. The parse method will apply the csvpath and the collect method will gather all the matched rows.
 
+```json
     { "test":"test/test_resources/test.csv" }
-
+```
 
 
 
