@@ -3,6 +3,7 @@ import os
 import json
 from . import CsvPath
 from . import FileException
+from . import ConfigurationException
 
 
 class CsvPaths:
@@ -40,6 +41,12 @@ class CsvPaths:
 
     def add_named_path(self, name: str, path: str) -> None:
         self.named_paths[name] = path
+
+    def get_named_path(self, name: str) -> str:
+        if name not in self.named_paths:
+            names = [_ for _ in self.named_paths]
+            raise ConfigurationException(f"There is no path named {name} in {names}")
+        return self.named_paths[name]
 
     def remove_named_path(self, name: str) -> None:
         if name in self.named_paths:

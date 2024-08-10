@@ -5,6 +5,7 @@ from csvpath.exceptions import (
     FileException,
     ProcessingException,
     VariableException,
+    ConfigurationException,
 )
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.expression_encoder import ExpressionEncoder

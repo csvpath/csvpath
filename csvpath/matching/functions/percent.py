@@ -7,7 +7,6 @@ class Percent(Function):
         if self in skip:
             return self._noop_value()
         if len(self.children) != 1:
-            self.matcher.print(f"Lower.to_value: must have 1 child: {self.children}")
             raise ChildrenException(
                 "Percent function must have 1 child: line|scan|match"
             )

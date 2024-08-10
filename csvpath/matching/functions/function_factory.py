@@ -15,6 +15,7 @@ from .above import Above
 from .first import First
 from .count_lines import CountLines
 from .count_scans import CountScans
+from .count_headers import CountHeaders
 from .orf import Or
 from .no import No
 from .yes import Yes
@@ -44,6 +45,7 @@ from .strip import Strip
 from .jinjaf import Jinjaf
 from .correlate import Correlate
 from .lookup import Lookup
+from .percent_unique import PercentUnique
 
 
 class UnknownFunctionException(Exception):
@@ -209,6 +211,10 @@ class FunctionFactory:
             f = Correlate(matcher, name, child)
         elif name == "lookup":
             f = Lookup(matcher, name, child)
+        elif name == "count_headers":
+            f = CountHeaders(matcher, name, child)
+        elif name == "percent_unique":
+            f = PercentUnique(matcher, name, child)
         else:
             if (
                 f is None

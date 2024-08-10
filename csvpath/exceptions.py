@@ -1,3 +1,9 @@
+class ConfigurationException(Exception):
+    """for when CsvPaths is incorrectly setup or some other config problem"""
+
+    pass
+
+
 class ParsingException(Exception):
     """for when the parsers fail for reasons beyond malformed csvpaths"""
 

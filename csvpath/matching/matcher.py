@@ -128,7 +128,9 @@ class Matcher:
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-        raise MatchException(f"Halting matching for error on {p.type}")
+        raise MatchException(
+            f"Halting matching for error on {None if p is None else p.type}"
+        )
 
     def p_match_part(self, p):
         """match_part : LEFT_BRACKET expression RIGHT_BRACKET

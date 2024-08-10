@@ -13,10 +13,12 @@ class TestFunctionsVariables(unittest.TestCase):
         path.parse(
             f"""${PATH}[*]
                             [
-                                tally(#lastname) no()
+                                tally(#lastname)
+                                @ah.so = #firstname
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
                                 last() -> @lastname.Bat = "fred"
+                                no()
                             ]
                    """
         )
@@ -25,3 +27,4 @@ class TestFunctionsVariables(unittest.TestCase):
         assert path.variables["lastname"]["Bat"] == "fred"
         assert path.variables["hmmm"] == 7
         assert path.variables["ohhh"] is None
+        assert path.variables["ah"]["so"]
