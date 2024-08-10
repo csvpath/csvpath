@@ -28,6 +28,7 @@ Your function must inherit from Function. It may implement `__init__` and take a
 
 A very simple function might look like:
 
+```python
     class MyFunction(Function):
         def to_value(self, skip=[]):
             if self in skip:
@@ -47,6 +48,7 @@ A very simple function might look like:
                 self.calculate_stuff()
                 #
             return self.match
+```
 
 In the common case the match depends on the value. In some cases, however, the value depends on the match. When the value is dependent and your function finds itself in the skip list return a call to `self.match()`; otherwise, call `self._noop_value()`. In either case when the match finds `self` in the skip list it should return `self._noop_match()`.
 
