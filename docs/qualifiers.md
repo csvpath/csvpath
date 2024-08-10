@@ -63,7 +63,9 @@ Add `onchange` to a variable to indicate that a row should only match when the v
 | Yes      | No      | Yes       |
 
 ## Arbitrary Names
-You can also add an arbitrary string to a function name. This additional name is for the function's internal use, typically to name a variable.
+You can also add an arbitrary string to a function name or a variable.
+
+When used with functions, this additional name is for the function's internal use, typically to name a variable.
 
 As an example, the `tally()` function sets an internal variable under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
 
@@ -71,9 +73,13 @@ As an example, the `tally()` function sets an internal variable under the key 't
     $test[*][ tally.my_tally(#firstname) tally.my_other_tally(#lastname)]
 ```
 
+When an arbitrary string qualifier is added to a variable name it is treated as a tracking value. A tracking value is used to turn a variable into a dictionary of tracked values. For e.g.
 
+```bash
+    $test[1][ @friend.firstname = #firstname @friend.lastname = #lastname ]
+```
 
-
+This path creates a `friend` variable as a dictionary. The `friend` dictionary has `firstname` and `lastname` keys. The value of the keys are set to the corresponding header value.
 
 
 
