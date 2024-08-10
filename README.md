@@ -4,7 +4,7 @@
 CsvPath defines a declarative syntax for inspecting and validating CSV files. Though much simpler, it is inspired by:
 
 - XPath. CsvPath is to CSV files like XPath is to XML files.
-- Validation of XML using Schematron rules
+- Validation of XML using <a href='https://schematron.com/'>Schematron rules</a>
 - The way CSS selectors pick out HTML structures
 
 CsvPath' goal is to make it easy to:
