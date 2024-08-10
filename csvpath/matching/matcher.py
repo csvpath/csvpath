@@ -191,10 +191,14 @@ class Matcher:
                  | term op var_or_header
                  | term op term
                  | term op function
-                 | equality op equality
+                 | equality COMMA equality
                  | equality op term
                  | equality op function
+                 | equality COMMA var_or_header
+                 | equality COMMA term
+                 | equality COMMA function
         """
+        # | equality op equality
         e = Equality(self)
         e.left = p[1]
         e.set_operation(p[2])

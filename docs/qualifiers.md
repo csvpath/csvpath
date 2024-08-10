@@ -67,7 +67,7 @@ You can also add an arbitrary string to a function name or a variable.
 
 When used with functions, this additional name is for the function's internal use, typically to name a variable.
 
-As an example, the `tally()` function sets an internal variable under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
+As an example, the `tally()` function sets an internal variable under the key `tally`. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
 
 ```bash
     $test[*][ tally.my_tally(#firstname) tally.my_other_tally(#lastname)]

@@ -50,7 +50,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>
 <tr><td>           </td><td> divide(value, value, ...)     </td><td> divides numbers                                           </td></tr>
 <tr><td>           </td><td> multiply(value, value, ...)   </td><td> multiplies numbers                                        </td></tr>
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/subtract.md'>subtract(value, value, ...)</a> or minus(int)    </td><td> subtracts numbers or makes a number negative                                        </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/subtract.md'>subtract(value, value, ...)</a>    </td><td> subtracts numbers or makes a number negative                                        </td></tr>
 <tr><td>           </td><td> after(value)                  </td><td> finds things after a date, number, string                 </td></tr>
 <tr><td>           </td><td> before(value)                 </td><td> finds things before a date, number, string                </td></tr>
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>

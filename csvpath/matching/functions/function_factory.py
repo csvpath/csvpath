@@ -46,6 +46,7 @@ from .jinjaf import Jinjaf
 from .correlate import Correlate
 from .lookup import Lookup
 from .percent_unique import PercentUnique
+from .all import All
 
 
 class UnknownFunctionException(Exception):
@@ -215,6 +216,8 @@ class FunctionFactory:
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
             f = PercentUnique(matcher, name, child)
+        elif name == "all":
+            f = All(matcher, name, child)
         else:
             if (
                 f is None
