@@ -34,9 +34,10 @@ This path says open the file named `filename`, scan all the lines, and match eve
 
 A slightly more functional csvpath could look like this:
 
-```$people.csv[*][
-         @two_names = count(not(#middle_name))
-         last() -> print("There are $.variables.two_names people with only two names")]
+```typescript
+        $people.csv[*][
+           @two_names = count(not(#middle_name))
+           last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
 This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
@@ -75,7 +76,8 @@ There are several ways to set up csvpath file references. Read <a href='https://
 
 This is a very basic programmatic use of CsvPath. For lots more examples, see the unit tests.
 
-``` path = CsvPath()
+```python
+    path = CsvPath()
     path.parse("""$test.csv[5-25]
                     [
                         #0=="Frog"
