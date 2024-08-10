@@ -28,7 +28,9 @@ The root of a csvpath starts with `$`. The match and scan parts are enclosed by 
 
 A very simple csvpath might look like this:
 
-```bash $filename[*][yes()]```
+```bash
+    $filename[*][yes()]
+```
 
 This path says open the file named `filename`, scan all the lines, and match every line scanned.
 
@@ -97,6 +99,7 @@ The csvpath says:
 
 Another path that does the same thing a bit more simply might look like:
 
+```bash
     """$test.csv[5-25]
         [
             #0=="Frog"
@@ -104,6 +107,7 @@ Another path that does the same thing a bit more simply might look like:
             count()==2 -> print( "$.match_count: $.line")
         ]
     """
+```
 
 In this case we're using the "when" operator, `->`, to determine when to print.
 
@@ -122,8 +126,10 @@ CsvPath paths can be used for rules based validation. Rules based validation che
 
 There is no "standard" way to do CsvPath validation. The simplest way is to create csvpaths that print a validation message when a rule fails. For example:
 
+```bash
     $test.csv[*][@failed = equals(#firstname, "Frog")
                  @failed.asbool -> print("Error: Check line $.line_count for a row with the name Frog")]
+```
 
 Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule.
 
@@ -131,8 +137,10 @@ Several rules can exist in the same csvpath for convenience and/or performance. 
 
 Csvpaths can use the `print` function to generate new file content on system out. Redirecting the output to a file is an easy way to create a new CSV file based on an existing file. For e.g.
 
+```bash
     $test.csv[*][ line_count()==0 -> print("lastname, firstname, say")
                   above(line_count(), 0) -> print("$.headers.lastname, $.headers.firstname, $.headers.say")]
+```
 
 This csvpath reorders the headers of the test file at `tests/test_resources/test.csv`. The output file will have a header row.
 
@@ -210,20 +218,28 @@ You can comment out components of a csvpath's match part using wrapping `~`. Com
 
 Examples:
 
+```bash
     [ count() ~ this is a comment~ ]
+```
+
+```bash
     [ ~this path is
        just experimental ~ any() ]
-
+```
 
 ## The when operator
 
 `->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
 
+```bash
     [ last() -> print("this is the last line") ]
+```
 
 Prints `this is the last line` just before the scan ends.
 
+```bash
     [ exists(#0) -> @firstname = #0 ]
+```
 
 Says to set the `firstname` variable to the value of the first column when the first column has a value.
 
@@ -236,7 +252,9 @@ Qualifiers are tokens added to variable, header, and function names. They are se
 <a name="examples"></a>
 ## More Examples
 
+```bash
     [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
+```
 
 In the path above, the rules applied are:
 - The exists test of `#common_name` checks if the column with the header "common_name" has a value. Headers are named for whatever values are found in the 0th row. They indicate a column in the row being checked for match.
