@@ -72,7 +72,6 @@ class CsvPaths:
 
     def update_file_path(self, name_or_path: str) -> str:
         ret = None
-        print(f"CsvPaths.update_file_path: named_files: {self.named_files}")
         if self.named_files is not None and name_or_path in self.named_files:
             ret = self.named_files.get(name_or_path)
         else:

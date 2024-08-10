@@ -226,6 +226,14 @@ class CsvPath:
             return self.get_total_lines_and_headers()
         return self.total_lines
 
+    """
+    def correctEncoding(filename, newFilename, encoding_from, encoding_to='UTF-8'):
+        with open(filename, 'r', encoding=encoding_from) as fr:
+            with open(newFilename, 'w', encoding=encoding_to) as fw:
+                for line in fr:
+                    fw.write(line[:-1]+'\r\n')
+    """
+
     def get_total_lines_and_headers(self) -> int:
         # do we need a way to disable the line count to speed up big files?
         if self.total_lines == -1:

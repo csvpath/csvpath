@@ -58,6 +58,48 @@ These are simple examples of csvpath match parts. Test them yourself before rely
     ]
 ```
 
+5. Keep it simple
 
+This works:
+
+```bash
+    $/User/fred/some_dir/csvpaths/test.csv[*][
+        line_count() == 1 -> print("$.headers")
+        not( line_count() == 1 ) -> stop()
+    ]
+```
+
+This is better:
+
+```bash
+    $test[*][
+        line_count() == 1 -> print("$.headers")
+        not( line_count() == 1 ) -> stop()
+    ]
+```
+
+Still better:
+
+```bash
+    $test[*][
+        line_count() == 1 -> print("$.headers")
+        stop()
+    ]
+```
+
+Getting there:
+
+```bash
+    $test[*][
+        print("$.headers")
+        stop()
+    ]
+```
+
+Best:
+
+```bash
+    $test[0][ print("$.headers") ]
+```
 
 

@@ -128,7 +128,7 @@ class Matcher:
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-        raise MatchException("Halting matching for error")
+        raise MatchException(f"Halting matching for error on {p.type}")
 
     def p_match_part(self, p):
         """match_part : LEFT_BRACKET expression RIGHT_BRACKET

@@ -14,7 +14,20 @@ PATH3 = "tests/test_resources/test-3.csv"
 
 class TestMatcher(unittest.TestCase):
 
-    # ============= JUST SYNTAX MOSTLY ================
+    # ============= JUST MATCHER SYNTAX MOSTLY ================
+
+    def test_match_equality1(self):
+        matcher = Matcher(
+            csvpath=None,
+            data="""[
+                                end() == 0 -> print("$.headers")
+                                not( end() ==  0 ) -> no()
+                          ] """,
+            line=LINE,
+            headers=HEADERS,
+        )
+        print(f"{matcher}")
+        assert matcher.matches(syntax_only=True)
 
     def test_match_one_header(self):
         matcher = Matcher(

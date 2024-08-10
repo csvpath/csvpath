@@ -8,7 +8,6 @@ class ParserUtility:
     def error(self, parser, p: YaccProduction) -> None:
         if self._quiet and False:
             return
-        # print(f"ParserUtility.error: {p}")
         if p:
             print(
                 f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}"
@@ -16,8 +15,12 @@ class ParserUtility:
             print(f"unexpected token: {p.value}")
             print("symbol stack: ")
             stack = parser.symstack
+
+            import inspect
+
             for _ in stack:
                 print(f"  {_}")
+            print("")
         else:
             print("syntax error at EOF")
 
