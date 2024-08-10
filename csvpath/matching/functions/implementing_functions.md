@@ -54,15 +54,21 @@ In the common case the match depends on the value. In some cases, however, the v
 
 To register your function add it to the FunctionFactory like this:
 
-        FunctionFactory.add_function(name='iamafunction', function=my_function_instance)
+```python
+    FunctionFactory.add_function(name='iamafunction', function=my_function_instance)
+```
 
 To use your function do something like:
 
+```bash
         "$test[*][ @t = iamafunction() ]"
+```
 
 Behind the scenes an instance of your function will be retrieved with:
 
+```python
         f = FunctionFactory.get_function(matcher=None, name="iamafunction")
+```
 
 The name you set on FunctionFactory must match the name passed in when a function is requested.
 
