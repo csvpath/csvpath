@@ -67,8 +67,9 @@ You can also add an arbitrary string to a function name. This additional name is
 
 As an example, the `tally()` function sets an internal variable under the key 'tally'. This variable would be overwritten if you used two `tally()` functions in one csvpath. Adding a name qualifier fixes that problem:
 
+```bash
     $test[*][ tally.my_tally(#firstname) tally.my_other_tally(#lastname)]
-
+```
 
 
 
