@@ -2,11 +2,11 @@ from ply.yacc import YaccProduction
 
 
 class ParserUtility:
-    def __init__(self, quiet=False):
+    def __init__(self, quiet=False):  # pragma: no cover
         self._quiet = quiet
 
     def error(self, parser, p: YaccProduction) -> None:
-        if self._quiet and False:
+        if self._quiet and False:  # pragma: no cover
             return
         if p:
             print(
