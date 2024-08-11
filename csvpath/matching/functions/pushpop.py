@@ -9,10 +9,10 @@ class Push(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
-            raise ChildrenException("Percent function must have 1 equality child")
+            raise ChildrenException("Push function must have 1 equality child")
         if not isinstance(self.children[0], Equality) or self.children[0].op != ",":
             raise ChildrenException(
-                "Percent function must have 1 equality child with the ',' between 2 values"
+                "Push function must have 1 equality child with the ',' between 2 values"
             )
 
         if self.value is None:

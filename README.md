@@ -37,9 +37,9 @@ This path says open the file named `filename`, scan all the lines, and match eve
 A slightly more functional csvpath could look like this:
 
 ```bash
-        $people.csv[*][
-           @two_names = count(not(#middle_name))
-           last() -> print("There are $.variables.two_names people with only two names")]
+    $people.csv[*][
+        @two_names = count(not(#middle_name))
+        last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
 This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.

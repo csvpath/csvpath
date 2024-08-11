@@ -14,6 +14,7 @@ class Now(Function):
         format = None
         if self.children and len(self.children) == 1:
             format = self.children[0].to_value(skip=skip)
+            format = f"{format}".strip()
         x = datetime.datetime.now()
         xs = None
         if format:

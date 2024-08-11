@@ -49,6 +49,7 @@ from .percent_unique import PercentUnique
 from .all import All
 from .total_lines import TotalLines
 from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize
+from .datef import Date
 
 
 class UnknownFunctionException(Exception):
@@ -232,6 +233,8 @@ class FunctionFactory:
             f = Peek(matcher, name, child)
         elif name == "peek_size":
             f = PeekSize(matcher, name, child)
+        elif name == "date" or name == "datetime":
+            f = Date(matcher, name, child)
         else:
             if (
                 f is None
