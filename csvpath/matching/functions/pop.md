@@ -3,13 +3,13 @@
 
 This family of functions allows you to create list variables.
 
-| Function       | Description                                  | Returns       |
-|----------------|----------------------------------------------|---------------|
-| `push`         | Pushes values on the top of the list         | True          |
-| `push_distinct`| Pushes values on the list if not already present | True      |
-| `pop`          | Pops values off the list LIFO                | value or None |
-| `peek`         | Gets the value at an index of the list       | value or None |
-| `peek_size`    | Returns the size of the list                 | int           |
+| Function       | Description                                  | Arguments     | Returns       |
+|----------------|----------------------------------------------|---------------|---------------|
+| `push`         | Pushes values on the top of the list         | name, value   | True          |
+| `push_distinct`| Pushes values on the list if not already present | name, value | True        |
+| `pop`          | Pops values off the list LIFO                | name          | value or None |
+| `peek`         | Gets the value at an index of the list       | name, int     | value or None |
+| `peek_size`    | Returns the size of the list                 | name          | int           |
 
 Push can be called in the form `push_distinct()` or it can take a `distinct` qualifier. (The `distinct` qualifier may become well-known, but at the moment is ad hoc just for `push()`).
 
