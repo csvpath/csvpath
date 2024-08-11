@@ -9,7 +9,7 @@ CsvPath's most important use is rules-based validation of CSV files. There are t
 
 The `fail()` function enables the third of these.
 
-When a validation rule identifies a problem you can use `fail()` to indicate that the CSV file is invalid. The reasoning or evidence, in the form of row values, is typically needed as well. However, programmatically, a printout is hard to interpret and a list of rows' values is difficult to interpret because valid rows can match as readily as invalid ones.
+When a validation rule identifies a problem you can use `fail()` to indicate that the CSV file is invalid. The reasoning or evidence, in the form of row values, is typically needed as well. However, programmatically, a printout is hard to interpret. A list of rows' values is also difficult to interpret because valid rows can match as readily as invalid ones.
 
 Setting the state of a csvpath is easy. In the csvpath just add `fail()` when there is a problem. Checking the state of the csvpath is also easy. You just check the CsvPath object's is_valid property.
 
