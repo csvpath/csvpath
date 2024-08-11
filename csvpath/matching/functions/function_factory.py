@@ -48,6 +48,7 @@ from .lookup import Lookup
 from .percent_unique import PercentUnique
 from .all import All
 from .total_lines import TotalLines
+from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize
 
 
 class UnknownFunctionException(Exception):
@@ -221,6 +222,16 @@ class FunctionFactory:
             f = All(matcher, name, child)
         elif name == "total_lines":
             f = TotalLines(matcher, name, child)
+        elif name == "push":
+            f = Push(matcher, name, child)
+        elif name == "push_distinct":
+            f = PushDistinct(matcher, name, child)
+        elif name == "pop":
+            f = Pop(matcher, name, child)
+        elif name == "peek":
+            f = Peek(matcher, name, child)
+        elif name == "peek_size":
+            f = PeekSize(matcher, name, child)
         else:
             if (
                 f is None

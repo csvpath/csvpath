@@ -198,7 +198,6 @@ class Matcher:
                  | equality COMMA term
                  | equality COMMA function
         """
-        # | equality op equality
         e = Equality(self)
         e.left = p[1]
         e.set_operation(p[2])

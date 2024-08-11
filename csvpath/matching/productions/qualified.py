@@ -27,12 +27,12 @@ class Qualified:
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
         self.qualifier = None
-        if name is None:
-            self.qualifiers = []
-        else:
+        self.qualifiers = []
+        if name is not None:
             n, qs = ExpressionUtility.get_name_and_qualifiers(name)
             self.name = n
-            self.qualifiers = qs
+            if qs is not None:
+                self.qualifiers = qs
 
     def first_non_term_qualifier(self, default: None) -> Optional[str]:
         if not self.qualifiers:  # this shouldn't happen but what if it did
@@ -46,6 +46,13 @@ class Qualified:
         self.qualifier = qs
         if qs is not None:
             self.qualifiers = qs.split(".")
+
+    def add_qualifier(self, q) -> None:
+        if q not in self.qualifiers:
+            self.qualifiers.append(q)
+
+    def has_qualifier(self, q) -> bool:
+        return q in self.qualifiers
 
     def has_onmatch(self) -> bool:
         if self.qualifiers:

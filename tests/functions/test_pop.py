@@ -1,0 +1,59 @@
+import unittest
+from csvpath.csvpath import CsvPath
+
+PATH = "tests/test_resources/test.csv"
+
+
+class TestPop(unittest.TestCase):
+    def test_function_push1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                push("pushed", count_lines())
+                @popped = pop("pushed")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert len(path.variables["pushed"]) == 0
+        assert path.variables["popped"] == 8
+
+    def test_function_push2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                push_distinct("pushed", #lastname )
+                push.distinct("dis", #lastname )
+                ~ who was second? ~
+                @peek = peek("dis", 1)
+                @peeksize = peek_size("dis")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert len(path.variables["pushed"]) == 3
+        assert len(path.variables["dis"]) == 3
+        assert path.variables["peek"] == "Kermit"
+        assert path.variables["peeksize"] == 3
+
+    def test_function_pop1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                push("pushed", count_lines())
+                @popped = pop("pushed")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert len(path.variables["pushed"]) == 0
+        assert path.variables["popped"] == 8
