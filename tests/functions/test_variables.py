@@ -18,6 +18,7 @@ class TestFunctionsVariables(unittest.TestCase):
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
                                 last() -> @lastname.Bat = "fred"
+                                @tl = total_lines()
                                 no()
                             ]
                    """

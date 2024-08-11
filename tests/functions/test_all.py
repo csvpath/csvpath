@@ -33,8 +33,8 @@ class TestFunctionsAll(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\test_function_all2: lines: {lines}")
+        print(f"test_function_all2: path vars: {path.variables}")
         assert len(lines) == 0
         assert path.variables["a"] is False
 

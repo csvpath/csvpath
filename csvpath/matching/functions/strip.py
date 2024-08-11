@@ -7,7 +7,7 @@ class Strip(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if len(self.children) != 1:
-            raise ChildrenException("In function must have 1 child")
+            raise ChildrenException("Strip function must have 1 child")
         if self.value is None:
             v = self.children[0].to_value()
             string = f"{v}"

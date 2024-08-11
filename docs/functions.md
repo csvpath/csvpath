@@ -72,6 +72,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/increment.md'>increment(value, n)</a> </td><td> increments a variable by n each time seen   </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/tally.md'>tally(value, value, ...)</a></td><td> counts times values are seen, including as a set   </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/total_lines.md'>total_lines()</a></td><td> returns the number of rows in the file being scanned   </td></tr>
 <tr><td> Strings   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> concat(value, value, ...)          </td><td> joins any number of values                 </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/jinja.md'>jinja(value, value)</a>  </td><td> applies a Jinja2 template                           </td></tr>

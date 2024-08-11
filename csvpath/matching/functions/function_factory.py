@@ -47,6 +47,7 @@ from .correlate import Correlate
 from .lookup import Lookup
 from .percent_unique import PercentUnique
 from .all import All
+from .total_lines import TotalLines
 
 
 class UnknownFunctionException(Exception):
@@ -218,6 +219,8 @@ class FunctionFactory:
             f = PercentUnique(matcher, name, child)
         elif name == "all":
             f = All(matcher, name, child)
+        elif name == "total_lines":
+            f = TotalLines(matcher, name, child)
         else:
             if (
                 f is None
