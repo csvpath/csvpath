@@ -50,6 +50,8 @@ from .all import All
 from .total_lines import TotalLines
 from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize
 from .datef import Date
+from .fail import Fail
+from .failed import Failed
 
 
 class UnknownFunctionException(Exception):
@@ -235,6 +237,10 @@ class FunctionFactory:
             f = PeekSize(matcher, name, child)
         elif name == "date" or name == "datetime":
             f = Date(matcher, name, child)
+        elif name == "fail":
+            f = Fail(matcher, name, child)
+        elif name == "failed" or name == "valid":
+            f = Failed(matcher, name, child)
         else:
             if (
                 f is None

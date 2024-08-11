@@ -48,6 +48,7 @@ class CsvPath:
         self.rows_time = -1
         self.total_iteration_time = -1
         self._advance = 0
+        self._is_valid = True
 
     def parse(self, data):
         # start = time.time()
@@ -130,6 +131,14 @@ class CsvPath:
             all_lines: {self.scanner.all_lines if self.scanner else None}
             these: {self.scanner.these if self.scanner else None}
         """
+
+    @property
+    def is_valid(self) -> bool:  # pragma: no cover
+        return self._is_valid
+
+    @is_valid.setter
+    def is_valid(self, tf: bool) -> None:
+        self._is_valid = tf
 
     @property
     def from_line(self):  # pragma: no cover

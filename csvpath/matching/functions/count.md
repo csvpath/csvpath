@@ -22,7 +22,6 @@ This path counts the number of matches of firstname into the path's variables so
     {'firstname_match':{True:1}}
 
 
-## Examples
 
 
 

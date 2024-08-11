@@ -46,6 +46,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>
 <tr><td>           </td><td> yes()                         </td><td> always true                                               </td></tr>
 <tr><td>           </td><td> exists(value)    </td><td> tests if the value exists            </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/in.md'>fail()</a>  </td><td> indicate that the CSV is invalid   </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/in.md'>failed()</a> and valid()</td><td> check if the CSV is invalid   </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
 <tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>

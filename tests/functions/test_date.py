@@ -1,0 +1,39 @@
+import unittest
+from csvpath.csvpath import CsvPath
+from datetime import date, datetime
+
+DATES = "tests/test_resources/dates.csv"
+
+
+class TestFunctionsDate(unittest.TestCase):
+    def test_function_date1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${DATES}[0-8]
+            [
+                push( "dates", date( #date, #format ) )
+            ]"""
+        )
+        print(f"\ntest_function_count_in: path vars: {path.variables}")
+        assert len(path.variables["dates"]) == 9
+        assert path.variables["dates"][0] == "date"
+        for i, _ in enumerate(path.variables["dates"]):
+            if i == 0:
+                assert isinstance(_, str)
+            else:
+                assert isinstance(_, date)
+
+    def test_function_date2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${DATES}[9+10]
+            [
+                push( "dates", datetime( #date, #format ) )
+            ]"""
+        )
+        print(f"\ntest_function_count_in: path vars: {path.variables}")
+        assert len(path.variables["dates"]) == 2
+        for i, _ in enumerate(path.variables["dates"]):
+            assert isinstance(_, datetime)
