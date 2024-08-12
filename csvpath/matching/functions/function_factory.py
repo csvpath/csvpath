@@ -52,6 +52,7 @@ from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .datef import Date
 from .fail import Fail
 from .failed import Failed
+from .stdev import Stdev
 
 
 class UnknownFunctionException(Exception):
@@ -243,6 +244,8 @@ class FunctionFactory:
             f = Failed(matcher, name, child)
         elif name == "stack":
             f = Stack(matcher, name, child)
+        elif name == "stdev" or name == "pstdev":
+            f = Stdev(matcher, name, child)
         else:
             if (
                 f is None

@@ -4,12 +4,6 @@ import pandas as pd
 
 
 class Correlate(Function):
-    def _float(self, v: Any) -> float:
-        try:
-            return float(v)
-        except Exception:
-            return None
-
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()

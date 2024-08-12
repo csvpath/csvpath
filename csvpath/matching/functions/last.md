@@ -1,7 +1,7 @@
 
 # Last
 
-Returns True to `matches()` when the current row is the last row in the file.
+Returns True to `matches()` when the current row is the last row in the file or the last row to be scanned.
 
 ## Example
 
