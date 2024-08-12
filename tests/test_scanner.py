@@ -230,3 +230,38 @@ class TestScanner(unittest.TestCase):
             elif i == 4:
                 assert ln[0][0:4] == "Slug"
         assert i == 4
+
+    def test_scanner_is_last(self):
+        path = CsvPath()
+        path.total_lines = 14
+        scanner = path.parse(f"${PATH}[1-3+6-7]")
+        # test properties
+        print(f"{scanner}")
+        assert scanner.is_last(8, from_line=2, to_line=8, all_lines=False, these=[])
+        assert not scanner.is_last(
+            10, from_line=2, to_line=8, all_lines=False, these=[]
+        )
+        assert not scanner.is_last(1, from_line=2, to_line=8, all_lines=False, these=[])
+        assert not scanner.is_last(5, from_line=2, to_line=8, all_lines=False, these=[])
+
+        assert not scanner.is_last(
+            5, from_line=None, to_line=None, all_lines=True, these=[]
+        )
+        assert scanner.is_last(
+            14, from_line=None, to_line=None, all_lines=True, these=[]
+        )
+
+        assert scanner.is_last(
+            14, from_line=None, to_line=None, all_lines=False, these=[14]
+        )
+        assert not scanner.is_last(
+            13, from_line=None, to_line=None, all_lines=False, these=[14]
+        )
+        assert not scanner.is_last(
+            15, from_line=None, to_line=None, all_lines=False, these=[14]
+        )
+        assert not scanner.is_last(
+            15, from_line=None, to_line=None, all_lines=False, these=[14, 12]
+        )
+
+        assert scanner.is_last(100, from_line=4, to_line=100, all_lines=False, these=[])

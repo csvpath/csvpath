@@ -70,6 +70,28 @@ class Pop(Function):
         return self.match
 
 
+class Stack(Function):
+    def to_value(self, *, skip=[]) -> Any:
+        if self in skip:  # pragma: no cover
+            return self._noop_value()
+        if len(self.children) != 1:
+            raise ChildrenException(
+                "Stack function must have 1 child giving the name of the variable"
+            )
+        if self.value is None:
+            k = self.children[0].to_value()
+            stack = self.matcher.get_variable(k, set_if_none=[])
+            if not isinstance(stack, list):
+                thelist = []
+                stack = thelist.append(stack)
+                self.matcher.set_variable(k, value=thelist)
+            self.value = stack
+        return self.value
+
+    def matches(self, *, skip=[]) -> bool:
+        return self._noop_match()
+
+
 class Peek(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover

@@ -10,5 +10,11 @@ class Last(Function):
         if self.match is None:
             self.match = (
                 self.matcher.csvpath.line_number == self.matcher.csvpath.total_lines
+                or (
+                    self.matcher.csvpath.scanner
+                    and self.matcher.csvpath.scanner.is_last(
+                        self.matcher.csvpath.line_number
+                    )
+                )
             )
         return self.match

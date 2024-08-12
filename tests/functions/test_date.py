@@ -13,9 +13,11 @@ class TestFunctionsDate(unittest.TestCase):
             ${DATES}[0-8]
             [
                 push( "dates", date( #date, #format ) )
+                yes()
             ]"""
         )
-        print(f"\ntest_function_count_in: path vars: {path.variables}")
+        path.fast_forward()
+        print(f"\ntest_function_date1: path vars: {path.variables}")
         assert len(path.variables["dates"]) == 9
         assert path.variables["dates"][0] == "date"
         for i, _ in enumerate(path.variables["dates"]):
@@ -33,7 +35,8 @@ class TestFunctionsDate(unittest.TestCase):
                 push( "dates", datetime( #date, #format ) )
             ]"""
         )
-        print(f"\ntest_function_count_in: path vars: {path.variables}")
+        path.fast_forward()
+        print(f"\ntest_function_date2: path vars: {path.variables}")
         assert len(path.variables["dates"]) == 2
         for i, _ in enumerate(path.variables["dates"]):
             assert isinstance(_, datetime)

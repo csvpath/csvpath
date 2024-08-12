@@ -1,31 +1,39 @@
 
 # Correlate
 
-Correlate calculates the correlation between two columns of numbers. It takes each column as a list of floats.If a row does not have a value in either of the columns, the tuple is captured to a `correlate_gap` variable with the row number as tracking key. The result of correlate is updated for each row seen.
+`correlate(var1, var2)` calculates the correlation between two stacks of numbers. It treats each stack as a list of floats. The result of correlate is updated for one of:
+- Each row seen
+- Each row matched
+- When the left-hand side of a when operator (`->`) is True
 
-The correlation value is given in a tuple with related data:
-- The line number
-- Variance left
-- Variance right
-- The covariance
-- The correlation
+The running track of the values for the calculations is stored in variables. Use `push(name, value)` to populate the variables. To find the correlation of two columns use pushes as shown below. If values are pushed that are not convertible to float they will be trimmed out along with the value at the same index in the second variable.
 
-The running track of the column values needed for the calculations is stored as a list of float in `correlate_left` and `correlate_right`.
-
-Correlate takes `onmatch` and can have a name qualifier to set the key names of its data. For e.g. using:
-
-    [ correlate.cor(#0, #1) ]
-
-You would have variables:
-- cor_left
-- cor_right
-- cor_gap
-- cor
+Correlate takes the `onmatch` qualifier.
 
 ## Example
 
-    $file.csv[1*][ correlate.cor(#years, #salary) ]
+```bash
+    $file.csv[1*][
+        above(#years, 5)
+        push("years", #years)
+        push("salary", #salary)
+        @running_corr = correlate.onmatch(#years, #salary)
+    ]
+```
 
-This path gives a correlation of experience to salary.
+This path gives a running correlation of experience to salary where experience is greater than 5 years.
+
+```bash
+    $test[1*][
+        @r = random(0,1)
+        @r == 1 -> push("years", #years)
+        @r == 1 -> push("salary", #salary)
+        last.nocontrib() -> @c = correlate(#years, #salary)
+        last.nocontrib() -> print("correlation of years to salary is $.variables.c")
+    ]
+```
+
+At the end of scanning a file this path prints the correlation of the years of experience and salary of a random sample of the population.
+
 
 

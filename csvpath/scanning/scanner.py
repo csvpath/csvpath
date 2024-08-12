@@ -8,7 +8,8 @@ from .exceptions import ScanException, UnexpectedException
 class Scanner(object):
     tokens = ScanningLexer.tokens
 
-    def __init__(self):
+    def __init__(self, csvpath=None):
+        self.csvpath = csvpath
         self.lexer = ScanningLexer()
         self.parser = yacc.yacc(module=self, start="path")
         self.these: List = []
@@ -36,6 +37,27 @@ class Scanner(object):
     def print(self, msg: str) -> None:
         if not self.block_print:
             print(msg)
+
+    def is_last(
+        self,
+        line: int,
+        *,
+        from_line: int = -1,
+        to_line: int = -1,
+        all_lines: bool = None,
+        these: List[int] = None,
+    ) -> bool:
+        from_line = self.from_line if from_line == -1 else from_line
+        to_line = self.to_line if to_line == -1 else to_line
+        all_lines = self.all_lines if all_lines is None else all_lines
+        these = self.these if these is None else these
+        if all_lines:
+            return line == self.csvpath.total_lines
+        elif line == to_line:
+            return True
+        if len(these) > 0 and max(these) == line and not to_line and not all_lines:
+            return True
+        return False
 
     def includes(
         self,

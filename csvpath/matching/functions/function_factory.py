@@ -48,7 +48,7 @@ from .lookup import Lookup
 from .percent_unique import PercentUnique
 from .all import All
 from .total_lines import TotalLines
-from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize
+from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .datef import Date
 from .fail import Fail
 from .failed import Failed
@@ -241,6 +241,8 @@ class FunctionFactory:
             f = Fail(matcher, name, child)
         elif name == "failed" or name == "valid":
             f = Failed(matcher, name, child)
+        elif name == "stack":
+            f = Stack(matcher, name, child)
         else:
             if (
                 f is None

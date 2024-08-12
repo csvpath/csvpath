@@ -57,3 +57,32 @@ class TestPop(unittest.TestCase):
         assert len(lines) == 9
         assert len(path.variables["pushed"]) == 0
         assert path.variables["popped"] == 8
+
+    def test_function_stack1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @r = stack("st")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 9
+        assert path.variables["r"] == []
+
+    def test_function_stack2(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[2+3]
+            [
+                push("st", #1)
+                @r = stack("st")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert path.variables["r"] == ["Bat", "Bat"]

@@ -10,6 +10,7 @@ This family of functions allows you to create list variables.
 | `pop`          | Pops values off the list LIFO                | name          | value or None |
 | `peek`         | Gets the value at an index of the list       | name, int     | value or None |
 | `peek_size`    | Returns the size of the list                 | name          | int           |
+| `stack`        | Returns the list                             | name          | a list        |
 
 Push can be called in the form `push_distinct()` or it can take a `distinct` qualifier. (The `distinct` qualifier may become well-known, but at the moment is ad hoc just for `push()`).
 
@@ -17,6 +18,7 @@ Peek will return None if you attempt to peek an index that doesn't exist. Likewi
 
 Peek and Pop can take the `asbool` qualifier in order to make their match depend on interpreting the value returned as a bool.
 
+`stack(name)` will return `[]` or `[var]` rather than `None` or `var`.
 
 ## Examples
 

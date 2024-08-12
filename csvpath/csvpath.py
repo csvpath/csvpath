@@ -52,7 +52,7 @@ class CsvPath:
 
     def parse(self, data):
         # start = time.time()
-        self.scanner = Scanner()
+        self.scanner = Scanner(csvpath=self)
         data = self._update_file_path(data)
         s, mat, mod = self._find_scan_match_modify(data)
         self.scan = s
