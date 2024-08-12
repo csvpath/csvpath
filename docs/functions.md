@@ -101,7 +101,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/pop.md'>pop(name)</a> </td><td> pops a value off a stack    </td>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/pop.md'>peek(name, int)</a> </td><td> accesses a value at an index in a stack    </td>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/pop.md'>peek_size(name)</a> </td><td> returns the size of a stack    </td>
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/pop.md'>stack(name)</a> </td><td> returns the size of a stack    </td>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/pop.md'>stack(name)</a> </td><td> returns a stack    </td>
 
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/stop.md'>stop(value)</a> </td><td> stops path scanning if a condition is met                 </td>
