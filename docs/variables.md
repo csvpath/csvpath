@@ -1,7 +1,7 @@
 
 # Variables
 
-Variables are identified by an `@` followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an "=" its value is set.  When it is used on either side of an `==` it is an equality test.
+Variables are identified by an `@` followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an `=` its value is set.  When it is used on either side of an `==` it is an equality test.
 
 Variables may have "tracking values". A tracking value is a key into a dict stored as the variable. Tracked values are often used by functions for internal bookkeeping. A csvpath can get or set a tracking value by using a qualifier on the variable name. E.g.
 
