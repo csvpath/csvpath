@@ -32,7 +32,6 @@ class HasDups(Function):
                     for _ in self.matcher.line:
                         string += f"{_}"
                 fingerprint = hashlib.sha256(string.encode("utf-8")).hexdigest()
-                # fingers = None
                 if fingerprint in values:
                     self.value = values[fingerprint]
                 else:

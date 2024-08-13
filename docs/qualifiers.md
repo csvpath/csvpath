@@ -34,6 +34,8 @@ When `asbool` is set on a variable or header its value is interpreted as a bool 
 |----------|---------|-----------|
 | No       | Yes     | Yes       |
 
+Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/asbool.md'>more about asbool here</a>.
+
 ### latch
 Adding `latch` to a variable makes the variable only set one time. The variable "latches" or locks on the first value. Subsequent attempts to update the variable do nothing, give no error or warning, and return `True` for matching, in order to not affect other components' matching.
 
