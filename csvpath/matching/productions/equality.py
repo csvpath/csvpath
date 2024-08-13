@@ -155,9 +155,13 @@ class Equality(Matchable):
                     pass
                 else:
                     self.matcher.set_variable(name, value=y, tracking=tracking)
-            else:
+                    ret = True
+            elif onchange:
+                ret = False
+            elif latch:
                 pass
-            ret = True
+            else:
+                raise Exception("this state should never happen")
         #
         # if onmatch we are True if the line matches,
         # potentially overriding latch and/or onchange,
