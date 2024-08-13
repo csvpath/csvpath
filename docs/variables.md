@@ -56,7 +56,7 @@ will never set `imcounting`, because of the `no()` function disallowing any matc
 
 will always set it.
 
-Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>
+Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
 # Examples
 - `@weather="cloudy"`

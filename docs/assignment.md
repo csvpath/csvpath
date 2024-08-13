@@ -1,5 +1,5 @@
 
-# Assignment
+# The Role Of Qualifiers In Assignment
 
 Assignment is the process of setting a variable equal to a value from another variable or a header, function, or term. There is more to assignment than you might think.
 
@@ -30,7 +30,7 @@ Qualifiers can go together in any order. CsvPath decides what to do in an assign
 
 You can think of these happening in layers.
 
-## Qualifying Assignment
+## Match Values Of Assignments
 
 | Form                                               | Match value                                |
 |----------------------------------------------------|--------------------------------------------|
