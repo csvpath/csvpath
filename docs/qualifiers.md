@@ -15,9 +15,10 @@ Or:
 
 When multiple qualifiers are used order is not important.
 
-Qualifiers are new and being added opportunistically. See the individual function docs for which qualifiers are available on a function.
+Qualifiers can have a large impact in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
-Qualifiers may also be used in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
+Qualifiers are relatively new and are being added opportunistically. See the individual function docs for which qualifiers are available on each function.
+
 
 ## Well-known Qualifiers
 At the moment there are only a few qualifiers.
