@@ -38,7 +38,10 @@ class Header(Matchable):
                     ret = None
                 elif self.matcher.line and len(self.matcher.line) > n:
                     ret = self.matcher.line[n]
-            self.value = ret
+            if self.asbool:
+                self.value = ExpressionUtility.asbool(ret)
+            else:
+                self.value = ret
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

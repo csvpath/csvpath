@@ -109,17 +109,17 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert "who" in path.variables
         assert path.variables["who"][True] == 3
 
-    """
     def test_header_qualifier(self):
         path = CsvPath()
         path.parse(
-            f"" "${BOOL}
+            f"""${BOOL}
                 [*]
                 [
-                    count_lines() == 2 -> @a = #error.asbool
-                    count_lines() == 5 -> @b = #error
+                    or( count_lines() == 2, count_lines.nocontrib() == 5)
+                    count_lines.nocontrib() == 2 -> @a = #error.asbool
+                    count_lines.nocontrib() == 5 -> @b = #error
                 ]
-                "" "
+                """
         )
         lines = path.collect()
         print(f"test_header_qualifier: lines: {len(lines)}")
@@ -127,6 +127,5 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert len(lines) == 2
         assert "a" in path.variables
         assert "b" in path.variables
-        assert path.variables["a"] == False
-        assert path.variables["b"] == True
-    """
+        assert path.variables["a"] is False
+        assert path.variables["b"] == "false"

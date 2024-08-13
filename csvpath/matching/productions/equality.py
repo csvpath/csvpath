@@ -234,7 +234,8 @@ class Equality(Matchable):
     def _do_when(self, *, skip=[]) -> bool:
         b = None
         if self.op == "->":
-            if self.left.matches(skip=skip) is True:
+            lm = self.left.matches(skip=skip)
+            if lm is True:
                 b = True
                 self.right.matches(skip=skip)
             else:

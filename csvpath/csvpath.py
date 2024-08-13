@@ -350,7 +350,6 @@ class CsvPath:
                 thevalue = set_if_none
         else:
             if name not in self.variables:
-                # I don't think we should store None...
                 if set_if_none is not None:
                     self.variables[name] = set_if_none
                     thevalue = set_if_none
