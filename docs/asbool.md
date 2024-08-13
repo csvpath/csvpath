@@ -5,8 +5,8 @@ The `asbool` qualifier makes CsvPath consider the match component it is used on 
 
 The difference is:
 
-- CsvPath evaluates "true" and "false" as their bool equivalents, True and False respectively
-- A match component used as an existence test without `asbool` evaluates to True or False based on any its `not None` condition, resulting in, for e.g., the value `False` == `True` because `False` exists
+- CsvPath evaluates "true" and "false" as their bool equivalents, `True` and `False` respectively
+- A match component used as an existence test without `asbool` evaluates to `True` or `False` based on any its `not None` condition, resulting in, for e.g., the value `False` == `True` because `False` exists
 
 As an example, the value of `not.asbool()` is assigned according to:
 
