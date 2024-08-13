@@ -53,6 +53,8 @@ from .datef import Date
 from .fail import Fail
 from .failed import Failed
 from .stdev import Stdev
+from .dups import HasDups
+from .empty import Empty
 
 
 class UnknownFunctionException(Exception):
@@ -246,6 +248,10 @@ class FunctionFactory:
             f = Stack(matcher, name, child)
         elif name == "stdev" or name == "pstdev":
             f = Stdev(matcher, name, child)
+        elif name == "has_dups":
+            f = HasDups(matcher, name, child)
+        elif name == "empty":
+            f = Empty(matcher, name, child)
         else:
             if (
                 f is None
