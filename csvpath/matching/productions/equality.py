@@ -133,8 +133,15 @@ class Equality(Matchable):
                     self.matcher.set_variable(self.left.name, value=v, tracking=t)
                     if not oc:
                         b = True
+            if self.left.asbool and not self._left_nocontrib(self.left):
+                b = ExpressionUtility.asbool(self.left.to_value())
+            elif self._left_nocontrib(self.left):
+                b = True
+            """
+            # original
             if self.left.asbool:
                 b = ExpressionUtility.asbool(self.left.to_value())
+            """
             return b
         else:
             raise ChildrenException("Left must be a variable and op must be =")
@@ -172,6 +179,7 @@ class Equality(Matchable):
         if self in skip:
             return True
         if not self.left or not self.right:
+            # this should never happen
             return False
         if not self.match:
             b = None
