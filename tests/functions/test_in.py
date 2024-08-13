@@ -97,7 +97,7 @@ class TestFunctionsIn(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f""" ${PATH}[*] [
-                @oc.onchange = in(#firstname, "Frog|Bug|Fish")
+                @oc.onchange.onmatch = in(#firstname, "Frog|Bug|Fish")
                 print.onmatch("printing: oc: $.variables.oc, count: $.match_count")
             ]
             """

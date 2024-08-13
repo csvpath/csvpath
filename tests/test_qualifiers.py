@@ -3,6 +3,7 @@ from csvpath.csvpath import CsvPath
 from csvpath.matching.expression_utility import ExpressionUtility
 
 PATH = "tests/test_resources/test.csv"
+BOOL = "tests/test_resources/bool.csv"
 
 
 class TestFunctionsQualifiers(unittest.TestCase):
@@ -107,3 +108,25 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert path.variables["t"] == 3
         assert "who" in path.variables
         assert path.variables["who"][True] == 3
+
+    """
+    def test_header_qualifier(self):
+        path = CsvPath()
+        path.parse(
+            f"" "${BOOL}
+                [*]
+                [
+                    count_lines() == 2 -> @a = #error.asbool
+                    count_lines() == 5 -> @b = #error
+                ]
+                "" "
+        )
+        lines = path.collect()
+        print(f"test_header_qualifier: lines: {len(lines)}")
+        print(f"test_function_qualifier: path vars: {path.variables}")
+        assert len(lines) == 2
+        assert "a" in path.variables
+        assert "b" in path.variables
+        assert path.variables["a"] == False
+        assert path.variables["b"] == True
+    """

@@ -98,11 +98,12 @@ class Matcher:
         for _ in self.if_all_match:
             name = _[0]
             value = _[1]
-            self.set_variable(name, value=value)
+            tracking = _[2]
+            self.set_variable(name, value=value, tracking=tracking)
         self.if_all_match = []
 
-    def set_if_all_match(self, name: str, value: Any) -> None:
-        self.if_all_match.append((name, value))
+    def set_if_all_match(self, name: str, value: Any, tracking=None) -> None:
+        self.if_all_match.append((name, value, tracking))
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         return self.csvpath.get_variable(

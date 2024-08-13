@@ -67,7 +67,7 @@ class TestFunctionsLast(unittest.TestCase):
         path.fast_forward()
         print(f"test_function_last: path vars: {path.variables}")
 
-    def test_function_access_tracking(self):
+    def test_function_last4(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*]
@@ -80,7 +80,7 @@ class TestFunctionsLast(unittest.TestCase):
                    """
         )
         path.collect()
-        print(f"test_function_access_tracking: path vars: {path.variables}")
+        print(f"test_function_last4: path vars: {path.variables}")
         assert path.variables["lastname"]["Bat"] == "fred"
         assert path.variables["hmmm"] == 7
         assert path.variables["ohhh"] is None

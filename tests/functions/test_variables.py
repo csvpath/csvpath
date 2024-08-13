@@ -8,7 +8,7 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsVariables(unittest.TestCase):
-    def test_function_access_tracking_values(self):
+    def test_function_access_variable_tracking_values(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*]

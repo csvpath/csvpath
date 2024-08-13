@@ -40,12 +40,12 @@ class TestFunctionsCount(unittest.TestCase):
         assert "firstname_is_one" in path.variables
         assert path.variables["firstname_is_one"][True] == 3
 
-    def test_function_count_header_in_ever(self):
+    def test_function_count_header_in_ever1(self):
         path = CsvPath()
         path.parse(
             f"""
                 ${PATH}
-                [*]
+                [1*]
                 [
                     @x.onmatch = count()
                     in(#firstname,"Bug|Bird|Ants")
@@ -105,7 +105,7 @@ class TestFunctionsCount(unittest.TestCase):
         assert path.variables["imcounting"] == 9
         assert len(lines) == 9
 
-    def test_function_linecount(self):
+    def test_function_linecount1(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -119,6 +119,7 @@ class TestFunctionsCount(unittest.TestCase):
         assert path.variables["imcounting"] == 8
         assert len(lines) == 0
 
+    def test_function_linecount2(self):
         path = CsvPath()
         path.parse(
             f"""

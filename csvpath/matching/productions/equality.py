@@ -89,62 +89,147 @@ class Equality(Matchable):
         else:
             return m.nocontrib
 
-    # ------------------
-
+    # ----------------------------------------------
+    #
+    # these talk about only x = y
+    # x = y                                  == True
+    # x.latch = y                            == True
+    # x.onchange = y                         == True
+    #
+    # this talks about the row, not x = y
+    # x.onmatch = y                          == If match True otherwise False
+    #
+    # this talks about the value of x
+    # x.[anything].asbool = y                == True or False by value of x
+    #
+    # this talks about the expression x = y and the row
+    # x.[anything].nocontrib = y             == True
+    #
     def _do_assignment(self, *, skip=[]) -> bool:
-        if isinstance(self.left, Variable) and self.op == "=":
-            b = None
-            v = self.right.to_value(skip=skip)
-            oc = self.left.has_onchange()
-            ov = ""
-            if oc:
-                ov = self.matcher.get_variable(self.left.name)
-                if f"{v}" != f"{ov}":
-                    b = True
+        #
+        # the count() function implies onmatch
+        #
+        count = self.right.name == "count" and len(self.right.children) == 0
+        onchange = self.left.onchange
+        latch = self.left.latch
+        onmatch = self.left.onmatch or count
+        asbool = self.left.asbool
+        nocontrib = self.left.nocontrib
+        noqualifiers = (
+            onchange is False
+            and latch is False
+            and asbool is False
+            and nocontrib is False
+            and onmatch is False
+        )
+
+        ret = True
+        #
+        # WHAT WE WANT TO SET X TO
+        #
+        y = self.right.to_value(skip=skip)
+        #
+        # WE CHECK THE NAME BECAUSE WE MIGHT BE USING A TRACKING VARIABLE
+        name = self.left.name
+        tracking = self.left.first_non_term_qualifier(None)
+        #
+        # GET THE CURRENT VALUE, IF ANY
+        #
+        current_value = self.matcher.get_variable(name, tracking=tracking)
+
+        #
+        # SET THE X TO Y IF APPROPRIATE. THE RETURN STARTS AS TRUE.
+        #
+        if noqualifiers:
+            self.matcher.set_variable(name, value=y, tracking=tracking)
+            ret = True
+        #
+        # FIND THE RETURN VALUE
+        #
+        # in the usual case, when we're just talking about x = y,
+        # we don't consider the assignment as part of the match
+        #
+        elif not onmatch and (latch or onchange):
+            if current_value != y:
+                if latch and current_value is not None:
+                    pass
                 else:
-                    b = False
-            #
-            # we can be both onmatch and latch, and
-            # also onchange, though that adds no value given latch
-            if self.left.onmatch or (
-                self.right.name == "count" and len(self.right.children) == 0
-            ):
-                if (
-                    self.left.latch
-                    and self.matcher.get_variable(self.left.name) is not None
-                ):
-                    b = True
-                else:
-                    #
-                    # register to set if all else matches. doesn't matter if
-                    # onchange
-                    #
-                    self.matcher.set_if_all_match(self.left.name, value=v)
-                    if not oc:
-                        b = True
+                    self.matcher.set_variable(name, value=y, tracking=tracking)
             else:
-                if (
-                    self.left.latch
-                    and self.matcher.get_variable(self.left.name) is not None
-                ):
-                    b = True
+                pass
+            ret = True
+        #
+        # if onmatch we are True if the line matches,
+        # potentially overriding latch and/or onchange,
+        # and we set x = y after everything else about the line is done,
+        # doing the set in the order all after-match sets are registered,
+        # however, if we are onmatch and the line doesn't match
+        # we do not set y and we are False.
+        # not setting y makes a difference to onchange and latch
+        elif onmatch and (latch or onchange):
+            if current_value != y:
+                if latch and current_value is not None:
+                    pass
                 else:
-                    t = self.left.first_non_term_qualifier(None)
-                    self.matcher.set_variable(self.left.name, value=v, tracking=t)
-                    if not oc:
-                        b = True
-            if self.left.asbool and not self._left_nocontrib(self.left):
-                b = ExpressionUtility.asbool(self.left.to_value())
-            elif self._left_nocontrib(self.left):
-                b = True
-            """
-            # original
-            if self.left.asbool:
-                b = ExpressionUtility.asbool(self.left.to_value())
-            """
-            return b
+                    self.matcher.set_if_all_match(name, value=y, tracking=tracking)
+            else:
+                pass
+            if onchange:
+                ret = self.line_matches() and current_value != y
+            else:
+                ret = self.line_matches()
+        #
+        # count() is only for matches so implies count.onmatch
+        # return set y and return true if the line matches
+        # but set y last after everything else about the line is done,
+        # doing the set in the order all after-match sets are registered
+        elif onmatch:
+            ret = self.line_matches()
+            if ret:
+                #
+                # i'm not convinced this delayed set is a good idea but it's not a bad one
+                #
+                self.matcher.set_if_all_match(name, value=y, tracking=tracking)
+
+        #
+        # we don't have any qualifiers that have to do with x = y
+        # but we may have asbool or nocontrib
+        # so set y and prepare the return to be True
+        elif not onmatch and not (latch or onchange):
+            self.matcher.set_variable(name, value=y, tracking=tracking)
+            ret = True
         else:
-            raise ChildrenException("Left must be a variable and op must be =")
+            d = {
+                "onchange": onchange,
+                "latch": latch,
+                "onmatch": onmatch,
+                "asbool": asbool,
+                "nocontrib": nocontrib,
+                "noqualifiers": noqualifiers,
+                "count": count,
+                "y": y,
+                "name": name,
+                "current_value": current_value,
+            }
+            raise Exception(
+                f"Equality._do_assignment: what case? ret: {ret}, args: {d}"
+            )
+        #
+        # if asbool we apply our interpretation to value of y,
+        # if we set y, otherwise we are False,
+        # but we can be overridden by nocontrib
+        if asbool:
+            if ret is True:
+                ret = ExpressionUtility.asbool(y)
+            else:
+                ret = False
+        #
+        # if nocontrib no matter what we return True because we're
+        # removing ourselves from consideration
+        if nocontrib:
+            ret = True
+
+        return ret
 
     def _do_when(self, *, skip=[]) -> bool:
         b = None
