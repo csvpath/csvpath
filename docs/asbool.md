@@ -17,6 +17,6 @@ As an example, the value of `not.asbool()` is assigned according to:
 | With the `nocontrib` qualifier              | @a.nocontrib.asbool = no() | True. In this case `nocontrib` overrides the match value of `asbool`. |
 | With the `onchange` qualifier               | @a.onchange.asbool = @b | evaluated as a bool |
 | With the `latch` qualifier                  | @a.latch.asbool = @b| evaluated as a bool |
-| With the `onmatch` qualifier                | @a.onmatch = @b     | True for the purposes of the whole row matching and evaluated as a bool if/when it does |
+| With the `onmatch` qualifier                | @a.onmatch.asbool = @b     | True for the purposes of the whole row matching and evaluated as a bool if/when it does |
 
 
