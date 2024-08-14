@@ -1,0 +1,14 @@
+
+$[*][
+    print("this is line $.line_number of a path")
+    @one = count()
+]
+
+-------- CSVPATH --------
+
+$[*][
+    print("this is line another validation message for a path")
+    @two = count()
+]
+
+

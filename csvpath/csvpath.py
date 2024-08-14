@@ -61,7 +61,8 @@ class CsvPath:
         self.scanner.parse(s)
         # end = time.time()
         # end - start
-        self.get_total_lines_and_headers()
+        if self.scanner.filename:
+            self.get_total_lines_and_headers()
         return self.scanner
 
     def parse_named_path(self, name):

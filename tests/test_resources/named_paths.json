@@ -1,0 +1,4 @@
+{
+    "many": ["a csvpath"],
+    "numbers": ["another csvpath", "a third"]
+}

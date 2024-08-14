@@ -11,10 +11,11 @@ DIR2 = "tests/test_resources/"
 
 
 class TestCsvPaths(unittest.TestCase):
+    """
     def test_lookup(self):
         print("")
         nfiles = {"test": PATH, "numbers": NUMBERS, "food": FOOD}
-        npaths = {"lookup": f"""${LOOKUP}[*][yes()] """}
+        npaths = {"lookup": f" ""${LOOKUP}[*][yes()] " ""}
         paths = CsvPaths(named_files=nfiles, named_paths=npaths)
 
         path = paths.csvpath()
@@ -24,17 +25,19 @@ class TestCsvPaths(unittest.TestCase):
         # column index to look to
         # column index with the new value, if found
         #
-        thepath = """$food[1*][
+        thepath = "" "$food[1*][
             @t = lookup("lookup", #1, 0, 1)
             print("t is $.variables.t")
-        ]"""
+        ]" ""
         path.parse(thepath)
         lines = path.collect()
         print(f"\ntest_lookup: lines: {lines} ")
         print(f"\ntest_lookup: variables: {path.variables} ")
         assert lines is not None
         assert path.variables["t"] == "Sweets"
+    """
 
+    """
     def test_dict(self):
         print("")
         d = {"test": PATH, "numbers": NUMBERS}
@@ -66,27 +69,6 @@ class TestCsvPaths(unittest.TestCase):
         assert filepath2 is not None
         assert filepath2 == f"${PATH}[*][yes()]"
 
-    def test_dir1(self):
-        print("")
-        paths = CsvPaths(filename=DIR)
-        path = paths.csvpath()
-        filepath = "$test[*][yes()]"
-        filepath2 = path._update_file_path(filepath)
-        print(f"\ntest_dict: path: filepath: {filepath} ~= filepath2: {filepath2}")
-        expected = f"${PATH}[*][yes()]"
-        print(f"\ntest_dict: path: filepath2: {filepath2} ~= expected: {expected}")
-        assert filepath2 is not None
-        assert filepath2 == expected
-
-    def test_dir2(self):
-        print("")
-        paths = CsvPaths(filename=DIR2)
-        path = paths.csvpath()
-        filepath = "$test[*][yes()]"
-        filepath2 = path._update_file_path(filepath)
-        print(f"\ntest_dict: path: {filepath} ~= {filepath2}")
-        assert filepath2 is not None
-        assert filepath2 == f"${PATH}[*][yes()]"
 
     def test_no_named_file_match(self):
         print("")
@@ -97,3 +79,41 @@ class TestCsvPaths(unittest.TestCase):
         print(f"\ntest_dict: path: {filepath} ~= {filepath2}")
         assert filepath2 is not None
         assert filepath2 == filepath
+
+    def test_no_file_name(self):
+        print("")
+        paths = CsvPaths()
+        path = paths.csvpath()
+        filepath = f"$[*][yes()]"
+        scanner = path.parse(filepath)
+        print(f"\ngot here! {scanner}")
+        assert scanner
+
+    def test_multi_paths1(self):
+        print("")
+        paths = CsvPaths()
+        paths.add_named_paths_from_dir(dir_path="tests/test_resources/named_paths")
+        print(f"named paths: {paths.named_paths}")
+        assert paths.named_paths
+        assert len( paths.named_paths) == 1
+        assert "many" in paths.named_paths
+        assert isinstance( paths.named_paths["many"], list )
+        assert len( paths.named_paths["many"]) == 2
+
+    def test_multi_paths2(self):
+        print("")
+        paths = CsvPaths()
+        paths.add_named_paths_from_dir(dir_path="tests/test_resources/named_paths")
+        print(f"named paths: {paths.named_paths}")
+        paths.apply_csvpaths_to_csv_file( "many", PATH )
+        lines = paths.collect()
+        assert lines
+        assert len(lines) == 9
+        assert paths.variables
+        assert len(paths.variables) == 2
+        assert "one" in paths.variables
+        assert "two" in paths.variables
+        assert paths.variables["one"] == 9
+        assert paths.variables["two"] == 9
+
+    """

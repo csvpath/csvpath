@@ -29,7 +29,7 @@ class ScanningLexer(object):
         return t
 
     def t_FILENAME(self, t):
-        r"\$[A-Z,a-z,0-9\._/\-\\#& ]+"
+        r"\$[A-Z,a-z,0-9\._/\-\\#& ]*"
         return t
 
     def t_error(self, t):
