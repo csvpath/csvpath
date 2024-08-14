@@ -21,6 +21,6 @@ class TestFunctionstop(unittest.TestCase):
         print(f"test_function_stop: path vars: {path.variables}")
         print(f"test_function_stop: lines: {lines}")
         assert path.stopped is True
-        assert len(lines) == 3
         assert path.variables["i"] == "FishBat"
         assert path.variables["c"] == 2
+        assert len(lines) == 3

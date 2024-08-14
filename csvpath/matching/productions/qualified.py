@@ -88,17 +88,37 @@ class Qualified:
     def latch(self) -> bool:
         return self.has_latch()
 
+    @latch.setter
+    def latch(self, b: bool) -> None:
+        if Qualities.LATCH.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.LATCH.value)
+
     @property
     def nocontrib(self) -> bool:
         return self.has_nocontrib()
+
+    @nocontrib.setter
+    def nocontrib(self, b: bool) -> None:
+        if Qualities.NOCONTRIB.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.NOCONTRIB.value)
 
     @property
     def asbool(self) -> bool:
         return self.has_asbool()
 
+    @asbool.setter
+    def asbool(self, b: bool) -> None:
+        if Qualities.ASBOOL.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.ASBOOL.value)
+
     @property
     def onmatch(self) -> bool:
         return self.has_onmatch()
+
+    @onmatch.setter
+    def onmatch(self, b: bool) -> None:
+        if Qualities.ONMATCH.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.ONMATCH.value)
 
     @property
     def onchange(self) -> bool:
