@@ -14,37 +14,37 @@ from abc import ABC, abstractmethod
 class CsvPathsPublic(ABC):
     @abstractmethod
     def csvpath(self) -> CsvPath:
-        """gets a CsvPath object primed with a reference to this CsvPaths"""
+        """Gets a CsvPath object primed with a reference to this CsvPaths"""
         pass
 
     @abstractmethod
     def collect_paths(self, pathsname, filename) -> None:
-        """sequentially does a CsvPath.collect() on filename for every named path"""
+        """Sequentially does a CsvPath.collect() on filename for every named path"""
         pass
 
     @abstractmethod
     def fast_forward_paths(self, pathsname, filename) -> None:
-        """sequentially does a CsvPath.fast_forward() on filename for every named path"""
+        """Sequentially does a CsvPath.fast_forward() on filename for every named path"""
         pass
 
     @abstractmethod
     def next_paths(self, pathsname, filename) -> None:
-        """does a CsvPath.next() on filename for every line against every named path in sequence"""
+        """Does a CsvPath.next() on filename for every line against every named path in sequence"""
         pass
 
     @abstractmethod
     def collect_by_line(self, pathsname, filename):
-        """does a CsvPath.collect() on filename where each row is considered by every named path before the next row starts"""
+        """Does a CsvPath.collect() on filename where each row is considered by every named path before the next row starts"""
         pass
 
     @abstractmethod
     def fast_forward_by_line(self, pathsname, filename):
-        """does a CsvPath.fast_forward() on filename where each row is considered by every named path before the next row starts"""
+        """Does a CsvPath.fast_forward() on filename where each row is considered by every named path before the next row starts"""
         pass
 
     @abstractmethod
     def next_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
-        """does a CsvPath.next() on filename where each row is considered by every named path before the next row starts"""
+        """Does a CsvPath.next() on filename where each row is considered by every named path before the next row starts"""
         pass
 
 

@@ -18,31 +18,41 @@ from abc import ABC, abstractmethod
 
 
 class CsvPathPublic(ABC):
-    def parse(self, data):
+    def parse(self, csvpath):
+        """Reads a csvpath prepares to match against CSV file lines"""
         pass
 
     def parse_named_path(self, name):
+        """Parses a csvpath found in this CsvPath's CsvPaths parent's collection of named csvpaths"""
         pass
 
     def is_valid(self) -> bool:
+        """Csvpaths can flag a CSV file as invalid using the fail() function"""
         pass
 
     def stop(self) -> None:
+        """Csvpaths can call for the CsvPath to stop processing lines using the stop() function"""
         pass
 
     def collect(self, nexts: int = -1) -> List[List[Any]]:
+        """Returns the lines of a CSV file that match the csvpath"""
         pass
 
     def advance(self, ff: int = -1) -> None:
-        """Advances the iteration by ff rows. The rows will be seen and
-        variables and side effects will happen.
+        """Advances the iteration by ff rows. The scanned rows will be considered for match and
+        variables and side effects will happen, but no rows will be returned or stored.
+        -1 means to the end of the file.
         """
         pass
 
     def fast_forward(self) -> None:
+        """Scans to the end of the CSV file. All scanned rows will be considered for match and
+        variables and side effects will happen, but no rows will be returned or stored.
+        -1 means to the end of the file."""
         pass
 
     def next(self):
+        """A generator function that steps through the CSV file returning matching rows"""
         pass
 
 
@@ -80,11 +90,11 @@ class CsvPath(CsvPathPublic):
         self._advance = 0
         self._is_valid = True
 
-    def parse(self, data):
+    def parse(self, csvpath):
         # start = time.time()
         self.scanner = Scanner(csvpath=self)
-        data = self._update_file_path(data)
-        s, mat, mod = self._find_scan_match_modify(data)
+        csvpath = self._update_file_path(csvpath)
+        s, mat, mod = self._find_scan_match_modify(csvpath)
         self.scan = s
         self.match = mat
         self.modify = mod
