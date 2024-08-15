@@ -83,6 +83,7 @@ To do the latter, create the file then import it by adding its directory. The cs
 
 For example these two csvpaths are from the file at `tests/test_resources/named_paths/food.csvpaths`:
 
+```bash
     $[*][
         #type == "candy" -> push( "candy", count_lines() )
         above(size("candy"), 1) -> print("$.count_lines: too much candy at: $.variables.candy ")
@@ -95,6 +96,7 @@ For example these two csvpaths are from the file at `tests/test_resources/named_
         count_lines.nocontrib() == 1 -> print(" ")
         above(#year, 1850) -> print("$.count_lines. $.headers.food is modern food")
     ]
+```
 
 We can apply them breadth-first using this code:
 
