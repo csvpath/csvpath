@@ -225,7 +225,7 @@ A stored value that is set or retrieved once per row scanned.
 
 |Returns | Matches | Examples      |
 |--------|---------|---------------|
-|A value | True when set, unless `onchange`. Used alone it is an existence test. | `@firstname` |
+|A value | True when set. (Unless the `onchange` qualifier is used). Alone it is an existence test. | `@firstname` |
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/variables.md'>Read about variables here</a>.
 
@@ -249,7 +249,7 @@ Two of the other types joined with an "=" or "==".
 <a name="comments"></a>
 ## Comments
 
-You can comment out components of a csvpath's match part using wrapping `~`. Comments can be multi-line. At the moment the only limitations are:
+You can comment out match components by wrapping them in `~`. Comments can be multi-line. At the moment the only limitations are:
 
 - Comments cannot follow one directly after another
 - Comments cannot go within match components, only between them
@@ -257,12 +257,12 @@ You can comment out components of a csvpath's match part using wrapping `~`. Com
 Examples:
 
 ```bash
-    [ count() ~ this is a comment~ ]
+    [ count() ~this is a comment~ ]
 ```
 
 ```bash
     [ ~this path is
-       just experimental ~ any() ]
+       just experimental~ any() ]
 ```
 
 <a name="when"></a>
