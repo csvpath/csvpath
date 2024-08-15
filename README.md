@@ -1,8 +1,9 @@
 
 # About CsvPath
 
-CsvPath defines a declarative syntax for inspecting and validating CSV files. Though much simpler, it is inspired by:
+CsvPath defines a declarative syntax for inspecting and validating CSV files.
 
+Though much simpler, it is inspired by:
 - XPath. CsvPath is to CSV files like XPath is to XML files.
 - Validation of XML using <a href='https://schematron.com/'>Schematron rules</a>
 - The way CSS selectors pick out HTML structures
@@ -98,11 +99,11 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 | fast_forward_by_line()| Same as CsvPath.fast_forward() but for all paths breadth first |
 | next_by_line()       | Same as CsvPath.next() but for all paths breadth first          |
 
-For clarity, the purpose of `CsvPaths` is to operate on multiple paths per file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
+To be clear, the purpose of `CsvPaths` is to apply multiple csvpaths per CSV file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
 
-There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
+There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about managing CSV files</a>.
 
-You also have options for providing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named paths here</a>.
+You also have options for providing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named csvpaths here</a>.
 
 This is a very basic programmatic use of CsvPath.
 
