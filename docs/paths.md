@@ -79,7 +79,7 @@ As well as the performance implications, this approach let's you break up big va
 - Add the named csvpaths programmatically or in a JSON file
 - Put the named csvpaths in a single file with each path separated by `---- CSVPATH ----`
 
-To do the latter, then import the file by adding its directory. The csvpaths will be separated and applied together by using their name; the file name minus the extension.
+To do the latter, create the file then import it by adding its directory. The csvpaths will be separated and applied together by using their name; i.e. the file name minus the extension.
 
 For example these two csvpaths are from the file at `tests/test_resources/named_paths/food.csvpaths`:
 
