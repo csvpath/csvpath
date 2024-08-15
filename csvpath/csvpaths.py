@@ -16,26 +16,20 @@ class CsvPathsCenter(ABC):
         pass
 
     @abstractmethod
-    def collect_paths(self, pathsname, filename):
+    def collect_paths(self, pathsname, filename) -> None:
         pass
 
     @abstractmethod
-    def fast_forward_paths(self, pathsname, filename):
+    def fast_forward_paths(self, pathsname, filename) -> None:
         pass
 
     @abstractmethod
-    def next(self, pathsname, filename):
+    def next(self, pathsname, filename) -> None:
         pass
 
 
 class CsvPaths(CsvPathsCenter):
-    def __init__(
-        self,
-        *,
-        delimiter=",",
-        quotechar='"',
-        skip_blank_lines=True,
-    ):
+    def __init__(self, *, delimiter=",", quotechar='"', skip_blank_lines=True):
         self.paths_manager = PathsManager()
         self.files_manager = FilesManager()
         self.results_manager = ResultsManager()
@@ -52,10 +46,10 @@ class CsvPaths(CsvPathsCenter):
             skip_blank_lines=self.skip_blank_lines,
         )
 
-    def collect_paths(self, pathsname, filename):
-        if pathsname not in self.named_paths:
+    def collect_paths(self, pathsname, filename) -> None:
+        if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException("pathsname must be a named set of paths")
-        if filename not in self.named_files:
+        if filename not in self.files_manager.named_files:
             raise ConfigurationException("filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
@@ -69,9 +63,9 @@ class CsvPaths(CsvPathsCenter):
             self.results_manager.add_named_result(pathsname, result)
 
     def fast_forward_paths(self, pathsname, filename):
-        if pathsname not in self.named_paths:
+        if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException("pathsname must be a named set of paths")
-        if filename not in self.named_files:
+        if filename not in self.files_manager.named_files:
             raise ConfigurationException("filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
@@ -85,10 +79,12 @@ class CsvPaths(CsvPathsCenter):
             self.results_manager.add_named_result(pathsname, result)
 
     def next(self, pathsname, filename):
-        if pathsname not in self.named_paths:
-            raise ConfigurationException("pathsname must be a named set of paths")
-        if filename not in self.named_files:
-            raise ConfigurationException("filename must be a named file")
+        if pathsname not in self.paths_manager.named_paths:
+            raise ConfigurationException(
+                f"pathsname '{pathsname}' must be a named set of paths"
+            )
+        if filename not in self.files_manager.named_files:
+            raise ConfigurationException(f"filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         for path in paths:

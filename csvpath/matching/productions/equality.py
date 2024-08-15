@@ -10,10 +10,7 @@ from csvpath.matching.expression_utility import ExpressionUtility
 class Equality(Matchable):
     def __init__(self, matcher):
         super().__init__(matcher)
-        self.op: str = (
-            "="  # we assume = but if a function or other containing production
-        )
-        # wants to check we might have a different op
+        self.op: str = "="  # we assume = but if a function or other containing production  # wants to check we might have a different op
 
     def reset(self) -> None:
         self.value = None
@@ -81,7 +78,8 @@ class Equality(Matchable):
         self.op = op
 
     def __str__(self) -> str:
-        return f"""{self.__class__}: {self.left}={self.right}"""
+
+        return f"""{self._simple_class_name()}({self.left} {self.op} {self.right})"""
 
     def _left_nocontrib(self, m) -> bool:
         if isinstance(m, Equality):
@@ -286,14 +284,14 @@ class Equality(Matchable):
         b = None
         left = self.left.to_value(skip=skip)
         right = self.right.to_value(skip=skip)
-        if left.__class__ == right.__class__:
-            b = self.left.to_value(skip=skip) == self.right.to_value(skip=skip)
-        elif (left.__class__ == str and right.__class__ == int) or (
-            right.__class__ == str and left.__class__ == int
-        ):
-            b = f"{left}" == f"{right}"
-        else:
-            b = f"{left}" == f"{right}"
+        b = f"{left}".strip() == f"{right}".strip()
+        #
+        # stringify is probably best most of the time,
+        # but it could make "1.0" != "1". there's probably
+        # more to do here.
+        #
+        if not b:
+            b = left == right
         return b
 
     def matches(self, *, skip=[]) -> bool:

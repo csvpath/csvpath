@@ -48,7 +48,12 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> empty(value)    </td><td> tests if the value is empty            </td></tr>
 <tr><td>           </td><td> exists(value)    </td><td> tests if the value exists            </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/fail.md'>fail()</a>  </td><td> indicate that the CSV is invalid   </td></tr>
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/fail.md'>failed()</a> and valid()</td><td> check if the CSV is invalid   </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/fail.md'>failed()</a></td><td> check if the CSV is invalid   </td></tr>
+
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/fail.md'>fail_and_stop()</a></td><td> stop the scan and declare the file invalid at the same time  </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/fail.md'>valid()</a></td><td> check if the CSV is valid or invalid  </td></tr>
+
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
 <tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> add(value, value, ...)        </td><td> adds numbers                                              </td></tr>

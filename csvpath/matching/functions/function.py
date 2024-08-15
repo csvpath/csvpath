@@ -15,7 +15,7 @@ class Function(Matchable):
             self.add_child(child)
 
     def __str__(self) -> str:
-        return f"""\n{self.__class__}{self.name}({self._function_or_equality})"""
+        return f"""{self._simple_class_name()}.{self.name}({self._function_or_equality if self._function_or_equality is not None else ""})"""
 
     def reset(self) -> None:
         self.value = None

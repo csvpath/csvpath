@@ -1,4 +1,5 @@
 from ply.yacc import YaccProduction
+from typing import List
 
 
 class ParserUtility:
@@ -25,15 +26,17 @@ class ParserUtility:
             print("syntax error at EOF")
 
     def print_production(
-        self, p: YaccProduction, label: str = None, override=True
+        self, p: List[YaccProduction], label: str = None, override=True
     ) -> None:
         if self._quiet and not override:
             return
-        if label:
-            label = f" at {label}"
-        print(f"production array {label} is:")
-        for _ in p:
-            print(f"\t{_} \t-> {_.__class__}")
+        print("Productions:")
+        try:
+            for _ in p:
+                print(f"     {_}")
+        except Exception:
+            pass
+        print("")
 
     @classmethod
     def enumerate_p(self, message, p, quiet=True):

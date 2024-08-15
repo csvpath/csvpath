@@ -64,8 +64,7 @@ class FilesManager(CsvPathsFilesManager):
 
     def get_named_file(self, name: str) -> str:
         if name not in self.named_files:
-            names = [_ for _ in self.named_files]
-            raise ConfigurationException(f"There is no file named {name} in {names}")
+            return None
         return self.named_files[name]
 
     def remove_named_file(self, name: str) -> None:

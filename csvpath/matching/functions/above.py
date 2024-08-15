@@ -24,11 +24,10 @@ class Above(Function):
             try:
                 this = float(this_is)
                 that = float(above_that)
+                self.value = this > that
             except Exception:
-                raise Exception(
-                    f"Above.to_value: this: {this}, a {this.__class__}, and {that}, a {that.__class__}"
-                )
-            self.value = this > that
+                # returning false because whatever the operands were they aren't above and below
+                self.value = False
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

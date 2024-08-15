@@ -1,4 +1,4 @@
-food, type, units, year, healthy
+food,type, units, year, healthy
 Apple, fruit, 1500000, 1921, true
 Skittles, candy, 2000000000, 1988, false
 Pizza, junk, 8000123, 1850, depends

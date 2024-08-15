@@ -60,7 +60,7 @@ class ExpressionEncoder:
     def matchable(self, json: str, m) -> str:
         json = f'{json} "base_class":"matchable", '
         json = f'{json} "parent_class":"{m.parent.__class__}", '
-        json = f'{json} "value":"{m.value}", '
+        json = f'{json} "value":"{self._no_quotes(m.value)}", '
         json = f'{json} "name":"{m.name}", '
         json = f'{json} "children": [ '
         for i, _ in enumerate(m.children):
@@ -69,6 +69,17 @@ class ExpressionEncoder:
                 json = f"{json}, "
         json = f"{json} ] "
         return json
+
+    def _no_quotes(self, v: str) -> str:
+        try:
+            # unwrap, if needed, then replace any inside " with '
+            if v[0] == '"' or v[0] == "'":
+                v = v[1:]
+            if v[len(v) - 1] == '"' or v[len(v) - 1] == "'":
+                v = v[0 : len(v) - 1]
+            return v.replace('"', "'")
+        except Exception:
+            return v
 
     def expression(self, json: str, e) -> str:
         json = f"{json} " + '{ "type":"expression", '

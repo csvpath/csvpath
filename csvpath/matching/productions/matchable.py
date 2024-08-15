@@ -17,6 +17,12 @@ class Matchable(Qualified):
     def __str__(self) -> str:
         return f"""{self.__class__}"""
 
+    def _simple_class_name(self) -> str:
+        cn = str(self.__class__)
+        name = cn[(cn.rfind(".") + 1) :]
+        name = name[0 : name.rfind("'>")]
+        return name
+
     def line_matches(self):
         es = self.matcher.expressions
         for e in es:

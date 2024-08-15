@@ -12,9 +12,9 @@ Print strings can include the following variables.
 |name               | The name of the file. E.g. for `$file.csv[*][no()]` it is `file`.     |
 |delimiter          | The file's delimiter                                                  |
 |quotechar          | The quote character the file uses to quote columns                    |
-|match_count        | The current number of matches                                         |
-|line_count         | The current line being processed                                      |
-|scan_count         | The current number of lines scanned                                   |
+|count_matches      | The current number of matches                                         |
+|count_lines        | The current line being processed                                      |
+|count_scans        | The current number of lines scanned                                   |
 |headers            | The list of header values                                             |
 |headers.headername | The value of the named header                                         |
 |scan_part          | The scan pattern                                                      |

@@ -14,10 +14,15 @@ class Stop(Function):
             raise ChildrenException("Stop must have 1 or 0 children")
         if self.match is None:
             self.match = True
+            stopped = False
             if len(self.children) == 1:
                 b = self.children[0].matches(skip=skip)
                 if b is True:
                     self.matcher.csvpath.stop()
+                    stopped = True
             else:
                 self.matcher.csvpath.stop()
+                stopped = True
+            if stopped and self.name == "fail_and_stop":
+                self.matcher.csvpath.is_valid = False
         return self.match

@@ -13,8 +13,7 @@ class Matcher:
 
     def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
         if not headers:
-            # raise Exception("no headers!")
-            print("\nWARNING: no headers available. this is only Ok for unit testing.")
+            print("\nWARNING: no headers available. Ok for unit testing.")
         if not data:
             raise MatchException(f"need data input: data: {data}")
         self.path = data
@@ -24,6 +23,7 @@ class Matcher:
         self.expressions = []
         self.header_dict = None
         self.if_all_match = []
+        self.current_expression = None
         if data is not None:
             self.lexer = MatchingLexer()
             self.parser = yacc.yacc(module=self, start="match_part")
@@ -40,10 +40,14 @@ class Matcher:
     def to_json(self, e) -> str:
         return ExpressionEncoder().to_json(e)
 
+    def dump_all_expressions_to_json(self) -> str:
+        return ExpressionEncoder().valued_list_to_json(self.expressions)
+
     def reset(self):
         for expression in self.expressions:
             expression[1] = None
             expression[0].reset()
+        self.current_expression = None
 
     def header_index(self, name: str) -> int:
         if not self.headers:
@@ -73,7 +77,11 @@ class Matcher:
     def matches(self, *, syntax_only=False) -> bool:
         ret = True
         failed = False
+        self.current_expression = None
         for i, et in enumerate(self.expressions):
+            if self.csvpath and self.csvpath.stopped:
+                return False
+            self.current_expression = et[0]
             if et[1] is True:
                 ret = True
             elif et[1] is False:
@@ -145,8 +153,6 @@ class Matcher:
         | COMMENT expressions
         | expressions COMMENT
         """
-
-    #        | COMMENT expression
 
     def p_expression(self, p):
         """expression : function

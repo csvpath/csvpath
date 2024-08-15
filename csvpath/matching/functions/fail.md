@@ -22,6 +22,8 @@ Within your csvpath you can check if a CSV is invalid using `failed()` or `valid
     ]
 ```
 
+Also, be aware that you can use `fail_and_stop()` to terminate a scan and declare the file invalid at the same time.
+
 ## Examples
 
 For this csvpath that says that nobody in the CSV can have the name "Fox":

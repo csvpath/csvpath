@@ -44,7 +44,6 @@ from .equals import Equals
 from .strip import Strip
 from .jinjaf import Jinjaf
 from .correlate import Correlate
-from .lookup import Lookup
 from .percent_unique import PercentUnique
 from .all import All
 from .total_lines import TotalLines
@@ -194,7 +193,7 @@ class FunctionFactory:
             f = Column(matcher, name, child)
         elif name == "substring":
             f = Substring(matcher, name, child)
-        elif name == "stop":
+        elif name == "stop" or name == "fail_and_stop":
             f = Stop(matcher, name, child)
         elif name == "variable":
             f = Variable(matcher, name, child)
@@ -218,8 +217,6 @@ class FunctionFactory:
             f = Jinjaf(matcher, name, child)
         elif name == "correlate":
             f = Correlate(matcher, name, child)
-        elif name == "lookup":
-            f = Lookup(matcher, name, child)
         elif name == "count_headers":
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
@@ -236,7 +233,7 @@ class FunctionFactory:
             f = Pop(matcher, name, child)
         elif name == "peek":
             f = Peek(matcher, name, child)
-        elif name == "peek_size":
+        elif name == "peek_size" or name == "size":
             f = PeekSize(matcher, name, child)
         elif name == "date" or name == "datetime":
             f = Date(matcher, name, child)

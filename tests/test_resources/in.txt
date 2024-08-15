@@ -3,6 +3,6 @@ this is a jinja template
 
 line: {{line}}
 name: {{name}}
-scan count: {{scan_count}}
+scan count: {{count_scans}}
 headers: {{headers}}
 

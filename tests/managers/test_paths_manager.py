@@ -28,10 +28,12 @@ class TestPathsManager(unittest.TestCase):
         pm = paths.paths_manager
         pm.add_named_paths_from_json(file_path=JSON)
         assert pm.named_paths
-        assert len(pm.named_paths) == 2
+        assert len(pm.named_paths) == 3
         assert "many" in pm.named_paths
         assert "numbers" in pm.named_paths
+        assert "needs split" in pm.named_paths
         assert len(pm.named_paths["numbers"]) == 2
+        assert len(pm.named_paths["needs split"]) == 2
 
     def test_named_paths_dict1(self):
         print("")

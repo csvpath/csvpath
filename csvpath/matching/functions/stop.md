@@ -3,6 +3,7 @@
 
 Stops the scan immediately on a condition or by being match-activated by an enclosing function. Always returns True to matches() and to_value().
 
+Also see the validation functions, including `fail_and_stop()`.
 
 ## Example
 

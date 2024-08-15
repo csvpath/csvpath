@@ -134,7 +134,7 @@ class PeekSize(Function):
 
         if len(self.children) != 1:
             raise ChildrenException(
-                "Percent function must have 1 child naming the variable"
+                "Size function must have 1 child naming the variable"
             )
         if self.value is None:
             k = self.children[0].to_value()

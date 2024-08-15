@@ -1,0 +1,14 @@
+
+$[*][
+    #type == "candy" -> push( "candy", count_lines() )
+    above(size("candy"), 1) -> print("$.count_lines: too much candy at: $.variables.candy ")
+    above(size("candy"), 1) -> fail_and_stop()
+]
+
+---- CSVPATH ----
+
+$[1*][
+    count_lines.nocontrib() == 1 -> print(" ")
+    above(#year, 1850) -> print("$.count_lines. $.headers.food is modern food")
+]
+

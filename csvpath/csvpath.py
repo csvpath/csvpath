@@ -79,7 +79,7 @@ class CsvPath:
         if self.csvpaths is None:
             return data
         name = self._get_name(data)
-        path = self.csvpaths.update_file_path(name)
+        path = self.csvpaths.files_manager.get_named_file(name)
         if path is None:
             return data
         elif path == name:

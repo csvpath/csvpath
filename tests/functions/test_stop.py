@@ -13,8 +13,8 @@ class TestFunctionstop(unittest.TestCase):
             [
                 @i = concat( #firstname, #lastname)
                 @c = count_lines()
-                stop(@i == "FishBat")
                 yes()
+                stop(@i == "FishBat")
             ]"""
         )
         lines = path.collect()

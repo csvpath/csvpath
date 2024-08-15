@@ -4,7 +4,7 @@ from csvpath.matching.productions.matchable import Matchable
 
 class Term(Matchable):
     def __str__(self) -> str:
-        return f"""{self.__class__}: {self.value} """
+        return f"""{self._simple_class_name()}({self.value}) """
 
     def reset(self) -> None:
         super().reset()

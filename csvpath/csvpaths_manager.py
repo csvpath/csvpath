@@ -32,13 +32,15 @@ class CsvPathsManager(ABC):
 
 
 class PathsManager(CsvPathsManager):
+    MARKER: str = "---- CSVPATH ----"
+
     def __init__(self, *, named_paths: Dict[str, List[str]] = {}):
         self.named_paths = named_paths
 
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         self.named_paths = np
 
-    def add_named_paths_from_dir(self, *, dir_path: str) -> None:
+    def add_named_paths_from_dir(self, dir_path: str) -> None:
         if dir_path is None:
             raise ConfigurationException("Named paths collection name needed")
         elif os.path.isdir(dir_path):
@@ -51,20 +53,28 @@ class PathsManager(CsvPathsManager):
                 path = os.path.join(base, p)
                 with open(path, "r") as f:
                     cp = f.read()
-                    _ = [
-                        apath.strip() for apath in cp.split("-------- CSVPATH --------")
-                    ]
+                    _ = [apath.strip() for apath in cp.split(PathsManager.MARKER)]
                     self.add_named_paths(name, _)
         else:
             raise ConfigurationException("dir_path must point to a directory")
 
-    def add_named_paths_from_json(self, *, file_path: str) -> None:
+    def add_named_paths_from_json(self, file_path: str) -> None:
         try:
             with open(file_path) as f:
                 j = json.load(f)
+                for k in j:
+                    v = j[k]
+                    if isinstance(v, list):
+                        continue
+                    elif isinstance(v, str):
+                        j[k] = [av.strip() for av in v.split(PathsManager.MARKER)]
+                    else:
+                        raise ConfigurationException(
+                            f"Unexpected object in JSON key: {k}: {v}"
+                        )
                 self.named_paths = j
-        except Exception:
-            print(f"Error: cannot load {file_path}")
+        except Exception as e:
+            raise ConfigurationException(f"Error: cannot load {file_path}: {e}")
 
     def add_named_paths(self, name: str, path: List[str]) -> None:
         self.named_paths[name] = path

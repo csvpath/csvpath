@@ -17,6 +17,12 @@ class CsvPathResult:
         else:
             return False
 
+    def __str__(self) -> str:
+        return f"""CsvPathResult:
+                        valid:{self.path.is_valid};
+                        path:{self.path};
+                        lines:{len(self.lines) if self.lines else None}"""
+
 
 class CsvPathsResultsManager(ABC):
     @abstractmethod
@@ -25,6 +31,10 @@ class CsvPathsResultsManager(ABC):
 
     @abstractmethod
     def is_valid(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def get_number_of_results(self, name: str) -> int:
         pass
 
     @abstractmethod
@@ -49,8 +59,8 @@ class CsvPathsResultsManager(ABC):
 
 
 class ResultsManager(CsvPathsResultsManager):
-    def __init__(self, *, named_results: Dict[str, List[CsvPathResult]] = {}):
-        self.named_results = named_results
+    def __init__(self):
+        self.named_results = dict()
 
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)
@@ -63,8 +73,15 @@ class ResultsManager(CsvPathsResultsManager):
         results = self.get_named_results(name)
         vs = {}
         for r in results:
-            vs += r.path.variables
+            vs = {**r.path.variables, **vs}
         return vs
+
+    def get_number_of_results(self, name: str) -> int:
+        nr = self.get_named_results(name)
+        if nr is None:
+            return 0
+        else:
+            return len(nr)
 
     def add_named_result(self, name: str, result: CsvPathResult) -> None:
         if name not in self.named_results:

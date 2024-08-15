@@ -1,4 +1,5 @@
 {
     "many": ["a csvpath"],
-    "numbers": ["another csvpath", "a third"]
+    "numbers": ["another csvpath", "a third"],
+    "needs split": " $[*][yes()] ---- CSVPATH ---- $[*][no()] "
 }
