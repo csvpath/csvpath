@@ -15,8 +15,11 @@ In many cases you will want to qualify these functions with the `nocontrib` qual
 ## Example
 
 ```bash
-    $file.csv[*][print(last(), "the file has $.line_count rows")]
+    $file.csv[*][
+            firstscan.nocontrib() -> print("we're scanning the whole file from the 0th line")
+            last.nocontrib() -> print("the file has $.count_lines rows")]
 ```
 
+This csvpath prints a message at the beginning and end of its scan. It collects all the rows. If we remove one of the `nocontrib` we collect just that line. If we remove both of them we collect nothing. Either way, the messages are still printed.
 
 
