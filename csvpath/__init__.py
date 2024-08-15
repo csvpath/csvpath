@@ -12,9 +12,9 @@ from csvpath.matching.matcher import Matcher
 from csvpath.matching.expression_encoder import ExpressionEncoder
 from csvpath.scanning.scanner import Scanner
 from csvpath.csvpath import CsvPath
-from csvpath.files_manager import FilesManager
-from csvpath.csvpaths_manager import PathsManager
-from csvpath.results_manager import ResultsManager, CsvPathResult
+from csvpath.managers.files_manager import FilesManager
+from csvpath.managers.csvpaths_manager import PathsManager
+from csvpath.managers.results_manager import ResultsManager, CsvPathResult
 from csvpath.csvpaths import CsvPaths
 
 __all__ = ["CsvPath", "CsvPaths"]

@@ -209,14 +209,72 @@ class CsvPath:
         for _ in self.next():
             pass
 
-    def next(self):
-        if self.scanner.filename is None:
-            raise FileException("There is no filename")
+    def _next_line(self) -> List[Any]:
         with open(self.scanner.filename, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
-            start = time.time()
+            for line in reader:
+                yield line
+
+    def next(self):
+        if self.scanner.filename is None:
+            raise FileException("There is no filename")
+        start = time.time()
+        for line in self._next_line():
+            b = self._consider_line(line)
+            if b:
+                yield line
+            """
+            if self.skip_blank_lines and len(line) == 0:
+                pass
+            elif self.scanner.includes(self.line_number):
+                self.scan_count = self.scan_count + 1
+                startmatch = time.perf_counter_ns()
+                b = self.matches(line)
+                endmatch = time.perf_counter_ns()
+                if b:
+                    self.match_count = self.match_count + 1
+                    if self._advance != 0:
+                        self._advance -= 1
+                    else:
+                        yield line
+                t = (endmatch - startmatch) / 1000000
+                self.last_row_time = t
+                self.rows_time += t
+            """
+            self.line_number = self.line_number + 1
+            # would need to bubble this up to csvpaths
+            if self.stopped:
+                break
+        end = time.time()
+        self.total_iteration_time = end - start
+
+    def _consider_line(self, line):
+        if self.skip_blank_lines and len(line) == 0:
+            pass
+        elif self.scanner.includes(self.line_number):
+            self.scan_count = self.scan_count + 1
+            startmatch = time.perf_counter_ns()
+            b = self.matches(line)
+            endmatch = time.perf_counter_ns()
+            if b:
+                self.match_count = self.match_count + 1
+                if self._advance != 0:
+                    self._advance -= 1
+                else:
+                    t = (endmatch - startmatch) / 1000000
+                    self.last_row_time = t
+                    self.rows_time += t
+                    return True
+                    # yield line
+        return False
+
+        """
+        with open(self.scanner.filename, "r") as file:
+            reader = csv.reader(
+                file, delimiter=self.delimiter, quotechar=self.quotechar
+            )
             for line in reader:
                 if self.skip_blank_lines and len(line) == 0:
                     pass
@@ -235,10 +293,31 @@ class CsvPath:
                     self.last_row_time = t
                     self.rows_time += t
                 self.line_number = self.line_number + 1
+                # would need to bubble this up to csvpaths
                 if self.stopped:
                     break
             end = time.time()
             self.total_iteration_time = end - start
+        """
+
+    def match_line(self, line) -> bool:
+        if self.skip_blank_lines and len(line) == 0:
+            pass
+        elif self.scanner.includes(self.line_number):
+            self.scan_count = self.scan_count + 1
+            startmatch = time.perf_counter_ns()
+            b = self.matches(line)
+            endmatch = time.perf_counter_ns()
+            if b:
+                self.match_count = self.match_count + 1
+                if self._advance != 0:
+                    self._advance -= 1
+                else:
+                    return True
+                    # yield line
+            t = (endmatch - startmatch) / 1000000
+            self.last_row_time = t
+            self.rows_time += t
 
     def get_total_lines(self) -> int:
         if self.total_lines == -1:

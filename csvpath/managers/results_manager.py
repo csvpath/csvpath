@@ -2,8 +2,8 @@ from typing import Dict, List, Any
 import os
 import json
 from abc import ABC, abstractmethod
-from . import ConfigurationException
-from . import CsvPath
+from ..exceptions import ConfigurationException
+from ..csvpath import CsvPath
 
 
 class CsvPathResult:

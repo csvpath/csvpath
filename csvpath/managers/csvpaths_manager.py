@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 import os
 import json
 from abc import ABC, abstractmethod
-from . import ConfigurationException
+from ..exceptions import ConfigurationException
 
 
 class CsvPathsManager(ABC):

@@ -1,4 +1,5 @@
 from typing import Dict, List, Any
+import csv
 import os
 import json
 from . import CsvPath
@@ -24,7 +25,7 @@ class CsvPathsCenter(ABC):
         pass
 
     @abstractmethod
-    def next(self, pathsname, filename) -> None:
+    def next_paths(self, pathsname, filename) -> None:
         pass
 
 
@@ -37,6 +38,7 @@ class CsvPaths(CsvPathsCenter):
         self.delimiter = delimiter
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
+        self.current_matchers: List[CsvPath] = []
 
     def csvpath(self) -> CsvPath:
         return CsvPath(
@@ -78,7 +80,7 @@ class CsvPaths(CsvPathsCenter):
             result = CsvPathResult(path=csvpath, lines=None)
             self.results_manager.add_named_result(pathsname, result)
 
-    def next(self, pathsname, filename):
+    def next_paths(self, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException(
                 f"pathsname '{pathsname}' must be a named set of paths"
@@ -95,4 +97,70 @@ class CsvPaths(CsvPathsCenter):
             for line in csvpath.next():
                 yield line
             result = CsvPathResult(path=csvpath, lines=None)
+            self.results_manager.add_named_result(pathsname, result)
+
+    # =============== breadth first processing ================
+
+    def collect_by_line(self, pathsname, filename):
+        for line in self.process_by_line(
+            pathsname=pathsname, filename=filename, collect=True
+        ):
+            pass
+
+    def fast_forward_by_line(self, pathsname, filename):
+        for line in self.process_by_line(
+            pathsname=pathsname, filename=filename, collect=False
+        ):
+            pass
+
+    def process_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
+        if filename not in self.files_manager.named_files:
+            raise ConfigurationException(f"filename '{filename}' must be a named file")
+        fn = self.files_manager.get_named_file(filename)
+        if not fn:
+            raise ConfigurationException(f"filename '{filename}' must be a named file")
+        if pathsname not in self.paths_manager.named_paths:
+            raise ConfigurationException(
+                f"pathsname '{pathsname}' must name a set of csvpaths"
+            )
+        paths = self.paths_manager.get_named_paths(pathsname)
+        if not isinstance(paths, list) or len(paths) == 0:
+            raise ConfigurationException(
+                f"pathsname '{pathsname}' must name a list of csvpaths"
+            )
+
+        csvpath_objects = []
+        for path in paths:
+            csvpath = self.csvpath()
+            f = path.find("[")
+            path = f"${fn}{path[f:]}"
+            csvpath.parse(path)
+            csvpath_objects.append((csvpath, []))
+        #
+        # setting fn into the csvpath is less obviously useful at CsvPaths
+        # but we'll do it for consistency.
+        #
+        with open(fn, "r") as file:
+            reader = csv.reader(
+                file, delimiter=self.delimiter, quotechar=self.quotechar
+            )
+            stopped_count: List[int] = []
+            for line in reader:
+                self.current_matchers: List[CsvPath] = []
+                for p in csvpath_objects:
+                    if p[0].stopped:
+                        stopped_count[0] = 1
+                    else:
+                        b = p[0]._consider_line(line)
+                        if b and collect:
+                            p[1].append(line)
+                        if b:
+                            self.current_matchers.append(p[0])
+                            # yield line
+                if len(self.current_matchers) > 0:
+                    yield line
+                if sum(stopped_count) == len(csvpath_objects):
+                    break
+        for csvpath in csvpath_objects:
+            result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
             self.results_manager.add_named_result(pathsname, result)

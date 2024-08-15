@@ -1,8 +1,8 @@
 from typing import Dict, List, Any
 import os
 import json
-from . import FileException
-from . import ConfigurationException
+from ..exceptions import FileException
+from ..exceptions import ConfigurationException
 from abc import ABC, abstractmethod
 
 
