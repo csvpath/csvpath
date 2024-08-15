@@ -11,7 +11,7 @@ from . import ResultsManager, CsvPathResult
 from abc import ABC, abstractmethod
 
 
-class CsvPathsCenter(ABC):
+class CsvPathsPublic(ABC):
     @abstractmethod
     def csvpath(self) -> CsvPath:
         """gets a CsvPath object primed with a reference to this CsvPaths"""
@@ -48,7 +48,7 @@ class CsvPathsCenter(ABC):
         pass
 
 
-class CsvPaths(CsvPathsCenter):
+class CsvPaths(CsvPathsPublic):
     def __init__(self, *, delimiter=",", quotechar='"', skip_blank_lines=True):
         self.paths_manager = PathsManager()
         self.files_manager = FilesManager()
