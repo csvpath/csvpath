@@ -98,6 +98,13 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/lookup.md'>lookup(name, value, int, int)</a></td><td> looks up value in a column in named set of values and returns a replacement value    </td></tr>
+
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstline()</a></td><td> matches on the 0th line, if scanned </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstscan()</a></td><td> matches on the 1st line scanned </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstmatch()</a></td><td> matches on the 1st line matched </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>last()</a></td><td> true on the last row that will be scanned </td></tr>
+
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/date.md'>date(value, format)</a></td><td> a date parsed according to a format string  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/date.md'>datetime(value, format)</a></td><td> a datetime parsed according to a format string  </td></tr>

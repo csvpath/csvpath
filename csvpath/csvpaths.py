@@ -171,6 +171,7 @@ class CsvPaths(CsvPathsPublic):
                         stopped_count.append(1)
                     else:
                         b = p[0]._consider_line(line)
+                        p[0].line_number = p[0].line_number + 1
                         if b and collect:
                             p[1].append(line)
                         if b:
@@ -180,6 +181,7 @@ class CsvPaths(CsvPathsPublic):
                     yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
+
         for csvpath in csvpath_objects:
             result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
             self.results_manager.add_named_result(pathsname, result)

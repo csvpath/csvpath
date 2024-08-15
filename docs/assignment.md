@@ -49,7 +49,7 @@ An `onchange` assignment is one that only happens when the variable's value chan
 
 `onmatch` is similar. If a row matches in all other respects, its `onmatch` variable assignments happen. If the same row doesn't match in other respects, the `onmatch`ed variable concurs -- it doesn't make the assignment and returns False in the match.
 
-`asbool` overrides the previously described variable qualifiers. If `asbool` is found, the assignment returns True or False in the match according to the value of the variable is set to. The interpretation of the variable's new value as a bool is similar to Python's `bool(x)`, but with the addition of "true" and "false" being treated as the True and False value, respectively.
+`asbool` overrides the previously described variable qualifiers. If `asbool` is found, the assignment returns True or False in the match according to the value the variable is set to. The interpretation of the variable's new value as a bool is similar to Python's `bool(x)`, but with the addition of "true" and "false" being treated as the True and False value, respectively.
 
 Finally, `nocontrib` is superior to all the other variable qualifiers. If found, the match returns True. It is, again, a way of taking the assignment out of consideration for the match.
 

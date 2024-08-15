@@ -266,7 +266,6 @@ class CsvPath(CsvPathPublic):
             if b:
                 yield line
             self.line_number = self.line_number + 1
-            # would need to bubble this up to csvpaths
             if self.stopped:
                 break
         end = time.time()

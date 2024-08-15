@@ -54,6 +54,7 @@ from .failed import Failed
 from .stdev import Stdev
 from .dups import HasDups
 from .empty import Empty
+from .first_line import FirstLine
 
 
 class UnknownFunctionException(Exception):
@@ -149,6 +150,8 @@ class FunctionFactory:
             f = Above(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)
+        elif name == "firstline" or name == "firstmatch" or name == "firstscan":
+            f = FirstLine(matcher, name, child)
         elif name == "count_lines":
             f = CountLines(matcher, name, child)
         elif name == "count_scans":

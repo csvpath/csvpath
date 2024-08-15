@@ -11,7 +11,7 @@ class CsvPathsManager(ABC):
         pass
 
     @abstractmethod
-    def add_named_paths_from_json(self, filename: str) -> None:
+    def set_named_paths_from_json(self, filename: str) -> None:
         pass
 
     @abstractmethod
@@ -58,7 +58,7 @@ class PathsManager(CsvPathsManager):
         else:
             raise ConfigurationException("dir_path must point to a directory")
 
-    def add_named_paths_from_json(self, file_path: str) -> None:
+    def set_named_paths_from_json(self, file_path: str) -> None:
         try:
             with open(file_path) as f:
                 j = json.load(f)
