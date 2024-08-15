@@ -1,7 +1,10 @@
 
 # Filenames and Named Files
 
-The string following the `$` can be a relative or absolute file path. It could alternatively be a logical identifier that points indirectly to a physical file, as described below.
+The file identifier following the root `$` and preceding the scanning part of the csvpath can be:
+- A relative or absolute file path
+- A logical identifier that points indirectly to a physical file, as described below
+- The empty string, in which case the file association happens in CsvPaths on the fly
 
 Filenames must match this regular expression `[A-Z,a-z,0-9\._/\-\\#&]+`. I.e. they have:
 
