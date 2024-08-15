@@ -70,7 +70,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/max.md'>min(value, type)</a></td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> percent(type)                 </td><td> % of total lines for "scan", "match", "line"              </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/percent_unique.md'>percent_unique(header)</a> </td><td> % of unique values found in the column  </td></tr>
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/stdev.md'>stdev(stack) and pstdev(stack)</a> </td><td> returns the standard deviation of numbers pushed on a stack  </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/stdev.md'>stdev(stack)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/stdev.md'>pstdev(stack)</a> </td><td> returns the standard deviation of numbers pushed on a stack  </td></tr>
 
 <tr><td> Counting  </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count.md'>count()</a> </td><td> counts the number of matches            </td></tr>
