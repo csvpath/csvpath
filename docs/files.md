@@ -1,5 +1,5 @@
 
-# Filenames and Named Files
+# Named Files
 
 The file identifier following the root `$` and preceding the scanning part of the csvpath can be:
 - A relative or absolute file path
