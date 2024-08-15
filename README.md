@@ -98,7 +98,7 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 | fast_forward_by_line()| Same as CsvPath.fast_forward() but for all paths breadth first |
 | next_by_line()       | Same as CsvPath.next() but for all paths breadth first          |
 
-For clarity, CsvPaths operates on multiple paths per file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
+For clarity, the purpose of `CsvPaths` is to operate on multiple paths per file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
 
 There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
 
@@ -108,16 +108,17 @@ This is a very basic programmatic use of CsvPath.
 
 ```python
     path = CsvPath()
-    path.parse("""$test.csv[5-25]
+    path.parse("""
+                    $test.csv[5-25]
                     [
                         #0=="Frog"
                         @lastname.onmatch="Bats"
                         count()==2
                     ]
-               """)
+    """)
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
-    print(f"path vars: {path.variables}")
+    print(f"The csvpath varibles collected are: {path.variables}")
 ```
 
 The csvpath says:
