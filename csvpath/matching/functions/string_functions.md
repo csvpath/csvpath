@@ -5,15 +5,27 @@ The string handling functions behave much like their Python equivalents.
 
 ### concat(value, value, ...)
 
+Concatenates any number of strings.
+
 ### length(value)
+
+Same as you would expect.
 
 ### lower(value)
 
+Same as you would expect.
+
 ### strip(value)
+
+Same as you would expect.
 
 ### substring(value, int)
 
+Substring starting from left and including the number of characters indicated. The value is stringified, so you can substring essentially anything.
+
 ### upper(value)
+
+Same as you would expect.
 
 ## Examples
 
