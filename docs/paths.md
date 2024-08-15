@@ -85,6 +85,8 @@ For example these two csvpaths are from the file at `tests/test_resources/named_
 
 ```bash
     $[*][
+        ~ invalid if there is too much candy on the manifest ~
+
         #type == "candy" -> push( "candy", count_lines() )
         above(size("candy"), 1) -> print("$.count_lines: too much candy at: $.variables.candy ")
         above(size("candy"), 1) -> fail_and_stop()
@@ -93,6 +95,7 @@ For example these two csvpaths are from the file at `tests/test_resources/named_
     ---- CSVPATH ----
 
     $[1*][
+        ~ call out any modern foods we see ~
         count_lines.nocontrib() == 1 -> print(" ")
         above(#year, 1850) -> print("$.count_lines. $.headers.food is modern food")
     ]
