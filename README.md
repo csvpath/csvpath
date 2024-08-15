@@ -162,12 +162,12 @@ There is no "standard" way to do CsvPath validation. The simplest way is to crea
                  @failed.asbool -> print("Error: Check line $.line_count for a row with the name Frog")]
 ```
 
-Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule.
+Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule. You can read more <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about managing csvpaths here</a>.
 
 <a name="newfiles"></a>
 ### Creating new CSV files
 
-Csvpaths can use the `print` function to generate new file content on system out. Redirecting the output to a file is an easy way to create a new CSV file based on an existing file. For e.g.
+Csvpaths can also use the `print` function to generate new file content on system out. Redirecting the output to a file is an easy way to create a new CSV file based on an existing file. For e.g.
 
 ```bash
     $test.csv[*][ line_count()==0 -> print("lastname, firstname, say")
