@@ -6,7 +6,7 @@ A csvpath has:
 - Scanning instructions, and
 - Matching criteria
 
-The match part in particular can get large. There is no limit on how many match components a csvpath can have. It is easy to come up with many validation rules, apply them to large files and have problems managing both the rules and the running time.
+The match part in particular can get large. There is no limit on how many match components a csvpath can have. It is easy to come up with many validation rules, apply them to large files, and have problems managing both the rules and the running time.
 
 In those cases it may be helpful to register paths with a `CsvPaths` object. Using paths by name is more than just convenient. The benefits include:
 
@@ -28,7 +28,7 @@ To use named csvpaths you must use a `CsvPaths` object. Your setup happens in Cs
 | get_named_paths(name)                 | Gets the list of csvpaths keyed by the name                      |
 | remove_named_paths(name)              | Removes a list of csvpaths
 
-## Examples
+## Simple Examples
 
 As a simple example, let's set up two csvpaths and use one of them by name.
 
@@ -46,7 +46,7 @@ As a simple example, let's set up two csvpaths and use one of them by name.
     path.fast_forward()
 ```
 
-A named path can reference a named file. To extend our example:
+A named path can reference a named file. To extend our example with named files:
 
 ```python
     nf = {
@@ -68,6 +68,45 @@ A named path can reference a named file. To extend our example:
     path.fast_forward()
 ```
 
+## Breadth First
+
+There may be cases when you want to run a set of csvpaths one after another. This requires iterating the CSV file multiple times. `CsvPaths` makes it easy to run csvpaths in series, but that typically isn't necessary and the runtime performance may not be acceptable.
+
+`CsvPaths` also makes it easy to run multiple csvpaths against a file breadth-first. That means CsvPaths will attempt to match every row in the file against all the provided csvpaths before it moves on to the next row.
+
+As well as the performance implications, this approach let's you break up big validation rules into sets of small rules for easier management. This can be handled two ways:
+
+- Add the named csvpaths programmatically or in a JSON file
+- Put the named csvpaths in a single file with each path separated by `---- CSVPATH ----`
+
+To do the latter, then import the file by adding its directory. The csvpaths will be separated and applied together by using their name; the file name minus the extension.
+
+For example these two csvpaths are from the file at `tests/test_resources/named_paths/food.csvpaths`:
+
+    $[*][
+        #type == "candy" -> push( "candy", count_lines() )
+        above(size("candy"), 1) -> print("$.count_lines: too much candy at: $.variables.candy ")
+        above(size("candy"), 1) -> fail_and_stop()
+    ]
+
+    ---- CSVPATH ----
+
+    $[1*][
+        count_lines.nocontrib() == 1 -> print(" ")
+        above(#year, 1850) -> print("$.count_lines. $.headers.food is modern food")
+    ]
+
+We can apply them breadth-first using this code:
+
+```python
+    cs = CsvPaths()
+    cs.files_manager.set_named_files(FILES)
+    cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+    for line in cs.next_by_line(filename="food", pathsname="many"):
+        valid = cs.results_manager.is_valid("many")
+        if valid:
+            print("Yup, still valid!")
+```
 
 
 
