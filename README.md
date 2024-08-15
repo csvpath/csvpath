@@ -59,7 +59,7 @@ CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a
 Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
 
 ### CsvPath
-<span style="font-size:8pt">(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)</span>
+(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
 |method                     |function                                                        |
 |---------------------------|----------------------------------------------------------------|
 |parse(csvpath)             | applies a csvpath                                              |
@@ -70,6 +70,7 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 |collect(n)                 | processes n rows and collects the lines that matched as lists  |
 
 ### CsvPaths
+(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpaths.py'>code</a>)
 |method               |function                                                         |
 |---------------------|-----------------------------------------------------------------|
 |csvpath()            | gets a CsvPath object that knows all the file names available   |
