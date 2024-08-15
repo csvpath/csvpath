@@ -59,7 +59,7 @@ CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a
 Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
 
 ### CsvPath
-(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
+<span style="font-size:0.5em;font-style:italic;">(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)</span>
 |method                     |function                                                        |
 |---------------------------|----------------------------------------------------------------|
 |parse(csvpath)             | applies a csvpath                                              |
