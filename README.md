@@ -81,7 +81,7 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 | fast_forward_by_line()| Same as CsvPath.fast_forward() but for all paths breadth first |
 | next_by_line()       | Same as CsvPath.next() but for all paths breadth first          |
 
-For clarity, the breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods apply each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
+For clarity, CsvPaths operates on multiple paths per file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
 
 There are several ways to set up csvpath file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about filenames</a>.
 
