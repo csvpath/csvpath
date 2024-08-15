@@ -51,5 +51,5 @@ The FilesManager methods are:
 | remove_named_file(name)             | Removes a named file                                                |
 
 
-Using these methods you can setup a CsvPaths, like the example above, then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `files_manager`. This use is easy and nearly transparent:
+Using these methods you can setup a CsvPaths, like the example above, then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `files_manager`. This use is easy and nearly transparent.
 
