@@ -14,18 +14,37 @@ from abc import ABC, abstractmethod
 class CsvPathsCenter(ABC):
     @abstractmethod
     def csvpath(self) -> CsvPath:
+        """gets a CsvPath object primed with a reference to this CsvPaths"""
         pass
 
     @abstractmethod
     def collect_paths(self, pathsname, filename) -> None:
+        """sequentially does a CsvPath.collect() on filename for every named path"""
         pass
 
     @abstractmethod
     def fast_forward_paths(self, pathsname, filename) -> None:
+        """sequentially does a CsvPath.fast_forward() on filename for every named path"""
         pass
 
     @abstractmethod
     def next_paths(self, pathsname, filename) -> None:
+        """does a CsvPath.next() on filename for every line against every named path in sequence"""
+        pass
+
+    @abstractmethod
+    def collect_by_line(self, pathsname, filename):
+        """does a CsvPath.collect() on filename where each row is considered by every named path before the next row starts"""
+        pass
+
+    @abstractmethod
+    def fast_forward_by_line(self, pathsname, filename):
+        """does a CsvPath.fast_forward() on filename where each row is considered by every named path before the next row starts"""
+        pass
+
+    @abstractmethod
+    def next_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
+        """does a CsvPath.next() on filename where each row is considered by every named path before the next row starts"""
         pass
 
 
@@ -113,7 +132,7 @@ class CsvPaths(CsvPathsCenter):
         ):
             pass
 
-    def process_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
+    def next_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
         if filename not in self.files_manager.named_files:
             raise ConfigurationException(f"filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)
@@ -149,7 +168,7 @@ class CsvPaths(CsvPathsCenter):
                 self.current_matchers: List[CsvPath] = []
                 for p in csvpath_objects:
                     if p[0].stopped:
-                        stopped_count[0] = 1
+                        stopped_count.append(1)
                     else:
                         b = p[0]._consider_line(line)
                         if b and collect:
