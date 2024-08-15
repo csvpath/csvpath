@@ -16,7 +16,7 @@ Filenames must match this regular expression `[A-Z,a-z,0-9\._/\-\\#&]+`. I.e. th
 - underscores, and
 - ampersands.
 
-## Using CsvPaths To Manage Files
+## Using CsvPaths To Work With Files
 
 You can use the `CsvPaths` class to set up a list of named files so that you can have more concise csvpaths. Named files can take the form of:
 
@@ -24,9 +24,22 @@ You can use the `CsvPaths` class to set up a list of named files so that you can
 - A dict object passed into the CsvPaths object containing the same name-to-file-path structure
 - A file system path pointing to a directory that will be used to populate the named files with all contained files
 
-Using named files requires `CsvPaths`, but the configuration happens in a CsvPaths' <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/managers/files_manager.py'>FilesManager</a>.
+Using named files requires `CsvPaths`, but the configuration happens in a CsvPaths's <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/managers/files_manager.py'>FilesManager</a>.
 
-The FileManager methods are:
+## Example
+
+```python
+    paths = CsvPaths()
+    paths.files_manager.add_named_file("test", "tests/test_resources/test.csv")
+    path = paths.csvpath()
+    path.parse( """$test[*][#firstname=="Fred"]""" )
+    rows = path.collect()
+```
+This csvpath will be applied to the file named `"test"` and match rows where the `firstname` is `"Fred"`. The matched rows will be returned from the `collect()` method.
+
+## FilesManager
+
+The FilesManager methods are:
 
 | Method                              | Description                                                         |
 |-------------------------------------|---------------------------------------------------------------------|
@@ -38,14 +51,5 @@ The FileManager methods are:
 | remove_named_file(name)             | Removes a named file                                                |
 
 
-You can then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `files_manager`. This use is easy and nearly transparent:
-
-```python
-    paths = CsvPaths()
-    paths.files_manager.add_named_file("test", "tests/test_resources/test.csv")
-    path = paths.csvpath()
-    path.parse( """$test[*][#firstname=="Fred"]""" )
-    rows = path.collect()
-```
-This csvpath will be applied to the file named `"test"` and match rows where the `firstname` is `"Fred"`. The matched rows will be returned from the `collect()` method.
+Using these methods you can setup a CsvPaths, like the example above, then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `files_manager`. This use is easy and nearly transparent:
 
