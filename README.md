@@ -1,5 +1,5 @@
 
-# CsvPath
+# About CsvPath
 
 CsvPath defines a declarative syntax for inspecting and validating CSV files. Though much simpler, it is inspired by:
 
@@ -17,7 +17,23 @@ And do it all in an automation-friendly way.
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 
+# Contents
+
+- [High-level Description](#description)
+- [Running CsvPath](#running)
+   - [Validation](#validating)
+   - [Creating new files](#newfiles)
+- [Scanning](#scanning)
+- [Matching](#matching)
+   - [Match Components](#components)
+   - [Comments](#comments)
+   - [The When Operator](#when)
+   - [Qualifiers](#qualifiers)
+- [More Examples](#examples)
+
+
 # Description
+<a name="description"></a>
 
 CsvPath paths have three parts:
 - a "root" file name
@@ -48,11 +64,12 @@ See [more examples here](#examples).
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths.
 
-CsvPath was conceived as a data testing and extraction tool. The assumption was that using csvpaths would typically involve testing the paths in advance and then using them in automated runs.
+CsvPath was conceived as a data testing and extraction tool. Running it in production typically involves testing the paths in advance and automating the runs.
 
-Interactive use of csvpaths can be valuable, too, of course. There is a simple REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
+Interactive use of csvpaths can be valuable, too, of course. There is a trivial REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
 
 ## Running CsvPath
+<a name="running"></a>
 
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/dk107dk/csvpath'>git repo is here</a>.
 
@@ -119,7 +136,7 @@ Another path that does the same thing a bit more simply might look like:
         ]
 ```
 
-In this case we're using the "when" operator, `->`, to determine when to print.
+In this case, we're using the "when" operator, `->`, to determine when to print.
 
 For lots more ideas see the unit tests and [more examples here](#examples).
 
@@ -132,6 +149,7 @@ Before we get into the details of the scanning and matching parts of paths, incl
 - Creating new CSV files based on an existing file
 
 ### Validating CSV
+<a name="validating"></a>
 
 CsvPath paths can be used for rules based validation. Rules based validation checks a file against content and structure rules but does not validate the file's structure against a schema. This validation approach is similar to XML's Schematron validation, where XPath rules are applied to XML.
 
@@ -145,6 +163,7 @@ There is no "standard" way to do CsvPath validation. The simplest way is to crea
 Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule.
 
 ### Creating new CSV files
+<a name="newfiles"></a>
 
 Csvpaths can use the `print` function to generate new file content on system out. Redirecting the output to a file is an easy way to create a new CSV file based on an existing file. For e.g.
 
@@ -157,6 +176,8 @@ This csvpath reorders the headers of the test file at `tests/test_resources/test
 
 
 # Scanning
+<a name="scanning"></a>
+
 The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
 
 The scan part of the path starts with a dollar sign to indicate the root, meaning the file from the top. After the dollar sign comes the file path. The scanning instructions are in a bracket. The rules are:
@@ -168,6 +189,8 @@ The scan part of the path starts with a dollar sign to indicate the root, meanin
 - `[1+3-8]` means line 1 and lines 3 through eight
 
 # Matching
+<a name="matching"></a>
+
 The match part is also bracketed. Matches have space separated components or "values" that are ANDed together. The components' order is important. A match component is one of several types:
 
 - Term
@@ -176,6 +199,7 @@ The match part is also bracketed. Matches have space separated components or "va
 - Header
 - Equality
 
+<a name="Components"></a>
 ## Term
 A string, number, or regular expression value.
 
@@ -221,6 +245,7 @@ Two of the other types joined with an "=" or "==".
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
 
 ## Comments
+<a name="comments"></a>
 
 You can comment out components of a csvpath's match part using wrapping `~`. Comments can be multi-line. At the moment the only limitations are:
 
@@ -239,6 +264,7 @@ Examples:
 ```
 
 ## The when operator
+<a name="when"></a>
 
 `->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
 
@@ -255,6 +281,7 @@ Prints `this is the last line` just before the scan ends.
 Says to set the `firstname` variable to the value of the first column when the first column has a value.
 
 ## Qualifiers
+<a name="qualifiers"></a>
 
 Qualifiers are tokens added to variable, header, and function names. They are separated from the names and each other with `.` characters. Each qualifier causes the qualified match component to behave in a different way than it otherwise would.
 
