@@ -30,11 +30,11 @@ Returns the modulus of two numbers. `mod()` upcasts to `float` and rounds to the
 ## int()
 
 Converts its argument to an int, if possible. If the convert to int fails it will attempt to:
-- Swap a None for 0
-- Identify the empty string and treat as 0
-- Swap False for 0
+- Swap a `None` for `0`
+- Identify the empty string and treat as `0`
+- Swap `False` for `0`
 
-If those attempts don't work it throws ChildrenException.
+If those attempts don't work it raises `ChildrenException`.
 
 
 ## Examples
