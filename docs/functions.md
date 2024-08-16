@@ -6,12 +6,12 @@ Functions perform work within a csvpath. A function is represented by a name fol
 There are dozens of functions listed below. More functions can be easily created.
 
 Functions can contain:
-- terms
-- variables
-- headers
-- equality tests
-- variable assignment
-- other functions
+- Terms
+- Variables
+- Headers
+- Equality tests
+- Variable assignment
+- Other functions
 
 Some functions take a specific or unlimited number of types as arguments.
 
