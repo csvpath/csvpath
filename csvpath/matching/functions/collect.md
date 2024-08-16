@@ -7,7 +7,7 @@ If you are running multiple csvpaths on a single file using a `CsvPaths` object,
 
 Keep in mind that `collect()` doesn't have any impact on `print()` and `jinja()`. Those functions still have access to the values of all the headers.
 
-That all sounds complicated! Just remember the core idea: each csvpath returns the values of the headers identifies by `collect()`, or if there is no `collect()` all the header values.
+That all sounds complicated! Just remember the core idea: each csvpath returns the values of the headers identified by `collect()`, or if there is no `collect()` all the header values.
 
 
 ## Examples
