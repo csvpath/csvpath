@@ -89,6 +89,7 @@ class CsvPath(CsvPathPublic):
         self.total_iteration_time = -1
         self._advance = 0
         self._is_valid = True
+        self._limit_collection_to = []
 
     def parse(self, csvpath):
         # start = time.time()
@@ -257,6 +258,22 @@ class CsvPath(CsvPathPublic):
             for line in reader:
                 yield line
 
+    @property
+    def limit_collection_to(self) -> List[int]:
+        return self._limit_collection_to
+
+    @limit_collection_to.setter
+    def limit_collection_to(self, indexes: List[int]) -> None:
+        self._limit_collection_to = indexes
+
+    def limit_collection(self, line: List[Any]) -> List[Any]:
+        if len(self.limit_collection_to) == 0:
+            return line
+        ls = []
+        for k in self.limit_collection_to:
+            ls.append(line[k])
+        return ls
+
     def next(self):
         if self.scanner.filename is None:
             raise FileException("There is no filename")
@@ -264,6 +281,7 @@ class CsvPath(CsvPathPublic):
         for line in self._next_line():
             b = self._consider_line(line)
             if b:
+                line = self.limit_collection(line)
                 yield line
             self.line_number = self.line_number + 1
             if self.stopped:

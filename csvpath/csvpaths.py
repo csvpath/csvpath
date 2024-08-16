@@ -173,6 +173,7 @@ class CsvPaths(CsvPathsPublic):
                         b = p[0]._consider_line(line)
                         p[0].line_number = p[0].line_number + 1
                         if b and collect:
+                            line = p[0].limit_collection(line)
                             p[1].append(line)
                         if b:
                             self.current_matchers.append(p[0])

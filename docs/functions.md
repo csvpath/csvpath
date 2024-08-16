@@ -100,6 +100,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/advance.md'>advance(int)</a></td><td> skips the next n-rows </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/collect.md'>collect(value, ...)</a></td><td> identifies the headers to collect when a row matches </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstline()</a></td><td> matches on the 0th line, if scanned </td></tr>
 
