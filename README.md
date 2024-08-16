@@ -49,7 +49,7 @@ A very simple csvpath might look like this:
     $filename[*][yes()]
 ```
 
-This path says open the file named `filename`, scan all the lines, and match every line scanned.
+This csvpath says open the file named `filename`, scan all the lines, and match every line scanned.
 
 A slightly more functional csvpath could look like this:
 
@@ -59,7 +59,15 @@ A slightly more functional csvpath could look like this:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-This path reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
+This csvpath reads `people.csv`, counting the people without a middle name and printing the result after the last row is read. A csvpath can point to a specific file or it can use a logical name associated with a physical file or it can have no specific file indicator.
+
+```bash
+    $[*][
+        @two_names = count(not(#middle_name))
+        last() -> print("There are $.variables.two_names people with only two names")]
+```
+
+This version of the example has its file chosen at runtime.
 
 See [more examples here](#examples).
 
