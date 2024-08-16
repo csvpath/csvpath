@@ -35,8 +35,8 @@ If not `asbool` the test is:
 
 ## Example
 
-    $file.csv[*][@ave = average.average_age(#age, "scan")]
-
-This path collects ages in the `average_age` variable under scan count keys and assigns the average to the `ave` variable.
+```bash
+    $file.csv[*][@existiant = exists(#age)]
+```
 
 
