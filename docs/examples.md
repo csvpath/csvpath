@@ -105,10 +105,16 @@ Getting there:
     ]
 ```
 
-Best:
+Stop here?
 
 ```bash
     $test[0][ print("$.headers") ]
+```
+
+Best:
+
+```bash
+    $[0][ print("$.headers") ]
 ```
 
 
