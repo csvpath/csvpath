@@ -1,7 +1,7 @@
 
 # Collect
 
-`collect()` identifies headers CsvPath should collect when a row matches. The headers can be given as their 0-based index or by name. The name of a header is whatever is found in that column in line 0. Collect only affects the csvpath it is used in.
+`collect()` identifies headers CsvPath should collect when a row matches. The headers can be given as their 0-based index or by name. The name of a header is whatever value is found in that column in line 0. `collect()` only affects the csvpath it is used in.
 
 If you are running multiple csvpaths on a single file using a `CsvPaths` object, each csvpath has its own `CsvPath` object. The set of `CsvPath` objects are collectively managed by the `CsvPaths` object. Each `CsvPath` object will collect the values of either all headers or just the ones identified by a `collect()` in its csvpath. This means that potentially each csvpath returns a different set of headers to the `CsvPaths`.
 
