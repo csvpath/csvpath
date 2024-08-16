@@ -1,7 +1,9 @@
 
-# Add, Subtract, Multiply, Divide, Mod
+# Add, Subtract, Multiply, Divide, Mod, Int
 
-These functions work mostly the way you would expect. Numbers are upcast to float before the operations.
+These arithmetic functions work mostly the way you would expect.
+
+Numbers are upcast to floats before the operations.
 
 ## subtract() and minus()
 
