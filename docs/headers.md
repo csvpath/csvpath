@@ -9,10 +9,13 @@ Names of headers are whatever is found in line 0, the header row. If a header co
 
 A numbered header references a column by its 0-based column index. The last column can be referenced by the `end()` function.
 
-The name of a header can be found using the `column()`, as in:
-    $file.csv[*][ @col = column(3) print("the header you need is named: #$.variables.col")]
+The name of a header can be found using the `column()` function, as in:
 
-As another example, the name of the second to last column can be found using `column(minus(1))`
+```bash
+    $file.csv[*][ @col = column(3) print("the header you need is named: #$.variables.col")]
+```
+
+As another example, the name of the second to last column can be found using `column(minus(1))`.
 
 Header values can be tested as a boolean (a Python bool) with the `asbool` qualifier. <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
