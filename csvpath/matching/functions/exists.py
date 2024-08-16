@@ -1,4 +1,5 @@
 from typing import Any
+import math
 from .function import Function, ChildrenException
 from ..productions import Header, Variable
 
@@ -7,7 +8,6 @@ class Exists(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-
         if self.value is None:
             self.value = self.matches(skip=skip)
         return self.value
@@ -30,8 +30,18 @@ class Exists(Function):
                     self.match = v
                 except Exception:
                     self.match = False
-            elif v is not None and f"{v}".strip() != "":
+            elif v is None:
+                self.match = False
+            elif self._isnan(v):
+                self.match = False
+            elif f"{v}".strip() != "":
                 self.match = True
             else:
                 self.match = False
         return self.match
+
+    def _isnan(self, v) -> bool:
+        try:
+            return math.isnan(v)
+        except Exception:
+            return False
