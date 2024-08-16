@@ -7,12 +7,10 @@ class Now(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) > 1:
-            raise ChildrenException(
-                "now function may have only a single child that gives a format"
-            )
+        self.validate_zero_or_one_arg()
+
         format = None
-        if self.children and len(self.children) == 1:
+        if len(self.children) == 1:
             format = self.children[0].to_value(skip=skip)
             format = f"{format}".strip()
         x = datetime.datetime.now()

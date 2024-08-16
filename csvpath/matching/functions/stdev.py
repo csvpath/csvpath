@@ -15,6 +15,7 @@ class Stdev(Function):
         if self.value is None:
             om = self.has_onmatch()
             if not om or self.line_matches():
+                self.validate_one_arg()
                 child = self.children[0]
                 v = child.to_value()
                 stack = None

@@ -6,9 +6,7 @@ class Upper(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Upper function must have 1 child")
-
+        self.validate_one_arg()
         value = self.children[0].to_value(skip=skip)
         value = f"{value}".upper()
         return value

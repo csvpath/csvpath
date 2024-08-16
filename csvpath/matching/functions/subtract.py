@@ -8,8 +8,7 @@ class Subtract(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
-            if len(self.children) != 1:
-                raise ChildrenException("no children. there must be 1 child")
+            self.validate_one_or_more_args()
             child = self.children[0]
             if isinstance(child, Term):
                 v = child.to_value()
@@ -25,10 +24,6 @@ class Subtract(Function):
                     else:
                         ret = float(ret) - float(v)
                 self.value = ret
-            else:
-                raise ChildrenException(
-                    f"must be 1 child, either equality or a term containing an int, not {child}"
-                )
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

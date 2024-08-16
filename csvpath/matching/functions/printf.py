@@ -28,8 +28,7 @@ class Print(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            if len(self.children) != 1:
-                raise ChildrenException("must be 1 term child")
+            self.validate_one_arg(types=[Term])
             string = self.children[0].to_value()
             self.value = self.make_string(string)
         return self.value
@@ -37,9 +36,8 @@ class Print(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if len(self.children) != 1:
-            raise ChildrenException("must be 1 child, equality or print string")
         if self.match is None:
+            self.validate_one_arg(types=[Term])
             om = self.has_onmatch()
             if om:
                 lm = self.line_matches()

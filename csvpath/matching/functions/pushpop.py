@@ -8,14 +8,8 @@ class Push(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Push function must have 1 equality child")
-        if not isinstance(self.children[0], Equality) or self.children[0].op != ",":
-            raise ChildrenException(
-                "Push function must have 1 equality child with the ',' between 2 values"
-            )
-
         if self.value is None:
+            self.validate_two_args()
             eq = self.children[0]
             k = eq.left.to_value()
             v = eq.right.to_value()
@@ -46,11 +40,8 @@ class Pop(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException(
-                "Pop function must have 1 child giving the name of the variable"
-            )
         if self.value is None:
+            self.validate_one_arg()
             k = self.children[0].to_value()
             stack = self.matcher.get_variable(k, set_if_none=[])
             if len(stack) > 0:
@@ -74,11 +65,8 @@ class Stack(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException(
-                "Stack function must have 1 child giving the name of the variable"
-            )
         if self.value is None:
+            self.validate_one_arg()
             k = self.children[0].to_value()
             stack = self.matcher.get_variable(k, set_if_none=[])
             if not isinstance(stack, list):
@@ -96,16 +84,8 @@ class Peek(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-
-        if (
-            len(self.children) != 1
-            or not isinstance(self.children[0], Equality)
-            or self.children[0].op != ","
-        ):
-            raise ChildrenException(
-                "Percent function must have 1 equality child with the ',' between 2 values"
-            )
         if self.value is None:
+            self.validate_two_args()
             eq = self.children[0]
             k = eq.left.to_value()
             v = eq.right.to_value()
@@ -131,12 +111,8 @@ class PeekSize(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-
-        if len(self.children) != 1:
-            raise ChildrenException(
-                "Size function must have 1 child naming the variable"
-            )
         if self.value is None:
+            self.validate_one_arg()
             k = self.children[0].to_value()
 
             stack = self.matcher.get_variable(k, set_if_none=[])

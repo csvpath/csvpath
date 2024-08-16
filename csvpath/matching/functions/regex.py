@@ -13,8 +13,8 @@ class Regex(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-
         if self.match is None:
+            self.validate_two_args()
             left = self._function_or_equality.left
             right = self._function_or_equality.right
             regex = None

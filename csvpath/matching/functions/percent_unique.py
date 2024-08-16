@@ -1,15 +1,15 @@
 from typing import Any
 from .function import Function, ChildrenException
+from ..productions import Header
 
 
 class PercentUnique(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Percent function must have 1 header child")
-        if self.value is None:
 
+        if self.value is None:
+            self.validate_one_arg(types=[Header])
             om = self.has_onmatch()
             if not om or self.line_matches():
                 tracking = self.children[0].to_value()

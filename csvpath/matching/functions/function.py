@@ -19,6 +19,18 @@ class Function(Matchable):
 
     # ------------ VALIDATION -------------
 
+    def _class_match(self, obj, ok: List[Type]) -> bool:
+        if not ok or len(ok) == 0:
+            return True
+        cls = obj.__class__
+        if cls in ok:
+            return True
+        else:
+            for _ in ok:
+                if isinstance(obj, _):
+                    return True
+        return False
+
     def validate_zero_or_more_args(self, types=[]) -> None:
         if len(self.children) == 0:
             pass
@@ -95,25 +107,13 @@ class Function(Matchable):
     def validate_one_arg(self, types=[]) -> None:
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have 1 argument")
-        elif hasattr(self.children[0], "op"):
+        elif hasattr(self.children[0], "op") and self.children[0].op == ",":
             raise ChildrenException(f"{self.name}() must have 1 argument")
         if len(types) > 0:
             if not self._class_match(self.children[0], types):
                 raise ChildrenException(
                     f"{self.name}() must have an argument of type: {types}"
                 )
-
-    def _class_match(self, obj, ok: List[Type]) -> bool:
-        if not ok or len(ok) == 0:
-            return True
-        cls = obj.__class__
-        if cls in ok:
-            return True
-        else:
-            for _ in ok:
-                if isinstance(obj, _):
-                    return True
-        return False
 
     def validate_one_or_two_args(self, one=[], left=[], right=[]) -> None:
         if len(self.children) != 1:

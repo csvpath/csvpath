@@ -6,18 +6,11 @@ class Substring(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("In function must have 1 child")
-        if self.children[0].op != ",":
-            raise ChildrenException(
-                f"Substring function must have an equality with the ',' operation, not {self.children[0].op}"
-            )
+        self.validate_two_args()
         if self.value is None:
             i = self.children[0].right.to_value()
             if not isinstance(i, int):
-                raise ChildrenException(
-                    "Substring function must have an int righthand child"
-                )
+                raise ChildrenException("substring() must have an int second argument")
             i = int(i)
             string = self.children[0].left.to_value()
             string = f"{string}"

@@ -7,9 +7,8 @@ class Random(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Random function must have 1 child")
         if self.value is None:
+            self.validate_two_args()
             lower = self.children[0].left.to_value()
             upper = self.children[0].right.to_value()
             if lower is None:

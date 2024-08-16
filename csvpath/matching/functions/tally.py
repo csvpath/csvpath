@@ -7,19 +7,17 @@ class Tally(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Tally function must have 1 child")
         if self.value is not None:
             return True
-        elif self in skip:
-            return True
         else:
+            self.validate_one_or_more_args()
             om = self.has_onmatch()
             if not om or self.line_matches():
                 child = self.children[0]
-                kids = (
-                    child.commas_to_list() if isinstance(child, Equality) else [child]
-                )
+                if isinstance(child, Equality):
+                    kids = child.commas_to_list()
+                else:
+                    kids = [child]
                 tally = ""
                 for _ in kids:
                     tally += f"{_.to_value(skip=skip)}|"

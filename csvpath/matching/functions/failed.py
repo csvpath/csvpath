@@ -13,4 +13,5 @@ class Failed(Function):
             raise Exception(f"Incorrect name {self.name} for a Failed class instance")
 
     def matches(self, *, skip=[]) -> bool:
+        self.validate_zero_args()
         return self.to_value(skip=skip)

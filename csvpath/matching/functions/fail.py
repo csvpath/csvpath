@@ -9,5 +9,6 @@ class Fail(Function):
         return False
 
     def matches(self, *, skip=[]) -> bool:
+        self.validate_zero_args()
         self.to_value(skip=skip)
         return False
