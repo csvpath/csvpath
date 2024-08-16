@@ -99,7 +99,10 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/advance.md'>advance(int)</a></td><td> skips the next n-rows </td></tr>
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstline()</a></td><td> matches on the 0th line, if scanned </td></tr>
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstscan()</a></td><td> matches on the 1st line scanned </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>firstmatch()</a></td><td> matches on the 1st line matched </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/last.md'>last()</a></td><td> true on the last row that will be scanned </td></tr>

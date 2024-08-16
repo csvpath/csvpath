@@ -55,6 +55,7 @@ from .stdev import Stdev
 from .dups import HasDups
 from .empty import Empty
 from .first_line import FirstLine
+from .advance import Advance
 
 
 class UnknownFunctionException(Exception):
@@ -252,6 +253,8 @@ class FunctionFactory:
             f = HasDups(matcher, name, child)
         elif name == "empty":
             f = Empty(matcher, name, child)
+        elif name == "advance":
+            f = Advance(matcher, name, child)
         else:
             if (
                 f is None

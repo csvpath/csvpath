@@ -8,9 +8,6 @@ class Below(Function):
             return self._noop_value()
 
         if len(self.children) != 1:
-            self.matcher.print(
-                f"In.to_value: must have 1 equality child: {self.children}"
-            )
             raise ChildrenException("Below function must have 1 child")
         if self.children[0].op != ",":
             raise ChildrenException(
