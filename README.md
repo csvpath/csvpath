@@ -59,7 +59,9 @@ A slightly more functional csvpath could look like this:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-This csvpath reads `people.csv`, counting the people without a middle name and printing the result after the last row is read. A csvpath can point to a specific file or it can use a logical name associated with a physical file or it can have no specific file indicator.
+This csvpath reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
+
+A csvpath doesn't have to point to a specific file. As shown above, it can point to a specific file or it can instead use a logical name associated with a physical file or have no specific file indicator.
 
 ```bash
     $[*][
