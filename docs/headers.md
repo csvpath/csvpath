@@ -15,7 +15,7 @@ The name of a header can be found using the `column()` function, as in:
     $file.csv[*][ @col = column(3) print("the header you need is named: #$.variables.col")]
 ```
 
-As another example, the name of the second to last column can be found using `column(minus(1))`.
+As another example, the name of the second to last column can be found using `column(minus(1))`. This is essentially saying give me the `end()` column, minus 1.
 
 Header values can be tested as a boolean (a Python bool) with the `asbool` qualifier. <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
