@@ -14,16 +14,17 @@ class Tally(Function):
             om = self.has_onmatch()
             if not om or self.line_matches():
                 child = self.children[0]
+                siblings = None
                 if isinstance(child, Equality):
-                    kids = child.commas_to_list()
+                    siblings = child.commas_to_list()
                 else:
-                    kids = [child]
+                    siblings = [child]
                 tally = ""
-                for _ in kids:
+                for _ in siblings:
                     tally += f"{_.to_value(skip=skip)}|"
                     value = f"{_.to_value(skip=skip)}"
                     self._store(_.name, value)
-                if len(kids) > 1:
+                if len(siblings) > 1:
                     self._store(
                         self.first_non_term_qualifier("tally"),
                         tally[0 : len(tally) - 1],
