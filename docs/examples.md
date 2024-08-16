@@ -87,6 +87,15 @@ Still better:
     ]
 ```
 
+Moving on up:
+
+```bash
+    $test[*][
+        firstline() -> print("$.headers")
+        stop()
+    ]
+```
+
 Getting there:
 
 ```bash
