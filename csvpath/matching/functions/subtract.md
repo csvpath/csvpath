@@ -36,7 +36,7 @@ Finds the name of the 2nd column from the right.
 Sets the value of `b` to be the value of `a` minus 2.
 
 ```bash
-    [*][ @workdays = multiply(count_lines(), 5, #52) ]
+    [*][ @workdays = multiply(count_lines(), 5, #weeks_per_year) ]
 ```
 
 Finds the number of work days by multiplying three numbers.
