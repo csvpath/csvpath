@@ -9,19 +9,13 @@ class Add(Function):
             return self._noop_value()
 
         if not self.value:
-            if len(self.children) != 1:
-                raise ChildrenException("no children. there must be 1 equality child")
+            self.validate_two_or_more_args()
             child = self.children[0]
-            if not isinstance(child, Equality):
-                raise ChildrenException("must be 1 equality child")
-
             siblings = child.commas_to_list()
             ret = 0
             for i, sib in enumerate(siblings):
                 v = sib.to_value(skip=skip)
-
                 ret = float(v) + float(ret)
-
             self.value = ret
         return self.value
 

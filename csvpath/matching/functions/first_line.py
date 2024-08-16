@@ -12,10 +12,7 @@ class FirstLine(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return self._noop_match()  # pragma: no cover
-        if len(self.children) > 0:
-            raise ChildrenException(
-                "firstline(), firstscan(), and firstmatch() do not take children"
-            )
+        self.validate_zero_args()
         if self.match is None:
             t = self.name
             if t == "firstmatch":
@@ -30,7 +27,6 @@ class FirstLine(Function):
                     self.matcher.csvpath.scan_count == 1
                 )  # 1-based, set before matcher is called.
             elif t == "firstline":
-                print(f"firstline: line no: {self.matcher.csvpath.line_number}")
                 self.match = (
                     self.matcher.csvpath.line_number == 0
                 )  # 0-based, updated after matcher is called.

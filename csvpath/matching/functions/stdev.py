@@ -17,7 +17,6 @@ class Stdev(Function):
             if not om or self.line_matches():
                 child = self.children[0]
                 v = child.to_value()
-                print(f"stdev.to_value: {v}")
                 stack = None
                 f = None
                 if isinstance(v, list):

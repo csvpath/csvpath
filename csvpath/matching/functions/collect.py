@@ -7,10 +7,7 @@ class Collect(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if self.children and len(self.children) != 1:
-            raise ChildrenException(
-                "Collect must have 1 child, a term or an equality with the ',' operator"
-            )
+        self.validate_one_or_more_args()
         if self.value is None:
             collect = []
             if isinstance(self.children[0], Equality):
@@ -25,7 +22,6 @@ class Collect(Function):
                     cs.append(self.matcher.header_index(s))
                 else:
                     cs.append(int(s))
-
             self.matcher.csvpath.limit_collection_to = cs
             self.value = True
         return self.value  # pragma: no cover

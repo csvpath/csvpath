@@ -57,6 +57,7 @@ from .empty import Empty
 from .first_line import FirstLine
 from .advance import Advance
 from .collect import Collect
+from .intf import Int
 
 
 class UnknownFunctionException(Exception):
@@ -258,6 +259,8 @@ class FunctionFactory:
             f = Advance(matcher, name, child)
         elif name == "collect":
             f = Collect(matcher, name, child)
+        elif name == "int":
+            f = Int(matcher, name, child)
         else:
             if (
                 f is None

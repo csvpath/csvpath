@@ -14,12 +14,9 @@ class Empty(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if self.children and len(self.children) != 1:
-            raise ChildrenException("Empty must have a header or variable child")
-        if not isinstance(self.children[0], Header) and not isinstance(
-            self.children[0], Variable
-        ):
-            raise ChildrenException("Empty must have a header or variable child")
+
+        self.validate_one_arg([Header, Variable])
+
         if self.match is None:
             v = self.children[0].to_value()
             ab = self.children[0].asbool

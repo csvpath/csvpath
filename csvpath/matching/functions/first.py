@@ -17,13 +17,10 @@ class First(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._my_value_or_none
-        if len(self.children) != 1:
-            self.matcher.print(f"First.to_value: must have 1 child: {self.children}")
-            raise ChildrenException("First function must have 1 child")
+        self.validate_one_or_more_args()
         if self._my_value_or_none == First.NEVER:
             om = self.has_onmatch()
             if not om or self.line_matches():
-
                 child = self.children[0]
                 value = ""
                 if isinstance(child, Equality):

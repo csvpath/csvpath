@@ -6,8 +6,7 @@ class Advance(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Advance function must have 1 child")
+        self.validate_one_arg()
         if self.value is None:
             child = self.children[0]
             v = child.to_value(skip=skip)

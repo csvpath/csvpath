@@ -7,12 +7,7 @@ class End(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if self.children and len(self.children) > 1:
-            raise ChildrenException("end must have 0 or 1 child")
-        if len(self.children) > 0 and not isinstance(self.children[0], Term):
-            raise ChildrenException(
-                f"end may have a term child, but not {self.children[0]}"
-            )
+        self.validate_zero_or_one_arg([Term])
         if not self.value:
             i = self.matcher.last_header_index()
             if len(self.children) > 0:

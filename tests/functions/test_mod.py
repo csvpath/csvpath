@@ -23,6 +23,22 @@ class TestFunctionsMod(unittest.TestCase):
         assert path.variables["mod"] == 0.0
         assert len(lines) == 5
 
+    def test_function_mod2(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[*] [
+                @mod = mod(count_lines(), 2)
+                @int = int(@mod)
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_mod1: path vars: {path.variables}")
+        print(f"test_function_mod1: lines: {lines}")
+        assert path.variables["mod"] == 0.0
+        assert path.variables["int"] == 0
+
     def test_function_equals_mod(self):
         path = CsvPath()
         path.parse(

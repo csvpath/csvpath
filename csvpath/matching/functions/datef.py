@@ -7,8 +7,7 @@ class Date(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if len(self.children) != 1:
-            raise ChildrenException("Date function must have 1 equality with op ','")
+        self.validate_two_args()
         if self.value is None:
             eq = self.children[0]
             v = eq.left.to_value(skip=skip)

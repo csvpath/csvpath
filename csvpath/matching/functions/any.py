@@ -12,11 +12,9 @@ class Any(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if self.children and len(self.children) > 1:
-            raise ChildrenException("Any must have only 1 or 0 children")
+        self.validate_zero_one_or_two_args()
         if self.match is None:
             self.match = False
-
             om = self.has_onmatch()
             if om and not self.line_matches():
                 pass

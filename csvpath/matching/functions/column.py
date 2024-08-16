@@ -7,8 +7,7 @@ class Column(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if self.children and len(self.children) != 1:
-            raise ChildrenException("Column must have a child")
+        self.validate_one_arg()
         if not self.value:
             v = self.children[0].to_value()
             if isinstance(v, int) or v.isdigit():

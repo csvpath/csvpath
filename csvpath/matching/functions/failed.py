@@ -4,6 +4,7 @@ from .function import Function, ChildrenException
 
 class Failed(Function):
     def to_value(self, *, skip=[]) -> Any:
+        self.validate_zero_args()
         if self.name == "failed":
             return not self.matcher.csvpath.is_valid
         elif self.name == "valid":

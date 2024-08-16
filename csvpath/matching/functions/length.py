@@ -3,20 +3,14 @@ from .function import (
     Function,
     ChildrenException,
 )
+from ..productions import Term, Variable, Header
 
 
 class Length(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if not self.children:
-            raise ChildrenException(
-                "length function must have a child that produces a value"
-            )
-        if not len(self.children) == 1:
-            raise ChildrenException(
-                "length function must have a single child that produces a value"
-            )
+        self.validate_one_arg(types=[Term, Variable, Header, Function])
         val = self.children[0].to_value(skip=skip)
         ret = 0
         if val:

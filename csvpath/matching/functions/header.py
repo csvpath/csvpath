@@ -12,6 +12,7 @@ class Header(Function):
         if self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
+            self.validate_zero_or_one_arg()
             if len(self.children) == 1:
                 v = self.children[0].to_value()
                 if isinstance(v, int) or v.isdigit():

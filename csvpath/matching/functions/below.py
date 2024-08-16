@@ -6,16 +6,9 @@ class Below(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-
-        if len(self.children) != 1:
-            raise ChildrenException("Below function must have 1 child")
-        if self.children[0].op != ",":
-            raise ChildrenException(
-                f"Below function must have an equality with the ',' operation, not {self.children[0].op}"
-            )
+        self.validate_two_args()
         thischild = self.children[0].children[0]
         belowthatchild = self.children[0].children[1]
-
         this_is = thischild.to_value(skip=skip)
         below_that = belowthatchild.to_value(skip=skip)
         this = -1

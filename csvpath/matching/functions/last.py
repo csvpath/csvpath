@@ -8,6 +8,7 @@ class Last(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self.match is None:
+            self.validate_zero_args()
             self.match = (
                 self.matcher.csvpath.line_number == self.matcher.csvpath.total_lines
                 or (

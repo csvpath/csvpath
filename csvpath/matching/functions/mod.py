@@ -8,20 +8,19 @@ class Mod(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
-            if len(self.children) != 1:
-                raise ChildrenException("no children. there must be 1 equality child")
+            self.validate_two_args()
             child = self.children[0]
-            if not isinstance(child, Equality):
-                raise ChildrenException("must be 1 equality child")
-
             siblings = child.commas_to_list()
-            if len(siblings) != 2:
-                raise ChildrenException("must be 2 arguments to mod")
             ret = 0
-
-            v = siblings[0].to_value(skip=skip)
-            m = siblings[1].to_value(skip=skip)
-            ret = float(v) % float(m)
+            try:
+                v = siblings[0].to_value(skip=skip)
+                m = siblings[1].to_value(skip=skip)
+                ret = float(v) % float(m)
+            except Exception:
+                raise ChildrenException(
+                    "mod()'s arguments must be convertable to float"
+                )
+            ret = round(ret, 2)
             self.value = ret
         return self.value
 

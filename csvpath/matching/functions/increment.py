@@ -7,12 +7,10 @@ class Increment(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-            # return True
-        if self.children and not len(self.children) == 1:
-            raise ChildrenException("must have a child")
-        if not isinstance(self.children[0], Equality):
-            raise ChildrenException("child must be an Equality")
+
+        self.validate_two_args()
         tv = self.children[0].right.to_value()
+
         if not isinstance(tv, int):
             raise ChildrenException("increment value must be a positive int")
         tv = int(tv)

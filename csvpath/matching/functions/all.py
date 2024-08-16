@@ -10,8 +10,7 @@ class All(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if self.children and len(self.children) > 1:
-            raise ChildrenException("All must have only 1 or 0 children")
+        self.validate_zero_or_more_than_one_arg()
         if self.match is None:
             self.match = False
             om = self.has_onmatch()
@@ -24,6 +23,10 @@ class All(Function):
                 if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         self.equality()
+                    else:
+                        raise Exception(
+                            "all() should have 0 or > 1 args. how did we get here?"
+                        )
         return self.match
 
     def all_exist(self):

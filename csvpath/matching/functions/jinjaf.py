@@ -9,12 +9,7 @@ class Jinjaf(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
 
-        if len(self.children) != 1:
-            raise ChildrenException("Jinja function must have 1 child")
-        if not isinstance(self.children[0], Equality):
-            raise ChildrenException(
-                "Jinja function must have 1 child equality that provides two paths"
-            )
+        self.validate_two_args()
         template_path = self.children[0].left.to_value(skip=skip)
         if template_path is None or f"{template_path}".strip() == "":
             raise ChildrenException(
@@ -25,6 +20,7 @@ class Jinjaf(Function):
             raise ChildrenException(
                 "Jinja function must have 1 child equality that provides two paths"
             )
+
         page = None
         with open(template_path, "r") as file:
             page = file.read()

@@ -1,6 +1,6 @@
 from typing import Any
 from .function import Function, ChildrenException
-from ..productions import Equality
+from ..productions import Equality, Variable, Term, Header
 from ..expression_utility import ExpressionUtility
 from ..productions.expression import Matchable
 from statistics import mean, median
@@ -12,7 +12,6 @@ class MinMax(Function):
     # longest value
     # quintile
     # decile
-    # std div
     """
 
     MAX = True
@@ -93,8 +92,8 @@ class Min(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if self.children and not len(self.children) == 1:
-            raise ChildrenException("must have a child")
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -117,8 +116,8 @@ class Max(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if self.children and not len(self.children) == 1:
-            raise ChildrenException("must have a child")
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -144,8 +143,8 @@ class Average(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if self.children and not len(self.children) == 1:
-            raise ChildrenException("must have a child")
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
         if self.value is None:
             v = self.get_the_value()
             # if we're watching a header and we're in the header row skip it.

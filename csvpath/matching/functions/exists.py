@@ -15,12 +15,7 @@ class Exists(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        if self.children and len(self.children) != 1:
-            raise ChildrenException("Exists must have a header or variable child")
-        if not isinstance(self.children[0], Header) and not isinstance(
-            self.children[0], Variable
-        ):
-            raise ChildrenException("Exists must have a header or variable child")
+        self.validate_one_arg(types=[Variable, Header])
         if self.match is None:
             v = self.children[0].to_value()
             ab = self.children[0].asbool

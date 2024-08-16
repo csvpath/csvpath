@@ -15,11 +15,8 @@ class HasDups(Function):
                 values = self.matcher.get_variable(name, set_if_none={})
                 string = ""
                 fingerprint = None
-                if len(self.children) > 1:
-                    raise ChildrenException(
-                        "has_dups must have 0 children or an equality child with op=','"
-                    )
-                elif len(self.children) == 1:
+                self.validate_zero_or_more_args(types=[Header])
+                if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         siblings = self.children[0].commas_to_list()
                         for _ in siblings:
@@ -27,6 +24,7 @@ class HasDups(Function):
                     elif isinstance(self.children[0], Header):
                         string = f"{self.children[0].to_value()}"
                     else:
+                        # should never get here
                         raise ChildrenException("has_dups must have header children")
                 else:
                     for _ in self.matcher.line:

@@ -1,6 +1,6 @@
 from typing import Any
 from .function import Function, ChildrenException
-from ..productions import Equality
+from ..productions import Equality, Term, Header, Variable
 
 
 class Every(Function):
@@ -14,12 +14,8 @@ class Every(Function):
             return self._noop_match()
 
         if self.value is None:
-            if len(self.children) != 1:
-                raise ChildrenException("no children. there must be 1 equality child")
+            self.validate_two_args(right=[Term, Variable, Function, Header])
             child = self.children[0]
-            if not isinstance(child, Equality):
-                raise ChildrenException("must be 1 equality child")
-
             ###
             # 1. we store a count of values under the ID of left. this is the value.to_value
             # 2. we store the every-N-seen count under the qualifier or ID of every
@@ -29,15 +25,19 @@ class Every(Function):
                 self.qualifier if self.qualifier is not None else self.get_id(self)
             )
             allcount = f"{self.get_id(self)}_{'every'}"
-            tracked_value = self.children[0].left.to_value(skip=skip)
-            print(f"Every.matches: tracked_value: {tracked_value}")
+            tracked_value = child.left.to_value(skip=skip)
             cnt = self.matcher.get_variable(
                 allcount, tracking=tracked_value, set_if_none=0
             )
             cnt += 1
             self.matcher.set_variable(allcount, tracking=tracked_value, value=cnt)
-            every = self.children[0].right.to_value()
-            every = int(every)
+            every = child.right.to_value()
+            # if we aren't an int we're going to blow up.
+            # what's the best option? a default int? for now just raising.
+            try:
+                every = int(every)
+            except Exception:
+                raise ChildrenException("every()'s second argument must be an int")
             if cnt % every == 0:
                 self.value = True
             else:
