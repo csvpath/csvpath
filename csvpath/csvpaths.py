@@ -198,8 +198,3 @@ class CsvPaths(CsvPathsPublic):
                     yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
-        """
-        for csvpath in csvpath_objects:
-            result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
-            self.results_manager.add_named_result(pathsname, result)
-        """

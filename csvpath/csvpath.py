@@ -375,28 +375,6 @@ class CsvPath(CsvPathPublic):
                 # yield line
         return False
 
-    #
-    # seems not used?  delete!
-    #
-    def match_line(self, line) -> bool:
-        if self.skip_blank_lines and len(line) == 0:
-            pass
-        elif self.scanner.includes(self.line_number):
-            self.scan_count = self.scan_count + 1
-            startmatch = time.perf_counter_ns()
-            b = self.matches(line)
-            endmatch = time.perf_counter_ns()
-            if b:
-                self.match_count = self.match_count + 1
-                if self._advance != 0:
-                    self._advance -= 1
-                else:
-                    return True
-                    # yield line
-            t = (endmatch - startmatch) / 1000000
-            self.last_row_time = t
-            self.rows_time += t
-
     def get_total_lines(self) -> int:
         if self.total_lines == -1:
             return self.get_total_lines_and_headers()
