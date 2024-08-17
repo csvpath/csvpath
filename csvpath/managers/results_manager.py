@@ -2,26 +2,51 @@ from typing import Dict, List, Any
 import os
 import json
 from abc import ABC, abstractmethod
-from ..exceptions import ConfigurationException
-from ..csvpath import CsvPath
+from .. import ConfigurationException
+from .. import CsvPath, Error
 
 
 class CsvPathResult:
     def __init__(self, *, lines: List[List[Any]] = None, path: CsvPath = None):
-        self.lines: List[List[Any]] = lines
-        self.path = path
+        self._lines: List[List[Any]] = lines
+        self._csvpath = path
+        self._errors = []
+
+    @property
+    def lines(self) -> List[List[Any]]:
+        return self._lines
+
+    @lines.setter
+    def lines(self, ls: List[List[Any]]) -> None:
+        self._lines = ls
+
+    @property
+    def csvpath(self) -> CsvPath:
+        return self._csvpath
+
+    @csvpath.setter
+    def csvpath(self, path: CsvPath) -> None:
+        path.error_collector = self
+        self._csvpath = path
+
+    @property
+    def errors(self) -> List[Error]:
+        return self._errors
+
+    def collect_error(self, err: Error) -> None:
+        self._errors.append(err)
 
     def is_valid(self) -> bool:
-        if self.path:
-            return self.path.is_valid
+        if self._csvpath:
+            return self._csvpath.is_valid
         else:
             return False
 
     def __str__(self) -> str:
         return f"""CsvPathResult:
-                        valid:{self.path.is_valid};
-                        path:{self.path};
-                        lines:{len(self.lines) if self.lines else None}"""
+                        valid:{self._csvpath.is_valid};
+                        path:{self._csvpath};
+                        lines:{len(self._lines) if self._lines else None}"""
 
 
 class CsvPathsResultsManager(ABC):
@@ -73,7 +98,7 @@ class ResultsManager(CsvPathsResultsManager):
         results = self.get_named_results(name)
         vs = {}
         for r in results:
-            vs = {**r.path.variables, **vs}
+            vs = {**r.csvpath.variables, **vs}
         return vs
 
     def get_number_of_results(self, name: str) -> int:

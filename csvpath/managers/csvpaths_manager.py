@@ -2,12 +2,12 @@ from typing import Dict, List, Any
 import os
 import json
 from abc import ABC, abstractmethod
-from ..exceptions import ConfigurationException
+from .. import ConfigurationException
 
 
 class CsvPathsManager(ABC):
     @abstractmethod
-    def add_named_paths_from_dir(self, *, dir_path: str) -> None:
+    def add_named_paths_from_dir(self, *, dirname: str) -> None:
         pass
 
     @abstractmethod
@@ -40,14 +40,14 @@ class PathsManager(CsvPathsManager):
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         self.named_paths = np
 
-    def add_named_paths_from_dir(self, dir_path: str) -> None:
-        if dir_path is None:
+    def add_named_paths_from_dir(self, dirname: str) -> None:
+        if dirname is None:
             raise ConfigurationException("Named paths collection name needed")
-        elif os.path.isdir(dir_path):
+        elif os.path.isdir(dirname):
             if self.named_paths is None:
                 self.named_files = {}
-            dlist = os.listdir(dir_path)
-            base = dir_path
+            dlist = os.listdir(dirname)
+            base = dirname
             for p in dlist:
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
@@ -56,7 +56,7 @@ class PathsManager(CsvPathsManager):
                     _ = [apath.strip() for apath in cp.split(PathsManager.MARKER)]
                     self.add_named_paths(name, _)
         else:
-            raise ConfigurationException("dir_path must point to a directory")
+            raise ConfigurationException("dirname must point to a directory")
 
     def set_named_paths_from_json(self, file_path: str) -> None:
         try:

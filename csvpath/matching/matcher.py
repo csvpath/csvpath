@@ -1,6 +1,6 @@
 import ply.yacc as yacc
 from csvpath.matching.matching_lexer import MatchingLexer
-from csvpath.parser_utility import ParserUtility
+from ..util.parser_utility import ParserUtility
 from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from .productions import *
 from .functions.function_factory import FunctionFactory

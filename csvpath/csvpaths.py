@@ -78,11 +78,12 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
+            result = CsvPathResult(path=csvpath)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
             lines = csvpath.collect()
-            result = CsvPathResult(path=csvpath, lines=lines)
+            result.lines = lines
             self.results_manager.add_named_result(pathsname, result)
 
     def fast_forward_paths(self, pathsname, filename):
@@ -94,11 +95,11 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
+            result = CsvPathResult(path=csvpath)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
             csvpath.fast_forward()
-            result = CsvPathResult(path=csvpath, lines=None)
             self.results_manager.add_named_result(pathsname, result)
 
     def next_paths(self, pathsname, filename):
@@ -112,6 +113,7 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
+            result = CsvPathResult(path=csvpath)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -157,6 +159,15 @@ class CsvPaths(CsvPathsPublic):
             path = f"${fn}{path[f:]}"
             csvpath.parse(path)
             csvpath_objects.append((csvpath, []))
+
+        for csvpath in csvpath_objects:
+            #
+            # the lines object is a shared reference. calling it
+            # out because do we like doing it that way?
+            #
+            result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
+            self.results_manager.add_named_result(pathsname, result)
+
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
@@ -184,7 +195,8 @@ class CsvPaths(CsvPathsPublic):
                     yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
-
+        """
         for csvpath in csvpath_objects:
             result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
             self.results_manager.add_named_result(pathsname, result)
+        """

@@ -18,7 +18,7 @@ class TestFilesManager(unittest.TestCase):
         print("")
         paths = CsvPaths()
         fm = paths.files_manager
-        fm.add_named_files_from_json(JSON)
+        fm.set_named_files_from_json(JSON)
         assert fm.named_files
         assert len(fm.named_files) == 2
 
@@ -39,7 +39,7 @@ class TestFilesManager(unittest.TestCase):
         fm.set_named_files(nf)
         assert fm.named_files
         assert len(fm.named_files) == 2
-        fm.add_named_file("outstanding", "a third path")
+        fm.add_named_file(name="outstanding", path="a third path")
         assert len(fm.named_files) == 3
         afile = fm.get_named_file("wonderful")
         assert afile == "a path"

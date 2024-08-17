@@ -2,9 +2,10 @@ import csv
 import time
 from typing import List, Dict, Any
 from collections.abc import Iterator
-from . import Matcher
-from . import Scanner
-from . import ExpressionEncoder
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
+from . import Error, ErrorPolicy, Matcher, Scanner, ExpressionEncoder
 from . import (
     VariableException,
     InputException,
@@ -14,7 +15,6 @@ from . import (
     ProcessingException,
     ConfigurationException,
 )
-from abc import ABC, abstractmethod
 
 
 class CsvPathPublic(ABC):
@@ -90,6 +90,26 @@ class CsvPath(CsvPathPublic):
         self._advance = 0
         self._is_valid = True
         self._limit_collection_to = []
+        self.errors = None
+        self.error_collector = None
+        self.error_policy = ErrorPolicy.FAIL_AND_STOP
+
+    def collect_error(self, e: Error) -> None:
+        if self.error_collector:
+            self.error_collector.collect_error(self, e)
+        else:
+            if self.errors is None:
+                self.errors = []
+            self.errors.append(e)
+        if self.error_policy == ErrorPolicy.STOP:
+            self.stopped = True
+        elif self.error_policy == ErrorPolicy.FAIL_AND_STOP:
+            self.stopped = True
+            self._is_valid = False
+        elif self.error_policy == ErrorPolicy.FAIL_AND_CONTINUE:
+            self._is_valid = False
+        elif self.error_policy == ErrorPolicy.CONTINUE:
+            pass
 
     def parse(self, csvpath):
         self.scanner = Scanner(csvpath=self)

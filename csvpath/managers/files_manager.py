@@ -1,18 +1,17 @@
-from typing import Dict, List, Any
 import os
 import json
-from ..exceptions import FileException
-from ..exceptions import ConfigurationException
+from typing import Dict, List, Any
 from abc import ABC, abstractmethod
+from .. import FileException, ConfigurationException
 
 
 class CsvPathsFilesManager(ABC):
     @abstractmethod
-    def add_named_files_from_dir(self, *, dir_path: str) -> None:
+    def add_named_files_from_dir(self, *, dirname: str) -> None:
         pass
 
     @abstractmethod
-    def add_named_files_from_json(self, filename: str) -> None:
+    def set_named_files_from_json(self, filename: str) -> None:
         pass
 
     @abstractmethod
@@ -20,7 +19,7 @@ class CsvPathsFilesManager(ABC):
         pass
 
     @abstractmethod
-    def add_named_file(self, name: str, path: str) -> None:
+    def add_named_file(self, *, name: str, path: str) -> None:
         pass
 
     @abstractmethod
@@ -39,7 +38,7 @@ class FilesManager(CsvPathsFilesManager):
     def set_named_files(self, nf: Dict[str, str]) -> None:
         self.named_files = nf
 
-    def add_named_files_from_json(self, filename: str) -> None:
+    def set_named_files_from_json(self, filename: str) -> None:
         try:
             with open(filename) as f:
                 j = json.load(f)
@@ -47,9 +46,9 @@ class FilesManager(CsvPathsFilesManager):
         except Exception:
             print(f"Error: cannot load {filename}")
 
-    def add_named_files_from_dir(self, name):
-        dlist = os.listdir(name)
-        base = name
+    def add_named_files_from_dir(self, dirname: str):
+        dlist = os.listdir(dirname)
+        base = dirname
         for p in dlist:
             _ = p.lower()
             if _.endswith(".csv") or _.endswith(".tsv"):
@@ -59,7 +58,7 @@ class FilesManager(CsvPathsFilesManager):
             else:
                 print(f"skipping {p} because it doesn't look like a csv file")
 
-    def add_named_file(self, name: str, path: str) -> None:
+    def add_named_file(self, *, name: str, path: str) -> None:
         self.named_files[name] = path
 
     def get_named_file(self, name: str) -> str:

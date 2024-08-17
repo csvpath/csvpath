@@ -1,6 +1,6 @@
 import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
-from csvpath.parser_utility import ParserUtility
+from ..util.parser_utility import ParserUtility
 from typing import List
 from .exceptions import ScanException, UnexpectedException
 
