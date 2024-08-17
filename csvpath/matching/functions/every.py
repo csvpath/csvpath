@@ -1,9 +1,13 @@
 from typing import Any
-from .function import Function, ChildrenException
-from ..productions import Equality, Term, Header, Variable
+from .function import Function
+from ..productions import Equality, Term, Header, Variable, ChildrenException
 
 
 class Every(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args(right=[Term, Variable, Function, Header])
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -14,7 +18,6 @@ class Every(Function):
             return self._noop_match()
 
         if self.value is None:
-            self.validate_two_args(right=[Term, Variable, Function, Header])
             child = self.children[0]
             ###
             # 1. we store a count of values under the ID of left. this is the value.to_value

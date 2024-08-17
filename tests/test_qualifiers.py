@@ -1,6 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
-from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 PATH = "tests/test_resources/test.csv"
 BOOL = "tests/test_resources/bool.csv"

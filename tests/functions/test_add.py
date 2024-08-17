@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.functions.function import ChildrenException
 
 PATH = "tests/test_resources/test.csv"
 
@@ -56,3 +58,12 @@ class TestFunctionsAdd(unittest.TestCase):
         print(f"test_function_add: path vars: {path.variables}")
         assert len(lines) == 1
         assert path.variables["l"] == 15
+
+    def test_function_add_error1(self):
+        path = CsvPath()
+        with pytest.raises(ChildrenException):
+            path.parse(
+                f"""
+                ${PATH}[1]
+                [ @l = add( count() ) ]"""
+            )

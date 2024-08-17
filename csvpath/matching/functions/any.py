@@ -1,18 +1,41 @@
 from typing import Any
 from .header import Header
 from .variable import Variable
-from .function import Function, ChildrenException
-from ..productions import Equality, Term
+from .function import Function
+from ..productions import Equality, Term, ChildrenException
 
 
 class Any(Function):
+    """
+    any()
+    any(header())
+    any(variable())
+    any(term)
+    any(header(), term)
+    any(variable(), term)
+    """
+
+    def check_valid(self) -> None:
+        self.validate_zero_one_or_two_args(
+            first_arg=[Variable, Header],
+            solo_arg=[Term, Header, Variable],
+            second_arg=[Term],
+        )
+        """
+            raise ChildrenException(
+                f" ""
+                    Left side of equality child of any() must be header() or variable(),
+                    not {self.children[0].left}" ""
+            )
+            """
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         return self.matches(skip=skip)  # pragma: no cover
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        self.validate_zero_one_or_two_args()
         if self.match is None:
             self.match = False
             om = self.has_onmatch()
@@ -29,7 +52,7 @@ class Any(Function):
                         # any(header())
                         self.header()
                     else:
-                        # any("True")
+                        # any(Term) we check in both headers and vars for any matches
                         self.check_value()
                 else:
                     # any()

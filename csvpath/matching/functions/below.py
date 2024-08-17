@@ -1,12 +1,16 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
+from ..productions import ChildrenException
 
 
 class Below(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        self.validate_two_args()
         thischild = self.children[0].children[0]
         belowthatchild = self.children[0].children[1]
         this_is = thischild.to_value(skip=skip)

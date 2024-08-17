@@ -1,13 +1,16 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 import datetime
 
 
 class Now(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_or_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        self.validate_zero_or_one_arg()
 
         format = None
         if len(self.children) == 1:

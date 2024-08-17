@@ -1,15 +1,18 @@
 from typing import Any
-from .function import Function, ChildrenException
-from ..expression_utility import ExpressionUtility
+from .function import Function
+from ..util.expression_utility import ExpressionUtility
 from ..productions.equality import Equality
 
 
 class Push(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_two_args()
             eq = self.children[0]
             k = eq.left.to_value()
             v = eq.right.to_value()
@@ -31,17 +34,23 @@ class Push(Function):
 
 
 class PushDistinct(Push):
+    def check_valid(self) -> None:
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         self.add_qualifier("distinct")
         return super().to_value(skip=skip)
 
 
 class Pop(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_one_arg()
             k = self.children[0].to_value()
             stack = self.matcher.get_variable(k, set_if_none=[])
             if len(stack) > 0:
@@ -62,11 +71,14 @@ class Pop(Function):
 
 
 class Stack(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_one_arg()
             k = self.children[0].to_value()
             stack = self.matcher.get_variable(k, set_if_none=[])
             if not isinstance(stack, list):
@@ -81,11 +93,14 @@ class Stack(Function):
 
 
 class Peek(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_two_args()
             eq = self.children[0]
             k = eq.left.to_value()
             v = eq.right.to_value()
@@ -93,7 +108,6 @@ class Peek(Function):
             stack = self.matcher.get_variable(k, set_if_none=[])
             if v < len(stack):
                 self.value = stack[v]
-
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
@@ -108,16 +122,17 @@ class Peek(Function):
 
 
 class PeekSize(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_one_arg()
             k = self.children[0].to_value()
-
             stack = self.matcher.get_variable(k, set_if_none=[])
             self.value = len(stack)
-
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

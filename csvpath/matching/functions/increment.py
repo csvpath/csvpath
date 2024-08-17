@@ -4,11 +4,14 @@ from ..productions import Equality
 
 
 class Increment(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
 
-        self.validate_two_args()
         tv = self.children[0].right.to_value()
 
         if not isinstance(tv, int):

@@ -3,6 +3,10 @@ from .function import Function
 
 
 class Header(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_or_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -12,7 +16,6 @@ class Header(Function):
         if self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
-            self.validate_zero_or_one_arg()
             if len(self.children) == 1:
                 v = self.children[0].to_value()
                 if isinstance(v, int) or v.isdigit():

@@ -1,5 +1,5 @@
 import ply.lex as lex
-from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class MatchingLexer(object):

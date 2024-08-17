@@ -1,6 +1,6 @@
 from typing import Any
 from .matchable import Matchable
-from ..expression_utility import ExpressionUtility
+from ..util.expression_utility import ExpressionUtility
 
 
 class Header(Matchable):

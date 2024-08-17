@@ -13,37 +13,39 @@ from abc import ABC, abstractmethod
 
 class CsvPathsPublic(ABC):
     @abstractmethod
-    def csvpath(self) -> CsvPath:
+    def csvpath(self) -> CsvPath:  # pragma: no cover
         """Gets a CsvPath object primed with a reference to this CsvPaths"""
         pass
 
     @abstractmethod
-    def collect_paths(self, pathsname, filename) -> None:
+    def collect_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.collect() on filename for every named path"""
         pass
 
     @abstractmethod
-    def fast_forward_paths(self, pathsname, filename) -> None:
+    def fast_forward_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.fast_forward() on filename for every named path"""
         pass
 
     @abstractmethod
-    def next_paths(self, pathsname, filename) -> None:
+    def next_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Does a CsvPath.next() on filename for every line against every named path in sequence"""
         pass
 
     @abstractmethod
-    def collect_by_line(self, pathsname, filename):
+    def collect_by_line(self, pathsname, filename):  # pragma: no cover
         """Does a CsvPath.collect() on filename where each row is considered by every named path before the next row starts"""
         pass
 
     @abstractmethod
-    def fast_forward_by_line(self, pathsname, filename):
+    def fast_forward_by_line(self, pathsname, filename):  # pragma: no cover
         """Does a CsvPath.fast_forward() on filename where each row is considered by every named path before the next row starts"""
         pass
 
     @abstractmethod
-    def next_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
+    def next_by_line(
+        self, pathsname, filename, collect: bool = False
+    ) -> List[Any]:  # pragma: no cover
         """Does a CsvPath.next() on filename where each row is considered by every named path before the next row starts"""
         pass
 

@@ -1,9 +1,14 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 import datetime
+from ..productions import ChildrenException
 
 
 class FirstLine(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -12,7 +17,6 @@ class FirstLine(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:
             return self._noop_match()  # pragma: no cover
-        self.validate_zero_args()
         if self.match is None:
             t = self.name
             if t == "firstmatch":
@@ -31,6 +35,6 @@ class FirstLine(Function):
                     self.matcher.csvpath.line_number == 0
                 )  # 0-based, updated after matcher is called.
             else:
-                raise ChildrenException(f"Unknown type: {t}")
+                raise ChildrenException(f"Unknown type of line: {t}")
 
         return self.match

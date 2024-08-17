@@ -1,10 +1,11 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality, Term
-from csvpath.matching.expression_encoder import ExpressionEncoder
+from ..util.expression_encoder import ExpressionEncoder
 
 
 class Print(Function):
+
     TOKENS = [
         "$.name",
         "$.delimiter",
@@ -24,11 +25,14 @@ class Print(Function):
         "$.total_lines",
     ]
 
+    def check_valid(self) -> None:
+        self.validate_one_arg(types=[Term])
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.validate_one_arg(types=[Term])
             string = self.children[0].to_value()
             self.value = self.make_string(string)
         return self.value

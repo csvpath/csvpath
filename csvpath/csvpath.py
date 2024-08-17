@@ -18,40 +18,40 @@ from abc import ABC, abstractmethod
 
 
 class CsvPathPublic(ABC):
-    def parse(self, csvpath):
+    def parse(self, csvpath):  # pragma: no cover
         """Reads a csvpath prepares to match against CSV file lines"""
         pass
 
-    def parse_named_path(self, name):
+    def parse_named_path(self, name):  # pragma: no cover
         """Parses a csvpath found in this CsvPath's CsvPaths parent's collection of named csvpaths"""
         pass
 
-    def is_valid(self) -> bool:
+    def is_valid(self) -> bool:  # pragma: no cover
         """Csvpaths can flag a CSV file as invalid using the fail() function"""
         pass
 
-    def stop(self) -> None:
+    def stop(self) -> None:  # pragma: no cover
         """Csvpaths can call for the CsvPath to stop processing lines using the stop() function"""
         pass
 
-    def collect(self, nexts: int = -1) -> List[List[Any]]:
+    def collect(self, nexts: int = -1) -> List[List[Any]]:  # pragma: no cover
         """Returns the lines of a CSV file that match the csvpath"""
         pass
 
-    def advance(self, ff: int = -1) -> None:
+    def advance(self, ff: int = -1) -> None:  # pragma: no cover
         """Advances the iteration by ff rows. The scanned rows will be considered for match and
         variables and side effects will happen, but no rows will be returned or stored.
         -1 means to the end of the file.
         """
         pass
 
-    def fast_forward(self) -> None:
+    def fast_forward(self) -> None:  # pragma: no cover
         """Scans to the end of the CSV file. All scanned rows will be considered for match and
         variables and side effects will happen, but no rows will be returned or stored.
         -1 means to the end of the file."""
         pass
 
-    def next(self):
+    def next(self):  # pragma: no cover
         """A generator function that steps through the CSV file returning matching rows"""
         pass
 
@@ -92,7 +92,6 @@ class CsvPath(CsvPathPublic):
         self._limit_collection_to = []
 
     def parse(self, csvpath):
-        # start = time.time()
         self.scanner = Scanner(csvpath=self)
         csvpath = self._update_file_path(csvpath)
         s, mat, mod = self._find_scan_match_modify(csvpath)
@@ -100,10 +99,18 @@ class CsvPath(CsvPathPublic):
         self.match = mat
         self.modify = mod
         self.scanner.parse(s)
-        # end = time.time()
-        # end - start
+        #
+        # we build a matcher to see if it builds without error.
+        # in principle we could keep this as the actual matcher.
+        # atm, tho, just create a dry-run copy. in some possible
+        # unit tests we may not have a parsable match part.
+        #
+        if mat:
+            Matcher(csvpath=self, data=mat, line=None, headers=None)
+
         if self.scanner.filename:
             self.get_total_lines_and_headers()
+
         return self.scanner
 
     def parse_named_path(self, name):

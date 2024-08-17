@@ -1,8 +1,4 @@
-from csvpath.matching.productions.expression import Expression
-from csvpath.matching.productions.equality import Equality
-from csvpath.matching.productions.variable import Variable
-from csvpath.matching.productions.header import Header
-from csvpath.matching.productions.term import Term
+from csvpath.matching.productions import Expression, Equality, Variable, Header, Term
 from csvpath.matching.functions.function import Function
 from typing import Any, List
 

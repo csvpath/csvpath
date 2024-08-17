@@ -1,9 +1,6 @@
 from typing import Any, Type, List
-from csvpath.matching.productions.matchable import Matchable
-
-
-class ChildrenException(Exception):
-    pass
+from ..productions.matchable import Matchable
+from ..util.exceptions import ChildrenException
 
 
 class Function(Matchable):
@@ -71,18 +68,22 @@ class Function(Matchable):
                 f"{self.name}() must have 0 or more than 1 argument"
             )
 
-    def validate_zero_one_or_two_args(self, first_arg=[]) -> None:
+    def validate_zero_one_or_two_args(
+        self, first_arg=[], second_arg=[], solo_arg=[]
+    ) -> None:
         if len(self.children) == 0:
             pass
         elif len(self.children) == 1 and not hasattr(self.children[0], "op"):
-            if not self._class_match(self.children[0], first_arg):
-                raise ChildrenException(
-                    f"{self.name}() must have its first argument in {first_arg}, not {self.children[0].__class__}"
-                )
+            if not self._class_match(self.children[0], solo_arg):
+                raise ChildrenException(f"{self.name}()'s argument must be {first_arg}")
         else:
-            if len(first_arg) and self.children[0].left.__class__ not in first_arg:
+            if not self._class_match(self.children[0].left, first_arg):
                 raise ChildrenException(
-                    f"{self.name}() must have its first argument in {first_arg}, not {self.children[0].__class__}"
+                    f"{self.name}()'s first argument must be {first_arg}"
+                )
+            if not self._class_match(self.children[0].right, second_arg):
+                raise ChildrenException(
+                    f"{self.name}()'s second argument must be {second_arg}"
                 )
 
     def validate_zero_or_one_arg(self, types=[]) -> None:

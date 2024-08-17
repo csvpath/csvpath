@@ -3,6 +3,10 @@ from .function import Function
 
 
 class Count(Function):
+    def check_valid(self) -> None:
+        # TODO: no validity checks from way back
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()

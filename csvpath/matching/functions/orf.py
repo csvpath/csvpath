@@ -1,9 +1,13 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality
 
 
 class Or(Function):
+    def check_valid(self) -> None:
+        self.validate_two_or_more_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -15,7 +19,6 @@ class Or(Function):
         else:
             skip.append(self)
         if not self.value:
-            self.validate_two_or_more_args()
             child = self.children[0]
             siblings = child.commas_to_list()
             ret = False

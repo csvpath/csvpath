@@ -9,7 +9,7 @@ from csvpath.exceptions import (
 )
 
 from csvpath.matching.matcher import Matcher
-from csvpath.matching.expression_encoder import ExpressionEncoder
+from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from csvpath.scanning.scanner import Scanner
 from csvpath.csvpath import CsvPath
 from csvpath.managers.files_manager import FilesManager

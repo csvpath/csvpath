@@ -1,9 +1,13 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Header, Variable
 
 
 class Empty(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg([Header, Variable])
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -14,9 +18,6 @@ class Empty(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-
-        self.validate_one_arg([Header, Variable])
-
         if self.match is None:
             v = self.children[0].to_value()
             ab = self.children[0].asbool

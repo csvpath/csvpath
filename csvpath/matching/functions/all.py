@@ -1,16 +1,19 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality
 
 
 class All(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_or_more_than_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         return self.matches(skip=skip)  # pragma: no cover
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        self.validate_zero_or_more_than_one_arg()
         if self.match is None:
             self.match = False
             om = self.has_onmatch()
@@ -23,10 +26,6 @@ class All(Function):
                 if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         self.equality()
-                    else:
-                        raise Exception(
-                            "all() should have 0 or > 1 args. how did we get here?"
-                        )
         return self.match
 
     def all_exist(self):

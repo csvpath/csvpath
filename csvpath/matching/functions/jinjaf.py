@@ -1,15 +1,16 @@
 from typing import Any, Dict
 from .function import Function, ChildrenException
-from ..productions.equality import Equality
 from .printf import Print
 
 
 class Jinjaf(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-
-        self.validate_two_args()
         template_path = self.children[0].left.to_value(skip=skip)
         if template_path is None or f"{template_path}".strip() == "":
             raise ChildrenException(
@@ -20,11 +21,9 @@ class Jinjaf(Function):
             raise ChildrenException(
                 "Jinja function must have 1 child equality that provides two paths"
             )
-
         page = None
         with open(template_path, "r") as file:
             page = file.read()
-
         page = self._transform(content=page, tokens=self._simplify_tokens())
         with open(output_path, "w") as file:
             file.write(page)

@@ -1,13 +1,16 @@
 from typing import Any
-from .function import Function, ChildrenException
-from ..productions import Term
+from .function import Function
+from ..productions import Term, ChildrenException
 
 
 class Column(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        self.validate_one_arg()
         if not self.value:
             v = self.children[0].to_value()
             if isinstance(v, int) or v.isdigit():

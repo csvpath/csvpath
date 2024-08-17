@@ -1,10 +1,14 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality
 
 
 class First(Function):
     NEVER = -9999999999
+
+    def check_valid(self) -> None:
+        self.validate_one_or_more_args()
+        super().check_valid()
 
     def __init__(self, matcher, name: str = None, child: Any = None):
         super().__init__(matcher, child=child, name=name)
@@ -17,7 +21,6 @@ class First(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._my_value_or_none
-        self.validate_one_or_more_args()
         if self._my_value_or_none == First.NEVER:
             om = self.has_onmatch()
             if not om or self.line_matches():

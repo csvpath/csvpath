@@ -4,7 +4,7 @@ from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
 from csvpath.matching.functions.function import Function, ChildrenException
-from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class Equality(Matchable):

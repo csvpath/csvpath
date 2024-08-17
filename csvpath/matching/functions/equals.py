@@ -1,13 +1,16 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 
 
 class Equals(Function):
+    def check_valid(self) -> None:
+        self.validate_two_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
-            self.validate_two_args()
             child = self.children[0]
             ret = False
             left = child.left.to_value()

@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Any, Self, Optional
-from ..expression_utility import ExpressionUtility
+from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
 
 
@@ -16,6 +16,11 @@ class Matchable(Qualified):
 
     def __str__(self) -> str:
         return f"""{self.__class__}"""
+
+    def check_valid(self) -> None:
+        print(f"checking valid in {self}")
+        for _ in self.children:
+            _.check_valid()
 
     def _simple_class_name(self) -> str:
         cn = str(self.__class__)

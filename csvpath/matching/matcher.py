@@ -1,10 +1,10 @@
 import ply.yacc as yacc
 from csvpath.matching.matching_lexer import MatchingLexer
 from csvpath.parser_utility import ParserUtility
-from csvpath.matching.expression_encoder import ExpressionEncoder
+from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from .productions import *
 from .functions.function_factory import FunctionFactory
-from .exceptions import MatchException
+from .util.exceptions import MatchException
 from typing import Any
 
 
@@ -28,6 +28,7 @@ class Matcher:
             self.lexer = MatchingLexer()
             self.parser = yacc.yacc(module=self, start="match_part")
             self.parser.parse(data, lexer=self.lexer.lexer)
+            self.check_valid()
 
     def __str__(self):
         return f"""
@@ -101,6 +102,10 @@ class Matcher:
         else:
             pass
         return ret
+
+    def check_valid(self) -> None:
+        for _ in self.expressions:
+            _[0].check_valid()
 
     def do_set_if_all_match(self) -> None:
         for _ in self.if_all_match:

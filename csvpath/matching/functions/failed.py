@@ -1,10 +1,13 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 
 
 class Failed(Function):
-    def to_value(self, *, skip=[]) -> Any:
+    def check_valid(self) -> None:
         self.validate_zero_args()
+        super().check_valid()
+
+    def to_value(self, *, skip=[]) -> Any:
         if self.name == "failed":
             return not self.matcher.csvpath.is_valid
         elif self.name == "valid":
@@ -13,5 +16,4 @@ class Failed(Function):
             raise Exception(f"Incorrect name {self.name} for a Failed class instance")
 
     def matches(self, *, skip=[]) -> bool:
-        self.validate_zero_args()
         return self.to_value(skip=skip)

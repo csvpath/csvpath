@@ -1,16 +1,19 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality
 
 
 class Tally(Function):
+    def check_valid(self) -> None:
+        self.validate_one_or_more_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is not None:
             return True
         else:
-            self.validate_one_or_more_args()
             om = self.has_onmatch()
             if not om or self.line_matches():
                 child = self.children[0]

@@ -1,14 +1,17 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality, Term
 
 
 class Subtract(Function):
+    def check_valid(self) -> None:
+        self.validate_one_or_more_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
-            self.validate_one_or_more_args()
             child = self.children[0]
             if isinstance(child, Term):
                 v = child.to_value()

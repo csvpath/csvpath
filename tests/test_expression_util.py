@@ -1,6 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
-from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class TestExpressionUtil(unittest.TestCase):

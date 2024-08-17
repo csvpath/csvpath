@@ -1,7 +1,7 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality, Variable, Term, Header
-from ..expression_utility import ExpressionUtility
+from ..util.expression_utility import ExpressionUtility
 from ..productions.expression import Matchable
 from statistics import mean, median
 
@@ -86,14 +86,17 @@ class MinMax(Function):
 
 
 class Min(MinMax):
+    def check_valid(self) -> None:
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
+        super().check_valid()
+
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -110,14 +113,17 @@ class Min(MinMax):
 
 
 class Max(MinMax):
+    def check_valid(self) -> None:
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
+        super().check_valid()
+
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
         if not self.value:
             # skip lines we should ignore
             if self._ignore():
@@ -134,6 +140,11 @@ class Max(MinMax):
 
 
 class Average(MinMax):
+    def check_valid(self) -> None:
+        types = [Variable, Term, Header, Function]
+        self.validate_one_or_two_args(one=types, left=types, right=types)
+        super().check_valid()
+
     def __init__(
         self, matcher: Any, name: str, child: Matchable = None, ave_or_med="average"
     ) -> None:
@@ -143,8 +154,6 @@ class Average(MinMax):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
         if self.value is None:
             v = self.get_the_value()
             # if we're watching a header and we're in the header row skip it.

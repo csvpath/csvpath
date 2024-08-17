@@ -1,6 +1,6 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
-from csvpath.matching.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class Variable(Matchable):

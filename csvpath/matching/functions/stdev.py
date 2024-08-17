@@ -1,9 +1,14 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
+from ..productions import ChildrenException
 from statistics import stdev, pstdev
 
 
 class Stdev(Function):
+    def check_valid(self) -> None:
+        self.validate_one_arg()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -15,7 +20,6 @@ class Stdev(Function):
         if self.value is None:
             om = self.has_onmatch()
             if not om or self.line_matches():
-                self.validate_one_arg()
                 child = self.children[0]
                 v = child.to_value()
                 stack = None

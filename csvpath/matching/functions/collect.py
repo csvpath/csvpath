@@ -1,13 +1,16 @@
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
 from ..productions import Equality
 
 
 class Collect(Function):
+    def check_valid(self) -> None:
+        self.validate_one_or_more_args()
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        self.validate_one_or_more_args()
         if self.value is None:
             collect = []
             if isinstance(self.children[0], Equality):

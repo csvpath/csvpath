@@ -1,10 +1,14 @@
 from typing import Any
-from .function import Function, ChildrenException
-from ..productions import Header, Equality
+from .function import Function
+from ..productions import Header, Equality, ChildrenException
 import hashlib
 
 
 class HasDups(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_or_more_args(types=[Header])
+        super().check_valid()
+
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
@@ -15,7 +19,6 @@ class HasDups(Function):
                 values = self.matcher.get_variable(name, set_if_none={})
                 string = ""
                 fingerprint = None
-                self.validate_zero_or_more_args(types=[Header])
                 if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         siblings = self.children[0].commas_to_list()
