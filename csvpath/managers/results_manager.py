@@ -3,14 +3,52 @@ import os
 import json
 from abc import ABC, abstractmethod
 from .. import ConfigurationException
-from .. import CsvPath, Error
+from .. import CsvPath, Error, Printer
 
 
-class CsvPathResult:
+class CsvPathErrorCollector(ABC):
+    @abstractmethod
+    def errors(self) -> List[Error]:
+        pass
+
+    @abstractmethod
+    def collect_error(self, error: Error) -> None:
+        pass
+
+    @abstractmethod
+    def has_errors(self) -> bool:
+        pass
+
+
+class CsvPathResult(CsvPathErrorCollector, Printer):
     def __init__(self, *, lines: List[List[Any]] = None, path: CsvPath = None):
-        self._lines: List[List[Any]] = lines
-        self._csvpath = path
+        self._lines: List[List[Any]] = None
+        self._csvpath = None
+        self._name = None
         self._errors = []
+        self._results_index = -1
+        self._printouts = {}
+        #
+        # use the properties so error_collector, etc. is set correctly
+        #
+        self.csvpath = path
+        self.lines = lines
+
+    @property
+    def results_index(self) -> int:
+        return self._results_index
+
+    @results_index.setter
+    def results_index(self, index: int) -> None:
+        self._results_index = index
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
 
     @property
     def lines(self) -> List[List[Any]]:
@@ -27,14 +65,18 @@ class CsvPathResult:
     @csvpath.setter
     def csvpath(self, path: CsvPath) -> None:
         path.error_collector = self
+        path.add_printer(self)
         self._csvpath = path
 
     @property
     def errors(self) -> List[Error]:
         return self._errors
 
-    def collect_error(self, err: Error) -> None:
-        self._errors.append(err)
+    def collect_error(self, error: Error) -> None:
+        self._errors.append(error)
+
+    def has_errors(self) -> bool:
+        return len(self.errors) > 0
 
     def is_valid(self) -> bool:
         if self._csvpath:
@@ -42,12 +84,40 @@ class CsvPathResult:
         else:
             return False
 
+    def print(self, string: str) -> None:
+        self.print_to("default", string)
+
+    def print_to(self, name: str, string: str) -> None:
+        if name not in self._printouts:
+            self._printouts[name] = []
+        self._printouts[name].append(string)
+
+    def dump_printing(self) -> None:
+        for name in self._printouts:
+            print(f"dumping printed lines named '{name}'")
+            for line in self._printouts[name]:
+                print(line)
+            print("")
+
+    def print_statements(self) -> int:
+        i = 0
+        for name in self._printouts:
+            i += len(self._printouts["name"]) if self._printouts["name"] else 0
+        return i
+
     def __str__(self) -> str:
-        return f"""CsvPathResult:
-                        valid:{self.csvpath.is_valid};
-                        path:{self.csvpath};
-                        lines:{len(self.lines) if self.lines else None};
-                        errors:{len(self.errors)}"""
+        return f"""CsvPathResult
+                   file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
+                   name of csvpaths:{self.name};
+                   results index:{self.results_index};
+                   valid:{self.csvpath.is_valid};
+                   stopped:{self.csvpath.stopped};
+                   last line processed:{self.csvpath.line_number};
+                   total file lines:{self.csvpath.total_lines};
+                   matches:{self.csvpath.match_count};
+                   lines captured:{len(self.lines) if self.lines else 0};
+                   print statements:{self.print_statements()};
+                   errors:{len(self.errors)}"""
 
 
 class CsvPathsResultsManager(ABC):
@@ -110,6 +180,8 @@ class ResultsManager(CsvPathsResultsManager):
             return len(nr)
 
     def add_named_result(self, name: str, result: CsvPathResult) -> None:
+        result.name = name
+        result.results_index = len(self.named_results)
         if name not in self.named_results:
             self.named_results[name] = [result]
         else:

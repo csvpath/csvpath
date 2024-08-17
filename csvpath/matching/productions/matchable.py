@@ -18,7 +18,6 @@ class Matchable(Qualified):
         return f"""{self.__class__}"""
 
     def check_valid(self) -> None:
-        print(f"checking valid in {self}")
         for _ in self.children:
             _.check_valid()
 

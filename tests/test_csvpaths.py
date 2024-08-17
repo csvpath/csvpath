@@ -16,6 +16,7 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
         cnt = 0
         for line in cs.next_paths("food", "food"):
+            print(f"test_csvpaths_next_paths: path: {line[len(line) - 1]}")
             cnt += 1
         assert cnt == 4
 

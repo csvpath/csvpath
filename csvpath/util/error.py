@@ -1,5 +1,4 @@
 from typing import Any
-from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
@@ -11,14 +10,14 @@ class ErrorPolicy(Enum):
     CONTINUE = "continue"
 
 
-@dataclass
 class Error:
-    line: int
-    match: int
-    scan: int
-    error: Exception
-    message: str
-    json: str
-    datum: Any
-    filename: str
-    at: datetime
+    def __init__(self):
+        self.line_count: int = -1
+        self.match_count: int = -1
+        self.scan_count: int = -1
+        self.error: Exception = None
+        self.message: str = None
+        self.json: str = None
+        self.datum: Any = None
+        self.filename: str = None
+        self.at: datetime = datetime.now()

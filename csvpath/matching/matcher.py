@@ -1,11 +1,11 @@
+from typing import Any
 import ply.yacc as yacc
-from csvpath.matching.matching_lexer import MatchingLexer
 from ..util.parser_utility import ParserUtility
-from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from .productions import *
 from .functions.function_factory import FunctionFactory
+from .matching_lexer import MatchingLexer
+from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
-from typing import Any
 
 
 class Matcher:
@@ -13,7 +13,8 @@ class Matcher:
 
     def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
         if not headers:
-            print("\nWARNING: no headers available. Ok for unit testing.")
+            # this could be a dry-run or unit testing
+            pass
         if not data:
             raise MatchException(f"need data input: data: {data}")
         self.path = data

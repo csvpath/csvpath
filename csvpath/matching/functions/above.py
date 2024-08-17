@@ -1,8 +1,9 @@
 from typing import Any
 from .function import Function
+from ..productions import ChildrenException
 
 
-class Above(Function):
+class AboveBelow(Function):
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
@@ -13,18 +14,57 @@ class Above(Function):
         if self.value is None:
             thischild = self.children[0].children[0]
             abovethatchild = self.children[0].children[1]
-            this_is = thischild.to_value(skip=skip)
-            above_that = abovethatchild.to_value(skip=skip)
-            this = -1
-            that = -1
-            try:
-                this = float(this_is)
-                that = float(above_that)
-                self.value = this > that
-            except Exception:
-                # returning false because whatever the operands were they aren't above and below
+            a = thischild.to_value(skip=skip)
+            b = abovethatchild.to_value(skip=skip)
+            if a is None and b is not None or b is None and a is not None:
+                self.value = False
+            else:
+                self.value = self._try_numbers(a, b)
+                if self.value is None:
+                    self.value = self._try_dates(a, b)
+                if self.value is None:
+                    self.value = self._try_strings(a, b)
+            if self.value is None:
                 self.value = False
         return self.value
+
+    def _above(self) -> bool:
+        if self.name == "gt" or self.name == "above":
+            return True
+        elif self.name == "lt" or self.name == "below":
+            return False
+        else:
+            raise ChildrenException(f"{self.name}() is not a known function")
+
+    def _try_numbers(self, a, b) -> bool:
+        try:
+            if self._above():
+                return float(a) > float(b)
+            else:
+                return float(a) < float(b)
+        except Exception:
+            return None
+
+    def _try_dates(self, a, b) -> bool:
+        try:
+            if self._above():
+                return a.timestamp() > b.timestamp()
+            else:
+                return a.timestamp() < b.timestamp()
+        except Exception:
+            return None
+
+    def _try_strings(self, a, b) -> bool:
+        if isinstance(a, str) and isinstance(b, str):
+            if self._above():
+                return a.strip() > b.strip()
+            else:
+                return a.strip() < b.strip()
+        else:
+            if self._above():
+                return f"{a}".strip() > f"{b}".strip()
+            else:
+                return f"{a}".strip() < f"{b}".strip()
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover

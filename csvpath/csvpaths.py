@@ -79,12 +79,12 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
+            self.results_manager.add_named_result(pathsname, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
             lines = csvpath.collect()
             result.lines = lines
-            self.results_manager.add_named_result(pathsname, result)
 
     def fast_forward_paths(self, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
@@ -96,13 +96,16 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
+            self.results_manager.add_named_result(pathsname, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
             csvpath.fast_forward()
-            self.results_manager.add_named_result(pathsname, result)
 
     def next_paths(self, pathsname, filename):
+        """appends the CsvPathResult for each CsvPath to the end of
+        each line it produces. this is so that the caller can easily
+        interrogate the CsvPath for its path parts, file, etc."""
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException(
                 f"pathsname '{pathsname}' must be a named set of paths"
@@ -114,13 +117,13 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
+            self.results_manager.add_named_result(pathsname, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
             for line in csvpath.next():
+                line.append(result)
                 yield line
-            result = CsvPathResult(path=csvpath, lines=None)
-            self.results_manager.add_named_result(pathsname, result)
 
     # =============== breadth first processing ================
 

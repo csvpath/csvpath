@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from . import Error, ErrorPolicy, Matcher, Scanner, ExpressionEncoder
+from . import Error, ErrorPolicy, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
 from . import (
     VariableException,
     InputException,
@@ -90,17 +90,44 @@ class CsvPath(CsvPathPublic):
         self._advance = 0
         self._is_valid = True
         self._limit_collection_to = []
-        self.errors = None
-        self.error_collector = None
+        self._errors: List[Error] = None
+        self._error_collector = None
         self.error_policy = ErrorPolicy.FAIL_AND_STOP
+        self.printers = [StdOutPrinter()]
+
+    def has_errors(self) -> bool:
+        if self.errors:
+            return len(self.errors) > 0
+        elif self.error_collector:
+            return self.error_collector.has_errors()
+        else:
+            raise ConfigurationException(
+                "There must either be a list of errors or an error collector"
+            )
+
+    @property
+    def errors(self) -> List[Error]:
+        return (
+            self._errors
+            if self._error_collector is None
+            else self._error_collector.errors
+        )
+
+    @property
+    def error_collector(self):
+        return self._error_collector
+
+    @error_collector.setter
+    def error_collector(self, error_collector) -> None:
+        self._error_collector = error_collector
 
     def collect_error(self, e: Error) -> None:
-        if self.error_collector:
-            self.error_collector.collect_error(self, e)
+        if self._error_collector:
+            self._error_collector.collect_error(e)
         else:
-            if self.errors is None:
-                self.errors = []
-            self.errors.append(e)
+            if self._errors is None:
+                self._errors = []
+            self._errors.append(e)
         if self.error_policy == ErrorPolicy.STOP:
             self.stopped = True
         elif self.error_policy == ErrorPolicy.FAIL_AND_STOP:
@@ -110,6 +137,17 @@ class CsvPath(CsvPathPublic):
             self._is_valid = False
         elif self.error_policy == ErrorPolicy.CONTINUE:
             pass
+
+    def add_printer(self, printer) -> None:
+        if printer not in self.printers:
+            self.printers.append(printer)
+
+    def set_printers(self, printers: List) -> None:
+        self.printers = printers
+
+    def print(self, string: str) -> None:
+        for p in self.printers:
+            p.print(string)
 
     def parse(self, csvpath):
         self.scanner = Scanner(csvpath=self)

@@ -10,8 +10,9 @@ from .concat import Concat
 from .lower import Lower
 from .upper import Upper
 from .percent import Percent
-from .below import Below
-from .above import Above
+
+# from .below import Below
+from .above import AboveBelow
 from .first import First
 from .count_lines import CountLines
 from .count_scans import CountScans
@@ -148,9 +149,9 @@ class FunctionFactory:
         elif name == "percent":
             f = Percent(matcher, name, child)
         elif name == "below" or name == "lt":
-            f = Below(matcher, name, child)
+            f = AboveBelow(matcher, name, child)
         elif name == "above" or name == "gt":
-            f = Above(matcher, name, child)
+            f = AboveBelow(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)
         elif name == "firstline" or name == "firstmatch" or name == "firstscan":
