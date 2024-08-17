@@ -44,9 +44,10 @@ class CsvPathResult:
 
     def __str__(self) -> str:
         return f"""CsvPathResult:
-                        valid:{self._csvpath.is_valid};
-                        path:{self._csvpath};
-                        lines:{len(self._lines) if self._lines else None}"""
+                        valid:{self.csvpath.is_valid};
+                        path:{self.csvpath};
+                        lines:{len(self.lines) if self.lines else None};
+                        errors:{len(self.errors)}"""
 
 
 class CsvPathsResultsManager(ABC):
