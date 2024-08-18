@@ -1,10 +1,5 @@
 Created by PLY version 3.11 (http://www.dabeaz.com/ply)
 
-Unused terminals:
-
-    NAME
-    NAME_LINE
-
 Grammar
 
 Rule 0     S' -> match_part
@@ -47,54 +42,42 @@ Rule 36    equality -> equality COMMA var_or_header
 Rule 37    equality -> equality COMMA term
 Rule 38    equality -> equality COMMA function
 Rule 39    op -> EQUALS
-Rule 40    op -> LT
-Rule 41    op -> GT
-Rule 42    op -> STAR
-Rule 43    op -> PLUS
-Rule 44    op -> MINUS
-Rule 45    op -> COMMA
-Rule 46    assignment -> var ASSIGNMENT var
-Rule 47    assignment -> var ASSIGNMENT term
-Rule 48    assignment -> var ASSIGNMENT function
-Rule 49    assignment -> var ASSIGNMENT header
-Rule 50    term -> QUOTED
-Rule 51    term -> QUOTE DATE QUOTE
-Rule 52    term -> QUOTE NUMBER QUOTE
-Rule 53    term -> NUMBER
-Rule 54    term -> REGEX
-Rule 55    var_or_header -> header
-Rule 56    var_or_header -> var
-Rule 57    var -> VAR_SYM SIMPLE_NAME
-Rule 58    header -> HEADER_SYM SIMPLE_NAME
-Rule 59    header -> HEADER_SYM NUMBER
-Rule 60    header -> HEADER_SYM QUOTED
+Rule 40    op -> COMMA
+Rule 41    assignment -> var ASSIGNMENT var
+Rule 42    assignment -> var ASSIGNMENT term
+Rule 43    assignment -> var ASSIGNMENT function
+Rule 44    assignment -> var ASSIGNMENT header
+Rule 45    term -> QUOTED
+Rule 46    term -> QUOTE DATE QUOTE
+Rule 47    term -> QUOTE NUMBER QUOTE
+Rule 48    term -> NUMBER
+Rule 49    term -> REGEX
+Rule 50    var_or_header -> header
+Rule 51    var_or_header -> var
+Rule 52    var -> VAR_SYM SIMPLE_NAME
+Rule 53    header -> HEADER_SYM SIMPLE_NAME
+Rule 54    header -> HEADER_SYM NUMBER
+Rule 55    header -> HEADER_SYM QUOTED
 
 Terminals, with rules where they appear
 
-ASSIGNMENT           : 46 47 48 49
+ASSIGNMENT           : 41 42 43 44
 CLOSE_PAREN          : 11 12 13 14 15
-COMMA                : 33 36 37 38 45
+COMMA                : 33 36 37 38 40
 COMMENT              : 4 6 7 8
-DATE                 : 51
+DATE                 : 46
 DO                   : 21 22 23 24 25 26
 EQUALS               : 39
-GT                   : 41
-HEADER_SYM           : 58 59 60
+HEADER_SYM           : 53 54 55
 LEFT_BRACKET         : 1 2
-LT                   : 40
-MINUS                : 44
-NAME                 : 
-NAME_LINE            : 
-NUMBER               : 52 53 59
+NUMBER               : 47 48 54
 OPEN_PAREN           : 11 12 13 14 15
-PLUS                 : 43
-QUOTE                : 51 51 52 52
-QUOTED               : 50 60
-REGEX                : 54
+QUOTE                : 46 46 47 47
+QUOTED               : 45 55
+REGEX                : 49
 RIGHT_BRACKET        : 1 2
-SIMPLE_NAME          : 11 12 13 14 15 57 58
-STAR                 : 42
-VAR_SYM              : 57
+SIMPLE_NAME          : 11 12 13 14 15 52 53
+VAR_SYM              : 52
 error                : 
 
 Nonterminals, with rules where they appear
@@ -104,12 +87,12 @@ assignment_or_equality : 10 21 22 25
 equality             : 12 16 25 26 33 33 34 35 36 37 38
 expression           : 1 3 4 5
 expressions          : 2 5 6 7
-function             : 9 13 18 19 19 20 21 23 24 24 26 27 32 35 38 48
-header               : 49 55
+function             : 9 13 18 19 19 20 21 23 24 24 26 27 32 35 38 43
+header               : 44 50
 match_part           : 0
 op                   : 18 19 20 27 28 29 30 31 32 34 35
-term                 : 14 18 28 30 31 31 32 34 37 47
-var                  : 22 23 46 46 47 48 49 56
+term                 : 14 18 28 30 31 31 32 34 37 42
+var                  : 22 23 41 41 42 43 44 51
 var_or_header        : 15 20 27 28 29 29 30 36
 
 Parsing method: LALR
@@ -170,21 +153,21 @@ state 2
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     COMMENT         shift and go to state 7
     SIMPLE_NAME     shift and go to state 8
@@ -263,21 +246,21 @@ state 4
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     RIGHT_BRACKET   shift and go to state 23
     COMMENT         shift and go to state 25
@@ -308,12 +291,7 @@ state 5
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
     RIGHT_BRACKET   reduce using rule 9 (expression -> function .)
     COMMENT         reduce using rule 9 (expression -> function .)
@@ -326,12 +304,7 @@ state 5
     HEADER_SYM      reduce using rule 9 (expression -> function .)
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
     op                             shift and go to state 26
 
@@ -390,21 +363,21 @@ state 7
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
   ! shift/reduce conflict for COMMENT resolved as shift
   ! shift/reduce conflict for SIMPLE_NAME resolved as shift
@@ -433,8 +406,8 @@ state 7
   ! REGEX           [ reduce using rule 8 (expressions -> COMMENT .) ]
   ! HEADER_SYM      [ reduce using rule 8 (expressions -> COMMENT .) ]
 
-    expressions                    shift and go to state 35
-    expression                     shift and go to state 36
+    expressions                    shift and go to state 30
+    expression                     shift and go to state 31
     function                       shift and go to state 5
     assignment_or_equality         shift and go to state 6
     equality                       shift and go to state 9
@@ -452,7 +425,7 @@ state 8
     (14) function -> SIMPLE_NAME . OPEN_PAREN term CLOSE_PAREN
     (15) function -> SIMPLE_NAME . OPEN_PAREN var_or_header CLOSE_PAREN
 
-    OPEN_PAREN      shift and go to state 37
+    OPEN_PAREN      shift and go to state 32
 
 
 state 9
@@ -467,21 +440,11 @@ state 9
     (37) equality -> equality . COMMA term
     (38) equality -> equality . COMMA function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
     RIGHT_BRACKET   reduce using rule 16 (assignment_or_equality -> equality .)
     COMMENT         reduce using rule 16 (assignment_or_equality -> equality .)
     SIMPLE_NAME     reduce using rule 16 (assignment_or_equality -> equality .)
@@ -492,25 +455,15 @@ state 9
     REGEX           reduce using rule 16 (assignment_or_equality -> equality .)
     HEADER_SYM      reduce using rule 16 (assignment_or_equality -> equality .)
     CLOSE_PAREN     reduce using rule 16 (assignment_or_equality -> equality .)
-    DO              shift and go to state 38
-    COMMA           shift and go to state 39
+    DO              shift and go to state 33
+    COMMA           shift and go to state 34
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
 
   ! DO              [ reduce using rule 16 (assignment_or_equality -> equality .) ]
   ! COMMA           [ reduce using rule 16 (assignment_or_equality -> equality .) ]
   ! EQUALS          [ reduce using rule 16 (assignment_or_equality -> equality .) ]
-  ! LT              [ reduce using rule 16 (assignment_or_equality -> equality .) ]
-  ! GT              [ reduce using rule 16 (assignment_or_equality -> equality .) ]
-  ! STAR            [ reduce using rule 16 (assignment_or_equality -> equality .) ]
-  ! PLUS            [ reduce using rule 16 (assignment_or_equality -> equality .) ]
-  ! MINUS           [ reduce using rule 16 (assignment_or_equality -> equality .) ]
 
-    op                             shift and go to state 40
+    op                             shift and go to state 35
 
 state 10
 
@@ -518,22 +471,12 @@ state 10
     (31) equality -> term . op term
     (32) equality -> term . op function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
-    op                             shift and go to state 41
+    op                             shift and go to state 36
 
 state 11
 
@@ -541,22 +484,12 @@ state 11
     (28) equality -> var_or_header . op term
     (29) equality -> var_or_header . op var_or_header
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
-    op                             shift and go to state 42
+    op                             shift and go to state 37
 
 state 12
 
@@ -574,11 +507,6 @@ state 12
     DO              reduce using rule 17 (assignment_or_equality -> assignment .)
     COMMA           reduce using rule 17 (assignment_or_equality -> assignment .)
     EQUALS          reduce using rule 17 (assignment_or_equality -> assignment .)
-    LT              reduce using rule 17 (assignment_or_equality -> assignment .)
-    GT              reduce using rule 17 (assignment_or_equality -> assignment .)
-    STAR            reduce using rule 17 (assignment_or_equality -> assignment .)
-    PLUS            reduce using rule 17 (assignment_or_equality -> assignment .)
-    MINUS           reduce using rule 17 (assignment_or_equality -> assignment .)
     CLOSE_PAREN     reduce using rule 17 (assignment_or_equality -> assignment .)
 
 
@@ -586,144 +514,119 @@ state 13
 
     (22) equality -> var . DO assignment_or_equality
     (23) equality -> var . DO function
-    (46) assignment -> var . ASSIGNMENT var
-    (47) assignment -> var . ASSIGNMENT term
-    (48) assignment -> var . ASSIGNMENT function
-    (49) assignment -> var . ASSIGNMENT header
-    (56) var_or_header -> var .
+    (41) assignment -> var . ASSIGNMENT var
+    (42) assignment -> var . ASSIGNMENT term
+    (43) assignment -> var . ASSIGNMENT function
+    (44) assignment -> var . ASSIGNMENT header
+    (51) var_or_header -> var .
 
-    DO              shift and go to state 43
-    ASSIGNMENT      shift and go to state 44
-    EQUALS          reduce using rule 56 (var_or_header -> var .)
-    LT              reduce using rule 56 (var_or_header -> var .)
-    GT              reduce using rule 56 (var_or_header -> var .)
-    STAR            reduce using rule 56 (var_or_header -> var .)
-    PLUS            reduce using rule 56 (var_or_header -> var .)
-    MINUS           reduce using rule 56 (var_or_header -> var .)
-    COMMA           reduce using rule 56 (var_or_header -> var .)
+    DO              shift and go to state 38
+    ASSIGNMENT      shift and go to state 39
+    EQUALS          reduce using rule 51 (var_or_header -> var .)
+    COMMA           reduce using rule 51 (var_or_header -> var .)
 
 
 state 14
 
-    (55) var_or_header -> header .
+    (50) var_or_header -> header .
 
-    EQUALS          reduce using rule 55 (var_or_header -> header .)
-    LT              reduce using rule 55 (var_or_header -> header .)
-    GT              reduce using rule 55 (var_or_header -> header .)
-    STAR            reduce using rule 55 (var_or_header -> header .)
-    PLUS            reduce using rule 55 (var_or_header -> header .)
-    MINUS           reduce using rule 55 (var_or_header -> header .)
-    COMMA           reduce using rule 55 (var_or_header -> header .)
-    DO              reduce using rule 55 (var_or_header -> header .)
-    RIGHT_BRACKET   reduce using rule 55 (var_or_header -> header .)
-    COMMENT         reduce using rule 55 (var_or_header -> header .)
-    SIMPLE_NAME     reduce using rule 55 (var_or_header -> header .)
-    VAR_SYM         reduce using rule 55 (var_or_header -> header .)
-    QUOTED          reduce using rule 55 (var_or_header -> header .)
-    QUOTE           reduce using rule 55 (var_or_header -> header .)
-    NUMBER          reduce using rule 55 (var_or_header -> header .)
-    REGEX           reduce using rule 55 (var_or_header -> header .)
-    HEADER_SYM      reduce using rule 55 (var_or_header -> header .)
-    CLOSE_PAREN     reduce using rule 55 (var_or_header -> header .)
+    EQUALS          reduce using rule 50 (var_or_header -> header .)
+    COMMA           reduce using rule 50 (var_or_header -> header .)
+    DO              reduce using rule 50 (var_or_header -> header .)
+    RIGHT_BRACKET   reduce using rule 50 (var_or_header -> header .)
+    COMMENT         reduce using rule 50 (var_or_header -> header .)
+    SIMPLE_NAME     reduce using rule 50 (var_or_header -> header .)
+    VAR_SYM         reduce using rule 50 (var_or_header -> header .)
+    QUOTED          reduce using rule 50 (var_or_header -> header .)
+    QUOTE           reduce using rule 50 (var_or_header -> header .)
+    NUMBER          reduce using rule 50 (var_or_header -> header .)
+    REGEX           reduce using rule 50 (var_or_header -> header .)
+    HEADER_SYM      reduce using rule 50 (var_or_header -> header .)
+    CLOSE_PAREN     reduce using rule 50 (var_or_header -> header .)
 
 
 state 15
 
-    (57) var -> VAR_SYM . SIMPLE_NAME
+    (52) var -> VAR_SYM . SIMPLE_NAME
 
-    SIMPLE_NAME     shift and go to state 45
+    SIMPLE_NAME     shift and go to state 40
 
 
 state 16
 
-    (50) term -> QUOTED .
+    (45) term -> QUOTED .
 
-    EQUALS          reduce using rule 50 (term -> QUOTED .)
-    LT              reduce using rule 50 (term -> QUOTED .)
-    GT              reduce using rule 50 (term -> QUOTED .)
-    STAR            reduce using rule 50 (term -> QUOTED .)
-    PLUS            reduce using rule 50 (term -> QUOTED .)
-    MINUS           reduce using rule 50 (term -> QUOTED .)
-    COMMA           reduce using rule 50 (term -> QUOTED .)
-    DO              reduce using rule 50 (term -> QUOTED .)
-    RIGHT_BRACKET   reduce using rule 50 (term -> QUOTED .)
-    COMMENT         reduce using rule 50 (term -> QUOTED .)
-    SIMPLE_NAME     reduce using rule 50 (term -> QUOTED .)
-    VAR_SYM         reduce using rule 50 (term -> QUOTED .)
-    QUOTED          reduce using rule 50 (term -> QUOTED .)
-    QUOTE           reduce using rule 50 (term -> QUOTED .)
-    NUMBER          reduce using rule 50 (term -> QUOTED .)
-    REGEX           reduce using rule 50 (term -> QUOTED .)
-    HEADER_SYM      reduce using rule 50 (term -> QUOTED .)
-    CLOSE_PAREN     reduce using rule 50 (term -> QUOTED .)
+    EQUALS          reduce using rule 45 (term -> QUOTED .)
+    COMMA           reduce using rule 45 (term -> QUOTED .)
+    DO              reduce using rule 45 (term -> QUOTED .)
+    RIGHT_BRACKET   reduce using rule 45 (term -> QUOTED .)
+    COMMENT         reduce using rule 45 (term -> QUOTED .)
+    SIMPLE_NAME     reduce using rule 45 (term -> QUOTED .)
+    VAR_SYM         reduce using rule 45 (term -> QUOTED .)
+    QUOTED          reduce using rule 45 (term -> QUOTED .)
+    QUOTE           reduce using rule 45 (term -> QUOTED .)
+    NUMBER          reduce using rule 45 (term -> QUOTED .)
+    REGEX           reduce using rule 45 (term -> QUOTED .)
+    HEADER_SYM      reduce using rule 45 (term -> QUOTED .)
+    CLOSE_PAREN     reduce using rule 45 (term -> QUOTED .)
 
 
 state 17
 
-    (51) term -> QUOTE . DATE QUOTE
-    (52) term -> QUOTE . NUMBER QUOTE
+    (46) term -> QUOTE . DATE QUOTE
+    (47) term -> QUOTE . NUMBER QUOTE
 
-    DATE            shift and go to state 46
-    NUMBER          shift and go to state 47
+    DATE            shift and go to state 41
+    NUMBER          shift and go to state 42
 
 
 state 18
 
-    (53) term -> NUMBER .
+    (48) term -> NUMBER .
 
-    EQUALS          reduce using rule 53 (term -> NUMBER .)
-    LT              reduce using rule 53 (term -> NUMBER .)
-    GT              reduce using rule 53 (term -> NUMBER .)
-    STAR            reduce using rule 53 (term -> NUMBER .)
-    PLUS            reduce using rule 53 (term -> NUMBER .)
-    MINUS           reduce using rule 53 (term -> NUMBER .)
-    COMMA           reduce using rule 53 (term -> NUMBER .)
-    DO              reduce using rule 53 (term -> NUMBER .)
-    RIGHT_BRACKET   reduce using rule 53 (term -> NUMBER .)
-    COMMENT         reduce using rule 53 (term -> NUMBER .)
-    SIMPLE_NAME     reduce using rule 53 (term -> NUMBER .)
-    VAR_SYM         reduce using rule 53 (term -> NUMBER .)
-    QUOTED          reduce using rule 53 (term -> NUMBER .)
-    QUOTE           reduce using rule 53 (term -> NUMBER .)
-    NUMBER          reduce using rule 53 (term -> NUMBER .)
-    REGEX           reduce using rule 53 (term -> NUMBER .)
-    HEADER_SYM      reduce using rule 53 (term -> NUMBER .)
-    CLOSE_PAREN     reduce using rule 53 (term -> NUMBER .)
+    EQUALS          reduce using rule 48 (term -> NUMBER .)
+    COMMA           reduce using rule 48 (term -> NUMBER .)
+    DO              reduce using rule 48 (term -> NUMBER .)
+    RIGHT_BRACKET   reduce using rule 48 (term -> NUMBER .)
+    COMMENT         reduce using rule 48 (term -> NUMBER .)
+    SIMPLE_NAME     reduce using rule 48 (term -> NUMBER .)
+    VAR_SYM         reduce using rule 48 (term -> NUMBER .)
+    QUOTED          reduce using rule 48 (term -> NUMBER .)
+    QUOTE           reduce using rule 48 (term -> NUMBER .)
+    NUMBER          reduce using rule 48 (term -> NUMBER .)
+    REGEX           reduce using rule 48 (term -> NUMBER .)
+    HEADER_SYM      reduce using rule 48 (term -> NUMBER .)
+    CLOSE_PAREN     reduce using rule 48 (term -> NUMBER .)
 
 
 state 19
 
-    (54) term -> REGEX .
+    (49) term -> REGEX .
 
-    EQUALS          reduce using rule 54 (term -> REGEX .)
-    LT              reduce using rule 54 (term -> REGEX .)
-    GT              reduce using rule 54 (term -> REGEX .)
-    STAR            reduce using rule 54 (term -> REGEX .)
-    PLUS            reduce using rule 54 (term -> REGEX .)
-    MINUS           reduce using rule 54 (term -> REGEX .)
-    COMMA           reduce using rule 54 (term -> REGEX .)
-    DO              reduce using rule 54 (term -> REGEX .)
-    RIGHT_BRACKET   reduce using rule 54 (term -> REGEX .)
-    COMMENT         reduce using rule 54 (term -> REGEX .)
-    SIMPLE_NAME     reduce using rule 54 (term -> REGEX .)
-    VAR_SYM         reduce using rule 54 (term -> REGEX .)
-    QUOTED          reduce using rule 54 (term -> REGEX .)
-    QUOTE           reduce using rule 54 (term -> REGEX .)
-    NUMBER          reduce using rule 54 (term -> REGEX .)
-    REGEX           reduce using rule 54 (term -> REGEX .)
-    HEADER_SYM      reduce using rule 54 (term -> REGEX .)
-    CLOSE_PAREN     reduce using rule 54 (term -> REGEX .)
+    EQUALS          reduce using rule 49 (term -> REGEX .)
+    COMMA           reduce using rule 49 (term -> REGEX .)
+    DO              reduce using rule 49 (term -> REGEX .)
+    RIGHT_BRACKET   reduce using rule 49 (term -> REGEX .)
+    COMMENT         reduce using rule 49 (term -> REGEX .)
+    SIMPLE_NAME     reduce using rule 49 (term -> REGEX .)
+    VAR_SYM         reduce using rule 49 (term -> REGEX .)
+    QUOTED          reduce using rule 49 (term -> REGEX .)
+    QUOTE           reduce using rule 49 (term -> REGEX .)
+    NUMBER          reduce using rule 49 (term -> REGEX .)
+    REGEX           reduce using rule 49 (term -> REGEX .)
+    HEADER_SYM      reduce using rule 49 (term -> REGEX .)
+    CLOSE_PAREN     reduce using rule 49 (term -> REGEX .)
 
 
 state 20
 
-    (58) header -> HEADER_SYM . SIMPLE_NAME
-    (59) header -> HEADER_SYM . NUMBER
-    (60) header -> HEADER_SYM . QUOTED
+    (53) header -> HEADER_SYM . SIMPLE_NAME
+    (54) header -> HEADER_SYM . NUMBER
+    (55) header -> HEADER_SYM . QUOTED
 
-    SIMPLE_NAME     shift and go to state 48
-    NUMBER          shift and go to state 49
-    QUOTED          shift and go to state 50
+    SIMPLE_NAME     shift and go to state 43
+    NUMBER          shift and go to state 44
+    QUOTED          shift and go to state 45
 
 
 state 21
@@ -790,22 +693,22 @@ state 26
     (18) equality -> function op . term
     (19) equality -> function op . function
     (20) equality -> function op . var_or_header
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
     (11) function -> . SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
     (12) function -> . SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
-    (57) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
+    (52) var -> . VAR_SYM SIMPLE_NAME
 
     QUOTED          shift and go to state 16
     QUOTE           shift and go to state 17
@@ -815,11 +718,11 @@ state 26
     HEADER_SYM      shift and go to state 20
     VAR_SYM         shift and go to state 15
 
-    function                       shift and go to state 51
-    term                           shift and go to state 52
-    var_or_header                  shift and go to state 53
+    function                       shift and go to state 46
+    term                           shift and go to state 47
+    var_or_header                  shift and go to state 48
     header                         shift and go to state 14
-    var                            shift and go to state 54
+    var                            shift and go to state 49
 
 state 27
 
@@ -853,21 +756,21 @@ state 27
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 8
     VAR_SYM         shift and go to state 15
@@ -877,8 +780,8 @@ state 27
     REGEX           shift and go to state 19
     HEADER_SYM      shift and go to state 20
 
-    function                       shift and go to state 55
-    assignment_or_equality         shift and go to state 56
+    function                       shift and go to state 50
+    assignment_or_equality         shift and go to state 51
     equality                       shift and go to state 9
     assignment                     shift and go to state 12
     term                           shift and go to state 10
@@ -901,83 +804,18 @@ state 28
 
 state 29
 
-    (40) op -> LT .
+    (40) op -> COMMA .
 
-    QUOTED          reduce using rule 40 (op -> LT .)
-    QUOTE           reduce using rule 40 (op -> LT .)
-    NUMBER          reduce using rule 40 (op -> LT .)
-    REGEX           reduce using rule 40 (op -> LT .)
-    SIMPLE_NAME     reduce using rule 40 (op -> LT .)
-    HEADER_SYM      reduce using rule 40 (op -> LT .)
-    VAR_SYM         reduce using rule 40 (op -> LT .)
+    QUOTED          reduce using rule 40 (op -> COMMA .)
+    QUOTE           reduce using rule 40 (op -> COMMA .)
+    NUMBER          reduce using rule 40 (op -> COMMA .)
+    REGEX           reduce using rule 40 (op -> COMMA .)
+    SIMPLE_NAME     reduce using rule 40 (op -> COMMA .)
+    HEADER_SYM      reduce using rule 40 (op -> COMMA .)
+    VAR_SYM         reduce using rule 40 (op -> COMMA .)
 
 
 state 30
-
-    (41) op -> GT .
-
-    QUOTED          reduce using rule 41 (op -> GT .)
-    QUOTE           reduce using rule 41 (op -> GT .)
-    NUMBER          reduce using rule 41 (op -> GT .)
-    REGEX           reduce using rule 41 (op -> GT .)
-    SIMPLE_NAME     reduce using rule 41 (op -> GT .)
-    HEADER_SYM      reduce using rule 41 (op -> GT .)
-    VAR_SYM         reduce using rule 41 (op -> GT .)
-
-
-state 31
-
-    (42) op -> STAR .
-
-    QUOTED          reduce using rule 42 (op -> STAR .)
-    QUOTE           reduce using rule 42 (op -> STAR .)
-    NUMBER          reduce using rule 42 (op -> STAR .)
-    REGEX           reduce using rule 42 (op -> STAR .)
-    SIMPLE_NAME     reduce using rule 42 (op -> STAR .)
-    HEADER_SYM      reduce using rule 42 (op -> STAR .)
-    VAR_SYM         reduce using rule 42 (op -> STAR .)
-
-
-state 32
-
-    (43) op -> PLUS .
-
-    QUOTED          reduce using rule 43 (op -> PLUS .)
-    QUOTE           reduce using rule 43 (op -> PLUS .)
-    NUMBER          reduce using rule 43 (op -> PLUS .)
-    REGEX           reduce using rule 43 (op -> PLUS .)
-    SIMPLE_NAME     reduce using rule 43 (op -> PLUS .)
-    HEADER_SYM      reduce using rule 43 (op -> PLUS .)
-    VAR_SYM         reduce using rule 43 (op -> PLUS .)
-
-
-state 33
-
-    (44) op -> MINUS .
-
-    QUOTED          reduce using rule 44 (op -> MINUS .)
-    QUOTE           reduce using rule 44 (op -> MINUS .)
-    NUMBER          reduce using rule 44 (op -> MINUS .)
-    REGEX           reduce using rule 44 (op -> MINUS .)
-    SIMPLE_NAME     reduce using rule 44 (op -> MINUS .)
-    HEADER_SYM      reduce using rule 44 (op -> MINUS .)
-    VAR_SYM         reduce using rule 44 (op -> MINUS .)
-
-
-state 34
-
-    (45) op -> COMMA .
-
-    QUOTED          reduce using rule 45 (op -> COMMA .)
-    QUOTE           reduce using rule 45 (op -> COMMA .)
-    NUMBER          reduce using rule 45 (op -> COMMA .)
-    REGEX           reduce using rule 45 (op -> COMMA .)
-    SIMPLE_NAME     reduce using rule 45 (op -> COMMA .)
-    HEADER_SYM      reduce using rule 45 (op -> COMMA .)
-    VAR_SYM         reduce using rule 45 (op -> COMMA .)
-
-
-state 35
 
     (6) expressions -> COMMENT expressions .
     (5) expressions -> expressions . expression
@@ -1012,21 +850,21 @@ state 35
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
   ! shift/reduce conflict for COMMENT resolved as shift
   ! shift/reduce conflict for SIMPLE_NAME resolved as shift
@@ -1065,7 +903,7 @@ state 35
     var                            shift and go to state 13
     header                         shift and go to state 14
 
-state 36
+state 31
 
     (3) expressions -> expression .
     (4) expressions -> expression . COMMENT
@@ -1084,7 +922,7 @@ state 36
   ! COMMENT         [ reduce using rule 3 (expressions -> expression .) ]
 
 
-state 37
+state 32
 
     (11) function -> SIMPLE_NAME OPEN_PAREN . CLOSE_PAREN
     (12) function -> SIMPLE_NAME OPEN_PAREN . equality CLOSE_PAREN
@@ -1117,19 +955,19 @@ state 37
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
-    CLOSE_PAREN     shift and go to state 57
+    CLOSE_PAREN     shift and go to state 52
     SIMPLE_NAME     shift and go to state 8
     QUOTED          shift and go to state 16
     QUOTE           shift and go to state 17
@@ -1138,14 +976,14 @@ state 37
     VAR_SYM         shift and go to state 15
     HEADER_SYM      shift and go to state 20
 
-    equality                       shift and go to state 58
-    function                       shift and go to state 59
-    term                           shift and go to state 60
-    var_or_header                  shift and go to state 61
-    var                            shift and go to state 62
+    equality                       shift and go to state 53
+    function                       shift and go to state 54
+    term                           shift and go to state 55
+    var_or_header                  shift and go to state 56
+    var                            shift and go to state 57
     header                         shift and go to state 14
 
-state 38
+state 33
 
     (25) equality -> equality DO . assignment_or_equality
     (26) equality -> equality DO . function
@@ -1177,21 +1015,21 @@ state 38
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 8
     VAR_SYM         shift and go to state 15
@@ -1202,21 +1040,21 @@ state 38
     HEADER_SYM      shift and go to state 20
 
     equality                       shift and go to state 9
-    assignment_or_equality         shift and go to state 63
-    function                       shift and go to state 64
+    assignment_or_equality         shift and go to state 58
+    function                       shift and go to state 59
     assignment                     shift and go to state 12
     term                           shift and go to state 10
     var_or_header                  shift and go to state 11
     var                            shift and go to state 13
     header                         shift and go to state 14
 
-state 39
+state 34
 
     (33) equality -> equality COMMA . equality
     (36) equality -> equality COMMA . var_or_header
     (37) equality -> equality COMMA . term
     (38) equality -> equality COMMA . function
-    (45) op -> COMMA .
+    (40) op -> COMMA .
     (18) equality -> . function op term
     (19) equality -> . function op function
     (20) equality -> . function op var_or_header
@@ -1238,22 +1076,22 @@ state 39
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
     (11) function -> . SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
     (12) function -> . SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
   ! shift/reduce conflict for QUOTED resolved as shift
   ! shift/reduce conflict for QUOTE resolved as shift
@@ -1268,28 +1106,28 @@ state 39
     VAR_SYM         shift and go to state 15
     HEADER_SYM      shift and go to state 20
 
-  ! QUOTED          [ reduce using rule 45 (op -> COMMA .) ]
-  ! QUOTE           [ reduce using rule 45 (op -> COMMA .) ]
-  ! NUMBER          [ reduce using rule 45 (op -> COMMA .) ]
-  ! REGEX           [ reduce using rule 45 (op -> COMMA .) ]
-  ! SIMPLE_NAME     [ reduce using rule 45 (op -> COMMA .) ]
+  ! QUOTED          [ reduce using rule 40 (op -> COMMA .) ]
+  ! QUOTE           [ reduce using rule 40 (op -> COMMA .) ]
+  ! NUMBER          [ reduce using rule 40 (op -> COMMA .) ]
+  ! REGEX           [ reduce using rule 40 (op -> COMMA .) ]
+  ! SIMPLE_NAME     [ reduce using rule 40 (op -> COMMA .) ]
 
-    equality                       shift and go to state 65
-    var_or_header                  shift and go to state 66
-    term                           shift and go to state 67
-    function                       shift and go to state 68
-    var                            shift and go to state 62
+    equality                       shift and go to state 60
+    var_or_header                  shift and go to state 61
+    term                           shift and go to state 62
+    function                       shift and go to state 63
+    var                            shift and go to state 57
     header                         shift and go to state 14
 
-state 40
+state 35
 
     (34) equality -> equality op . term
     (35) equality -> equality op . function
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
     (11) function -> . SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
     (12) function -> . SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
@@ -1302,30 +1140,30 @@ state 40
     REGEX           shift and go to state 19
     SIMPLE_NAME     shift and go to state 8
 
-    term                           shift and go to state 69
-    function                       shift and go to state 70
+    term                           shift and go to state 64
+    function                       shift and go to state 65
 
-state 41
+state 36
 
     (30) equality -> term op . var_or_header
     (31) equality -> term op . term
     (32) equality -> term op . function
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
     (11) function -> . SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
     (12) function -> . SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
-    (57) var -> . VAR_SYM SIMPLE_NAME
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
+    (52) var -> . VAR_SYM SIMPLE_NAME
 
     QUOTED          shift and go to state 16
     QUOTE           shift and go to state 17
@@ -1335,13 +1173,13 @@ state 41
     HEADER_SYM      shift and go to state 20
     VAR_SYM         shift and go to state 15
 
-    term                           shift and go to state 71
-    var_or_header                  shift and go to state 72
-    function                       shift and go to state 73
+    term                           shift and go to state 66
+    var_or_header                  shift and go to state 67
+    function                       shift and go to state 68
     header                         shift and go to state 14
-    var                            shift and go to state 54
+    var                            shift and go to state 49
 
-state 42
+state 37
 
     (27) equality -> var_or_header op . function
     (28) equality -> var_or_header op . term
@@ -1351,17 +1189,17 @@ state 42
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
-    (57) var -> . VAR_SYM SIMPLE_NAME
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
+    (52) var -> . VAR_SYM SIMPLE_NAME
 
     SIMPLE_NAME     shift and go to state 8
     QUOTED          shift and go to state 16
@@ -1371,13 +1209,13 @@ state 42
     HEADER_SYM      shift and go to state 20
     VAR_SYM         shift and go to state 15
 
-    var_or_header                  shift and go to state 74
-    function                       shift and go to state 75
-    term                           shift and go to state 76
+    var_or_header                  shift and go to state 69
+    function                       shift and go to state 70
+    term                           shift and go to state 71
     header                         shift and go to state 14
-    var                            shift and go to state 54
+    var                            shift and go to state 49
 
-state 43
+state 38
 
     (22) equality -> var DO . assignment_or_equality
     (23) equality -> var DO . function
@@ -1409,21 +1247,21 @@ state 43
     (36) equality -> . equality COMMA var_or_header
     (37) equality -> . equality COMMA term
     (38) equality -> . equality COMMA function
-    (46) assignment -> . var ASSIGNMENT var
-    (47) assignment -> . var ASSIGNMENT term
-    (48) assignment -> . var ASSIGNMENT function
-    (49) assignment -> . var ASSIGNMENT header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (55) var_or_header -> . header
-    (56) var_or_header -> . var
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (41) assignment -> . var ASSIGNMENT var
+    (42) assignment -> . var ASSIGNMENT term
+    (43) assignment -> . var ASSIGNMENT function
+    (44) assignment -> . var ASSIGNMENT header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (50) var_or_header -> . header
+    (51) var_or_header -> . var
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     SIMPLE_NAME     shift and go to state 8
     VAR_SYM         shift and go to state 15
@@ -1434,34 +1272,34 @@ state 43
     HEADER_SYM      shift and go to state 20
 
     var                            shift and go to state 13
-    assignment_or_equality         shift and go to state 77
-    function                       shift and go to state 78
+    assignment_or_equality         shift and go to state 72
+    function                       shift and go to state 73
     equality                       shift and go to state 9
     assignment                     shift and go to state 12
     term                           shift and go to state 10
     var_or_header                  shift and go to state 11
     header                         shift and go to state 14
 
-state 44
+state 39
 
-    (46) assignment -> var ASSIGNMENT . var
-    (47) assignment -> var ASSIGNMENT . term
-    (48) assignment -> var ASSIGNMENT . function
-    (49) assignment -> var ASSIGNMENT . header
-    (57) var -> . VAR_SYM SIMPLE_NAME
-    (50) term -> . QUOTED
-    (51) term -> . QUOTE DATE QUOTE
-    (52) term -> . QUOTE NUMBER QUOTE
-    (53) term -> . NUMBER
-    (54) term -> . REGEX
+    (41) assignment -> var ASSIGNMENT . var
+    (42) assignment -> var ASSIGNMENT . term
+    (43) assignment -> var ASSIGNMENT . function
+    (44) assignment -> var ASSIGNMENT . header
+    (52) var -> . VAR_SYM SIMPLE_NAME
+    (45) term -> . QUOTED
+    (46) term -> . QUOTE DATE QUOTE
+    (47) term -> . QUOTE NUMBER QUOTE
+    (48) term -> . NUMBER
+    (49) term -> . REGEX
     (11) function -> . SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
     (12) function -> . SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
     (13) function -> . SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
     (14) function -> . SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
     (15) function -> . SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-    (58) header -> . HEADER_SYM SIMPLE_NAME
-    (59) header -> . HEADER_SYM NUMBER
-    (60) header -> . HEADER_SYM QUOTED
+    (53) header -> . HEADER_SYM SIMPLE_NAME
+    (54) header -> . HEADER_SYM NUMBER
+    (55) header -> . HEADER_SYM QUOTED
 
     VAR_SYM         shift and go to state 15
     QUOTED          shift and go to state 16
@@ -1471,134 +1309,109 @@ state 44
     SIMPLE_NAME     shift and go to state 8
     HEADER_SYM      shift and go to state 20
 
-    var                            shift and go to state 79
-    term                           shift and go to state 80
-    function                       shift and go to state 81
-    header                         shift and go to state 82
+    var                            shift and go to state 74
+    term                           shift and go to state 75
+    function                       shift and go to state 76
+    header                         shift and go to state 77
+
+state 40
+
+    (52) var -> VAR_SYM SIMPLE_NAME .
+
+    DO              reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    ASSIGNMENT      reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    EQUALS          reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    COMMA           reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    RIGHT_BRACKET   reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    COMMENT         reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    SIMPLE_NAME     reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    VAR_SYM         reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    QUOTED          reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    QUOTE           reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    NUMBER          reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    REGEX           reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    HEADER_SYM      reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+    CLOSE_PAREN     reduce using rule 52 (var -> VAR_SYM SIMPLE_NAME .)
+
+
+state 41
+
+    (46) term -> QUOTE DATE . QUOTE
+
+    QUOTE           shift and go to state 78
+
+
+state 42
+
+    (47) term -> QUOTE NUMBER . QUOTE
+
+    QUOTE           shift and go to state 79
+
+
+state 43
+
+    (53) header -> HEADER_SYM SIMPLE_NAME .
+
+    EQUALS          reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    COMMA           reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    DO              reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    RIGHT_BRACKET   reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    COMMENT         reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    SIMPLE_NAME     reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    VAR_SYM         reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    QUOTED          reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    QUOTE           reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    NUMBER          reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    REGEX           reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    HEADER_SYM      reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+    CLOSE_PAREN     reduce using rule 53 (header -> HEADER_SYM SIMPLE_NAME .)
+
+
+state 44
+
+    (54) header -> HEADER_SYM NUMBER .
+
+    EQUALS          reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    COMMA           reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    DO              reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    RIGHT_BRACKET   reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    COMMENT         reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    SIMPLE_NAME     reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    VAR_SYM         reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    QUOTED          reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    QUOTE           reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    NUMBER          reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    REGEX           reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    HEADER_SYM      reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+    CLOSE_PAREN     reduce using rule 54 (header -> HEADER_SYM NUMBER .)
+
 
 state 45
 
-    (57) var -> VAR_SYM SIMPLE_NAME .
+    (55) header -> HEADER_SYM QUOTED .
 
-    DO              reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    ASSIGNMENT      reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    EQUALS          reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    LT              reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    GT              reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    STAR            reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    PLUS            reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    MINUS           reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    COMMA           reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    RIGHT_BRACKET   reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    COMMENT         reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    SIMPLE_NAME     reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    VAR_SYM         reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    QUOTED          reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    QUOTE           reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    NUMBER          reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    REGEX           reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    HEADER_SYM      reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
-    CLOSE_PAREN     reduce using rule 57 (var -> VAR_SYM SIMPLE_NAME .)
+    EQUALS          reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    COMMA           reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    DO              reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    RIGHT_BRACKET   reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    COMMENT         reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    SIMPLE_NAME     reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    VAR_SYM         reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    QUOTED          reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    QUOTE           reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    NUMBER          reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    REGEX           reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    HEADER_SYM      reduce using rule 55 (header -> HEADER_SYM QUOTED .)
+    CLOSE_PAREN     reduce using rule 55 (header -> HEADER_SYM QUOTED .)
 
 
 state 46
-
-    (51) term -> QUOTE DATE . QUOTE
-
-    QUOTE           shift and go to state 83
-
-
-state 47
-
-    (52) term -> QUOTE NUMBER . QUOTE
-
-    QUOTE           shift and go to state 84
-
-
-state 48
-
-    (58) header -> HEADER_SYM SIMPLE_NAME .
-
-    EQUALS          reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    LT              reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    GT              reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    STAR            reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    PLUS            reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    MINUS           reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    COMMA           reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    DO              reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    RIGHT_BRACKET   reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    COMMENT         reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    SIMPLE_NAME     reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    VAR_SYM         reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    QUOTED          reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    QUOTE           reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    NUMBER          reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    REGEX           reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    HEADER_SYM      reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-    CLOSE_PAREN     reduce using rule 58 (header -> HEADER_SYM SIMPLE_NAME .)
-
-
-state 49
-
-    (59) header -> HEADER_SYM NUMBER .
-
-    EQUALS          reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    LT              reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    GT              reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    STAR            reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    PLUS            reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    MINUS           reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    COMMA           reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    DO              reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    RIGHT_BRACKET   reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    COMMENT         reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    SIMPLE_NAME     reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    VAR_SYM         reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    QUOTED          reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    QUOTE           reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    NUMBER          reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    REGEX           reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    HEADER_SYM      reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-    CLOSE_PAREN     reduce using rule 59 (header -> HEADER_SYM NUMBER .)
-
-
-state 50
-
-    (60) header -> HEADER_SYM QUOTED .
-
-    EQUALS          reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    LT              reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    GT              reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    STAR            reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    PLUS            reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    MINUS           reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    COMMA           reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    DO              reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    RIGHT_BRACKET   reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    COMMENT         reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    SIMPLE_NAME     reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    VAR_SYM         reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    QUOTED          reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    QUOTE           reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    NUMBER          reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    REGEX           reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    HEADER_SYM      reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-    CLOSE_PAREN     reduce using rule 60 (header -> HEADER_SYM QUOTED .)
-
-
-state 51
 
     (19) equality -> function op function .
 
     DO              reduce using rule 19 (equality -> function op function .)
     COMMA           reduce using rule 19 (equality -> function op function .)
     EQUALS          reduce using rule 19 (equality -> function op function .)
-    LT              reduce using rule 19 (equality -> function op function .)
-    GT              reduce using rule 19 (equality -> function op function .)
-    STAR            reduce using rule 19 (equality -> function op function .)
-    PLUS            reduce using rule 19 (equality -> function op function .)
-    MINUS           reduce using rule 19 (equality -> function op function .)
     RIGHT_BRACKET   reduce using rule 19 (equality -> function op function .)
     COMMENT         reduce using rule 19 (equality -> function op function .)
     SIMPLE_NAME     reduce using rule 19 (equality -> function op function .)
@@ -1611,18 +1424,13 @@ state 51
     CLOSE_PAREN     reduce using rule 19 (equality -> function op function .)
 
 
-state 52
+state 47
 
     (18) equality -> function op term .
 
     DO              reduce using rule 18 (equality -> function op term .)
     COMMA           reduce using rule 18 (equality -> function op term .)
     EQUALS          reduce using rule 18 (equality -> function op term .)
-    LT              reduce using rule 18 (equality -> function op term .)
-    GT              reduce using rule 18 (equality -> function op term .)
-    STAR            reduce using rule 18 (equality -> function op term .)
-    PLUS            reduce using rule 18 (equality -> function op term .)
-    MINUS           reduce using rule 18 (equality -> function op term .)
     RIGHT_BRACKET   reduce using rule 18 (equality -> function op term .)
     COMMENT         reduce using rule 18 (equality -> function op term .)
     SIMPLE_NAME     reduce using rule 18 (equality -> function op term .)
@@ -1635,18 +1443,13 @@ state 52
     CLOSE_PAREN     reduce using rule 18 (equality -> function op term .)
 
 
-state 53
+state 48
 
     (20) equality -> function op var_or_header .
 
     DO              reduce using rule 20 (equality -> function op var_or_header .)
     COMMA           reduce using rule 20 (equality -> function op var_or_header .)
     EQUALS          reduce using rule 20 (equality -> function op var_or_header .)
-    LT              reduce using rule 20 (equality -> function op var_or_header .)
-    GT              reduce using rule 20 (equality -> function op var_or_header .)
-    STAR            reduce using rule 20 (equality -> function op var_or_header .)
-    PLUS            reduce using rule 20 (equality -> function op var_or_header .)
-    MINUS           reduce using rule 20 (equality -> function op var_or_header .)
     RIGHT_BRACKET   reduce using rule 20 (equality -> function op var_or_header .)
     COMMENT         reduce using rule 20 (equality -> function op var_or_header .)
     SIMPLE_NAME     reduce using rule 20 (equality -> function op var_or_header .)
@@ -1659,31 +1462,26 @@ state 53
     CLOSE_PAREN     reduce using rule 20 (equality -> function op var_or_header .)
 
 
-state 54
+state 49
 
-    (56) var_or_header -> var .
+    (51) var_or_header -> var .
 
-    DO              reduce using rule 56 (var_or_header -> var .)
-    COMMA           reduce using rule 56 (var_or_header -> var .)
-    EQUALS          reduce using rule 56 (var_or_header -> var .)
-    LT              reduce using rule 56 (var_or_header -> var .)
-    GT              reduce using rule 56 (var_or_header -> var .)
-    STAR            reduce using rule 56 (var_or_header -> var .)
-    PLUS            reduce using rule 56 (var_or_header -> var .)
-    MINUS           reduce using rule 56 (var_or_header -> var .)
-    RIGHT_BRACKET   reduce using rule 56 (var_or_header -> var .)
-    COMMENT         reduce using rule 56 (var_or_header -> var .)
-    SIMPLE_NAME     reduce using rule 56 (var_or_header -> var .)
-    VAR_SYM         reduce using rule 56 (var_or_header -> var .)
-    QUOTED          reduce using rule 56 (var_or_header -> var .)
-    QUOTE           reduce using rule 56 (var_or_header -> var .)
-    NUMBER          reduce using rule 56 (var_or_header -> var .)
-    REGEX           reduce using rule 56 (var_or_header -> var .)
-    HEADER_SYM      reduce using rule 56 (var_or_header -> var .)
-    CLOSE_PAREN     reduce using rule 56 (var_or_header -> var .)
+    DO              reduce using rule 51 (var_or_header -> var .)
+    COMMA           reduce using rule 51 (var_or_header -> var .)
+    EQUALS          reduce using rule 51 (var_or_header -> var .)
+    RIGHT_BRACKET   reduce using rule 51 (var_or_header -> var .)
+    COMMENT         reduce using rule 51 (var_or_header -> var .)
+    SIMPLE_NAME     reduce using rule 51 (var_or_header -> var .)
+    VAR_SYM         reduce using rule 51 (var_or_header -> var .)
+    QUOTED          reduce using rule 51 (var_or_header -> var .)
+    QUOTE           reduce using rule 51 (var_or_header -> var .)
+    NUMBER          reduce using rule 51 (var_or_header -> var .)
+    REGEX           reduce using rule 51 (var_or_header -> var .)
+    HEADER_SYM      reduce using rule 51 (var_or_header -> var .)
+    CLOSE_PAREN     reduce using rule 51 (var_or_header -> var .)
 
 
-state 55
+state 50
 
     (24) equality -> function DO function .
     (18) equality -> function . op term
@@ -1692,20 +1490,10 @@ state 55
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     RIGHT_BRACKET   reduce using rule 24 (equality -> function DO function .)
     COMMENT         reduce using rule 24 (equality -> function DO function .)
@@ -1719,36 +1507,21 @@ state 55
     CLOSE_PAREN     reduce using rule 24 (equality -> function DO function .)
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! DO              [ reduce using rule 24 (equality -> function DO function .) ]
   ! COMMA           [ reduce using rule 24 (equality -> function DO function .) ]
   ! EQUALS          [ reduce using rule 24 (equality -> function DO function .) ]
-  ! LT              [ reduce using rule 24 (equality -> function DO function .) ]
-  ! GT              [ reduce using rule 24 (equality -> function DO function .) ]
-  ! STAR            [ reduce using rule 24 (equality -> function DO function .) ]
-  ! PLUS            [ reduce using rule 24 (equality -> function DO function .) ]
-  ! MINUS           [ reduce using rule 24 (equality -> function DO function .) ]
 
     op                             shift and go to state 26
 
-state 56
+state 51
 
     (21) equality -> function DO assignment_or_equality .
 
     DO              reduce using rule 21 (equality -> function DO assignment_or_equality .)
     COMMA           reduce using rule 21 (equality -> function DO assignment_or_equality .)
     EQUALS          reduce using rule 21 (equality -> function DO assignment_or_equality .)
-    LT              reduce using rule 21 (equality -> function DO assignment_or_equality .)
-    GT              reduce using rule 21 (equality -> function DO assignment_or_equality .)
-    STAR            reduce using rule 21 (equality -> function DO assignment_or_equality .)
-    PLUS            reduce using rule 21 (equality -> function DO assignment_or_equality .)
-    MINUS           reduce using rule 21 (equality -> function DO assignment_or_equality .)
     RIGHT_BRACKET   reduce using rule 21 (equality -> function DO assignment_or_equality .)
     COMMENT         reduce using rule 21 (equality -> function DO assignment_or_equality .)
     SIMPLE_NAME     reduce using rule 21 (equality -> function DO assignment_or_equality .)
@@ -1761,17 +1534,12 @@ state 56
     CLOSE_PAREN     reduce using rule 21 (equality -> function DO assignment_or_equality .)
 
 
-state 57
+state 52
 
     (11) function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .
 
     DO              reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
     EQUALS          reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
-    LT              reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
-    GT              reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
-    STAR            reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
-    PLUS            reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
-    MINUS           reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
     COMMA           reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
     RIGHT_BRACKET   reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
     COMMENT         reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
@@ -1785,7 +1553,7 @@ state 57
     CLOSE_PAREN     reduce using rule 11 (function -> SIMPLE_NAME OPEN_PAREN CLOSE_PAREN .)
 
 
-state 58
+state 53
 
     (12) function -> SIMPLE_NAME OPEN_PAREN equality . CLOSE_PAREN
     (25) equality -> equality . DO assignment_or_equality
@@ -1797,26 +1565,16 @@ state 58
     (37) equality -> equality . COMMA term
     (38) equality -> equality . COMMA function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 85
-    DO              shift and go to state 38
-    COMMA           shift and go to state 39
+    CLOSE_PAREN     shift and go to state 80
+    DO              shift and go to state 33
+    COMMA           shift and go to state 34
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
 
-    op                             shift and go to state 40
+    op                             shift and go to state 35
 
-state 59
+state 54
 
     (13) function -> SIMPLE_NAME OPEN_PAREN function . CLOSE_PAREN
     (18) equality -> function . op term
@@ -1825,116 +1583,76 @@ state 59
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 86
+    CLOSE_PAREN     shift and go to state 81
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
     op                             shift and go to state 26
 
-state 60
+state 55
 
     (14) function -> SIMPLE_NAME OPEN_PAREN term . CLOSE_PAREN
     (30) equality -> term . op var_or_header
     (31) equality -> term . op term
     (32) equality -> term . op function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 87
+    CLOSE_PAREN     shift and go to state 82
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
-    op                             shift and go to state 41
+    op                             shift and go to state 36
 
-state 61
+state 56
 
     (15) function -> SIMPLE_NAME OPEN_PAREN var_or_header . CLOSE_PAREN
     (27) equality -> var_or_header . op function
     (28) equality -> var_or_header . op term
     (29) equality -> var_or_header . op var_or_header
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
-    CLOSE_PAREN     shift and go to state 88
+    CLOSE_PAREN     shift and go to state 83
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
-    op                             shift and go to state 42
+    op                             shift and go to state 37
 
-state 62
+state 57
 
     (22) equality -> var . DO assignment_or_equality
     (23) equality -> var . DO function
-    (56) var_or_header -> var .
+    (51) var_or_header -> var .
 
   ! shift/reduce conflict for DO resolved as shift
-    DO              shift and go to state 43
-    CLOSE_PAREN     reduce using rule 56 (var_or_header -> var .)
-    EQUALS          reduce using rule 56 (var_or_header -> var .)
-    LT              reduce using rule 56 (var_or_header -> var .)
-    GT              reduce using rule 56 (var_or_header -> var .)
-    STAR            reduce using rule 56 (var_or_header -> var .)
-    PLUS            reduce using rule 56 (var_or_header -> var .)
-    MINUS           reduce using rule 56 (var_or_header -> var .)
-    COMMA           reduce using rule 56 (var_or_header -> var .)
-    RIGHT_BRACKET   reduce using rule 56 (var_or_header -> var .)
-    COMMENT         reduce using rule 56 (var_or_header -> var .)
-    SIMPLE_NAME     reduce using rule 56 (var_or_header -> var .)
-    VAR_SYM         reduce using rule 56 (var_or_header -> var .)
-    QUOTED          reduce using rule 56 (var_or_header -> var .)
-    QUOTE           reduce using rule 56 (var_or_header -> var .)
-    NUMBER          reduce using rule 56 (var_or_header -> var .)
-    REGEX           reduce using rule 56 (var_or_header -> var .)
-    HEADER_SYM      reduce using rule 56 (var_or_header -> var .)
+    DO              shift and go to state 38
+    CLOSE_PAREN     reduce using rule 51 (var_or_header -> var .)
+    EQUALS          reduce using rule 51 (var_or_header -> var .)
+    COMMA           reduce using rule 51 (var_or_header -> var .)
+    RIGHT_BRACKET   reduce using rule 51 (var_or_header -> var .)
+    COMMENT         reduce using rule 51 (var_or_header -> var .)
+    SIMPLE_NAME     reduce using rule 51 (var_or_header -> var .)
+    VAR_SYM         reduce using rule 51 (var_or_header -> var .)
+    QUOTED          reduce using rule 51 (var_or_header -> var .)
+    QUOTE           reduce using rule 51 (var_or_header -> var .)
+    NUMBER          reduce using rule 51 (var_or_header -> var .)
+    REGEX           reduce using rule 51 (var_or_header -> var .)
+    HEADER_SYM      reduce using rule 51 (var_or_header -> var .)
 
-  ! DO              [ reduce using rule 56 (var_or_header -> var .) ]
+  ! DO              [ reduce using rule 51 (var_or_header -> var .) ]
 
 
-state 63
+state 58
 
     (25) equality -> equality DO assignment_or_equality .
 
     DO              reduce using rule 25 (equality -> equality DO assignment_or_equality .)
     COMMA           reduce using rule 25 (equality -> equality DO assignment_or_equality .)
     EQUALS          reduce using rule 25 (equality -> equality DO assignment_or_equality .)
-    LT              reduce using rule 25 (equality -> equality DO assignment_or_equality .)
-    GT              reduce using rule 25 (equality -> equality DO assignment_or_equality .)
-    STAR            reduce using rule 25 (equality -> equality DO assignment_or_equality .)
-    PLUS            reduce using rule 25 (equality -> equality DO assignment_or_equality .)
-    MINUS           reduce using rule 25 (equality -> equality DO assignment_or_equality .)
     RIGHT_BRACKET   reduce using rule 25 (equality -> equality DO assignment_or_equality .)
     COMMENT         reduce using rule 25 (equality -> equality DO assignment_or_equality .)
     SIMPLE_NAME     reduce using rule 25 (equality -> equality DO assignment_or_equality .)
@@ -1947,7 +1665,7 @@ state 63
     CLOSE_PAREN     reduce using rule 25 (equality -> equality DO assignment_or_equality .)
 
 
-state 64
+state 59
 
     (26) equality -> equality DO function .
     (18) equality -> function . op term
@@ -1956,20 +1674,10 @@ state 64
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     RIGHT_BRACKET   reduce using rule 26 (equality -> equality DO function .)
     COMMENT         reduce using rule 26 (equality -> equality DO function .)
@@ -1983,25 +1691,15 @@ state 64
     CLOSE_PAREN     reduce using rule 26 (equality -> equality DO function .)
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! DO              [ reduce using rule 26 (equality -> equality DO function .) ]
   ! COMMA           [ reduce using rule 26 (equality -> equality DO function .) ]
   ! EQUALS          [ reduce using rule 26 (equality -> equality DO function .) ]
-  ! LT              [ reduce using rule 26 (equality -> equality DO function .) ]
-  ! GT              [ reduce using rule 26 (equality -> equality DO function .) ]
-  ! STAR            [ reduce using rule 26 (equality -> equality DO function .) ]
-  ! PLUS            [ reduce using rule 26 (equality -> equality DO function .) ]
-  ! MINUS           [ reduce using rule 26 (equality -> equality DO function .) ]
 
     op                             shift and go to state 26
 
-state 65
+state 60
 
     (33) equality -> equality COMMA equality .
     (25) equality -> equality . DO assignment_or_equality
@@ -2013,21 +1711,11 @@ state 65
     (37) equality -> equality . COMMA term
     (38) equality -> equality . COMMA function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
     RIGHT_BRACKET   reduce using rule 33 (equality -> equality COMMA equality .)
     COMMENT         reduce using rule 33 (equality -> equality COMMA equality .)
     SIMPLE_NAME     reduce using rule 33 (equality -> equality COMMA equality .)
@@ -2038,46 +1726,26 @@ state 65
     REGEX           reduce using rule 33 (equality -> equality COMMA equality .)
     HEADER_SYM      reduce using rule 33 (equality -> equality COMMA equality .)
     CLOSE_PAREN     reduce using rule 33 (equality -> equality COMMA equality .)
-    DO              shift and go to state 38
-    COMMA           shift and go to state 39
+    DO              shift and go to state 33
+    COMMA           shift and go to state 34
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
 
   ! DO              [ reduce using rule 33 (equality -> equality COMMA equality .) ]
   ! COMMA           [ reduce using rule 33 (equality -> equality COMMA equality .) ]
   ! EQUALS          [ reduce using rule 33 (equality -> equality COMMA equality .) ]
-  ! LT              [ reduce using rule 33 (equality -> equality COMMA equality .) ]
-  ! GT              [ reduce using rule 33 (equality -> equality COMMA equality .) ]
-  ! STAR            [ reduce using rule 33 (equality -> equality COMMA equality .) ]
-  ! PLUS            [ reduce using rule 33 (equality -> equality COMMA equality .) ]
-  ! MINUS           [ reduce using rule 33 (equality -> equality COMMA equality .) ]
 
-    op                             shift and go to state 40
+    op                             shift and go to state 35
 
-state 66
+state 61
 
     (36) equality -> equality COMMA var_or_header .
     (27) equality -> var_or_header . op function
     (28) equality -> var_or_header . op term
     (29) equality -> var_or_header . op var_or_header
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     DO              reduce using rule 36 (equality -> equality COMMA var_or_header .)
     RIGHT_BRACKET   reduce using rule 36 (equality -> equality COMMA var_or_header .)
@@ -2091,43 +1759,23 @@ state 66
     HEADER_SYM      reduce using rule 36 (equality -> equality COMMA var_or_header .)
     CLOSE_PAREN     reduce using rule 36 (equality -> equality COMMA var_or_header .)
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! COMMA           [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
   ! EQUALS          [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
-  ! LT              [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
-  ! GT              [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
-  ! STAR            [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
-  ! PLUS            [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
-  ! MINUS           [ reduce using rule 36 (equality -> equality COMMA var_or_header .) ]
 
-    op                             shift and go to state 42
+    op                             shift and go to state 37
 
-state 67
+state 62
 
     (37) equality -> equality COMMA term .
     (30) equality -> term . op var_or_header
     (31) equality -> term . op term
     (32) equality -> term . op function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     DO              reduce using rule 37 (equality -> equality COMMA term .)
     RIGHT_BRACKET   reduce using rule 37 (equality -> equality COMMA term .)
@@ -2141,24 +1789,14 @@ state 67
     HEADER_SYM      reduce using rule 37 (equality -> equality COMMA term .)
     CLOSE_PAREN     reduce using rule 37 (equality -> equality COMMA term .)
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! COMMA           [ reduce using rule 37 (equality -> equality COMMA term .) ]
   ! EQUALS          [ reduce using rule 37 (equality -> equality COMMA term .) ]
-  ! LT              [ reduce using rule 37 (equality -> equality COMMA term .) ]
-  ! GT              [ reduce using rule 37 (equality -> equality COMMA term .) ]
-  ! STAR            [ reduce using rule 37 (equality -> equality COMMA term .) ]
-  ! PLUS            [ reduce using rule 37 (equality -> equality COMMA term .) ]
-  ! MINUS           [ reduce using rule 37 (equality -> equality COMMA term .) ]
 
-    op                             shift and go to state 41
+    op                             shift and go to state 36
 
-state 68
+state 63
 
     (38) equality -> equality COMMA function .
     (18) equality -> function . op term
@@ -2167,20 +1805,10 @@ state 68
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     RIGHT_BRACKET   reduce using rule 38 (equality -> equality COMMA function .)
     COMMENT         reduce using rule 38 (equality -> equality COMMA function .)
@@ -2194,36 +1822,21 @@ state 68
     CLOSE_PAREN     reduce using rule 38 (equality -> equality COMMA function .)
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! DO              [ reduce using rule 38 (equality -> equality COMMA function .) ]
   ! COMMA           [ reduce using rule 38 (equality -> equality COMMA function .) ]
   ! EQUALS          [ reduce using rule 38 (equality -> equality COMMA function .) ]
-  ! LT              [ reduce using rule 38 (equality -> equality COMMA function .) ]
-  ! GT              [ reduce using rule 38 (equality -> equality COMMA function .) ]
-  ! STAR            [ reduce using rule 38 (equality -> equality COMMA function .) ]
-  ! PLUS            [ reduce using rule 38 (equality -> equality COMMA function .) ]
-  ! MINUS           [ reduce using rule 38 (equality -> equality COMMA function .) ]
 
     op                             shift and go to state 26
 
-state 69
+state 64
 
     (34) equality -> equality op term .
 
     DO              reduce using rule 34 (equality -> equality op term .)
     COMMA           reduce using rule 34 (equality -> equality op term .)
     EQUALS          reduce using rule 34 (equality -> equality op term .)
-    LT              reduce using rule 34 (equality -> equality op term .)
-    GT              reduce using rule 34 (equality -> equality op term .)
-    STAR            reduce using rule 34 (equality -> equality op term .)
-    PLUS            reduce using rule 34 (equality -> equality op term .)
-    MINUS           reduce using rule 34 (equality -> equality op term .)
     RIGHT_BRACKET   reduce using rule 34 (equality -> equality op term .)
     COMMENT         reduce using rule 34 (equality -> equality op term .)
     SIMPLE_NAME     reduce using rule 34 (equality -> equality op term .)
@@ -2236,18 +1849,13 @@ state 69
     CLOSE_PAREN     reduce using rule 34 (equality -> equality op term .)
 
 
-state 70
+state 65
 
     (35) equality -> equality op function .
 
     DO              reduce using rule 35 (equality -> equality op function .)
     COMMA           reduce using rule 35 (equality -> equality op function .)
     EQUALS          reduce using rule 35 (equality -> equality op function .)
-    LT              reduce using rule 35 (equality -> equality op function .)
-    GT              reduce using rule 35 (equality -> equality op function .)
-    STAR            reduce using rule 35 (equality -> equality op function .)
-    PLUS            reduce using rule 35 (equality -> equality op function .)
-    MINUS           reduce using rule 35 (equality -> equality op function .)
     RIGHT_BRACKET   reduce using rule 35 (equality -> equality op function .)
     COMMENT         reduce using rule 35 (equality -> equality op function .)
     SIMPLE_NAME     reduce using rule 35 (equality -> equality op function .)
@@ -2260,18 +1868,13 @@ state 70
     CLOSE_PAREN     reduce using rule 35 (equality -> equality op function .)
 
 
-state 71
+state 66
 
     (31) equality -> term op term .
 
     DO              reduce using rule 31 (equality -> term op term .)
     COMMA           reduce using rule 31 (equality -> term op term .)
     EQUALS          reduce using rule 31 (equality -> term op term .)
-    LT              reduce using rule 31 (equality -> term op term .)
-    GT              reduce using rule 31 (equality -> term op term .)
-    STAR            reduce using rule 31 (equality -> term op term .)
-    PLUS            reduce using rule 31 (equality -> term op term .)
-    MINUS           reduce using rule 31 (equality -> term op term .)
     RIGHT_BRACKET   reduce using rule 31 (equality -> term op term .)
     COMMENT         reduce using rule 31 (equality -> term op term .)
     SIMPLE_NAME     reduce using rule 31 (equality -> term op term .)
@@ -2284,18 +1887,13 @@ state 71
     CLOSE_PAREN     reduce using rule 31 (equality -> term op term .)
 
 
-state 72
+state 67
 
     (30) equality -> term op var_or_header .
 
     DO              reduce using rule 30 (equality -> term op var_or_header .)
     COMMA           reduce using rule 30 (equality -> term op var_or_header .)
     EQUALS          reduce using rule 30 (equality -> term op var_or_header .)
-    LT              reduce using rule 30 (equality -> term op var_or_header .)
-    GT              reduce using rule 30 (equality -> term op var_or_header .)
-    STAR            reduce using rule 30 (equality -> term op var_or_header .)
-    PLUS            reduce using rule 30 (equality -> term op var_or_header .)
-    MINUS           reduce using rule 30 (equality -> term op var_or_header .)
     RIGHT_BRACKET   reduce using rule 30 (equality -> term op var_or_header .)
     COMMENT         reduce using rule 30 (equality -> term op var_or_header .)
     SIMPLE_NAME     reduce using rule 30 (equality -> term op var_or_header .)
@@ -2308,18 +1906,13 @@ state 72
     CLOSE_PAREN     reduce using rule 30 (equality -> term op var_or_header .)
 
 
-state 73
+state 68
 
     (32) equality -> term op function .
 
     DO              reduce using rule 32 (equality -> term op function .)
     COMMA           reduce using rule 32 (equality -> term op function .)
     EQUALS          reduce using rule 32 (equality -> term op function .)
-    LT              reduce using rule 32 (equality -> term op function .)
-    GT              reduce using rule 32 (equality -> term op function .)
-    STAR            reduce using rule 32 (equality -> term op function .)
-    PLUS            reduce using rule 32 (equality -> term op function .)
-    MINUS           reduce using rule 32 (equality -> term op function .)
     RIGHT_BRACKET   reduce using rule 32 (equality -> term op function .)
     COMMENT         reduce using rule 32 (equality -> term op function .)
     SIMPLE_NAME     reduce using rule 32 (equality -> term op function .)
@@ -2332,18 +1925,13 @@ state 73
     CLOSE_PAREN     reduce using rule 32 (equality -> term op function .)
 
 
-state 74
+state 69
 
     (29) equality -> var_or_header op var_or_header .
 
     DO              reduce using rule 29 (equality -> var_or_header op var_or_header .)
     COMMA           reduce using rule 29 (equality -> var_or_header op var_or_header .)
     EQUALS          reduce using rule 29 (equality -> var_or_header op var_or_header .)
-    LT              reduce using rule 29 (equality -> var_or_header op var_or_header .)
-    GT              reduce using rule 29 (equality -> var_or_header op var_or_header .)
-    STAR            reduce using rule 29 (equality -> var_or_header op var_or_header .)
-    PLUS            reduce using rule 29 (equality -> var_or_header op var_or_header .)
-    MINUS           reduce using rule 29 (equality -> var_or_header op var_or_header .)
     RIGHT_BRACKET   reduce using rule 29 (equality -> var_or_header op var_or_header .)
     COMMENT         reduce using rule 29 (equality -> var_or_header op var_or_header .)
     SIMPLE_NAME     reduce using rule 29 (equality -> var_or_header op var_or_header .)
@@ -2356,18 +1944,13 @@ state 74
     CLOSE_PAREN     reduce using rule 29 (equality -> var_or_header op var_or_header .)
 
 
-state 75
+state 70
 
     (27) equality -> var_or_header op function .
 
     DO              reduce using rule 27 (equality -> var_or_header op function .)
     COMMA           reduce using rule 27 (equality -> var_or_header op function .)
     EQUALS          reduce using rule 27 (equality -> var_or_header op function .)
-    LT              reduce using rule 27 (equality -> var_or_header op function .)
-    GT              reduce using rule 27 (equality -> var_or_header op function .)
-    STAR            reduce using rule 27 (equality -> var_or_header op function .)
-    PLUS            reduce using rule 27 (equality -> var_or_header op function .)
-    MINUS           reduce using rule 27 (equality -> var_or_header op function .)
     RIGHT_BRACKET   reduce using rule 27 (equality -> var_or_header op function .)
     COMMENT         reduce using rule 27 (equality -> var_or_header op function .)
     SIMPLE_NAME     reduce using rule 27 (equality -> var_or_header op function .)
@@ -2380,18 +1963,13 @@ state 75
     CLOSE_PAREN     reduce using rule 27 (equality -> var_or_header op function .)
 
 
-state 76
+state 71
 
     (28) equality -> var_or_header op term .
 
     DO              reduce using rule 28 (equality -> var_or_header op term .)
     COMMA           reduce using rule 28 (equality -> var_or_header op term .)
     EQUALS          reduce using rule 28 (equality -> var_or_header op term .)
-    LT              reduce using rule 28 (equality -> var_or_header op term .)
-    GT              reduce using rule 28 (equality -> var_or_header op term .)
-    STAR            reduce using rule 28 (equality -> var_or_header op term .)
-    PLUS            reduce using rule 28 (equality -> var_or_header op term .)
-    MINUS           reduce using rule 28 (equality -> var_or_header op term .)
     RIGHT_BRACKET   reduce using rule 28 (equality -> var_or_header op term .)
     COMMENT         reduce using rule 28 (equality -> var_or_header op term .)
     SIMPLE_NAME     reduce using rule 28 (equality -> var_or_header op term .)
@@ -2404,18 +1982,13 @@ state 76
     CLOSE_PAREN     reduce using rule 28 (equality -> var_or_header op term .)
 
 
-state 77
+state 72
 
     (22) equality -> var DO assignment_or_equality .
 
     DO              reduce using rule 22 (equality -> var DO assignment_or_equality .)
     COMMA           reduce using rule 22 (equality -> var DO assignment_or_equality .)
     EQUALS          reduce using rule 22 (equality -> var DO assignment_or_equality .)
-    LT              reduce using rule 22 (equality -> var DO assignment_or_equality .)
-    GT              reduce using rule 22 (equality -> var DO assignment_or_equality .)
-    STAR            reduce using rule 22 (equality -> var DO assignment_or_equality .)
-    PLUS            reduce using rule 22 (equality -> var DO assignment_or_equality .)
-    MINUS           reduce using rule 22 (equality -> var DO assignment_or_equality .)
     RIGHT_BRACKET   reduce using rule 22 (equality -> var DO assignment_or_equality .)
     COMMENT         reduce using rule 22 (equality -> var DO assignment_or_equality .)
     SIMPLE_NAME     reduce using rule 22 (equality -> var DO assignment_or_equality .)
@@ -2428,7 +2001,7 @@ state 77
     CLOSE_PAREN     reduce using rule 22 (equality -> var DO assignment_or_equality .)
 
 
-state 78
+state 73
 
     (23) equality -> var DO function .
     (18) equality -> function . op term
@@ -2437,20 +2010,10 @@ state 78
     (21) equality -> function . DO assignment_or_equality
     (24) equality -> function . DO function
     (39) op -> . EQUALS
-    (40) op -> . LT
-    (41) op -> . GT
-    (42) op -> . STAR
-    (43) op -> . PLUS
-    (44) op -> . MINUS
-    (45) op -> . COMMA
+    (40) op -> . COMMA
 
   ! shift/reduce conflict for DO resolved as shift
   ! shift/reduce conflict for EQUALS resolved as shift
-  ! shift/reduce conflict for LT resolved as shift
-  ! shift/reduce conflict for GT resolved as shift
-  ! shift/reduce conflict for STAR resolved as shift
-  ! shift/reduce conflict for PLUS resolved as shift
-  ! shift/reduce conflict for MINUS resolved as shift
   ! shift/reduce conflict for COMMA resolved as shift
     RIGHT_BRACKET   reduce using rule 23 (equality -> var DO function .)
     COMMENT         reduce using rule 23 (equality -> var DO function .)
@@ -2464,179 +2027,134 @@ state 78
     CLOSE_PAREN     reduce using rule 23 (equality -> var DO function .)
     DO              shift and go to state 27
     EQUALS          shift and go to state 28
-    LT              shift and go to state 29
-    GT              shift and go to state 30
-    STAR            shift and go to state 31
-    PLUS            shift and go to state 32
-    MINUS           shift and go to state 33
-    COMMA           shift and go to state 34
+    COMMA           shift and go to state 29
 
   ! DO              [ reduce using rule 23 (equality -> var DO function .) ]
   ! COMMA           [ reduce using rule 23 (equality -> var DO function .) ]
   ! EQUALS          [ reduce using rule 23 (equality -> var DO function .) ]
-  ! LT              [ reduce using rule 23 (equality -> var DO function .) ]
-  ! GT              [ reduce using rule 23 (equality -> var DO function .) ]
-  ! STAR            [ reduce using rule 23 (equality -> var DO function .) ]
-  ! PLUS            [ reduce using rule 23 (equality -> var DO function .) ]
-  ! MINUS           [ reduce using rule 23 (equality -> var DO function .) ]
 
     op                             shift and go to state 26
 
+state 74
+
+    (41) assignment -> var ASSIGNMENT var .
+
+    RIGHT_BRACKET   reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    COMMENT         reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    SIMPLE_NAME     reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    VAR_SYM         reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    QUOTED          reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    QUOTE           reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    NUMBER          reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    REGEX           reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    HEADER_SYM      reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    DO              reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    COMMA           reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    EQUALS          reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+    CLOSE_PAREN     reduce using rule 41 (assignment -> var ASSIGNMENT var .)
+
+
+state 75
+
+    (42) assignment -> var ASSIGNMENT term .
+
+    RIGHT_BRACKET   reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    COMMENT         reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    SIMPLE_NAME     reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    VAR_SYM         reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    QUOTED          reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    QUOTE           reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    NUMBER          reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    REGEX           reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    HEADER_SYM      reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    DO              reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    COMMA           reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    EQUALS          reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+    CLOSE_PAREN     reduce using rule 42 (assignment -> var ASSIGNMENT term .)
+
+
+state 76
+
+    (43) assignment -> var ASSIGNMENT function .
+
+    RIGHT_BRACKET   reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    COMMENT         reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    SIMPLE_NAME     reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    VAR_SYM         reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    QUOTED          reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    QUOTE           reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    NUMBER          reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    REGEX           reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    HEADER_SYM      reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    DO              reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    COMMA           reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    EQUALS          reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+    CLOSE_PAREN     reduce using rule 43 (assignment -> var ASSIGNMENT function .)
+
+
+state 77
+
+    (44) assignment -> var ASSIGNMENT header .
+
+    RIGHT_BRACKET   reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    COMMENT         reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    SIMPLE_NAME     reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    VAR_SYM         reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    QUOTED          reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    QUOTE           reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    NUMBER          reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    REGEX           reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    HEADER_SYM      reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    DO              reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    COMMA           reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    EQUALS          reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+    CLOSE_PAREN     reduce using rule 44 (assignment -> var ASSIGNMENT header .)
+
+
+state 78
+
+    (46) term -> QUOTE DATE QUOTE .
+
+    EQUALS          reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    COMMA           reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    DO              reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    RIGHT_BRACKET   reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    COMMENT         reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    SIMPLE_NAME     reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    VAR_SYM         reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    QUOTED          reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    QUOTE           reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    NUMBER          reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    REGEX           reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    HEADER_SYM      reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+    CLOSE_PAREN     reduce using rule 46 (term -> QUOTE DATE QUOTE .)
+
+
 state 79
 
-    (46) assignment -> var ASSIGNMENT var .
+    (47) term -> QUOTE NUMBER QUOTE .
 
-    RIGHT_BRACKET   reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    COMMENT         reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    SIMPLE_NAME     reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    VAR_SYM         reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    QUOTED          reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    QUOTE           reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    NUMBER          reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    REGEX           reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    HEADER_SYM      reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    DO              reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    COMMA           reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    EQUALS          reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    LT              reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    GT              reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    STAR            reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    PLUS            reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    MINUS           reduce using rule 46 (assignment -> var ASSIGNMENT var .)
-    CLOSE_PAREN     reduce using rule 46 (assignment -> var ASSIGNMENT var .)
+    EQUALS          reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    COMMA           reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    DO              reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    RIGHT_BRACKET   reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    COMMENT         reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    SIMPLE_NAME     reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    VAR_SYM         reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    QUOTED          reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    QUOTE           reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    NUMBER          reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    REGEX           reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    HEADER_SYM      reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
+    CLOSE_PAREN     reduce using rule 47 (term -> QUOTE NUMBER QUOTE .)
 
 
 state 80
-
-    (47) assignment -> var ASSIGNMENT term .
-
-    RIGHT_BRACKET   reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    COMMENT         reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    SIMPLE_NAME     reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    VAR_SYM         reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    QUOTED          reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    QUOTE           reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    NUMBER          reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    REGEX           reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    HEADER_SYM      reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    DO              reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    COMMA           reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    EQUALS          reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    LT              reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    GT              reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    STAR            reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    PLUS            reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    MINUS           reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-    CLOSE_PAREN     reduce using rule 47 (assignment -> var ASSIGNMENT term .)
-
-
-state 81
-
-    (48) assignment -> var ASSIGNMENT function .
-
-    RIGHT_BRACKET   reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    COMMENT         reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    SIMPLE_NAME     reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    VAR_SYM         reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    QUOTED          reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    QUOTE           reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    NUMBER          reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    REGEX           reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    HEADER_SYM      reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    DO              reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    COMMA           reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    EQUALS          reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    LT              reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    GT              reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    STAR            reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    PLUS            reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    MINUS           reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-    CLOSE_PAREN     reduce using rule 48 (assignment -> var ASSIGNMENT function .)
-
-
-state 82
-
-    (49) assignment -> var ASSIGNMENT header .
-
-    RIGHT_BRACKET   reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    COMMENT         reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    SIMPLE_NAME     reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    VAR_SYM         reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    QUOTED          reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    QUOTE           reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    NUMBER          reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    REGEX           reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    HEADER_SYM      reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    DO              reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    COMMA           reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    EQUALS          reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    LT              reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    GT              reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    STAR            reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    PLUS            reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    MINUS           reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-    CLOSE_PAREN     reduce using rule 49 (assignment -> var ASSIGNMENT header .)
-
-
-state 83
-
-    (51) term -> QUOTE DATE QUOTE .
-
-    EQUALS          reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    LT              reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    GT              reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    STAR            reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    PLUS            reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    MINUS           reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    COMMA           reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    DO              reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    RIGHT_BRACKET   reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    COMMENT         reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    SIMPLE_NAME     reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    VAR_SYM         reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    QUOTED          reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    QUOTE           reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    NUMBER          reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    REGEX           reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    HEADER_SYM      reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-    CLOSE_PAREN     reduce using rule 51 (term -> QUOTE DATE QUOTE .)
-
-
-state 84
-
-    (52) term -> QUOTE NUMBER QUOTE .
-
-    EQUALS          reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    LT              reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    GT              reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    STAR            reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    PLUS            reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    MINUS           reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    COMMA           reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    DO              reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    RIGHT_BRACKET   reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    COMMENT         reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    SIMPLE_NAME     reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    VAR_SYM         reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    QUOTED          reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    QUOTE           reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    NUMBER          reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    REGEX           reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    HEADER_SYM      reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-    CLOSE_PAREN     reduce using rule 52 (term -> QUOTE NUMBER QUOTE .)
-
-
-state 85
 
     (12) function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .
 
     DO              reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
     EQUALS          reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
-    LT              reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
-    GT              reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
-    STAR            reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
-    PLUS            reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
-    MINUS           reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
     COMMA           reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
     RIGHT_BRACKET   reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
     COMMENT         reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
@@ -2650,17 +2168,12 @@ state 85
     CLOSE_PAREN     reduce using rule 12 (function -> SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN .)
 
 
-state 86
+state 81
 
     (13) function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .
 
     DO              reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
     EQUALS          reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
-    LT              reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
-    GT              reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
-    STAR            reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
-    PLUS            reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
-    MINUS           reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
     COMMA           reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
     RIGHT_BRACKET   reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
     COMMENT         reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
@@ -2674,17 +2187,12 @@ state 86
     CLOSE_PAREN     reduce using rule 13 (function -> SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN .)
 
 
-state 87
+state 82
 
     (14) function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .
 
     DO              reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
     EQUALS          reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
-    LT              reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
-    GT              reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
-    STAR            reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
-    PLUS            reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
-    MINUS           reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
     COMMA           reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
     RIGHT_BRACKET   reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
     COMMENT         reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
@@ -2698,17 +2206,12 @@ state 87
     CLOSE_PAREN     reduce using rule 14 (function -> SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN .)
 
 
-state 88
+state 83
 
     (15) function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .
 
     DO              reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
     EQUALS          reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
-    LT              reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
-    GT              reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
-    STAR            reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
-    PLUS            reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
-    MINUS           reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
     COMMA           reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
     RIGHT_BRACKET   reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
     COMMENT         reduce using rule 15 (function -> SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN .)
@@ -2737,77 +2240,37 @@ WARNING: shift/reduce conflict for HEADER_SYM in state 7 resolved as shift
 WARNING: shift/reduce conflict for DO in state 9 resolved as shift
 WARNING: shift/reduce conflict for COMMA in state 9 resolved as shift
 WARNING: shift/reduce conflict for EQUALS in state 9 resolved as shift
-WARNING: shift/reduce conflict for LT in state 9 resolved as shift
-WARNING: shift/reduce conflict for GT in state 9 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 9 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 9 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 9 resolved as shift
-WARNING: shift/reduce conflict for COMMENT in state 35 resolved as shift
-WARNING: shift/reduce conflict for SIMPLE_NAME in state 35 resolved as shift
-WARNING: shift/reduce conflict for VAR_SYM in state 35 resolved as shift
-WARNING: shift/reduce conflict for QUOTED in state 35 resolved as shift
-WARNING: shift/reduce conflict for QUOTE in state 35 resolved as shift
-WARNING: shift/reduce conflict for NUMBER in state 35 resolved as shift
-WARNING: shift/reduce conflict for REGEX in state 35 resolved as shift
-WARNING: shift/reduce conflict for HEADER_SYM in state 35 resolved as shift
-WARNING: shift/reduce conflict for COMMENT in state 36 resolved as shift
-WARNING: shift/reduce conflict for QUOTED in state 39 resolved as shift
-WARNING: shift/reduce conflict for QUOTE in state 39 resolved as shift
-WARNING: shift/reduce conflict for NUMBER in state 39 resolved as shift
-WARNING: shift/reduce conflict for REGEX in state 39 resolved as shift
-WARNING: shift/reduce conflict for SIMPLE_NAME in state 39 resolved as shift
-WARNING: shift/reduce conflict for DO in state 55 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 55 resolved as shift
-WARNING: shift/reduce conflict for LT in state 55 resolved as shift
-WARNING: shift/reduce conflict for GT in state 55 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 55 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 55 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 55 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 55 resolved as shift
-WARNING: shift/reduce conflict for DO in state 62 resolved as shift
-WARNING: shift/reduce conflict for DO in state 64 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 64 resolved as shift
-WARNING: shift/reduce conflict for LT in state 64 resolved as shift
-WARNING: shift/reduce conflict for GT in state 64 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 64 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 64 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 64 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 64 resolved as shift
-WARNING: shift/reduce conflict for DO in state 65 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 65 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 65 resolved as shift
-WARNING: shift/reduce conflict for LT in state 65 resolved as shift
-WARNING: shift/reduce conflict for GT in state 65 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 65 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 65 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 65 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 66 resolved as shift
-WARNING: shift/reduce conflict for LT in state 66 resolved as shift
-WARNING: shift/reduce conflict for GT in state 66 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 66 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 66 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 66 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 66 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 67 resolved as shift
-WARNING: shift/reduce conflict for LT in state 67 resolved as shift
-WARNING: shift/reduce conflict for GT in state 67 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 67 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 67 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 67 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 67 resolved as shift
-WARNING: shift/reduce conflict for DO in state 68 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 68 resolved as shift
-WARNING: shift/reduce conflict for LT in state 68 resolved as shift
-WARNING: shift/reduce conflict for GT in state 68 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 68 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 68 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 68 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 68 resolved as shift
-WARNING: shift/reduce conflict for DO in state 78 resolved as shift
-WARNING: shift/reduce conflict for EQUALS in state 78 resolved as shift
-WARNING: shift/reduce conflict for LT in state 78 resolved as shift
-WARNING: shift/reduce conflict for GT in state 78 resolved as shift
-WARNING: shift/reduce conflict for STAR in state 78 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 78 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 78 resolved as shift
-WARNING: shift/reduce conflict for COMMA in state 78 resolved as shift
+WARNING: shift/reduce conflict for COMMENT in state 30 resolved as shift
+WARNING: shift/reduce conflict for SIMPLE_NAME in state 30 resolved as shift
+WARNING: shift/reduce conflict for VAR_SYM in state 30 resolved as shift
+WARNING: shift/reduce conflict for QUOTED in state 30 resolved as shift
+WARNING: shift/reduce conflict for QUOTE in state 30 resolved as shift
+WARNING: shift/reduce conflict for NUMBER in state 30 resolved as shift
+WARNING: shift/reduce conflict for REGEX in state 30 resolved as shift
+WARNING: shift/reduce conflict for HEADER_SYM in state 30 resolved as shift
+WARNING: shift/reduce conflict for COMMENT in state 31 resolved as shift
+WARNING: shift/reduce conflict for QUOTED in state 34 resolved as shift
+WARNING: shift/reduce conflict for QUOTE in state 34 resolved as shift
+WARNING: shift/reduce conflict for NUMBER in state 34 resolved as shift
+WARNING: shift/reduce conflict for REGEX in state 34 resolved as shift
+WARNING: shift/reduce conflict for SIMPLE_NAME in state 34 resolved as shift
+WARNING: shift/reduce conflict for DO in state 50 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 50 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 50 resolved as shift
+WARNING: shift/reduce conflict for DO in state 57 resolved as shift
+WARNING: shift/reduce conflict for DO in state 59 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 59 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 59 resolved as shift
+WARNING: shift/reduce conflict for DO in state 60 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 60 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 60 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 61 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 61 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 62 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 62 resolved as shift
+WARNING: shift/reduce conflict for DO in state 63 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 63 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 63 resolved as shift
+WARNING: shift/reduce conflict for DO in state 73 resolved as shift
+WARNING: shift/reduce conflict for EQUALS in state 73 resolved as shift
+WARNING: shift/reduce conflict for COMMA in state 73 resolved as shift

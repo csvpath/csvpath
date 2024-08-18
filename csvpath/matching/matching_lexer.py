@@ -6,11 +6,6 @@ class MatchingLexer(object):
     tokens = [
         "DATE",
         "DO",
-        "LT",
-        "GT",
-        "STAR",
-        "PLUS",
-        "MINUS",
         "COMMA",
         "NUMBER",
         "EQUALS",
@@ -23,9 +18,7 @@ class MatchingLexer(object):
         "VAR_SYM",
         "REGEX",
         "QUOTE",
-        "NAME",
         "QUOTED",
-        "NAME_LINE",
         "SIMPLE_NAME",
         "COMMENT",
     ]
@@ -37,18 +30,12 @@ class MatchingLexer(object):
     t_HEADER_SYM = r"\#"
     t_EQUALS = r"=="
     t_DO = "->"
-    t_LT = r"<"
-    t_GT = r">"
-    t_STAR = r"\*"
-    t_PLUS = r"\+"
-    t_MINUS = "-"
     t_COMMA = ","
     t_ASSIGNMENT = r"="
     t_VAR_SYM = r"@"
     t_LEFT_BRACKET = r"\["
     t_RIGHT_BRACKET = r"\]"
     t_COMMENT = r"\~[^\~]*\~"
-    t_NAME_LINE = r"[\$A-Za-z0-9\.%_|\s, :]+\n"
 
     def t_NUMBER(self, t):
         r"\d*\.?\d+"

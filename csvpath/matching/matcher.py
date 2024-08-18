@@ -223,11 +223,6 @@ class Matcher:
 
     def p_op(self, p):
         """op : EQUALS
-        | LT
-        | GT
-        | STAR
-        | PLUS
-        | MINUS
         | COMMA
         """
         p[0] = p[1]

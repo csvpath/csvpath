@@ -19,7 +19,6 @@ class Count(Function):
                     self._get_match_count() + 1
                 )  # we're eager to +1 because we don't
                 # contribute to if there's a match
-            print(f"counting self.value: {self.value}")
         return self.value  # or not. we have to act as if.
 
     #
