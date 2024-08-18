@@ -41,7 +41,7 @@ This path counts the number of matches of `#firstname` into the path's variables
     {'firstname_match':{True:1}}
 ```
 
-`count()` can take the `onmatch` qualifier. When there is a contained value and `onmatch` count only increments when its contained value matches. For e.g.
+`count()` can take the `onmatch` qualifier. When there is a contained value and `onmatch`, count only increments if its contained value matches. For e.g.
 
 ```bash
     $[*][
