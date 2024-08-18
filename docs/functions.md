@@ -43,7 +43,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/any.md'>any(value, value, ...)</a>  </td><td> existence test across a range of places </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/no.md'>no()</a>  </td><td> always false                                  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/not.md'>not(value)</a>                    </td><td> negates a value                                           </td></tr>
-<tr><td>           </td><td> or(value, value,...)          </td><td> match any one                                             </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/andor.md'>and(value, value,...)</a>          </td><td> match all                                             </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/andor.md'>or(value, value,...)</a>          </td><td> match any one                                             </td></tr>
 <tr><td>           </td><td> yes()                         </td><td> always true                                               </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/empty.md'>empty(value)</a>    </td><td> tests if the value is empty            </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/empty.md'>exists(value)</a> </td><td> tests if the value exists            </td></tr>

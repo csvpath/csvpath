@@ -10,8 +10,6 @@ from .concat import Concat
 from .lower import Lower
 from .upper import Upper
 from .percent import Percent
-
-# from .below import Below
 from .above import AboveBelow
 from .first import First
 from .count_lines import CountLines
@@ -59,6 +57,7 @@ from .first_line import FirstLine
 from .advance import Advance
 from .collect import Collect
 from .intf import Int
+from .andf import And
 
 
 class UnknownFunctionException(Exception):
@@ -262,6 +261,8 @@ class FunctionFactory:
             f = Collect(matcher, name, child)
         elif name == "int":
             f = Int(matcher, name, child)
+        elif name == "and":
+            f = And(matcher, name, child)
         else:
             if (
                 f is None

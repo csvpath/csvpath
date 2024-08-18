@@ -1,6 +1,5 @@
 from typing import Any
 from .function import Function
-from ..productions import Equality
 
 
 class Add(Function):

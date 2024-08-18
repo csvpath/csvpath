@@ -56,7 +56,7 @@ class FilesManager(CsvPathsFilesManager):
                 path = os.path.join(base, p)
                 self.named_files[name] = path
             else:
-                print(f"skipping {p} because it doesn't look like a csv file")
+                pass
 
     def add_named_file(self, *, name: str, path: str) -> None:
         self.named_files[name] = path
