@@ -4,7 +4,7 @@ from .function import Function
 
 class Count(Function):
     def check_valid(self) -> None:
-        # TODO: no validity checks from way back
+        # TODO: no specific validity checks from way back
         super().check_valid()
 
     def to_value(self, *, skip=[]) -> Any:
@@ -19,28 +19,26 @@ class Count(Function):
                     self._get_match_count() + 1
                 )  # we're eager to +1 because we don't
                 # contribute to if there's a match
+            print(f"counting self.value: {self.value}")
         return self.value  # or not. we have to act as if.
 
+    #
+    # we always match. regardless of if any contained condition matches.  good? :/
+    #
     def matches(self, *, skip=[]) -> bool:
+        # we get a value because that's how we are sure to count
+        self.to_value(skip=skip)
         return self._noop_match()  # pragma: no cover
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:
-            print("WARNING: no csvpath. are we testing?")
+            # this could be testing; otherwise invalid.
             return -1
         return self.matcher.csvpath.current_match_count()
 
     def _get_contained_value(self, *, skip=[]) -> Any:
-        #
-        # need to apply this count function to the contained obj's value
-        #
-        b = self._function_or_equality.matches(skip=skip)
-        if not b:
-            return False
-        self._id = (
-            self.qualifier
-            if self.qualifier is not None
-            else self.get_id(self._function_or_equality)
+        self._id = self.first_non_term_qualifier(
+            self.get_id(self._function_or_equality)
         )
         #
         # to_value() is often going to be a bool based on matches().
@@ -48,7 +46,7 @@ class Count(Function):
         #
         tracked_value = self._function_or_equality.to_value(skip=skip)
         cnt = self.matcher.get_variable(self._id, tracking=tracked_value, set_if_none=0)
-        if b:
+        if not self.onmatch or self._function_or_equality.matches(skip=skip):
             cnt += 1
-        self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
-        return cnt
+            self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
+        return 0 if cnt is None else cnt

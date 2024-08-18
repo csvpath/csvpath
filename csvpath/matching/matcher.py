@@ -120,9 +120,12 @@ class Matcher:
         self.if_all_match.append((name, value, tracking))
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
-        return self.csvpath.get_variable(
-            name, tracking=tracking, set_if_none=set_if_none
-        )
+        if self.csvpath is None:
+            return None
+        else:
+            return self.csvpath.get_variable(
+                name, tracking=tracking, set_if_none=set_if_none
+            )
 
     def set_variable(self, name: str, *, value: Any, tracking=None) -> None:
         return self.csvpath.set_variable(name, value=value, tracking=tracking)

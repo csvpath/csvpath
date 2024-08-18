@@ -21,3 +21,17 @@ class Error:
         self.datum: Any = None
         self.filename: str = None
         self.at: datetime = datetime.now()
+
+    def __str__(self) -> str:
+        return f"""Error
+exception: {self.error if self.error else ""}
+exception class: {self.error.__class__ if self.error else ""}
+filename: {self.filename if self.filename else ""}
+datetime: {self.at}
+message: {self.message if self.message else ""}
+line: {self.line_count if self.line_count is not None else ""}
+scan: {self.scan_count if self.scan_count else ""}
+match: {self.match_count if self.match_count else ""}
+datum: {self.datum if self.datum else ""}
+json: {self.json if self.json else ""}
+"""

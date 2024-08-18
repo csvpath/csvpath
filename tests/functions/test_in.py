@@ -16,13 +16,14 @@ class TestFunctionsIn(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert len(lines) == 3
 
-    def test_function_count_header_in_2(self):
+    def test_function_count_header_in1(self):
+        """~this test is also in with count but there using onmatch"""
         path = CsvPath()
         path.parse(
             f"""
                         ${PATH}
                         [*]
-                        [count.firstname_is_one(in(#firstname,"Bug|Bird|Ants"))==2]
+                        [count.one( in(#firstname,"Bug|Bird|Ants") ) == 2]
                    """
         )
         lines = path.collect()
@@ -30,9 +31,10 @@ class TestFunctionsIn(unittest.TestCase):
         for line in lines:
             print(f"test_function_count_in: line: {line}")
         print(f"test_function_count_in: path vars: {path.variables}")
-        assert len(lines) == 1
-        assert "firstname_is_one" in path.variables
-        assert path.variables["firstname_is_one"][True] == 3
+        assert len(lines) == 2
+        assert "one" in path.variables
+        assert path.variables["one"][True] == 3
+        assert path.variables["one"][False] == 6
 
     def test_function_count_header_in_ever(self):
         path = CsvPath()

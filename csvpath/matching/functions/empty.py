@@ -29,7 +29,7 @@ class Empty(Function):
                     self.match = False
             elif v is None:
                 self.match = True
-            elif isinstance(v, list) and v == []:
+            elif isinstance(v, list) and len(v) == 0:
                 self.match = True
             elif isinstance(v, dict) and len(dict) == 0:
                 self.match = True

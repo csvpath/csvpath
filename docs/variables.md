@@ -11,6 +11,8 @@ Variables may have "tracking values". A tracking value is a key into a dict stor
 
 The tracking value qualifier must not match any of the predefined qualifiers, like `asbool` or `onmatch`. As usual, the order and number of qualifiers is not important.
 
+Note that a variable's name and tracking value are strings. If you request a variable with a boolean tracking value that looks like `@empty.True`, the value will nevertheless be found. This often happens when using `count()` or another bool producing function.
+
 The interaction of variables and their qualifiers can be complex. That is particularly true in variable assignment. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>. As, of course, if you don't need the nuance, you can just do simpler assignments.
 
 _Note: as of Aug 2024 there is a grammar problem that may keep variables from being used as an existence test all on their own. In that situation use the `exists()` function as a work-around until this bug is fixed. The problem should not be seen in using the when operator (`->`)._

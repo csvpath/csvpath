@@ -51,11 +51,13 @@ class CsvPathsPublic(ABC):
 
 
 class CsvPaths(CsvPathsPublic):
-    def __init__(self, *, delimiter=",", quotechar='"', skip_blank_lines=True):
+    def __init__(
+        self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
+    ):
         self.paths_manager = PathsManager()
         self.files_manager = FilesManager()
         self.results_manager = ResultsManager()
-
+        self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
@@ -67,6 +69,7 @@ class CsvPaths(CsvPathsPublic):
             delimiter=self.delimiter,
             quotechar=self.quotechar,
             skip_blank_lines=self.skip_blank_lines,
+            print_default=self.print_default,
         )
 
     def collect_paths(self, pathsname, filename) -> None:

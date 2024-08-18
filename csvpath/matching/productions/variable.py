@@ -31,4 +31,15 @@ class Variable(Matchable):
         if not self.value:
             track = self.first_non_term_qualifier(None)
             self.value = self.matcher.get_variable(self.name, tracking=track)
+            if self.value is None:
+                # if it looks like a bool let's try that and
+                # take the answer if not None.
+                # in principle we could do this with numbers too.
+                retry = None
+                if track == "True":
+                    retry = self.matcher.get_variable(self.name, tracking=True)
+                elif track == "False":
+                    retry = self.matcher.get_variable(self.name, tracking=False)
+                if retry is not None:
+                    self.value = retry
         return self.value

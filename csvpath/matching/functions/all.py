@@ -20,10 +20,12 @@ class All(Function):
             if om and not self.line_matches():
                 pass
             else:
-                if len(self.children) == 0:
+                cs = len(self.children)
+                if cs == 0:
                     # all headers have a value
                     self.all_exist()
                 if len(self.children) == 1:
+                    # a list of headers have values
                     if isinstance(self.children[0], Equality):
                         self.equality()
         return self.match
@@ -32,7 +34,7 @@ class All(Function):
         if len(self.matcher.line) != len(self.matcher.headers):
             self.match = False
             return
-        for h in self.matcher.line:
+        for i, h in enumerate(self.matcher.line):
             if h is None or f"{h}".strip() == "":
                 self.match = False
                 return

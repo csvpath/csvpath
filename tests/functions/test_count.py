@@ -22,20 +22,21 @@ class TestFunctionsCount(unittest.TestCase):
         assert len(lines) == 1
         assert lines[0][0] == "Frog"
 
-    def test_function_count_header_in_2(self):
+    def test_function_count_header_in_22(self):
         path = CsvPath()
         path.parse(
             f"""
-                        ${PATH}
-                        [*]
-                        [count.firstname_is_one(in(#firstname,"Bug|Bird|Ants"))==2]
-                   """
+                ${PATH}
+                [*][
+                    count.firstname_is_one.onmatch( in(#firstname,"Bug|Bird|Ants") ) == 2
+                ]
+             """
         )
         lines = path.collect()
-        print(f"test_function_count_in: lines: {len(lines)}")
+        print(f"test_function_count_header_in_22: lines: {len(lines)}")
         for line in lines:
-            print(f"test_function_count_in: line: {line}")
-        print(f"test_function_count_in: path vars: {path.variables}")
+            print(f"test_function_count_header_in_22: line: {line}")
+        print(f"test_function_count_header_in_22: path vars: {path.variables}")
         assert len(lines) == 1
         assert "firstname_is_one" in path.variables
         assert path.variables["firstname_is_one"][True] == 3

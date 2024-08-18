@@ -72,6 +72,9 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     def errors(self) -> List[Error]:
         return self._errors
 
+    def errors_count(self) -> int:
+        return len(self._errors) if self._errors else 0
+
     def collect_error(self, error: Error) -> None:
         self._errors.append(error)
 
@@ -83,6 +86,21 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
             return self._csvpath.is_valid
         else:
             return False
+
+    @property
+    def printouts(self) -> List[str]:
+        """this method returns the default printouts. use get_printout_by_name for specific printouts"""
+        if self._printouts is None:
+            self._printouts = []
+        return self._printouts["default"] if "default" in self._printouts else []
+
+    def get_printout_by_name(self, name: str) -> List[str]:
+        if self._printouts is None:
+            self._printouts = []
+        return self._printous[name] if name in self._printouts else []
+
+    def has_printouts(self) -> bool:
+        return len(self._printouts) > 0 if self._printouts else False
 
     def print(self, string: str) -> None:
         self.print_to("default", string)
@@ -99,10 +117,10 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
                 print(line)
             print("")
 
-    def print_statements(self) -> int:
+    def print_statements_count(self) -> int:
         i = 0
         for name in self._printouts:
-            i += len(self._printouts["name"]) if self._printouts["name"] else 0
+            i += len(self._printouts[name]) if self._printouts[name] else 0
         return i
 
     def __str__(self) -> str:
@@ -116,7 +134,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
                    total file lines:{self.csvpath.total_lines};
                    matches:{self.csvpath.match_count};
                    lines captured:{len(self.lines) if self.lines else 0};
-                   print statements:{self.print_statements()};
+                   print statements:{self.print_statements_count()};
                    errors:{len(self.errors)}"""
 
 

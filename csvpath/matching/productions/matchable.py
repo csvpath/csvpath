@@ -17,6 +17,17 @@ class Matchable(Qualified):
     def __str__(self) -> str:
         return f"""{self.__class__}"""
 
+    """
+    # was going to be for raising errors. still a good idea?
+    def _my_expression(self) -> expression:
+        p = self.parent
+        e = None
+        while p is not None:
+            e = p
+            p = p.parent
+        return e
+    """
+
     def check_valid(self) -> None:
         for _ in self.children:
             _.check_valid()

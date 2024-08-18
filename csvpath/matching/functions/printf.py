@@ -46,10 +46,10 @@ class Print(Function):
             if om:
                 lm = self.line_matches()
                 if lm:
-                    print(f"{self.to_value()}")
+                    self.matcher.csvpath.print(f"{self.to_value()}")
                     self.match = True
             else:
-                print(f"{self.to_value()}")
+                self.matcher.csvpath.print(f"{self.to_value()}")
                 self.match = True
         return self.match
 

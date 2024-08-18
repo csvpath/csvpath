@@ -1,13 +1,27 @@
 import unittest
-from csvpath.matching.functions.function_factory import FunctionFactory
 from csvpath.csvpath import CsvPath
-from csvpath.matching.matcher import Matcher
 from csvpath.matching.util.expression_utility import ExpressionUtility
 
 PATH = "tests/test_resources/test.csv"
 
 
-class TestFunctionsVariables(unittest.TestCase):
+class TestVariables(unittest.TestCase):
+    def test_function_variable_bool_tracking(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}
+                        [*]
+                        [
+                            count.t(#lastname=="Bat")
+                            @u = @t.True
+                        ]
+                   """
+        )
+        path.fast_forward()
+        print(f"test_function_variable_bool_tracking: path vars: {path.variables}")
+        assert "u" in path.variables
+        assert path.variables["u"] == 7
+
     def test_function_access_variable_tracking_values(self):
         path = CsvPath()
         path.parse(

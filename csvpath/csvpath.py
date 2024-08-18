@@ -64,6 +64,7 @@ class CsvPath(CsvPathPublic):
         delimiter=",",
         quotechar='"',
         skip_blank_lines=True,
+        print_default=True,
     ):
         self.csvpaths = csvpaths
         self.scanner = None
@@ -93,7 +94,9 @@ class CsvPath(CsvPathPublic):
         self._errors: List[Error] = None
         self._error_collector = None
         self.error_policy = ErrorPolicy.FAIL_AND_STOP
-        self.printers = [StdOutPrinter()]
+        self.printers = []
+        if print_default:
+            self.printers.append(StdOutPrinter())
 
     def has_errors(self) -> bool:
         if self.errors:
