@@ -60,6 +60,10 @@ will always set it.
 
 Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
+## Naming
+
+Variable names are relatively restrictive. The CsvPaths grammar current defines variable names to match: `/@[a-zA-Z-0-9\_\.]+/` A.k.a. one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
+
 # Examples
 - `@weather="cloudy"`
 - `count(@weather=="sunny")`
