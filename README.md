@@ -261,7 +261,7 @@ Two of the other types joined with an "=" or "==".
 
 You can comment out match components by wrapping them in `~`. Comments can be multi-line. At the moment the only limitations are:
 
-- Comments cannot follow one directly after another
+- Comments cannot include the ~ (tilde) and ] (right bracket) characters
 - Comments cannot go within match components, only between them
 
 Examples:
@@ -271,8 +271,11 @@ Examples:
 ```
 
 ```bash
-    [ ~this path is
-       just experimental~ any() ]
+    [    ~this csvpath is
+          just for testing.
+          use at own risk~
+       any()
+    ]
 ```
 
 <a name="when"></a>
