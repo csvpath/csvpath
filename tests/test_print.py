@@ -16,7 +16,7 @@ class TestPrint(unittest.TestCase):
         matcher = Matcher(csvpath=path, data="[no()]")
         path.set_variable("test", value="fish")
         string = "this is a print string with a $.variables.test variable"
-        astr = Term(matcher, value=string, name="")
+        astr = Term(matcher, value=string, name=None)
         p = Print(matcher, "print", astr)
         e = Equality(matcher)
         e.left = Yes(matcher, name="yes")
@@ -31,7 +31,7 @@ class TestPrint(unittest.TestCase):
         path.set_variable("test", value="fish")
         path.set_variable("blue", value="red")
         string = "this is a $.variables print string with a $.variables.test variable"
-        astr = Term(matcher, value=string, name="")
+        astr = Term(matcher, value=string, name=None)
         p = Print(matcher, "print", astr)
         e = Equality(matcher)
         e.left = Yes(matcher, name="yes")
@@ -54,7 +54,7 @@ class TestPrint(unittest.TestCase):
         path.set_variable("cnt", value="0015")
         path.set_variable("t", value="True")
         string = "$.variables.col, $.variables.t, $.variables.cntln, $.variables.cnt"
-        astr = Term(matcher, value=string, name="")
+        astr = Term(matcher, value=string, name=None)
         p = Print(matcher, "print", astr)
         e = Equality(matcher)
         e.left = Yes(matcher, name="yes")
@@ -87,7 +87,7 @@ class TestPrint(unittest.TestCase):
         matcher.headers = headers
         matcher.line = line
         string = "this is a $.headers print string with a $.headers.fish variable"
-        astr = Term(matcher, value=string, name="")
+        astr = Term(matcher, value=string, name=None)
         p = Print(matcher, "print", astr)
         e = Equality(matcher)
         e.left = Yes(matcher, name="yes")

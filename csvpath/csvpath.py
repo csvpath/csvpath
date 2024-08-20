@@ -474,7 +474,17 @@ class CsvPath(CsvPathPublic):
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         if not name:
-            raise VariableException("Name cannot be None")
+            raise VariableException(
+                f"Name cannot be None: name: {name}, tracking: {tracking}, value: {value}"
+            )
+        if name.strip() == "":
+            raise VariableException(
+                f"Name cannot be the empty string: name: {name}, tracking: {tracking}, value: {value}"
+            )
+        if tracking is not None and f"{tracking}".strip() == "":
+            raise VariableException(
+                f"Tracking value cannot be the empty string: name: {name}, tracking: {tracking}, value: {value}"
+            )
         if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}

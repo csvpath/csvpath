@@ -1,0 +1,15 @@
+[
+                @a = "a"
+                @b.asbool = "qualifier"
+                ~ b.asbool and b.asbool.onchange are the same thing
+                  but with different runtime behaviors. redefining
+                  this way could certainly become a bug in a csvpath,
+                  but it is not a bug for the way variables work. ~
+                @b.asbool.onchange = "2 qualifiers"
+                @c_is_my_name = "underscores"
+                @_hmm = "starts with underscore"
+                @123me = "starts with number"
+                @3.3 = "number and number qualifier"
+                @Iam_capped = "capitalization"
+                ~@commented = "not here!"~
+            ]

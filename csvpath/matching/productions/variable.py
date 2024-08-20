@@ -1,6 +1,7 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from . import ChildrenException
 
 
 class Variable(Matchable):
@@ -9,6 +10,10 @@ class Variable(Matchable):
         n, qs = ExpressionUtility.get_name_and_qualifiers(name)
         self.name = n
         self.qualifiers = qs
+        if n is None:
+            raise ChildrenException("Name cannot be None")
+        elif n.strip() == "":
+            raise ChildrenException("Name cannot be the empty string")
 
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name}"""

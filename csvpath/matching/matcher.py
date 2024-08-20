@@ -6,6 +6,7 @@ from .functions.function_factory import FunctionFactory
 from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
+from ..util.exceptions import VariableException
 from . import LarkParser, LarkTransformer
 
 

@@ -1,5 +1,6 @@
 from typing import Any, Self, Optional
 from ..util.expression_utility import ExpressionUtility
+from . import ChildrenException
 from enum import Enum
 
 
@@ -33,6 +34,8 @@ class Qualified:
             self.name = n
             if qs is not None:
                 self.qualifiers = qs
+        if self.name is not None and self.name.strip() == "":
+            raise ChildrenException(f"Name of {self} cannot be the empty string")
 
     def first_non_term_qualifier(self, default: None) -> Optional[str]:
         if not self.qualifiers:  # this shouldn't happen but what if it did
