@@ -19,6 +19,19 @@ As another example, the name of the second to last column can be found using `co
 
 Header values can be tested as a boolean (a Python bool) with the `asbool` qualifier. <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
+## Header Naming
+
+Header names can be a challenge if file formats are not under our own control. The current name definition is:
+
+```regex
+     ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
+```
+
+This means that a header is a `#` followed by one or more letters, numbers, periods, dashes, or underscores, or the same surrounded by double quotes and allowing spaces.
+
+This names definition may be loosened in the future. For now, if you run into a header that you cannot use in CsvPath use the numeric header identification approach. `#0, #1, ... end()` will work in place of any header name.
+
+
 # Examples
 
 - `#0`

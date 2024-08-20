@@ -68,7 +68,7 @@ Variable names are relatively restrictive. The CsvPath grammar currently defines
     /@[a-zA-Z-0-9\_\.]+/
 ```
 
-A.k.a. one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
+A.k.a., one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
 
 # Examples
 - `@weather="cloudy"`
