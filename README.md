@@ -281,7 +281,7 @@ Examples:
 <a name="when"></a>
 ## The when operator
 
-`->`, the "when" operator, is used to act on a condition. `->` can take an equality or function on the left and trigger an equality, assignment, or function on the right. For e.g.
+`->`, the "when" operator, is used to act on a condition. `->` can take an equality, header, variable, or function on the left and trigger an assignment or function on the right. For e.g.
 
 ```bash
     [ last() -> print("this is the last line") ]
