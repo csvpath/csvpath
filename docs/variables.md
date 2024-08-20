@@ -62,7 +62,13 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>m
 
 ## Naming
 
-Variable names are relatively restrictive. The CsvPaths grammar current defines variable names to match: `/@[a-zA-Z-0-9\_\.]+/` A.k.a. one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
+Variable names are relatively restrictive. The CsvPath grammar currently defines variable names to match:
+
+```regex
+    /@[a-zA-Z-0-9\_\.]+/
+```
+
+A.k.a. one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
 
 # Examples
 - `@weather="cloudy"`
