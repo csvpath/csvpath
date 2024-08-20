@@ -38,19 +38,13 @@ class Matcher:
                 expressions = []
                 for e in es:
                     expressions.append([e, None])
-                print("\n>> LARK:")
-                # encoder = ExpressionEncoder()
-                # json = encoder.valued_list_to_json(expressions)
                 self.expressions = expressions
                 self.check_valid()
-            if False or parser_type is None or parser_type == "ply":
+            if parser_type is None or parser_type == "ply":
                 self.lexer = MatchingLexer()
                 self.parser = yacc.yacc(module=self, start="match_part")
                 self.parser.parse(data, lexer=self.lexer.lexer)
                 self.check_valid()
-                print("\n>> PLY:")
-                # encoder = ExpressionEncoder()
-                # json = encoder.valued_list_to_json(self.expressions)
 
     def __str__(self):
         return f"""
