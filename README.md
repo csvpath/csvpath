@@ -31,6 +31,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
    - [The When Operator](#when)
    - [Qualifiers](#qualifiers)
 - [More Examples](#examples)
+- [Grammar](#grammar)
 
 
 # Description
@@ -321,6 +322,12 @@ There are more examples scattered throughout the documentation. Good places to l
 - The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
 - The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> _(not realistic, but a good source of ideas)_
 - A few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
+
+<a name="grammar"></a>
+## Grammar
+
+Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more about the CsvPath grammar definition here</a>.
+
 
 # Not For Production
 Anything could change and performance could be better. This project is a still just a passion project.
