@@ -21,7 +21,7 @@ Header values can be tested as a boolean (a Python bool) with the `asbool` quali
 
 ## Header Naming
 
-Header names can be a challenge if file formats are not under our own control. The current name definition is:
+Header names can be a challenge, particularly when the file format are not under your own control. The current CsvPath header name definition is:
 
 ```regex
      ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
