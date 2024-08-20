@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, List, Any
 import os
 import json
@@ -21,6 +22,11 @@ class CsvPathErrorCollector(ABC):
 
 
 class CsvPathResult(CsvPathErrorCollector, Printer):
+    """This class handles the results for a single CsvPath in the
+    context of a CsvPaths run that may apply any number of CsvPath
+    instances against the same file.
+    """
+
     def __init__(self, *, lines: List[List[Any]] = None, path: CsvPath = None):
         self._lines: List[List[Any]] = None
         self._csvpath = None
@@ -28,6 +34,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._errors = []
         self._results_index = -1
         self._printouts = {}
+
         #
         # use the properties so error_collector, etc. is set correctly
         #
@@ -139,6 +146,15 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
 
 
 class CsvPathsResultsManager(ABC):
+    """this class is the manager of all the results associated with a
+    CsvPaths instance. Unlikely CsvPath, which are single use, a single
+    CsvPaths can be used as often as needed. Results managers track all the
+    results for a set of named results. Each set of named results tracks the
+    output of a set of named csvpaths. Before reusing the CsvPaths object
+    for another run on the same named path you must clear the results from
+    the ResultsManager.
+    """
+
     @abstractmethod
     def get_variables(self, name: str) -> bool:
         pass
@@ -173,8 +189,33 @@ class CsvPathsResultsManager(ABC):
 
 
 class ResultsManager(CsvPathsResultsManager):
-    def __init__(self):
+    def __init__(self, csvpaths):
         self.named_results = dict()
+        self._csvpaths = None
+        self.csvpaths = csvpaths
+
+    @property
+    def csvpaths(self) -> CsvPaths:  # noqa: F821
+        return self._csvpaths
+
+    @csvpaths.setter
+    def csvpaths(self, cs: CsvPaths) -> None:  # noqa: F821
+        self._csvpaths = cs
+
+    def get_metadata(self, name: str) -> Dict[str, Any]:
+        results = self.get_named_results(name)
+        meta = {}
+        if results and len(results):
+            rs = results[0]
+            path = rs.csvpath
+            meta["paths name"] = name
+            meta["file name"] = path.scanner.filename
+            meta["lines"] = path.total_lines
+            paths = len(self.csvpaths.paths_manager.get_named_paths(name))
+            meta["csvpaths applied"] = paths
+            meta["csvpaths completed"] = paths == len(results)
+            meta["valid"] = self.is_valid(name)
+        return meta
 
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)

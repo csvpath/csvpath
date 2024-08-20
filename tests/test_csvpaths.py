@@ -71,3 +71,51 @@ class TestNewCsvPaths(unittest.TestCase):
         assert "one" in pvars
         assert isinstance(pvars["one"], int)
         assert pvars["one"] == 11
+
+    def test_csvpaths_metadata1(self):
+        cs = CsvPaths()
+        cs.files_manager.set_named_files(FILES)
+        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.fast_forward_by_line(filename="food", pathsname="many")
+        meta = cs.results_manager.get_metadata("many")
+        print(f"\ntest_csvpaths_metadata: meta: {meta}")
+        assert meta is not None
+        assert "paths name" in meta
+        assert "file name" in meta
+        assert "lines" in meta
+        assert "csvpaths applied" in meta
+        assert "csvpaths completed" in meta
+        assert "valid" in meta
+        assert meta["paths name"] == "many"
+        assert meta["file name"] == "tests/test_resources/named_files/food.csv"
+        assert meta["lines"] == 10
+        assert meta["csvpaths applied"] == 2
+        assert meta["csvpaths completed"] is True
+        assert meta["valid"] is True
+
+    def test_csvpaths_metadata2(self):
+        cs = CsvPaths()
+        cs.files_manager.set_named_files(FILES)
+        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.fast_forward_by_line(filename="food", pathsname="many")
+        meta = cs.results_manager.get_metadata("many")
+        print(f"\ntest_csvpaths_metadata: meta: {meta}")
+        assert meta is not None
+
+        cs.collect_by_line(filename="food", pathsname="many")
+        meta2 = cs.results_manager.get_metadata("many")
+        assert meta2 is not None
+        #
+        # have to clear the results for "many" before this works
+        #
+        assert meta != meta2
+
+        cs.results_manager.remove_named_results("many")
+
+        cs.collect_by_line(filename="food", pathsname="many")
+        meta2 = cs.results_manager.get_metadata("many")
+        assert meta2 is not None
+        #
+        # now should work
+        #
+        assert meta == meta2
