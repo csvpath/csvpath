@@ -1,5 +1,6 @@
 import csv
 import time
+import os
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
@@ -94,6 +95,9 @@ class CsvPath(CsvPathPublic):
         self._errors: List[Error] = None
         self._error_collector = None
         self.error_policy = ErrorPolicy.FAIL_AND_STOP
+        self._save_scan_dir = None
+        self._save_match_dir = None
+        self._run_name = None
         self.printers = []
         if print_default:
             self.printers.append(StdOutPrinter())
@@ -230,7 +234,23 @@ class CsvPath(CsvPathPublic):
         matches = matches if len(matches) > 0 else None
         modify = modify.strip()
         modify = modify if len(modify) > 0 else None
+        #
+        # if we're given directory(s) to save to, save the parts
+        #
+        self._save_parts_if(scan, matches)
         return scan, matches, modify
+
+    def _save_parts_if(self, scan, match):
+        if self._save_scan_dir and self._run_name:
+            with open(
+                os.path.join(self._save_scan_dir, f"{self._run_name}.txt"), "w"
+            ) as f:
+                f.write(scan)
+        if self._save_match_dir and self._run_name:
+            with open(
+                os.path.join(self._save_match_dir, f"{self._run_name}.txt"), "w"
+            ) as f:
+                f.write(match)
 
     def __str__(self):
         return f"""

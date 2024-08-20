@@ -1,0 +1,1 @@
+[ #firstname=="Frog" @frogs_seen=count() @scanned_for_frogs=count_scans()  ]

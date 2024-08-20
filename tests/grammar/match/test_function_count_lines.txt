@@ -1,0 +1,1 @@
+[ #firstname=="David" @david.onmatch=count_lines() ]

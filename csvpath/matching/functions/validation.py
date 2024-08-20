@@ -90,8 +90,10 @@ class Validation(Matchable):
     def validate_one_arg(self, types=[]) -> None:
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have 1 argument")
-        elif hasattr(self.children[0], "op") and self.children[0].op == ",":
-            raise ChildrenException(f"{self.name}() must have 1 argument")
+        if hasattr(self.children[0], "op") and self.children[0].op == ",":
+            raise ChildrenException(
+                f"{self}() must have 1 argument, not {self.children}, {self.children[0].op}"
+            )
         if len(types) > 0:
             if not self._class_match(self.children[0], types):
                 raise ChildrenException(
@@ -151,11 +153,21 @@ class Validation(Matchable):
                 )
 
     def validate_two_or_more_args(self) -> None:
+        # must be an equality
         if len(self.children) != 1:
-            raise ChildrenException(f"{self.name}() must have 2 or more arguments")
+            raise ChildrenException(
+                f"{self}() must have 2 or more arguments, not {len(self.children)}"
+            )
+        # , indicates arguments, at least 2
         elif not hasattr(self.children[0], "op"):
-            raise ChildrenException(f"{self.name}() must have 2 or more arguments")
+            raise ChildrenException(
+                f"{self}() must have 2 or more arguments, not {self.children}"
+            )
         elif self.children[0].op != ",":
-            raise ChildrenException(f"{self.name}() must have 2 or more arguments")
+            raise ChildrenException(
+                f"{self.name}() must have 2 or more arguments, op: {self.children[0].op}"
+            )
+        # if we can't find left or right we have < 2 arguments. left or right
+        # could be equalities so the number may be more than 2
         elif self.children[0].left is None or self.children[0].right is None:
             raise ChildrenException(f"{self.name}() must have 2 or more arguments")

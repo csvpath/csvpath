@@ -1,0 +1,6 @@
+[
+                @i = column("firstname")
+                @j = column("lastname")
+                @n = column(2)
+                @m = column(minus(1))
+            ]

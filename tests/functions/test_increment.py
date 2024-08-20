@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsIncrement(unittest.TestCase):
     def test_function_increment(self):
         path = CsvPath()
+        Save._save(path, "test_function_increment")
         path.parse(
             f"""
             ${PATH}[*]
@@ -26,6 +28,7 @@ class TestFunctionsIncrement(unittest.TestCase):
 
     def test_function_increment2(self):
         path = CsvPath()
+        Save._save(path, "test_function_increment2")
         path.parse(
             f"""
             ${PATH}[*]
@@ -49,6 +52,7 @@ class TestFunctionsIncrement(unittest.TestCase):
     # leaving this as an example, for now.
     def test_function_onchange1(self):
         path = CsvPath()
+        Save._save(path, "test_function_onchange1")
         path.parse(
             f""" ${PATH}[*] [
                 increment.test( yes(), 3)

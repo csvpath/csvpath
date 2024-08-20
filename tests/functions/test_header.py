@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -8,6 +9,7 @@ EMPTY = "tests/test_resources/empty.csv"
 class TestFunctionsHeader(unittest.TestCase):
     def test_function_any_function1(self):
         path = CsvPath()
+        Save._save(path, "test_function_any_function1")
         path.parse(
             f"""
             ${PATH}[3]
@@ -23,6 +25,7 @@ class TestFunctionsHeader(unittest.TestCase):
 
     def test_function_any_function3(self):
         path = CsvPath()
+        Save._save(path, "test_function_any_function3")
         path.parse(
             f"""
             ${PATH}[3]
@@ -51,6 +54,7 @@ class TestFunctionsHeader(unittest.TestCase):
 
     def test_function_any_function4(self):
         path = CsvPath()
+        Save._save(path, "test_function_any_function4")
         path.parse(
             f"""
             ${EMPTY}[1-2]
@@ -68,6 +72,7 @@ class TestFunctionsHeader(unittest.TestCase):
 
     def test_function_any_function5(self):
         path = CsvPath()
+        Save._save(path, "test_function_any_function5")
         path.parse(
             f"""
             ${PATH}[1-2]
@@ -88,6 +93,7 @@ class TestFunctionsHeader(unittest.TestCase):
 
     def test_function_header_exists(self):
         path = CsvPath()
+        Save._save(path, "test_function_header_exists")
         path.parse(
             f"""
             ${PATH}[*]

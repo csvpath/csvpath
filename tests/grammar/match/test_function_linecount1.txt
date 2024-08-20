@@ -1,0 +1,1 @@
+[ @imcounting = count_lines() no()]

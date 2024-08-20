@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 NUMBERS = "tests/test_resources/numbers.csv"
 PATH = "tests/test_resources/test.csv"
@@ -8,6 +9,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsHasDups(unittest.TestCase):
     def test_function_has_dups1(self):
         path = CsvPath()
+        Save._save(path, "test_function_has_dups1")
         path.parse(
             f""" ${NUMBERS}[*] [
                 @d = has_dups()
@@ -25,6 +27,7 @@ class TestFunctionsHasDups(unittest.TestCase):
 
     def test_function_has_dups2(self):
         path = CsvPath()
+        Save._save(path, "test_function_has_dups2")
         path.parse(
             f""" ${NUMBERS}[*] [
                 @d = has_dups(#0,#1)
@@ -42,6 +45,7 @@ class TestFunctionsHasDups(unittest.TestCase):
 
     def test_function_has_dups3(self):
         path = CsvPath()
+        Save._save(path, "test_function_has_dups3")
         path.parse(
             f""" ${PATH}[*] [
                 @d = has_dups(#1)

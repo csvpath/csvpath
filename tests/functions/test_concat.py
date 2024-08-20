@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsConcat(unittest.TestCase):
     def test_function_concat1(self):
         path = CsvPath()
+        Save._save(path, "test_function_concat1")
         path.parse(
             f"""
                         ${PATH}[*]
@@ -19,6 +21,7 @@ class TestFunctionsConcat(unittest.TestCase):
 
     def test_function_concat2(self):
         path = CsvPath()
+        Save._save(path, "test_function_concat2")
         path.parse(
             f"""
                         ${PATH}[1]

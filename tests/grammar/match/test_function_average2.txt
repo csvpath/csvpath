@@ -1,0 +1,4 @@
+[
+                @the_average = average(count(#lastname), "scan")
+                no()
+            ]

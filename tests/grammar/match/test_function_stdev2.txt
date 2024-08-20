@@ -1,0 +1,5 @@
+[
+                    push("a", #1)
+                    last.nocontrib() -> @sd = pstdev(stack("a"))
+                    last.nocontrib() -> print("pstdev $.variables.sd")
+                ]

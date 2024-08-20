@@ -1,0 +1,4 @@
+[
+                            or( #firstname == "Frog", #firstname == "Ants" )
+                            tally.sothere.onmatch(#firstname, #lastname)
+                        ]

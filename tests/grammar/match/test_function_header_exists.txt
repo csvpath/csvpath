@@ -1,0 +1,4 @@
+[
+                @has_firstname = header("firstname")
+                @has_space_aliens = header("it is aliens")
+            ]

@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,6 +9,7 @@ class TestFunctionsMax(unittest.TestCase):
     def test_function_max1(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_max1")
         path.parse(
             f"""
             ${PATH}[*]
@@ -24,6 +26,7 @@ class TestFunctionsMax(unittest.TestCase):
     def test_function_max2(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_max2")
         path.parse(
             f"""
             ${PATH}[*]

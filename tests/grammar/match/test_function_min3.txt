@@ -1,0 +1,4 @@
+[
+                @the_min = min(#firstname, "match")
+                no()
+            ]

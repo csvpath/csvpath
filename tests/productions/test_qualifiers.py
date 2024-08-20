@@ -1,6 +1,7 @@
 import unittest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 BOOL = "tests/test_resources/bool.csv"
@@ -9,6 +10,7 @@ BOOL = "tests/test_resources/bool.csv"
 class TestFunctionsQualifiers(unittest.TestCase):
     def test_function_qualifier(self):
         path = CsvPath()
+        Save._save(path, "test_function_qualifier")
         path.parse(
             f"""${PATH}
                         [*]
@@ -45,6 +47,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_latch(self):
         path = CsvPath()
+        Save._save(path, "test_latch")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -60,6 +63,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_function_every_qualifier1(self):
         path = CsvPath()
+        Save._save(path, "test_function_every_qualifier1")
         path.parse(
             f"""${PATH}
                         [*]
@@ -86,6 +90,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_function_every_qualifier2(self):
         path = CsvPath()
+        Save._save(path, "test_function_every_qualifier2")
         path.parse(
             f"""${PATH}
                         [*]
@@ -111,6 +116,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_header_qualifier(self):
         path = CsvPath()
+        Save._save(path, "test_header_qualifier")
         path.parse(
             f"""${BOOL}
                 [*]

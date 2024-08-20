@@ -1,0 +1,4 @@
+[
+              @h = #level
+              @h == "WARN" -> print( "$.headers.level $.headers.message" )
+            ]

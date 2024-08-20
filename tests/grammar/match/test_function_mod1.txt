@@ -1,0 +1,6 @@
+[ ~this is a comment~
+                @mod = mod(count_lines(), 2)
+                ~another comment~
+                @mod == 0.0
+                print.onmatch("$.variables.mod")
+            ]

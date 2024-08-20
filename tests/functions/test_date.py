@@ -1,6 +1,7 @@
 import unittest
 from csvpath.csvpath import CsvPath
 from datetime import date, datetime
+from tests.save import Save
 
 DATES = "tests/test_resources/dates.csv"
 
@@ -8,6 +9,7 @@ DATES = "tests/test_resources/dates.csv"
 class TestFunctionsDate(unittest.TestCase):
     def test_function_date1(self):
         path = CsvPath()
+        Save._save(path, "test_function_date1")
         path.parse(
             f"""
             ${DATES}[0-8]
@@ -28,6 +30,7 @@ class TestFunctionsDate(unittest.TestCase):
 
     def test_function_date2(self):
         path = CsvPath()
+        Save._save(path, "test_function_date2")
         path.parse(
             f"""
             ${DATES}[9+10]

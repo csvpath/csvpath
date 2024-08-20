@@ -1,0 +1,3 @@
+[ yes()
+                             last.nocontrib() -> jinja("tests/test_resources/in.txt", "tests/test_resources/out.txt")
+            ]

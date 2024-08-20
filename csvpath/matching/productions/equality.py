@@ -19,10 +19,14 @@ class Equality(Matchable):
 
     @property
     def left(self):
-        return self.children[0]
+        if len(self.children) > 0:
+            return self.children[0]
 
     @left.setter
     def left(self, o):
+        #
+        # TODO: should make sure we are child's parent
+        #
         if not self.children:
             self.children = [None, None]
         while len(self.children) < 2:
@@ -32,10 +36,14 @@ class Equality(Matchable):
 
     @property
     def right(self):
-        return self.children[1]
+        if len(self.children) > 1:
+            return self.children[1]
 
     @right.setter
     def right(self, o):
+        #
+        # TODO: should make sure we are child's parent
+        #
         if not self.children:
             self.children = [None, None]
         while len(self.children) < 2:
@@ -64,7 +72,11 @@ class Equality(Matchable):
 
     def commas_to_list(self) -> List[Any]:
         ls = []
-        self._to_list(ls, self)
+        if self.matcher.parser_type == "lark":
+            for _ in self.children:
+                ls.append(_)
+        else:
+            self._to_list(ls, self)
         return ls
 
     def _to_list(self, ls: List, p):
@@ -78,8 +90,14 @@ class Equality(Matchable):
         self.op = op
 
     def __str__(self) -> str:
+        if self.op == ",":
+            string = ""
+            for c in self.children:
+                string = f"{c}" if string == "" else f"{string}, {c}"
+            return f"""{self._simple_class_name()}({string})"""
 
-        return f"""{self._simple_class_name()}({self.left} {self.op} {self.right})"""
+        else:
+            return f"""{self._simple_class_name()}(left:{self.left} {self.op} right:{self.right})"""
 
     def _left_nocontrib(self, m) -> bool:
         if isinstance(m, Equality):

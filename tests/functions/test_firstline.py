@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -8,6 +9,7 @@ EMPTY = "tests/test_resources/empty.csv"
 class TestFunctionsFirstLine(unittest.TestCase):
     def test_function_firstline_function1(self):
         path = CsvPath()
+        Save._save(path, "test_function_firstline_function1")
         path.parse(
             f"""
             ${PATH}[0-7]
@@ -29,6 +31,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
 
     def test_function_firstline_function2(self):
         path = CsvPath()
+        Save._save(path, "test_function_firstline_function2")
         path.parse(
             f"""
             ${PATH}[3-7]
@@ -50,6 +53,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
 
     def test_function_firstline_function3(self):
         path = CsvPath()
+        Save._save(path, "test_function_firstline_function3")
         path.parse(
             f"""
             ${PATH}[*]

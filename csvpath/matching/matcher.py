@@ -6,12 +6,15 @@ from .functions.function_factory import FunctionFactory
 from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
+from . import LarkParser, LarkTransformer
 
 
 class Matcher:
     tokens = MatchingLexer.tokens
 
-    def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
+    def __init__(
+        self, *, csvpath=None, data=None, line=None, headers=None, parser_type="lark"
+    ):
         if not headers:
             # this could be a dry-run or unit testing
             pass
@@ -25,18 +28,35 @@ class Matcher:
         self.header_dict = None
         self.if_all_match = []
         self.current_expression = None
+        self.parser_type = parser_type
         if data is not None:
-            self.lexer = MatchingLexer()
-            self.parser = yacc.yacc(module=self, start="match_part")
-            self.parser.parse(data, lexer=self.lexer.lexer)
-            self.check_valid()
+            if parser_type == "lark":
+                self.parser = LarkParser()
+                tree = self.parser.parse(data)
+                transformer = LarkTransformer(self)
+                es = transformer.transform(tree)
+                expressions = []
+                for e in es:
+                    expressions.append([e, None])
+                print("\n>> LARK:")
+                # encoder = ExpressionEncoder()
+                # json = encoder.valued_list_to_json(expressions)
+                self.expressions = expressions
+                self.check_valid()
+            if False or parser_type is None or parser_type == "ply":
+                self.lexer = MatchingLexer()
+                self.parser = yacc.yacc(module=self, start="match_part")
+                self.parser.parse(data, lexer=self.lexer.lexer)
+                self.check_valid()
+                print("\n>> PLY:")
+                # encoder = ExpressionEncoder()
+                # json = encoder.valued_list_to_json(self.expressions)
 
     def __str__(self):
         return f"""
             line: {self.line}
             csvpath: {self.csvpath}
             parser: {self.parser}
-            lexer: {self.lexer}
         """
 
     def to_json(self, e) -> str:

@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers.csv"
@@ -35,6 +36,7 @@ class TestFunctionsRandom(unittest.TestCase):
 
     def test_function_random(self):
         path = CsvPath()
+        Save._save(path, "test_function_random")
         path.parse(
             f"""
             ${PATH}[*]
@@ -44,12 +46,13 @@ class TestFunctionsRandom(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_count_in: path vars: {path.variables}")
+        print(f"test_function_random: path vars: {path.variables}")
         assert path.variables["r"] == 1 or path.variables["r"] == 0
         assert len(lines) == 0
 
     def test_function_increment(self):
         path = CsvPath()
+        Save._save(path, "test_function_increment")
         path.parse(
             f"""
             ${PATH}[*]
@@ -60,7 +63,7 @@ class TestFunctionsRandom(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_count_in: path vars: {path.variables}")
+        print(f"test_function_increment: path vars: {path.variables}")
         assert len(lines) == 9
         assert path.variables["test"] == 9
         assert path.variables["i"] == 3

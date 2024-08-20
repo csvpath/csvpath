@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsSubstring(unittest.TestCase):
     def test_function_substring(self):
         path = CsvPath()
+        Save._save(path, "test_function_substring")
         path.parse(
             f"""
             ${PATH}[*]

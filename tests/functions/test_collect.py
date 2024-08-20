@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsCollect(unittest.TestCase):
     def test_function_collect1(self):
         path = CsvPath()
+        Save._save(path, "test_function_collect1")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -22,6 +24,7 @@ class TestFunctionsCollect(unittest.TestCase):
 
     def test_function_collect2(self):
         path = CsvPath()
+        Save._save(path, "test_function_collect2")
         path.parse(
             f"""
             ${PATH}[1*]

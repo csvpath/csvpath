@@ -1,0 +1,4 @@
+[
+                @found = any(header())
+                @notfound = not(any(header()))
+            ]

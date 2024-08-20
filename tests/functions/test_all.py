@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -9,6 +10,7 @@ FOOD = "tests/test_resources/food.csv"
 class TestFunctionsAll(unittest.TestCase):
     def test_function_all1(self):
         path = CsvPath()
+        Save._save(path, "test_function_all1")
         path.parse(
             f"""
             ${PATH}[3]
@@ -24,6 +26,7 @@ class TestFunctionsAll(unittest.TestCase):
 
     def test_function_all2(self):
         path = CsvPath()
+        Save._save(path, "test_function_all2")
         path.parse(
             f"""
             ${EMPTY}[1*]
@@ -40,6 +43,7 @@ class TestFunctionsAll(unittest.TestCase):
 
     def test_function_all3(self):
         path = CsvPath()
+        Save._save(path, "test_function_all3")
         path.parse(
             f"""
             ${FOOD}[10]
@@ -54,6 +58,7 @@ class TestFunctionsAll(unittest.TestCase):
 
     def test_function_all4(self):
         path = CsvPath()
+        Save._save(path, "test_function_all4")
         path.parse(
             f"""
             ${FOOD}[10]

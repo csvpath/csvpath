@@ -1,6 +1,7 @@
 import unittest
 from csvpath.matching.functions.function_factory import FunctionFactory
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -16,6 +17,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_count_equality(self):
         path = CsvPath()
+        Save._save(path, "test_function_count_equality")
         path.parse(f'${PATH}[*][count(#lastname=="Bat")==7]')
         lines = path.collect()
         print(f"test_function_count_equality: lines: {lines}")
@@ -24,6 +26,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_count_header_in_22(self):
         path = CsvPath()
+        Save._save(path, "test_function_count_header_in_22")
         path.parse(
             f"""
                 ${PATH}
@@ -43,6 +46,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_count_header_in_ever1(self):
         path = CsvPath()
+        Save._save(path, "test_function_count_header_in_ever1")
         path.parse(
             f"""
                 ${PATH}
@@ -64,6 +68,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_count_lines(self):
         path = CsvPath()
+        Save._save(path, "test_function_count_lines")
         path.parse(f'${PATH}[*][ #firstname=="David" @david.onmatch=count_lines() ]')
         lines = path.collect()
         assert len(lines) == 1
@@ -72,6 +77,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_count_scans(self):
         path = CsvPath()
+        Save._save(path, "test_function_count_scans")
         path.parse(
             f'${PATH}[*][ #firstname=="Frog" @frogs_seen=count() @scanned_for_frogs=count_scans()  ]'
         )
@@ -83,6 +89,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_nocount(self):
         path = CsvPath()
+        Save._save(path, "test_function_nocount")
         path.parse(
             f"""
             ${PATH}[*][ @imcounting = count() no()]
@@ -95,6 +102,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_allcount(self):
         path = CsvPath()
+        Save._save(path, "test_function_allcount")
         path.parse(
             f"""
             ${PATH}[*][ @imcounting = count() yes()]
@@ -108,6 +116,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_linecount1(self):
         path = CsvPath()
+        Save._save(path, "test_function_linecount1")
         path.parse(
             f"""
             ${PATH}[*][ @imcounting = count_lines() no()]
@@ -122,6 +131,7 @@ class TestFunctionsCount(unittest.TestCase):
 
     def test_function_linecount2(self):
         path = CsvPath()
+        Save._save(path, "test_function_linecount2")
         path.parse(
             f"""
             ${PATH}[*][ @imcounting.onmatch = count_lines() no()]

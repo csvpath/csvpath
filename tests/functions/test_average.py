@@ -1,13 +1,15 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers.csv"
 
 
 class TestFunctionsAverage(unittest.TestCase):
-    def test_function_average(self):
+    def test_function_average1(self):
         path = CsvPath()
+        Save._save(path, "test_function_average1")
         path.parse(
             f"""
             ${PATH}[3-5]
@@ -21,7 +23,9 @@ class TestFunctionsAverage(unittest.TestCase):
         assert path.variables["the_average"] is None
         assert len(lines) == 0
 
+    def test_function_average2(self):
         path = CsvPath()
+        Save._save(path, "test_function_average2")
         path.parse(
             f"""
             ${PATH}[3-5]

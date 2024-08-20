@@ -1,0 +1,4 @@
+[
+                count_lines()==0 -> @first = 0
+                last() -> @last = count_lines()
+            ]

@@ -1,0 +1,6 @@
+[
+                @found = any.onmatch(header())
+                @found2 = any(header())
+                @notfound = not(any.onmatch(header()))
+                no()
+            ]

@@ -1,0 +1,5 @@
+[
+                @i = increment.test(yes(), 3)
+                @j = increment.double_check(yes(), 2)
+                @k = increment.rand(random(0,1)==1, 2)
+            ]

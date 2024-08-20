@@ -1,0 +1,5 @@
+[
+                @d = has_dups(#1)
+                not(empty(@d)) -> print("line $.line_count has dups in $.variables.d")
+
+            ]

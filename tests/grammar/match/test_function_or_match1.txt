@@ -1,0 +1,6 @@
+[
+                or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
+                @say.onmatch=#say
+                @line.onmatch=count_lines()
+
+            ]

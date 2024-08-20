@@ -1,0 +1,3 @@
+[ yes() -> print("$.line_count")
+                last() -> print("the last row is $.line_count")
+            ]

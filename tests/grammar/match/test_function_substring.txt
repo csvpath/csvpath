@@ -1,0 +1,3 @@
+[
+                @i = substring("testtest", 4)
+            ]

@@ -1,0 +1,5 @@
+[
+                    or( count_lines() == 2, count_lines.nocontrib() == 5)
+                    count_lines.nocontrib() == 2 -> @a = #error.asbool
+                    count_lines.nocontrib() == 5 -> @b = #error
+                ]

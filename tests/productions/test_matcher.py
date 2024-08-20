@@ -5,6 +5,8 @@ from csvpath.matching.productions.equality import Equality
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
 from csvpath.csvpath import CsvPath
+from tests.save import Save
+
 
 HEADERS = ["abc", "aheader", "crows", "d"]
 LINE = ["fish", 10, "alert", "fum"]
@@ -162,6 +164,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_miss_because_header(self):
         path = CsvPath()
+        Save._save(path, "test_match_miss_because_header")
         scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #1=="Kermit"]')
         # test properties
         print(f"{scanner}")
@@ -183,6 +186,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_two_headers_count(self):
         path = CsvPath()
+        Save._save(path, "test_match_two_headers_count")
         scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #lastname=="Bats" count()==2]')
         # test properties
         print(f"{scanner}")
@@ -206,6 +210,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_two_headers_wrong_count(self):
         path = CsvPath()
+        Save._save(path, "test_match_two_headers_wrong_count")
         scanner = path.parse(f'${PATH}[2-4][#0=="Frog" #lastname=="Bats" count()==3]')
         # test properties
         print(f"{scanner}")
@@ -227,6 +232,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_match_string_with_space(self):
         path = CsvPath()
+        Save._save(path, "test_match_string_with_space")
         scanner = path.parse(f'${PATH}[*][#2=="sniffle sniffle..."]')
         # test properties
         print(f"{scanner}")
@@ -236,6 +242,7 @@ class TestMatcher(unittest.TestCase):
 
     def test_quoted_headers(self):
         path = CsvPath()
+        Save._save(path, "test_quoted_headers")
         scanner = path.parse(
             f"""
             ${PATH3}[2-4][#0=="Frog" #"My lastname"=="Bats" count()==3]

@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsColumn(unittest.TestCase):
     def test_function_column(self):
         path = CsvPath()
+        Save._save(path, "test_function_column")
         path.parse(
             f"""
             ${PATH}[*]

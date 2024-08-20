@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsEvery(unittest.TestCase):
     def test_function_every_qualifier1(self):
         path = CsvPath()
+        Save._save(path, "test_function_every_qualifier1")
         path.parse(
             f"""${PATH}
                         [*]
@@ -33,6 +35,7 @@ class TestFunctionsEvery(unittest.TestCase):
 
     def test_function_every_qualifier2(self):
         path = CsvPath()
+        Save._save(path, "test_function_every_qualifier2")
         path.parse(
             f"""${PATH}
                         [*]
@@ -58,6 +61,7 @@ class TestFunctionsEvery(unittest.TestCase):
 
     def test_function_every1(self):
         path = CsvPath()
+        Save._save(path, "test_function_every1")
         path.parse(
             f"""
             ${PATH}[*]

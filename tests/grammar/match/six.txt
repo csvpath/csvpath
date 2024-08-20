@@ -1,0 +1,11 @@
+
+    [
+    firstline.nocontrib() -> @h20name = column(20)
+    count.e( not( empty(#20) ) )
+    count.e( not( empty(#20) ) )
+    @found = @e.True
+    last.nocontrib() -> print("column $.variables.h20name has $.variables.found values")
+    and( last(), gt(@found, 5) ) -> fail()
+    ]
+
+

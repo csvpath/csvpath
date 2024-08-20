@@ -4,6 +4,7 @@ from .function import Function
 
 class Add(Function):
     def check_valid(self) -> None:
+        print(f"Add: check valid: {len(self.children)}")
         self.validate_two_or_more_args()
         super().check_valid()
 

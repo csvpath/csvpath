@@ -1,0 +1,10 @@
+[
+                @v = any(variable())
+                @frog = any(header(), "Frog")
+                @found = any()
+                @slug = any("slug")
+                @bear = any(header(),"Bear")
+                @me = any("True")
+                @h = any(header())
+                @v2 = any(variable())
+            ]

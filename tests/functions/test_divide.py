@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -7,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsDivide(unittest.TestCase):
     def test_function_divide(self):
         path = CsvPath()
+        Save._save(path, "test_function_divide")
         path.parse(
             f"""
             ${PATH}[2]
@@ -20,6 +22,7 @@ class TestFunctionsDivide(unittest.TestCase):
 
     def test_function_divide2(self):
         path = CsvPath()
+        Save._save(path, "test_function_divide2")
         path.parse(
             f"""
             ${PATH}[2-3]
@@ -33,6 +36,7 @@ class TestFunctionsDivide(unittest.TestCase):
 
     def test_function_divide3(self):
         path = CsvPath()
+        Save._save(path, "test_function_divide3")
         path.parse(
             f"""
             ${PATH}[2-3]
@@ -46,6 +50,7 @@ class TestFunctionsDivide(unittest.TestCase):
 
     def test_function_divide4(self):
         path = CsvPath()
+        Save._save(path, "test_function_divide4")
         path.parse(
             f"""
             ${PATH}[2-3]

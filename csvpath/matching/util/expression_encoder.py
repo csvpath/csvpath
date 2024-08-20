@@ -51,19 +51,22 @@ class ExpressionEncoder:
         elif o is None:
             return f'{json} "None" '
         else:
-            raise Exception(f"what am I {o}")
+            raise Exception(f"what am I {o} \nin: {json}")
 
     def matchable(self, json: str, m) -> str:
-        json = f'{json} "base_class":"matchable", '
-        json = f'{json} "parent_class":"{m.parent.__class__}", '
-        json = f'{json} "value":"{self._no_quotes(m.value)}", '
-        json = f'{json} "name":"{m.name}", '
-        json = f'{json} "children": [ '
-        for i, _ in enumerate(m.children):
-            json = self._encode(json, _)
-            if i < len(m.children) - 1:
-                json = f"{json}, "
-        json = f"{json} ] "
+        if m.value is not None:
+            json = (
+                f'{json} "value":"{self._no_quotes(m.value)}" {"," if m.name else ""} '
+            )
+        if m.name is not None:
+            json = f'{json} "name":"{m.name}" {"," if m.children and len(m.children) > 0 else ""} '
+        if m.children and len(m.children) > 0:
+            json = f'{json} "children": [ '
+            for i, _ in enumerate(m.children):
+                json = self._encode(json, _)
+                if i < len(m.children) - 1:
+                    json = f"{json}, "
+            json = f"{json} ] "
         return json
 
     def _no_quotes(self, v: str) -> str:

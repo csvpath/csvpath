@@ -1,12 +1,14 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
 
-class TestFunctionstop(unittest.TestCase):
+class TestFunctionStop(unittest.TestCase):
     def test_function_stop(self):
         path = CsvPath()
+        Save._save(path, "test_function_stop")
         path.parse(
             f"""
             ${PATH}[*]

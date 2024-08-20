@@ -1,0 +1,4 @@
+[
+                @mod = mod(count_lines(), 2)
+                @int = int(@mod)
+            ]

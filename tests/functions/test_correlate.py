@@ -1,5 +1,6 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from tests.save import Save
 
 COR = "tests/test_resources/correlation.csv"
 
@@ -7,6 +8,7 @@ COR = "tests/test_resources/correlation.csv"
 class TestFunctionsCorrelate(unittest.TestCase):
     def test_function_correlation1(self):
         path = CsvPath()
+        Save._save(path, "test_function_correlation1")
         path.parse(
             f"""${COR}[1-10][
                     push("a", #0)
@@ -24,6 +26,7 @@ class TestFunctionsCorrelate(unittest.TestCase):
 
     def test_function_correlation2(self):
         path = CsvPath()
+        Save._save(path, "test_function_correlation2")
         path.parse(
             f"""${COR}[11-20][
                     push("a", #0)
@@ -41,6 +44,7 @@ class TestFunctionsCorrelate(unittest.TestCase):
 
     def test_function_correlation3(self):
         path = CsvPath()
+        Save._save(path, "test_function_correlation3")
         path.parse(
             f"""${COR}[21-30][
                     push("a", #0)

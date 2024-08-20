@@ -1,0 +1,4 @@
+[
+                @my_firstname.latch = #firstname
+                @other_firstname = #firstname
+            ]

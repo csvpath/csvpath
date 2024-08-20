@@ -1,0 +1,6 @@
+[
+                                tally(#lastname) no()
+                                @hmmm = @lastname.Bat
+                                @ohhh = @hmmm.fish
+                                last() -> @lastname.Bat = "fred"
+                            ]

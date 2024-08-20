@@ -1,0 +1,5 @@
+[
+                push("cnt", count_lines())
+                print("$.count_lines ")
+                count.nocontrib() == 3 -> advance(2)
+            ]

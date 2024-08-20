@@ -1,0 +1,4 @@
+[
+                push( "dates", date( #date, #format ) )
+                yes()
+            ]

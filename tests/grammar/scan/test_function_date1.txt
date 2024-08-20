@@ -1,0 +1,1 @@
+$tests/test_resources/dates.csv[0-8]

@@ -1,13 +1,16 @@
 import unittest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsLast(unittest.TestCase):
     def test_function_last1(self):
+        print("")
         path = CsvPath()
+        Save._save(path, "test_function_last1")
         matchpart = """
             [
                 count_lines()==0 -> @first = 0
@@ -40,6 +43,7 @@ class TestFunctionsLast(unittest.TestCase):
 
     def test_function_last2(self):
         path = CsvPath()
+        Save._save(path, "test_function_last2")
         path.parse(
             f""" ${PATH}[*] [
                 count_lines()==0 -> @first = 0
@@ -57,6 +61,7 @@ class TestFunctionsLast(unittest.TestCase):
     # FIXME: this is not really a deterministic test.
     def test_function_last3(self):
         path = CsvPath()
+        Save._save(path, "test_function_last3")
         path.parse(
             f""" ${PATH}[*] [ yes() -> print("$.line_count")
                 last() -> print("the last row is $.line_count")
@@ -69,6 +74,7 @@ class TestFunctionsLast(unittest.TestCase):
 
     def test_function_last4(self):
         path = CsvPath()
+        Save._save(path, "test_function_last4")
         path.parse(
             f"""${PATH}[*]
                             [

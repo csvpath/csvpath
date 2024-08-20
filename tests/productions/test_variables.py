@@ -1,6 +1,7 @@
 import unittest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,6 +9,7 @@ PATH = "tests/test_resources/test.csv"
 class TestVariables(unittest.TestCase):
     def test_function_variable_bool_tracking(self):
         path = CsvPath()
+        Save._save(path, "test_function_variable_bool_tracking")
         path.parse(
             f"""${PATH}
                         [*]
@@ -24,6 +26,7 @@ class TestVariables(unittest.TestCase):
 
     def test_function_access_variable_tracking_values(self):
         path = CsvPath()
+        Save._save(path, "test_function_access_variable_tracking_values")
         path.parse(
             f"""${PATH}[*]
                             [
@@ -38,7 +41,9 @@ class TestVariables(unittest.TestCase):
                    """
         )
         path.collect()
-        print(f"test_function_access_tracking: path vars: {path.variables}")
+        print(
+            f"test_function_access_variable_tracking_values: path vars: {path.variables}"
+        )
         assert path.variables["lastname"]["Bat"] == "fred"
         assert path.variables["hmmm"] == 7
         assert path.variables["ohhh"] is None
