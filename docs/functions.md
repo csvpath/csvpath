@@ -130,6 +130,8 @@ Most of the work of matching is done in functions. The match functions are the f
 
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/stop.md'>stop(value)</a> </td><td> stops path scanning if a condition is met                 </td>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/track.md'>track(value, value)</a> </td><td> tracks a value by name             </td>
+
 <tr><td>           </td><td> none()                    </td><td> returns None </td></tr>
 <tr><td>           </td><td> variable()                    </td><td> indicates to another function to look in variables       </td></tr>
 </tr>

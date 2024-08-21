@@ -80,7 +80,7 @@ class LarkTransformer(Transformer):
 
     # function: /[a-zA-Z][a-zA-Z-0-9\._]*/ args
     def function(self, name, args):
-        f = FunctionFactory.get_function(self.matcher, name=name, child=args)
+        f = FunctionFactory.get_function(self.matcher, name=f"{name}", child=args)
         return f
 
     # LP RP

@@ -58,6 +58,7 @@ from .advance import Advance
 from .collect import Collect
 from .intf import Int
 from .andf import And
+from .track import Track
 
 
 class UnknownFunctionException(Exception):
@@ -263,6 +264,8 @@ class FunctionFactory:
             f = Int(matcher, name, child)
         elif name == "and":
             f = And(matcher, name, child)
+        elif name == "track":
+            f = Track(matcher, name, child)
         else:
             if (
                 f is None
