@@ -30,6 +30,7 @@ class Reference(Matchable):
         # some of these may become possible with functions that take references
         #
         self.name_parts = name.split(".")
+        self.ref = None
 
     def __str__(self) -> str:
         return f"""{self.__class__}: {self.name}"""
@@ -55,8 +56,8 @@ class Reference(Matchable):
         if self in skip:
             return self._noop_value()
         if self.value is None:
-            self.ref = self._get_reference()
-            if self.ref["variable_or_header"] == "header":
+            ref = self._get_reference()
+            if ref["var_or_header"] == "header":
                 self.value = self._header_value()
             else:
                 self.value = self._variable_value()
@@ -114,14 +115,14 @@ class Reference(Matchable):
         return self.ref
 
     def _variable_value(self) -> Any:
+        ref = self._get_reference()
         results = self._get_results()
         csvpath = results.csvpath
         if csvpath is None:
             raise ChildrenException(
                 "Results exist but there is no CsvPath that created them"
             )
-        ref = self._get_reference()
-        return csvpath.variables.get_variable(ref["name"], ref["tracking"])
+        return csvpath.get_variable(name=ref["name"], tracking=ref["tracking"])
 
     def _header_value(self) -> Any:
         """for right now we just need an existence test"""

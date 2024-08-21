@@ -88,7 +88,7 @@ class CsvPaths(CsvPathsPublic):
             print_default=self.print_default,
         )
 
-    def collect_paths(self, pathsname, filename) -> None:
+    def collect_paths(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException("pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
@@ -108,7 +108,7 @@ class CsvPaths(CsvPathsPublic):
             lines = csvpath.collect()
             result.lines = lines
 
-    def fast_forward_paths(self, pathsname, filename):
+    def fast_forward_paths(self, *, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException("pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
@@ -116,18 +116,25 @@ class CsvPaths(CsvPathsPublic):
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         for path in paths:
-            csvpath = self.csvpath()
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
-            self.path_results_manager.add_named_result(result)
-            self.file_results_manager.add_named_result(result)
-            f = path.find("[")
-            path = f"${file}{path[f:]}"
-            csvpath.parse(path)
-            csvpath.fast_forward()
+            try:
+                csvpath = self.csvpath()
+                result = CsvPathResult(
+                    csvpath=csvpath, file_name=filename, paths_name=pathsname
+                )
+                self.path_results_manager.add_named_result(result)
+                self.file_results_manager.add_named_result(result)
+                f = path.find("[")
+                apath = f"${file}{path[f:]}"
+                csvpath.parse(apath)
+                csvpath.fast_forward()
+            except Exception as ex:
+                #
+                # what is the best way to handle this?
+                # config throw, log, etc.?
+                #
+                raise ex
 
-    def next_paths(self, pathsname, filename):
+    def next_paths(self, *, pathsname, filename):
         """appends the CsvPathResult for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
@@ -155,19 +162,19 @@ class CsvPaths(CsvPathsPublic):
 
     # =============== breadth first processing ================
 
-    def collect_by_line(self, pathsname, filename):
+    def collect_by_line(self, *, pathsname, filename):
         for line in self.next_by_line(
             pathsname=pathsname, filename=filename, collect=True
         ):
             pass
 
-    def fast_forward_by_line(self, pathsname, filename):
+    def fast_forward_by_line(self, *, pathsname, filename):
         for line in self.next_by_line(
             pathsname=pathsname, filename=filename, collect=False
         ):
             pass
 
-    def next_by_line(self, pathsname, filename, collect: bool = False) -> List[Any]:
+    def next_by_line(self, *, pathsname, filename, collect: bool = False) -> List[Any]:
         if filename not in self.files_manager.named_files:
             raise ConfigurationException(f"filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)

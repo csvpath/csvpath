@@ -49,11 +49,25 @@ class PathsManager(CsvPathsManager):
             dlist = os.listdir(dirname)
             base = dirname
             for p in dlist:
+                #
+                # TODO: make allowed exts config
+                #
+                if p[0] == ".":
+                    continue
+                if p.find(".") == -1:
+                    continue
+                ext = p[p.rfind(".") + 1 :].strip().lower()
+                if ext not in ["txt", "csvpaths"]:
+                    continue
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
                 with open(path, "r") as f:
                     cp = f.read()
-                    _ = [apath.strip() for apath in cp.split(PathsManager.MARKER)]
+                    _ = [
+                        apath.strip()
+                        for apath in cp.split(PathsManager.MARKER)
+                        if apath.strip() != ""
+                    ]
                     self.add_named_paths(name, _)
         else:
             raise ConfigurationException("dirname must point to a directory")

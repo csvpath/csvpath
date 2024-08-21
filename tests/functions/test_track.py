@@ -37,8 +37,8 @@ class TestFunctionsTrack(unittest.TestCase):
         path.fast_forward()
         print(f"\tnest_function_track2: path vars: {path.variables}")
         assert path.variables["food"]
-        assert path.variables["food"]["Bulgur"]
-        assert path.variables["food"]["Bulgur"] == "grain"
+        assert path.variables["food"]["Bulgar"]
+        assert path.variables["food"]["Bulgar"] == "grain"
 
     def test_function_track3(self):
         path = CsvPath()

@@ -103,14 +103,14 @@ class CsvPath(CsvPathPublic):
             self.printers.append(StdOutPrinter())
 
     def has_errors(self) -> bool:
+        #
+        # TODO: test this more.
+        #
         if self.errors:
             return len(self.errors) > 0
         elif self.error_collector:
             return self.error_collector.has_errors()
-        else:
-            raise ConfigurationException(
-                "There must either be a list of errors or an error collector"
-            )
+        return False
 
     @property
     def errors(self) -> List[Error]:

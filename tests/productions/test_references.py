@@ -1,44 +1,73 @@
 import unittest
 import pytest
 from lark.exceptions import VisitError
-from csvpath.csvpath import CsvPaths
-from csvpath.matching.util.exceptions import ChildrenException
-from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath import CsvPaths
+from csvpath.matching.productions import Reference
 from tests.save import Save
 
-FILES = "tests/test_resources/named_files"
+NAMED_FILES_DIR = "tests/test_resources/named_files"
 NAMED_PATHS_DIR = "tests/test_resources/named_paths"
+PATH = "tests/test_resources/food.csv"
 
 
 class TestReferences(unittest.TestCase):
+    def test_get_reference_for_parts(self):
+        reference = Reference(matcher=None, name="zipcodes.variables.zipcodes.Boston")
+        nameparts = ["zipcodes", "variables", "zipcodes", "Boston"]
+        ref = reference._get_reference_for_parts(nameparts)
+        assert ref["file"] == "zipcodes"
+        assert ref["paths_name"] is None
+        assert ref["var_or_header"] == "variables"
+        assert ref["name"] == "zipcodes"
+        assert ref["tracking"] == "Boston"
+
+    #
+    # using a named path, read city zip codes from a named
+    # file track the codes by city to $.variables.zipcodes
+    # from another csvpath make a reference to
+    #     $.variables.zipcodes.Boston
+    # use the reference to set a local var. and check it.
+    #
     def test_parse_variable_reference1(self):
         #
-        # does a reference in an assignment parse?
+        # setup the city->zip variable
         #
         cs = CsvPaths()
-        cs.files_manager.set_named_files(FILES)
+        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
-        cnt = 0
-        for line in cs.next_by_line(filename="food", pathsname="many"):
-            cnt += 1
-            print(f"vars 0: {cs.current_matchers[0].variables}")
-            print(f"vars 1: {cs.current_matchers[1].variables}")
-            assert (
-                cs.current_matchers[0].variables["test"]
-                != cs.current_matchers[1].variables["test"]
-            )
-        assert cnt == 11
-        valid = cs.path_results_manager.is_valid("many")
-        assert valid
-        assert cs.path_results_manager.get_number_of_results("many") == 2
-        pvars = cs.path_results_manager.get_variables("many")
-        assert "one" in pvars
-        assert isinstance(pvars["one"], int)
-        assert pvars["one"] == 11
+        cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
+        rm = cs.file_results_manager
+        resultset = rm.get_named_results("zipcodes")
+        assert resultset
+        assert len(resultset) == 1
+        results = resultset[0]
+        rcp = results.csvpath
+        rcp.variables
+        print(f"test_parse_variable_reference1: rcp.variables: {rcp.variables}")
+        assert "zipcodes" in rcp.variables
+        assert "Boston" in rcp.variables["zipcodes"]
 
-    def test_parse_header_reference1(self):
         #
-        # does a reference in an assignment parse?
+        # now use the tracked variable by reference
         #
-        path = CsvPaths()
+        path = cs.csvpath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                ~#food == "Bulgar" ~
+                @zip = $zipcodes.variables.zipcodes.Boston
+
+            ]"""
+        )
         path.fast_forward()
+        if path.errors:
+            print(
+                f"test_parse_variable_reference1: there are errors: {len(path.errors)}"
+            )
+            for error in path.errors:
+                print(f"test_parse_variable_reference1: error: {error}")
+        assert not path.has_errors()
+        print("test_parse_variable_reference1: done with fast forward")
+        print(f"test_parse_variable_reference1: variables: {path.variables}")
+        assert path.variables["zip"] == "01915"

@@ -15,7 +15,7 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.files_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
         cnt = 0
-        for line in cs.next_paths("food", "food"):
+        for line in cs.next_paths(filename="food", pathsname="food"):
             print(f"test_csvpaths_next_paths: path: {line[len(line) - 1]}")
             cnt += 1
         assert cnt == 4
@@ -25,7 +25,7 @@ class TestNewCsvPaths(unittest.TestCase):
         cs = CsvPaths()
         cs.files_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
-        cs.fast_forward_paths("food", "food")
+        cs.fast_forward_paths(filename="food", pathsname="food")
         n = cs.path_results_manager.get_number_of_results("food")
         valid = cs.path_results_manager.is_valid("food")
         assert not valid
@@ -39,7 +39,7 @@ class TestNewCsvPaths(unittest.TestCase):
         cs = CsvPaths()
         cs.files_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
-        cs.collect_paths("food", "food")
+        cs.collect_paths(filename="food", pathsname="food")
         valid = cs.path_results_manager.is_valid("food")
         assert not valid
         assert cs.path_results_manager.get_number_of_results("food") == 2
