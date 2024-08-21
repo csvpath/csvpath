@@ -27,35 +27,42 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     instances against the same file.
     """
 
-    def __init__(self, *, lines: List[List[Any]] = None, path: CsvPath = None):
+    def __init__(
+        self,
+        *,
+        lines: List[List[Any]] = None,
+        csvpath: CsvPath,
+        file_name: str,
+        paths_name: str,
+    ):
         self._lines: List[List[Any]] = None
         self._csvpath = None
-        self._name = None
+        self._paths_name = paths_name
+        self._file_name = file_name
         self._errors = []
-        self._results_index = -1
         self._printouts = {}
 
         #
         # use the properties so error_collector, etc. is set correctly
         #
-        self.csvpath = path
+        self.csvpath = csvpath
         self.lines = lines
 
     @property
-    def results_index(self) -> int:
-        return self._results_index
+    def paths_name(self) -> str:
+        return self._paths_name
 
-    @results_index.setter
-    def results_index(self, index: int) -> None:
-        self._results_index = index
+    @paths_name.setter
+    def paths_name(self, paths_name: str) -> None:
+        self._paths_name = paths_name
 
     @property
-    def name(self) -> str:
-        return self._name
+    def file_name(self) -> str:
+        return self._file_name
 
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
+    @file_name.setter
+    def file_name(self, file_name: str) -> None:
+        self._file_name = file_name
 
     @property
     def lines(self) -> List[List[Any]]:
@@ -96,7 +103,8 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
 
     @property
     def printouts(self) -> List[str]:
-        """this method returns the default printouts. use get_printout_by_name for specific printouts"""
+        """this method returns the default printouts. use get_printout_by_name
+        for specific printouts"""
         if self._printouts is None:
             self._printouts = []
         return self._printouts["default"] if "default" in self._printouts else []
@@ -133,8 +141,8 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     def __str__(self) -> str:
         return f"""CsvPathResult
                    file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
-                   name of csvpaths:{self.name};
-                   results index:{self.results_index};
+                   name of paths:{self.paths_name};
+                   name of file:{self.file_name};
                    valid:{self.csvpath.is_valid};
                    stopped:{self.csvpath.stopped};
                    last line processed:{self.csvpath.line_number};
@@ -181,6 +189,12 @@ class CsvPathsResultsManager(ABC):
 
     @abstractmethod
     def get_named_results(self, name: str) -> List[CsvPathResult]:
+        """Named csvpaths: For each named paths, keeps and returns the most recent
+        run of the paths producing results
+
+        Named files: For each named file, keeps and returns the results of
+        running any paths on the named file
+        """
         pass
 
     @abstractmethod
@@ -189,11 +203,31 @@ class CsvPathsResultsManager(ABC):
 
 
 class ResultsManager(CsvPathsResultsManager):
-    def __init__(self, csvpaths):
+    FILES_MANAGER_TYPE = "files"
+    PATHS_MANAGER_TYPE = "paths"
+
+    def __init__(self, *, csvpaths=None, type=None):
         self.named_results = dict()
         self._csvpaths = None
+        self._type = None
+
         # use property
         self.csvpaths = csvpaths
+        self.type = type
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, type: str) -> None:
+        if (
+            type == ResultsManager.PATHS_MANAGER_TYPE
+            or type == ResultsManager.FILES_MANAGER_TYPE
+        ):
+            self._type = type
+        else:
+            raise ConfigurationException(f"type must be 'files' or 'paths', not {type}")
 
     @property
     def csvpaths(self) -> CsvPaths:  # noqa: F821
@@ -209,11 +243,8 @@ class ResultsManager(CsvPathsResultsManager):
         if results and len(results):
             rs = results[0]
             path = rs.csvpath
-            #
-            # TODO: we could be a file results manager. can't assume paths
-            #
-            meta["paths name"] = name
-            meta["file name"] = path.scanner.filename
+            meta["paths name"] = rs.paths_name
+            meta["file name"] = rs.file_name
             meta["lines"] = path.total_lines
             paths = len(self.csvpaths.paths_manager.get_named_paths(name))
             meta["csvpaths applied"] = paths
@@ -242,9 +273,16 @@ class ResultsManager(CsvPathsResultsManager):
         else:
             return len(nr)
 
-    def add_named_result(self, name: str, result: CsvPathResult) -> None:
-        result.name = name
-        result.results_index = len(self.named_results)
+    def add_named_result(self, result: CsvPathResult) -> None:
+        if result.file_name is None:
+            raise ConfigurationException("Results must have a named file")
+        if result.paths_name is None:
+            raise ConfigurationException("Results must have a named-paths name")
+        name = (
+            result.file_name
+            if self.type == ResultsManager.FILES_MANAGER_TYPE
+            else result.paths_name
+        )
         if name not in self.named_results:
             self.named_results[name] = [result]
         else:

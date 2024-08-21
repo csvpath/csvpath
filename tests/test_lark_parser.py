@@ -29,7 +29,8 @@ class TestLarkParser(unittest.TestCase):
                         tree = parser.parse(matchpart)
                         print(f"path {path} is:\n{tree.pretty()}")
             except Exception as ex:
-                print(f"Error on {i}: {ex}")
+                print(f"Error on {i}: {ex} at {p}")
                 e += 1
-        print("test_lark_parser: {i} examples parsed correctly")
+                break
+        print(f"test_lark_parser: {i} examples parsed correctly")
         assert e == 0

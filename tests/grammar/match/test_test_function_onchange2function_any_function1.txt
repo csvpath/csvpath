@@ -1,4 +1,0 @@
-[
-                @oc.onchange.onmatch = in(#firstname, "Frog|Bug|Fish")
-                print.onmatch("printing: oc: $.variables.oc, count: $.match_count")
-            ]

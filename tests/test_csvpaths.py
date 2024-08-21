@@ -87,7 +87,7 @@ class TestNewCsvPaths(unittest.TestCase):
         assert "csvpaths completed" in meta
         assert "valid" in meta
         assert meta["paths name"] == "many"
-        assert meta["file name"] == "tests/test_resources/named_files/food.csv"
+        assert meta["file name"] == "food"
         assert meta["lines"] == 10
         assert meta["csvpaths applied"] == 2
         assert meta["csvpaths completed"] is True

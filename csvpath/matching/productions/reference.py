@@ -64,7 +64,9 @@ class Reference(Matchable):
                         break
             elif self.variables:
                 #
-                # the syntax is $namedfile.variables-qualifier.varname.tracking
+                # the syntax is $named-file[.named-path].variables-qualifier.varname.tracking
+                # the syntax is $named-file[.named-path].headers-qualifier.headername
+                # the syntax is $named-connection.query.queryname.columnname
                 #
                 varname = self.first_non_term_qualifier()
                 tracking = self.second_non_term_qualifier()

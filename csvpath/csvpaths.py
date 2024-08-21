@@ -71,8 +71,8 @@ class CsvPaths(CsvPathsPublic):
     ):
         self.paths_manager = PathsManager()
         self.files_manager = FilesManager()
-        self.path_results_manager = ResultsManager(self)
-        self.file_results_manager = ResultsManager(self)
+        self.path_results_manager = ResultsManager(csvpaths=self, type="paths")
+        self.file_results_manager = ResultsManager(csvpaths=self, type="files")
         self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -97,9 +97,11 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
-            result = CsvPathResult(path=csvpath)
-            self.path_results_manager.add_named_result(pathsname, result)
-            self.file_results_manager.add_named_result(filename, result)
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
+            self.path_results_manager.add_named_result(result)
+            self.file_results_manager.add_named_result(result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -115,9 +117,11 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
-            result = CsvPathResult(path=csvpath)
-            self.path_results_manager.add_named_result(pathsname, result)
-            self.file_results_manager.add_named_result(filename, result)
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
+            self.path_results_manager.add_named_result(result)
+            self.file_results_manager.add_named_result(result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -137,9 +141,11 @@ class CsvPaths(CsvPathsPublic):
         file = self.files_manager.get_named_file(filename)
         for path in paths:
             csvpath = self.csvpath()
-            result = CsvPathResult(path=csvpath)
-            self.path_results_manager.add_named_result(pathsname, result)
-            self.file_results_manager.add_named_result(filename, result)
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
+            self.path_results_manager.add_named_result(result)
+            self.file_results_manager.add_named_result(result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -190,9 +196,11 @@ class CsvPaths(CsvPathsPublic):
             # the lines object is a shared reference. calling it
             # out because do we like doing it that way?
             #
-            result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
-            self.path_results_manager.add_named_result(pathsname, result)
-            self.file_results_manager.add_named_result(filename, result)
+            result = CsvPathResult(
+                csvpath=csvpath[0], file_name=filename, paths_name=pathsname
+            )
+            self.path_results_manager.add_named_result(result)
+            self.file_results_manager.add_named_result(result)
 
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths

@@ -11,6 +11,9 @@ PATH = "tests/test_resources/test.csv"
 
 class TestReferences(unittest.TestCase):
     def test_reference1(self):
+        #
+        # does a reference in an assignment parse?
+        #
         path = CsvPath()
         Save._save(path, "test_reference1")
         path.parse(
@@ -18,7 +21,7 @@ class TestReferences(unittest.TestCase):
                         [*]
                         [
                             count.t()
-                            $ref.headers.zipcodes
+                            @a = $ref.headers.zipcodes
                         ]
                    """
         )

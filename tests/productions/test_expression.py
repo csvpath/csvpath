@@ -40,7 +40,7 @@ class TestExpressions(unittest.TestCase):
         paths = CsvPaths()
         path = paths.csvpath()
         matcher = Matcher(csvpath=path, data="[yes()]")
-        results = CsvPathResult(path=path)
+        results = CsvPathResult(csvpath=path, file_name="...", paths_name="......")
 
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()

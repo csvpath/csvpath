@@ -1,5 +1,4 @@
 [
     @l = add( 4, length("this"))
-    $test.headers.zipcodes
-    @visitors = $test.variables.city.Boston
+    @visitors = $test.path.variables.city.Boston
 ]

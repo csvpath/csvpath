@@ -15,7 +15,7 @@ class LarkParser:
                   | COMMENT
 
         action: (function|assignment)
-        left: HEADER|VARIABLE|function|REFERENCE
+        left: HEADER|VARIABLE|function
         assignment: VARIABLE ASSIGN (left|REFERENCE|(STRING | SIGNED_NUMBER | REGEX))
         equality: left EQUALS (left|REFERENCE|(STRING | SIGNED_NUMBER | REGEX))
 
