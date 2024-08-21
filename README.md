@@ -270,13 +270,15 @@ The form of a reference is:
     $named_file.variables.firstname
 ```
 
-Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/references.md'>more about references here</a>.
-
 This reference looks in the results named for its CSV file. The qualifier `variables` indicates the value is a variable named `firstname`.
 
 |Returns    | Matches | Examples      |
 |-----------|---------|---------------|
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
+
+
+Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/references.md'>more about references here</a>.
+
 
 <a name="comments"></a>
 ## Comments
