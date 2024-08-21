@@ -1,6 +1,7 @@
 from . import DataException, ChildrenException, Matchable
 from csvpath.util.error import Error
 from datetime import datetime
+import traceback
 
 
 class Expression(Matchable):
@@ -16,6 +17,8 @@ class Expression(Matchable):
                 self.match = ret
             except Exception as e:
                 error = self._new_error(e)
+                trace = traceback.format_exc()
+                error.message = trace
                 if self.matcher.csvpath:
                     self.matcher.csvpath.collect_error(error)
                 else:

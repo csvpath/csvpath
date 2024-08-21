@@ -21,6 +21,30 @@ class TestReferences(unittest.TestCase):
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] == "Boston"
 
+        nameparts = ["zipcodes", "apath", "variables", "zipcodes", "Boston"]
+        ref = reference._get_reference_for_parts(nameparts)
+        assert ref["file"] == "zipcodes"
+        assert ref["paths_name"] == "apath"
+        assert ref["var_or_header"] == "variables"
+        assert ref["name"] == "zipcodes"
+        assert ref["tracking"] == "Boston"
+
+        nameparts = ["zipcodes", "apath", "headers", "zipcodes", "Boston"]
+        ref = reference._get_reference_for_parts(nameparts)
+        assert ref["file"] == "zipcodes"
+        assert ref["paths_name"] == "apath"
+        assert ref["var_or_header"] == "headers"
+        assert ref["name"] == "zipcodes"
+        assert ref["tracking"] == "Boston"
+
+        nameparts = ["zipcodes", "apath", "headers", "zipcodes"]
+        ref = reference._get_reference_for_parts(nameparts)
+        assert ref["file"] == "zipcodes"
+        assert ref["paths_name"] == "apath"
+        assert ref["var_or_header"] == "headers"
+        assert ref["name"] == "zipcodes"
+        assert ref["tracking"] is None
+
     #
     # using a named path, read city zip codes from a named
     # file track the codes by city to $.variables.zipcodes
@@ -71,3 +95,42 @@ class TestReferences(unittest.TestCase):
         print("test_parse_variable_reference1: done with fast forward")
         print(f"test_parse_variable_reference1: variables: {path.variables}")
         assert path.variables["zip"] == "01915"
+
+    def test_parse_variable_reference2(self):
+        cs = CsvPaths()
+        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.collect_paths(filename="zipcodes", pathsname="zips")
+        rm = cs.file_results_manager
+        resultset = rm.get_named_results("zipcodes")
+        assert resultset
+        assert len(resultset) == 1
+        results = resultset[0]
+        rcp = results.csvpath
+        assert rcp
+        #
+        # now test if the header `points` has any values
+        #
+        path = cs.csvpath()
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                @zip = $zipcodes.headers.points
+                @cities = $zipcodes.headers.city
+
+            ]"""
+        )
+        path.fast_forward()
+        if path.errors:
+            print(
+                f"test_parse_variable_reference1: there are errors: {len(path.errors)}"
+            )
+            for error in path.errors:
+                print(f"test_parse_variable_reference1: error: {error}")
+        assert path.has_errors() is not True
+        print("test_parse_variable_reference1: done with fast forward")
+        print(f"test_parse_variable_reference1: variables: {path.variables}")
+
+        assert path.variables["zip"] is False
+        assert path.variables["cities"] is True

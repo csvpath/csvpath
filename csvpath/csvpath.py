@@ -594,4 +594,4 @@ class CsvPath(CsvPathPublic):
         for i, n in enumerate(self.headers):
             if n == name:
                 return i
-        return i
+        return -1

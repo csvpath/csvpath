@@ -57,7 +57,7 @@ class Reference(Matchable):
             return self._noop_value()
         if self.value is None:
             ref = self._get_reference()
-            if ref["var_or_header"] == "header":
+            if ref["var_or_header"] == "headers":
                 self.value = self._header_value()
             else:
                 self.value = self._variable_value()
@@ -87,32 +87,32 @@ class Reference(Matchable):
         return results
 
     def _get_reference(self) -> Dict[str, str]:
-        return self._get_reference_for_parts(self.name_parts)
+        if self.ref is None:
+            self.ref = self._get_reference_for_parts(self.name_parts)
+        return self.ref
 
-    # TODO: test me
     def _get_reference_for_parts(self, name_parts: List[str]) -> Dict[str, str]:
+        # this method is not persistent to facilitate testing
         # file . variable/header . name . tracking
         # file . path . variable/header . name . tracking
-        if self.ref is None:
-            ref = {}
-            if name_parts[1] in ["variables", "headers"]:
-                ref["file"] = name_parts[0]
-                ref["paths_name"] = None
-                ref["var_or_header"] = name_parts[1]
-                ref["name"] = name_parts[2]
-                ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
-            else:
-                ref["file"] = name_parts[0]
-                ref["paths_name"] = name_parts[1]
-                ref["var_or_header"] = name_parts[2]
-                ref["name"] = name_parts[3]
-                ref["tracking"] = name_parts[4] if len(name_parts) == 5 else None
-            if ref["var_or_header"] not in ["variables", "headers"]:
-                raise ChildrenException(
-                    f"""References must be to variables or headers, not {ref["var_or_header"]}"""
-                )
-            self.ref = ref
-        return self.ref
+        ref = {}
+        if name_parts[1] in ["variables", "headers"]:
+            ref["file"] = name_parts[0]
+            ref["paths_name"] = None
+            ref["var_or_header"] = name_parts[1]
+            ref["name"] = name_parts[2]
+            ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
+        else:
+            ref["file"] = name_parts[0]
+            ref["paths_name"] = name_parts[1]
+            ref["var_or_header"] = name_parts[2]
+            ref["name"] = name_parts[3]
+            ref["tracking"] = name_parts[4] if len(name_parts) == 5 else None
+        if ref["var_or_header"] not in ["variables", "headers"]:
+            raise ChildrenException(
+                f"""References must be to variables or headers, not {ref["var_or_header"]}"""
+            )
+        return ref
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
@@ -139,7 +139,7 @@ class Reference(Matchable):
         # will not be correct here. leaving that for now.
         # TODO: document the potential gotcha
         #
-        i = csvpath.header_index(ref["var_or_header"])
+        i = csvpath.header_index(ref["name"])
         for line in results.lines:
             if line[i] is not None and f"{line[i]}".strip() != "":
                 value = True
