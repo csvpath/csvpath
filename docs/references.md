@@ -57,6 +57,7 @@ This path doesn't do much, other than illustrate the use of references. It says 
 
 A note of warning. As you can see, CsvPath and CsvPaths are working together to make this reference possible. References only have meaning in the context of a CsvPaths instance. The intention is for references to fail gracefully when there is no CsvPaths instance orchestrating CsvPath instances. However, you should definitely not count on graceful or predictable failure. Instead, just be mindful how you are using your paths and write them accordingly.
 
+In the same vein, your csvpath could collect a different number of headers than the original file has, potentially causing problems with references. If you use `collect()` to capture, say, 2 headers out of 5, your indexes would be different and the resulting lines would have only two values, not five. Moreover, you would be missing 3 header names. Since references by name are converted to indexes your references might use the correct name of a captured column but under the hood attempt to access it using the wrong index. Today there is no work around for this, other than just not doing it.
 
 
 
