@@ -11,7 +11,7 @@ References are similar to the pointers you use in the `print()` function. They l
     $[1][
         ~ this variable takes the value of a variable named "my_variable"
           in the most recent csvpaths run against the file identified
-          as my_namedfile. ~
+          as "my_namedfile". ~
         @ref_one = $my_namedfile.variables.my_variable
 
         ~ this second variable takes its value from the "Today" key of the
@@ -22,7 +22,7 @@ References are similar to the pointers you use in the `print()` function. They l
     ]
 ```
 
-References point to the results of a path run against a file. They always refer to the most recent such run.
+References point to the results of a csvpath run against a file. They always refer to the most recent such run.
 
 A reference is composed of the following parts in this order:
 - A named-file name
@@ -54,6 +54,9 @@ This reference points to the `total` variable resulting from the most recent Csv
 ```
 
 This path doesn't do much, other than illustrate the use of references. It says that if the value found by the most recent run of the `orders` CSV file was too low we declare it invalid and stop processing.
+
+A note of warning. As you can see, CsvPath and CsvPaths are working together to make this reference possible. References only have meaning in the context of a CsvPaths instance. The intention is for references to fail gracefully when there is no CsvPaths instance orchestrating CsvPath instances. However, you should definitely not count on graceful or predictable failure. Instead, just be mindful how you are using your paths and write them accordingly.
+
 
 
 
