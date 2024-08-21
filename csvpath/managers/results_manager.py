@@ -192,6 +192,7 @@ class ResultsManager(CsvPathsResultsManager):
     def __init__(self, csvpaths):
         self.named_results = dict()
         self._csvpaths = None
+        # use property
         self.csvpaths = csvpaths
 
     @property
@@ -208,6 +209,9 @@ class ResultsManager(CsvPathsResultsManager):
         if results and len(results):
             rs = results[0]
             path = rs.csvpath
+            #
+            # TODO: we could be a file results manager. can't assume paths
+            #
             meta["paths name"] = name
             meta["file name"] = path.scanner.filename
             meta["lines"] = path.total_lines

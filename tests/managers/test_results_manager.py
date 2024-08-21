@@ -14,7 +14,7 @@ class TestResultsManager(unittest.TestCase):
         rs = {}
         rs["many"] = results
 
-        rm = paths.results_manager
+        rm = paths.path_results_manager
         rm.set_named_results(results=rs)
 
         some = rm.get_named_results("many")

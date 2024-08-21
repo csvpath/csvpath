@@ -60,12 +60,19 @@ class CsvPathsPublic(ABC):
 
 
 class CsvPaths(CsvPathsPublic):
+    """Manages the application of csvpaths to files. Csvpaths must be grouped and named.
+    Files must be named. Results are indexed by `path_results_manager` and
+    `file_results_manager`. CsvPaths instances can be reused. Path results and
+    file results can be out of sync, which may be useful at times.
+    """
+
     def __init__(
         self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
     ):
         self.paths_manager = PathsManager()
         self.files_manager = FilesManager()
-        self.results_manager = ResultsManager(self)
+        self.path_results_manager = ResultsManager(self)
+        self.file_results_manager = ResultsManager(self)
         self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -91,7 +98,8 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
-            self.results_manager.add_named_result(pathsname, result)
+            self.path_results_manager.add_named_result(pathsname, result)
+            self.file_results_manager.add_named_result(filename, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -108,7 +116,8 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
-            self.results_manager.add_named_result(pathsname, result)
+            self.path_results_manager.add_named_result(pathsname, result)
+            self.file_results_manager.add_named_result(filename, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -129,7 +138,8 @@ class CsvPaths(CsvPathsPublic):
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(path=csvpath)
-            self.results_manager.add_named_result(pathsname, result)
+            self.path_results_manager.add_named_result(pathsname, result)
+            self.file_results_manager.add_named_result(filename, result)
             f = path.find("[")
             path = f"${file}{path[f:]}"
             csvpath.parse(path)
@@ -181,7 +191,8 @@ class CsvPaths(CsvPathsPublic):
             # out because do we like doing it that way?
             #
             result = CsvPathResult(path=csvpath[0], lines=csvpath[1])
-            self.results_manager.add_named_result(pathsname, result)
+            self.path_results_manager.add_named_result(pathsname, result)
+            self.file_results_manager.add_named_result(filename, result)
 
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths

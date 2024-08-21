@@ -2,7 +2,15 @@ from lark import Transformer, v_args
 from lark.tree import Tree
 from lark.lexer import Token
 
-from .productions import Matchable, Equality, Variable, Term, Expression, Header
+from .productions import (
+    Matchable,
+    Equality,
+    Variable,
+    Term,
+    Expression,
+    Header,
+    Reference,
+)
 from .functions.function import Function
 from .functions.function_factory import FunctionFactory
 
@@ -63,6 +71,11 @@ class LarkTransformer(Transformer):
     # token
     def VARIABLE(self, token):
         v = Variable(self.matcher, name=token.value[1:])
+        return v
+
+    # token
+    def REFERENCE(self, token):
+        v = Reference(self.matcher, name=token.value[1:])
         return v
 
     # function: /[a-zA-Z][a-zA-Z-0-9\._]*/ args
