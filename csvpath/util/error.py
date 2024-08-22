@@ -45,20 +45,43 @@ class ErrorHandler:
             )
         error = self.build(ex)
         if self._csvpath:
-            self._handle_if(self._csvpath.config.CSVPATH_ON_ERROR, error)
+            self._handle_if(
+                collector=self._csvpath,
+                policy=self._csvpath.config.CSVPATH_ON_ERROR,
+                error=error,
+            )
         if self._csvpaths:
-            self._handle_if(self._csvpath.config.CSVPATHS_ON_ERROR, error)
+            self._handle_if(
+                collector=self._csvpaths,
+                policy=self._csvpaths.config.CSVPATHS_ON_ERROR,
+                error=error,
+            )
 
-    def _handle_if(self, policy: List[str], error: Error) -> None:
+    def _handle_if(self, *, collector, policy: List[str], error: Error) -> None:
         print(f"Error._handle_if: policy: {policy}")
 
         if OnError.QUIET.value not in policy:
-            pass
-            # do logging
+            #
+            # this doesn't go to standard out so it's already "quiet".
+            # do we really want to let people rely on just the collected
+            # errors? what would be the advantage? Otoh, this will drop
+            # a lot of text into the log. maybe just print a single
+            # line?
+            #
+            if self._csvpath:
+                self._csvpath.logger.error(f"{error}")
+            else:
+                self._csvpaths.logger.error(f"{error}")
+        else:
+            if self._csvpath:
+                self._csvpath.logger.error(f"{error.message}")
+            else:
+                self._csvpaths.logger.error(f"{error.exception_class}: {error.message}")
+
         if OnError.STOP.value in policy:
             self._csvpath.stopped = True
         if OnError.COLLECT.value in policy:
-            self._csvpath.collect_error(error)
+            collector.collect_error(error)
         if OnError.FAIL.value in policy:
             self._csvpath.is_valid = False
         if OnError.RAISE.value in policy:

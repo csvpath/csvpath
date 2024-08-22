@@ -1,6 +1,7 @@
 import csv
 import time
 import os
+import traceback
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
@@ -106,12 +107,9 @@ class CsvPath(CsvPathPublic):
         if print_default:
             self.printers.append(StdOutPrinter())
         self.logger = self.config.get_logger("csvpath")
-        self.logger.info("initialized CsvPath")
+        self.logger.info("initializing CsvPath")
 
     def has_errors(self) -> bool:
-        #
-        # TODO: test this more.
-        #
         if self.errors and len(self.errors) > 0:
             return True
         elif self.error_collector:
@@ -341,6 +339,7 @@ class CsvPath(CsvPathPublic):
             pass
 
     def _next_line(self) -> List[Any]:
+        self.logger.info(f"beginning to scan file: {self.scanner.filename}")
         with open(self.scanner.filename, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
@@ -465,6 +464,10 @@ class CsvPath(CsvPathPublic):
         if not self.match:
             return True
         if self.matcher is None:
+            import hashlib
+
+            h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
+            self.logger.info(f"loading matcher with data. hash: {h}")
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers
             )
