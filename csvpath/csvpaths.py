@@ -1,7 +1,9 @@
+from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Tuple
 import csv
 import os
 import json
+import traceback
 from csvpath.util.error import ErrorHandler
 from csvpath.util.config import CsvPathConfig
 from . import CsvPath
@@ -10,8 +12,6 @@ from . import ConfigurationException
 from . import PathsManager
 from . import FilesManager
 from . import ResultsManager, CsvPathResult
-from abc import ABC, abstractmethod
-import traceback
 
 
 class CsvPathsPublic(ABC):
@@ -82,6 +82,7 @@ class CsvPaths(CsvPathsPublic):
         self.skip_blank_lines = skip_blank_lines
         self.current_matchers: List[CsvPath] = []
         self.config = CsvPathConfig()
+        self.log = self.config.get_logger("csvpaths")
 
     def csvpath(self) -> CsvPath:
         return CsvPath(

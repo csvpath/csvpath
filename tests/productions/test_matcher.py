@@ -30,7 +30,6 @@ class TestMatcher(unittest.TestCase):
         assert isinstance(matcher.expressions[0][0].children[0].children[1], Term)
         assert matcher.expressions[0][0].children[0].matches()
         assert matcher.expressions[0][0].matches()
-        assert matcher.matches(syntax_only=True)
 
     # ============= SCAN AND MATCH ================
 

@@ -3,6 +3,7 @@ from csvpath.scanning.scanning_lexer import ScanningLexer
 from ..util.parser_utility import ParserUtility
 from typing import List
 from .exceptions import ScanException, UnexpectedException
+from csvpath.util.config import CsvPathConfig
 
 
 class Scanner(object):
@@ -19,8 +20,12 @@ class Scanner(object):
         self.to_line = None
         self.path = None
         self.quiet = True
-        self.block_print = True
-        self.print(f"initialized Scanner: {self}")
+        if self.csvpath:
+            self.log = self.csvpath.config.get_logger("scanner")
+        else:
+            # unit testing only
+            config = CsvPathConfig()
+            self.log = config.get_logger("scanner")
 
     def __str__(self):
         return f"""
@@ -33,10 +38,6 @@ class Scanner(object):
             all_lines: {self.all_lines}
             these: {self.these}
         """
-
-    def print(self, msg: str) -> None:
-        if not self.block_print:
-            print(msg)
 
     def is_last(
         self,

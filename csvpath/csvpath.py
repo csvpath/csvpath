@@ -6,8 +6,8 @@ from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from . import Error, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
 from csvpath.util.config import CsvPathConfig
+from . import Error, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
 from . import (
     VariableException,
     InputException,
@@ -105,6 +105,7 @@ class CsvPath(CsvPathPublic):
             self.config = CsvPathConfig()
         if print_default:
             self.printers.append(StdOutPrinter())
+        self.log = self.config.get_logger("csvpath")
 
     def has_errors(self) -> bool:
         #
