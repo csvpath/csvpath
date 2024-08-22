@@ -225,7 +225,7 @@ class FunctionFactory:
             f = Jinjaf(matcher, name, child)
         elif name == "correlate":
             f = Correlate(matcher, name, child)
-        elif name == "count_headers":
+        elif name == "count_headers" or name == "count_headers_in_line":
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
             f = PercentUnique(matcher, name, child)

@@ -10,4 +10,7 @@ class CountHeaders(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return True
-        return len(self.matcher.headers)
+        if self.name == "count_headers":
+            return len(self.matcher.headers)
+        elif self.name == "count_headers_in_line":
+            return len(self.matcher.line)

@@ -1,0 +1,4 @@
+[
+                gt(count_headers_in_line(),  count_headers()) -> @toomany = count_lines()
+                lt(count_headers_in_line(),  count_headers()) -> @toofew = count_lines()
+            ]

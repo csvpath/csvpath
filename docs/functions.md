@@ -84,7 +84,6 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count.md'>count(value)</a> </td><td> count matches of value              </td></tr>
 <tr><td>           </td><td> count_lines()                 </td><td> count lines to this point in the file                     </td></tr>
 <tr><td>           </td><td> count_scans()                 </td><td> count lines we checked for match                          </td></tr>
-<tr><td>           </td><td> count_headers()                 </td><td> returns the number of columns      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/first.md'>first(value, value, ...)</a> </td><td> match the first occurrence and capture line  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/increment.md'>increment(value, n)</a> </td><td> increments a variable by n each time seen   </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
@@ -104,6 +103,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> column(value)                 </td><td> returns column name for an index or index for a name      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers()</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers_in_line()</a>    </td><td> returns the number of columns expected and in the row      </td></tr>
+
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/advance.md'>advance(int)</a></td><td> skips the next n-rows </td></tr>
