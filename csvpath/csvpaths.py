@@ -203,22 +203,10 @@ class CsvPaths(CsvPathsPublic):
                 f"pathsname '{pathsname}' must name a list of csvpaths"
             )
 
-        csvpath_objects = self._load_csvpath_objects(paths, fn)
-
-        for csvpath in csvpath_objects:
-            try:
-                #
-                # lines object is a shared reference between path and results.
-                #
-                result = CsvPathResult(
-                    csvpath=csvpath[0], file_name=filename, paths_name=pathsname
-                )
-                self.path_results_manager.add_named_result(result)
-                self.file_results_manager.add_named_result(result)
-            except Exception as ex:
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+        csvpath_objects = self._load_csvpath_objects(paths=paths, named_file=fn)
+        self._prep_csvpath_results(
+            csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname
+        )
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
@@ -253,7 +241,7 @@ class CsvPaths(CsvPathsPublic):
                     ErrorHandler(csvpaths=self).handle_error(ex)
 
     def _load_csvpath_objects(
-        self, paths: List[str], named_file: str
+        self, *, paths: List[str], named_file: str
     ) -> List[Tuple[CsvPath, List]]:
         csvpath_objects = []
         for path in paths:
@@ -263,6 +251,23 @@ class CsvPaths(CsvPathsPublic):
                 path = f"${named_file}{path[f:]}"
                 csvpath.parse(path)
                 csvpath_objects.append((csvpath, []))
+            except Exception as ex:
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)
+        return csvpath_objects
+
+    def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
+        for csvpath in csvpath_objects:
+            try:
+                #
+                # lines object is a shared reference between path and results.
+                #
+                result = CsvPathResult(
+                    csvpath=csvpath[0], file_name=filename, paths_name=pathsname
+                )
+                self.path_results_manager.add_named_result(result)
+                self.file_results_manager.add_named_result(result)
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
