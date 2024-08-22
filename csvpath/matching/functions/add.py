@@ -1,10 +1,10 @@
 from typing import Any
 from .function import Function
+from ..util.expression_utility import ExpressionUtility
 
 
 class Add(Function):
     def check_valid(self) -> None:
-        print(f"Add: check valid: {len(self.children)}")
         self.validate_two_or_more_args()
         super().check_valid()
 
@@ -18,6 +18,8 @@ class Add(Function):
             ret = 0
             for i, sib in enumerate(siblings):
                 v = sib.to_value(skip=skip)
+                if ExpressionUtility.is_none(v):
+                    v = 0
                 ret = float(v) + float(ret)
             self.value = ret
         return self.value

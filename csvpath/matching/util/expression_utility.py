@@ -5,6 +5,18 @@ from typing import Tuple, Any
 
 class ExpressionUtility:
     @classmethod
+    def is_none(self, v: Any) -> bool:
+        if v is None:
+            return True
+        elif v == "None":
+            return True
+        elif f"{v}" == "nan":
+            return True
+        elif f"{v}".strip() == "":
+            return True
+        return False
+
+    @classmethod
     def ascompariable(self, v: Any) -> Any:
         if v is None:
             return v
