@@ -1,7 +1,8 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import csv
 import os
 import json
+from csvpath.util.error import ErrorHandler
 from csvpath.util.config import CsvPathConfig
 from . import CsvPath
 from . import FileException
@@ -10,6 +11,7 @@ from . import PathsManager
 from . import FilesManager
 from . import ResultsManager, CsvPathResult
 from abc import ABC, abstractmethod
+import traceback
 
 
 class CsvPathsPublic(ABC):
@@ -99,17 +101,22 @@ class CsvPaths(CsvPathsPublic):
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         for path in paths:
-            csvpath = self.csvpath()
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
-            self.path_results_manager.add_named_result(result)
-            self.file_results_manager.add_named_result(result)
-            f = path.find("[")
-            path = f"${file}{path[f:]}"
-            csvpath.parse(path)
-            lines = csvpath.collect()
-            result.lines = lines
+            try:
+                csvpath = self.csvpath()
+                result = CsvPathResult(
+                    csvpath=csvpath, file_name=filename, paths_name=pathsname
+                )
+                self.path_results_manager.add_named_result(result)
+                self.file_results_manager.add_named_result(result)
+                f = path.find("[")
+                path = f"${file}{path[f:]}"
+                csvpath.parse(path)
+                lines = csvpath.collect()
+                result.lines = lines
+            except Exception as ex:
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)
 
     def fast_forward_paths(self, *, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
@@ -131,11 +138,9 @@ class CsvPaths(CsvPathsPublic):
                 csvpath.parse(apath)
                 csvpath.fast_forward()
             except Exception as ex:
-                #
-                # what is the best way to handle this?
-                # config throw, log, etc.?
-                #
-                raise ex
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)
 
     def next_paths(self, *, pathsname, filename):
         """appends the CsvPathResult for each CsvPath to the end of
@@ -150,18 +155,23 @@ class CsvPaths(CsvPathsPublic):
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         for path in paths:
-            csvpath = self.csvpath()
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
-            self.path_results_manager.add_named_result(result)
-            self.file_results_manager.add_named_result(result)
-            f = path.find("[")
-            path = f"${file}{path[f:]}"
-            csvpath.parse(path)
-            for line in csvpath.next():
-                line.append(result)
-                yield line
+            try:
+                csvpath = self.csvpath()
+                result = CsvPathResult(
+                    csvpath=csvpath, file_name=filename, paths_name=pathsname
+                )
+                self.path_results_manager.add_named_result(result)
+                self.file_results_manager.add_named_result(result)
+                f = path.find("[")
+                path = f"${file}{path[f:]}"
+                csvpath.parse(path)
+                for line in csvpath.next():
+                    line.append(result)
+                    yield line
+            except Exception as ex:
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)
 
     # =============== breadth first processing ================
 
@@ -193,25 +203,22 @@ class CsvPaths(CsvPathsPublic):
                 f"pathsname '{pathsname}' must name a list of csvpaths"
             )
 
-        csvpath_objects = []
-        for path in paths:
-            csvpath = self.csvpath()
-            f = path.find("[")
-            path = f"${fn}{path[f:]}"
-            csvpath.parse(path)
-            csvpath_objects.append((csvpath, []))
+        csvpath_objects = self._load_csvpath_objects(paths, fn)
 
         for csvpath in csvpath_objects:
-            #
-            # the lines object is a shared reference. calling it
-            # out because do we like doing it that way?
-            #
-            result = CsvPathResult(
-                csvpath=csvpath[0], file_name=filename, paths_name=pathsname
-            )
-            self.path_results_manager.add_named_result(result)
-            self.file_results_manager.add_named_result(result)
-
+            try:
+                #
+                # lines object is a shared reference between path and results.
+                #
+                result = CsvPathResult(
+                    csvpath=csvpath[0], file_name=filename, paths_name=pathsname
+                )
+                self.path_results_manager.add_named_result(result)
+                self.file_results_manager.add_named_result(result)
+            except Exception as ex:
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
@@ -222,20 +229,41 @@ class CsvPaths(CsvPathsPublic):
             )
             stopped_count: List[int] = []
             for line in reader:
-                self.current_matchers: List[CsvPath] = []
-                for p in csvpath_objects:
-                    if p[0].stopped:
-                        stopped_count.append(1)
-                    else:
-                        b = p[0]._consider_line(line)
-                        p[0].line_number = p[0].line_number + 1
-                        if b and collect:
-                            line = p[0].limit_collection(line)
-                            p[1].append(line)
-                        if b:
-                            self.current_matchers.append(p[0])
-                            # yield line
-                if len(self.current_matchers) > 0:
-                    yield line
-                if sum(stopped_count) == len(csvpath_objects):
-                    break
+                try:
+                    self.current_matchers: List[CsvPath] = []
+                    for p in csvpath_objects:
+                        if p[0].stopped:
+                            stopped_count.append(1)
+                        else:
+                            b = p[0]._consider_line(line)
+                            p[0].line_number = p[0].line_number + 1
+                            if b and collect:
+                                line = p[0].limit_collection(line)
+                                p[1].append(line)
+                            if b:
+                                self.current_matchers.append(p[0])
+                                # yield line
+                    if len(self.current_matchers) > 0:
+                        yield line
+                    if sum(stopped_count) == len(csvpath_objects):
+                        break
+                except Exception as ex:
+                    ex.trace = traceback.format_exc()
+                    ex.source = self
+                    ErrorHandler(csvpaths=self).handle_error(ex)
+
+    def _load_csvpath_objects(
+        self, paths: List[str], named_file: str
+    ) -> List[Tuple[CsvPath, List]]:
+        csvpath_objects = []
+        for path in paths:
+            try:
+                csvpath = self.csvpath()
+                f = path.find("[")
+                path = f"${named_file}{path[f:]}"
+                csvpath.parse(path)
+                csvpath_objects.append((csvpath, []))
+            except Exception as ex:
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(csvpaths=self).handle_error(ex)

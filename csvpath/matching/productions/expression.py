@@ -19,7 +19,7 @@ class Expression(Matchable):
                 e.trace = traceback.format_exc()
                 e.source = self
                 e.json = self.matcher.to_json(self)
-                ErrorHandler(self.matcher.csvpath).handle_error(e)
+                ErrorHandler(csvpath=self.matcher.csvpath).handle_error(e)
         return self.match
 
     def reset(self) -> None:

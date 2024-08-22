@@ -34,7 +34,7 @@ json: {self.json if self.json else ""}
 
 
 class ErrorHandler:
-    def __init__(self, csvpath=None, csvpaths=None):
+    def __init__(self, *, csvpath=None, csvpaths=None):
         self._csvpath = csvpath
         self._csvpaths = csvpaths
 

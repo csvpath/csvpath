@@ -60,10 +60,6 @@ class ExpressionEncoder:
         elif o is None:
             return f'{json} "None" '
         else:
-            #
-            # we could be testing so let's not blow up.
-            #
-            # raise Exception(f"what am I {o.__class__} \nin: {json}")
             return f'{json} "unknown child of type {o.__class__} " '
 
     def matchable(self, json: str, m) -> str:

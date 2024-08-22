@@ -29,7 +29,6 @@ class TestExpressions(unittest.TestCase):
         expr.children.append(child)
         with pytest.raises(DataException):
             expr.matches(skip=[])
-
         assert "stop" in path.config.CSVPATH_ON_ERROR
         assert "fail" in path.config.CSVPATH_ON_ERROR
         assert len(path.errors) == 1
