@@ -89,9 +89,9 @@ class TestFunctionsIn(unittest.TestCase):
         print(f"test_function_in: lines: {len(lines)}")
         assert len(lines) == 3
 
-    def test_function_concat1(self):
+    def test_function_concat_in1(self):
         path = CsvPath()
-        Save._save(path, "test_function_concat1")
+        Save._save(path, "test_function_concat_in1")
         path.parse(
             f"""
                         ${PATH}[*]
@@ -99,7 +99,7 @@ class TestFunctionsIn(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"test_function_concat: lines: {len(lines)}")
+        print(f"test_function_concat_in1: lines: {len(lines)}")
         assert len(lines) == 1
 
     def test_function_onchange2(self):

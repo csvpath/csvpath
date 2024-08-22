@@ -2,10 +2,11 @@ from configparser import RawConfigParser
 from dataclasses import dataclass
 from os import path, environ
 from typing import Dict, List, Callable
+from enum import Enum
 import logging
+from logging.handlers import RotatingFileHandler
 
 from csvpath import ConfigurationException
-from enum import Enum
 
 
 class OnError(Enum):
@@ -53,6 +54,9 @@ class CsvPathConfig:
     DEFAULT_CSVPATHS_LOG_LEVEL = LogLevels.INFO.value
     DEFAULT_MATCHER_LOG_LEVEL = LogLevels.INFO.value
     DEFAULT_SCANNER_LOG_LEVEL = LogLevels.INFO.value
+    DEFAULT_LOG_FILE = "./logs/csvpath.log"
+    DEFAULT_LOG_FILES_TO_KEEP = 1
+    DEFAULT_LOG_FILE_SIZE = 2048
 
     def __post_init__(self):
         self.options: Dict[str, str] = {}
@@ -65,8 +69,11 @@ class CsvPathConfig:
         self.CSVPATHS_LOG_LEVEL = self.DEFAULT_CSVPATHS_LOG_LEVEL
         self.MATCHER_LOG_LEVEL = self.DEFAULT_MATCHER_LOG_LEVEL
         self.SCANNER_LOG_LEVEL = self.DEFAULT_SCANNER_LOG_LEVEL
-
+        self.LOG_FILE = self.DEFAULT_LOG_FILE
+        self.LOG_FILES_TO_KEEP = self.DEFAULT_LOG_FILES_TO_KEEP
+        self.LOG_FILE_SIZE = self.DEFAULT_LOG_FILE_SIZE
         configpath = environ.get(CsvPathConfig.CSVPATH_CONFIG_FILE)
+        self.log_file_handler = None
         if configpath is not None:
             self.CONFIG = configpath.strip()
         self._load_config()
@@ -145,6 +152,31 @@ class CsvPathConfig:
         level = self._config[Sections.LOGGING.value]["scanner"]
         if level and level.strip() != "":
             self.SCANNER_LOG_LEVEL = level.strip().lower()
+        log_file = self._config[Sections.LOGGING.value]["log_file"]
+        if log_file and log_file.strip() != "":
+            self.LOG_FILE = log_file.strip().lower()
+        log_files_to_keep = self._config[Sections.LOGGING.value]["log_files_to_keep"]
+        if log_files_to_keep and log_files_to_keep.strip() != "":
+            i = -1
+            try:
+                i = int(log_files_to_keep.strip().lower())
+            except Exception:
+                pass
+            if i > 0 and i < 101:
+                self.LOG_FILES_TO_KEEP = i
+            else:
+                print("[log_files_to_keep] must be between 1-100. Using the default.")
+                self.LOG_FILES_TO_KEEP = self.DEFAULT_LOG_FILES_TO_KEEP
+
+        log_file_size = self._config[Sections.LOGGING.value]["log_file_size"]
+        if log_file_size and log_file_size.strip() != "":
+            try:
+                i = int(log_file_size.strip().lower())
+                if i > 0:
+                    self.LOG_FILE_SIZE = i
+            except Exception:
+                print("[log_file_size] must be an integer. Using the default.")
+                self.LOG_FILE_SIZE = self.DEFAULT_LOG_FILE_SIZE
 
     def get_logger(self, component: str) -> Callable:
         level = None
@@ -158,14 +190,29 @@ class CsvPathConfig:
             level = self.MATCHER_LOG_LEVEL
         else:
             raise ConfigurationException(f"Unknown log component '{component}'")
-        logger = logging.getLogger(component)
         if level == "error":
-            return logger.error
+            level = logging.ERROR
         elif level == "warn":
-            return logger.warn
+            level = logging.WARNING
         elif level == "debug":
-            return logger.debug
+            level = logging.DEBUG
         elif level == "info":
-            return logger.info
+            level = logging.INFO
         else:
             raise ConfigurationException(f"Unknown log level '{level}'")
+
+        if self.log_file_handler is None:
+            self.log_file_handler = RotatingFileHandler(
+                filename=self.LOG_FILE,
+                maxBytes=self.LOG_FILE_SIZE,
+                backupCount=self.LOG_FILES_TO_KEEP,
+            )
+            formatter = logging.Formatter(
+                "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+            )
+            self.log_file_handler.setFormatter(formatter)
+
+        logger = logging.getLogger(component)
+        logger.addHandler(self.log_file_handler)
+        logger.setLevel(level)
+        return logger

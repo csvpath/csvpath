@@ -21,11 +21,12 @@ class Scanner(object):
         self.path = None
         self.quiet = True
         if self.csvpath:
-            self.log = self.csvpath.config.get_logger("scanner")
+            self.logger = self.csvpath.config.get_logger("scanner")
         else:
             # unit testing only
             config = CsvPathConfig()
-            self.log = config.get_logger("scanner")
+            self.logger = config.get_logger("scanner")
+        self.logger.info("initialized Scanner")
 
     def __str__(self):
         return f"""

@@ -105,7 +105,8 @@ class CsvPath(CsvPathPublic):
             self.config = CsvPathConfig()
         if print_default:
             self.printers.append(StdOutPrinter())
-        self.log = self.config.get_logger("csvpath")
+        self.logger = self.config.get_logger("csvpath")
+        self.logger.info("initialized CsvPath")
 
     def has_errors(self) -> bool:
         #

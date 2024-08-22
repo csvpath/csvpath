@@ -82,7 +82,8 @@ class CsvPaths(CsvPathsPublic):
         self.skip_blank_lines = skip_blank_lines
         self.current_matchers: List[CsvPath] = []
         self.config = CsvPathConfig()
-        self.log = self.config.get_logger("csvpaths")
+        self.logger = self.config.get_logger("csvpaths")
+        self.logger.info("initialized CsvPaths")
 
     def csvpath(self) -> CsvPath:
         return CsvPath(
@@ -101,6 +102,7 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException("filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
+        self.logger.info(f"beginning collect_paths with {len(paths)} paths")
         for path in paths:
             try:
                 csvpath = self.csvpath()
@@ -126,6 +128,7 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException("filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
+        self.logger.info(f"beginning fast_forward_paths with {len(paths)} paths")
         for path in paths:
             try:
                 csvpath = self.csvpath()
@@ -155,6 +158,7 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException(f"filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
+        self.logger.info(f"beginning next_paths with {len(paths)} paths")
         for path in paths:
             try:
                 csvpath = self.csvpath()
@@ -212,6 +216,7 @@ class CsvPaths(CsvPathsPublic):
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
         #
+        self.logger.info(f"beginning next_by_line with {len(csvpath_objects)} paths")
         with open(fn, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
