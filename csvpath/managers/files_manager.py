@@ -1,8 +1,11 @@
+# from __future__ import annotations
 import os
 import json
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .. import FileException, ConfigurationException
+
+# from .. import  CsvPaths
 
 
 class CsvPathsFilesManager(ABC):
@@ -32,8 +35,9 @@ class CsvPathsFilesManager(ABC):
 
 
 class FilesManager(CsvPathsFilesManager):
-    def __init__(self, *, named_files: Dict[str, str] = {}):
+    def __init__(self, *, named_files: Dict[str, str] = {}, csvpaths):
         self.named_files: Dict[str, str] = named_files
+        self.csvpaths = csvpaths
 
     def set_named_files(self, nf: Dict[str, str]) -> None:
         self.named_files = nf
@@ -51,7 +55,8 @@ class FilesManager(CsvPathsFilesManager):
         base = dirname
         for p in dlist:
             _ = p.lower()
-            if _.endswith(".csv") or _.endswith(".tsv"):
+            ext = p[p.rfind(".") + 1 :].strip().lower()
+            if ext in self.csvpaths.config.CSV_FILE_EXTENSIONS:
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
                 self.named_files[name] = path

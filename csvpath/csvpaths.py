@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 import csv
 import os
 import json
+from csvpath.util.config import CsvPathConfig
 from . import CsvPath
 from . import FileException
 from . import ConfigurationException
@@ -69,8 +70,8 @@ class CsvPaths(CsvPathsPublic):
     def __init__(
         self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
     ):
-        self.paths_manager = PathsManager()
-        self.files_manager = FilesManager()
+        self.paths_manager = PathsManager(csvpaths=self)
+        self.files_manager = FilesManager(csvpaths=self)
         self.path_results_manager = ResultsManager(csvpaths=self, type="paths")
         self.file_results_manager = ResultsManager(csvpaths=self, type="files")
         self.print_default = print_default
@@ -78,6 +79,7 @@ class CsvPaths(CsvPathsPublic):
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
         self.current_matchers: List[CsvPath] = []
+        self.config = CsvPathConfig()
 
     def csvpath(self) -> CsvPath:
         return CsvPath(

@@ -1,8 +1,12 @@
+# from __future__ import annotations
 from typing import Dict, List, Any
 import os
 import json
 from abc import ABC, abstractmethod
 from .. import ConfigurationException
+from csvpath.util.config import CsvPathConfig
+
+# from csvpath import CsvPaths
 
 
 class CsvPathsManager(ABC):
@@ -34,8 +38,9 @@ class CsvPathsManager(ABC):
 class PathsManager(CsvPathsManager):
     MARKER: str = "---- CSVPATH ----"
 
-    def __init__(self, *, named_paths: Dict[str, List[str]] = {}):
+    def __init__(self, *, named_paths: Dict[str, List[str]] = {}, csvpaths):
         self.named_paths = named_paths
+        self.csvpaths = csvpaths
 
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         self.named_paths = np
@@ -57,7 +62,7 @@ class PathsManager(CsvPathsManager):
                 if p.find(".") == -1:
                     continue
                 ext = p[p.rfind(".") + 1 :].strip().lower()
-                if ext not in ["txt", "csvpaths"]:
+                if ext not in self.csvpaths.config.CSVPATH_FILE_EXTENSIONS:
                     continue
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)

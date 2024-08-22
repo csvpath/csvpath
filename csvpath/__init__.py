@@ -11,6 +11,8 @@ from csvpath.util.exceptions import (
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from csvpath.scanning.scanner import Scanner
+
+# from csvpath.util.config import CsvPathConfig
 from csvpath.util.error import Error, ErrorPolicy
 from csvpath.util.printer import StdOutPrinter, Printer
 from csvpath.csvpath import CsvPath

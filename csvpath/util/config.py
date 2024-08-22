@@ -2,6 +2,7 @@ from configparser import RawConfigParser
 from dataclasses import dataclass
 from os import path, environ
 from typing import Dict, List
+
 from csvpath import ConfigurationException
 from enum import Enum
 
