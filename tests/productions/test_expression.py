@@ -4,7 +4,6 @@ from csvpath.matching.productions import Expression
 from csvpath.matching.util.exceptions import DataException, MatchException
 from csvpath import CsvPath, CsvPaths, CsvPathResult
 from csvpath.matching.matcher import Matcher
-from csvpath.util.error import ErrorPolicy
 
 
 class RaisingChild:
@@ -28,9 +27,11 @@ class TestExpressions(unittest.TestCase):
         print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
-        expr.matches(skip=[])
+        with pytest.raises(DataException):
+            expr.matches(skip=[])
 
-        assert path.error_policy == ErrorPolicy.FAIL_AND_STOP
+        assert "stop" in path.config.CSVPATH_ON_ERROR
+        assert "fail" in path.config.CSVPATH_ON_ERROR
         assert len(path.errors) == 1
         assert not path.is_valid
         assert path.stopped is True
@@ -47,9 +48,10 @@ class TestExpressions(unittest.TestCase):
         print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
-        expr.matches(skip=[])
-
-        assert path.error_policy == ErrorPolicy.FAIL_AND_STOP
+        with pytest.raises(DataException):
+            expr.matches(skip=[])
+        assert "stop" in path.config.CSVPATH_ON_ERROR
+        assert "fail" in path.config.CSVPATH_ON_ERROR
         assert len(path.errors) == 1
         print(f"path._errors: {path._errors}")
         assert path._errors is None

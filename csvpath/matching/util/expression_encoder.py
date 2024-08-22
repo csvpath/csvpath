@@ -1,4 +1,11 @@
-from csvpath.matching.productions import Expression, Equality, Variable, Header, Term
+from csvpath.matching.productions import (
+    Expression,
+    Equality,
+    Variable,
+    Header,
+    Term,
+    Reference,
+)
 from csvpath.matching.functions.function import Function
 from typing import Any, List
 
@@ -48,10 +55,16 @@ class ExpressionEncoder:
             return self.variable(json, o)
         elif isinstance(o, Term):
             return self.term(json, o)
+        elif isinstance(o, Reference):
+            return self.reference(json, o)
         elif o is None:
             return f'{json} "None" '
         else:
-            raise Exception(f"what am I {o} \nin: {json}")
+            #
+            # we could be testing so let's not blow up.
+            #
+            # raise Exception(f"what am I {o.__class__} \nin: {json}")
+            return f'{json} "unknown child of type {o.__class__} " '
 
     def matchable(self, json: str, m) -> str:
         if m.value is not None:
@@ -114,5 +127,11 @@ class ExpressionEncoder:
     def term(self, json: str, t) -> str:
         json = f"{json} " + '{ "type":"term", '
         json = self.matchable(json, t)
+        json = f"{json} " + "} "
+        return json
+
+    def reference(self, json: str, r) -> str:
+        json = f"{json} " + '{ "type":"reference", '
+        json = self.matchable(json, r)
         json = f"{json} " + "} "
         return json

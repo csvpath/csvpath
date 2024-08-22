@@ -6,7 +6,8 @@ from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from . import Error, ErrorPolicy, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
+from . import Error, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
+from csvpath.util.config import CsvPathConfig
 from . import (
     VariableException,
     InputException,
@@ -66,6 +67,7 @@ class CsvPath(CsvPathPublic):
         quotechar='"',
         skip_blank_lines=True,
         print_default=True,
+        config=None,
     ):
         self.csvpaths = csvpaths
         self.scanner = None
@@ -94,11 +96,13 @@ class CsvPath(CsvPathPublic):
         self._limit_collection_to = []
         self._errors: List[Error] = None
         self._error_collector = None
-        self.error_policy = ErrorPolicy.FAIL_AND_STOP
         self._save_scan_dir = None
         self._save_match_dir = None
         self._run_name = None
         self.printers = []
+        self.config = config
+        if not self.config:
+            self.config = CsvPathConfig()
         if print_default:
             self.printers.append(StdOutPrinter())
 
@@ -106,8 +110,8 @@ class CsvPath(CsvPathPublic):
         #
         # TODO: test this more.
         #
-        if self.errors:
-            return len(self.errors) > 0
+        if self.errors and len(self.errors) > 0:
+            return True
         elif self.error_collector:
             return self.error_collector.has_errors()
         return False
@@ -129,21 +133,17 @@ class CsvPath(CsvPathPublic):
         self._error_collector = error_collector
 
     def collect_error(self, e: Error) -> None:
+        #
+        # errors must be built and handled in ErrorHandler.
+        # here we're just collecting them if collect is
+        # selected by our configuration
+        #
         if self._error_collector:
             self._error_collector.collect_error(e)
         else:
             if self._errors is None:
                 self._errors = []
             self._errors.append(e)
-        if self.error_policy == ErrorPolicy.STOP:
-            self.stopped = True
-        elif self.error_policy == ErrorPolicy.FAIL_AND_STOP:
-            self.stopped = True
-            self._is_valid = False
-        elif self.error_policy == ErrorPolicy.FAIL_AND_CONTINUE:
-            self._is_valid = False
-        elif self.error_policy == ErrorPolicy.CONTINUE:
-            pass
 
     def add_printer(self, printer) -> None:
         if printer not in self.printers:

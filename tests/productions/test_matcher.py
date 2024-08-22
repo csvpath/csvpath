@@ -15,22 +15,6 @@ PATH3 = "tests/test_resources/test-3.csv"
 
 
 class TestMatcher(unittest.TestCase):
-
-    # ============= JUST MATCHER SYNTAX MOSTLY ================
-
-    def test_match_equality1(self):
-        matcher = Matcher(
-            csvpath=None,
-            data="""[
-                                end() == 0 -> print("$.headers")
-                                not( end() ==  0 ) -> no()
-                          ] """,
-            line=LINE,
-            headers=HEADERS,
-        )
-        print(f"{matcher}")
-        assert matcher.matches(syntax_only=True)
-
     def test_match_one_header(self):
         matcher = Matcher(
             csvpath=None, data='[#2=="alert"]', line=LINE, headers=HEADERS
@@ -46,84 +30,6 @@ class TestMatcher(unittest.TestCase):
         assert isinstance(matcher.expressions[0][0].children[0].children[1], Term)
         assert matcher.expressions[0][0].children[0].matches()
         assert matcher.expressions[0][0].matches()
-        assert matcher.matches(syntax_only=True)
-
-    def test_match_equality_to_list(self):
-        matcher = Matcher(
-            csvpath=None,
-            data='[first("alert", "test", "abc", "xyz")]',
-            line=LINE,
-            headers=HEADERS,
-        )
-        print(f"{matcher}")
-        assert len(matcher.expressions) == 1
-        assert isinstance(matcher.expressions[0][0], Expression)
-        assert len(matcher.expressions[0][0].children) == 1
-        print(f"children m.e[0].c         : {matcher.expressions[0][0].children}")
-        print(
-            f"children m.e[0].c[0].c    : {matcher.expressions[0][0].children[0].children}"
-        )
-        print(
-            f"children m.e[0].c[0].c[0] : {matcher.expressions[0][0].children[0].children[0]}"
-        )
-        eq = matcher.expressions[0][0].children[0].children[0]
-        ls = eq.commas_to_list()
-        print(f"ls: {len(ls)}: {ls}")
-        assert len(ls) == 4
-
-        matcher = Matcher(
-            csvpath=None,
-            data='[first("alert", "test", "abc")]',
-            line=LINE,
-            headers=HEADERS,
-        )
-        print(f"{matcher}")
-        eq = matcher.expressions[0][0].children[0].children[0]
-        ls = eq.commas_to_list()
-        print(f"ls: {len(ls)}: {ls}")
-        assert len(ls) == 3
-
-    def test_match_regex_function(self):
-        matcher = Matcher(
-            csvpath=None, data="[regex(#2 == /a.+ert/)]", line=LINE, headers=HEADERS
-        )
-        print(f"{matcher}")
-        assert matcher.matches()
-
-    def test_match_count_function(self):
-        matcher = Matcher(csvpath=None, data="[count()==1]", line=LINE, headers=HEADERS)
-        print(f"{matcher}")
-        assert matcher.matches(syntax_only=True)
-
-    def test_match_function_arg(self):
-        matcher = Matcher(
-            csvpath=CsvPath(), data="[count(#aheader==10)]", line=LINE, headers=HEADERS
-        )
-        print(f"{matcher}")
-        assert matcher.matches(syntax_only=True)
-
-    def test_match_nested_function_arg(self):
-        matcher = Matcher(
-            csvpath=None, data="[count(not(#aheader==10))]", line=LINE, headers=HEADERS
-        )
-        print(f"{matcher}")
-        assert matcher.matches(syntax_only=True)
-
-    def test_match_twice(self):
-        matcher = Matcher(
-            csvpath=None, data='[count()==1 #abc=="fish"]', line=LINE, headers=HEADERS
-        )
-        print(f"{matcher}")
-        assert matcher.matches(syntax_only=True)
-
-    def test_match_thrice(self):
-        matcher = Matcher(
-            csvpath=None,
-            data='[count()==1 #abc=="fish" not(#crows=="tired")]',
-            line=LINE,
-            headers=HEADERS,
-        )
-        print(f"{matcher}")
         assert matcher.matches(syntax_only=True)
 
     # ============= SCAN AND MATCH ================

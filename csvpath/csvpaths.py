@@ -87,6 +87,7 @@ class CsvPaths(CsvPathsPublic):
             delimiter=self.delimiter,
             quotechar=self.quotechar,
             skip_blank_lines=self.skip_blank_lines,
+            config=self.config,
             print_default=self.print_default,
         )
 
