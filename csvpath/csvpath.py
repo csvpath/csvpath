@@ -590,7 +590,6 @@ class CsvPath(CsvPathPublic):
     def header_index(self, name: str) -> int:
         if not self.headers:
             return None
-        i = -1
         for i, n in enumerate(self.headers):
             if n == name:
                 return i

@@ -153,6 +153,8 @@ In this case, we're using the "when" operator, `->`, to determine when to print.
 
 For lots more ideas see the unit tests and [more examples here](#examples).
 
+There are a small number of configuration options. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/config.md'>more about those here</a>.
+
 ## The print function
 
 Before we get into the details of the scanning and matching parts of paths, including all the functions, let's look at print. The `print` function has several important uses, including:
