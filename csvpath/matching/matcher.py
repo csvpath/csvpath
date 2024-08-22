@@ -25,7 +25,12 @@ class Matcher:
         self.path = data
         self.csvpath = csvpath
         self.line = line
-        self.headers = headers
+        #
+        # copying the headers so a csvpath can reset them w/o
+        # losing the originals
+        #
+        if headers:
+            self.headers = headers[:]
         self.expressions = []
         self.header_dict = None
         self.if_all_match = []

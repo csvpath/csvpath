@@ -1,0 +1,6 @@
+[
+                gt(count_headers_in_line(),  count_headers()) -> reset_headers()
+                @number_of_headers = count_headers()
+                push("last_header", end())
+
+            ]

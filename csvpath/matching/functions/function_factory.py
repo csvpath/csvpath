@@ -60,6 +60,7 @@ from .intf import Int
 from .andf import And
 from .track import Track
 from .sum import Sum
+from .reset_headers import ResetHeaders
 
 
 class UnknownFunctionException(Exception):
@@ -269,6 +270,8 @@ class FunctionFactory:
             f = Track(matcher, name, child)
         elif name == "sum":
             f = Sum(matcher, name, child)
+        elif name == "reset_headers":
+            f = ResetHeaders(matcher, name, child)
         else:
             if (
                 f is None
