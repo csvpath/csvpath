@@ -152,6 +152,27 @@ class Validation(Matchable):
                     f"{self.name}() must have a second argument of type: {right}"
                 )
 
+    def validate_two_or_three_args(self) -> None:
+        cs = self.children
+        if cs is None:
+            raise ChildrenException(
+                f"{self.name}() must have two or three args, not none"
+            )
+        elif len(cs) == 1 and hasattr(cs[0], "op"):
+            child = cs[0]
+            if child.left is None or child.right is None:
+                raise ChildrenException(
+                    f"{self.name}() must have two or three args, not 1: {child}"
+                )
+            if child.op != ",":
+                raise ChildrenException(
+                    f"{self.name}() must have two or three args, not: {child}"
+                )
+        elif len(cs) > 3:
+            raise ChildrenException(
+                f"{self.name}() must have two or three args, not: {cs}"
+            )
+
     def validate_two_or_more_args(self) -> None:
         # must be an equality
         if len(self.children) != 1:

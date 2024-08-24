@@ -224,11 +224,9 @@ class CsvPath(CsvPathPublic):
             raise InputException(f"Cannot find the scan part of this csvpath: {data}")
 
         scan = data[0 : i + 1]
-        print(f"CsvPath._find_scan_match_modify: scan: {scan}")
         scan = scan.strip()
 
         ndata = data[i + 1 :]
-        print(f"CsvPath._find_scan_match_modify: ndata: {ndata}")
         ndata = ndata.strip()
 
         if ndata == "":

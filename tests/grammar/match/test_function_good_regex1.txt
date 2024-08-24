@@ -1,1 +1,4 @@
-[ regex(#say, /^sniffl[Ee]/) ]
+[
+                    regex(#say, /^sniffl[Ee]/)
+                    @sniffle = regex(#say, /^sniffl[Ee]/)
+               ]

@@ -1,0 +1,4 @@
+[
+                regex(#say, /s(niff)le/)
+                @group1.onmatch = regex(#say, /s(niff)le/, 11)
+            ]
