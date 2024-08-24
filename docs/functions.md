@@ -96,7 +96,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/string_functions.md'>strip(value)</a>              </td><td> trims off whitespace     </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/string_functions.md'>substring(value, int)</a>     </td><td> returns the first n chars from the value                  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/string_functions.md'>upper(value)</a>              </td><td> makes a value uppercase                                     </td></tr>
-<tr><td>           </td><td> regex(regex-string, value)    </td><td> match on a regular expression                             </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/regex.md'>regex(regex-string, value)</a> </td><td> match on a regular expression </td></tr>
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/jinja.md'>jinja(value, value)</a>  </td><td> applies a Jinja2 template                           </td></tr>
 
 <tr><td> Columns   </td><td>                               </td><td>                                                           </td></tr>
