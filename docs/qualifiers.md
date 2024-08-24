@@ -26,6 +26,7 @@ At the moment there are only a few qualifiers.
 - `asbool`
 - `latch`
 - `nocontrib`
+- `notnone`
 - `onchange`
 - `onmatch`
 
@@ -51,6 +52,13 @@ Adding `latch` to a variable makes the variable only set one time. The variable 
 |Functions | Headers | Variables |
 |----------|---------|-----------|
 | Yes      | No      | No        |
+
+### notnone
+`notnone` is set on a variable in an assignment to indicate that the assignment should only happen if the value being assigned is not None.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
 
 ### onchange
 Add `onchange` to a variable to indicate that a row should only match when the variable is set to a new value.

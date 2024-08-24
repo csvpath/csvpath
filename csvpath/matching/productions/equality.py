@@ -137,12 +137,19 @@ class Equality(Matchable):
         onmatch = self.left.onmatch or count
         asbool = self.left.asbool
         nocontrib = self.left.nocontrib
+        notnone = self.left.notnone
         noqualifiers = (
             onchange is False
             and latch is False
             and asbool is False
             and nocontrib is False
             and onmatch is False
+            #
+            # since we're treating notnone as a block on set_variable, rather than
+            # as part of the qualifiers decision tree, we don't actually want to
+            # acknowledge it here. can still pass it in under its name tho.
+            #
+            # and notnone is False
         )
         #
         # WHAT WE WANT TO SET X TO
@@ -162,6 +169,7 @@ class Equality(Matchable):
             "onmatch": onmatch,
             "asbool": asbool,
             "nocontrib": nocontrib,
+            "notnone": notnone,
             "noqualifiers": noqualifiers,
             "count": count,
             "new_value": y,
@@ -175,12 +183,13 @@ class Equality(Matchable):
 
     def _do_assignment_new_impl(
         self, *, name: str, tracking: str = None, args: dict
-    ) -> bool:
+    ) -> bool:  # noqa: C901
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]
         asbool = args["asbool"]
         nocontrib = args["nocontrib"]
+        notnone = args["notnone"]
         noqualifiers = args["noqualifiers"]
         y = args["new_value"]
         current_value = args["current_value"]
@@ -193,7 +202,7 @@ class Equality(Matchable):
         # SET THE X TO Y IF APPROPRIATE. THE RETURN STARTS AS TRUE.
         #
         if noqualifiers:  # == TEST MARKER 1
-            self.matcher.set_variable(name, value=y, tracking=tracking)
+            self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
             ret = True
         #
         # FIND THE RETURN VALUE
@@ -206,7 +215,9 @@ class Equality(Matchable):
                 if latch and current_value is not None:
                     pass  # == TEST MARKER 2
                 else:
-                    self.matcher.set_variable(name, value=y, tracking=tracking)
+                    self._set_variable(
+                        name, value=y, tracking=tracking, notnone=notnone
+                    )
                     ret = True  # == TEST MARKER 3  #== TEST MARKER 4
             elif onchange:
                 ret = False  # == TEST MARKER 5
@@ -228,7 +239,11 @@ class Equality(Matchable):
                     pass  # == TEST MARKER 7
                 else:
                     # == TEST MARKER 8  #== TEST MARKER 9 #== TEST MARKER 10
-                    self.matcher.set_if_all_match(name, value=y, tracking=tracking)
+                    #
+                    # not none here. and still return ret = True, regardless
+                    #
+                    if not notnone or y is not None:
+                        self.matcher.set_if_all_match(name, value=y, tracking=tracking)
                     ret = True
             else:
                 ret = self._test_friendly_line_matches(line_matches)
@@ -249,9 +264,10 @@ class Equality(Matchable):
                 #
                 # i'm not convinced this delayed set is a good idea but it's not a bad one
                 #
-                self.matcher.set_if_all_match(
-                    name, value=y, tracking=tracking
-                )  # == TEST MARKER 13
+                if not notnone or y is not None:
+                    self.matcher.set_if_all_match(
+                        name, value=y, tracking=tracking
+                    )  # == TEST MARKER 13
             else:
                 pass  # == TEST MARKER 14
         #
@@ -259,7 +275,7 @@ class Equality(Matchable):
         # but we may have asbool or nocontrib
         # so set y and prepare the return to be True
         elif not onmatch and not (latch or onchange):  # == TEST MARKER 15
-            self.matcher.set_variable(name, value=y, tracking=tracking)
+            self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
             ret = True
         else:
             # never happens. remove?
@@ -281,6 +297,12 @@ class Equality(Matchable):
         if nocontrib:  # == TEST MARKER 18
             ret = True
         return ret
+
+    def _set_variable(self, name, *, value, tracking=None, notnone=False) -> None:
+        if notnone and value is None:
+            return
+        else:
+            self.matcher.set_variable(name, value=value, tracking=tracking)
 
     def _do_when(self, *, skip=[]) -> bool:
         b = None

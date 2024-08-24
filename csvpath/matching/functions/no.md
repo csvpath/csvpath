@@ -5,7 +5,7 @@ These functions simply returns True or False. A csvpath like `$[*][yes()]` alway
 
 They are most useful for turning off matches for testing, or for other reasons, and/or collecting variables without matching.
 
-`yes()` and `no()` are aliased with `true()` and `false()`, respectively.
+`yes()` and `no()` are aliased with `true()` and `false()`.
 
 ## Example
 

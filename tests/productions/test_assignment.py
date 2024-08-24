@@ -22,6 +22,7 @@ class TestAssignment(unittest.TestCase):
             "onmatch": False,
             "asbool": False,
             "nocontrib": False,
+            "notnone": False,
             "noqualifiers": True,
             "count": False,
             "current_value": "x",

@@ -13,6 +13,7 @@ class Qualities(Enum):
     NOCONTRIB = "nocontrib"
     VARIABLES = "variables"
     HEADERS = "headers"
+    NOTNONE = "notnone"
 
 
 class Qualified:
@@ -25,6 +26,7 @@ class Qualified:
         Qualities.LATCH.value,
         Qualities.VARIABLES.value,
         Qualities.HEADERS.value,
+        Qualities.NOTNONE.value,
     ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
@@ -116,6 +118,11 @@ class Qualified:
             return Qualities.VARIABLES.value in self.qualifiers
         return False
 
+    def has_notnone(self) -> bool:
+        if self.qualifiers:
+            return Qualities.NOTNONE.value in self.qualifiers
+        return False
+
     @property
     def latch(self) -> bool:
         return self.has_latch()
@@ -178,3 +185,12 @@ class Qualified:
     def headers(self, oc: bool) -> None:
         if Qualities.HEADERS.value not in self.qualifiers:
             self.qualifiers.append(Qualities.HEADERS.value)
+
+    @property
+    def notnone(self) -> bool:
+        return self.has_notnone()
+
+    @notnone.setter
+    def notnone(self, nn: bool) -> None:
+        if Qualities.NOTNONE.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.NOTNONE.value)
