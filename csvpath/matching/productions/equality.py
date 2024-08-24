@@ -184,6 +184,7 @@ class Equality(Matchable):
     def _do_assignment_new_impl(
         self, *, name: str, tracking: str = None, args: dict
     ) -> bool:
+
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]

@@ -1,5 +1,5 @@
 alias pytest='poetry run pytest'
-alias flake8='poetry run flake8'
+alias flake8='poetry run flake8 --max-complexity=20'
 alias run='poetry run python '
 alias black='poetry run black .'
 alias coverage='poetry run coverage run -m pytest'
