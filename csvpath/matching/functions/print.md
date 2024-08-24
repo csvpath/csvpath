@@ -1,9 +1,14 @@
 
 # Print
 
-Prints to std.out. The function is helpful for debugging. It is good for writing validation results. Print can also be a quick way to create an output .csv or in another way capture the data generated during a run.
+Prints to std.out and/or to a Printer object.
 
-Print takes a value and a string. The value indicates if the print() is activated. The string is the output to write to sys.out.
+`print()` is helpful for debugging and validation. Print can also be a quick way to create an output .csv or in another way capture the data generated during a run.
+
+Print takes a string argument and, optionally, a function. The function is executed after the printout.
+
+
+## Variables
 
 Print strings can include the following variables.
 
@@ -29,24 +34,6 @@ Print strings can include the following variables.
 A variable is indicated as a qualifier off the root. The root is `$`, so the `delimiter` variable is referred to like this:
 
     $.delimiter
-
-The print string must match this regular expression:
-
-    r'"[\$A-Za-z0-9\.%_|\s :\\/,]+"'
-
-I.e. it must be quoted with double quotes and be composed of only:
-- Alphanums
-- Dollar signs
-- Periods
-- Percents
-- Underscores
-- Pipes (the `|`)
-- Spaces
-- Colons
-- Forward slashes
-- Commas
-
-It would obviously be better to have more special characters. The grammar may improve in the future, but for now that what we get. Any value contained by a header or variable will print just fine, even if it doesn't match this limited set of characters.
 
 ## Examples
 

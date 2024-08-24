@@ -57,7 +57,7 @@ class Validation(Matchable):
             )
 
     def validate_zero_one_or_two_args(
-        self, first_arg=[], second_arg=[], solo_arg=[]
+        self, *, first_arg=[], second_arg=[], solo_arg=[]
     ) -> None:
         if len(self.children) == 0:
             pass

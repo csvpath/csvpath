@@ -11,6 +11,21 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestPrint(unittest.TestCase):
+    def test_print_plus_function(self):
+        pathstr = f"""${PATH}[*]
+            [
+              @h = #0
+              yes() -> print( "$.headers.level $.headers.message", advance(6) )
+            ] """
+
+        path = CsvPath()
+        Save._save(path, "test_print_plus_function")
+        path.parse(pathstr)
+        lines = path.collect()
+        print(f"test_print_plus_function: path.vars: {path.variables}")
+        assert path.is_valid
+        assert len(lines) == 2
+
     def test_print_variables(self):
         path = CsvPath()
         matcher = Matcher(csvpath=path, data="[no()]")

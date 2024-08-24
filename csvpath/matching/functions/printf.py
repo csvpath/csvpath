@@ -26,14 +26,21 @@ class Print(Function):
     ]
 
     def check_valid(self) -> None:
-        self.validate_one_arg(types=[Term])
+        self.validate_one_or_two_args(
+            one=[Term], left=[Term], right=[Function, Equality]
+        )
         super().check_valid()
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            string = self.children[0].to_value()
+            child = None
+            if isinstance(self.children[0], Equality):
+                child = self.children[0].left
+            else:
+                child = self.children[0]
+            string = child.to_value()
             self.value = self.make_string(string)
         return self.value
 
@@ -41,16 +48,15 @@ class Print(Function):
         if self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
-            self.validate_one_arg(types=[Term])
+            right = None
+            if isinstance(self.children[0], Equality):
+                right = self.children[0].right
             om = self.has_onmatch()
-            if om:
-                lm = self.line_matches()
-                if lm:
-                    self.matcher.csvpath.print(f"{self.to_value()}")
-                    self.match = True
-            else:
+            if not om or self.line_matches():
                 self.matcher.csvpath.print(f"{self.to_value()}")
                 self.match = True
+                if right:
+                    right.matches(skip=skip)
         return self.match
 
     def make_string(self, string: str) -> str:

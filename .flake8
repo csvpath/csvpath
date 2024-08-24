@@ -8,6 +8,8 @@ max-line-length = 90
 max-complexity = 22
 select = B,C,E,F,W,T4,B9
 exclude =
+    .
+    .old
     .tox,
     __pycache__
     parsetab.py

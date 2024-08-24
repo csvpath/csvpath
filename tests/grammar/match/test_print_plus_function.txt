@@ -1,0 +1,4 @@
+[
+              @h = #0
+              yes() -> print( "$.headers.level $.headers.message", advance(6) )
+            ]
