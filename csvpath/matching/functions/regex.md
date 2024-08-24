@@ -8,9 +8,9 @@ Within the CsvPaths grammar, regexes are plain text wrapped in forward slashes. 
 At the moment, regular expressions are only acted on in the `regex()` function. The function finds matches and returns the first matched text. You can optionally add an int, as a third argument, to return the capture group at that index. (Capture groups are 1-based; 0 means the whole matched string, which is the default returned without an index).
 
 The syntax of regexes is:
-
+```regex
 regex( /[A-Z][a-z]*( jr\.?)?/, #firstname, 1 )`
-
+```
 
 ## Examples
 
