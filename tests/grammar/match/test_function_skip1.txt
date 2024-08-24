@@ -1,0 +1,6 @@
+[
+                @name = concat( #firstname, #lastname)
+                skip(@name == "FishBat")
+                push( "not_skipped", count_lines() )
+                print("not skipped!")
+            ]

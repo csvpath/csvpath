@@ -32,7 +32,7 @@ from .increment import Increment
 from .column import Column
 from .substring import Substring
 from .starts_with import StartsWith
-from .stop import Stop
+from .stop import Stop, Skip
 from .any import Any
 from .variable import Variable
 from .header import Header
@@ -275,6 +275,8 @@ class FunctionFactory:
             f = ResetHeaders(matcher, name, child)
         elif name == "starts_with":
             f = StartsWith(matcher, name, child)
+        elif name == "skip":
+            f = Skip(matcher, name, child)
         else:
             if (
                 f is None

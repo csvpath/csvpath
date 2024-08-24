@@ -36,6 +36,7 @@ class Matcher:
         self.if_all_match = []
         self.current_expression = None
         self.parser_type = parser_type
+        self.skip = False
         if self.csvpath:
             self.logger = self.csvpath.config.get_logger("matcher")
         else:
@@ -112,6 +113,21 @@ class Matcher:
         self.current_expression = None
         for i, et in enumerate(self.expressions):
             if self.csvpath and self.csvpath.stopped:
+                #
+                # stopped is like a system halt. this csvpath is calling it
+                # quits on this CSV file. we don't continue to match the row
+                # so we may miss out on some side effects. we just return
+                # because the function already let the CsvPath know to stop.
+                #
+                return False
+            elif self.skip is True:
+                #
+                # skip is like the continue statement in a python loop
+                # we're not only not matching, we don't want any side effects
+                # we might gain from continuing to check for a match;
+                # but we also don't want to stop the run or fail validation
+                #
+                self.skip = False
                 return False
             self.current_expression = et[0]
             if et[1] is True:
