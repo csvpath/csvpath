@@ -15,6 +15,10 @@ Same as you would expect.
 
 Same as you would expect.
 
+### starts_with(does_this, start_with_this)
+
+Checks if the first value, stringified, starts with the second value. The values are stripped.
+
 ### strip(value)
 
 Same as you would expect.

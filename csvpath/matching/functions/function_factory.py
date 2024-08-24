@@ -31,6 +31,7 @@ from .printf import Print
 from .increment import Increment
 from .column import Column
 from .substring import Substring
+from .starts_with import StartsWith
 from .stop import Stop
 from .any import Any
 from .variable import Variable
@@ -272,6 +273,8 @@ class FunctionFactory:
             f = Sum(matcher, name, child)
         elif name == "reset_headers":
             f = ResetHeaders(matcher, name, child)
+        elif name == "starts_with":
+            f = StartsWith(matcher, name, child)
         else:
             if (
                 f is None

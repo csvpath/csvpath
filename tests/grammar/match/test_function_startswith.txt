@@ -1,0 +1,4 @@
+[
+                @t1 = starts_with("# testtest", "#")
+                @t2 = starts_with("! testtest", "#")
+            ]
