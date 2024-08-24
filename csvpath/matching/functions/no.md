@@ -1,13 +1,19 @@
 
-# No
+# Yes and No
 
-Always returns False to matches() and to_value(). Useful for turning off matches for testing or other reasons and/or collecting variables without matching.
+These functions simply returns True or False. A csvpath like `$[*][yes()]` always matches every line. One like `$[*][no()]` never matches.
+
+They are most useful for turning off matches for testing, or for other reasons, and/or collecting variables without matching.
+
+`yes()` and `no()` are aliased with `true()` and `false()`, respectively.
 
 ## Example
 
+```bash
     $file.csv[*][@counting=count_lines() no()]
+```
 
-This path never matches but does set `counting` to the current line number.
+This path never matches but it does set `counting` to the current line number as each line is scanned.
 
 
 
