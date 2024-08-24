@@ -1,7 +1,7 @@
 
 # Print
 
-Prints to std.out and/or to a Printer object.
+Prints to std.out and/or to a <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/util/printer.py'>Printer object</a>.
 
 `print()` is helpful for debugging and validation. Print can also be a quick way to create an output .csv or in another way capture the data generated during a run.
 
