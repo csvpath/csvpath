@@ -46,6 +46,7 @@ class Matcher:
         if data is not None:
             if parser_type == "lark":
                 self.parser = LarkParser()
+                print(f"Matcher.__init__: data: {data}")
                 tree = self.parser.parse(data)
                 transformer = LarkTransformer(self)
                 es = transformer.transform(tree)

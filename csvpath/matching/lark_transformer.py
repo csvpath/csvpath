@@ -83,6 +83,9 @@ class LarkTransformer(Transformer):
         f = FunctionFactory.get_function(self.matcher, name=f"{name}", child=args)
         return f
 
+    def term(self, aterm):
+        return aterm
+
     # LP RP
     # | LP a (COMMA a)* RP
     def args(self, *args):

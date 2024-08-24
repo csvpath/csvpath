@@ -8,6 +8,11 @@ class Regex(Function):
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
+        left = self._function_or_equality.left
+        right = self._function_or_equality.right
+        restr = self._get_regex(left, right).to_value()
+        print(f"Regex.check_valid: restr: {restr}")
+        re.compile(restr)
 
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
@@ -35,4 +40,11 @@ class Regex(Function):
             if theregex[len(theregex) - 1] == "/":
                 theregex = theregex[0 : len(theregex) - 1]
             self.match = re.search(theregex, thevalue) is not None
+            print(f"Regex.matches: {self.match}")
         return self.match
+
+    def _get_regex(self, left, right):
+        if isinstance(left, Term):
+            return left
+        else:
+            return right

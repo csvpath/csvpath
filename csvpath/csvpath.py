@@ -218,22 +218,31 @@ class CsvPath(CsvPathPublic):
         scan = ""
         matches = ""
         modify = ""
-        p = 0
-        for i, c in enumerate(data):
-            if p == 0:
-                scan = scan + c
-            elif p == 1:
-                matches = matches + c
-            else:
-                modify = modify + c
-            if c == "]":
-                p = p + 1
+
+        i = data.find("]")
+        if i < 0:
+            raise InputException(f"Cannot find the scan part of this csvpath: {data}")
+
+        scan = data[0 : i + 1]
+        print(f"CsvPath._find_scan_match_modify: scan: {scan}")
         scan = scan.strip()
-        scan = scan if len(scan) > 0 else None
-        matches = matches.strip()
-        matches = matches if len(matches) > 0 else None
-        modify = modify.strip()
-        modify = modify if len(modify) > 0 else None
+
+        ndata = data[i + 1 :]
+        print(f"CsvPath._find_scan_match_modify: ndata: {ndata}")
+        ndata = ndata.strip()
+
+        if ndata == "":
+            raise InputException("There must be a match part of this csvpath: {data}")
+
+        if ndata[0] != "[":
+            raise InputException("Cannot find the match part of this csvpath: {data}")
+        if ndata[len(ndata) - 1] != "]":
+            raise InputException("The match part of this csvpath is incorrect: {data}")
+        #
+        # we do not have a "modify" csvpath part at this time, so we're done.
+        #
+        matches = ndata
+        modify = None
         #
         # if we're given directory(s) to save to, save the parts
         #

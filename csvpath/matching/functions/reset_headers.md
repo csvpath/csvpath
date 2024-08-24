@@ -18,5 +18,3 @@ This function is experimental. It seems to work fine and logically it should. Bu
 This csvpath resets the headers when there are more headers in a given line then there were in the header row (0th line). It pushes the value of the last header onto a stack for inspection.
 
 
-
-

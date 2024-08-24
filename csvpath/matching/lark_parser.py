@@ -16,8 +16,8 @@ class LarkParser:
 
         action: (function|assignment)
         left: HEADER|VARIABLE|function
-        assignment: VARIABLE ASSIGN (left|REFERENCE|(STRING | SIGNED_NUMBER | REGEX))
-        equality: left EQUALS (left|REFERENCE|(STRING | SIGNED_NUMBER | REGEX))
+        assignment: VARIABLE ASSIGN (left|REFERENCE|term)
+        equality: left EQUALS (left|REFERENCE|term)
 
         REFERENCE: /\$[a-zA-Z-0-9\_\.]+/
         HEADER: ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
@@ -25,22 +25,25 @@ class LarkParser:
         function: /[a-zA-Z][a-zA-Z-0-9\._]*/ args
         args: LP RP
             | LP a (COMMA a)* RP
-        a: (STRING | SIGNED_NUMBER | REGEX)
+        a: term
          | VARIABLE
          | HEADER
          | function
          | equality
          | REFERENCE
-
+        term: STRING | SIGNED_NUMBER | REGEX
         LP: "("
         RP: ")"
+        _LS: "("
+        _RS: ")"
         COMMA: ","
         STRING: /"[^"]*"/
         ASSIGN: "="
         WHEN: "->"
         EQUALS: "=="
         COMMENT: "~" /[^~]*/ "~"
-        REGEX: /\/(?!\/)(\\\/|\\\\|[^\/])*?\/[imslux]*/
+        REGEX: "/" REGEX_INNER "/"
+        REGEX_INNER: /([^\/\\\\]|\\\\.)*/
         _LB: "["
         _RB: "]"
         %import common.SIGNED_NUMBER
@@ -54,5 +57,8 @@ class LarkParser:
         self.tree = None
 
     def parse(self, matchpart):
-        self.tree = self.parser.parse(matchpart)
+        print(f"LarkParser.parse: parsing {matchpart}")
+        # this trailing '\n' may not be needed/helpful but it was a
+        # recommendation from a lark dev
+        self.tree = self.parser.parse(f"{matchpart}\n")
         return self.tree
