@@ -13,7 +13,7 @@ Or:
     [ @i = increment.this_is_my_increment.onmatch(yes(), 3) ]
 ```
 
-When multiple qualifiers are used order is not important.
+When multiple qualifiers are used, order is not important.
 
 Qualifiers can have a large impact in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
