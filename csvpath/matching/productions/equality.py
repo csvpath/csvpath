@@ -183,7 +183,7 @@ class Equality(Matchable):
 
     def _do_assignment_new_impl(
         self, *, name: str, tracking: str = None, args: dict
-    ) -> bool:  # noqa: C901
+    ) -> bool:
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]

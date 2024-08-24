@@ -12,3 +12,4 @@ repos:
     hooks:
     -   id: flake8
         exclude: ^csvpath/matching/productions/equality\.py$
+
