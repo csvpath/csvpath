@@ -6,6 +6,7 @@ import json
 import traceback
 from csvpath.util.error import ErrorHandler
 from csvpath.util.config import CsvPathConfig
+from csvpath.util.log_utility import LogUtility
 from . import CsvPath
 from . import FileException
 from . import ConfigurationException
@@ -82,7 +83,7 @@ class CsvPaths(CsvPathsPublic):
         self.skip_blank_lines = skip_blank_lines
         self.current_matchers: List[CsvPath] = []
         self.config = CsvPathConfig()
-        self.logger = self.config.get_logger("csvpaths")
+        self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
         self._error_collector = None
 

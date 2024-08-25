@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from csvpath.util.config import CsvPathConfig
+from csvpath.util.log_utility import LogUtility
 from . import Error, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
 from . import (
     VariableException,
@@ -105,8 +106,8 @@ class CsvPath(CsvPathPublic):
         self._config = config
         if print_default:
             self.printers.append(StdOutPrinter())
-        self.logger = self.config.get_logger("csvpath")
-        self.logger.info("initializing CsvPath")
+        self.logger = LogUtility.logger(self)
+        self.logger.info("initialized CsvPath")
 
     @property
     def config(self) -> CsvPathConfig:

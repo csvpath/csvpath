@@ -55,7 +55,6 @@ class Regex(Function):
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
-        print(f"Regex.matches: self.match: {self.match}")
         if self.match is None:
             self.match = self.to_value(skip=skip) is not None
         return self.match

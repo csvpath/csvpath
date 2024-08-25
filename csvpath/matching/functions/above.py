@@ -20,7 +20,6 @@ class AboveBelow(Function):
             if a is None and b is not None or b is None and a is not None:
                 self.value = False
             else:
-                print(f"AboveBelow.to_value: a: {a}, b: {b}")
                 typed = False
                 if isinstance(a, int) or isinstance(a, float):
                     self.value = self._try_numbers(a, b)
@@ -63,23 +62,19 @@ class AboveBelow(Function):
     def _try_dates(self, a, b) -> bool:
         if isinstance(a, datetime):
             try:
-                print("AboveBelow.try_dates: a, b")
                 if self._above():
                     return a.timestamp() > b.timestamp()
                 else:
                     return a.timestamp() < b.timestamp()
-            except Exception as ex:
-                print(f"AboveBelow.try_dates: datetime exception: ex: {ex}")
+            except Exception:
                 return None
         else:
             try:
-                print("AboveBelow.try_dates: a, b")
                 if self._above():
                     return a > b
                 else:
                     return a < b
-            except Exception as ex:
-                print(f"AboveBelow.try_dates: date exception: ex: {ex}")
+            except Exception:
                 return None
 
     def _try_strings(self, a, b) -> bool:

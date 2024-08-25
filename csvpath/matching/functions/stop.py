@@ -21,11 +21,18 @@ class Stop(Function):
                 b = self.children[0].matches(skip=skip)
                 if b is True:
                     self.matcher.csvpath.stop()
+                    self.matcher.csvpath.logger.info(
+                        f"stopping at {self.matcher.csvpath.line_number}. contained child matches."
+                    )
                     stopped = True
             else:
                 self.matcher.csvpath.stop()
+                self.matcher.csvpath.logger.info(
+                    f"stopping at {self.matcher.csvpath.line_number}"
+                )
                 stopped = True
             if stopped and self.name == "fail_and_stop":
+                self.matcher.csvpath.logger.info("setting invalid")
                 self.matcher.csvpath.is_valid = False
         return self.match
 
@@ -48,7 +55,13 @@ class Skip(Function):
                 if b is True:
                     self.matcher.skip = True
                     self.match = True
+                    self.matcher.csvpath.logger.info(
+                        f"skipping line {self.matcher.csvpath.line_number}. contained child matches."
+                    )
             else:
                 self.matcher.skip = True
+                self.matcher.csvpath.logger.info(
+                    f"skipping line {self.matcher.csvpath.line_number}"
+                )
                 self.match = True
         return self.match

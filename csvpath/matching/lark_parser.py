@@ -57,8 +57,5 @@ class LarkParser:
         self.tree = None
 
     def parse(self, matchpart):
-        print(f"LarkParser.parse: parsing {matchpart}")
-        # this trailing '\n' may not be needed/helpful but it was a
-        # recommendation from a lark dev
-        self.tree = self.parser.parse(f"{matchpart}\n")
+        self.tree = self.parser.parse(f"{matchpart}")
         return self.tree

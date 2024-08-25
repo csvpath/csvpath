@@ -3,7 +3,6 @@ from csvpath.scanning.scanning_lexer import ScanningLexer
 from ..util.parser_utility import ParserUtility
 from typing import List
 from .exceptions import ScanException, UnexpectedException
-from csvpath.util.config import CsvPathConfig
 
 
 class Scanner(object):
@@ -21,12 +20,7 @@ class Scanner(object):
         self.path = None
         self.quiet = True
         if self.csvpath:
-            self.logger = self.csvpath.config.get_logger("scanner")
-        else:
-            # unit testing only
-            config = CsvPathConfig()
-            self.logger = config.get_logger("scanner")
-        self.logger.info("initialized Scanner")
+            self.csvpath.logger.info("initialized Scanner")
 
     def __str__(self):
         return f"""

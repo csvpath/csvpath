@@ -8,7 +8,6 @@ from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
 from ..util.exceptions import VariableException
 from . import LarkParser, LarkTransformer
-from csvpath.util.config import CsvPathConfig
 
 
 class Matcher:
@@ -37,12 +36,6 @@ class Matcher:
         self.current_expression = None
         self.parser_type = parser_type
         self.skip = False
-        if self.csvpath:
-            self.logger = self.csvpath.config.get_logger("matcher")
-        else:
-            # unit testing only
-            config = CsvPathConfig()
-            self.logger = config.get_logger("matcher")
 
         if data is not None:
             if parser_type == "lark":
@@ -60,7 +53,8 @@ class Matcher:
                 self.parser = yacc.yacc(module=self, start="match_part")
                 self.parser.parse(data, lexer=self.lexer.lexer)
                 self.check_valid()
-        self.logger.info("initialized Matcher")
+        if self.csvpath:
+            self.csvpath.logger.info("initialized Matcher")
 
     def __str__(self):
         return f"""
