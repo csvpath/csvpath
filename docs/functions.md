@@ -65,8 +65,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/subtract.md'>mod(value, value)</a>    </td><td> returns the modulus of two numbers </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/subtract.md'>int(value)</a>    </td><td> returns a number as an int </td></tr>
 
-<tr><td>           </td><td> after(value, value) or gt(value, value) </td><td> finds things after a date, number, string        </td></tr>
-<tr><td>           </td><td> before(value, value) or lt(value, value) </td><td> finds things before a date, number, string       </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>after(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>gt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>above( value, value)</a> </td><td> finds things after a date, number, string        </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>before(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>lt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/above.md'>below( value, value)</a></td><td> finds things before a date, number, string       </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/sum.md'>sum(value)</a> </td><td> returns a running subtotal of the value </td></tr>
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>

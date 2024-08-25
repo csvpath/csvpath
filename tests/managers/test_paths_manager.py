@@ -6,39 +6,6 @@ JSON = "tests/test_resources/named_paths.json"
 
 
 class TestPathsManager(unittest.TestCase):
-
-    """
-    def test_multiple_paths_with_metadata(self):
-        print("")
-        paths = CsvPaths()
-        pm = paths.paths_manager
-        contents = "" "
-        ---- CSVPATH: This is test path #1 ----
-        $[*][ yes() ]
-
-        ---- CSVPATH: This is test path #2 ----
-        $[*][ no() ]
-
-        ---- CSVPATH: This is test path #3 ----
-        $[*][ stop() ]
-
-        ---- CSVPATH ----
-
-        ~ meta-name: This is test path #2
-          meta-description: It does stuff
-        ~
-        $[*][ fail() ]
-
-        "" "
-        rs = pm._extract_paths(contents)
-        print(f"test_multiple_paths_with_metadata: results: {rs}")
-        assert len(rs) == 4
-        assert len(rs[0]) == 2
-        assert "This is test path #1" == rs[0][1]
-        assert "This is test path #3" == rs[2][1]
-        assert rs[2][0] == "$[*][ stop() ]"
-    """
-
     def test_named_paths_json1(self):
         print("")
         paths = CsvPaths()

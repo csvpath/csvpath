@@ -151,9 +151,9 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
-        elif name == "below" or name == "lt":
+        elif name == "below" or name == "lt" or name == "before":
             f = AboveBelow(matcher, name, child)
-        elif name == "above" or name == "gt":
+        elif name == "above" or name == "gt" or name == "after":
             f = AboveBelow(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)

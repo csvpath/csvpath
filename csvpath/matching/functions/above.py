@@ -1,6 +1,7 @@
 from typing import Any
 from .function import Function
 from ..productions import ChildrenException
+from datetime import date, datetime
 
 
 class AboveBelow(Function):
@@ -19,7 +20,16 @@ class AboveBelow(Function):
             if a is None and b is not None or b is None and a is not None:
                 self.value = False
             else:
-                self.value = self._try_numbers(a, b)
+                if isinstance(a, int) or isinstance(a, float):
+                    self.value = self._try_numbers(a, b)
+                if (
+                    self.value is None
+                    and isinstance(a, datetime)
+                    or isinstance(a, date)
+                ):
+                    self.value = self._try_dates(a, b)
+                if self.value is None:
+                    self.value = self._try_numbers(a, b)
                 if self.value is None:
                     self.value = self._try_dates(a, b)
                 if self.value is None:
@@ -29,9 +39,9 @@ class AboveBelow(Function):
         return self.value
 
     def _above(self) -> bool:
-        if self.name == "gt" or self.name == "above":
+        if self.name == "gt" or self.name == "above" or self.name == "after":
             return True
-        elif self.name == "lt" or self.name == "below":
+        elif self.name == "lt" or self.name == "below" or self.name == "before":
             return False
         else:
             raise ChildrenException(f"{self.name}() is not a known function")
