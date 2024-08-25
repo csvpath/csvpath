@@ -8,11 +8,9 @@ from csvpath.matching.lark_parser import LarkParser
 
 class TestLarkParser(unittest.TestCase):
     def test_lark_parser(self):
-        LarkParser()
         dirpath = "tests/grammar/match"
         dlist = os.listdir(dirpath)
         base = dirpath
-        tree = None
         i = 0
         e = 0
         for p in dlist:
@@ -23,15 +21,18 @@ class TestLarkParser(unittest.TestCase):
                     print(f"file: {path}")
                     with open(path) as f:
                         matchpart = f.read()
+                        LarkParser()
                         parser = Lark(
                             LarkParser.GRAMMAR, start="match", ambiguity="explicit"
                         )
-                        print(
-                            f"\n>>>>>>>>>>>> TestLarkParser.test_lark_parser: data: {matchpart}"
-                        )
 
-                        tree = parser.parse(matchpart)
-                        print(f"path {path} is:\n{tree.pretty()}")
+                        parser.parse(matchpart)
+                        #
+                        # lark makes very pretty output, if we want to see it.
+                        #
+                        # tree = parser.parse(matchpart)
+                        # print(f"path {path} is:\n{tree.pretty()}")
+                        #
             except Exception as ex:
                 print(f"Error on {i}: {ex} at {p}")
                 e += 1

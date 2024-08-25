@@ -78,7 +78,6 @@ class TestFunctionsRegex(unittest.TestCase):
         print(f"test_function_good_regex1: path.var: {path.variables}")
 
     def test_function_regex_units(self):
-        path = CsvPath()
         #
         # The 200+ regex in tests/test_resources/regexes.txt
         # were taken from the Python regex unit tests. They are
@@ -101,5 +100,6 @@ class TestFunctionsRegex(unittest.TestCase):
             for i, line in enumerate(file):
                 line = line.strip()
                 print(f"[{i}] attempting line: {line}")
+                path = CsvPath()
                 path.parse(line)
         print("test_function_good_regex2 done")

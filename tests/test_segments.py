@@ -1,11 +1,12 @@
 import unittest
 from csvpath.csvpath import CsvPath
+import pytest
 
 PATH = "a/test/file.csv"
 
 
 class TestSegments(unittest.TestCase):
-    def test_find_scan_match_modify1(self):
+    def test_segments_find_scan_match_modify1(self):
         path = CsvPath()
         s, ma, mo = path._find_scan_match_modify(
             f"""${PATH}[3][ @frog = any(header(), "Frog") ]"""
@@ -14,7 +15,7 @@ class TestSegments(unittest.TestCase):
         assert ma == """[ @frog = any(header(), "Frog") ]"""
         assert mo is None
 
-    def test_find_scan_match_modify2(self):
+    def test_segments_find_scan_match_modify2(self):
         # a regex with [] like this path was confusing the parts finder
         path = CsvPath()
         s, ma, mo = path._find_scan_match_modify(

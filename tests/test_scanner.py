@@ -6,7 +6,7 @@ PATH2 = "tests/test_resources/test-2-with_-and&#.csv"
 
 
 class TestScanner(unittest.TestCase):
-    def test_scan_special_char_filename(self):
+    def test_scanner_scan_special_char_filename(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH2}[*][]")
         print(f"{scanner}")
@@ -24,7 +24,7 @@ class TestScanner(unittest.TestCase):
         assert i == 8
         print("special char filename worked")
 
-    def test_scan_all(self):
+    def test_scanner_scan_all(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[*][]")
         print(f"{scanner}")
@@ -41,7 +41,7 @@ class TestScanner(unittest.TestCase):
             pass
         assert i == 8
 
-    def test_scan_normal_from_to(self):
+    def test_scanner_scan_normal_from_to(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[2-4][]")
         # test properties
@@ -67,7 +67,7 @@ class TestScanner(unittest.TestCase):
                 assert ln[0][0:3] == "Bug"
         assert i == 2
 
-    def test_scan_from_line_to_end(self):
+    def test_scanner_scan_from_line_to_end(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[3*][]")
         print(f"{scanner}")
@@ -98,7 +98,7 @@ class TestScanner(unittest.TestCase):
                 assert ln[0][0:4] == "Slug"
         assert i == 5
 
-    def test_scan_one_line(self):
+    def test_scanner_scan_one_line(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[3][]")
         print(f"{scanner}")
@@ -120,7 +120,7 @@ class TestScanner(unittest.TestCase):
     #
     # pytest -s -v -k test_line_plus_line
     #
-    def test_scan_line_plus_line(self):
+    def test_scanner_scan_line_plus_line(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[1+3][]")
         print(f"{scanner}")
@@ -146,7 +146,7 @@ class TestScanner(unittest.TestCase):
     #
     # pytest -s -v -k test_multi_line_plus_line
     #
-    def test_scan_multi_line_plus_line(self):
+    def test_scanner_scan_multi_line_plus_line(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[1+3+5][]")
         print(f"{scanner}")
@@ -171,7 +171,7 @@ class TestScanner(unittest.TestCase):
                 assert ln[0][0:4] == "Bird"
         assert i == 2
 
-    def test_scan_to_from(self):
+    def test_scanner_scan_to_from(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[4-2][]")
         # test properties
@@ -199,7 +199,7 @@ class TestScanner(unittest.TestCase):
                 assert ln[0][0:3] == "Bug"
         assert i == 2
 
-    def test_scan_from_to_plus_from_to(self):
+    def test_scanner_scan_from_to_plus_from_to(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[1-3+6-7][]")
         # test properties

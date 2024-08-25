@@ -209,13 +209,13 @@ For example, this comment says that the csvpath has the name `Order Validation`:
     $[*][ count(#order) == 10 ]
 ```
 
-The name `Order Validation` is available in CsvPath's `metadata` property. You can use any metadata keys you like. All the metadata is available when during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
+The name `Order Validation` is available in CsvPath's `metadata` property. You can use any metadata keys you like. All the metadata is available during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
 
 
 <a name="scanning"></a>
 # Scanning
 
-The scanner enumerates lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
+The scanning part of a csvpath enumerates selected lines. For each line returned, the line number, the scanned line count, and the match count are available. The set of line numbers scanned is also available.
 
 The scan part of the path starts with a dollar sign to indicate the root, meaning the file from the top. After the dollar sign comes the file path. The scanning instructions are in a bracket. The rules are:
 - `[*]` means all

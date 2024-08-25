@@ -6,6 +6,16 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestCsvPath(unittest.TestCase):
+    def test_a_lot_of_csvpaths(self):
+        #
+        # we had an open files bug due to too many loggers. this
+        # is just in case something similar.
+        #
+        for i in range(0, 1000):
+            print(f"TestCsvPath.test_a_lot_of_csvpaths: starting {i}")
+            path = CsvPath()
+            print(f"TestCsvPath.test_a_lot_of_csvpaths: made a {i}th CsvPath! {path}")
+
     def test_includes(self):
         # csvpath = CsvPath()
         # pass line number = None probably in error

@@ -102,13 +102,17 @@ class CsvPath(CsvPathPublic):
         self._run_name = None
         self.metadata: Dict[str, Any] = {}
         self.printers = []
-        self.config = config
-        if not self.config:
-            self.config = CsvPathConfig()
+        self._config = config
         if print_default:
             self.printers.append(StdOutPrinter())
         self.logger = self.config.get_logger("csvpath")
         self.logger.info("initializing CsvPath")
+
+    @property
+    def config(self) -> CsvPathConfig:
+        if not self._config:
+            self._config = CsvPathConfig()
+        return self._config
 
     def has_errors(self) -> bool:
         if self.errors and len(self.errors) > 0:

@@ -5,7 +5,6 @@ from typing import Dict, List, Callable
 from enum import Enum
 import logging
 from logging.handlers import RotatingFileHandler
-
 from csvpath import ConfigurationException
 
 
@@ -31,14 +30,16 @@ class Sections(Enum):
     LOGGING = "logging"
 
 
-@dataclass
+# @dataclass
 class CsvPathConfig:
     """by default finds config files at ./config/config.ini.
     To set a different location:
     - set a CSVPATH_CONFIG_FILE env var
     - create a CsvPathConfig instance set its CONFIG member and call reload
+    - or set CsvPathConfig.CONFIG and reload to reset all instances w/o own specific settings
     """
 
+    LOGGERS = {}
     CONFIG: str = "config/config.ini"
     CSVPATH_CONFIG_FILE = "CSVPATH_CONFIG_FILE"
     # extensions
@@ -57,49 +58,52 @@ class CsvPathConfig:
     DEFAULT_LOG_FILE = "./logs/csvpath.log"
     DEFAULT_LOG_FILES_TO_KEEP = 1
     DEFAULT_LOG_FILE_SIZE = 2048
+    CONFIG_INSTANCE = RawConfigParser()
 
-    def __post_init__(self):
+    def __init__(self):
         self.options: Dict[str, str] = {}
-        self._config = RawConfigParser()
         self.CSVPATH_ON_ERROR: List[str] = []
         self.CSVPATHS_ON_ERROR: List[str] = []
         self.CSV_FILE_EXTENSIONS: List[str] = []
         self.CSVPATH_FILE_EXTENSIONS: List[str] = []
-        self.CSVPATH_LOG_LEVEL = self.DEFAULT_CSVPATH_LOG_LEVEL
-        self.CSVPATHS_LOG_LEVEL = self.DEFAULT_CSVPATHS_LOG_LEVEL
-        self.MATCHER_LOG_LEVEL = self.DEFAULT_MATCHER_LOG_LEVEL
-        self.SCANNER_LOG_LEVEL = self.DEFAULT_SCANNER_LOG_LEVEL
-        self.LOG_FILE = self.DEFAULT_LOG_FILE
-        self.LOG_FILES_TO_KEEP = self.DEFAULT_LOG_FILES_TO_KEEP
-        self.LOG_FILE_SIZE = self.DEFAULT_LOG_FILE_SIZE
+        self.CSVPATH_LOG_LEVEL = CsvPathConfig.DEFAULT_CSVPATH_LOG_LEVEL
+        self.CSVPATHS_LOG_LEVEL = CsvPathConfig.DEFAULT_CSVPATHS_LOG_LEVEL
+        self.MATCHER_LOG_LEVEL = CsvPathConfig.DEFAULT_MATCHER_LOG_LEVEL
+        self.SCANNER_LOG_LEVEL = CsvPathConfig.DEFAULT_SCANNER_LOG_LEVEL
+        self.LOG_FILE = CsvPathConfig.DEFAULT_LOG_FILE
+        self.LOG_FILES_TO_KEEP = CsvPathConfig.DEFAULT_LOG_FILES_TO_KEEP
+        self.LOG_FILE_SIZE = CsvPathConfig.DEFAULT_LOG_FILE_SIZE
         configpath = environ.get(CsvPathConfig.CSVPATH_CONFIG_FILE)
         self.log_file_handler = None
         if configpath is not None:
             self.CONFIG = configpath.strip()
         self._load_config()
 
+    def _get(self, section: str, name: str) -> str:
+        return CsvPathConfig.CONFIG_INSTANCE[section][name]
+
     def reload(self):
         self._load_config()
 
     def _load_config(self):
         if path.isfile(self.CONFIG):
-            self._config.read(self.CONFIG)
+            CsvPathConfig.CONFIG_INSTANCE.read(self.CONFIG)
             try:
-                exts = self._config[Sections.CSVPATH_FILES.value]["extensions"]
+                exts = self._get(Sections.CSVPATH_FILES.value, "extensions")
                 if exts is None or len(exts.strip()) == 0:
-                    exts = self.DEFAULT_CSVPATH_FILE_EXTENSIONS
+                    exts = CsvPathConfig.DEFAULT_CSVPATH_FILE_EXTENSIONS
                 self.CSVPATH_FILE_EXTENSIONS = [
                     _.strip().lower() for _ in exts.split(",")
                 ]
             except KeyError:
                 raise ConfigurationException(
-                    f"Config failed on {Sections.CSVPATH_FILES.value}[extensions]"
+                    f"Config failed on {Sections.CSVPATH_FILES.value}[extensions]: {self._config}"
                 )
 
             try:
-                exts = self._config[Sections.CSV_FILES.value]["extensions"]
+                exts = self._get(Sections.CSV_FILES.value, "extensions")
                 if exts is None or len(exts.strip()) == 0:
-                    exts = self.DEFAULT_CSV_FILE_EXTENSIONS
+                    exts = CsvPathConfig.DEFAULT_CSV_FILE_EXTENSIONS
                 self.CSV_FILE_EXTENSIONS = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
                 raise ConfigurationException(
@@ -107,9 +111,9 @@ class CsvPathConfig:
                 )
 
             try:
-                exts = self._config[Sections.ERRORS.value]["csvpath"]
+                exts = self._get(Sections.ERRORS.value, "csvpath")
                 if exts is None or len(exts.strip()) == 0:
-                    exts = self.DEFAULT_CSVPATH_ON_ERROR
+                    exts = CsvPathConfig.DEFAULT_CSVPATH_ON_ERROR
                 self.CSVPATH_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
                 raise ConfigurationException(
@@ -120,11 +124,10 @@ class CsvPathConfig:
                     raise ConfigurationException(
                         f"Config failed on unknown CsvPath error option '{_}'"
                     )
-
             try:
-                exts = self._config[Sections.ERRORS.value]["csvpaths"]
+                exts = self._get(Sections.ERRORS.value, "csvpaths")
                 if exts is None or len(exts.strip()) == 0:
-                    exts = self.DEFAULT_CSVPATHS_ON_ERROR
+                    exts = CsvPathConfig.DEFAULT_CSVPATHS_ON_ERROR
                 self.CSVPATHS_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
                 raise ConfigurationException(
@@ -140,22 +143,22 @@ class CsvPathConfig:
             print(f"No config file at {self.CONFIG}. Using hardcoded defaults.")
 
     def _set_log_levels(self):
-        level = self._config[Sections.LOGGING.value]["csvpath"]
+        level = self._get(Sections.LOGGING.value, "csvpath")
         if level and level.strip() != "":
             self.CSVPATH_LOG_LEVEL = level.strip().lower()
-        level = self._config[Sections.LOGGING.value]["csvpaths"]
+        level = self._get(Sections.LOGGING.value, "csvpaths")
         if level and level.strip() != "":
             self.CSVPATHS_LOG_LEVEL = level.strip().lower()
-        level = self._config[Sections.LOGGING.value]["matcher"]
+        level = self._get(Sections.LOGGING.value, "matcher")
         if level and level.strip() != "":
             self.MATCHER_LOG_LEVEL = level.strip().lower()
-        level = self._config[Sections.LOGGING.value]["scanner"]
+        level = self._get(Sections.LOGGING.value, "scanner")
         if level and level.strip() != "":
             self.SCANNER_LOG_LEVEL = level.strip().lower()
-        log_file = self._config[Sections.LOGGING.value]["log_file"]
+        log_file = self._get(Sections.LOGGING.value, "log_file")
         if log_file and log_file.strip() != "":
             self.LOG_FILE = log_file.strip().lower()
-        log_files_to_keep = self._config[Sections.LOGGING.value]["log_files_to_keep"]
+        log_files_to_keep = self._get(Sections.LOGGING.value, "log_files_to_keep")
         if log_files_to_keep and log_files_to_keep.strip() != "":
             i = -1
             try:
@@ -166,9 +169,9 @@ class CsvPathConfig:
                 self.LOG_FILES_TO_KEEP = i
             else:
                 print("[log_files_to_keep] must be between 1-100. Using the default.")
-                self.LOG_FILES_TO_KEEP = self.DEFAULT_LOG_FILES_TO_KEEP
+                self.LOG_FILES_TO_KEEP = CsvPathConfig.DEFAULT_LOG_FILES_TO_KEEP
 
-        log_file_size = self._config[Sections.LOGGING.value]["log_file_size"]
+        log_file_size = self._get(Sections.LOGGING.value, "log_file_size")
         if log_file_size and log_file_size.strip() != "":
             try:
                 i = int(log_file_size.strip().lower())
@@ -176,7 +179,7 @@ class CsvPathConfig:
                     self.LOG_FILE_SIZE = i
             except Exception:
                 print("[log_file_size] must be an integer. Using the default.")
-                self.LOG_FILE_SIZE = self.DEFAULT_LOG_FILE_SIZE
+                self.LOG_FILE_SIZE = CsvPathConfig.DEFAULT_LOG_FILE_SIZE
 
     def get_logger(self, component: str) -> Callable:
         level = None
@@ -200,19 +203,26 @@ class CsvPathConfig:
             level = logging.INFO
         else:
             raise ConfigurationException(f"Unknown log level '{level}'")
-
-        if self.log_file_handler is None:
-            self.log_file_handler = RotatingFileHandler(
-                filename=self.LOG_FILE,
-                maxBytes=self.LOG_FILE_SIZE,
-                backupCount=self.LOG_FILES_TO_KEEP,
-            )
-            formatter = logging.Formatter(
-                "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-            )
-            self.log_file_handler.setFormatter(formatter)
-
-        logger = logging.getLogger(component)
-        logger.addHandler(self.log_file_handler)
-        logger.setLevel(level)
-        return logger
+        try:
+            # try to reuse logger
+            return CsvPathConfig.LOGGERS[component][level]
+        except Exception:
+            # make new logger
+            if self.log_file_handler is None:
+                self.log_file_handler = RotatingFileHandler(
+                    filename=self.LOG_FILE,
+                    maxBytes=self.LOG_FILE_SIZE,
+                    backupCount=self.LOG_FILES_TO_KEEP,
+                )
+                formatter = logging.Formatter(
+                    "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+                )
+                self.log_file_handler.setFormatter(formatter)
+            logger = None
+            logger = logging.getLogger(component)
+            logger.addHandler(self.log_file_handler)
+            logger.setLevel(level)
+            if component not in CsvPathConfig.LOGGERS:
+                CsvPathConfig.LOGGERS[component] = {}
+            CsvPathConfig.LOGGERS[component][level] = logger
+            return logger
