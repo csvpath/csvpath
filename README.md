@@ -24,6 +24,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 - [Running CsvPath](#running)
    - [Validation](#validating)
    - [Creating new files](#newfiles)
+- [Comments](#top-comments)
 - [Scanning](#scanning)
 - [Matching](#matching)
    - [Match Components](#components)
@@ -33,7 +34,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
       - [Variables](#variables)
       - [Equalities](#equalities)
       - [References](#references)
-   - [Comments](#comments)
+   - [Comments Within Match](#comments)
    - [The When Operator](#when)
    - [Qualifiers](#qualifiers)
 - [More Examples](#examples)
@@ -194,6 +195,21 @@ Csvpaths can also use the `print` function to generate new file content on syste
 ```
 
 This csvpath reorders the headers of the test file at `tests/test_resources/test.csv`. The output file will have a header row.
+
+<a name="top-comments"></a>
+# Comments
+CsvPaths have file scanning instructions, match components, and comments. Comments exist at the top level, outside the CsvPath's brackets, and in the matching part of the path. Comments within the match part are covered below.
+
+Comments outside the csvpath can contribute to a collection of metadata fields associated with a csvpath. A comment starts and ends with a `~` character. Within the comment, any word that has a colon after it is considered a metadata key. The metadata value is anything following the key up till a new metadata key word is seen or the comment ends.
+
+For example, this comment says that the csvpath has the name `Order Validation`:
+
+```bash
+    ~ name: Order Validation ~
+    $[*][ count(#order) == 10 ]
+```
+
+The name `Order Validation` is available in CsvPath's `metadata` property. You can use any metadata keys you like. All the metadata is available when during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
 
 
 <a name="scanning"></a>

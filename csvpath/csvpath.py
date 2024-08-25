@@ -100,7 +100,7 @@ class CsvPath(CsvPathPublic):
         self._save_scan_dir = None
         self._save_match_dir = None
         self._run_name = None
-        self._metadata = None
+        self.metadata: Dict[str, Any] = {}
         self.printers = []
         self.config = config
         if not self.config:
@@ -186,8 +186,10 @@ class CsvPath(CsvPathPublic):
 
         return self.scanner
 
+    #
+    # TODO: extract this
+    #
     def _extract_metadata(self, csvpath) -> str:
-        print(f"\nCsvPath._extract_metadata: starting csvpath: {csvpath}")
         csvpath2 = ""
         comment = ""
         state = 0  # 0 == outside, 1 == outer comment, 2 == inside
@@ -204,7 +206,6 @@ class CsvPath(CsvPathPublic):
                 csvpath2 += c
             elif c == "]":
                 t = csvpath[i + 1 :]
-                print(f" >>>>.. t: {t}")
                 _ = t.find("]")
                 if state == 2 and _ == -1:
                     state = 0
@@ -220,7 +221,6 @@ class CsvPath(CsvPathPublic):
             else:
                 if state == 0:
                     pass
-                    # comment.append(c)
                 elif state == 1:
                     comment += c
                 elif state == 2:
@@ -228,8 +228,6 @@ class CsvPath(CsvPathPublic):
         #
         # pull the metadata out of the comment
         #
-        print(f"CsvPath._extract_metadata: csvpath2: {csvpath2}")
-        print(f"CsvPath._extract_metadata: comment: {comment}")
         current_word = ""
         metadata_fields = {}
         metaname = None
@@ -265,8 +263,6 @@ class CsvPath(CsvPathPublic):
             )
         if len(metadata_fields) > 0:
             self._metadata = metadata_fields
-        print(f"CsvPath._extract_metadata: metadata_fields: {metadata_fields}")
-
         return csvpath2
 
     def parse_named_path(self, name):
