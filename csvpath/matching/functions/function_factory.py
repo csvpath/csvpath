@@ -135,7 +135,7 @@ class FunctionFactory:
             f = Count(matcher, name, child)
         elif name == "length":
             f = Length(matcher, name, child)
-        elif name == "regex":
+        elif name == "regex" or name == "exact":
             f = Regex(matcher, name, child)
         elif name == "not":
             f = Not(matcher, name, child)

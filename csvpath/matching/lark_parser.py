@@ -43,7 +43,7 @@ class LarkParser:
         EQUALS: "=="
         COMMENT: "~" /[^~]*/ "~"
         REGEX: "/" REGEX_INNER "/"
-        REGEX_INNER: /([^\/\\\\]|\\\\.)*/
+        REGEX_INNER: /([^\/\\\\]|\\\\.|\\.)*/
         _LB: "["
         _RB: "]"
         %import common.SIGNED_NUMBER
@@ -51,6 +51,8 @@ class LarkParser:
         %ignore WS
 
     """
+    #
+    # orig, good, but not ok: /([^\/\\\\]|\\\\.)*/
 
     def __init__(self):
         self.parser = Lark(LarkParser.GRAMMAR, start="match", ambiguity="explicit")

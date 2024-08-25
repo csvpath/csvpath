@@ -49,12 +49,24 @@ class Regex(Function):
             # do extra regexing because self.value remains None
             # problem? self.match will be set so that may protect
             # us.
-            self.value = m.group(group) if m is not None else None
+            v = None
+            if m:
+                v = m.group(group)
+            if self.name == "regex":
+                self.value = v
+            elif self.name == "exact":
+                self.value = v == thevalue
+            self.matcher.csvpath.logger.info(
+                f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
+            )
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
         if self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
-            self.match = self.to_value(skip=skip) is not None
+            if self.name == "regex":
+                self.match = self.to_value(skip=skip) is not None
+            elif self.name == "exact":
+                self.match = bool(self.to_value(skip=skip))
         return self.match

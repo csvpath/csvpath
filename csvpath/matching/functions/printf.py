@@ -41,6 +41,7 @@ class Print(Function):
             else:
                 child = self.children[0]
             string = child.to_value()
+            print(f"Print.to_value: string before interpolation: {string}")
             self.value = self.make_string(string)
         return self.value
 

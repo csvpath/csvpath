@@ -7,6 +7,20 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsRegex(unittest.TestCase):
+    def test_function_regex_quick_parse(self):
+        path = CsvPath()
+        Save._save(path, "test_function_regex_quick_parse")
+        path.parse(
+            rf"""
+            ${PATH}[1]
+            [
+                regex( #0, /.{0, 2})/ )
+            ]"""
+        )
+        #                 regex(#0, /\$?(\d*|\.{0,2})/ )
+        # path.collect()
+        print(f"test_function_regex_quick_parse: path vars: {path.variables}")
+
     def test_function_regex1(self):
         path = CsvPath()
         Save._save(path, "test_function_regex1")
