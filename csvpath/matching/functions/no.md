@@ -1,7 +1,7 @@
 
-# Yes and No
+# Yes, No and None
 
-These functions simply returns True or False. A csvpath like `$[*][yes()]` always matches every line. One like `$[*][no()]` never matches.
+These functions simply returns True or False or None. A csvpath like `$[*][yes()]` always matches every line. One like `$[*][no()]` never matches.
 
 They are most useful for turning off matches for testing, or for other reasons, and/or collecting variables without matching.
 
