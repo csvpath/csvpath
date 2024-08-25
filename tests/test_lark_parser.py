@@ -26,6 +26,10 @@ class TestLarkParser(unittest.TestCase):
                         parser = Lark(
                             LarkParser.GRAMMAR, start="match", ambiguity="explicit"
                         )
+                        print(
+                            f"\n>>>>>>>>>>>> TestLarkParser.test_lark_parser: data: {matchpart}"
+                        )
+
                         tree = parser.parse(matchpart)
                         print(f"path {path} is:\n{tree.pretty()}")
             except Exception as ex:

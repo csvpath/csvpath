@@ -8,18 +8,35 @@ JSON = "tests/test_resources/named_paths.json"
 class TestPathsManager(unittest.TestCase):
 
     """
-    # this test works fine by itself, but when run with the other
-    # ~200 it consistently fails. wtf?
-    def test_named_paths_dir1(self):
+    def test_multiple_paths_with_metadata(self):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
-        pm.add_named_paths_from_dir(dir_path=DIR)
-        print(f"test_named_paths_dir1: named paths: {pm.named_paths}")
-        assert pm.named_paths
-        assert len(pm.named_paths) == 1
-        assert "many" in pm.named_paths
-        assert len(pm.named_paths["many"]) == 2
+        contents = "" "
+        ---- CSVPATH: This is test path #1 ----
+        $[*][ yes() ]
+
+        ---- CSVPATH: This is test path #2 ----
+        $[*][ no() ]
+
+        ---- CSVPATH: This is test path #3 ----
+        $[*][ stop() ]
+
+        ---- CSVPATH ----
+
+        ~ meta-name: This is test path #2
+          meta-description: It does stuff
+        ~
+        $[*][ fail() ]
+
+        "" "
+        rs = pm._extract_paths(contents)
+        print(f"test_multiple_paths_with_metadata: results: {rs}")
+        assert len(rs) == 4
+        assert len(rs[0]) == 2
+        assert "This is test path #1" == rs[0][1]
+        assert "This is test path #3" == rs[2][1]
+        assert rs[2][0] == "$[*][ stop() ]"
     """
 
     def test_named_paths_json1(self):

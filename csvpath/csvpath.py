@@ -100,6 +100,7 @@ class CsvPath(CsvPathPublic):
         self._save_scan_dir = None
         self._save_match_dir = None
         self._run_name = None
+        self._metadata = None
         self.printers = []
         self.config = config
         if not self.config:
@@ -158,6 +159,13 @@ class CsvPath(CsvPathPublic):
 
     def parse(self, csvpath):
         self.scanner = Scanner(csvpath=self)
+        #
+        # strip off any comments and collect any metadata?
+        #
+        csvpath = self._extract_metadata(csvpath)
+        #
+        #
+        #
         csvpath = self._update_file_path(csvpath)
         s, mat, mod = self._find_scan_match_modify(csvpath)
         self.scan = s
@@ -177,6 +185,89 @@ class CsvPath(CsvPathPublic):
             self.get_total_lines_and_headers()
 
         return self.scanner
+
+    def _extract_metadata(self, csvpath) -> str:
+        print(f"\nCsvPath._extract_metadata: starting csvpath: {csvpath}")
+        csvpath2 = ""
+        comment = ""
+        state = 0  # 0 == outside, 1 == outer comment, 2 == inside
+        for i, c in enumerate(csvpath):
+            if c == "~":
+                if state == 0:
+                    state = 1
+                elif state == 1:
+                    state = 0
+                elif state == 2:
+                    csvpath2 += c
+            elif c == "[":
+                state = 2
+                csvpath2 += c
+            elif c == "]":
+                t = csvpath[i + 1 :]
+                print(f" >>>>.. t: {t}")
+                _ = t.find("]")
+                if state == 2 and _ == -1:
+                    state = 0
+                csvpath2 += c
+            elif c == "$":
+                if state == 0:
+                    state = 2
+                    csvpath2 += c
+                elif state == 1:
+                    comment += c
+                else:
+                    csvpath2 += c
+            else:
+                if state == 0:
+                    pass
+                    # comment.append(c)
+                elif state == 1:
+                    comment += c
+                elif state == 2:
+                    csvpath2 += c
+        #
+        # pull the metadata out of the comment
+        #
+        print(f"CsvPath._extract_metadata: csvpath2: {csvpath2}")
+        print(f"CsvPath._extract_metadata: comment: {comment}")
+        current_word = ""
+        metadata_fields = {}
+        metaname = None
+        metafield = None
+        for c in comment:
+            if c == ":":
+                if metaname is not None:
+                    metafield = metafield[0 : len(metafield) - len(current_word)]
+                    metadata_fields[metaname] = (
+                        metafield.strip() if metafield is not None else None
+                    )
+                    metaname = None
+                    metafield = None
+                metaname = current_word.strip()
+                current_word = ""
+            elif c.isalnum():
+                current_word += c
+                if metaname is not None:
+                    if metafield is None:
+                        metafield = c
+                    else:
+                        metafield += c
+            elif c in [" ", "\n", "\r", "\t"]:
+                if metaname is not None:
+                    if metafield is not None:
+                        metafield += c
+                current_word = ""
+            else:
+                current_word = ""
+        if metaname:
+            metadata_fields[metaname] = (
+                metafield.strip() if metafield is not None else None
+            )
+        if len(metadata_fields) > 0:
+            self._metadata = metadata_fields
+        print(f"CsvPath._extract_metadata: metadata_fields: {metadata_fields}")
+
+        return csvpath2
 
     def parse_named_path(self, name):
         if not self.csvpaths:

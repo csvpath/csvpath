@@ -1,5 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -28,6 +28,10 @@ class TestFunctionsAny(unittest.TestCase):
         Save._save(path, "test_function_any_function2")
         path.parse(
             f"""
+            ~ description: this is a test! ~
+            ~ name: harry ~
+            ~ fish: bluefish and bass temp: hot ~
+
             ${PATH}[3]
             [
                 @found = any()
