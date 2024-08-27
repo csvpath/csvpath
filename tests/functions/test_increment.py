@@ -60,7 +60,7 @@ class TestFunctionsIncrement(unittest.TestCase):
                  on lines
                 ~
                 @oc.onchange = @test_increment
-                print.onmatch("printing: oc: $.variables.oc, test: $.variables.test, count: $.match_count")
+                print.onmatch("printing: oc: $.variables.oc, test: $.variables.test, count: $.csvpath.match_count")
             ]
             """
         )

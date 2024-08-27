@@ -14,7 +14,7 @@ class TestFunctionsCollect(unittest.TestCase):
             ${PATH}[1*]
             [
                 collect(1)
-                print("$.count_lines: $.line")
+                print("$.csvpath.count_lines ")
             ]"""
         )
         lines = path.collect()
@@ -30,7 +30,7 @@ class TestFunctionsCollect(unittest.TestCase):
             ${PATH}[1*]
             [
                 collect(0, "say")
-                print("$.count_lines: $.line")
+                print("$.csvpath.count_lines ")
             ]"""
         )
         lines = path.collect()

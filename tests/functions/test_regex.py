@@ -14,7 +14,7 @@ class TestFunctionsRegex(unittest.TestCase):
             rf"""
             ${PATH}[1]
             [
-                regex( #0, /.{0, 2})/ )
+                regex( #0, /.{0, 2}/ )
             ]"""
         )
         #                 regex(#0, /\$?(\d*|\.{0,2})/ )

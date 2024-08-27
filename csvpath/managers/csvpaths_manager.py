@@ -51,9 +51,6 @@ class PathsManager(CsvPathsManager):
             dlist = os.listdir(dirname)
             base = dirname
             for p in dlist:
-                #
-                # TODO: make allowed exts config
-                #
                 if p[0] == ".":
                     continue
                 if p.find(".") == -1:

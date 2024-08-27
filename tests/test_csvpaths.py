@@ -94,6 +94,11 @@ class TestNewCsvPaths(unittest.TestCase):
         assert meta["valid"] is True
 
     def test_csvpaths_metadata2(self):
+        #
+        # named results are cleared by CsvPaths before each run
+        # the results may be identical, but they are not the same
+        # data.
+        #
         cs = CsvPaths()
         cs.files_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
@@ -105,17 +110,12 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.collect_by_line(filename="food", pathsname="many")
         meta2 = cs.path_results_manager.get_metadata("many")
         assert meta2 is not None
-        #
-        # have to clear the results for "many" before this works
-        #
-        assert meta != meta2
 
-        cs.path_results_manager.remove_named_results("many")
+        # cs.path_results_manager.remove_named_results("many")
 
         cs.collect_by_line(filename="food", pathsname="many")
         meta2 = cs.path_results_manager.get_metadata("many")
         assert meta2 is not None
-        #
-        # now should work
-        #
         assert meta == meta2
+        meta["x"] = 1
+        assert meta != meta2

@@ -13,7 +13,7 @@ class TestFunctionsHasDups(unittest.TestCase):
         path.parse(
             f""" ${NUMBERS}[*] [
                 @d = has_dups()
-                not(empty(@d)) -> print("line $.line_count has dups in $.variables.d")
+                not(empty(@d)) -> print("line $.csvpath.line_count has dups in $.variables.d")
 
             ]
             """
@@ -31,7 +31,7 @@ class TestFunctionsHasDups(unittest.TestCase):
         path.parse(
             f""" ${NUMBERS}[*] [
                 @d = has_dups(#0,#1)
-                not(empty(@d)) -> print("line $.line_count has dups in $.variables.d")
+                not(empty(@d)) -> print("line $.csvpath.line_count has dups in $.variables.d")
 
             ]
             """
@@ -49,7 +49,7 @@ class TestFunctionsHasDups(unittest.TestCase):
         path.parse(
             f""" ${PATH}[*] [
                 @d = has_dups(#1)
-                not(empty(@d)) -> print("line $.line_count has dups in $.variables.d")
+                not(empty(@d)) -> print("line $.csvpath.line_count has dups in $.variables.d")
 
             ]
             """

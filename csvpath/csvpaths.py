@@ -97,56 +97,92 @@ class CsvPaths(CsvPathsPublic):
             print_default=self.print_default,
         )
 
+    def clean(self, *, file, paths) -> None:
+        self.path_results_manager.clean_named_results(paths)
+        self.file_results_manager.clean_named_results(file)
+
     def collect_paths(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:
-            raise ConfigurationException("pathsname must be a named set of paths")
+            raise ConfigurationException("Pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException("filename must be a named file")
+            raise ConfigurationException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"beginning collect_paths with {len(paths)} paths")
+        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
+        self.clean(file=filename, paths=pathsname)
+        self.logger.info(
+            f"Beginning collect_paths '{pathsname}' with {len(paths)} paths"
+        )
         for path in paths:
+            csvpath = self.csvpath()
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
             try:
-                csvpath = self.csvpath()
-                result = CsvPathResult(
-                    csvpath=csvpath, file_name=filename, paths_name=pathsname
-                )
                 self.path_results_manager.add_named_result(result)
                 self.file_results_manager.add_named_result(result)
+                self._load_csvpath(csvpath, path=path, file=file)
+                """
                 f = path.find("[")
                 path = f"${file}{path[f:]}"
                 csvpath.parse(path)
+                """
                 lines = csvpath.collect()
                 result.lines = lines
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+        self.logger.info(
+            f"Completed collect_paths '{pathsname}' with {len(paths)} paths"
+        )
+
+    def _load_csvpath(self, csvpath: CsvPath, path: str, file: str) -> None:
+        # we strip comments from above the path so we need to extract them first
+        csvpath._extract_metadata(path)
+        f = path.find("[")
+        apath = f"${file}{path[f:]}"
+        csvpath.parse(apath)
 
     def fast_forward_paths(self, *, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException("pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException("filename must be a named file")
+            raise ConfigurationException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"beginning fast_forward_paths with {len(paths)} paths")
-        for path in paths:
+        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
+        self.clean(file=filename, paths=pathsname)
+        self.logger.info(
+            f"Beginning fast_forward_paths '{pathsname}' with {len(paths)} paths"
+        )
+        for i, path in enumerate(paths):
+            csvpath = self.csvpath()
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
             try:
-                csvpath = self.csvpath()
-                result = CsvPathResult(
-                    csvpath=csvpath, file_name=filename, paths_name=pathsname
-                )
                 self.path_results_manager.add_named_result(result)
                 self.file_results_manager.add_named_result(result)
+                self._load_csvpath(csvpath, path=path, file=file)
+                """
+                csvpath._extract_metadata(path)
                 f = path.find("[")
                 apath = f"${file}{path[f:]}"
                 csvpath.parse(apath)
+                """
+                self.logger.info(f"Parsed csvpath {i} pointed at {file}")
                 csvpath.fast_forward()
+                self.logger.info(
+                    f"Completed fast forward of csvpath {i} against {file}"
+                )
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+        self.logger.info(
+            f"Completed fast_forward_paths '{pathsname}' with {len(paths)} paths"
+        )
 
     def next_paths(self, *, pathsname, filename):
         """appends the CsvPathResult for each CsvPath to the end of
@@ -154,60 +190,79 @@ class CsvPaths(CsvPathsPublic):
         interrogate the CsvPath for its path parts, file, etc."""
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException(
-                f"pathsname '{pathsname}' must be a named set of paths"
+                f"Pathsname '{pathsname}' must be a named set of paths"
             )
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException(f"filename '{filename}' must be a named file")
+            raise ConfigurationException(f"Filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"beginning next_paths with {len(paths)} paths")
+        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
+        self.clean(file=filename, paths=pathsname)
+        self.logger.info(f"Beginning next_paths with {len(paths)} paths")
         for path in paths:
+            csvpath = self.csvpath()
+            result = CsvPathResult(
+                csvpath=csvpath, file_name=filename, paths_name=pathsname
+            )
             try:
-                csvpath = self.csvpath()
-                result = CsvPathResult(
-                    csvpath=csvpath, file_name=filename, paths_name=pathsname
-                )
                 self.path_results_manager.add_named_result(result)
                 self.file_results_manager.add_named_result(result)
+                self._load_csvpath(csvpath, path=path, file=file)
+                """
                 f = path.find("[")
                 path = f"${file}{path[f:]}"
                 csvpath.parse(path)
+                """
                 for line in csvpath.next():
                     line.append(result)
                     yield line
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
 
     # =============== breadth first processing ================
 
     def collect_by_line(self, *, pathsname, filename):
+        self.logger.info(
+            f"Starting collect_by_line for paths: {pathsname} and file: {filename}"
+        )
         for line in self.next_by_line(
             pathsname=pathsname, filename=filename, collect=True
         ):
             pass
+        self.logger.info(
+            f"Completed collect_by_line for paths: {pathsname} and file: {filename}"
+        )
 
     def fast_forward_by_line(self, *, pathsname, filename):
+        self.logger.info(
+            f"Starting fast_forward_by_line for paths: {pathsname} and file: {filename}"
+        )
         for line in self.next_by_line(
             pathsname=pathsname, filename=filename, collect=False
         ):
             pass
+        self.logger.info(
+            f"Completed fast_forward_by_line for paths: {pathsname} and file: {filename}"
+        )
 
     def next_by_line(self, *, pathsname, filename, collect: bool = False) -> List[Any]:
+        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
+        self.clean(file=filename, paths=pathsname)
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException(f"filename '{filename}' must be a named file")
+            raise ConfigurationException(f"Filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)
         if not fn:
-            raise ConfigurationException(f"filename '{filename}' must be a named file")
+            raise ConfigurationException(f"Filename '{filename}' must be a named file")
         if pathsname not in self.paths_manager.named_paths:
             raise ConfigurationException(
-                f"pathsname '{pathsname}' must name a set of csvpaths"
+                f"Pathsname '{pathsname}' must name a set of csvpaths"
             )
         paths = self.paths_manager.get_named_paths(pathsname)
         if not isinstance(paths, list) or len(paths) == 0:
             raise ConfigurationException(
-                f"pathsname '{pathsname}' must name a list of csvpaths"
+                f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
 
         csvpath_objects = self._load_csvpath_objects(paths=paths, named_file=fn)
@@ -218,26 +273,31 @@ class CsvPaths(CsvPathsPublic):
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
         #
-        self.logger.info(f"beginning next_by_line with {len(csvpath_objects)} paths")
+        self.logger.info(f"Beginning next_by_line with {len(csvpath_objects)} paths")
         with open(fn, "r") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
             stopped_count: List[int] = []
             for line in reader:
+                #
+                # ErrorHandler needs a reference it can see
+                #
+                acsvpath = None
                 try:
                     self.current_matchers: List[CsvPath] = []
                     for p in csvpath_objects:
-                        if p[0].stopped:
+                        acsvpath = p[0]
+                        if acsvpath.stopped:
                             stopped_count.append(1)
                         else:
-                            b = p[0]._consider_line(line)
-                            p[0].line_number = p[0].line_number + 1
+                            b = acsvpath._consider_line(line)
+                            acsvpath.line_number = acsvpath.line_number + 1
                             if b and collect:
-                                line = p[0].limit_collection(line)
+                                line = acsvpath.limit_collection(line)
                                 p[1].append(line)
                             if b:
-                                self.current_matchers.append(p[0])
+                                self.current_matchers.append(acsvpath)
                                 # yield line
                     if len(self.current_matchers) > 0:
                         yield line
@@ -246,23 +306,29 @@ class CsvPaths(CsvPathsPublic):
                 except Exception as ex:
                     ex.trace = traceback.format_exc()
                     ex.source = self
-                    ErrorHandler(csvpaths=self).handle_error(ex)
+                    ErrorHandler(csvpath=acsvpath).handle_error(ex)
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str
     ) -> List[Tuple[CsvPath, List]]:
         csvpath_objects = []
         for path in paths:
+            csvpath = self.csvpath()
             try:
-                csvpath = self.csvpath()
+                self._load_csvpath(csvpath, path=path, file=named_file)
+                """
                 f = path.find("[")
                 path = f"${named_file}{path[f:]}"
                 csvpath.parse(path)
+                """
                 csvpath_objects.append((csvpath, []))
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+                # the error handler is the CsvPathResults. it registers itself with
+                # the csvpath as the error collector. not as straightforward a way to
+                # get ErrorHandler what it needs, but effectively same as we do above
+                ErrorHandler(csvpath=csvpath).handle_error(ex)
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):

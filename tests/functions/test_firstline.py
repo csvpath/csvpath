@@ -59,7 +59,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
             ${PATH}[*]
             [
                 firstscan.nocontrib() -> print("we scan the whole file from the 0th line")
-                last.nocontrib() -> print("the file has $.count_lines rows")
+                last.nocontrib() -> print("the file has $.csvpath.count_lines rows")
             ]"""
         )
         lines = path.collect()

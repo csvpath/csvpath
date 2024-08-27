@@ -63,8 +63,8 @@ class TestFunctionsLast(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_function_last3")
         path.parse(
-            f""" ${PATH}[*] [ yes() -> print("$.line_count")
-                last() -> print("the last row is $.line_count")
+            f""" ${PATH}[*] [ yes() -> print("$.csvpath.line_count")
+                last() -> print("the last row is $.csvpath.line_count")
             ]
             """
         )

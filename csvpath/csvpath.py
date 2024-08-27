@@ -165,7 +165,7 @@ class CsvPath(CsvPathPublic):
     def parse(self, csvpath):
         self.scanner = Scanner(csvpath=self)
         #
-        # strip off any comments and collect any metadata?
+        # strip off any comments and collect any metadata
         #
         csvpath = self._extract_metadata(csvpath)
         #
@@ -230,6 +230,7 @@ class CsvPath(CsvPathPublic):
                     comment += c
                 elif state == 2:
                     csvpath2 += c
+
         #
         # pull the metadata out of the comment
         #
@@ -266,8 +267,10 @@ class CsvPath(CsvPathPublic):
             metadata_fields[metaname] = (
                 metafield.strip() if metafield is not None else None
             )
+
         if len(metadata_fields) > 0:
-            self._metadata = metadata_fields
+            self.metadata = metadata_fields
+
         return csvpath2
 
     def parse_named_path(self, name):

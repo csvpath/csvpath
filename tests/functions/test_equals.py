@@ -13,7 +13,7 @@ class TestFunctionsEquals(unittest.TestCase):
             f""" ${PATH}[*] [
                 @m = mod(count_lines(), 2)
                 @c = count( equals( @m, 0) )
-                print.onmatch("printing: $.variables, count: $.match_count")
+                print.onmatch("printing: count: $.csvpath.match_count")
                 ~ comment ~
             ]
             """

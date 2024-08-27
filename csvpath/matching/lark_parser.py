@@ -51,8 +51,6 @@ class LarkParser:
         %ignore WS
 
     """
-    #
-    # orig, good, but not ok: /([^\/\\\\]|\\\\.)*/
 
     def __init__(self):
         self.parser = Lark(LarkParser.GRAMMAR, start="match", ambiguity="explicit")

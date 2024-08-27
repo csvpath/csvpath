@@ -155,12 +155,11 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
 
 class CsvPathsResultsManager(ABC):
     """this class is the manager of all the results associated with a
-    CsvPaths instance. Unlikely CsvPath, which are single use, a single
+    CsvPaths instance. Unlike CsvPath, which are single use, a single
     CsvPaths can be used as often as needed. Results managers track all the
     results for a set of named results. Each set of named results tracks the
-    output of a set of named csvpaths. Before reusing the CsvPaths object
-    for another run on the same named path you must clear the results from
-    the ResultsManager.
+    output of a set of named csvpaths. Before rerunning a named set
+    CsvPaths clears the named results from the ResultsManager.
     """
 
     @abstractmethod
@@ -199,6 +198,12 @@ class CsvPathsResultsManager(ABC):
 
     @abstractmethod
     def remove_named_results(self, name: str) -> None:
+        """should raise an exception if no such results"""
+        pass
+
+    @abstractmethod
+    def clean_named_results(self, name: str) -> None:
+        """should remove any results, completing silently if no such results"""
         pass
 
 
@@ -275,7 +280,7 @@ class ResultsManager(CsvPathsResultsManager):
 
     def add_named_result(self, result: CsvPathResult) -> None:
         if result.file_name is None:
-            raise ConfigurationException("Results must have a named file")
+            raise ConfigurationException("Results must have a named-file name")
         if result.paths_name is None:
             raise ConfigurationException("Results must have a named-paths name")
         name = (
@@ -298,10 +303,31 @@ class ResultsManager(CsvPathsResultsManager):
         if name in self.named_results:
             del self.named_results[name]
         else:
-            raise ConfigurationException(f"Results {name} not found")
+            self.csvpaths.logger.warning(f"Results '{name}' not found")
+            #
+            # we treat this as a recoverable error because typically the user
+            # has complete control of the csvpaths environment, making the
+            # problem likely due to config issues that should be addressed.
+            #
+            # if reached by a reference this error should be trapped at an
+            # expression and handled according to the error policy.
+            #
+            raise ConfigurationException(f"Results '{name}' not found")
+
+    def clean_named_results(self, name: str) -> None:
+        if name in self.named_results:
+            self.remove_named_results(name)
 
     def get_named_results(self, name) -> List[List[Any]]:
         if name in self.named_results:
             return self.named_results[name]
         else:
-            raise ConfigurationException(f"Results {name} not found")
+            #
+            # we treat this as a recoverable error because typically the user
+            # has complete control of the csvpaths environment, making the
+            # problem likely due to config issues that should be addressed.
+            #
+            # if reached by a reference this error should be trapped at an
+            # expression and handled according to the error policy.
+            #
+            raise ConfigurationException(f"Results '{name}' not found")

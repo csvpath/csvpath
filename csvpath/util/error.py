@@ -34,9 +34,16 @@ json: {self.json if self.json else ""}
 
 
 class ErrorHandler:
-    def __init__(self, *, csvpath=None, csvpaths=None):
+    def __init__(self, *, csvpath=None, csvpaths=None, error_collector=None):
         self._csvpath = csvpath
         self._csvpaths = csvpaths
+        self._error_collector = (
+            error_collector if error_collector is not None else csvpath
+        )
+        if self._error_collector is None:
+            raise ConfigurationException(
+                "A CsvPathErrorCollector collector must be available. CsvPath or CsvPathResult."
+            )
 
     def handle_error(self, ex: Exception) -> Error:
         if self._csvpath is None and self._csvpaths is None:
@@ -46,13 +53,13 @@ class ErrorHandler:
         error = self.build(ex)
         if self._csvpath:
             self._handle_if(
-                collector=self._csvpath,
+                collector=self._error_collector,
                 policy=self._csvpath.config.CSVPATH_ON_ERROR,
                 error=error,
             )
         if self._csvpaths:
             self._handle_if(
-                collector=self._csvpaths,
+                collector=self._error_collector,
                 policy=self._csvpaths.config.CSVPATHS_ON_ERROR,
                 error=error,
             )

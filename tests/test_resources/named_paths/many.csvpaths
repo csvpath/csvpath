@@ -1,6 +1,6 @@
 
 $[*][
-    print("this is line $.line_number of a path")
+    print("this is line $.csvpath.line_number of a path")
     @test = "one"
     @one = count()
 ]

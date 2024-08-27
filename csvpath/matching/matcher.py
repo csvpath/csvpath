@@ -28,6 +28,7 @@ class Matcher:
         # copying the headers so a csvpath can reset them w/o
         # losing the originals
         #
+        self.headers = None
         if headers:
             self.headers = headers[:]
         self.expressions = []

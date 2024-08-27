@@ -1,152 +1,220 @@
 import unittest
-from csvpath.matching.functions.printf import Print
-from csvpath.matching.functions.yes import Yes
-from csvpath.matching.matcher import Equality
-from csvpath.matching.matcher import Term
-from csvpath.matching.matcher import Matcher
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath, CsvPaths
+from csvpath.util.log_utility import LogUtility
+from csvpath.matching.functions.printf import Print, PrintParser
+from csvpath.matching.util.lark_print_parser import (
+    LarkPrintParser,
+    LarkPrintTransformer,
+)
 
 PATH = "tests/test_resources/test.csv"
+PATH2 = "tests/test_resources/test-3.csv"
 
 
 class TestPrint(unittest.TestCase):
-    def test_print_plus_function(self):
-        pathstr = f"""${PATH}[*]
-            [
-              @h = #0
-              yes() -> print( "$.headers.level $.headers.message", advance(6) )
-            ] """
+    def test_lark_print_parser_parse_and_transform(self):
+        printstr = """$me.headers.level
+            $me.headers.message
+            $.variables.news.day
+            $.metadata.news.day
+            $.headers."this is a header"
+            $.variables."this is a variable"
+            $.variables."this is a variable".day
+            $.csvpath.count_lines"""
+        parser = LarkPrintParser()
+        t = parser.parse(printstr)
+        print(f"tree: {t.pretty()}")
+        transformer = LarkPrintTransformer()
+        ps = transformer.transform(t)
+        for i, _ in enumerate(ps):
+            print(f"\n ... ps[{i}]: {_}")
+        assert ps
+        assert len(ps) == 8
+
+    def test_print_parser_transform_csvpath_data(self):
+        path = CsvPath()
+        path.parse(f"""${PATH}[*] [ yes() ]""")
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        printstr = """ $.csvpath.count_lines """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "9"
+
+        printstr = """ $.csvpath.delimiter """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == ","
+
+        printstr = """ $.csvpath.quotechar """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == '"'
+
+        printstr = """ $.csvpath.scan_part """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == f"${PATH}[*]"
+
+        printstr = """ $.csvpath.match_part """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "[ yes() ]"
 
         path = CsvPath()
-        Save._save(path, "test_print_plus_function")
+        path.parse(
+            f"""${PATH}[1*] [
+                not( count_lines() == 3 )
+                count_lines.nocontrib() == 6 -> stop() ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        printstr = """ $.csvpath.count_lines """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "7"
+
+        printstr = """ $.csvpath.count_matches """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "5"
+
+        printstr = """ $.csvpath.count_scans """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "6"
+
+        printstr = """ $.csvpath.total_lines """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "8"
+
+    def test_print_parser_transform_variables(self):
+        path = CsvPath()
+        path.parse(f"""${PATH}[*] [ yes() ]""")
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        path.variables["test"] = "test"
+        path.variables["one"] = 1
+        path.variables["stack"] = ["a", "b", "c"]
+        path.variables["tracking"] = {}
+        path.variables["tracking"]["value"] = "fish"
+        path.variables["a name with spaces"] = "whoohoo"
+
+        printstr = """ $.variables.test """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "test"
+
+        printstr = """ $.variables.one """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "1"
+
+        printstr = """ $.variables.stack.1 """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "b"
+
+        printstr = """ $.variables.stack.length """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "3"
+
+        printstr = """ $.variables.tracking.value """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "fish"
+
+        printstr = """ $.variables."a name with spaces" """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "whoohoo"
+
+    def test_print_parser_transform_headers(self):
+        path = CsvPath()
+        path.parse(f"""${PATH}[*] [ yes() ]""")
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        printstr = """ $.headers.say """
+        assert path.line_number == 9
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "growl"
+
+        printstr = """ $.headers.2 """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "growl"
+
+        path = CsvPath()
+        path.parse(f"""${PATH2}[*] [ yes() ]""")
+        lines = path.collect()
+        parser = PrintParser(path)
+
+        printstr = """ $.headers."What I say" """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "growl"
+
+    def test_print_parser_transform_metadata(self):
+        path = CsvPath()
+        pathstr = f"""
+            ~ name: test path
+              description: a way of checking things ~
+            ${PATH}[*] [ yes() ]"""
         path.parse(pathstr)
         lines = path.collect()
-        print(f"test_print_plus_function: path.vars: {path.variables}")
-        assert path.is_valid
-        assert len(lines) == 2
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
 
-    def test_print_variables(self):
-        path = CsvPath()
-        matcher = Matcher(csvpath=path, data="[no()]")
-        path.set_variable("test", value="fish")
-        string = "this is a print string with a $.variables.test variable"
-        astr = Term(matcher, value=string, name=None)
-        p = Print(matcher, "print", astr)
-        e = Equality(matcher)
-        e.left = Yes(matcher, name="yes")
-        e.right = p
-        t = p.handle_variables(string)
-        print(f"t: {t}")
-        assert t.index("fish") > -1
+        printstr = """ $.metadata.description """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "a way of checking things"
 
-    def test_print_variables2(self):
-        path = CsvPath()
-        matcher = Matcher(csvpath=path, data="[no()]")
-        path.set_variable("test", value="fish")
-        path.set_variable("blue", value="red")
-        string = "this is a $.variables print string with a $.variables.test variable"
-        astr = Term(matcher, value=string, name=None)
-        p = Print(matcher, "print", astr)
-        e = Equality(matcher)
-        e.left = Yes(matcher, name="yes")
-        e.right = p
-        t = p.handle_variables(string)
-        print(f"at 1 t: {t}\n")
-        t = p.handle_variables(t)
-        print(f"at 2 t: {t}\n")
-        i = t.find("blue")
-        assert i > -1
-        print(f"t: {t}")
-        i = t.find("with a fish")
-        assert i > -1
+        printstr = """ $.metadata.name """
+        result = parser.transform(printstr)
+        assert result
+        assert result.strip() == "test path"
 
-    def test_print_variables3(self):
-        path = CsvPath()
-        matcher = Matcher(csvpath=path, data="[no()]")
-        path.set_variable("col", value="1115")
-        path.set_variable("cntln", value="3338")
-        path.set_variable("cnt", value="0015")
-        path.set_variable("t", value="True")
-        string = "$.variables.col, $.variables.t, $.variables.cntln, $.variables.cnt"
-        astr = Term(matcher, value=string, name=None)
-        p = Print(matcher, "print", astr)
-        e = Equality(matcher)
-        e.left = Yes(matcher, name="yes")
-        e.right = p
-        t = p.handle_variables(string)
-        print(f"at 1 string is: {t}\n")
-        t = p.handle_variables(t)
-        print(f"at 2 string is: {t}\n")
-        t = p.handle_variables(t)
-        print(f"at 3 string is: {t}\n")
-        t = p.handle_variables(t)
-        print(f"at 4 string is: {t}\n")
-        i = t.find("1115")
-        assert i > -1
-        print(f"t: {t}")
-        i = t.find("3338")
-        assert i > -1
-        i = t.find("0015")
-        assert i > -1
-        i = t.find("True")
-        assert i > -1
+        printstr = """ $.metadata.fish """
+        result = parser.transform(printstr)
+        assert result.strip() == "fish"
 
-    def test_print_headers(self):
-        path = CsvPath()
-        headers = ["fish", "bat"]
-        path.headers = headers
-        line = ["xx", "yy"]
-        path.line = line
-        matcher = Matcher(csvpath=path, data="[no()]")
-        matcher.headers = headers
-        matcher.line = line
-        string = "this is a $.headers print string with a $.headers.fish variable"
-        astr = Term(matcher, value=string, name=None)
-        p = Print(matcher, "print", astr)
-        e = Equality(matcher)
-        e.left = Yes(matcher, name="yes")
-        e.right = p
-        t = p.handle_headers(string)
-        print(f"at 1 t: {t}\n")
-        t = p.handle_headers(t)
-        print(f"at 2 t: {t}\n")
-        i = t.find("xx")
-        assert i > -1
-        print(f"t: {t}")
-        i = t.find("with a xx")
-        assert i > -1
+    def test_print_parser_named_paths_data(self):
+        paths = CsvPaths()
+        LogUtility.logger(paths, "debug")
 
-    # this test only checks that the NAME_LINE token is handled correctly
-    # print(  @h=="WARN", "$.headers.level, $.headers.message" )
+        paths.files_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.paths_manager.add_named_paths_from_dir("tests/test_resources/named_paths")
 
-    def test_print_plus_header(self):
-        pathstr = f"""${PATH}[1-100]
-            [
-              @h = #level
-              @h == "WARN" -> print( "$.headers.level $.headers.message" )
-            ] """
+        paths.fast_forward_paths(pathsname="food", filename="food")
 
-        path = CsvPath()
-        Save._save(path, "test_print_plus_header")
+        path = paths.csvpath()
+        LogUtility.logger(path, "debug")
+
+        pathstr = f"""
+            ~ name: test path
+              description: a way of checking things ~
+            ${PATH}[*] [ yes() ]"""
         path.parse(pathstr)
-        path.collect()
+        lines = path.collect()
+        print(f"test_function_concat: lines: {len(lines)}")
+        parser = PrintParser(path)
 
-    def test_function_jinja(self):
-        path = CsvPath()
-        Save._save(path, "test_function_jinja")
-        out = "tests/test_resources/out.txt"
-        inf = "tests/test_resources/in.txt"
-        path.parse(
-            f""" ${PATH}[*][ yes()
-                             last.nocontrib() -> jinja("{inf}", "{out}")
-            ]
-            """
-        )
-        print("")
-        path.fast_forward()
-        print(f"test_function_jinja: path vars: {path.variables}")
-        with open(out, "r") as file:
-            txt = file.read()
-            i = txt.find("scan count: 9")
-            assert i >= 0
+        printstr = """ $food.variables.type """
+        result = parser.transform(printstr)
+        assert result.strip() == "fruit"
+
+        printstr = """ $food.metadata.valid """
+        result = parser.transform(printstr)
+        assert result.strip() == "False"
