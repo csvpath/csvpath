@@ -7,6 +7,7 @@ import traceback
 from csvpath.util.error import ErrorHandler
 from csvpath.util.config import CsvPathConfig
 from csvpath.util.log_utility import LogUtility
+from csvpath.util.metadata_parser import MetadataParser
 from . import CsvPath
 from . import FileException
 from . import ConfigurationException
@@ -139,7 +140,8 @@ class CsvPaths(CsvPathsPublic):
 
     def _load_csvpath(self, csvpath: CsvPath, path: str, file: str) -> None:
         # we strip comments from above the path so we need to extract them first
-        csvpath._extract_metadata(path)
+        path = MetadataParser().extract_metadata(instance=csvpath, csvpath=path)
+        # csvpath._extract_metadata(path)
         f = path.find("[")
         apath = f"${file}{path[f:]}"
         csvpath.parse(apath)
