@@ -16,7 +16,7 @@ class Column(Function):
             if isinstance(v, int) or v.isdigit():
                 i = int(v)
                 if i < 0:
-                    hlen = len(self.matcher.headers)
+                    hlen = len(self.matcher.csvpath.headers)
                     c = hlen + i
                     if i < 0:
                         c = c - 1

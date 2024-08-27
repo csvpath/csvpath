@@ -1,6 +1,7 @@
 from typing import Any, List, Dict
 from .function import Function
 from ..productions import Equality, Term
+import hashlib
 
 # from ..util.lark_print_parser import LarkPrintParser, LarkPrintTransformer
 from ..util.print_parser import PrintParser
@@ -36,8 +37,19 @@ class Print(Function):
                 right = self.children[0].right
             om = self.has_onmatch()
             if not om or self.line_matches():
-                self.matcher.csvpath.print(f"{self.to_value()}")
-                self.match = True
+                if self.onchange:
+                    id = self.get_id()
+                    v = self.matcher.get_variable(id)
+                    me = self.to_value()
+                    me = hashlib.sha256(me.encode("utf-8")).hexdigest()
+                    if me == v:
+                        pass
+                    else:
+                        self.matcher.csvpath.print(f"{self.to_value()}")
+                    self.matcher.set_variable(id, value=me)
+                else:
+                    self.matcher.csvpath.print(f"{self.to_value()}")
                 if right:
                     right.matches(skip=skip)
+            self.match = True
         return self.match

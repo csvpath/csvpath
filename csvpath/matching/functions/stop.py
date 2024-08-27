@@ -49,12 +49,10 @@ class Skip(Function):
         if self in skip:  # pragma: no cover
             return False
         if self.match is None:
-            self.match = True
             if len(self.children) == 1:
                 b = self.children[0].matches(skip=skip)
                 if b is True:
                     self.matcher.skip = True
-                    self.match = True
                     self.matcher.csvpath.logger.info(
                         f"skipping line {self.matcher.csvpath.line_number}. contained child matches."
                     )
@@ -63,5 +61,5 @@ class Skip(Function):
                 self.matcher.csvpath.logger.info(
                     f"skipping line {self.matcher.csvpath.line_number}"
                 )
-                self.match = True
+            self.match = True
         return self.match

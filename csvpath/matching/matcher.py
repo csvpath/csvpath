@@ -28,9 +28,9 @@ class Matcher:
         # copying the headers so a csvpath can reset them w/o
         # losing the originals
         #
-        self.headers = None
-        if headers:
-            self.headers = headers[:]
+        # self.headers = None
+        # if headers:
+        #    self.headers = headers[:]
         self.expressions = []
         self.header_dict = None
         self.if_all_match = []
@@ -77,20 +77,20 @@ class Matcher:
         self.current_expression = None
 
     def header_index(self, name: str) -> int:
-        if not self.headers:
+        if not self.csvpath.headers:  # self.headers:
             return None
-        if not self.header_dict:
+        if self.header_dict is None:
             self.header_dict = {}
-            for i, n in enumerate(self.headers):
+            for i, n in enumerate(self.csvpath.headers):  # self.headers):
                 self.header_dict[n] = i
         return self.header_dict.get(name)
 
     def header_name(self, i: int) -> str:
-        if not self.headers:
+        if not self.csvpath.headers:  # self.headers:
             return None
-        if i < 0 or i >= len(self.headers):
+        if i < 0 or i >= len(self.csvpath.headers):  # self.headers):
             return None
-        return self.headers[i]
+        return self.csvpath.headers[i]  # self.headers[i]
 
     def header_value(self, name: str) -> Any:
         n = self.header_index(name)
@@ -176,8 +176,12 @@ class Matcher:
         return None
 
     def last_header_name(self) -> str:
-        if self.headers and len(self.headers) > 0:
-            return self.headers[self.last_header_index()]
+        if (
+            self.csvpath.headers and len(self.csvpath.headers) > 0
+        ):  # self.headers and len(self.headers) > 0:
+            return self.csvpath.headers[
+                self.last_header_index()
+            ]  # self.headers[self.last_header_index()]
         return None
 
     # ===================

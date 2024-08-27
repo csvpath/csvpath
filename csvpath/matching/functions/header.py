@@ -20,7 +20,7 @@ class Header(Function):
                 v = self.children[0].to_value()
                 if isinstance(v, int) or v.isdigit():
                     i = int(v)
-                    if i < 0 or i >= len(self.matcher.headers):
+                    if i < 0 or i >= len(self.matcher.csvpath.headers):
                         self.match = False
                     else:
                         self.match = True

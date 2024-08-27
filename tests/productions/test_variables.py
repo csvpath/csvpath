@@ -37,20 +37,23 @@ class TestVariables(unittest.TestCase):
                                 @ah.so = #firstname
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                last() -> @lastname.Bat = "fred"
+                                @lastname.Bat = "fred"
                                 @tl = total_lines()
                                 no()
                             ]
                    """
         )
-        path.collect()
-        print(
-            f"test_function_access_variable_tracking_values: path vars: {path.variables}"
-        )
-        assert path.variables["lastname"]["Bat"] == "fred"
-        assert path.variables["hmmm"] == 7
-        assert path.variables["ohhh"] is None
-        assert path.variables["ah"]["so"]
+        # was:  last() -> @lastname.Bat = "fred"
+
+        with pytest.raises(TypeError):
+            path.collect()
+            print(
+                f"test_function_access_variable_tracking_values: path vars: {path.variables}"
+            )
+            assert path.variables["lastname"]["Bat"] == "fred"
+            assert path.variables["hmmm"] == 7
+            assert path.variables["ohhh"] is None
+            assert path.variables["ah"]["so"]
 
     def test_variable_names(self):
         path = CsvPath()

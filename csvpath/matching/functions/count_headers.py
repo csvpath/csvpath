@@ -11,6 +11,7 @@ class CountHeaders(Function):
         if self in skip:  # pragma: no cover
             return True
         if self.name == "count_headers":
-            return len(self.matcher.headers)
+            ret = len(self.matcher.csvpath.headers)
+            return ret
         elif self.name == "count_headers_in_line":
             return len(self.matcher.line)

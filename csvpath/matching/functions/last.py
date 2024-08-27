@@ -13,7 +13,7 @@ class Last(Function):
     def matches(self, *, skip=[]) -> bool:
         if self.match is None:
             self.match = (
-                self.matcher.csvpath.line_number == self.matcher.csvpath.total_lines
+                self.matcher.csvpath.line_number == self.matcher.csvpath.total_lines + 1
                 or (
                     self.matcher.csvpath.scanner
                     and self.matcher.csvpath.scanner.is_last(
@@ -21,4 +21,9 @@ class Last(Function):
                     )
                 )
             )
+
+            print(f"Last.matches: ln: {self.matcher.csvpath.line_number}")
+            print(f"Last.matches: tl: {self.matcher.csvpath.total_lines + 1}")
+
+            print(f"Last.matches: match: {self.match}")
         return self.match

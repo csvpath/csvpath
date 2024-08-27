@@ -3,7 +3,7 @@
                                 @ah.so = #firstname
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                last() -> @lastname.Bat = "fred"
+                                @lastname.Bat = "fred"
                                 @tl = total_lines()
                                 no()
                             ]

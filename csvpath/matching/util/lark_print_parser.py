@@ -10,10 +10,12 @@ class LarkPrintParser:
     GRAMMAR = r"""
         printed: (TEXT | reference | WS)+
         TEXT: /[^\$\s]+/
-        reference: ROOT type NAME
+        reference: ROOT type name
         ROOT: /\$[^\.\$]*\./
         type: (VARIABLES|HEADERS|METADATA|CSVPATH)
-        NAME: /(\.([^\.\$]+|"[^"]+")){1,2}/
+        name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))?
+        SIMPLE_NAME: /[^\.\$\s!\:\?"']+/
+        QUOTED_NAME: /'[^']+'/
         VARIABLES: "variables"
         HEADERS: "headers"
         METADATA: "metadata"
@@ -21,6 +23,10 @@ class LarkPrintParser:
         %import common.SIGNED_NUMBER
         %import common.WS
     """
+    #
+    #    NAME: ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
+    #    NAME: /(\.([^\.\$\s!\:\?"]+|"[^"]+")){1,2}/
+    #
 
     def __init__(self):
         self.parser = Lark(
@@ -76,15 +82,21 @@ class LarkPrintTransformer(Transformer):
     def ROOT(self, token):
         return token.value
 
-    def NAME(self, token):
-        name = token.value.lstrip(".").strip()
+    def name(self, simple, tracking=None):
+        name = simple.lstrip(".").strip()
         names = name.split(".")
         names_unquoted = []
         for aname in names:
-            if aname[0] == '"' and aname[len(aname) - 1] == '"':
+            if aname[0] == "'" and aname[len(aname) - 1] == "'":
                 aname = aname[1 : len(aname) - 1]
             names_unquoted.append(aname)
         return names_unquoted
+
+    def SIMPLE_NAME(self, token):
+        return token.value
+
+    def QUOTED_NAME(self, token):
+        return token.value
 
     def type(self, atype):
         return atype

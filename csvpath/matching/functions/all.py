@@ -31,7 +31,9 @@ class All(Function):
         return self.match
 
     def all_exist(self):
-        if len(self.matcher.line) != len(self.matcher.headers):
+        if len(self.matcher.line) != len(
+            self.matcher.csvpath.headers
+        ):  # changed to csvpath.headers
             self.match = False
             return
         for i, h in enumerate(self.matcher.line):

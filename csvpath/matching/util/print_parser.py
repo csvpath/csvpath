@@ -20,6 +20,7 @@ class PrintParser:
 
     def _to_string(self, ts) -> str:
         res = ""
+        print(f"PrintParser: to string: ts: {ts}")
         for item in ts:
             if isinstance(item, dict):
                 item = self._handle_replacement(item)
@@ -90,12 +91,27 @@ class PrintParser:
 
     def _ref_from_list(self, ref, data, name, tracking):
         # find index of header
-        c = ref["results"].csvpath if "results" in ref else self.csvpath
+        if "results" in ref:
+            c = ref["results"].csvpath
+        else:
+            c = self.csvpath
         i = c.header_index(name)
+        print(f"PrintParser: name: {name}, i: {i}")
+        #
+        # i was -1 on a miss which wrapped. a miss is now None,
+        # but checking for -1 doesn't hurt.
+        #
+        if i is None or i == -1:
+
+            if f"{name}".isdigit():
+                i = int(name)
+            pass
+
         # if csvpaths and lines were collected, we could pull them from
         # the results. for now we'll just use the matcher's last line.
         # if/when we want to allow indexing into the result lines this will
         # change.
+        datum = name
         if c.matcher:
             try:
                 datum = c.matcher.line[i]

@@ -167,6 +167,8 @@ class CsvPath(CsvPathPublic):
         self.scanner = Scanner(csvpath=self)
         #
         # strip off any comments and collect any metadata
+        # csvpaths will do this earlier but it stripped off
+        # the comments so we won't find them again
         #
         csvpath = MetadataParser().extract_metadata(instance=self, csvpath=csvpath)
         #
@@ -400,7 +402,15 @@ class CsvPath(CsvPathPublic):
         self.total_iteration_time = end - start
 
     def _consider_line(self, line):
-        if self.skip_blank_lines and len(line) == 0:
+        blankskip = (
+            self.skip_blank_lines
+            and len(line) == 0
+            and self.line_number != self.total_lines - 1
+        )
+        if blankskip:
+            self.logger.info(
+                f"Skipping the line following {self.line_number} because blank"
+            )
             pass
         elif self.scanner.includes(self.line_number):
             self.scan_count = self.scan_count + 1
@@ -435,6 +445,8 @@ class CsvPath(CsvPathPublic):
                 )
                 i = 0
                 for line in reader:
+                    if len(line) == 0 and self.skip_blank_lines:
+                        continue
                     if i == 0:
                         self.headers = line
                         i += 1
@@ -619,4 +631,4 @@ class CsvPath(CsvPathPublic):
         for i, n in enumerate(self.headers):
             if n == name:
                 return i
-        return -1
+        return None

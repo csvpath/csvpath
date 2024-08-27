@@ -48,7 +48,7 @@ class Scanner(object):
         all_lines = self.all_lines if all_lines is None else all_lines
         these = self.these if these is None else these
         if all_lines:
-            return line == self.csvpath.total_lines
+            return line == self.csvpath.total_lines + 1
         elif line == to_line:
             return True
         if len(these) > 0 and max(these) == line and not to_line and not all_lines:

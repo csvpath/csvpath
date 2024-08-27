@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from csvpath.csvpath import CsvPath
 from tests.save import Save
 
@@ -46,12 +47,13 @@ class TestFunctionsTally(unittest.TestCase):
                                 tally(#lastname) no()
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                last() -> @lastname.Bat = "fred"
+                                @lastname.Bat = "fred"
                             ]
                    """
         )
-        path.collect()
-        print(f"test_function_tally4: path vars: {path.variables}")
-        assert path.variables["lastname"]["Bat"] == "fred"
-        assert path.variables["hmmm"] == 7
-        assert path.variables["ohhh"] is None
+        with pytest.raises(TypeError):
+            path.collect()
+            print(f"test_function_tally4: path vars: {path.variables}")
+            assert path.variables["lastname"]["Bat"] == "fred"
+            assert path.variables["hmmm"] == 7
+            assert path.variables["ohhh"] is None

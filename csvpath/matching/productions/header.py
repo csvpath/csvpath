@@ -14,7 +14,7 @@ class Header(Matchable):
         if isinstance(name, str):
             name = name.strip()
             if name[0] == '"' and name[len(name) - 1] == '"':
-                name = name[1 : len(name) - 2]
+                name = name[1 : len(name) - 1]
         super().__init__(matcher, value=Header.NEVER, name=name)
 
     def reset(self) -> None:
@@ -38,6 +38,10 @@ class Header(Matchable):
                     ret = None
                 elif self.matcher.line and len(self.matcher.line) > n:
                     ret = self.matcher.line[n]
+                else:
+                    self.matcher.csvpath.logger.debug(
+                        f"Header.to_value: miss because n >= {len(self.matcher.line)}"
+                    )
             if self.asbool:
                 self.value = ExpressionUtility.asbool(ret)
             else:

@@ -12,11 +12,12 @@ class ResetHeaders(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            self.matcher.headers = self.matcher.line[:]
+            self.matcher.csvpath.headers = self.matcher.line[:]
             self.matcher.header_dict = None
             self.matcher.csvpath.logger.warning(
                 f"Resetting headers mid run! Line number: {self.matcher.csvpath.line_number}."
             )
+            self.value = True
         return self.value
 
     def matches(self, *, skip=[]) -> bool:
