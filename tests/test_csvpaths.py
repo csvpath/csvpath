@@ -80,17 +80,17 @@ class TestNewCsvPaths(unittest.TestCase):
         meta = cs.path_results_manager.get_metadata("many")
         print(f"\ntest_csvpaths_metadata: meta: {meta}")
         assert meta is not None
-        assert "paths name" in meta
-        assert "file name" in meta
+        assert "paths_name" in meta
+        assert "file_name" in meta
         assert "lines" in meta
-        assert "csvpaths applied" in meta
-        assert "csvpaths completed" in meta
+        assert "csvpaths_applied" in meta
+        assert "csvpaths_completed" in meta
         assert "valid" in meta
-        assert meta["paths name"] == "many"
-        assert meta["file name"] == "food"
+        assert meta["paths_name"] == "many"
+        assert meta["file_name"] == "food"
         assert meta["lines"] == 11
-        assert meta["csvpaths applied"] == 2
-        assert meta["csvpaths completed"] is True
+        assert meta["csvpaths_applied"] == 2
+        assert meta["csvpaths_completed"] is True
         assert meta["valid"] is True
 
     def test_csvpaths_metadata2(self):

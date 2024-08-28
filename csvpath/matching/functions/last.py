@@ -12,10 +12,13 @@ class Last(Function):
 
     def matches(self, *, skip=[]) -> bool:
         if self.match is None:
-            self.match = self.matcher.csvpath.line_monitor.is_last_line() or (
+            last = self.matcher.csvpath.line_monitor.is_last_line()
+            last_scan = (
                 self.matcher.csvpath.scanner
                 and self.matcher.csvpath.scanner.is_last(
                     self.matcher.csvpath.line_monitor.physical_line_number
                 )
             )
+            self.match = last or last_scan
+            # print(f"Last.matches: line: {self.matcher.csvpath.line_monitor.physical_line_number}, last: {last}, last_scan: {last_scan}, self.match: {self.match}")
         return self.match

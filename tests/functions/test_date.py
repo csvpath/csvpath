@@ -14,12 +14,15 @@ class TestFunctionsDate(unittest.TestCase):
             f"""
             ${DATES}[0-8]
             [
+                print("line $.csvpath.line_number")
                 push( "dates", date( #date, #format ) )
                 yes()
             ]"""
         )
         path.fast_forward()
         print(f"\ntest_function_date1: path vars: {path.variables}")
+        for d in path.variables["dates"]:
+            print(f"...d: {d}")
         assert len(path.variables["dates"]) == 9
         assert path.variables["dates"][0] == "date"
         for i, _ in enumerate(path.variables["dates"]):

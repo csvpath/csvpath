@@ -11,16 +11,22 @@ class End(Function):
     def to_value(self, *, skip=[]) -> Any:
         if self in skip:  # pragma: no cover
             return self._noop_value()
-        if not self.value:
+        if self.value is None:
             i = self.matcher.last_header_index()
-            if len(self.children) > 0:
-                v = self.children[0].to_value()
-                if isinstance(v, int) or v.isdigit():
-                    i = i - int(v)
-                else:
-                    raise ChildrenException("end()'s term must be a positive int")
-            if i >= 0 and i < len(self.matcher.line):
-                self.value = self.matcher.line[i]
+            if i is None:
+                #
+                # this could happen when a line is blank or has some other oddity
+                #
+                pass
+            else:
+                if len(self.children) > 0:
+                    v = self.children[0].to_value()
+                    if isinstance(v, int) or v.isdigit():
+                        i = i - int(v)
+                    else:
+                        raise ChildrenException("end()'s term must be a positive int")
+                if i >= 0 and i < len(self.matcher.line):
+                    self.value = self.matcher.line[i]
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

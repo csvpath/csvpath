@@ -248,12 +248,12 @@ class ResultsManager(CsvPathsResultsManager):
         if results and len(results):
             rs = results[0]
             path = rs.csvpath
-            meta["paths name"] = rs.paths_name
-            meta["file name"] = rs.file_name
+            meta["paths_name"] = rs.paths_name
+            meta["file_name"] = rs.file_name
             meta["lines"] = path.line_monitor.data_end_line_count
             paths = len(self.csvpaths.paths_manager.get_named_paths(name))
-            meta["csvpaths applied"] = paths
-            meta["csvpaths completed"] = paths == len(results)
+            meta["csvpaths_applied"] = paths
+            meta["csvpaths_completed"] = paths == len(results)
             meta["valid"] = self.is_valid(name)
         return meta
 

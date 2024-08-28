@@ -107,32 +107,16 @@ class CsvPath(CsvPathPublic):
         # the line non-blank.
         #
         self.skip_blank_lines = skip_blank_lines
-
-        """
-        LineMonitor has this tracking now
         #
-        # physical_total_lines == the total number of lines including blanks
-        # data_total_lines == the number of lines that have at least one header
+        # in the case of a [*] scan where the last line is blank we would miss firing
+        # last() unless we take steps. instead, we allow that line to match, but we
+        # do not return a line to the caller of next() and we freeze the variables
+        # there is room for side effects make changes, but that a reasonable compromise
+        # between missing last and allowing unwanted changes. we definitely do not
+        # freeze is_valid or stop, which can be useful signaling, even in an
+        # inconsistent state.
         #
-        self.physical_total_lines = -1
-        self.data_total_lines = -1
-        #
-        # physical line count == count at the current line being processed including blanks
-        # data line count == count at the current line being processed of all lines containing data
-        #
-        self.physical_line_count = -1
-        self.data_line_count = -1
-        #
-        # physical line number is a pointer to a line in the file
-        # data line number is a pointer to a line that is being/has been processed
-        #
-        # pointers are 0-based; they may be used as indexes into lists
-        #
-        # old -- self.line_number
-        #
-        self.physical_line_number = 0
-        self.data_line_number = 0
-        """
+        self._freeze_variables = False
         #
         # counts are 1-based
         #
@@ -476,6 +460,7 @@ class CsvPath(CsvPathPublic):
                 yield line
             if self.stopped:
                 break
+        self._freeze_variables = True
         end = time.time()
         self.total_iteration_time = end - start
 
@@ -510,10 +495,10 @@ class CsvPath(CsvPathPublic):
         # if we're empty, but last, we need to make sure the
         # matcher runs a final time so that any last() can run.
         #
+        # print(f"\nCsvPath._consider_line: starting with line: {self.line_monitor.physical_line_number}, last & empty: {self.line_monitor.is_last_line_and_empty(line)}")
         if self.line_monitor.is_last_line_and_empty(line):
-            # self.matcher.reset()
-            # self.matcher.line = line
-            # self.matcher.matches()
+            print("last line is empty. freezing, matching, and returning false.")
+            self._freeze_variables = True
             self.matches(line)
             return False
 
@@ -670,6 +655,12 @@ class CsvPath(CsvPathPublic):
         return matched
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
+        print(f"Csvpath:setting a var: {name}, value: {value}")
+        if self._freeze_variables:
+            self.logger.warning(
+                f"The run is ending, the variables are frozen. Cannot set {name} to {value}"
+            )
+            return
         if not name:
             raise VariableException(
                 f"Name cannot be None: name: {name}, tracking: {tracking}, value: {value}"
@@ -695,6 +686,11 @@ class CsvPath(CsvPathPublic):
     ) -> Any:
         if not name:
             raise VariableException("Name cannot be None")
+        if self._freeze_variables:
+            #
+            # run is ending, no more changes
+            #
+            set_if_none = None
         thevalue = None
         if tracking is not None:
             thedict = None
@@ -721,6 +717,15 @@ class CsvPath(CsvPathPublic):
                     thevalue = set_if_none
             else:
                 thevalue = self.variables[name]
+        if self._freeze_variables:
+            if isinstance(thevalue, list):
+                #
+                # run is ending, no more changes
+                #
+                thevalue = tuple(thevalue)
+                print(
+                    f"returning a tuple: {isinstance(thevalue, tuple)} for {thevalue}"
+                )
         return thevalue
 
     def line_numbers(self) -> Iterator[int | str]:

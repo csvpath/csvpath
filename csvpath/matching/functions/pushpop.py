@@ -20,11 +20,19 @@ class Push(Function):
                 stack = self.matcher.get_variable(k, set_if_none=[])
                 if self.has_qualifier("distinct") and v in stack:
                     pass
-                else:
+                elif isinstance(stack, tuple):
+                    self.matcher.csvpath.logger.warning(
+                        "Push cannot add to the stack because it is a tuple. The run may be ending."
+                    )
+                elif stack is not None:
                     stack.append(v)
-                self.matcher.set_variable(
-                    k, value=stack
-                )  # technically we don't have to call set because refs
+                else:
+                    self.matcher.csvpath.logger.warning(
+                        "Push cannot do its work because no default stack was created. The run may be ending."
+                    )
+                    # self.matcher.set_variable(
+                    #     k, value=stack
+                    # )  # technically we don't have to call set because refs
         self.value = True
         return self.value
 

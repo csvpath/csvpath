@@ -2,6 +2,27 @@ from typing import List, Any
 
 
 class LineMonitor:
+    """
+    #
+    # physical_total_lines == the total number of lines including blanks
+    # data_total_lines == the number of lines that have at least one header
+    #
+    # physical line count == count at the current line being processed including blanks
+    # data line count == count at the current line being processed of all lines
+    # containing data
+    #
+    # physical line number is a pointer to a line in the file
+    # data line number is a pointer to a line that is being/has been processed
+    #
+    # the end_line_count and end_line_number are the max lines/counts sentinels. we
+    # get them from the first file open that pulls headers and line numbers. once we
+    # iterate to get the line count call set_end_lines_and_reset(). that will keep
+    # the totals but zero out the others so we're ready to process.
+    #
+    # pointers are 0-based; they may be used as indexes into lists
+    #
+    """
+
     def __init__(self) -> None:
         self._physical_end_line_count: int = None
         self._physical_end_line_number: int = None
@@ -20,13 +41,10 @@ class LineMonitor:
         ret = True
         if self._physical_end_line_number is None or self._physical_line_number is None:
             ret = False
-        if (
-            self._physical_end_line_number == self._physical_line_number
-            and line
-            and len(line) == 0
-        ):
+        same = self._physical_end_line_number == self._physical_line_number
+        if same and line is not None and len(line) == 0:
             ret = True
-        elif self._physical_end_line_number == self._physical_line_number and line:
+        elif same and line:
             for d in line:
                 if f"{d}".strip() != "":
                     ret = False

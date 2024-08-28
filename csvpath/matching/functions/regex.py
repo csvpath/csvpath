@@ -44,21 +44,27 @@ class Regex(Function):
                 theregex = theregex[1:]
             if theregex[len(theregex) - 1] == "/":
                 theregex = theregex[0 : len(theregex) - 1]
-            m = re.search(theregex, thevalue)
-            # in the case of no match we're going to potentially
-            # do extra regexing because self.value remains None
-            # problem? self.match will be set so that may protect
-            # us.
-            v = None
-            if m:
-                v = m.group(group)
-            if self.name == "regex":
-                self.value = v
-            elif self.name == "exact":
-                self.value = v == thevalue
-            self.matcher.csvpath.logger.info(
-                f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
-            )
+            if thevalue is None:
+                #
+                # this could happen if the line is blank
+                #
+                pass
+            else:
+                m = re.search(theregex, thevalue)
+                # in the case of no match we're going to potentially
+                # do extra regexing because self.value remains None
+                # problem? self.match will be set so that may protect
+                # us.
+                v = None
+                if m:
+                    v = m.group(group)
+                if self.name == "regex":
+                    self.value = v
+                elif self.name == "exact":
+                    self.value = v == thevalue
+                self.matcher.csvpath.logger.info(
+                    f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
+                )
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

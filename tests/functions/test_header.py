@@ -7,7 +7,7 @@ EMPTY = "tests/test_resources/empty.csv"
 
 
 class TestFunctionsHeader(unittest.TestCase):
-    def test_function_any_function1(self):
+    def test_function_header1(self):
         path = CsvPath()
         Save._save(path, "test_function_any_function1")
         path.parse(
@@ -23,7 +23,7 @@ class TestFunctionsHeader(unittest.TestCase):
         assert len(lines) == 1
         assert path.variables["frog"] is True
 
-    def test_function_any_function3(self):
+    def test_function_header3(self):
         path = CsvPath()
         Save._save(path, "test_function_any_function3")
         path.parse(
@@ -52,7 +52,7 @@ class TestFunctionsHeader(unittest.TestCase):
         assert path.variables["v2"] is True
         assert path.variables["h"] is True
 
-    def test_function_any_function4(self):
+    def test_function_header4(self):
         path = CsvPath()
         Save._save(path, "test_function_any_function4")
         path.parse(
@@ -70,7 +70,7 @@ class TestFunctionsHeader(unittest.TestCase):
         assert path.variables["found"] is False
         assert path.variables["notfound"] is True
 
-    def test_function_any_function5(self):
+    def test_function_header5(self):
         path = CsvPath()
         Save._save(path, "test_function_any_function5")
         path.parse(
@@ -91,7 +91,7 @@ class TestFunctionsHeader(unittest.TestCase):
         assert path.variables["found2"] is True
         assert path.variables["notfound"] is True
 
-    def test_function_header_exists(self):
+    def test_function_header6(self):
         path = CsvPath()
         Save._save(path, "test_function_header_exists")
         path.parse(

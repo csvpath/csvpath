@@ -12,6 +12,20 @@ class TestCsvPath(unittest.TestCase):
         path.fast_forward()
         assert path.line_monitor.data_line_count == 9
 
+    def test_csvpath_vars_frozen(self):
+        path = CsvPath()
+        path.parse(
+            """$tests/test_resources/empty2.csv[*][
+                            @c = count()
+                            last.nocontrib() -> push("chk", "True")
+                   ]"""
+        )
+        path.fast_forward()
+        print(f"test_csvpath_vars_frozen: vars: {path.variables}")
+        assert "c" in path.variables
+        assert path.variables["c"] == 3
+        assert "chk" not in path.variables
+
     def test_csvpath_a_lot_of_csvpaths(self):
         #
         # we had an open files bug due to too many loggers. this

@@ -192,3 +192,14 @@ class Validation(Matchable):
         # could be equalities so the number may be more than 2
         elif self.children[0].left is None or self.children[0].right is None:
             raise ChildrenException(f"{self.name}() must have 2 or more arguments")
+
+    def validate_three_args(self) -> None:
+        cs = self.children
+        if cs is None:
+            raise ChildrenException(f"{self.name}() must have three args, not none")
+        elif len(cs) == 1 and hasattr(cs[0], "op"):
+            child = cs[0]
+            if len(child.children) != 3:
+                raise ChildrenException(f"{self.name}() must have three args")
+        elif len(cs) != 3:
+            raise ChildrenException(f"{self.name}() must have three args")

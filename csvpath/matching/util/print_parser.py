@@ -235,6 +235,7 @@ class PrintParser:
         else:
             runtime["count_scans"] = csvpath.scan_count
 
+        runtime["file_name"] = csvpath.scanner.filename
         runtime["scan_part"] = csvpath.scan
         runtime["match_part"] = csvpath.match
         runtime["last_row_time"] = csvpath.last_row_time

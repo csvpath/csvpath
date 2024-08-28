@@ -11,6 +11,7 @@ from .lower import Lower
 from .upper import Upper
 from .percent import Percent
 from .above import AboveBelow
+from .between import Between
 from .first import First
 from .count_lines import CountLines
 from .count_scans import CountScans
@@ -277,6 +278,13 @@ class FunctionFactory:
             f = StartsWith(matcher, name, child)
         elif name == "skip":
             f = Skip(matcher, name, child)
+        elif (
+            name == "between"
+            or name == "inside"
+            or name == "beyond"
+            or name == "outside"
+        ):
+            f = Between(matcher, name, child)
         else:
             if (
                 f is None
