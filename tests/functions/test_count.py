@@ -73,7 +73,7 @@ class TestFunctionsCount(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
         print(f"test_function_count_in: path vars: {path.variables}")
-        assert path.variables["david"] == 1
+        assert path.variables["david"] == 2
 
     def test_function_count_scans(self):
         path = CsvPath()
@@ -87,7 +87,7 @@ class TestFunctionsCount(unittest.TestCase):
         assert path.variables["frogs_seen"] == 2
         assert path.variables["scanned_for_frogs"] == 9
 
-    def test_function_nocount(self):
+    def test_function_count_nocount(self):
         path = CsvPath()
         Save._save(path, "test_function_nocount")
         path.parse(
@@ -100,7 +100,7 @@ class TestFunctionsCount(unittest.TestCase):
         assert "imcounting" not in path.variables
         assert len(lines) == 0
 
-    def test_function_allcount(self):
+    def test_function_count_allcount(self):
         path = CsvPath()
         Save._save(path, "test_function_allcount")
         path.parse(
@@ -114,7 +114,7 @@ class TestFunctionsCount(unittest.TestCase):
         assert path.variables["imcounting"] == 9
         assert len(lines) == 9
 
-    def test_function_linecount1(self):
+    def test_function_count_linecount1(self):
         path = CsvPath()
         Save._save(path, "test_function_linecount1")
         path.parse(
@@ -126,10 +126,10 @@ class TestFunctionsCount(unittest.TestCase):
         print(f"test_function_count_in: path vars: {path.variables}")
         assert "imcounting" in path.variables
         # lines are zero-based, unlike match counts
-        assert path.variables["imcounting"] == 8
+        assert path.variables["imcounting"] == 9
         assert len(lines) == 0
 
-    def test_function_linecount2(self):
+    def test_function_count_linecount2(self):
         path = CsvPath()
         Save._save(path, "test_function_linecount2")
         path.parse(

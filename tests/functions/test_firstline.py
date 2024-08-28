@@ -7,9 +7,9 @@ EMPTY = "tests/test_resources/empty.csv"
 
 
 class TestFunctionsFirstLine(unittest.TestCase):
-    def test_function_firstline_function1(self):
+    def test_function_firstline1(self):
         path = CsvPath()
-        Save._save(path, "test_function_firstline_function1")
+        Save._save(path, "test_function_firstline1")
         path.parse(
             f"""
             ${PATH}[0-7]
@@ -22,16 +22,16 @@ class TestFunctionsFirstLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\n test_function_firstline1: lines: {lines}")
+        print(f"test_function_firstline1: path vars: {path.variables}")
         assert len(lines) == 1
-        assert path.variables["line"] == 0
-        assert path.variables["scan"] == 0
-        assert path.variables["match"] == 4
+        assert path.variables["line"] == 1
+        assert path.variables["scan"] == 1
+        assert path.variables["match"] == 5
 
-    def test_function_firstline_function2(self):
+    def test_function_firstline2(self):
         path = CsvPath()
-        Save._save(path, "test_function_firstline_function2")
+        Save._save(path, "test_function_firstline2")
         path.parse(
             f"""
             ${PATH}[3-7]
@@ -44,16 +44,16 @@ class TestFunctionsFirstLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\n test_function_firstline2: lines: {lines}")
+        print(f"test_function_firstline2: path vars: {path.variables}")
         assert len(lines) == 1
         assert "line" not in path.variables
-        assert path.variables["scan"] == 3
-        assert path.variables["match"] == 4
+        assert path.variables["scan"] == 4
+        assert path.variables["match"] == 5
 
-    def test_function_firstline_function3(self):
+    def test_function_firstline3(self):
         path = CsvPath()
-        Save._save(path, "test_function_firstline_function3")
+        Save._save(path, "test_function_firstline3")
         path.parse(
             f"""
             ${PATH}[*]
@@ -63,8 +63,8 @@ class TestFunctionsFirstLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\n test_function_firstline3: lines: {lines}")
+        print(f"test_function_firstline3: path vars: {path.variables}")
         assert len(lines) == 9
         """
         assert "line" not in path.variables

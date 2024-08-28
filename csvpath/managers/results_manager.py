@@ -145,8 +145,8 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
                    name of file:{self.file_name};
                    valid:{self.csvpath.is_valid};
                    stopped:{self.csvpath.stopped};
-                   last line processed:{self.csvpath.line_number};
-                   total file lines:{self.csvpath.total_lines};
+                   last line processed:{self.csvpath.line_monitor.physical_line_number};
+                   total file lines:{self.csvpath.line_monitor.physical_end_line_number};
                    matches:{self.csvpath.match_count};
                    lines captured:{len(self.lines) if self.lines else 0};
                    print statements:{self.print_statements_count()};
@@ -250,7 +250,7 @@ class ResultsManager(CsvPathsResultsManager):
             path = rs.csvpath
             meta["paths name"] = rs.paths_name
             meta["file name"] = rs.file_name
-            meta["lines"] = path.total_lines
+            meta["lines"] = path.line_monitor.data_end_line_count
             paths = len(self.csvpaths.paths_manager.get_named_paths(name))
             meta["csvpaths applied"] = paths
             meta["csvpaths completed"] = paths == len(results)

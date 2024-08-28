@@ -18,14 +18,23 @@ class Percent(Function):
                     "percent() argument must be scan, match, or line"
                 )
             if which == "line":
-                count = self.matcher.csvpath.current_line_number()
+                #
+                # line_number is a pointer, not a count, so we add 1
+                #
+                count = self.matcher.csvpath.line_monitor.data_line_count
             elif which == "scan":
-                count = self.matcher.csvpath.current_scan_count()
+                count = self.matcher.csvpath.current_scan_count
             else:
-                count = self.matcher.csvpath.current_match_count()
-            total = self.matcher.csvpath.get_total_lines()
+                count = self.matcher.csvpath.current_match_count
+            total = self.matcher.csvpath.line_monitor.data_end_line_count
             value = count / total
-            self.value = value
+            self.value = round(value, 2)
+            self.matcher.csvpath.logger.debug(
+                f"Percent.to_value: value: {value}, count: {count}, total: {total}, rounded: {self.value}"
+            )
+            print(
+                f"Percent.to_value: value: {value}, count: {count}, total: {total}, rounded: {self.value}"
+            )
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

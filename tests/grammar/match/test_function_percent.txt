@@ -1,1 +1,5 @@
-[@p = percent("match") #lastname=="Bat"]
+[
+                @p = percent("match")
+                #lastname=="Bat"
+                print("$.headers.firstname: $.csvpath.count_lines")
+            ]

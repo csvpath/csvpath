@@ -33,7 +33,7 @@ class Count(Function):
         if not self.matcher or not self.matcher.csvpath:
             # this could be testing; otherwise invalid.
             return -1
-        return self.matcher.csvpath.current_match_count()
+        return self.matcher.csvpath.current_match_count
 
     def _get_contained_value(self, *, skip=[]) -> Any:
         self._id = self.first_non_term_qualifier(

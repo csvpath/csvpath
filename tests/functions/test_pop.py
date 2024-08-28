@@ -21,7 +21,7 @@ class TestPop(unittest.TestCase):
         print(f"test_function_push1: path vars: {path.variables}")
         assert len(lines) == 9
         assert len(path.variables["pushed"]) == 0
-        assert path.variables["popped"] == 8
+        assert path.variables["popped"] == 9
 
     def test_function_push2(self):
         path = CsvPath()
@@ -60,7 +60,7 @@ class TestPop(unittest.TestCase):
         print(f"test_function_pop1: path vars: {path.variables}")
         assert len(lines) == 9
         assert len(path.variables["pushed"]) == 0
-        assert path.variables["popped"] == 8
+        assert path.variables["popped"] == 9
 
     def test_function_stack1(self):
         path = CsvPath()

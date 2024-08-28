@@ -2,6 +2,7 @@ import csv
 import time
 import os
 import traceback
+import hashlib
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
@@ -10,6 +11,7 @@ from datetime import datetime
 from csvpath.util.config import CsvPathConfig
 from .util.metadata_parser import MetadataParser
 from csvpath.util.log_utility import LogUtility
+from csvpath.util.line_monitor import LineMonitor
 from . import Error, Matcher, Scanner, ExpressionEncoder, StdOutPrinter
 from . import (
     VariableException,
@@ -72,41 +74,143 @@ class CsvPath(CsvPathPublic):
         print_default=True,
         config=None,
     ):
-        self.csvpaths = csvpaths
         self.scanner = None
-        self.value = None
+        self.matcher = None
+        #
+        # a parent CsvPaths may manage a CsvPath instance. if so, it will enable
+        # the use of named files and named paths, print capture, error handling,
+        # results collection, reference handling, etc. if a CsvPaths is not present
+        # the CsvPath instance is responsible for all its own upkeep and does not have
+        # some of those capabilities.
+        #
+        self.csvpaths = csvpaths
+        #
+        #
+        #
+        self.line_monitor = LineMonitor()
+        #
+        # the scanning part of the csvpath. e.g. $test.csv[*]
+        #
         self.scan = None
+        #
+        # the matching part of the csvpath. e.g. [yes()]
+        #
         self.match = None
-        self.modify = None
+
         self.headers = None
-        self.line_number = 0
-        self.scan_count = 0
-        self.match_count = 0
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
         self.quotechar = quotechar
-        self.total_lines = -1
-        self.matchers = []
-        self.jsons = []
-        self.matcher = None
+        #
+        # a blank line has no headers. it has no data. physically it is 2 \n with
+        # nothing but whitespace between them. any data or any delimiters would make
+        # the line non-blank.
+        #
         self.skip_blank_lines = skip_blank_lines
+
+        """
+        LineMonitor has this tracking now
+        #
+        # physical_total_lines == the total number of lines including blanks
+        # data_total_lines == the number of lines that have at least one header
+        #
+        self.physical_total_lines = -1
+        self.data_total_lines = -1
+        #
+        # physical line count == count at the current line being processed including blanks
+        # data line count == count at the current line being processed of all lines containing data
+        #
+        self.physical_line_count = -1
+        self.data_line_count = -1
+        #
+        # physical line number is a pointer to a line in the file
+        # data line number is a pointer to a line that is being/has been processed
+        #
+        # pointers are 0-based; they may be used as indexes into lists
+        #
+        # old -- self.line_number
+        #
+        self.physical_line_number = 0
+        self.data_line_number = 0
+        """
+        #
+        # counts are 1-based
+        #
+        self.scan_count = 0
+        self.match_count = 0
+        #
+        # used by stop() and advance(). a stopped CsvPath halts without finishing
+        # its run. an advancing CsvPath doesn't consider the match part of the
+        # csvpath and does not incur any side effects as it progresses through the
+        # rows the advance skips. the skip() function has the same effect as
+        # advance(1) but without any guarantee that the other match components on
+        # the line will be considered before skipping ahead. there are likely
+        # corner cases where an onmatch qualifier or some other constraint will
+        # trigger match components that would otherwise be skipped so the ability
+        # to shortcut some of the match should not be relied on for anything
+        # critical.
+        #
         self.stopped = False
+        self._advance = 0
+        #
+        # set by fail() and tracked by CsvPathResults
+        #
+        self._is_valid = True
+        #
+        # basic timing for the CsvPath instance only. if the CsvPath is managed
+        # by a CsvPaths the timings for a run may include time spent by other
+        # CsvPath instances.
+        #
         self.last_row_time = -1
         self.rows_time = -1
         self.total_iteration_time = -1
-        self._advance = 0
-        self._is_valid = True
+        #
+        # limiting collection means returning fewer headers (values in the
+        # line, a.k.a columns) then are available. limiting headers returned
+        # can impact named results, reset_headers(), and other considerations.
+        #
         self._limit_collection_to = []
+        #
+        # error collecting is at the CsvPath instance by default. CsvPath
+        # instances that are managed by a CsvPaths have their errors collected
+        # by their ResultsManager. the policy for errors -- their noise level,
+        # effect on validity, etc. -- is set in config.ini at the CsvPath and
+        # CsvPaths level.
+        #
         self._errors: List[Error] = None
         self._error_collector = None
+        #
+        # saves the scan and match parts of paths. helpful for testing.
+        # the run name becomes the file name of the saved path parts.
+        #
         self._save_scan_dir = None
         self._save_match_dir = None
         self._run_name = None
+        #
+        # metadata is collected from "outer" csvpath comments. outer comments
+        # separate from the comments within the match part of the csvpath.
+        # the keys are words with colons. e.g. ~ name: my new csvpath ~
+        #
         self.metadata: Dict[str, Any] = {}
+        #
+        # printers receive print lines from the print function. the default
+        # printer prints to standard out. a CsvPath that is managed by a
+        # CsvPaths has its CsvPathResults as a printer, as well as having
+        # the default printer.
+        #
         self.printers = []
-        self._config = config
         if print_default:
             self.printers.append(StdOutPrinter())
+        #
+        # the config.ini file loaded as a ConfigParser instance
+        #
+        self._config = config
+        #
+        # there are two logger components one for CsvPath and one for CsvPaths.
+        # the default levels are set in config.ini. to change the levels pass LogUtility
+        # your component instance and the logging level. e.g.:
+        # LogUtility.logger(csvpath, "debug")
+        #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
 
@@ -175,10 +279,9 @@ class CsvPath(CsvPathPublic):
         #
         #
         csvpath = self._update_file_path(csvpath)
-        s, mat, mod = self._find_scan_match_modify(csvpath)
+        s, mat = self._find_scan_and_match_parts(csvpath)
         self.scan = s
         self.match = mat
-        self.modify = mod
         self.scanner.parse(s)
         #
         # we build a matcher to see if it builds without error.
@@ -189,9 +292,10 @@ class CsvPath(CsvPathPublic):
         if mat:
             Matcher(csvpath=self, data=mat, line=None, headers=None)
 
-        if self.scanner.filename:
+        if self.scanner.filename is None:
+            raise ConfigurationException("Cannot proceed without a filename")
+        else:
             self.get_total_lines_and_headers()
-
         return self.scanner
 
     def parse_named_path(self, name):
@@ -228,12 +332,11 @@ class CsvPath(CsvPathPublic):
                 raise FormatException(f"Must start with '$', not {data[0]}")
             return data
 
-    def _find_scan_match_modify(self, data):
+    def _find_scan_and_match_parts(self, data):
         if data is None or not isinstance(data, str):
             raise InputException("Not a csvpath string")
         scan = ""
         matches = ""
-        modify = ""
 
         i = data.find("]")
         if i < 0:
@@ -252,16 +355,12 @@ class CsvPath(CsvPathPublic):
             raise InputException("Cannot find the match part of this csvpath: {data}")
         if ndata[len(ndata) - 1] != "]":
             raise InputException("The match part of this csvpath is incorrect: {data}")
-        #
-        # we do not have a "modify" csvpath part at this time, so we're done.
-        #
         matches = ndata
-        modify = None
         #
         # if we're given directory(s) to save to, save the parts
         #
         self._save_parts_if(scan, matches)
-        return scan, matches, modify
+        return scan, matches
 
     def _save_parts_if(self, scan, match):
         if self._save_scan_dir and self._run_name:
@@ -323,10 +422,25 @@ class CsvPath(CsvPathPublic):
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.these
 
+    @property
+    def limit_collection_to(self) -> List[int]:
+        return self._limit_collection_to
+
+    @limit_collection_to.setter
+    def limit_collection_to(self, indexes: List[int]) -> None:
+        self._limit_collection_to = indexes
+
     def stop(self) -> None:
         self.stopped = True
 
+    #
+    #
+    # collect(), fast_forward(), and next() are the central methods of CsvPath.
+    #
+    #
     def collect(self, nexts: int = -1) -> List[List[Any]]:
+        """Runs the csvpath forward and returns the matching lines seen as
+        a list of lists"""
         if nexts < -1:
             raise ProcessingException(
                 "Input must be >= -1. -1 means collect to the end of the file."
@@ -343,17 +457,6 @@ class CsvPath(CsvPathPublic):
                 break
         return lines
 
-    def advance(self, ff: int = -1) -> None:
-        """Advances the iteration by ff rows. The rows will be seen and
-        variables and side effects will happen.
-        """
-        if ff == -1:
-            self._advance = self.total_lines - self.line_number - self._advance
-        else:
-            self._advance += ff
-        if self._advance > self.total_lines:
-            self._advance = self.total_lines
-
     def fast_forward(self) -> None:
         """Runs the path for all rows of the file. Variables are collected
         and side effects like print happen. No lines are collected.
@@ -361,58 +464,72 @@ class CsvPath(CsvPathPublic):
         for _ in self.next():
             pass
 
-    def _next_line(self) -> List[Any]:
-        self.logger.info(f"beginning to scan file: {self.scanner.filename}")
-        with open(self.scanner.filename, "r") as file:
-            reader = csv.reader(
-                file, delimiter=self.delimiter, quotechar=self.quotechar
-            )
-            for line in reader:
-                yield line
-
-    @property
-    def limit_collection_to(self) -> List[int]:
-        return self._limit_collection_to
-
-    @limit_collection_to.setter
-    def limit_collection_to(self, indexes: List[int]) -> None:
-        self._limit_collection_to = indexes
-
-    def limit_collection(self, line: List[Any]) -> List[Any]:
-        if len(self.limit_collection_to) == 0:
-            return line
-        ls = []
-        for k in self.limit_collection_to:
-            ls.append(line[k])
-        return ls
-
     def next(self):
-        if self.scanner.filename is None:
-            raise FileException("There is no filename")
+        """Iterates over the lines in the CSV file returning those that match
+        the csvpath. collect() and fast_forward() call next() behind the scenes.
+        """
         start = time.time()
         for line in self._next_line():
             b = self._consider_line(line)
             if b:
                 line = self.limit_collection(line)
                 yield line
-            self.line_number = self.line_number + 1
             if self.stopped:
                 break
         end = time.time()
         self.total_iteration_time = end - start
 
+    def _next_line(self) -> List[Any]:
+        self.logger.info(f"beginning to scan file: {self.scanner.filename}")
+        #
+        # this exception will blow up a standalone CsvPath but should be
+        # caught and handled if there is a CsvPaths.
+        #
+        if self.scanner.filename is None:
+            raise FileException("There is no filename")
+        with open(self.scanner.filename, "r") as file:
+            reader = csv.reader(
+                file, delimiter=self.delimiter, quotechar=self.quotechar
+            )
+            for line in reader:
+                self.line_monitor.next_line(data=line)
+                yield line
+
+    def track_line(self, line) -> None:
+        #
+        # move this here so CsvPaths can call it
+        #
+        self.line_monitor.next_line(data=line)
+
     def _consider_line(self, line):
+        #
+        # we always look at the last line so that last() has a
+        # chance to run
+        #
+        #
+        # if we're empty, but last, we need to make sure the
+        # matcher runs a final time so that any last() can run.
+        #
+        if self.line_monitor.is_last_line_and_empty(line):
+            # self.matcher.reset()
+            # self.matcher.line = line
+            # self.matcher.matches()
+            self.matches(line)
+            return False
+
         blankskip = (
+            # if we skip blanks
             self.skip_blank_lines
+            # and the line is blank
             and len(line) == 0
-            and self.line_number != self.total_lines - 1
         )
         if blankskip:
+            # we skip this line
             self.logger.info(
-                f"Skipping the line following {self.line_number} because blank"
+                f"Skipping line {self.line_monitor.physical_line_number} because blank"
             )
             pass
-        elif self.scanner.includes(self.line_number):
+        elif self.scanner.includes(self.line_monitor.physical_line_number):
             self.scan_count = self.scan_count + 1
             startmatch = time.perf_counter_ns()
             b = False
@@ -427,43 +544,88 @@ class CsvPath(CsvPathPublic):
                 self.last_row_time = t
                 self.rows_time += t
                 return True
-                # yield line
         return False
 
-    def get_total_lines(self) -> int:
-        if self.total_lines == -1:
-            return self.get_total_lines_and_headers()
-        return self.total_lines
+    def limit_collection(self, line: List[Any]) -> List[Any]:
+        if len(self.limit_collection_to) == 0:
+            return line
+        ls = []
+        for k in self.limit_collection_to:
+            ls.append(line[k])
+        return ls
 
+    def advance(self, ff: int = -1) -> None:
+        """Advances the iteration by ff rows. The rows will be seen and
+        variables and side effects will happen.
+        """
+        if ff is None:
+            raise InputException("Input to advance must not be None")
+        if self.line_monitor.physical_end_line_number is None:
+            raise ProcessingException(
+                "The last line number must be known (physical_end_line_number)"
+            )
+        if ff == -1:
+            self._advance = (
+                self.line_monitor.physical_end_line_number
+                - self.line_monitor.physical_line_number
+                - self._advance
+            )
+        else:
+            self._advance += ff
+        if self._advance > self.line_monitor.physical_end_line_number:
+            self._advance = self.line_monitor.physical_end_line_number
+
+    def get_total_lines(self) -> int:
+        if (
+            self.line_monitor.physical_end_line_number is None
+            or self.line_monitor.physical_end_line_number == 0
+        ):
+            self.get_total_lines_and_headers()
+        return self.line_monitor.physical_end_line_number
+
+    # do we need a way to disable the line count to speed up big files?
     def get_total_lines_and_headers(self) -> int:
-        # do we need a way to disable the line count to speed up big files?
-        if self.total_lines == -1:
+        #
+        # total lines is a count not a pointer. counts are 1-based
+        # pointers are array indexes, so they are 0-based.
+        #
+        if (
+            self.line_monitor.physical_end_line_number is None
+            or self.line_monitor.physical_end_line_number == -1
+        ):
             start = time.time()
+            self.line_monitor.reset()
             with open(self.scanner.filename, "r") as file:
                 reader = csv.reader(
                     file, delimiter=self.delimiter, quotechar=self.quotechar
                 )
-                i = 0
                 for line in reader:
+                    self.line_monitor.next_line(data=line)
                     if len(line) == 0 and self.skip_blank_lines:
                         continue
-                    if i == 0:
-                        self.headers = line
-                        i += 1
-                    self.total_lines += 1
-            hs = self.headers[:]
-            self.headers = []
-            for header in hs:
-                header = header.strip()
-                header = header.replace(";", "")
-                header = header.replace(",", "")
-                header = header.replace("|", "")
-                header = header.replace("\t", "")
-                header = header.replace("`", "")
-                self.headers.append(header)
+                    if not self.headers:
+                        self.headers = []
+                    if len(self.headers) == 0:
+                        self.headers = line[:]
+            self._clean_headers()
             end = time.time()
-            end - start
-        return self.total_lines
+            self.logger.info(f"Counting lines and getting headers took {end - start}")
+            self.line_monitor.set_end_lines_and_reset()
+
+    def _clean_headers(self) -> None:
+        if self.headers is None:
+            self.logger.warning("Cannot clean headers because headers are None")
+            return
+        hs = self.headers[:]
+        self.headers = []
+        for header in hs:
+            header = header.strip()
+            header = header.replace(";", "")
+            header = header.replace(",", "")
+            header = header.replace("|", "")
+            header = header.replace("\t", "")
+            header = header.replace("`", "")
+            self.headers.append(header)
 
     def _load_headers(self) -> None:
         with open(self.scanner.filename, "r") as file:
@@ -484,12 +646,11 @@ class CsvPath(CsvPathPublic):
             header = header.replace("`", "")
             self.headers.append(header)
 
-    def current_line_number(self) -> int:
-        return self.line_number
-
+    @property
     def current_scan_count(self) -> int:
         return self.scan_count
 
+    @property
     def current_match_count(self) -> int:
         return self.match_count
 
@@ -497,8 +658,6 @@ class CsvPath(CsvPathPublic):
         if not self.match:
             return True
         if self.matcher is None:
-            import hashlib
-
             h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
             self.logger.info(f"loading matcher with data. hash: {h}")
             self.matcher = Matcher(

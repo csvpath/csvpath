@@ -73,6 +73,7 @@ class TestPrint(unittest.TestCase):
         path.parse(
             f"""${PATH}[1*] [
                 not( count_lines() == 3 )
+                print("count of lines: $.csvpath.count_lines")
                 count_lines.nocontrib() == 6 -> stop() ]"""
         )
         lines = path.collect()
@@ -82,22 +83,22 @@ class TestPrint(unittest.TestCase):
         printstr = """ $.csvpath.count_lines """
         result = parser.transform(printstr)
         assert result
-        assert result.strip() == "7"
+        assert result.strip() == "6"
 
         printstr = """ $.csvpath.count_matches """
         result = parser.transform(printstr)
         assert result
-        assert result.strip() == "5"
+        assert result.strip() == "4"
 
         printstr = """ $.csvpath.count_scans """
         result = parser.transform(printstr)
         assert result
-        assert result.strip() == "6"
+        assert result.strip() == "5"
 
         printstr = """ $.csvpath.total_lines """
         result = parser.transform(printstr)
         assert result
-        assert result.strip() == "8"
+        assert result.strip() == "9"
 
     def test_print_parser_transform_variables(self):
         path = CsvPath()
@@ -155,7 +156,7 @@ class TestPrint(unittest.TestCase):
         parser = PrintParser(path)
 
         printstr = """ $.headers.say """
-        assert path.line_number == 9
+        assert path.line_monitor.data_line_count == 9
         result = parser.transform(printstr)
         assert result
         assert result.strip() == "growl"

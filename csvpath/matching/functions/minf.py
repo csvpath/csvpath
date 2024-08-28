@@ -41,13 +41,13 @@ class MinMax(Function):
             v = self.children[0].right.to_value()
             v = f"{v}".strip()
             if v == "match":
-                return self.matcher.csvpath.current_match_count()
+                return self.matcher.csvpath.current_match_count
             elif v == "scan":
-                return self.matcher.csvpath.current_scan_count()
+                return self.matcher.csvpath.current_scan_count
             else:
-                return self.matcher.csvpath.current_line_number()
+                return self.matcher.csvpath.line_monitor.physical_line_number
         else:
-            return self.matcher.csvpath.current_line_number()
+            return self.matcher.csvpath.line_monitor.physical_line_number
 
     def is_match(self) -> bool:
         if self.has_onmatch():
@@ -62,7 +62,7 @@ class MinMax(Function):
     def _ignore(self):
         if (
             self.get_the_name() in self.matcher.csvpath.headers
-            and self.matcher.csvpath.current_line_number() == 0
+            and self.matcher.csvpath.line_monitor.physical_line_number == 0
         ):
             return True
         if self.is_match() and not self.line_matches():
@@ -159,7 +159,7 @@ class Average(MinMax):
             # if we're watching a header and we're in the header row skip it.
             if (
                 self.get_the_name() in self.matcher.csvpath.headers
-                and self.matcher.csvpath.current_line_number() == 0
+                and self.matcher.csvpath.line_monitor.physical_line_number == 0
             ):
                 return self.value
             # if the line must match and it doesn't stop here and return

@@ -32,7 +32,7 @@ class FirstLine(Function):
                 )  # 1-based, set before matcher is called.
             elif t == "firstline":
                 self.match = (
-                    self.matcher.csvpath.line_number == 0
+                    self.matcher.csvpath.line_monitor.data_line_number == 0
                 )  # 0-based, updated after matcher is called.
             else:
                 raise ChildrenException(f"Unknown type of line: {t}")

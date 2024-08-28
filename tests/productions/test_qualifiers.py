@@ -159,9 +159,9 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert "who" in path.variables
         assert path.variables["who"][True] == 3
 
-    def test_header_qualifier(self):
+    def test_qualifier_header(self):
         path = CsvPath()
-        Save._save(path, "test_header_qualifier")
+        Save._save(path, "test_qualifier_header")
         path.parse(
             f"""${BOOL}
                 [*]
@@ -173,10 +173,10 @@ class TestFunctionsQualifiers(unittest.TestCase):
                 """
         )
         lines = path.collect()
-        print(f"test_header_qualifier: lines: {len(lines)}")
-        print(f"test_function_qualifier: path vars: {path.variables}")
+        print(f"test_qualifier_header: lines: {len(lines)}")
+        print(f"test_qualifier_header: path vars: {path.variables}")
         assert len(lines) == 2
         assert "a" in path.variables
         assert "b" in path.variables
-        assert path.variables["a"] is False
-        assert path.variables["b"] == "false"
+        assert path.variables["a"] is True
+        assert path.variables["b"] == "true"

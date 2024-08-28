@@ -293,8 +293,9 @@ class CsvPaths(CsvPathsPublic):
                         if acsvpath.stopped:
                             stopped_count.append(1)
                         else:
+                            acsvpath.track_line(line)
                             b = acsvpath._consider_line(line)
-                            acsvpath.line_number = acsvpath.line_number + 1
+                            # acsvpath.line_number = acsvpath.line_number + 1
                             if b and collect:
                                 line = acsvpath.limit_collection(line)
                                 p[1].append(line)

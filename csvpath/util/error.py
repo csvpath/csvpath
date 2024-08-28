@@ -99,7 +99,9 @@ class ErrorHandler:
         error.error = ex
         error.at = datetime.now()
         if self._csvpath:
-            error.line_count = self._csvpath.line_number if self._csvpath else -1
+            error.line_count = (
+                self._csvpath.line_monitor.physical_line_number if self._csvpath else -1
+            )
             error.match_count = self._csvpath.match_count if self._csvpath else -1
             error.scan_count = self._csvpath.scan_count if self._csvpath else -1
             error.filename = (
