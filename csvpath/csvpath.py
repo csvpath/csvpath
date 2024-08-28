@@ -588,10 +588,10 @@ class CsvPath(CsvPathPublic):
                     self.line_monitor.next_line(data=line)
                     if len(line) == 0 and self.skip_blank_lines:
                         continue
-                    if not self.headers:
-                        self.headers = []
-                    if len(self.headers) == 0:
+                    if (not self.headers or len(self.headers) == 0) and len(line) > 0:
                         self.headers = line[:]
+            if not self.headers:
+                self.headers = []
             self._clean_headers()
             end = time.time()
             self.logger.info(f"Counting lines and getting headers took {end - start}")

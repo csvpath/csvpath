@@ -109,6 +109,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers()</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers_in_line()</a>    </td><td> returns the number of columns expected or the number found in the line      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/reset_headers.md'>reset_headers()</a>  </td><td> sets the headers to the values of the current line      </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/mismatch.md'>mismatch()</a>  </td><td> returns the difference in number of value vs. number of headers      </td></tr>
 
 <tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
 

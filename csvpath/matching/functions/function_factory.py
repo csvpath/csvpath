@@ -63,6 +63,7 @@ from .andf import And
 from .track import Track
 from .sum import Sum
 from .reset_headers import ResetHeaders
+from .mismatch import Mismatch
 
 
 class UnknownFunctionException(Exception):
@@ -278,6 +279,8 @@ class FunctionFactory:
             f = StartsWith(matcher, name, child)
         elif name == "skip":
             f = Skip(matcher, name, child)
+        elif name == "mismatch":
+            f = Mismatch(matcher, name, child)
         elif (
             name == "between"
             or name == "inside"
