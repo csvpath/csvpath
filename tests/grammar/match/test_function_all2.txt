@@ -1,4 +1,3 @@
 [
                @a.asbool = all()
-               ~all()~
             ]

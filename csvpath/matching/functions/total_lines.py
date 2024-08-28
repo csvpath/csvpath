@@ -9,5 +9,5 @@ class TotalLines(Function):
 
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:
-            self.value = self.matcher.csvpath.total_lines + 1
+            self.value = self.matcher.csvpath.line_monitor.data_end_line_count
         return self.value

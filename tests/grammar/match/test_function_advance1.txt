@@ -1,5 +1,5 @@
 [
-                push("cnt", count_lines())
+                push.onmatch("cnt", count_lines())
                 print("$.csvpath.count_lines ")
                 count.nocontrib() == 3 -> advance(2)
             ]

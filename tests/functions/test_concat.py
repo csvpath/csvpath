@@ -16,7 +16,7 @@ class TestFunctionsConcat(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"test_function_concat: lines: {len(lines)}")
+        print(f"test_function_concat1: lines: {len(lines)}")
         assert len(lines) == 1
 
     def test_function_concat2(self):
@@ -29,5 +29,5 @@ class TestFunctionsConcat(unittest.TestCase):
                    """
         )
         path.collect()
-        print(f"test_function_concat: variables: {path.variables}")
+        print(f"test_function_concat2: variables: {path.variables}")
         assert path.variables["bs"] == "Birds"

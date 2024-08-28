@@ -48,7 +48,9 @@ class Scanner(object):
         all_lines = self.all_lines if all_lines is None else all_lines
         these = self.these if these is None else these
         if all_lines:
-            return line == self.csvpath.total_lines + 1
+            return (
+                line == self.csvpath.line_monitor.physical_end_line_number
+            )  # total_lines + 1
         elif line == to_line:
             return True
         if len(these) > 0 and max(these) == line and not to_line and not all_lines:
@@ -68,7 +70,6 @@ class Scanner(object):
         to_line = self.to_line if to_line == -1 else to_line
         all_lines = self.all_lines if all_lines is None else all_lines
         these = self.these if these is None else these
-
         if line is None:
             return False
         elif from_line is None and all_lines:
@@ -102,7 +103,7 @@ class Scanner(object):
 
     def p_error(self, p):
         ParserUtility().error(self.parser, p)
-        raise ScanException("Halting for scanner parsing error")
+        raise ScanException(f"Halting for scanner parsing error on {self.path}")
 
     def p_path(self, p):
         "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"

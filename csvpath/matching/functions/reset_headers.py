@@ -15,7 +15,7 @@ class ResetHeaders(Function):
             self.matcher.csvpath.headers = self.matcher.line[:]
             self.matcher.header_dict = None
             self.matcher.csvpath.logger.warning(
-                f"Resetting headers mid run! Line number: {self.matcher.csvpath.line_number}."
+                f"Resetting headers mid run! Line number: {self.matcher.csvpath.line_monitor.physical_line_number}."
             )
             self.value = True
         return self.value

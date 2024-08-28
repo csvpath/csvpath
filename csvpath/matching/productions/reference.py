@@ -139,9 +139,15 @@ class Reference(Matchable):
         # will not be correct here. leaving that for now.
         # TODO: document the potential gotcha
         #
+        print(f"\nReference._header_values: ref: {ref}")
         i = csvpath.header_index(ref["name"])
+        print(f"\nReference._header_values: i: {i}")
+        if i < 0:
+            self.matcher.csvpath.logger.warn(
+                f"Index of header {ref['name']} is negative. Check the headers for your reference."
+            )
         for line in results.lines:
-            if line[i] is not None and f"{line[i]}".strip() != "":
+            if len(line) > i and line[i] is not None and f"{line[i]}".strip() != "":
                 value = True
                 break
         return value

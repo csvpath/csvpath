@@ -1,0 +1,6 @@
+[
+                @m = mod(count_lines(), 2)
+                @c = count( equals( @m, 0) )
+                print.onmatch("printing: count: $.csvpath.match_count")
+                ~ comment ~
+            ]

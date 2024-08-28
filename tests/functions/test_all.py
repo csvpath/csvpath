@@ -32,7 +32,6 @@ class TestFunctionsAll(unittest.TestCase):
             ${EMPTY}[1*]
             [
                @a.asbool = all()
-               ~all()~
             ]"""
         )
         lines = path.collect()

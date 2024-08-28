@@ -24,7 +24,7 @@ class TestFunctionStop(unittest.TestCase):
         print(f"test_function_stop: lines: {lines}")
         assert path.stopped is True
         assert path.variables["i"] == "FishBat"
-        assert path.variables["c"] == 2
+        assert path.variables["c"] == 3
         assert len(lines) == 3
 
     def test_function_skip1(self):
@@ -41,8 +41,7 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_skip1: path vars: {path.variables}")
+        print(f"\ntest_function_skip1: path vars: {path.variables}")
         print(f"test_function_skip1: lines: {lines}")
-        # assert path.variables["name"] == "FishBat"
         assert len(lines) == 7
-        assert path.variables["not_skipped"] == [1, 3, 4, 5, 6, 7, 8]
+        assert path.variables["not_skipped"] == [2, 4, 5, 6, 7, 8, 9]

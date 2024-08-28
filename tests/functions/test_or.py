@@ -24,7 +24,7 @@ class TestFunctionsOr(unittest.TestCase):
         print(f"test_function_or_match1: path vars: {path.variables}")
         assert len(lines) == 3
         assert path.variables["say"] == "oozeeee..."
-        assert path.variables["line"] == 7
+        assert path.variables["line"] == 8
 
     def test_function_count_or_match2(self):
         path = CsvPath()

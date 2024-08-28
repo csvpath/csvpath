@@ -32,7 +32,7 @@ class TestFunctionsSum(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_sum2: lines: {lines}")
         print(f"test_function_sum2: path vars: {path.variables}")
-        assert path.variables["l"] == 3
+        assert path.variables["l"] == 1
 
     def test_function_sum3(self):
         path = CsvPath()

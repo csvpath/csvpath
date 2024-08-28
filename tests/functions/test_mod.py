@@ -22,8 +22,8 @@ class TestFunctionsMod(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_mod1: path vars: {path.variables}")
         print(f"test_function_mod1: lines: {lines}")
-        assert path.variables["mod"] == 0.0
-        assert len(lines) == 5
+        assert path.variables["mod"] == 1.0
+        assert len(lines) == 4
 
     def test_function_mod2(self):
         path = CsvPath()
@@ -39,12 +39,12 @@ class TestFunctionsMod(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_mod2: path vars: {path.variables}")
         print(f"test_function_mod2: lines: {lines}")
-        assert path.variables["mod"] == 0.0
-        assert path.variables["int"] == 0
+        assert path.variables["mod"] == 1.0
+        assert path.variables["int"] == 1
 
-    def test_function_equal_mod(self):
+    def test_function_mod3(self):
         path = CsvPath()
-        Save._save(path, "test_function_equal_mod")
+        Save._save(path, "test_function_mod3")
         path.parse(
             f""" ${PATH}[*] [
                 @m = mod(count_lines(), 2)
@@ -56,8 +56,8 @@ class TestFunctionsMod(unittest.TestCase):
         )
         print("")
         lines = path.collect()
-        print(f"test_function_equal_mod: path vars: {path.variables}")
-        print(f"test_function_equal_mod: lines: {lines}")
+        print(f"test_function_mod3: path vars: {path.variables}")
+        print(f"test_function_mod3: lines: {lines}")
         assert path.variables["c"] == 5
         assert len(lines) == 9
 

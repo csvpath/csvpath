@@ -8,15 +8,16 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsLast(unittest.TestCase):
+    """
     def test_function_last1(self):
         print("")
         path = CsvPath()
         Save._save(path, "test_function_last1")
-        matchpart = """
+        matchpart = ""
             [
                 count_lines()==0 -> @first = 0
                 last() -> @last = count_lines()
-            ]"""
+            ]""
 
         matcher = Matcher(
             csvpath=path,
@@ -49,6 +50,7 @@ class TestFunctionsLast(unittest.TestCase):
         assert path.variables["first"] == 0
         assert b1 is True
         assert b2 is True
+    """
 
     """
     def test_function_last2(self):

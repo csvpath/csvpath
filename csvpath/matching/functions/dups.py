@@ -38,7 +38,9 @@ class HasDups(Function):
                 else:
                     self.value = []
                     values[fingerprint] = []
-                values[fingerprint].append(self.matcher.csvpath.line_number)
+                values[fingerprint].append(
+                    self.matcher.csvpath.line_monitor.physical_line_number
+                )
                 self.matcher.set_variable(name, value=values)
         return self.value
 

@@ -13,17 +13,18 @@ class Push(Function):
         if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            eq = self.children[0]
-            k = eq.left.to_value()
-            v = eq.right.to_value()
-            stack = self.matcher.get_variable(k, set_if_none=[])
-            if self.has_qualifier("distinct") and v in stack:
-                pass
-            else:
-                stack.append(v)
-            self.matcher.set_variable(
-                k, value=stack
-            )  # technically we don't have to call set becauses refs
+            if not self.onmatch or self.line_matches:
+                eq = self.children[0]
+                k = eq.left.to_value()
+                v = eq.right.to_value()
+                stack = self.matcher.get_variable(k, set_if_none=[])
+                if self.has_qualifier("distinct") and v in stack:
+                    pass
+                else:
+                    stack.append(v)
+                self.matcher.set_variable(
+                    k, value=stack
+                )  # technically we don't have to call set because refs
         self.value = True
         return self.value
 

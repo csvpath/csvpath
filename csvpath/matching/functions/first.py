@@ -39,7 +39,11 @@ class First(Function):
                     self.matcher.set_variable(
                         my_id,
                         tracking=value,
-                        value=self.matcher.csvpath.current_line_number(),
+                        #
+                        # we capture line number because the value in knowing it is that
+                        # you can go to the file line to inspect it or use it
+                        #
+                        value=self.matcher.csvpath.line_monitor.physical_line_number,
                     )
                 #
                 # when we have no earlier value we are first, so we match

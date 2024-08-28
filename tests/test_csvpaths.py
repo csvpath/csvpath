@@ -33,7 +33,7 @@ class TestNewCsvPaths(unittest.TestCase):
         pvars = cs.path_results_manager.get_variables("food")
         assert "candy" in pvars
         assert isinstance(pvars["candy"], list)
-        assert pvars["candy"] == [2, 7]
+        assert pvars["candy"] == [3, 8]
 
     def test_csvpaths_collect_paths(self):
         cs = CsvPaths()
@@ -46,7 +46,7 @@ class TestNewCsvPaths(unittest.TestCase):
         pvars = cs.path_results_manager.get_variables("food")
         assert "candy" in pvars
         assert isinstance(pvars["candy"], list)
-        assert pvars["candy"] == [2, 7]
+        assert pvars["candy"] == [3, 8]
 
     # ================= breadth first ==================
 
@@ -88,7 +88,7 @@ class TestNewCsvPaths(unittest.TestCase):
         assert "valid" in meta
         assert meta["paths name"] == "many"
         assert meta["file name"] == "food"
-        assert meta["lines"] == 10
+        assert meta["lines"] == 11
         assert meta["csvpaths applied"] == 2
         assert meta["csvpaths completed"] is True
         assert meta["valid"] is True

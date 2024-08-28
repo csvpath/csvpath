@@ -20,7 +20,6 @@ class PrintParser:
 
     def _to_string(self, ts) -> str:
         res = ""
-        print(f"PrintParser: to string: ts: {ts}")
         for item in ts:
             if isinstance(item, dict):
                 item = self._handle_replacement(item)
@@ -96,7 +95,6 @@ class PrintParser:
         else:
             c = self.csvpath
         i = c.header_index(name)
-        print(f"PrintParser: name: {name}, i: {i}")
         #
         # i was -1 on a miss which wrapped. a miss is now None,
         # but checking for -1 doesn't hurt.
@@ -222,10 +220,15 @@ class PrintParser:
         else:
             runtime["count_matches"] = csvpath.match_count
 
+        #
+        # count_lines is a count, so 1-based. line_number
+        # is a pointer, so 0-based
+        #
         if "count_lines" in runtime:
-            runtime["count_lines"] += csvpath.line_number
+            runtime["count_lines"] += csvpath.line_monitor.physical_count
         else:
-            runtime["count_lines"] = csvpath.line_number
+            runtime["count_lines"] = csvpath.line_monitor.physical_line_count
+        runtime["line_number"] = csvpath.line_monitor.physical_line_number
 
         if "count_scans" in runtime:
             runtime["count_scans"] += csvpath.scan_count
@@ -242,7 +245,7 @@ class PrintParser:
             runtime["rows_time"] = csvpath.rows_time
 
         runtime["rows_time"] = csvpath.rows_time
-        runtime["total_lines"] = csvpath.total_lines
+        runtime["total_lines"] = csvpath.line_monitor.data_end_line_count
         #
         # if the author named the csvpath use that to identify if it is valid.
         #
