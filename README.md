@@ -20,6 +20,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 
 # Contents
 
+- [Motivation](#motivation)
 - [High-level Description](#description)
 - [Running CsvPath](#running)
    - [Validation](#validating)
@@ -41,6 +42,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 - [Grammar](#grammar)
 
 # Motivation
+<a name="motivation"></a>
 
 CSV files are everywhere!
 
