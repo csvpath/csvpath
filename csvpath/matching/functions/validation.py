@@ -16,27 +16,22 @@ class Validation(Matchable):
                     return True
         return False
 
-    def validate_zero_or_more_args(self, types=[]) -> None:
-        if len(self.children) == 0:
-            pass
-        elif hasattr(self.children[0], "commas_to_list"):
-            siblings = self.children[0].commas_to_list()
-            if len(types) > 0:
-                for _ in siblings:
-                    if not self._class_match(_, types):
-                        raise ChildrenException(
-                            f"{self.name}() can only have these arguments: {types}"
-                        )
-        elif len(self.children) == 1:
-            if len(types) > 0:
-                if not self._class_match(self.children[0], types):
-                    raise ChildrenException(
-                        f"{self.name}() can only have these arguments: {types}"
-                    )
-
     def validate_zero_args(self) -> None:
         if len(self.children) > 0:
             raise ChildrenException(f"{self.name}() cannot have arguments")
+
+    def validate_zero_or_one_arg(self, types=[]) -> None:
+        if len(self.children) > 1:
+            raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
+        elif len(self.children) == 0:
+            pass
+        elif hasattr(self.children[0], "op"):
+            raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
+        elif len(types) > 0:
+            if not self._class_match(self.children[0], types):
+                raise ChildrenException(
+                    f"If {self.name}() has an argument it must be of type: {types}"
+                )
 
     def validate_zero_or_more_than_one_arg(self) -> None:
         if len(self.children) == 1 and not hasattr(self.children[0], "op"):
@@ -56,6 +51,24 @@ class Validation(Matchable):
                 f"{self.name}() must have 0 or more than 1 argument"
             )
 
+    def validate_zero_or_more_args(self, types=[]) -> None:
+        if len(self.children) == 0:
+            pass
+        elif hasattr(self.children[0], "commas_to_list"):
+            siblings = self.children[0].commas_to_list()
+            if len(types) > 0:
+                for _ in siblings:
+                    if not self._class_match(_, types):
+                        raise ChildrenException(
+                            f"{self.name}() can only have these arguments: {types}"
+                        )
+        elif len(self.children) == 1:
+            if len(types) > 0:
+                if not self._class_match(self.children[0], types):
+                    raise ChildrenException(
+                        f"{self.name}() can only have these arguments: {types}"
+                    )
+
     def validate_zero_one_or_two_args(
         self, *, first_arg=[], second_arg=[], solo_arg=[]
     ) -> None:
@@ -72,19 +85,6 @@ class Validation(Matchable):
             if not self._class_match(self.children[0].right, second_arg):
                 raise ChildrenException(
                     f"{self.name}()'s second argument must be {second_arg}"
-                )
-
-    def validate_zero_or_one_arg(self, types=[]) -> None:
-        if len(self.children) > 1:
-            raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
-        elif len(self.children) == 0:
-            pass
-        elif hasattr(self.children[0], "op"):
-            raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
-        elif len(types) > 0:
-            if not self._class_match(self.children[0], types):
-                raise ChildrenException(
-                    f"If {self.name}() has an argument it must be of type: {types}"
                 )
 
     def validate_one_arg(self, types=[]) -> None:

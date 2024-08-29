@@ -164,8 +164,9 @@ class CsvPath(CsvPathPublic):
         self._errors: List[Error] = None
         self._error_collector = None
         #
-        # saves the scan and match parts of paths. helpful for testing.
-        # the run name becomes the file name of the saved path parts.
+        # saves the scan and match parts of paths for reference. mainly helpful
+        # for testing the CsvPath library itself; not used end users. the run
+        # name becomes the file name of the saved path parts.
         #
         self._save_scan_dir = None
         self._save_match_dir = None

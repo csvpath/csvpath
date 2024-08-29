@@ -4,7 +4,7 @@ from .function import Function
 
 class Mismatch(Function):
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        self.validate_zero_or_one_arg()
         super().check_valid()
 
     def to_value(self, *, skip=[]) -> Any:
@@ -17,7 +17,22 @@ class Mismatch(Function):
                 # blank line with some whitespace chars. we don't take credit for that
                 self.value = hs
             else:
-                self.value = abs(hs - ls)
+                ab = True
+                if len(self.children) == 1:
+                    v = self.children[0].to_value()
+                    if isinstance(v, str):
+                        av = v.strip().lower()
+                        if av == "true":
+                            ab = True
+                        elif av == "false" or av == "signed":
+                            ab = False
+                    else:
+                        ab = bool(v)
+                if ab:
+                    self.value = abs(hs - ls)
+                else:
+                    signed = ls - hs
+                    self.value = signed
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

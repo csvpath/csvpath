@@ -5,7 +5,7 @@ from ..productions import ChildrenException
 
 class ResetHeaders(Function):
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        self.validate_zero_or_one_arg()
         super().check_valid()
 
     def to_value(self, *, skip=[]) -> Any:
@@ -17,6 +17,8 @@ class ResetHeaders(Function):
             self.matcher.csvpath.logger.warning(
                 f"Resetting headers mid run! Line number: {self.matcher.csvpath.line_monitor.physical_line_number}."
             )
+            if len(self.children) == 1:
+                self.children[0].matches(skip=skip)
             self.value = True
         return self.value
 

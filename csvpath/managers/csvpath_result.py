@@ -54,7 +54,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
 
     @property
     def all_variables(self) -> Dict[str, Any]:
-        return self.csvpath.csvpaths.path_results_manager.get_variables(self.paths_name)
+        return self.csvpath.csvpaths.results_manager.get_variables(self.paths_name)
 
     @property
     def paths_name(self) -> str:

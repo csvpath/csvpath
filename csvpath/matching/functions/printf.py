@@ -46,10 +46,12 @@ class Print(Function):
                         pass
                     else:
                         self.matcher.csvpath.print(f"{self.to_value()}")
-                    self.matcher.set_variable(id, value=me)
+                        self.matcher.set_variable(id, value=me)
+                        if right:
+                            right.matches(skip=skip)
                 else:
                     self.matcher.csvpath.print(f"{self.to_value()}")
-                if right:
-                    right.matches(skip=skip)
+                    if right:
+                        right.matches(skip=skip)
             self.match = True
         return self.match

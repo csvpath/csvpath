@@ -195,7 +195,6 @@ class PrintParser:
         return data
 
     def _get_data(self, csvpath, runtime: Dict[str, Any]) -> None:
-        runtime["name"] = csvpath._run_name
 
         if "delimiter" in runtime:
             if runtime["delimiter"] != csvpath.delimiter:
@@ -245,6 +244,11 @@ class PrintParser:
 
         runtime["rows_time"] = csvpath.rows_time
         runtime["total_lines"] = csvpath.line_monitor.data_end_line_count
+        #
+        # headers can change so we need a way to easily show what we're
+        # dealing with at a point in time
+        #
+        runtime["headers"] = str(csvpath.headers)
         #
         # if the author named the csvpath use that to identify if it is valid.
         #
