@@ -30,7 +30,8 @@ class Matchable(Qualified):
     def line_matches(self):
         es = self.matcher.expressions
         for e in es:
-            m = e[0].matches(skip=[self])
+            m = e[1] is True or e[0].matches(skip=[self])
+            # m = e[0].matches(skip=[self])
             if not m:
                 return False
         return True
