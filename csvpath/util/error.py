@@ -42,7 +42,7 @@ class ErrorHandler:
         )
         if self._error_collector is None:
             raise ConfigurationException(
-                "A CsvPathErrorCollector collector must be available. CsvPath or CsvPathResult."
+                "A CsvPathErrorCollector collector must be available"
             )
 
     def handle_error(self, ex: Exception) -> Error:
@@ -65,8 +65,6 @@ class ErrorHandler:
             )
 
     def _handle_if(self, *, collector, policy: List[str], error: Error) -> None:
-        print(f"Error._handle_if: policy: {policy}")
-
         if OnError.QUIET.value not in policy:
             #
             # this doesn't go to standard out so it's already "quiet".

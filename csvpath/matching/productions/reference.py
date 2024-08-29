@@ -69,13 +69,13 @@ class Reference(Matchable):
             return None
         ref = self._get_reference()
         #
-        # our name less the '$' is the name of the named file's results
+        # our name less the '$' is the name of the named-paths's results
         #
-        # the syntax is $named-file[.named-path].variables-qualifier.varname.tracking
-        # the syntax is $named-file[.named-path].headers-qualifier.headername
+        # the syntax is $named-path.variables-qualifier.varname.tracking
+        # the syntax is $named-path.headers-qualifier.headername
         # the syntax is $named-connection.query.queryname.columnname
         #
-        results_list = cs.file_results_manager.get_named_results(ref["file"])
+        results_list = cs.results_manager.get_named_results(ref["file"])
         if results_list and len(results_list) > 0:
             if self.ref["paths_name"] is None:
                 results = results_list[0]

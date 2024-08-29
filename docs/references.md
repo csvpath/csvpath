@@ -25,8 +25,7 @@ References are similar to the pointers you use in the `print()` function. They l
 References point to the results of a csvpath run against a file. They always refer to the most recent such run.
 
 A reference is composed of the following parts in this order:
-- A named-file name
-- Optionally a named-path reference
+- A named-path reference
 - The word `variables` or `headers`
 - A variable or header name
 - Optionally a tracking value name
@@ -37,7 +36,7 @@ For e.g.:
     $orders.variables.total
 ```
 
-This reference points to the `total` variable resulting from the most recent CsvPath run against the file that was identified to CsvPaths by the name "orders". To do that, we might set it up like this:
+This reference points to the `total` variable resulting from the most recent CsvPath run using the csvpath(s) identified to CsvPaths by the name "orders". To do that, we might set it up like this:
 
 ```python
         cs = CsvPaths()
@@ -49,7 +48,7 @@ This reference points to the `total` variable resulting from the most recent Csv
         #
         path = cs.csvpath()
         path.parse("$[*][
-            @monthly = $orders.variables.total lt(@monthly, 1000) -> fail_and_stop() ]")
+            @monthly = $shipping-validations.variables.total lt(@monthly, 1000) -> fail_and_stop() ]")
         path.fast_forward()
 ```
 

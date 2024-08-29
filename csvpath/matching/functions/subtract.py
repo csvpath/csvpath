@@ -36,12 +36,6 @@ class Subtract(Function):
                 try:
                     ret = float(ret) - float(v)
                 except Exception as ex:
-                    #
-                    # log a data error with (ret, v) as the data
-                    # the error goes to csvpath or to CsvPathResults,
-                    # depending on if we're running in a CsvPaths
-                    # object or not.
-                    #
                     err = DataException(f"{ex}")
                     err.datum = (ret, v)
                     # reset self.value just in case

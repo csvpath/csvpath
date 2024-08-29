@@ -60,6 +60,9 @@ class Matchable(Qualified):
                 self.children.append(child)
 
     def get_id(self, child: Self = None) -> str:
+        self.matcher.csvpath.logger.debug(
+            f"Matchable.get_id: for child: {child} or self: {self}"
+        )
         if not self._id:
             thing = self if not child else child
             self._id = ExpressionUtility.get_id(thing=thing)

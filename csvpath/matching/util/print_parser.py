@@ -154,9 +154,9 @@ class PrintParser:
     def _get_results(self, ref, name):
         if not self.csvpath.csvpaths:
             return None
-        if not self.csvpath.csvpaths.path_results_manager:
+        if not self.csvpath.csvpaths.results_manager:
             return None
-        return self.csvpath.csvpaths.path_results_manager.get_named_results(name)
+        return self.csvpath.csvpaths.results_manager.get_named_results(name)
 
     def _get_variables(self, ref, results):
         data = {}
@@ -181,9 +181,7 @@ class PrintParser:
         # about the individual csvpaths. last adder
         # wins.
         #
-        data = self.csvpath.csvpaths.path_results_manager.get_metadata(
-            ref["named_paths"]
-        )
+        data = self.csvpath.csvpaths.results_manager.get_metadata(ref["named_paths"])
         for result in results:
             csvpath = result.csvpath
             data = {**data, **csvpath.metadata}

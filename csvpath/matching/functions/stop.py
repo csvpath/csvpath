@@ -55,7 +55,8 @@ class Skip(Function):
                         b = self.children[0].matches(skip=skip)
                         if b is True:
                             self.matcher.skip = True
-                            self.set_once_happened()
+                            if self.once:
+                                self.set_once_happened()
                             self.matcher.csvpath.logger.info(
                                 f"skipping physical line {self.matcher.csvpath.line_monitor.physical_line_number}. contained child matches."
                             )
@@ -63,7 +64,8 @@ class Skip(Function):
                             pass
                     else:
                         self.matcher.skip = True
-                        self.set_once_happened()
+                        if self.once:
+                            self.set_once_happened()
                         self.matcher.csvpath.logger.info(
                             f"skipping line {self.matcher.csvpath.line_monitor.physical_line_number}"
                         )

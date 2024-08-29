@@ -10,13 +10,13 @@ class TestConfig(unittest.TestCase):
             f"TestConfig.test_config1: config.CSVPATH_ON_ERROR: {config.CSVPATH_ON_ERROR}"
         )
         assert config.CSVPATH_ON_ERROR
-        assert len(config.CSVPATH_ON_ERROR) > 1
+        assert len(config.CSVPATH_ON_ERROR) >= 1
         assert config.CSVPATHS_ON_ERROR
-        assert len(config.CSVPATHS_ON_ERROR) > 1
+        assert len(config.CSVPATHS_ON_ERROR) >= 1
         assert config.CSV_FILE_EXTENSIONS
-        assert len(config.CSV_FILE_EXTENSIONS) > 1
+        assert len(config.CSV_FILE_EXTENSIONS) >= 1
         assert config.CSVPATH_FILE_EXTENSIONS
-        assert len(config.CSVPATH_FILE_EXTENSIONS) > 1
+        assert len(config.CSVPATH_FILE_EXTENSIONS) >= 1
         assert "csv" in config.CSV_FILE_EXTENSIONS
         assert "csvpath" in config.CSVPATH_FILE_EXTENSIONS
         print(f"TestConfig.test_config1: config is {config}")

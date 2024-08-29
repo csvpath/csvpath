@@ -60,8 +60,8 @@ class TestReferences(unittest.TestCase):
         cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
-        rm = cs.file_results_manager
-        resultset = rm.get_named_results("zipcodes")
+        rm = cs.results_manager
+        resultset = rm.get_named_results("zips")
         assert resultset
         assert len(resultset) == 1
         results = resultset[0]
@@ -80,7 +80,7 @@ class TestReferences(unittest.TestCase):
             ${PATH}[1*]
             [
                 ~#food == "Bulgar" ~
-                @zip = $zipcodes.variables.zipcodes.Boston
+                @zip = $zips.variables.zipcodes.Boston
 
             ]"""
         )
@@ -101,8 +101,8 @@ class TestReferences(unittest.TestCase):
         cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
-        rm = cs.file_results_manager
-        resultset = rm.get_named_results("zipcodes")
+        rm = cs.results_manager
+        resultset = rm.get_named_results("zips")
         assert resultset
         assert len(resultset) == 1
         results = resultset[0]
@@ -116,8 +116,8 @@ class TestReferences(unittest.TestCase):
             f"""
             ${PATH}[1]
             [
-                @zip = $zipcodes.headers.points
-                @cities = $zipcodes.headers.city
+                @zip = $zips.headers.points
+                @cities = $zips.headers.city
 
             ]"""
         )

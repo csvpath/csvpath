@@ -66,9 +66,7 @@ class CsvPathsPublic(ABC):
 
 class CsvPaths(CsvPathsPublic):
     """Manages the application of csvpaths to files. Csvpaths must be grouped and named.
-    Files must be named. Results are indexed by `path_results_manager` and
-    `file_results_manager`. CsvPaths instances can be reused. Path results and
-    file results can be out of sync, which may be useful at times.
+    Files must be named. Results are held by the results_manager.
     """
 
     def __init__(
@@ -76,8 +74,7 @@ class CsvPaths(CsvPathsPublic):
     ):
         self.paths_manager = PathsManager(csvpaths=self)
         self.files_manager = FilesManager(csvpaths=self)
-        self.path_results_manager = ResultsManager(csvpaths=self, type="paths")
-        self.file_results_manager = ResultsManager(csvpaths=self, type="files")
+        self.results_manager = ResultsManager(csvpaths=self)
         self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -99,8 +96,7 @@ class CsvPaths(CsvPathsPublic):
         )
 
     def clean(self, *, file, paths) -> None:
-        self.path_results_manager.clean_named_results(paths)
-        self.file_results_manager.clean_named_results(file)
+        self.results_manager.clean_named_results(paths)
 
     def collect_paths(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:
@@ -120,8 +116,7 @@ class CsvPaths(CsvPathsPublic):
                 csvpath=csvpath, file_name=filename, paths_name=pathsname
             )
             try:
-                self.path_results_manager.add_named_result(result)
-                self.file_results_manager.add_named_result(result)
+                self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
                 """
                 f = path.find("[")
@@ -164,8 +159,7 @@ class CsvPaths(CsvPathsPublic):
                 csvpath=csvpath, file_name=filename, paths_name=pathsname
             )
             try:
-                self.path_results_manager.add_named_result(result)
-                self.file_results_manager.add_named_result(result)
+                self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
                 """
                 csvpath._extract_metadata(path)
@@ -207,8 +201,7 @@ class CsvPaths(CsvPathsPublic):
                 csvpath=csvpath, file_name=filename, paths_name=pathsname
             )
             try:
-                self.path_results_manager.add_named_result(result)
-                self.file_results_manager.add_named_result(result)
+                self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
                 """
                 f = path.find("[")
@@ -343,8 +336,7 @@ class CsvPaths(CsvPathsPublic):
                 result = CsvPathResult(
                     csvpath=csvpath[0], file_name=filename, paths_name=pathsname
                 )
-                self.path_results_manager.add_named_result(result)
-                self.file_results_manager.add_named_result(result)
+                self.results_manager.add_named_result(result)
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self

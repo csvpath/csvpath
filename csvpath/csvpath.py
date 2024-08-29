@@ -137,7 +137,7 @@ class CsvPath(CsvPathPublic):
         self.stopped = False
         self._advance = 0
         #
-        # set by fail() and tracked by CsvPathResults
+        # set by fail()
         #
         self._is_valid = True
         #
