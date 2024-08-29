@@ -118,11 +118,6 @@ class CsvPaths(CsvPathsPublic):
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
-                """
-                f = path.find("[")
-                path = f"${file}{path[f:]}"
-                csvpath.parse(path)
-                """
                 lines = csvpath.collect()
                 result.lines = lines
             except Exception as ex:
@@ -161,12 +156,6 @@ class CsvPaths(CsvPathsPublic):
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
-                """
-                csvpath._extract_metadata(path)
-                f = path.find("[")
-                apath = f"${file}{path[f:]}"
-                csvpath.parse(apath)
-                """
                 self.logger.info(f"Parsed csvpath {i} pointed at {file}")
                 csvpath.fast_forward()
                 self.logger.info(
@@ -203,11 +192,6 @@ class CsvPaths(CsvPathsPublic):
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
-                """
-                f = path.find("[")
-                path = f"${file}{path[f:]}"
-                csvpath.parse(path)
-                """
                 for line in csvpath.next():
                     line.append(result)
                     yield line
@@ -288,13 +272,11 @@ class CsvPaths(CsvPathsPublic):
                         else:
                             acsvpath.track_line(line)
                             b = acsvpath._consider_line(line)
-                            # acsvpath.line_number = acsvpath.line_number + 1
                             if b and collect:
                                 line = acsvpath.limit_collection(line)
                                 p[1].append(line)
                             if b:
                                 self.current_matchers.append(acsvpath)
-                                # yield line
                     if len(self.current_matchers) > 0:
                         yield line
                     if sum(stopped_count) == len(csvpath_objects):
@@ -312,11 +294,6 @@ class CsvPaths(CsvPathsPublic):
             csvpath = self.csvpath()
             try:
                 self._load_csvpath(csvpath, path=path, file=named_file)
-                """
-                f = path.find("[")
-                path = f"${named_file}{path[f:]}"
-                csvpath.parse(path)
-                """
                 csvpath_objects.append((csvpath, []))
             except Exception as ex:
                 ex.trace = traceback.format_exc()

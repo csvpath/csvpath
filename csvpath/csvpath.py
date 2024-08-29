@@ -256,7 +256,7 @@ class CsvPath(CsvPathPublic):
         self.scanner = Scanner(csvpath=self)
         #
         # strip off any comments and collect any metadata
-        # csvpaths will do this earlier but it stripped off
+        # CsvPaths will do this earlier but it stripped off
         # the comments so we won't find them again
         #
         csvpath = MetadataParser().extract_metadata(instance=self, csvpath=csvpath)
@@ -723,7 +723,7 @@ class CsvPath(CsvPathPublic):
                 #
                 # run is ending, no more changes
                 #
-                thevalue = tuple(thevalue)
+                thevalue = tuple(thevalue[:])
         return thevalue
 
     def line_numbers(self) -> Iterator[int | str]:
