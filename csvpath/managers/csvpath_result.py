@@ -47,6 +47,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         #
         self.csvpath = csvpath
         self.lines = lines
+        self._last_line = None
 
     @property
     def variables(self) -> Dict[str, Any]:
@@ -132,6 +133,11 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         if name not in self._printouts:
             self._printouts[name] = []
         self._printouts[name].append(string)
+        self._last_line = string
+
+    @property
+    def last_line(self):
+        return self._last_line
 
     def dump_printing(self) -> None:
         for name in self._printouts:

@@ -100,15 +100,14 @@ class PrintParser:
         # but checking for -1 doesn't hurt.
         #
         if i is None or i == -1:
-
             if f"{name}".isdigit():
                 i = int(name)
             pass
-
-        # if csvpaths and lines were collected, we could pull them from
-        # the results. for now we'll just use the matcher's last line.
-        # if/when we want to allow indexing into the result lines this will
-        # change.
+        # if we're working on a reference to another csvpath than we are in
+        # and if csvpaths and lines were collected, we could pull them from
+        # the results. but for now we'll just use the matcher's last/current
+        # line. if/when we want to allow indexing into the result lines this
+        # will change.
         datum = name
         if c.matcher:
             try:
@@ -116,7 +115,9 @@ class PrintParser:
             except Exception:
                 self.csvpath.logger.warning(f"No matcher.line[{i}] available")
         else:
+            self.csvpath.logger.warning("No matcher to provide header values")
             datum = name
+
         if tracking is not None and tracking != "":
             self.csvpath.logger.warning(
                 f"Found tracking {tracking} in reference {ref}. We don't use tracking codes on headers"

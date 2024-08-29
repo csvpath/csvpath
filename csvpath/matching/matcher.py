@@ -3,6 +3,7 @@ import ply.yacc as yacc
 from ..util.parser_utility import ParserUtility
 from .productions import *
 from .functions.function_factory import FunctionFactory
+from .functions.function import Function
 from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
@@ -101,7 +102,37 @@ class Matcher:
             ret = self.line[n]
         return ret
 
+    def _do_lasts(self) -> None:
+        for i, et in enumerate(self.expressions):
+            e = et[0]
+            self._find_and_actvate_lasts(e)
+
+    def _find_and_actvate_lasts(self, e) -> None:
+        cs = e.children[:]
+        while len(cs) > 0:
+            c = cs.pop()
+            if (
+                isinstance(c, Equality)
+                and c.op == "->"
+                and c.left
+                and isinstance(c.left, Function)
+                and c.left.name == "last"
+            ):
+                c.matches(skip=[])
+            elif isinstance(c, Function) and c.name == "last":
+                c.matches(skip=[])
+            else:
+                cs += c.children
+
     def matches(self, *, syntax_only=False) -> bool:
+        #
+        # is this a blank last line? if so, we just want to activate any/all
+        # last() in the csvpath.
+        #
+        if self.csvpath.line_monitor.is_last_line_and_empty(self.line):
+            self._do_lasts()
+            return True
+
         ret = True
         failed = False
         self.current_expression = None

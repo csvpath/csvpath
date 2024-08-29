@@ -1,1 +1,1 @@
-$tests/test_resources/test.csv[*]
+$tests/test_resources/count_physical_lines.csv[*]

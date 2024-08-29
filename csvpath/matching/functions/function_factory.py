@@ -13,7 +13,7 @@ from .percent import Percent
 from .above import AboveBelow
 from .between import Between
 from .first import First
-from .count_lines import CountLines
+from .count_lines import CountLines, LineNumber
 from .count_scans import CountScans
 from .count_headers import CountHeaders
 from .orf import Or
@@ -281,6 +281,8 @@ class FunctionFactory:
             f = Skip(matcher, name, child)
         elif name == "mismatch":
             f = Mismatch(matcher, name, child)
+        elif name == "line_number":
+            f = LineNumber(matcher, name, child)
         elif (
             name == "between"
             or name == "inside"

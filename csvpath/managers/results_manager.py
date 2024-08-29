@@ -4,7 +4,7 @@ import os
 import json
 from abc import ABC, abstractmethod
 from .. import ConfigurationException
-from .. import CsvPath, Error, Printer, CsvPathResult
+from .. import CsvPath, Error, CsvPathResult
 
 
 class CsvPathsResultsManager(ABC):

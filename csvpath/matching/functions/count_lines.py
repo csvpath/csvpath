@@ -9,6 +9,16 @@ class CountLines(Function):
 
     def to_value(self, *, skip=[]) -> Any:
         if self.value is None:
-            if self.matcher:
-                self.value = self.matcher.csvpath.line_monitor.data_line_count
+            self.value = self.matcher.csvpath.line_monitor.data_line_count
+        return self.value
+
+
+class LineNumber(Function):
+    def check_valid(self) -> None:
+        self.validate_zero_args()
+        super().check_valid()
+
+    def to_value(self, *, skip=[]) -> Any:
+        if self.value is None:
+            self.value = self.matcher.csvpath.line_monitor.physical_line_number
         return self.value

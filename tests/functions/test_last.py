@@ -5,6 +5,7 @@ from csvpath.matching.matcher import Matcher
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
+EMPTY = "tests/test_resources/empty2.csv"
 
 
 class TestFunctionsLast(unittest.TestCase):
@@ -104,3 +105,27 @@ class TestFunctionsLast(unittest.TestCase):
             assert path.variables["lastname"]["Bat"] == "fred"
             assert path.variables["hmmm"] == 7
             assert path.variables["ohhh"] is None
+
+    def test_function_last5(self):
+        # must run last even though line is blank
+        path = CsvPath()
+        Save._save(path, "test_function_last5a")
+        path.parse(
+            f"""${EMPTY}[*][
+                   last(print("last!"))
+            ] """
+        )
+        path.fast_forward()
+        print(f"test_function_last5a: path vars: {path.variables}")
+        assert path.printers[0].last_line == "last!"
+
+        path = CsvPath()
+        Save._save(path, "test_function_last5b")
+        path.parse(
+            f"""${EMPTY}[*][
+                   last() -> print("last!")
+            ] """
+        )
+        path.fast_forward()
+        print(f"test_function_last5b: path vars: {path.variables}")
+        assert path.printers[0].last_line == "last!"

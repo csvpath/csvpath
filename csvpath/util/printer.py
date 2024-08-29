@@ -7,6 +7,10 @@ class Printer(ABC):
     DEFAULT = "default"
 
     @abstractmethod
+    def last_line(self):
+        pass
+
+    @abstractmethod
     def print(self, string: str) -> None:
         """prints string with a newline. same as print_to(None, string)."""
         pass
@@ -20,6 +24,13 @@ class Printer(ABC):
 
 
 class StdOutPrinter(Printer):
+    def __init__(self):
+        self._last_line = None
+
+    @property
+    def last_line(self) -> str:
+        return self._last_line
+
     def print(self, string: str) -> None:
         self.print_to(None, string)
 
@@ -30,3 +41,4 @@ class StdOutPrinter(Printer):
             print(string, file=name)
         else:
             print(string)
+        self._last_line = string

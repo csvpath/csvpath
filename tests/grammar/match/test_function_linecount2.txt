@@ -1,1 +1,4 @@
-[ @imcounting.onmatch = count_lines() no()]
+[
+                push( "physical", line_number() )
+                push( "data", count_lines())
+            ]

@@ -35,5 +35,5 @@ class TestFunctionsCountHeaders(unittest.TestCase):
         )
         path.collect()
         print(f"test_function_headers2: path vars: {path.variables}")
-        assert path.variables["toomany"] == 5
+        assert path.variables["toomany"] == 4
         assert path.variables["toofew"] == 3

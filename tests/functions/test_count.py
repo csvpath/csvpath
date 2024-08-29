@@ -4,6 +4,7 @@ from csvpath.csvpath import CsvPath
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
+EMPTY = "tests/test_resources/count_physical_lines.csv"
 
 
 class TestFunctionsCount(unittest.TestCase):
@@ -143,6 +144,24 @@ class TestFunctionsCount(unittest.TestCase):
         # lines are zero-based, unlike match counts
         # assert path.variables["imcounting"] == 0
         assert len(lines) == 0
+
+    def test_function_count_linecount3(self):
+        path = CsvPath()
+        Save._save(path, "test_function_linecount2")
+        path.parse(
+            f"""
+            ${EMPTY}[*][
+                push( "physical", line_number() )
+                push( "data", count_lines())
+            ]
+            """
+        )
+        path.fast_forward()
+        print(f"test_function_count_in: path vars: {path.variables}")
+        assert "physical" in path.variables
+        assert "data" in path.variables
+        assert path.variables["physical"] == [0, 1, 5, 7]
+        assert path.variables["data"] == [1, 2, 3, 4]
 
     """
     # non-deterministic test, but a good example to keep for now
