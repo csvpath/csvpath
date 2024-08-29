@@ -40,6 +40,15 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 - [More Examples](#examples)
 - [Grammar](#grammar)
 
+# Motivation
+
+CSV files are everywhere!
+
+A surprisingly large number of companies depending on CSV processing for significant amounts of revenue. Research organizations are awash in CSV. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use day to day uses CSV for sharing. CSV is the lowest of common dominators. Many CSVs are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
+
+CsvPath is first and foremost a validation language. It is intended to describe CSV files in simple declarative rules that indicate if a file is as expected. CsvPath can also extract data, create reports, and in other ways have useful side effects.
+
+CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library, not a system, so it relies on being easy to integrate with other DataOps tools.
 
 # Description
 <a name="description"></a>
@@ -96,10 +105,10 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 
 ### CsvPath
 (<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
+The CsvPath class is the basic entry point for running csvpaths.
 |method                      |function                                                        |
 |----------------------------|----------------------------------------------------------------|
 | parse(csvpath)             | applies a csvpath                                              |
-| parse_named_path(pathname) | applies a csvpath that is registered with a CsvPaths object    |
 | next()                     | iterates over matched rows returning each matched row as a list|
 | fast_forward()             | iterates over the file collecting variables and side effects   |
 | advance(n)                 | skips forward n rows from within a `for row in path.next()` loop|
@@ -107,6 +116,7 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 
 ### CsvPaths
 (<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpaths.py'>code</a>)
+The CsvPaths class helps you manage validations of multiple files and/or multiple csvpaths. It coordinates the work of multiple CsvPath instances.
 |method                |function                                                         |
 |----------------------|-----------------------------------------------------------------|
 | csvpath()            | gets a CsvPath object that knows all the file names available   |
@@ -135,15 +145,16 @@ This is a very basic programmatic use of CsvPath.
                         count()==2
                     ]
     """)
+
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
-    print(f"The csvpath varibles collected are: {path.variables}")
+    print(f"The varibles collected are: {path.variables}")
 ```
 
 The csvpath says:
 - Open test.csv
 - Scan lines 5 through 25
-- Match the second time we see a line where the first column equals "Frog" and set the variable called  "lastname" to "Bats"
+- Match the second time we see a line where the first column equals `Frog` and set the variable called  `lastname` to "Bats"
 
 Another path that does the same thing a bit more simply might look like:
 
@@ -198,18 +209,20 @@ This csvpath reorders the headers of the test file at `tests/test_resources/test
 
 <a name="top-comments"></a>
 # Comments
-CsvPaths have file scanning instructions, match components, and comments. Comments exist at the top level, outside the CsvPath's brackets, and in the matching part of the path. Comments within the match part are covered below.
+CsvPaths have file scanning instructions, match components, and comments. Comments exist at the top level, outside the CsvPath's brackets, as well as in the matching part of the path. Comments within the match part are covered below.
 
 Comments outside the csvpath can contribute to a collection of metadata fields associated with a csvpath. A comment starts and ends with a `~` character. Within the comment, any word that has a colon after it is considered a metadata key. The metadata value is anything following the key up till a new metadata key word is seen or the comment ends.
 
 For example, this comment says that the csvpath has the name `Order Validation`:
 
 ```bash
-    ~ name: Order Validation ~
+    ~ name: Order Validation
+      developer: Abe Sheng
+    ~
     $[*][ count(#order) == 10 ]
 ```
 
-The name `Order Validation` is available in CsvPath's `metadata` property. You can use any metadata keys you like. All the metadata is available during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
+The name `Order Validation` is available in CsvPath's `metadata` property along with the developer's name. You can use any metadata keys you like. All the metadata is available during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
 
 
 <a name="scanning"></a>
