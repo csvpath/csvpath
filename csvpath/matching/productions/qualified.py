@@ -14,6 +14,8 @@ class Qualities(Enum):
     VARIABLES = "variables"
     HEADERS = "headers"
     NOTNONE = "notnone"
+    ONCE = "once"
+    DISTINCT = "distinct"
 
 
 class Qualified:
@@ -27,6 +29,7 @@ class Qualified:
         Qualities.VARIABLES.value,
         Qualities.HEADERS.value,
         Qualities.NOTNONE.value,
+        Qualities.ONCE.value,
     ]
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
@@ -93,6 +96,11 @@ class Qualified:
             return Qualities.ONCHANGE.value in self.qualifiers
         return False
 
+    def has_once(self) -> bool:
+        if self.qualifiers:
+            return Qualities.ONCE.value in self.qualifiers
+        return False
+
     def has_asbool(self) -> bool:
         if self.qualifiers:
             return Qualities.ASBOOL.value in self.qualifiers
@@ -149,6 +157,15 @@ class Qualified:
     def asbool(self, b: bool) -> None:
         if Qualities.ASBOOL.value not in self.qualifiers:
             self.qualifiers.append(Qualities.ASBOOL.value)
+
+    @property
+    def once(self) -> bool:
+        return self.has_once()
+
+    @once.setter
+    def once(self, b: bool) -> None:
+        if Qualities.ONCE.value not in self.qualifiers:
+            self.qualifiers.append(Qualities.ONCE.value)
 
     @property
     def onmatch(self) -> bool:

@@ -34,6 +34,18 @@ class LineMonitor:
         self._data_line_count: int = None
         self._data_line_number: int = None
 
+    def __str__(self) -> str:
+        return f"""
+        physical_end_line_count: {self._physical_end_line_count}
+        physical_end_line_number: {self._physical_end_line_number}
+        physical_line_count: {self._physical_line_count}
+        physical_line_number: {self._physical_line_number}
+        data_end_line_count: {self._data_end_line_count}
+        data_end_line_number: {self._data_end_line_number}
+        data_line_count: {self._data_line_count}
+        data_line_number: {self._data_line_number}
+        """
+
     def is_last_line(self) -> bool:
         return self._physical_end_line_number == self._physical_line_number
 

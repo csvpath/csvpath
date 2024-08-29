@@ -49,20 +49,36 @@ class Skip(Function):
         if self in skip:  # pragma: no cover
             return False
         if self.match is None:
-            if len(self.children) == 1:
-                b = self.children[0].matches(skip=skip)
-                if b is True:
-                    self.matcher.skip = True
-                    self.matcher.csvpath.logger.info(
-                        f"skipping physical line {self.matcher.csvpath.line_monitor.physical_line_number}. contained child matches."
-                    )
-                    print(
-                        f"skipping physical line {self.matcher.csvpath.line_monitor.physical_line_number}. contained child matches."
-                    )
+            if not self.onmatch or self.line_matches():
+                if not self.once or self.has_not_yet():
+                    if len(self.children) == 1:
+                        b = self.children[0].matches(skip=skip)
+                        if b is True:
+                            self.matcher.skip = True
+                            self.set_once_happened()
+                            self.matcher.csvpath.logger.info(
+                                f"skipping physical line {self.matcher.csvpath.line_monitor.physical_line_number}. contained child matches."
+                            )
+                        else:
+                            pass
+                    else:
+                        self.matcher.skip = True
+                        self.set_once_happened()
+                        self.matcher.csvpath.logger.info(
+                            f"skipping line {self.matcher.csvpath.line_monitor.physical_line_number}"
+                        )
+                else:
+                    pass
             else:
-                self.matcher.skip = True
-                self.matcher.csvpath.logger.info(
-                    f"skipping line {self.matcher.csvpath.line_monitor.physical_line_number}"
-                )
+                pass
             self.match = True
         return self.match
+
+    def has_not_yet(self):
+        id = self.get_id()
+        v = self.matcher.get_variable(id, set_if_none=True)
+        return v
+
+    def set_once_happened(self) -> None:
+        id = self.get_id()
+        self.matcher.set_variable(id, value=False)

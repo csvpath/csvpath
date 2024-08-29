@@ -20,5 +20,4 @@ class Last(Function):
                 )
             )
             self.match = last or last_scan
-            # print(f"Last.matches: line: {self.matcher.csvpath.line_monitor.physical_line_number}, last: {last}, last_scan: {last_scan}, self.match: {self.match}")
         return self.match

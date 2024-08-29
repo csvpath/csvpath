@@ -1,6 +1,4 @@
 [
-                @name = concat( #firstname, #lastname)
-                skip(@name == "FishBat")
-                push( "not_skipped", count_lines() )
-                print("not skipped!")
+                skip.once(#lastname == "Bat")
+                push.onmatch("line", count_lines())
             ]

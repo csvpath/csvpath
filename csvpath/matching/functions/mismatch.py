@@ -13,17 +13,11 @@ class Mismatch(Function):
         if self.value is None:
             hs = len(self.matcher.csvpath.headers)
             ls = len(self.matcher.line)
-            print(
-                f"Mismatch.to_value: {self.matcher.csvpath.line_monitor.physical_line_number}: hs: {hs} - ls: {ls} "
-            )
             if ls == 1 and f"{self.matcher.line[0]}".strip() == "":
                 # blank line with some whitespace chars. we don't take credit for that
                 self.value = hs
             else:
                 self.value = abs(hs - ls)
-            print(
-                f"Mismatch.to_value: {self.matcher.csvpath.line_monitor.physical_line_number}: v: {self.value} "
-            )
         return self.value
 
     def matches(self, *, skip=[]) -> bool:

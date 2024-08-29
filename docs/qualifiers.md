@@ -21,12 +21,13 @@ Qualifiers are relatively new and are being added opportunistically. See the ind
 
 
 ## Well-known Qualifiers
-At the moment there are only a few qualifiers.
+At the moment there are only a few "official" qualifiers.
 
 - `asbool`
 - `latch`
 - `nocontrib`
 - `notnone`
+- `once`
 - `onchange`
 - `onmatch`
 
@@ -59,6 +60,14 @@ Adding `latch` to a variable makes the variable only set one time. The variable 
 |Functions | Headers | Variables |
 |----------|---------|-----------|
 | No       | No      | Yes       |
+
+### once
+Add `once` to a function to indicate that it should fire at most one time. `once` is the function equivalent of variables' `latch`.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| Yes      | No      | No        |
+
 
 ### onchange
 Add `onchange` to a variable to indicate that a row should only match when the variable is set to a new value.

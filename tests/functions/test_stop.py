@@ -45,3 +45,19 @@ class TestFunctionStop(unittest.TestCase):
         print(f"test_function_skip1: lines: {lines}")
         assert len(lines) == 7
         assert path.variables["not_skipped"] == [2, 4, 5, 6, 7, 8, 9]
+
+    def test_function_skip2(self):
+        path = CsvPath()
+        Save._save(path, "test_function_skip1")
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                skip.once(#lastname == "Bat")
+                push.onmatch("line", count_lines())
+            ]"""
+        )
+        path.fast_forward()
+        print(f"\n test_function_skip2: path vars: {path.variables}")
+        assert "line" in path.variables
+        assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]

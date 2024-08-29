@@ -11,5 +11,4 @@ class CountLines(Function):
         if self.value is None:
             if self.matcher:
                 self.value = self.matcher.csvpath.line_monitor.data_line_count
-                print(f"CountLines.to_value: self.value: {self.value}")
         return self.value
