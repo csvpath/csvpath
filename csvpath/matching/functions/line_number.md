@@ -16,7 +16,7 @@ This path captures the line numbers of lines that have less or more delimited va
 Date,City,Order Number
 ```
 
-And it has 5 lines:
+And it has 1 header line, 4 data lines, and a blank line:
 
 ```csv
 Date,City,Order Number
