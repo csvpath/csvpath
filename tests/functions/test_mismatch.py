@@ -19,4 +19,4 @@ class TestFunctionsMismatch(unittest.TestCase):
         path.fast_forward()
         print(f"test_function_any_function: path vars: {path.variables}")
         assert "problems" in path.variables
-        assert path.variables["problems"] == [0, 5, 1, 0, 10]
+        assert path.variables["problems"] == [0, 5, 3, 0, 10]

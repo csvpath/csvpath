@@ -11,7 +11,7 @@ CsvPath uses the 0th row as headers. Headers are like columns, except without an
 
 When the designated headers -- usually those set from the first non-blank line -- do not match the number of values in a row there is a mismatch. The number of values means data values plus the empty string for those values that have a position in the line but no more substantial content.
 
-`mismatch()` counts the number of values, including blanks, compares that number to the number of headers, and returns the difference as a positive integer.
+`mismatch()` counts the number of values, including blanks, compares that number to the number of headers, and returns the difference as a positive integer. If a line has no delimiters but does have whitespace characters it technically has one header. `mismatch()` doesn't give credit for the whitespace because in reality the line is blank and has zero headers.
 
 ## Examples
 
