@@ -1,7 +1,7 @@
 
 # Qualifiers
 
-Variables and some functions can take qualifiers on their name. A qualifier takes the form of a dot plus a qualification name. Qualifiers look like:
+Variables, headers, and functions can take qualifiers on their names. A qualifier takes the form of a dot plus a qualification name. Qualifiers look like:
 
 ```bash
     [ @myvar.onmatch = yes() ]
@@ -17,7 +17,7 @@ When multiple qualifiers are used, order is not important.
 
 Qualifiers can have a large impact in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
-Qualifiers are relatively new and are being added opportunistically. See the individual function docs for which qualifiers are available on each function.
+Qualifiers are relatively new and are being added opportunistically. Not all functions support all the qualifiers that might be applicable. See the individual function docs for which qualifiers are available on each function.
 
 
 ## Well-known Qualifiers
