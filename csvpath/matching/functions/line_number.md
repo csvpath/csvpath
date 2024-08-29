@@ -8,7 +8,7 @@ The topic of counts vs. pointers is more interesting than you might think. At a 
 ## Examples
 
 ```bash
-    $[*][ mismatch() -> push("mismatched lines", line_number())
+    $[*][ mismatch() -> push("mismatched lines", line_number()) ]
 ```
 This path captures the line numbers of lines that have less or more delimited values than the headers. E.g., say we have a 5-line file named orders.csv. Orders.csv has 3 headers:
 
