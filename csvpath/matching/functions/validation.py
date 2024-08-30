@@ -60,7 +60,7 @@ class Validation(Matchable):
                 for _ in siblings:
                     if not self._class_match(_, types):
                         raise ChildrenException(
-                            f"{self.name}() can only have these arguments: {types}"
+                            f"{self.name}() can only have these arguments: {types}, not {_}"
                         )
         elif len(self.children) == 1:
             if len(types) > 0:

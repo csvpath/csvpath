@@ -8,7 +8,7 @@ from csvpath import ConfigurationException
 
 class All(Function):
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args([Equality, Header, Variable])
+        self.validate_zero_or_more_args()
         super().check_valid()
 
     def to_value(self, *, skip=[]) -> Any:

@@ -35,6 +35,7 @@ match: {self.match_count if self.match_count else ""}
 datum: {self.datum if self.datum else ""}
 json: {self.json if self.json else ""}
 """
+        return string
 
 
 class ErrorHandler:
@@ -67,11 +68,13 @@ class ErrorHandler:
         self.logger.debug(
             f"Handling an error with {self._error_collector.__class__} and policy: {policy}"
         )
+        if error is None:
+            raise ConfigurationException("Error handler cannot handle a None error")
         try:
             if OnError.QUIET.value in policy:
                 self.logger.error(f"{error}")
             else:
-                self.logger.error(f"Error: {error}")
+                self.logger.error(f"{error}")
             if OnError.STOP.value in policy:
                 if self._csvpath:
                     self._csvpath.stopped = True

@@ -31,6 +31,7 @@ class TestExpressions(unittest.TestCase):
             expr.matches(skip=[])
         assert "stop" in path.config.CSVPATH_ON_ERROR
         assert "fail" in path.config.CSVPATH_ON_ERROR
+        assert path.errors
         assert len(path.errors) == 1
         assert not path.is_valid
         assert path.stopped is True
