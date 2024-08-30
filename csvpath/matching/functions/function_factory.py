@@ -2,7 +2,7 @@ from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .count import Count
 from .regex import Regex
-from .length import Length
+from .length import Length, MinMaxLength
 from .notf import Not
 from .now import Now
 from .inf import In
@@ -283,6 +283,8 @@ class FunctionFactory:
             f = Mismatch(matcher, name, child)
         elif name == "line_number":
             f = LineNumber(matcher, name, child)
+        elif name == "min_length" or name == "max_length":
+            f = MinMaxLength(matcher, name, child)
         elif (
             name == "between"
             or name == "inside"

@@ -19,8 +19,8 @@ class TestFunctionsAll(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\test_function_all1: lines: {lines}")
+        print(f"test_function_all1: path vars: {path.variables}")
         assert len(lines) == 1
         assert path.variables["a"] is True
 
@@ -51,8 +51,8 @@ class TestFunctionsAll(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\test_function_all3: lines: {lines}")
+        print(f"test_function_all3: path vars: {path.variables}")
         assert len(lines) == 0
 
     def test_function_all4(self):
@@ -66,6 +66,37 @@ class TestFunctionsAll(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_any_function: lines: {lines}")
-        print(f"test_function_any_function: path vars: {path.variables}")
+        print(f"\test_function_all4: lines: {lines}")
+        print(f"test_function_all4: path vars: {path.variables}")
+        assert len(lines) == 1
+
+    def test_function_all5(self):
+        path = CsvPath()
+        Save._save(path, "test_function_all5")
+        path.parse(
+            f"""
+            ${FOOD}[*]
+            [
+               not(all(header()))
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\test_function_all5: lines: {lines}")
+        print(f"test_function_all5: path vars: {path.variables}")
+        assert len(lines) == 1
+
+    def test_function_all6(self):
+        path = CsvPath()
+        Save._save(path, "test_function_all6")
+        path.parse(
+            f"""
+            ${FOOD}[*]
+            [
+                last.nocontrib() -> @noway = none()
+                not(all( variable()))
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_all6: lines: {lines}")
+        print(f"test_function_all6: path vars: {path.variables}")
         assert len(lines) == 1

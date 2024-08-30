@@ -133,3 +133,19 @@ class TestFunctionsLength(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_not_length: lines: {len(lines)}")
         assert len(lines) == 2
+
+    def test_function_minmax_length1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_minmax_length1")
+        path.parse(
+            f"""
+            ${PATH}[0-3]
+            [
+                push( "min", min_length( #lastname, 5))
+                push( "max", max_length( #lastname, 4))
+            ]"""
+        )
+        path.fast_forward()
+        print(f"test_function_minmax_length1: path vars: {path.variables}")
+        assert path.variables["min"] == [True, True, False, False]
+        assert path.variables["max"] == [False, False, True, True]

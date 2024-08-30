@@ -11,6 +11,10 @@ Concatenates any number of strings.
 
 Same as you would expect.
 
+### min_length(value, int) and max_length(value, int)
+
+`min_length()` and `max_length()` return True if the stringified value is more than or less than the integer provided. The functionality can also be achieved using `above()` and `below()` or `between()`, but the min and max functions are obviously simpler.
+
 ### lower(value)
 
 Same as you would expect.
