@@ -123,7 +123,9 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    logger=self.logger, error_collector=result, component="csvpaths"
+                ).handle_error(ex)
         self.logger.info(
             f"Completed collect_paths '{pathsname}' with {len(paths)} paths"
         )
@@ -164,7 +166,9 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    logger=self.logger, error_collector=result, component="csvpaths"
+                ).handle_error(ex)
         self.logger.info(
             f"Completed fast_forward_paths '{pathsname}' with {len(paths)} paths"
         )
@@ -198,7 +202,9 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    logger=self.logger, error_collector=result, component="csvpaths"
+                ).handle_error(ex)
 
     # =============== breadth first processing ================
 
@@ -284,7 +290,11 @@ class CsvPaths(CsvPathsPublic):
                 except Exception as ex:
                     ex.trace = traceback.format_exc()
                     ex.source = self
-                    ErrorHandler(csvpath=acsvpath).handle_error(ex)
+                    ErrorHandler(
+                        logger=self.logger,
+                        error_collector=acsvpath,
+                        component="csvpaths",
+                    ).handle_error(ex)
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str
@@ -301,7 +311,9 @@ class CsvPaths(CsvPathsPublic):
                 # the error handler is the CsvPathResults. it registers itself with
                 # the csvpath as the error collector. not as straightforward a way to
                 # get ErrorHandler what it needs, but effectively same as we do above
-                ErrorHandler(csvpath=csvpath).handle_error(ex)
+                ErrorHandler(
+                    logger=self.logger, error_collector=csvpath, component="csvpaths"
+                ).handle_error(ex)
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
@@ -309,6 +321,8 @@ class CsvPaths(CsvPathsPublic):
             try:
                 #
                 # lines object is a shared reference between path and results.
+                # CsvPathResult will set itself into its CsvPath as error collector
+                # printer, etc.
                 #
                 result = CsvPathResult(
                     csvpath=csvpath[0], file_name=filename, paths_name=pathsname
@@ -317,4 +331,6 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(csvpaths=self).handle_error(ex)
+                ErrorHandler(
+                    logger=self.logger, csvpaths=self, component="csvpaths"
+                ).handle_error(ex)

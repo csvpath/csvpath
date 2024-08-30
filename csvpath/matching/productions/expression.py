@@ -20,7 +20,12 @@ class Expression(Matchable):
                 e.trace = traceback.format_exc()
                 e.source = self
                 e.json = self.matcher.to_json(self)
-                ErrorHandler(csvpath=self.matcher.csvpath).handle_error(e)
+                ErrorHandler(
+                    csvpath=self.matcher.csvpath,
+                    logger=self.matcher.csvpath.logger,
+                    error_collector=self.matcher.csvpath,
+                    component="csvpath",
+                ).handle_error(e)
         return self.match
 
     def reset(self) -> None:
@@ -37,7 +42,11 @@ class Expression(Matchable):
             e.source = self
             e.message = f"Failed csvpath validity check with: {e}"
             e.json = self.matcher.to_json(self)
-            ErrorHandler(csvpath=self.matcher.csvpath).handle_error(e)
+            ErrorHandler(
+                logger=self.matcher.csvpath.logger,
+                error_collector=self.matcher.csvpath,
+                component="csvpath",
+            ).handle_error(e)
             #
             # We always stop if the csvpath itself is found to be invalid
             # before the run starts. The error policy doesn't override that.

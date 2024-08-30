@@ -41,7 +41,6 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._file_name = file_name
         self._errors = []
         self._printouts = {}
-
         #
         # use the properties so error_collector, etc. is set correctly
         #

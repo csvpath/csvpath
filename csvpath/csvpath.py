@@ -414,6 +414,7 @@ class CsvPath(CsvPathPublic):
     @limit_collection_to.setter
     def limit_collection_to(self, indexes: List[int]) -> None:
         self._limit_collection_to = indexes
+        self.logger.warning("Setting a limit on headers collected: {indexes}")
 
     def stop(self) -> None:
         self.stopped = True
@@ -464,6 +465,11 @@ class CsvPath(CsvPathPublic):
         self._freeze_variables = True
         end = time.time()
         self.total_iteration_time = end - start
+        self.logger.info(f"Run against {self.scanner.filename} is complete.")
+        self.logger.info(f"Iteration time was {round(self.total_iteration_time, 2)}")
+        self.logger.info(
+            f"{round(self.total_iteration_time / self.line_monitor.physical_end_line_count, 2)} per line."
+        )
 
     def _next_line(self) -> List[Any]:
         self.logger.info(f"beginning to scan file: {self.scanner.filename}")
@@ -491,7 +497,6 @@ class CsvPath(CsvPathPublic):
         #
         # we always look at the last line so that last() has a
         # chance to run
-        #
         #
         # if we're empty, but last, we need to make sure the
         # matcher runs a final time so that any last() can run.
@@ -570,7 +575,6 @@ class CsvPath(CsvPathPublic):
             self.get_total_lines_and_headers()
         return self.line_monitor.physical_end_line_number
 
-    # do we need a way to disable the line count to speed up big files?
     def get_total_lines_and_headers(self) -> int:
         #
         # total lines is a count not a pointer. counts are 1-based
@@ -596,32 +600,15 @@ class CsvPath(CsvPathPublic):
                 self.headers = []
             self._clean_headers()
             end = time.time()
-            self.logger.info(f"Counting lines and getting headers took {end - start}")
+            self.logger.info(
+                f"Counting lines and getting headers took {round(end - start, 2)}"
+            )
             self.line_monitor.set_end_lines_and_reset()
 
     def _clean_headers(self) -> None:
         if self.headers is None:
             self.logger.warning("Cannot clean headers because headers are None")
             return
-        hs = self.headers[:]
-        self.headers = []
-        for header in hs:
-            header = header.strip()
-            header = header.replace(";", "")
-            header = header.replace(",", "")
-            header = header.replace("|", "")
-            header = header.replace("\t", "")
-            header = header.replace("`", "")
-            self.headers.append(header)
-
-    def _load_headers(self) -> None:
-        with open(self.scanner.filename, "r") as file:
-            reader = csv.reader(
-                file, delimiter=self.delimiter, quotechar=self.quotechar
-            )
-            for row in reader:
-                self.headers = row
-                break
         hs = self.headers[:]
         self.headers = []
         for header in hs:
@@ -646,11 +633,12 @@ class CsvPath(CsvPathPublic):
             return True
         if self.matcher is None:
             h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
-            self.logger.info(f"loading matcher with data. hash: {h}")
+            self.logger.info(f"Loading matcher with data. match part hash: {h}")
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers
             )
         else:
+            self.logger.info("Resetting and reloading matcher")
             self.matcher.reset()
             self.matcher.line = line
         matched = self.matcher.matches()
@@ -724,6 +712,9 @@ class CsvPath(CsvPathPublic):
                 # run is ending, no more changes
                 #
                 thevalue = tuple(thevalue[:])
+                self.logger.debug(
+                    f"Returning {thevalue} for frozen variable {name}.{tracking}"
+                )
         return thevalue
 
     def line_numbers(self) -> Iterator[int | str]:

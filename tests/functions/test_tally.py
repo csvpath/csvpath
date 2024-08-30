@@ -51,6 +51,7 @@ class TestFunctionsTally(unittest.TestCase):
                             ]
                    """
         )
+        path.logger.warning("We are going to intentionally raise an exception")
         with pytest.raises(TypeError):
             path.collect()
             print(f"test_function_tally4: path vars: {path.variables}")
