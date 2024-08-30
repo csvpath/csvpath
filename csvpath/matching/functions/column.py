@@ -1,12 +1,7 @@
 from typing import Any
 from .function import Function
-from ..productions import (
-    Term,
-    ChildrenException,
-    Equality,
-    DataException,
-    ConfigurationException,
-)
+from ..productions import Term, ChildrenException, Equality, DataException
+from csvpath import ConfigurationException
 
 
 class Column(Function):

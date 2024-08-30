@@ -7,9 +7,9 @@
 
 If you give `header_name()` and integer it will find the name of that header. Remember that header indexes are 0-based. If the lookup fails the value result is `None`. The match result is `False`.
 
-If you also provide `header_name()` a second string argument that is the expected name it will return `True` if the names match; otherwise, `False`.
+If you also provide `header_name()` a second string argument that is the expected name, it will return `True` if the names match; otherwise, `False`.
 
-`header_index()` does the same, but with you providing a name to look up and, optionally, an expected index value.
+`header_index()` does the same, but with a name to look up and, optionally, an expected index value.
 
 
 ## Examples
