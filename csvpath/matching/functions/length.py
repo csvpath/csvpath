@@ -6,7 +6,6 @@ from csvpath import ConfigurationException
 
 class Length(Function):
     def check_valid(self) -> None:
-        print(f"Length: children: {self.children}")
         self.validate_one_arg(types=[Term, Variable, Header, Function])
         super().check_valid()
 

@@ -30,7 +30,10 @@ from .tally import Tally
 from .every import Every
 from .printf import Print
 from .increment import Increment
-from .column import Column
+
+# Column is deprecated, HeaderName has same
+# function and more, and matches the terminology
+from .column import Column, HeaderName
 from .substring import Substring
 from .starts_with import StartsWith
 from .stop import Stop, Skip
@@ -203,6 +206,8 @@ class FunctionFactory:
             f = Increment(matcher, name, child)
         elif name == "column":
             f = Column(matcher, name, child)
+        elif name == "header_name" or name == "header_index":
+            f = HeaderName(matcher, name, child)
         elif name == "substring":
             f = Substring(matcher, name, child)
         elif name == "stop" or name == "fail_and_stop":

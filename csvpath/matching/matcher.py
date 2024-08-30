@@ -33,7 +33,7 @@ class Matcher:
         # if headers:
         #    self.headers = headers[:]
         self.expressions = []
-        self.header_dict = None
+        # self.header_dict = None
         self.if_all_match = []
         self.current_expression = None
         self.parser_type = parser_type
@@ -78,6 +78,8 @@ class Matcher:
         self.current_expression = None
 
     def header_index(self, name: str) -> int:
+        return self.csvpath.header_index(name)
+        """
         if not self.csvpath.headers:  # self.headers:
             return None
         if self.header_dict is None:
@@ -85,6 +87,7 @@ class Matcher:
             for i, n in enumerate(self.csvpath.headers):  # self.headers):
                 self.header_dict[n] = i
         return self.header_dict.get(name)
+        """
 
     def header_name(self, i: int) -> str:
         if not self.csvpath.headers:  # self.headers:
