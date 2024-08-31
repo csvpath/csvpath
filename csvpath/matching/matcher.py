@@ -7,8 +7,6 @@ from .functions.function import Function
 from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
-
-# from .util.last_line_stats import LastLineStats
 from ..util.exceptions import VariableException
 from . import LarkParser, LarkTransformer
 
@@ -27,7 +25,6 @@ class Matcher:
         self.path = data
         self.csvpath = csvpath
         self._line = line
-        # self._last_line:LastLineStats = None
         self.expressions = []
         self.if_all_match = []
         self.current_expression = None

@@ -32,8 +32,10 @@ from .printf import Print
 from .increment import Increment
 from .round import Round
 
+#
 # Column is deprecated, HeaderName has same
 # function and more, and matches the terminology
+#
 from .column import Column, HeaderName, HeaderNamesMismatch
 from .substring import Substring
 from .starts_with import StartsWith
@@ -69,6 +71,7 @@ from .sum import Sum
 from .reset_headers import ResetHeaders
 from .mismatch import Mismatch
 from .after_blank import AfterBlank
+from .importf import Import
 
 
 class UnknownFunctionException(Exception):
@@ -300,6 +303,8 @@ class FunctionFactory:
             f = AfterBlank(matcher, name, child)
         elif name == "round":
             f = Round(matcher, name, child)
+        elif name == "import":
+            f = Import(matcher, name, child)
         elif (
             name == "min_length"
             or name == "max_length"

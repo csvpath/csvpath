@@ -40,7 +40,7 @@ class ExpressionUtility:
             v = v.replace("€", "")
             v = v.replace("£", "")
         #
-        # if this doesn't work we'll presumably handle the error above
+        # if this doesn't work we'll handle the higher in the stack
         #
         return int(v)
 
@@ -176,3 +176,13 @@ class ExpressionUtility:
             else:
                 break
         return hashlib.sha256(id.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def get_my_expression(self, thing):
+        p = thing.parent
+        ret = p
+        while p:
+            p = p.parent
+            if p:
+                ret = p
+        return ret

@@ -119,3 +119,19 @@ class TestNewCsvPaths(unittest.TestCase):
         assert meta == meta2
         meta["x"] = 1
         assert meta != meta2
+
+    def test_csvpaths_import_function(self):
+
+        cs = CsvPaths()
+        cs.files_manager.set_named_files(FILES)
+        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.fast_forward_by_line(filename="food", pathsname="import")
+        results = cs.results_manager.get_named_results("import")
+        for result in results:
+            for p in result.printouts:
+                print(f"\t   >> {p}")
+
+        vs = cs.results_manager.get_variables("import")
+        print(f"\n test_csvpaths_import_function: vars from import paths: {vs}")
+        assert "import" in vs
+        assert vs["import"] is True

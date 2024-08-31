@@ -1,0 +1,10 @@
+
+$[*][
+    print("Import worked!")
+    @import = yes()
+]
+
+---- CSVPATH ----
+
+
+

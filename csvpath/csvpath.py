@@ -254,8 +254,13 @@ class CsvPath(CsvPathPublic):
         for p in self.printers:
             p.print(string)
 
-    def parse(self, csvpath):
-        self.scanner = Scanner(csvpath=self)
+    def parse(self, csvpath, disposably=False):
+        """displosably is True when a Matcher is needed for some purpose other than
+        the run we were created to do. could be that a match component wanted a
+        parsed csvpath for its own purposes. when True, we create and return the
+        Matcher, but then forget it ever existed.
+        """
+        # self.scanner = Scanner(csvpath=self)
         #
         # strip off any comments and collect any metadata
         # CsvPaths will do this earlier but it stripped off
@@ -267,31 +272,60 @@ class CsvPath(CsvPathPublic):
         #
         csvpath = self._update_file_path(csvpath)
         s, mat = self._find_scan_and_match_parts(csvpath)
-        self.scan = s
-        self.match = mat
-        self.scanner.parse(s)
+        if disposably:
+            pass
+        else:
+            self.scan = s
+            self.match = mat
+            self.scanner = Scanner(csvpath=self)
+            self.scanner.parse(s)
         #
         # we build a matcher to see if it builds without error.
         # in principle we could keep this as the actual matcher.
         # atm, tho, just create a dry-run copy. in some possible
         # unit tests we may not have a parsable match part.
         #
+        matcher = None
         if mat:
-            Matcher(csvpath=self, data=mat, line=None, headers=None)
-
-        if self.scanner.filename is None:
-            raise ConfigurationException("Cannot proceed without a filename")
+            matcher = Matcher(csvpath=self, data=mat, line=None, headers=None)
+        if disposably:
+            #
+            # if the matcher was requested for some reason beyond our own needs
+            # we just return it and forget it existed.
+            #
+            return matcher
         else:
-            self.get_total_lines_and_headers()
-        return self.scanner
+            if self.scanner.filename is None:
+                raise ConfigurationException("Cannot proceed without a filename")
+            else:
+                self.get_total_lines_and_headers()
+            return self.scanner
 
-    def parse_named_path(self, name):
+    def parse_named_path(self, name, file=None, disposably=False):
+        """displosably is True when a Matcher is needed for some purpose other than
+        the run we were created to do. could be that a match component wanted a
+        parsed csvpath for its own purposes. when True, we create and return the
+        Matcher, but then forget it ever existed.
+
+        also note: the path must have a name or full filename. $[*] is not enough.
+        """
         if not self.csvpaths:
             raise ConfigurationException("No CsvPaths object available")
-        np = self.csvpaths.get_named_path(name)
+
+        np = self.csvpaths.paths_manager.get_named_paths(name)
         if not np:
-            raise ConfigurationException(f"Named path {name} not found")
-        self.parse(np)
+            raise ConfigurationException(f"Named paths {name} not found")
+        elif len(np) == 0:
+            raise ConfigurationException(f"Named paths {name} has no csvpaths")
+        elif len(np) > 1:
+            self.logger.warning(
+                "In parse_named_path found {name} has {len(np)} csvpaths. Parsing just the first one."
+            )
+        path = np[0]
+        path = self._update_file_path(path)
+        dis = self.parse(path, disposably=disposably)
+        if disposably is True:
+            return dis
 
     def _update_file_path(self, data: str):
         if data is None:

@@ -1,0 +1,10 @@
+
+$[*][
+    print("Attempting import!")
+    import("importable")
+]
+
+---- CSVPATH ----
+
+
+
