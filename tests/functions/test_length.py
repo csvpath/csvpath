@@ -143,9 +143,13 @@ class TestFunctionsLength(unittest.TestCase):
             [
                 push( "min", min_length( #lastname, 5))
                 push( "max", max_length( #lastname, 4))
+                push( "too_long", too_long( #lastname, 5))
+                push( "too_short", too_short( #lastname, 4))
             ]"""
         )
         path.fast_forward()
         print(f"test_function_minmax_length1: path vars: {path.variables}")
         assert path.variables["min"] == [True, True, False, False]
         assert path.variables["max"] == [False, False, True, True]
+        assert path.variables["too_long"] == [True, True, False, False]
+        assert path.variables["too_short"] == [False, False, True, True]

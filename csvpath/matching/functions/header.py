@@ -1,6 +1,10 @@
 from typing import Any
 from .function import Function
 
+#
+# deprecated. use HeaderName.
+#
+
 
 class Header(Function):
     def check_valid(self) -> None:

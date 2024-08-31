@@ -44,6 +44,7 @@ class TestFunctionsColumn(unittest.TestCase):
                 @p = header_name(0, "firstname")
                 @q = header_name(2, "firstname")
                 @r = header_name(4)
+                @s = header_name(0, "ffirstname")
             ]"""
         )
         path.collect()
@@ -58,6 +59,7 @@ class TestFunctionsColumn(unittest.TestCase):
         assert path.variables["p"] is True
         assert path.variables["q"] is False
         assert path.variables["r"] is None
+        assert path.variables["s"] is False
 
     def test_function_header_name_and_index2(self):
         path = CsvPath()
@@ -94,3 +96,54 @@ class TestFunctionsColumn(unittest.TestCase):
         lines = path.collect()
         print(f"test_function_header_name_and_index4: lines: {lines}")
         assert len(lines) == 1
+
+    def test_function_header_name_and_index5(self):
+        path = CsvPath()
+        Save._save(path, "test_function_header_name_and_index5")
+        path.parse(
+            f""" ${PATH}[2][
+                header_name(0, "ffirstname")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_header_name_and_index5: lines: {lines}")
+        assert len(lines) == 0
+
+    def test_function_header_names_mismatch1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_header_names_mismatch1")
+        path.parse(
+            f""" ${PATH}[2][
+                header_names_mismatch.chk("firstname|lastname|say")
+                header_names_mismatch.more("firstname|lastname|say|more")
+                header_names_mismatch.order("lastname|firstname|say")
+                header_names_mismatch.dup("firstname|firstname|say")
+                header_names_mismatch.short("firstname|say")
+            ]"""
+        )
+        path.collect()
+        print(f"test_function_header_names_mismatch1: vars: {path.variables}")
+        v = path.variables
+        assert len(v["chk_present"]) == 3
+        assert len(v["more_present"]) == 3
+        assert len(v["order_present"]) == 1
+        assert len(v["dup_present"]) == 2
+        assert len(v["short_present"]) == 1
+
+        assert len(v["chk_unmatched"]) == 0
+        assert len(v["more_unmatched"]) == 1
+        assert len(v["order_unmatched"]) == 0
+        assert len(v["dup_unmatched"]) == 1
+        assert len(v["short_unmatched"]) == 1
+
+        assert len(v["chk_misordered"]) == 0
+        assert len(v["more_misordered"]) == 0
+        assert len(v["order_misordered"]) == 2
+        assert len(v["dup_misordered"]) == 1
+        assert len(v["short_misordered"]) == 1
+
+        assert len(v["chk_duplicated"]) == 0
+        assert len(v["more_duplicated"]) == 0
+        assert len(v["order_duplicated"]) == 0
+        assert len(v["dup_duplicated"]) == 1
+        assert len(v["short_duplicated"]) == 0

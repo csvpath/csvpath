@@ -33,7 +33,7 @@ from .increment import Increment
 
 # Column is deprecated, HeaderName has same
 # function and more, and matches the terminology
-from .column import Column, HeaderName
+from .column import Column, HeaderName, HeaderNamesMismatch
 from .substring import Substring
 from .starts_with import StartsWith
 from .stop import Stop, Skip
@@ -206,8 +206,14 @@ class FunctionFactory:
             f = Increment(matcher, name, child)
         elif name == "column":
             f = Column(matcher, name, child)
-        elif name == "header_name" or name == "header_index":
+        elif (
+            name == "header_name"
+            or name == "header_index"
+            or name == "header_name_mismatch"
+        ):
             f = HeaderName(matcher, name, child)
+        elif name == "header_names_mismatch":
+            f = HeaderNamesMismatch(matcher, name, child)
         elif name == "substring":
             f = Substring(matcher, name, child)
         elif name == "stop" or name == "fail_and_stop":
@@ -288,7 +294,12 @@ class FunctionFactory:
             f = Mismatch(matcher, name, child)
         elif name == "line_number":
             f = LineNumber(matcher, name, child)
-        elif name == "min_length" or name == "max_length":
+        elif (
+            name == "min_length"
+            or name == "max_length"
+            or name == "too_long"
+            or name == "too_short"
+        ):
             f = MinMaxLength(matcher, name, child)
         elif (
             name == "between"

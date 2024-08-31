@@ -36,6 +36,15 @@ class Matchable(Qualified):
                 return False
         return True
 
+    def has_not_yet(self):
+        id = self.get_id()
+        v = self.matcher.get_variable(id, set_if_none=True)
+        return v
+
+    def set_has_happened(self) -> None:
+        id = self.get_id()
+        self.matcher.set_variable(id, value=False)
+
     def reset(self) -> None:
         # let the subclasses handle value
         # self.value = None
@@ -68,3 +77,24 @@ class Matchable(Qualified):
             thing = self if not child else child
             self._id = ExpressionUtility.get_id(thing=thing)
         return self._id
+
+    # convenience method for one or two arg functions
+    def _value_one(self):
+        if len(self.children) == 0:
+            # validation should have already caught this, if it is a problem
+            return None
+        elif hasattr(self.children[0], "left"):
+            return self.children[0].left.to_value()
+        else:
+            return self.children[0].to_value()
+
+    # convenience method for one or two arg functions
+    def _value_two(self):
+        if len(self.children) == 0:
+            # validation should have already caught this, if it is a problem
+            return None
+        if hasattr(self.children[0], "right"):
+            return self.children[0].right.to_value()
+        else:
+            # with the current parse tree this shouldn't happen
+            return None

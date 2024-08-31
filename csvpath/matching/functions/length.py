@@ -37,9 +37,9 @@ class MinMaxLength(Function):
             value = self.children[0].left.to_value()
             length = self.children[0].right.to_value()
             length = int(length)
-            if self.name == "min_length":
+            if self.name == "min_length" or self.name == "too_long":
                 self.value = len(value) >= length
-            elif self.name == "max_length":
+            elif self.name == "max_length" or self.name == "too_short":
                 self.value = len(value) <= length
             else:
                 raise ConfigurationException("Unknown function name: {self.name}")

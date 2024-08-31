@@ -9,4 +9,5 @@
                 @p = header_name(0, "firstname")
                 @q = header_name(2, "firstname")
                 @r = header_name(4)
+                @s = header_name(0, "ffirstname")
             ]
