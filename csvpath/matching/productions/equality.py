@@ -10,7 +10,10 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 class Equality(Matchable):
     def __init__(self, matcher):
         super().__init__(matcher)
-        self.op: str = "="  # we assume = but if a function or other containing production  # wants to check we might have a different op
+        self.op: str = (
+            "="  # we assume = but if a function or other containing production
+        )
+        # wants to check we might have a different op
 
     def reset(self) -> None:
         self.value = None
@@ -72,11 +75,8 @@ class Equality(Matchable):
 
     def commas_to_list(self) -> List[Any]:
         ls = []
-        if self.matcher.parser_type == "lark":
-            for _ in self.children:
-                ls.append(_)
-        else:
-            self._to_list(ls, self)
+        for _ in self.children:
+            ls.append(_)
         return ls
 
     def _to_list(self, ls: List, p):

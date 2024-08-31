@@ -8,15 +8,14 @@ from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
 from ..util.exceptions import VariableException
+from ..util.exceptions import ConfigurationException
 from . import LarkParser, LarkTransformer
 
 
 class Matcher:
     tokens = MatchingLexer.tokens
 
-    def __init__(
-        self, *, csvpath=None, data=None, line=None, headers=None, parser_type="lark"
-    ):
+    def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
         if not headers:
             # this could be a dry-run or unit testing
             pass
@@ -28,25 +27,17 @@ class Matcher:
         self.expressions = []
         self.if_all_match = []
         self.current_expression = None
-        self.parser_type = parser_type
         self.skip = False
-
         if data is not None:
-            if parser_type == "lark":
-                self.parser = LarkParser()
-                tree = self.parser.parse(data)
-                transformer = LarkTransformer(self)
-                es = transformer.transform(tree)
-                expressions = []
-                for e in es:
-                    expressions.append([e, None])
-                self.expressions = expressions
-                self.check_valid()
-            if parser_type is None or parser_type == "ply":
-                self.lexer = MatchingLexer()
-                self.parser = yacc.yacc(module=self, start="match_part")
-                self.parser.parse(data, lexer=self.lexer.lexer)
-                self.check_valid()
+            self.parser = LarkParser()
+            tree = self.parser.parse(data)
+            transformer = LarkTransformer(self)
+            es = transformer.transform(tree)
+            expressions = []
+            for e in es:
+                expressions.append([e, None])
+            self.expressions = expressions
+            self.check_valid()
         if self.csvpath:
             self.csvpath.logger.info("initialized Matcher")
 
@@ -63,19 +54,7 @@ class Matcher:
 
     @line.setter
     def line(self, line: List[List[Any]]) -> None:
-        # self._last_line = LastLineStats(matcher=self, last_line=self._line)
         self._line = line
-
-    """
-    @property
-    def last_line(self) -> LastLineStats:
-        return self._last_line
-    """
-    """
-    @line.setter
-    def line(self, line:LastLineStats) -> None:
-        self._last_line = line
-    """
 
     def to_json(self, e) -> str:
         return ExpressionEncoder().to_json(e)
@@ -216,134 +195,3 @@ class Matcher:
         if self.csvpath.headers and len(self.csvpath.headers) > 0:
             return self.csvpath.headers[self.last_header_index()]
         return None
-
-    # ===================
-    # productions
-    # ===================
-
-    def p_error(self, p):
-        ParserUtility().error(self.parser, p)
-        raise MatchException(
-            f"Halting matching for error on {None if p is None else p.type}"
-        )
-
-    def p_match_part(self, p):
-        """match_part : LEFT_BRACKET expression RIGHT_BRACKET
-        | LEFT_BRACKET expressions RIGHT_BRACKET
-        """
-
-    def p_expressions(self, p):
-        """expressions : expression
-        | expression COMMENT
-        | expressions expression
-        | COMMENT expressions
-        | expressions COMMENT
-        | COMMENT
-        """
-
-    def p_expression(self, p):
-        """expression : function
-        | assignment_or_equality
-        """
-        e = Expression(self)
-        e.add_child(p[1])
-        self.expressions.append([e, None])
-        p[0] = e
-
-    def p_function(self, p):
-        """function : SIMPLE_NAME OPEN_PAREN CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN equality CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN function CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN term CLOSE_PAREN
-        | SIMPLE_NAME OPEN_PAREN var_or_header CLOSE_PAREN
-        """
-        name = p[1]
-        child = p[3] if p and len(p) == 5 else None
-        f = FunctionFactory.get_function(self, name=name, child=child)
-        p[0] = f
-
-    def p_assignment_or_equality(self, p):
-        """assignment_or_equality : equality
-        | assignment
-        """
-        p[0] = p[1]
-
-    def p_equality(self, p):
-        """
-        equality : function op term
-                 | function op function
-                 | function op var_or_header
-                 | function DO assignment_or_equality
-                 | var DO assignment_or_equality
-                 | var DO function
-                 | function DO function
-                 | equality DO assignment_or_equality
-                 | equality DO function
-                 | var_or_header op function
-                 | var_or_header op term
-                 | var_or_header op var_or_header
-                 | term op var_or_header
-                 | term op term
-                 | term op function
-                 | equality COMMA equality
-                 | equality op term
-                 | equality op function
-                 | equality COMMA var_or_header
-                 | equality COMMA term
-                 | equality COMMA function
-        """
-        e = Equality(self)
-        e.left = p[1]
-        e.set_operation(p[2])
-        e.right = p[3]
-        p[0] = e
-
-    def p_op(self, p):
-        """op : EQUALS
-        | COMMA
-        """
-        p[0] = p[1]
-
-    def p_assignment(self, p):
-        """
-        assignment : var ASSIGNMENT var
-                 | var ASSIGNMENT term
-                 | var ASSIGNMENT function
-                 | var ASSIGNMENT header
-        """
-        e = Equality(self)
-        e.left = p[1]
-        e.set_operation(p[2])
-        e.right = p[3]
-        p[0] = e
-
-    def p_term(self, p):
-        """term : QUOTED
-        | QUOTE DATE QUOTE
-        | QUOTE NUMBER QUOTE
-        | NUMBER
-        | REGEX
-        """
-        if len(p) == 4:
-            p[0] = Term(self, value=p[2])
-        else:
-            p[0] = Term(self, value=p[1])
-
-    def p_var_or_header(self, p):
-        """var_or_header : header
-        | var
-        """
-        p[0] = p[1]
-
-    def p_var(self, p):
-        """var : VAR_SYM SIMPLE_NAME"""
-        v = Variable(self, name=p[2])
-        p[0] = v
-
-    def p_header(self, p):
-        """header : HEADER_SYM SIMPLE_NAME
-        | HEADER_SYM NUMBER
-        | HEADER_SYM QUOTED
-        """
-        h = Header(self, name=p[2])
-        p[0] = h

@@ -18,7 +18,8 @@ class Import(Function):
         #
         if self.value is None:
             #
-            # here rather than in to_value so that it runs before line 0
+            # the import goes here rather than in to_value so that it runs
+            # before line 0
             #
             if self.matcher.csvpath.csvpaths is None:
                 raise ConfigurationException("No CsvPaths instance available")
