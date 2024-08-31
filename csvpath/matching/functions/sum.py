@@ -15,13 +15,13 @@ class Sum(Function):
             var = self.first_non_term_qualifier(self.name)
             val = self.matcher.get_variable(var, set_if_none=0)
             self.value = val
-            if not self.onmatch or self.line_matches():
+            if self.do_onmatch():
                 child = self.children[0]
                 cval = child.to_value()
                 if ExpressionUtility.is_none(cval):
                     cval = 0
                 else:
-                    cval = float(cval)
+                    cval = ExpressionUtility.to_float(cval)
                 val += cval
                 self.matcher.set_variable(var, value=val)
                 self.value = val

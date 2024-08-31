@@ -71,6 +71,7 @@ Most of the work of matching is done in functions. The match functions are the f
 
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/sum.md'>sum(value)</a> </td><td> returns a running subtotal of the value </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/subtract.md'>round(value)</a> </td><td> rounds a number </td></tr>
 <tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/correlate.md'>correlate(value, value)</a> </td><td> gives the running correlation between two values </td></tr>

@@ -644,7 +644,7 @@ class CsvPath(CsvPathPublic):
                 csvpath=self, data=self.match, line=line, headers=self.headers
             )
         else:
-            self.logger.info("Resetting and reloading matcher")
+            self.logger.debug("Resetting and reloading matcher")
             self.matcher.reset()
             self.matcher.line = line
         matched = self.matcher.matches()

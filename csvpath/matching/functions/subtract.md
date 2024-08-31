@@ -1,5 +1,5 @@
 
-# Add, Subtract, Multiply, Divide, Mod, Int
+# Add, Subtract, Multiply, Divide, Mod, Int, Round
 
 These arithmetic functions work mostly the way you would expect.
 
@@ -36,6 +36,9 @@ Converts its argument to an int, if possible. If the convert to int fails it wil
 
 If those attempts don't work it raises `ChildrenException`.
 
+## round()
+
+`round()` takes a numeric value and a number of places and rounds the first by the second. The function will convert a `None` or `bool` to 0.0 or 1.0. The places value must be a positive int.
 
 ## Examples
 

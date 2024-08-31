@@ -30,6 +30,7 @@ from .tally import Tally
 from .every import Every
 from .printf import Print
 from .increment import Increment
+from .round import Round
 
 # Column is deprecated, HeaderName has same
 # function and more, and matches the terminology
@@ -297,6 +298,8 @@ class FunctionFactory:
             f = LineNumber(matcher, name, child)
         elif name == "after_blank":
             f = AfterBlank(matcher, name, child)
+        elif name == "round":
+            f = Round(matcher, name, child)
         elif (
             name == "min_length"
             or name == "max_length"

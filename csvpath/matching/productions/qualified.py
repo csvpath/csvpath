@@ -69,6 +69,13 @@ class Qualified:
                 return q
         return default
 
+    def do_onmatch(self):
+        ret = not self.onmatch or self.line_matches()
+        self.matcher.csvpath.logger.debug(
+            f"Qualified.do_onmatch: {ret} for {self.name}"
+        )
+        return ret
+
     def set_qualifiers(self, qs) -> None:
         self.qualifier = qs
         if qs is not None:

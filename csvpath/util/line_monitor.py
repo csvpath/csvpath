@@ -106,30 +106,9 @@ class LineMonitor:
     def last_line(self) -> LastLineStats:
         return self._last_line_stats
 
-    """
-    def _move_to_last(self):
-        self.last = LineMonitor()
-        last_line._physical_end_line_count = self._physical_end_line_count
-        last_line._physical_end_line_number = self._physical_end_line_number
-        last_line._physical_line_count = self._physical_line_count
-        last_line._physical_line_number = self._physical_line_number
-
-        last_line._data_end_line_count = self._data_end_line_count
-        last_line._data_end_line_number = self._data_end_line_number
-        last_line._data_line_count = self._data_line_count
-        last_line._data_line_number = self._data_line_number
-
-    @property
-
-
-    """
-
     def next_line(self, *, last_line: List, data: List) -> None:
-        #########
         self._last_line_stats = LastLineStats(line_monitor=self, last_line=last_line)
-
         has_data = data and len(data) > 0
-        # self._move_to_last()
         if self._physical_line_count is None:
             self._physical_line_count = 1
             self._physical_line_number = 0

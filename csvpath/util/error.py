@@ -14,6 +14,7 @@ class Error:
         self.error: Exception = None
         self.source: Any = None
         self.message: str = None
+        self.trace: str = None
         self.json: str = None
         self.datum: Any = None
         self.filename: str = None
@@ -27,7 +28,10 @@ filename: {self.filename if self.filename else ""}
 datetime: {self.at}"""
         if self.message:
             string = f"""{string}
-message: self.message"""
+message: {self.message}"""
+        if self.trace:
+            string = f"""{string}
+trace: {self.trace}"""
         string = f"""{string}
 line: {self.line_count if self.line_count is not None else ""}
 scan: {self.scan_count if self.scan_count else ""}
@@ -108,8 +112,10 @@ class ErrorHandler:
             error.json = ex.json
         if hasattr(ex, "datum") and error.datum != "":
             error.datum = ex.datum
+        if hasattr(ex, "message"):
+            error.message = ex.message
         if hasattr(ex, "trace"):
-            error.message = ex.trace
+            error.trace = ex.trace
         if hasattr(ex, "source"):
             error.source = ex.source
         return error

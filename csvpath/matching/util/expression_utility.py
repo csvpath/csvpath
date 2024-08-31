@@ -17,6 +17,61 @@ class ExpressionUtility:
         return False
 
     @classmethod
+    def to_int(self, v: Any) -> float:
+        if v is None:
+            return 0
+        if v is True:
+            return 1
+        elif v is False:
+            return 0
+        if type(v) is int:
+            # still convert jic
+            return int(v)
+        v = f"{v}".strip()
+        if v == "":
+            return 0
+        try:
+            v = int(v)
+            return v
+        except Exception:
+            v = v.replace(",", "")
+            v = v.replace(";", "")
+            v = v.replace("$", "")
+            v = v.replace("€", "")
+            v = v.replace("£", "")
+        #
+        # if this doesn't work we'll presumably handle the error above
+        #
+        return int(v)
+
+    @classmethod
+    def to_float(self, v: Any) -> float:
+        if v is None:
+            return float(0)
+        if type(v) is int:
+            return float(v)
+        if v is True:
+            return float(1)
+        elif v is False:
+            return float(0)
+        v = f"{v}".strip()
+        if v == "":
+            return float(0)
+        try:
+            v = float(v)
+            return v
+        except Exception:
+            v = v.replace(",", "")
+            v = v.replace(";", "")
+            v = v.replace("$", "")
+            v = v.replace("€", "")
+            v = v.replace("£", "")
+        #
+        # if this doesn't work we'll presumably handle the error above
+        #
+        return float(v)
+
+    @classmethod
     def ascompariable(self, v: Any) -> Any:
         if v is None:
             return v

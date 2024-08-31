@@ -19,17 +19,11 @@ class AfterBlank(Function):
                     lline_no = (
                         self.matcher.csvpath.line_monitor.last_line.last_data_line_number
                     )
-                    print(f"pline_no: {pline_no}, lline_no: {lline_no}")
                     if lline_no is None:
                         self.value = False
                     else:
                         cur_minus_last = pline_no - lline_no
                         ret = last_zero or cur_minus_last > 1
-                        print(f"\n  last was zero: {last_zero}")
-                        print(f"  physical line: {pline_no}")
-                        print(f"  last physical line: {lline_no}")
-                        print(f"  current minus last: {cur_minus_last}")
-                        print(f"  result: {ret}")
                         self.value = ret
                 else:
                     #
