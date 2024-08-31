@@ -67,6 +67,7 @@ from .track import Track
 from .sum import Sum
 from .reset_headers import ResetHeaders
 from .mismatch import Mismatch
+from .after_blank import AfterBlank
 
 
 class UnknownFunctionException(Exception):
@@ -294,6 +295,8 @@ class FunctionFactory:
             f = Mismatch(matcher, name, child)
         elif name == "line_number":
             f = LineNumber(matcher, name, child)
+        elif name == "after_blank":
+            f = AfterBlank(matcher, name, child)
         elif (
             name == "min_length"
             or name == "max_length"

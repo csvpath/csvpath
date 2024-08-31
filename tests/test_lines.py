@@ -9,32 +9,32 @@ class TestLines(unittest.TestCase):
         path = LineMonitor()
         data = [True]
         nodata = []
-        path.next_line(data=data)
+        path.next_line(last_line=None, data=data)
         assert path.physical_line_count == 1
         assert path.physical_line_number == 0
         assert path.data_line_count == 1
         assert path.data_line_number == 0
-        path.next_line(data=nodata)
+        path.next_line(last_line=None, data=nodata)
         assert path.physical_line_count == 2
         assert path.physical_line_number == 1
         assert path.data_line_count == 1
         assert path.data_line_number == 0
-        path.next_line(data=data)
+        path.next_line(last_line=None, data=data)
         assert path.physical_line_count == 3
         assert path.physical_line_number == 2
         assert path.data_line_count == 2
         assert path.data_line_number == 2
-        path.next_line(data=nodata)
+        path.next_line(last_line=None, data=nodata)
         assert path.physical_line_count == 4
         assert path.physical_line_number == 3
         assert path.data_line_count == 2
         assert path.data_line_number == 2
-        path.next_line(data=nodata)
+        path.next_line(last_line=None, data=nodata)
         assert path.physical_line_count == 5
         assert path.physical_line_number == 4
         assert path.data_line_count == 2
         assert path.data_line_number == 2
-        path.next_line(data=data)
+        path.next_line(last_line=None, data=data)
         assert path.physical_line_count == 6
         assert path.physical_line_number == 5
         assert path.data_line_count == 3
@@ -63,22 +63,22 @@ class TestLines(unittest.TestCase):
         #
         # start iterating again
         #
-        path.next_line(data=data)
+        path.next_line(last_line=None, data=data)
         assert path.physical_line_count == 1
         assert path.physical_line_number == 0
         assert path.data_line_count == 1
         assert path.data_line_number == 0
-        path.next_line(data=nodata)
+        path.next_line(last_line=None, data=nodata)
         assert path.physical_line_count == 2
         assert path.physical_line_number == 1
         assert path.data_line_count == 1
         assert path.data_line_number == 0
-        path.next_line(data=data)
+        path.next_line(last_line=None, data=data)
         assert path.physical_line_count == 3
         assert path.physical_line_number == 2
         assert path.data_line_count == 2
         assert path.data_line_number == 2
-        path.next_line(data=nodata)
+        path.next_line(last_line=None, data=nodata)
         assert path.physical_line_count == 4
         assert path.physical_line_number == 3
         assert path.data_line_count == 2

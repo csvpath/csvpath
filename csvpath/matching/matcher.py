@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 import ply.yacc as yacc
 from ..util.parser_utility import ParserUtility
 from .productions import *
@@ -7,6 +7,8 @@ from .functions.function import Function
 from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
+
+# from .util.last_line_stats import LastLineStats
 from ..util.exceptions import VariableException
 from . import LarkParser, LarkTransformer
 
@@ -24,7 +26,8 @@ class Matcher:
             raise MatchException(f"need data input: data: {data}")
         self.path = data
         self.csvpath = csvpath
-        self.line = line
+        self._line = line
+        # self._last_line:LastLineStats = None
         self.expressions = []
         self.if_all_match = []
         self.current_expression = None
@@ -56,6 +59,26 @@ class Matcher:
             csvpath: {self.csvpath}
             parser: {self.parser}
         """
+
+    @property
+    def line(self) -> List[List[Any]]:
+        return self._line
+
+    @line.setter
+    def line(self, line: List[List[Any]]) -> None:
+        # self._last_line = LastLineStats(matcher=self, last_line=self._line)
+        self._line = line
+
+    """
+    @property
+    def last_line(self) -> LastLineStats:
+        return self._last_line
+    """
+    """
+    @line.setter
+    def line(self, line:LastLineStats) -> None:
+        self._last_line = line
+    """
 
     def to_json(self, e) -> str:
         return ExpressionEncoder().to_json(e)

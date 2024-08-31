@@ -88,6 +88,8 @@ class CsvPath(CsvPathPublic):
         #
         #
         self.line_monitor = LineMonitor()
+        # self._last_line:LastLineStats = None
+
         #
         # the scanning part of the csvpath. e.g. $test.csv[*]
         #
@@ -484,14 +486,17 @@ class CsvPath(CsvPathPublic):
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
             for line in reader:
-                self.line_monitor.next_line(data=line)
+                self.track_line(line=line)
                 yield line
 
     def track_line(self, line) -> None:
         #
         # move this here so CsvPaths can call it
         #
-        self.line_monitor.next_line(data=line)
+        last_line = None
+        if self.matcher:
+            last_line = self.matcher.line
+        self.line_monitor.next_line(last_line=last_line, data=line)
 
     def _consider_line(self, line):
         #
@@ -591,7 +596,8 @@ class CsvPath(CsvPathPublic):
                     file, delimiter=self.delimiter, quotechar=self.quotechar
                 )
                 for line in reader:
-                    self.line_monitor.next_line(data=line)
+                    self.track_line(line)
+                    # self.line_monitor.next_line(last_line=None, data=line)
                     if len(line) == 0 and self.skip_blank_lines:
                         continue
                     if (not self.headers or len(self.headers) == 0) and len(line) > 0:
