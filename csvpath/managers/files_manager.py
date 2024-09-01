@@ -1,11 +1,8 @@
-# from __future__ import annotations
 import os
 import json
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .. import FileException, ConfigurationException
-
-# from .. import  CsvPaths
 
 
 class CsvPathsFilesManager(ABC):

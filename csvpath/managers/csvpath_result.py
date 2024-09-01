@@ -41,6 +41,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._file_name = file_name
         self._errors = []
         self._printouts = {}
+        self.print_count = 0
         #
         # use the properties so error_collector, etc. is set correctly
         #
@@ -125,10 +126,15 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     def has_printouts(self) -> bool:
         return len(self._printouts) > 0 if self._printouts else False
 
+    @property
+    def lines_printed(self) -> int:
+        return self._print_count
+
     def print(self, string: str) -> None:
         self.print_to("default", string)
 
     def print_to(self, name: str, string: str) -> None:
+        self.print_count += 1
         if name not in self._printouts:
             self._printouts[name] = []
         self._printouts[name].append(string)

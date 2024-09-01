@@ -31,6 +31,7 @@ from .every import Every
 from .printf import Print
 from .increment import Increment
 from .round import Round
+from .print_line import PrintLine
 
 #
 # Column is deprecated, HeaderName has same
@@ -72,6 +73,7 @@ from .reset_headers import ResetHeaders
 from .mismatch import Mismatch
 from .after_blank import AfterBlank
 from .importf import Import
+from .print_queue import PrintQueue
 
 
 class UnknownFunctionException(Exception):
@@ -305,6 +307,10 @@ class FunctionFactory:
             f = Round(matcher, name, child)
         elif name == "import":
             f = Import(matcher, name, child)
+        elif name == "print_line":
+            f = PrintLine(matcher, name, child)
+        elif name == "print_queue":
+            f = PrintQueue(matcher, name, child)
         elif (
             name == "min_length"
             or name == "max_length"

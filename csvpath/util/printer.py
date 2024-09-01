@@ -11,6 +11,10 @@ class Printer(ABC):
         pass
 
     @abstractmethod
+    def lines_printed(self) -> int:
+        pass
+
+    @abstractmethod
     def print(self, string: str) -> None:
         """prints string with a newline. same as print_to(None, string)."""
         pass
@@ -26,6 +30,11 @@ class Printer(ABC):
 class StdOutPrinter(Printer):
     def __init__(self):
         self._last_line = None
+        self._count = 0
+
+    @property
+    def lines_printed(self) -> int:
+        return self._count
 
     @property
     def last_line(self) -> str:
@@ -35,6 +44,7 @@ class StdOutPrinter(Printer):
         self.print_to(None, string)
 
     def print_to(self, name: str, string: str) -> None:
+        self._count += 1
         if name == Printer.ERROR:
             print(string, file=sys.stderr)
         elif name:

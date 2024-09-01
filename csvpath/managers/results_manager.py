@@ -95,6 +95,7 @@ class ResultsManager(CsvPathsResultsManager):
             meta["csvpaths_completed"] = paths == len(results)
             meta["valid"] = self.is_valid(name)
             meta["all_variables"] = self.get_variables(name)
+            meta = {**meta, **rs.csvpath.metadata}
         return meta
 
     def is_valid(self, name: str) -> bool:

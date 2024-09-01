@@ -1,0 +1,3 @@
+[
+                   last() -> print_line("|","quotes")
+            ]

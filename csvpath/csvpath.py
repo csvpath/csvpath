@@ -252,6 +252,7 @@ class CsvPath(CsvPathPublic):
 
     def print(self, string: str) -> None:
         for p in self.printers:
+            print(f"CsvPath.print: string: {string}")
             p.print(string)
 
     def parse(self, csvpath, disposably=False):
