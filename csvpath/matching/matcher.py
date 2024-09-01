@@ -1,10 +1,8 @@
 from typing import Any, List
-import ply.yacc as yacc
 from ..util.parser_utility import ParserUtility
 from .productions import *
 from .functions.function_factory import FunctionFactory
 from .functions.function import Function
-from .matching_lexer import MatchingLexer
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
 from ..util.exceptions import VariableException
@@ -13,8 +11,6 @@ from . import LarkParser, LarkTransformer
 
 
 class Matcher:
-    tokens = MatchingLexer.tokens
-
     def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
         if not headers:
             # this could be a dry-run or unit testing
