@@ -1,13 +1,14 @@
 from typing import Any
 from .function import Function
 
-#
-# deprecated for existence testing specific headers.
-# use HeaderName instead.
-#
 
+class Headers(Function):
+    """directs functions like any() to look in the headers.
+    secondary purpose: do existence test for a header name or
+    index for the current headers/whole file. header_name
+    doesn't quite do this so we'll keep the function here.
+    """
 
-class Header(Function):
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg()
         super().check_valid()

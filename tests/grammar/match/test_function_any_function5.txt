@@ -1,6 +1,6 @@
 [
-                @found = any.onmatch(header())
-                @found2 = any(header())
-                @notfound = not(any.onmatch(header()))
+                @found = any.onmatch(headers())
+                @found2 = any(headers())
+                @notfound = not(any.onmatch(headers()))
                 no()
             ]

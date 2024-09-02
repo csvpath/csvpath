@@ -4,40 +4,6 @@ from ..productions import Term, ChildrenException, Equality, DataException
 from csvpath import ConfigurationException
 
 
-class Column(Function):
-    """depreciated. the word column is confusing since
-    CsvPath takes a position on the words column vs. header.
-    This was one of the few places the word was used regularly.
-    we also wanted the additional functionality in HeaderName
-    so it is time to phase Column out.
-    """
-
-    def check_valid(self) -> None:
-        self.validate_one_arg()
-        super().check_valid()
-
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            v = self.children[0].to_value()
-            if isinstance(v, int) or v.isdigit():
-                i = int(v)
-                if i < 0:
-                    hlen = len(self.matcher.csvpath.headers)
-                    c = hlen + i
-                    if i < 0:
-                        c = c - 1
-                    i = c
-                self.value = self.matcher.header_name(i)
-            else:
-                self.value = self.matcher.header_index(v)
-        return self.value
-
-    def matches(self, *, skip=[]) -> bool:
-        return self._noop_match()  # pragma: no cover
-
-
 class HeaderName(Function):
     """looks up a header name by index or an index by header name
     if given an expected result as a 2nd argument we return

@@ -1,4 +1,4 @@
 [
                 last.nocontrib() -> @noway = none()
-                not(all( variable()))
+                not(all( variables()))
             ]

@@ -22,8 +22,8 @@ class TestFunctionsNot(unittest.TestCase):
             f"""
             ${EMPTY}[1-2]
             [
-                @found = any(header())
-                @notfound = not(any(header()))
+                @found = any(headers())
+                @notfound = not(any(headers()))
             ]"""
         )
         lines = path.collect()
@@ -40,9 +40,9 @@ class TestFunctionsNot(unittest.TestCase):
             f"""
             ${PATH}[1-2]
             [
-                @found = any.onmatch(header())
-                @found2 = any(header())
-                @notfound = not(any.onmatch(header()))
+                @found = any.onmatch(headers())
+                @found2 = any(headers())
+                @notfound = not(any.onmatch(headers()))
                 no()
             ]"""
         )

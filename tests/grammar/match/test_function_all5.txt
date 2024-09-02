@@ -1,3 +1,3 @@
 [
-               not(all(header()))
+               not(all(headers()))
             ]

@@ -2,7 +2,7 @@ from typing import Any
 from .function import Function
 
 
-class Variable(Function):
+class Variables(Function):
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

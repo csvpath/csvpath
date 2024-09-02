@@ -1,7 +1,7 @@
 from typing import Any
 from .function import Function
-from .header import Header
-from .variable import Variable
+from .headers import Headers
+from .variables import Variables
 from ..productions import Equality
 from csvpath import ConfigurationException
 
@@ -30,9 +30,9 @@ class All(Function):
                     # a list of headers have values
                     if isinstance(child, Equality):
                         self.equality()
-                    elif isinstance(child, Header):
+                    elif isinstance(child, Headers):
                         self.all_exist()
-                    elif isinstance(child, Variable):
+                    elif isinstance(child, Variables):
                         self.all_variables()
                     else:
                         raise ConfigurationException("Child cannot be {child}")

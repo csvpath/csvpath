@@ -77,7 +77,7 @@ class TestFunctionsAll(unittest.TestCase):
             f"""
             ${FOOD}[*]
             [
-               not(all(header()))
+               not(all(headers()))
             ]"""
         )
         lines = path.collect()
@@ -93,7 +93,7 @@ class TestFunctionsAll(unittest.TestCase):
             ${FOOD}[*]
             [
                 last.nocontrib() -> @noway = none()
-                not(all( variable()))
+                not(all( variables()))
             ]"""
         )
         lines = path.collect()

@@ -1,10 +1,10 @@
 [
-                @v = any(variable())
-                @frog = any(header(), "Frog")
+                @v = any(variables())
+                @frog = any(headers(), "Frog")
                 @found = any()
                 @slug = any("slug")
-                @bear = any(header(),"Bear")
+                @bear = any(headers(),"Bear")
                 @me = any("True")
-                @h = any(header())
-                @v2 = any(variable())
+                @h = any(headers())
+                @v2 = any(variables())
             ]

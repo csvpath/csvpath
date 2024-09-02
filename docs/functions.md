@@ -153,7 +153,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/track.md'>track(value, value)</a> </td><td> tracks a value by name             </td>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/no.md'>none()</a>                    </td><td> returns None </td></tr>
-<tr><td>           </td><td> variable()                    </td><td> indicates to another function to look in variables       </td></tr>
+<tr><td>           </td><td> variables()                    </td><td> indicates to another function to look in variables       </td></tr>
 </tr>
 </table>
 

@@ -1,4 +1,4 @@
 [
-                @has_firstname = header("firstname")
-                @has_space_aliens = header("it is aliens")
+                @has_firstname = headers("firstname")
+                @has_space_aliens = headers("it is aliens")
             ]

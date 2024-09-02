@@ -14,7 +14,7 @@ class TestFunctionsAny(unittest.TestCase):
             f"""
             ${PATH}[3]
             [
-                @frog = any(header(), "Frog")
+                @frog = any(headers(), "Frog")
             ]"""
         )
         lines = path.collect()
@@ -50,14 +50,14 @@ class TestFunctionsAny(unittest.TestCase):
             f"""
             ${PATH}[3]
             [
-                @v = any(variable())
-                @frog = any(header(), "Frog")
+                @v = any(variables())
+                @frog = any(headers(), "Frog")
                 @found = any()
                 @slug = any("slug")
-                @bear = any(header(),"Bear")
+                @bear = any(headers(),"Bear")
                 @me = any("True")
-                @h = any(header())
-                @v2 = any(variable())
+                @h = any(headers())
+                @v2 = any(variables())
             ]"""
         )
         lines = path.collect()
@@ -79,8 +79,8 @@ class TestFunctionsAny(unittest.TestCase):
             f"""
             ${EMPTY}[1-2]
             [
-                @found = any(header())
-                @notfound = not(any(header()))
+                @found = any(headers())
+                @notfound = not(any(headers()))
             ]"""
         )
         lines = path.collect()
@@ -97,9 +97,9 @@ class TestFunctionsAny(unittest.TestCase):
             f"""
             ${PATH}[1-2]
             [
-                @found = any.onmatch(header())
-                @found2 = any(header())
-                @notfound = not(any.onmatch(header()))
+                @found = any.onmatch(headers())
+                @found2 = any(headers())
+                @notfound = not(any.onmatch(headers()))
                 no()
             ]"""
         )

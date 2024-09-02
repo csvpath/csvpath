@@ -1,6 +1,6 @@
 from typing import Any
-from .header import Header
-from .variable import Variable
+from .headers import Headers
+from .variables import Variables
 from .function import Function
 from ..productions import Equality, Term, ChildrenException
 
@@ -17,8 +17,8 @@ class Any(Function):
 
     def check_valid(self) -> None:
         self.validate_zero_one_or_two_args(
-            first_arg=[Variable, Header],
-            solo_arg=[Term, Header, Variable],
+            first_arg=[Variables, Headers],
+            solo_arg=[Term, Headers, Variables],
             second_arg=[Term],
         )
         """
@@ -45,10 +45,10 @@ class Any(Function):
                 if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         self.equality()
-                    elif isinstance(self.children[0], Variable):
+                    elif isinstance(self.children[0], Variables):
                         # any(variable())
                         self.variable()
-                    elif isinstance(self.children[0], Header):
+                    elif isinstance(self.children[0], Headers):
                         # any(header())
                         self.header()
                     else:
@@ -109,12 +109,12 @@ class Any(Function):
 
     def equality(self):
         value = self.children[0].right.to_value()
-        if isinstance(self.children[0].left, Header):
+        if isinstance(self.children[0].left, Headers):
             for h in self.matcher.line:
                 if f"{h}" == f"{value}":
                     self.match = True
                     break
-        elif isinstance(self.children[0].left, Variable):
+        elif isinstance(self.children[0].left, Variables):
             for v in self.matcher.csvpath.variables.values():
                 if f"{v}" == f"{value}":
                     self.match = True

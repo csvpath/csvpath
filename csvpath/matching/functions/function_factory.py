@@ -32,19 +32,14 @@ from .printf import Print
 from .increment import Increment
 from .round import Round
 from .print_line import PrintLine
-
-#
-# Column is deprecated, HeaderName has same
-# function and more, and matches the terminology
-#
 from .header_name import HeaderName
 from .header_names_mismatch import HeaderNamesMismatch
 from .substring import Substring
 from .starts_with import StartsWith
 from .stop import Stop, Skip
 from .any import Any
-from .variable import Variable
-from .header import Header
+from .variables import Variables
+from .headers import Headers
 from .nonef import Nonef
 from .last import Last
 from .exists import Exists
@@ -222,10 +217,10 @@ class FunctionFactory:
             f = Substring(matcher, name, child)
         elif name == "stop" or name == "fail_and_stop":
             f = Stop(matcher, name, child)
-        elif name == "variable":
-            f = Variable(matcher, name, child)
-        elif name == "header":
-            f = Header(matcher, name, child)
+        elif name == "variables":
+            f = Variables(matcher, name, child)
+        elif name == "headers":
+            f = Headers(matcher, name, child)
         elif name == "any":
             f = Any(matcher, name, child)
         elif name == "none":
