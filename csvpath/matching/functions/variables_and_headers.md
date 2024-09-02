@@ -1,7 +1,7 @@
 
 # Headers and Variables
 
-These functions primarily signal to other functions that they could direct themselves towards the headers or variables. `all()` and `any()` are examples of functions that may need your input using `headers()` or `variables()`.
+These functions primarily signal to other functions that they should direct themselves towards the headers or variables. `all()` and `any()` are examples of functions that may need your input using `headers()` or `variables()`.
 
 ## Headers
 
@@ -15,11 +15,15 @@ None of those methods gives you an easy way to set a bool variable based on the 
 
 ## Example
 
+```bash
     $file.csv[*][@fn = headers("firstname")]
+```
 
 This path checks for the existence of the `firstname` header and assigns the result to the `@fn` variable.
 
+```bash
     $file.csv[*][ all(headers())]
+```
 
 This path checks that all headers have values in each line.
 
