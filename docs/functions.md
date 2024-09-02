@@ -110,7 +110,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td> Headers   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last column                      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header_name.md'>header_name(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header_name.md'>header_index(value, value)</a> </td><td> returns header name for an index or index for a name      </td></tr>
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header.md'>header(value)</a>  </td><td> indicates to another function to look in headers or tests if a header exists.      </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/variables_and_headers.md'>header(value)</a>  </td><td> indicates to another function that it should look in headers.      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/header_names_mismatch.md'>header_names_mismatch(value)</a>  </td><td> checks the headers against a delimited list of expected headers   </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers()</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/count_headers.md'>count_headers_in_line()</a>    </td><td> returns the number of columns expected or the number found in the line      </td></tr>
@@ -153,7 +153,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/track.md'>track(value, value)</a> </td><td> tracks a value by name             </td>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/no.md'>none()</a>                    </td><td> returns None </td></tr>
-<tr><td>           </td><td> variables()                    </td><td> indicates to another function to look in variables       </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/matching/functions/variables_and_headers.md'>variables()</a>    </td><td> indicates to another function that it should look in the variables       </td></tr>
 </tr>
 </table>
 

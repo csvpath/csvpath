@@ -100,9 +100,11 @@ class TestFunctionsHeader(unittest.TestCase):
             [
                 @has_firstname = headers("firstname")
                 @has_space_aliens = headers("it is aliens")
+                @fn = header_names_mismatch("firstname|lastname|say")
             ]"""
         )
         path.fast_forward()
         print(f"test_function_any_function: path vars: {path.variables}")
         assert path.variables["has_firstname"] is True
         assert path.variables["has_space_aliens"] is False
+        assert path.variables["fn"] is True
