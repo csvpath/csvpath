@@ -46,7 +46,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 
 CSV files are everywhere!
 
-A surprisingly large number of companies depending on CSV processing for significant amounts of revenue. Research organizations are awash in CSV. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use day to day uses CSV for sharing. CSV is the lowest of common dominators. Many CSVs are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
+A surprisingly large number of companies depend on CSV processing for significant amounts of revenue. Research organizations are awash in CSV. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use day to day uses CSV for sharing. CSV is the lowest of common dominators. Many CSVs are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
 
 CsvPath is first and foremost a validation language. It is intended to describe CSV files in simple declarative rules that indicate if a file is as expected. CsvPath can also extract data, create reports, and in other ways have useful side effects.
 

@@ -6,18 +6,19 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsColumn(unittest.TestCase):
+    """
     def test_function_column(self):
         path = CsvPath()
         Save._save(path, "test_function_column")
         path.parse(
-            f"""
+            f""
             ${PATH}[*]
             [
                 @i = column("firstname")
                 @j = column("lastname")
                 @n = column(2)
                 @m = column(minus(1))
-            ]"""
+            ]""
         )
         lines = path.collect()
         print(f"test_function_column: path vars: {path.variables}")
@@ -26,6 +27,7 @@ class TestFunctionsColumn(unittest.TestCase):
         assert path.variables["i"] == 0
         assert path.variables["n"] == "say"
         assert path.variables["m"] == "lastname"
+    """
 
     def test_function_header_name_and_index1(self):
         path = CsvPath()

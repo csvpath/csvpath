@@ -37,7 +37,8 @@ from .print_line import PrintLine
 # Column is deprecated, HeaderName has same
 # function and more, and matches the terminology
 #
-from .column import Column, HeaderName, HeaderNamesMismatch
+from .header_name import HeaderName
+from .header_names_mismatch import HeaderNamesMismatch
 from .substring import Substring
 from .starts_with import StartsWith
 from .stop import Stop, Skip
@@ -211,13 +212,9 @@ class FunctionFactory:
             f = Print(matcher, name, child)
         elif name == "increment":
             f = Increment(matcher, name, child)
-        elif name == "column":
-            f = Column(matcher, name, child)
-        elif (
-            name == "header_name"
-            or name == "header_index"
-            or name == "header_name_mismatch"
-        ):
+        # elif name == "column":
+        #    f = Column(matcher, name, child)
+        elif name == "header_name" or name == "header_index":
             f = HeaderName(matcher, name, child)
         elif name == "header_names_mismatch":
             f = HeaderNamesMismatch(matcher, name, child)
