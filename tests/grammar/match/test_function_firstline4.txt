@@ -1,0 +1,4 @@
+[
+                firstline.nocontrib(fail()) ->
+                    print("we scan the whole file from the 0th line but are failing.")
+            ]

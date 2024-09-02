@@ -2,6 +2,12 @@ from typing import Any
 from .function import Function
 from ..productions import Header, Variable
 
+#
+# TODO: when we have functions.header() sorted out (to headers())
+# it should be possible to use it to request a check of all
+# headers.
+#
+
 
 class Empty(Function):
     def check_valid(self) -> None:
@@ -26,6 +32,12 @@ class Empty(Function):
                     v = bool(v)
                     self.match = v
                 except Exception:
+                    #
+                    # TODO: use ExpressionUtility.asbool. note it existence tests different.
+                    #
+                    self.matcher.csvpath.logger.warning(
+                        f"Cannot convert {v} to bool; therefore the asbool match is False"
+                    )
                     self.match = False
             elif v is None:
                 self.match = True

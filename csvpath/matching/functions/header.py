@@ -2,7 +2,8 @@ from typing import Any
 from .function import Function
 
 #
-# deprecated. use HeaderName.
+# deprecated for existence testing specific headers.
+# use HeaderName instead.
 #
 
 

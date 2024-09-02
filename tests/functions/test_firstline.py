@@ -1,6 +1,8 @@
 import unittest
+import pytest
 from csvpath.csvpath import CsvPath
 from tests.save import Save
+from csvpath.matching.productions import ChildrenException
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -66,8 +68,35 @@ class TestFunctionsFirstLine(unittest.TestCase):
         print(f"\n test_function_firstline3: lines: {lines}")
         print(f"test_function_firstline3: path vars: {path.variables}")
         assert len(lines) == 9
-        """
-        assert "line" not in path.variables
-        assert path.variables["scan"] == 3
-        assert path.variables["match"] == 4
-        """
+
+    def test_function_firstline4(self):
+        path = CsvPath()
+        Save._save(path, "test_function_firstline4")
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                firstline.nocontrib(fail()) ->
+                    print("we scan the whole file from the 0th line but are failing.")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_firstline4: lines: {lines}")
+        print(f"test_function_firstline4: path vars: {path.variables}")
+        assert path.is_valid is False
+        assert len(lines) == 9
+
+    def test_function_firstline5(self):
+        path = CsvPath()
+        Save._save(path, "test_function_firstline5")
+        with pytest.raises(ChildrenException):
+            path.parse(
+                f"""
+                ${PATH}[*]
+                [
+                    firstline.nocontrib(@t == fail()) ->
+                        print("we scan the whole file from the 0th line but are failing.")
+                ]"""
+            )
+            lines = path.collect()
+            print(f"\n test_function_firstline5: lines: {lines}")

@@ -148,12 +148,21 @@ class Matcher:
                 ret = True
             if not ret:
                 failed = True
+            #
+            # if we're failed we need to (re)set ret in case this is the final iteration.
+            #
             if failed:
                 ret = False
         if ret is True:
             self.do_set_if_all_match()
         else:
             pass
+        #
+        # here we could be set to do an OR, not an AND.
+        # we would do that only in the case that the answer was False. if so, we
+        # would recheck all self.expressions[.][1] for a True. if at least one
+        # were found, we would respond True; else, False.
+        #
         return ret
 
     def check_valid(self) -> None:

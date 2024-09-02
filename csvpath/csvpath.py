@@ -98,7 +98,27 @@ class CsvPath(CsvPathPublic):
         # the matching part of the csvpath. e.g. [yes()]
         #
         self.match = None
-
+        #
+        # when True the lines that do not match are returned from next()
+        # and collect(). this switches CsvPath from being an AND machine
+        # to being an OR machine. in the default, we say:
+        #     are all of these things true?
+        # but when collect_when_not_matched is True we ask:
+        #     are any of these things not true?
+        #
+        self._when_not_matched = False
+        #
+        # TODO: by default CsvPath's matcher does an AND match. if we set this property
+        # to True we tell the matcher to do an OR. i.e. if any of the match components
+        # return true there is a match. HOWEVER, this would be a big change because
+        # default values and nocontrib would have to be negative when ORing. we
+        # don't have a way to do that today -- defaults aren't centralized. they
+        # should be. if they were, easy.
+        #
+        # self._or_match = False
+        #
+        #
+        #
         self.headers = None
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
@@ -254,6 +274,17 @@ class CsvPath(CsvPathPublic):
         for p in self.printers:
             print(f"CsvPath.print: string: {string}")
             p.print(string)
+
+    @property
+    def collect_when_not_matched(self) -> bool:
+        return self._when_not_matched
+
+    @collect_when_not_matched.setter
+    def collect_when_not_matched(self, yesno: bool) -> None:
+        """when collect_when_not_matched is True we return the lines that failed
+        to match, rather than the default behavior of returning the matches.
+        """
+        self._when_not_matched = yesno
 
     def parse(self, csvpath, disposably=False):
         """displosably is True when a Matcher is needed for some purpose other than
@@ -543,40 +574,49 @@ class CsvPath(CsvPathPublic):
         #
         if self.line_monitor.is_last_line_and_empty(line):
             self.logger.info(
-                "last line is empty. freezing, matching, and returning false."
+                "last line is empty. freezing, matching, and returning false regardless of match."
             )
             self._freeze_variables = True
             self.matches(line)
             return False
-
-        blankskip = (
-            # if we skip blanks
-            self.skip_blank_lines
-            # and the line is blank
-            and len(line) == 0
-        )
-        if blankskip:
-            # we skip this line
+        elif self.skip_blank_lines and len(line) == 0:
             self.logger.info(
                 f"Skipping line {self.line_monitor.physical_line_number} because blank"
             )
-            pass
+            return False
         elif self.scanner.includes(self.line_monitor.physical_line_number):
             self.scan_count = self.scan_count + 1
-            startmatch = time.perf_counter_ns()
-            b = False
+            matches = None
             if self._advance > 0:
                 self._advance -= 1
+                matches = False
             else:
-                b = self.matches(line)
-            endmatch = time.perf_counter_ns()
-            if b:
-                self.match_count = self.match_count + 1
+                startmatch = time.perf_counter_ns()
+                matches = self.matches(line)
+                endmatch = time.perf_counter_ns()
                 t = (endmatch - startmatch) / 1000000
                 self.last_row_time = t
                 self.rows_time += t
-                return True
-        return False
+
+            if matches is True:
+                self.match_count = self.match_count + 1
+                if self.collect_when_not_matched:
+                    return False
+                else:
+                    return True
+            elif matches is False:
+                if self.collect_when_not_matched:
+                    return True
+                else:
+                    return False
+            else:
+                raise Exception(
+                    f"How did we get here? matches must be True or False, not {matches}"
+                )
+        else:
+            return False
+
+    #
 
     def limit_collection(self, line: List[Any]) -> List[Any]:
         if len(self.limit_collection_to) == 0:

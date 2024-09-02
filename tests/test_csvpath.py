@@ -70,6 +70,26 @@ class TestCsvPath(unittest.TestCase):
         assert [3] == csvpath._collect_line_numbers(from_line=3)
         assert ["0..3"] == csvpath._collect_line_numbers(to_line=3)
 
+    def test_csvpath_collect_when_not_matched1(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[1*][
+            #lastname == "Bat"
+        ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 7
+
+        path = CsvPath()
+        path.collect_when_not_matched = True
+        path.parse(
+            f"""${PATH}[1*][
+            #lastname == "Bat"
+        ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+
     def test_csvpath_variables(self):
         path = CsvPath()
         scanner = path.parse(f"${PATH}[2-4][@me = count()]")

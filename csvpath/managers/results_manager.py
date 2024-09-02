@@ -25,6 +25,14 @@ class CsvPathsResultsManager(ABC):
         pass
 
     @abstractmethod
+    def has_errors(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def get_number_of_errors(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
     def get_number_of_results(self, name: str) -> int:
         pass
 
@@ -120,6 +128,20 @@ class ResultsManager(CsvPathsResultsManager):
             return 0
         else:
             return len(nr)
+
+    def has_errors(self, name: str) -> bool:
+        results = self.get_named_results(name)
+        for r in results:
+            if r.has_errors():
+                return True
+        return False
+
+    def get_number_of_errors(self, name: str) -> bool:
+        results = self.get_named_results(name)
+        errors = 0
+        for r in results:
+            errors += r.errors_count()
+        return errors
 
     def add_named_result(self, result: CsvPathResult) -> None:
         if result.file_name is None:
