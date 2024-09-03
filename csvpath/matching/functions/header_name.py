@@ -1,8 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
-from ..productions import Term, ChildrenException, Equality, DataException
-from csvpath import ConfigurationException
+from ..productions import DataException
 
 
 class HeaderName(Function):

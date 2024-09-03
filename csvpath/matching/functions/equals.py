@@ -37,6 +37,6 @@ class Equals(Function):
     def _is_float(self, fs) -> bool:
         try:
             float(fs)
-        except Exception:
+        except (OverflowError, ValueError):
             return False
         return True

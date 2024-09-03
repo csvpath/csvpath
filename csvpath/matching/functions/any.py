@@ -40,10 +40,7 @@ class Any(Function):
             return self._noop_match()
         if self.match is None:
             self.match = False
-            om = self.has_onmatch()
-            if om and not self.line_matches():
-                pass
-            else:
+            if not self.onmatch or self.line_matches():
                 if len(self.children) == 1:
                     if isinstance(self.children[0], Equality):
                         self.equality()

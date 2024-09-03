@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
-from .function import Function, ChildrenException
+from .function import Function
+from ..util.exceptions import ChildrenException
 
 
 class Substring(Function):

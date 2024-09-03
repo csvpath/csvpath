@@ -1,8 +1,8 @@
 # pylint: disable=C0114
 from typing import Any
+from statistics import stdev, pstdev
 from .function import Function
 from ..productions import ChildrenException
-from statistics import stdev, pstdev
 
 
 class Stdev(Function):
@@ -21,8 +21,7 @@ class Stdev(Function):
             )
 
         if self.value is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 child = self.children[0]
                 v = child.to_value()
                 stack = None
@@ -52,9 +51,11 @@ class Stdev(Function):
         return self._noop_match()  # pragma: no cover
 
     def _to_floats(self, stack):
-        for i in range(0, len(stack)):
+        for i in range(0, len(stack)):  # pylint: disable=C0200
+            # re: C0200 better to not mutate while iterating.
+            # doesn't matter in this case, but still.
             try:
                 stack[i] = float(stack[i])
-            except Exception:
+            except (TypeError, ValueError):
                 pass
         return stack

@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 
 from typing import Any
+from datetime import datetime
 from .function import Function
 from ..productions import ChildrenException
-from datetime import date, datetime
 
 
 class Between(Function):
@@ -52,20 +52,20 @@ class Between(Function):
     def _try_numbers(self, me, a, b) -> bool:
         try:
             return self._order(float(me), float(a), float(b))
-        except Exception:
+        except (ValueError, TypeError):
             return None
 
     def _try_dates(self, me, a, b) -> bool:
         if isinstance(a, datetime):
             try:
                 return self._order(me.timestamp(), a.timestamp(), b.timestamp())
-            except Exception:
+            except (TypeError, AttributeError):
                 return None
         else:
             ret = None
             try:
                 return self._order(me, a, b)
-            except Exception:
+            except TypeError:
                 ret = None
             return ret
 

@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
-from ..productions import Equality, ChildrenException
 
 
 class Mod(Function):
@@ -18,12 +17,9 @@ class Mod(Function):
             child = self.children[0]
             siblings = child.commas_to_list()
             ret = 0
-            try:
-                v = siblings[0].to_value(skip=skip)
-                m = siblings[1].to_value(skip=skip)
-                ret = float(v) % float(m)
-            except Exception:
-                raise ChildrenException("mod()'s arguments must convert to float")
+            v = siblings[0].to_value(skip=skip)
+            m = siblings[1].to_value(skip=skip)
+            ret = float(v) % float(m)
             ret = round(ret, 2)
             self.value = ret
         return self.value

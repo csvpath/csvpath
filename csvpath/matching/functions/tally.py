@@ -16,26 +16,23 @@ class Tally(Function):
             return self._noop_value()
         if self.value is not None:
             return True
-        else:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
-                child = self.children[0]
-                siblings = None
-                if isinstance(child, Equality):
-                    siblings = child.commas_to_list()
-                else:
-                    siblings = [child]
-                tally = ""
-                for _ in siblings:
-                    tally += f"{_.to_value(skip=skip)}|"
-                    value = f"{_.to_value(skip=skip)}"
-                    self._store(_.name, value)
-                if len(siblings) > 1:
-                    self._store(
-                        self.first_non_term_qualifier("tally"),
-                        tally[0 : len(tally) - 1],
-                    )
-
+        if not self.onmatch or self.line_matches():
+            child = self.children[0]
+            siblings = None
+            if isinstance(child, Equality):
+                siblings = child.commas_to_list()
+            else:
+                siblings = [child]
+            tally = ""
+            for _ in siblings:
+                tally += f"{_.to_value(skip=skip)}|"
+                value = f"{_.to_value(skip=skip)}"
+                self._store(_.name, value)
+            if len(siblings) > 1:
+                self._store(
+                    self.first_non_term_qualifier("tally"),
+                    tally[0 : len(tally) - 1],
+                )
             self.value = True
         return self.value
 

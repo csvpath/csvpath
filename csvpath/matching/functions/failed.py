@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
+from ..productions import ChildrenException
 
 
 class Failed(Function):
@@ -13,10 +14,9 @@ class Failed(Function):
     def to_value(self, *, skip=None) -> Any:
         if self.name == "failed":
             return not self.matcher.csvpath.is_valid
-        elif self.name == "valid":
+        if self.name == "valid":
             return self.matcher.csvpath.is_valid
-        else:
-            raise Exception(f"Incorrect name {self.name} for a Failed class instance")
+        raise ChildrenException(f"Incorrect function name {self.name}")
 
     def matches(self, *, skip=None) -> bool:
         return self.to_value(skip=skip)

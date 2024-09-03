@@ -1,8 +1,8 @@
 # pylint: disable=C0114
 from typing import Any
+from datetime import date, datetime
 from .function import Function
 from ..productions import ChildrenException
-from datetime import date, datetime
 
 
 class AboveBelow(Function):
@@ -50,16 +50,14 @@ class AboveBelow(Function):
             return True
         elif self.name == "lt" or self.name == "below" or self.name == "before":
             return False
-        else:
-            raise ChildrenException(f"{self.name}() is not a known function")
+        raise ChildrenException(f"{self.name}() is not a known function")
 
     def _try_numbers(self, a, b) -> bool:
         try:
             if self._above():
                 return float(a) > float(b)
-            else:
-                return float(a) < float(b)
-        except Exception:
+            return float(a) < float(b)
+        except (ValueError, TypeError):
             return None
 
     def _try_dates(self, a, b) -> bool:
@@ -67,30 +65,26 @@ class AboveBelow(Function):
             try:
                 if self._above():
                     return a.timestamp() > b.timestamp()
-                else:
-                    return a.timestamp() < b.timestamp()
-            except Exception:
+                return a.timestamp() < b.timestamp()
+            except (TypeError, AttributeError):
                 return None
         else:
             try:
                 if self._above():
                     return a > b
-                else:
-                    return a < b
-            except Exception:
+                return a < b
+            except TypeError:
                 return None
 
     def _try_strings(self, a, b) -> bool:
         if isinstance(a, str) and isinstance(b, str):
             if self._above():
                 return a.strip() > b.strip()
-            else:
-                return a.strip() < b.strip()
+            return a.strip() < b.strip()
         else:
             if self._above():
                 return f"{a}".strip() > f"{b}".strip()
-            else:
-                return f"{a}".strip() < f"{b}".strip()
+            return f"{a}".strip() < f"{b}".strip()
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

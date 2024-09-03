@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
-from ..productions import Equality, Term, Header, Variable, ChildrenException
+from ..productions import Term, Header, Variable, ChildrenException
 
 
 class Every(Function):

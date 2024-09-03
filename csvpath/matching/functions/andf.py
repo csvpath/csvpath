@@ -2,7 +2,6 @@
 
 from typing import Any
 from .function import Function
-from ..productions import Equality
 
 
 class And(Function):
@@ -27,7 +26,7 @@ class And(Function):
         if self.match is None:
             child = self.children[0]
             siblings = child.commas_to_list()
-            for i, sib in enumerate(siblings):
+            for sib in siblings:
                 self.match = sib.matches(skip=skip)
                 if not self.match:
                     break

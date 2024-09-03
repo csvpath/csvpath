@@ -22,8 +22,7 @@ class All(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 self.match = False
                 cs = len(self.children)
                 if cs == 0:
@@ -45,16 +44,17 @@ class All(Function):
     def all_variables(self) -> None:
         # default is True in case no vars
         self.match = True
-        for k, v in self.matcher.csvpath.variables.items():
+        for v in self.matcher.csvpath.variables.values():
             if v is None or f"{v}".strip() == "":
                 self.match = False
                 return
+        self.match = True
 
     def all_exist(self):
         if len(self.matcher.line) != len(self.matcher.csvpath.headers):
             self.match = False
             return
-        for i, h in enumerate(self.matcher.line):
+        for h in self.matcher.line:
             if h is None or f"{h}".strip() == "":
                 self.match = False
                 return

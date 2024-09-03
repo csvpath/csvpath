@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
-from .function import Function, ChildrenException
-from ..productions import Equality
+from .function import Function
+from ..util.exceptions import ChildrenException
 
 
 class Increment(Function):
@@ -25,7 +25,7 @@ class Increment(Function):
                 v = 0
             v2 = v
             m = self.children[0].left.matches(skip=[self])
-            om = self.has_onmatch()
+            om = self.onmatch
             lm = self.line_matches()
             if m:
                 if om and lm:

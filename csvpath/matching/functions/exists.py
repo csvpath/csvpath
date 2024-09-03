@@ -19,18 +19,15 @@ class Exists(Function):
             self.value = self.matches(skip=skip)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
             v = self.children[0].to_value()
             ab = self.children[0].asbool
             if ab:
-                try:
-                    v = bool(v)
-                    self.match = v
-                except Exception:
-                    self.match = False
+                v = bool(v)
+                self.match = v
             elif v is None:
                 self.match = False
             elif self._isnan(v):
@@ -44,5 +41,5 @@ class Exists(Function):
     def _isnan(self, v) -> bool:
         try:
             return math.isnan(v)
-        except Exception:
+        except TypeError:
             return False

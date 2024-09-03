@@ -2,7 +2,6 @@
 from typing import Any
 from .function import Function
 from ..util.expression_utility import ExpressionUtility
-from ..productions.equality import Equality
 
 
 class Push(Function):

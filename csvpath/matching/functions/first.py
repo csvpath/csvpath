@@ -25,8 +25,7 @@ class First(Function):
         if skip and self in skip:  # pragma: no cover
             return self._my_value_or_none
         if self._my_value_or_none == First.NEVER:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 child = self.children[0]
                 value = ""
                 if isinstance(child, Equality):
@@ -57,8 +56,7 @@ class First(Function):
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return True
-        om = self.has_onmatch()
-        if om and not self.line_matches():
+        if self.onmatch and not self.line_matches():
             ret = False
         else:
             #

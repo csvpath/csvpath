@@ -1,7 +1,8 @@
 # pylint: disable=C0114
 from typing import Any, Dict
-from .function import Function, ChildrenException
+from .function import Function
 from .printf import Print
+from ..util.exceptions import ChildrenException
 
 
 class Jinjaf(Function):
@@ -27,10 +28,10 @@ class Jinjaf(Function):
                 "Jinja function must have 1 child equality that provides two paths"
             )
         page = None
-        with open(template_path, "r") as file:
+        with open(template_path, "r", encoding="utf-8") as file:
             page = file.read()
         page = self._transform(content=page, tokens=self._simplify_tokens())
-        with open(output_path, "w") as file:
+        with open(output_path, "w", encoding="utf-8") as file:
             file.write(page)
         return True
 
@@ -68,6 +69,8 @@ class Jinjaf(Function):
         from jinja2 import Template
         import inflect
         import traceback
+
+        self._engine = inflect.engine()
 
         tokens["plural"] = self._plural
         tokens["cap"] = self._cap

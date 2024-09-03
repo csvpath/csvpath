@@ -1,8 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
-from .function import Function
-from ..productions import ChildrenException
 import pandas as pd
+from .function import Function
 
 
 class Correlate(Function):
@@ -16,8 +15,7 @@ class Correlate(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 child = self.children[0]
                 left = child.left
                 right = child.right
@@ -44,6 +42,6 @@ class Correlate(Function):
             try:
                 ll.append(float(leftlist[i]))
                 rl.append(float(rightlist[i]))
-            except Exception:
+            except (TypeError, ValueError):
                 pass
         return ll, rl

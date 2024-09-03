@@ -1,7 +1,6 @@
 # pylint: disable=C0114
-from typing import Any, Type, List
+from typing import Any
 from ..productions.matchable import Matchable
-from ..util.exceptions import ChildrenException
 from .validation import Validation
 
 

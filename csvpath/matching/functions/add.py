@@ -20,7 +20,7 @@ class Add(Function):
             child = self.children[0]
             siblings = child.commas_to_list()
             ret = 0
-            for i, sib in enumerate(siblings):
+            for sib in siblings:
                 v = sib.to_value(skip=skip)
                 if ExpressionUtility.is_none(v):
                     v = 0

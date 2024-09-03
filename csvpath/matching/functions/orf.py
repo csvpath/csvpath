@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
-from ..productions import Equality
 
 
 class Or(Function):
@@ -25,7 +24,7 @@ class Or(Function):
             child = self.children[0]
             siblings = child.commas_to_list()
             ret = False
-            for i, sib in enumerate(siblings):
+            for sib in siblings:
                 if sib.matches(skip=skip):
                     ret = True
                     break

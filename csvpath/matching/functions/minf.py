@@ -23,23 +23,23 @@ class MinMax(Function):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
-    def get_the_value(self) -> Any:
+    def _get_the_value(self) -> Any:
         if isinstance(self.children[0], Equality):
             return self.children[0].left.to_value()
         else:
             return self.children[0].to_value()
 
-    def get_the_value_conformed(self) -> Any:
-        v = self.get_the_value()
+    def _get_the_value_conformed(self) -> Any:
+        v = self._get_the_value()
         return ExpressionUtility.ascompariable(v)
 
-    def get_the_name(self) -> Any:
+    def _get_the_name(self) -> Any:
         if isinstance(self.children[0], Equality):
             return self.children[0].left.name
         else:
             return self.children[0].name
 
-    def get_the_line(self) -> int:
+    def _get_the_line(self) -> int:
         if isinstance(self.children[0], Equality):
             v = self.children[0].right.to_value()
             v = f"{v}".strip()
@@ -47,24 +47,21 @@ class MinMax(Function):
                 return self.matcher.csvpath.current_match_count
             elif v == "scan":
                 return self.matcher.csvpath.current_scan_count
-            else:
-                return self.matcher.csvpath.line_monitor.physical_line_number
-        else:
             return self.matcher.csvpath.line_monitor.physical_line_number
+        return self.matcher.csvpath.line_monitor.physical_line_number
 
     def is_match(self) -> bool:
-        if self.has_onmatch():
+        if self.onmatch:
             return True
         elif isinstance(self.children[0], Equality):
             v = self.children[0].right.to_value()
             v = f"{v}".strip()
             return v == "match"
-        else:
-            return False
+        return False
 
     def _ignore(self):
         if (
-            self.get_the_name() in self.matcher.csvpath.headers
+            self._get_the_name() in self.matcher.csvpath.headers
             and self.matcher.csvpath.line_monitor.physical_line_number == 0
         ):
             return True
@@ -73,7 +70,7 @@ class MinMax(Function):
         return False
 
     def _store_and_compare(self, v, maxormin: bool) -> Any:
-        self.matcher.set_variable("min", tracking=f"{self.get_the_line()}", value=v)
+        self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
         all_values = self.matcher.get_variable(
             "min" if maxormin is MinMax.MIN else "max"
         )
@@ -107,8 +104,10 @@ class Min(MinMax):
             if self._ignore():
                 return self.value
             # track and compare
-            v = self.get_the_value_conformed()
-            self.matcher.set_variable("min", tracking=f"{self.get_the_line()}", value=v)
+            v = self._get_the_value_conformed()
+            self.matcher.set_variable(
+                "min", tracking=f"{self._get_the_line()}", value=v
+            )
             m = self._store_and_compare(v, MinMax.MIN)
             self.value = m
         return self.value
@@ -136,8 +135,10 @@ class Max(MinMax):
             if self._ignore():
                 return self.value
             # track and compare
-            v = self.get_the_value_conformed()
-            self.matcher.set_variable("max", tracking=f"{self.get_the_line()}", value=v)
+            v = self._get_the_value_conformed()
+            self.matcher.set_variable(
+                "max", tracking=f"{self._get_the_line()}", value=v
+            )
             m = self._store_and_compare(v, MinMax.MAX)
             self.value = m
         return self.value
@@ -164,10 +165,10 @@ class Average(MinMax):
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            v = self.get_the_value()
+            v = self._get_the_value()
             # if we're watching a header and we're in the header row skip it.
             if (
-                self.get_the_name() in self.matcher.csvpath.headers
+                self._get_the_name() in self.matcher.csvpath.headers
                 and self.matcher.csvpath.line_monitor.physical_line_number == 0
             ):
                 return self.value
@@ -176,7 +177,7 @@ class Average(MinMax):
                 return self.value
             n = self.first_non_term_qualifier(self.ave_or_med)
             # set the "average" or "median" variable tracking the value by line, scan, or match count
-            self.matcher.set_variable(n, tracking=f"{self.get_the_line()}", value=v)
+            self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)
             # get value for all the line counts
             all_values = self.matcher.get_variable(n)
             m = []
@@ -185,7 +186,7 @@ class Average(MinMax):
                 try:
                     v = float(v)
                     m.append(v)
-                except Exception:
+                except (ValueError, TypeError):
                     pass
                 if self.ave_or_med == "average":
                     self.value = mean(m)

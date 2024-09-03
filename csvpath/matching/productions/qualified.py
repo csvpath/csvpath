@@ -1,12 +1,12 @@
-from typing import Any, Self, Optional
+from enum import Enum
+import hashlib
+from typing import Any, Optional
 from ..util.expression_utility import ExpressionUtility
 from . import ChildrenException
-from enum import Enum
 
 
 class Qualities(Enum):
     ONMATCH = "onmatch"
-    IFEMPTY = "ifempty"
     ONCHANGE = "onchange"
     ASBOOL = "asbool"
     LATCH = "latch"
@@ -21,7 +21,6 @@ class Qualities(Enum):
 class Qualified:
     QUALIFIERS = [
         Qualities.ONMATCH.value,
-        Qualities.IFEMPTY.value,
         Qualities.ONCHANGE.value,
         Qualities.ASBOOL.value,
         Qualities.NOCONTRIB.value,
@@ -32,7 +31,7 @@ class Qualified:
         Qualities.ONCE.value,
     ]
 
-    def __init__(self, matcher, *, value: Any = None, name: str = None):
+    def __init__(self, *, name: str = None):
         self.name = name
         #
         # keep the original name so we can look up non-term secondary qualifiers
@@ -69,13 +68,6 @@ class Qualified:
                 return q
         return default
 
-    def do_onmatch(self):
-        ret = not self.onmatch or self.line_matches()
-        self.matcher.csvpath.logger.debug(
-            f"Qualified.do_onmatch: {ret} for {self.name}"
-        )
-        return ret
-
     def set_qualifiers(self, qs) -> None:
         self.qualifier = qs
         if qs is not None:
@@ -88,133 +80,149 @@ class Qualified:
     def has_qualifier(self, q) -> bool:
         return q in self.qualifiers
 
-    def has_onmatch(self) -> bool:
-        if self.qualifiers:
-            return Qualities.ONMATCH.value in self.qualifiers
-        return False
+    def _set(self, string: str, on: bool):
+        if on and string not in self.qualifiers:
+            self.qualifiers.append(string)
+        elif not on:
+            try:
+                self.qualifiers.remove(string)
+            except ValueError:
+                pass
 
-    def has_ifempty(self) -> bool:
-        if self.qualifiers:
-            return Qualities.IFEMPTY.value in self.qualifiers
-        return False
-
-    def has_onchange(self) -> bool:
-        if self.qualifiers:
-            return Qualities.ONCHANGE.value in self.qualifiers
-        return False
-
-    def has_once(self) -> bool:
-        if self.qualifiers:
-            return Qualities.ONCE.value in self.qualifiers
-        return False
-
-    def has_asbool(self) -> bool:
-        if self.qualifiers:
-            return Qualities.ASBOOL.value in self.qualifiers
-        return False
-
-    def has_nocontrib(self) -> bool:
-        if self.qualifiers:
-            return Qualities.NOCONTRIB.value in self.qualifiers
-        return False
-
-    def has_latch(self) -> bool:
-        if self.qualifiers:
-            return Qualities.LATCH.value in self.qualifiers
-        return False
-
-    def has_headers(self) -> bool:
-        if self.qualifiers:
-            return Qualities.HEADERS.value in self.qualifiers
-        return False
-
-    def has_variables(self) -> bool:
+    @property
+    def variables(self) -> bool:
         if self.qualifiers:
             return Qualities.VARIABLES.value in self.qualifiers
         return False
 
-    def has_notnone(self) -> bool:
+    @variables.setter
+    def variables(self, v: bool) -> None:
+        self._set(Qualities.VARIABLES.value, v)
+
+    @property
+    def headers(self) -> bool:
+        if self.qualifiers:
+            return Qualities.HEADERS.value in self.qualifiers
+        return False
+
+    @headers.setter
+    def headers(self, h: bool) -> None:
+        self._set(Qualities.HEADERS.value, h)
+
+    @property
+    def notnone(self) -> bool:
         if self.qualifiers:
             return Qualities.NOTNONE.value in self.qualifiers
         return False
 
+    @notnone.setter
+    def notnone(self, nn: bool) -> None:
+        self._set(Qualities.NOTNONE.value, nn)
+
     @property
     def latch(self) -> bool:
-        return self.has_latch()
+        if self.qualifiers:
+            return Qualities.LATCH.value in self.qualifiers
+        return False
 
     @latch.setter
-    def latch(self, b: bool) -> None:
-        if Qualities.LATCH.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.LATCH.value)
+    def latch(self, latch: bool) -> None:
+        self._set(Qualities.LATCH.value, latch)
 
     @property
     def nocontrib(self) -> bool:
-        return self.has_nocontrib()
+        if self.qualifiers:
+            return Qualities.NOCONTRIB.value in self.qualifiers
+        return False
 
     @nocontrib.setter
-    def nocontrib(self, b: bool) -> None:
-        if Qualities.NOCONTRIB.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.NOCONTRIB.value)
+    def nocontrib(self, nc: bool) -> None:
+        self._set(Qualities.NOCONTRIB.value, nc)
 
     @property
     def asbool(self) -> bool:
-        return self.has_asbool()
+        if self.qualifiers:
+            return Qualities.ASBOOL.value in self.qualifiers
+        return False
 
     @asbool.setter
-    def asbool(self, b: bool) -> None:
-        if Qualities.ASBOOL.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.ASBOOL.value)
+    def asbool(self, ab: bool) -> None:
+        self._set(Qualities.ASBOOL.value, ab)
 
-    @property
-    def once(self) -> bool:
-        return self.has_once()
-
-    @once.setter
-    def once(self, b: bool) -> None:
-        if Qualities.ONCE.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.ONCE.value)
+    # =============
+    # onmatch
+    # =============
 
     @property
     def onmatch(self) -> bool:
-        return self.has_onmatch()
+        if self.qualifiers:
+            return Qualities.ONMATCH.value in self.qualifiers
+        return False
 
     @onmatch.setter
-    def onmatch(self, b: bool) -> None:
-        if Qualities.ONMATCH.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.ONMATCH.value)
+    def onmatch(self, om: bool) -> None:
+        self._set(Qualities.ONMATCH.value, om)
+
+    def do_onmatch(self):
+        ret = not self.onmatch or self.line_matches()
+        self.matcher.csvpath.logger.debug(
+            f"Qualified.do_onmatch: {ret} for {self.name}"
+        )
+        return ret
+
+    # =============
+    # onchange
+    # =============
+
+    def do_onchange(self):
+        if not self.onchange:
+            return True
+        id = self.get_id()
+        v = self.matcher.get_variable(id)
+        me = hashlib.sha256(f"{self.to_value()}".encode("utf-8")).hexdigest()
+        self.matcher.set_variable(id, value=me)
+        return me != v
 
     @property
     def onchange(self) -> bool:
-        return self.has_onchange()
+        if self.qualifiers:
+            return Qualities.ONCHANGE.value in self.qualifiers
+        return False
 
     @onchange.setter
     def onchange(self, oc: bool) -> None:
-        if Qualities.ONCHANGE.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.ONCHANGE.value)
+        self._set(Qualities.ONCHANGE.value, oc)
+
+    # =============
+    # once
+    # =============
 
     @property
-    def variables(self) -> bool:
-        return self.has_variables()
+    def once(self) -> bool:
+        if self.qualifiers:
+            return Qualities.ONCE.value in self.qualifiers
+        return False
 
-    @variables.setter
-    def variables(self, oc: bool) -> None:
-        if Qualities.VARIABLES.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.VARIABLES.value)
+    @once.setter
+    def once(self, o: bool) -> None:
+        self._set(Qualities.ONCE.value, o)
 
-    @property
-    def headers(self) -> bool:
-        return self.has_headers()
+    def do_once(self):
+        ret = not self.once or self._has_not_yet()
+        self.matcher.csvpath.logger.debug(f"Qualified.do_ononce: {ret} for {self.name}")
+        return ret
 
-    @headers.setter
-    def headers(self, oc: bool) -> None:
-        if Qualities.HEADERS.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.HEADERS.value)
+    def _has_not_yet(self):
+        #
+        # supports ONCE
+        #
+        id = self.get_id()
+        v = self.matcher.get_variable(id, set_if_none=True)
+        return v
 
-    @property
-    def notnone(self) -> bool:
-        return self.has_notnone()
-
-    @notnone.setter
-    def notnone(self, nn: bool) -> None:
-        if Qualities.NOTNONE.value not in self.qualifiers:
-            self.qualifiers.append(Qualities.NOTNONE.value)
+    def _set_has_happened(self) -> None:
+        #
+        # supports ONCE
+        #
+        id = self.get_id()
+        self.matcher.set_variable(id, value=False)

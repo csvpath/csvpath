@@ -18,9 +18,6 @@ class Multiply(Function):
             siblings = child.commas_to_list()
             ret = 0
             for i, sib in enumerate(siblings):
-                #
-                # TODO
-                #
                 v = sib.to_value(skip=skip)
                 if i == 0:
                     ret = v

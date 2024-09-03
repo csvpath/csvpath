@@ -2,7 +2,6 @@
 from typing import Any
 from .function import Function
 from ..productions import Equality, Term
-from ..util.exceptions import DataException
 
 
 class Subtract(Function):
@@ -20,9 +19,6 @@ class Subtract(Function):
             if isinstance(child, Term):
                 v = child.to_value()
                 v = int(v)
-                #
-                # do x = -1 * n to make negative
-                #
                 self.value = v * -1
             elif isinstance(child, Equality):
                 self.value = self._do_sub(child, skip=skip)
@@ -36,14 +32,7 @@ class Subtract(Function):
             if i == 0:
                 ret = v
             else:
-                try:
-                    ret = float(ret) - float(v)
-                except Exception as ex:
-                    err = DataException(f"{ex}")
-                    err.datum = (ret, v)
-                    # reset self.value just in case
-                    self.value = None
-                    raise err
+                ret = float(ret) - float(v)
         return ret
 
     def matches(self, *, skip=None) -> bool:

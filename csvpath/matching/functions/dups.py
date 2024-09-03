@@ -16,8 +16,7 @@ class HasDups(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 name = self.first_non_term_qualifier(self.name)
                 values = self.matcher.get_variable(name, set_if_none={})
                 string = ""
@@ -51,8 +50,7 @@ class HasDups(Function):
         if skip and self in skip:  # pragma: no cover
             self._noop_match()
         if self.match is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 ls = self.to_value()
                 if len(ls) > 0:
                     self.match = True

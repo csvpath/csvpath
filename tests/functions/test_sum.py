@@ -1,7 +1,6 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.functions.function import ChildrenException
 from tests.save import Save
 
 PATH = "tests/test_resources/numbers.csv"

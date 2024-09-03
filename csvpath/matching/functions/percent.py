@@ -34,7 +34,7 @@ class Percent(Function):
             value = count / total
             self.value = round(value, 2)
             self.matcher.csvpath.logger.debug(
-                f"Percent.to_value: value: {value}, count: {count}, total: {total}, rounded: {self.value}"
+                f"Percent: val: {value}, cnt: {count}, total: {total}, rounded: {self.value}"  # pylint: disable=C0301
             )
         return self.value
 

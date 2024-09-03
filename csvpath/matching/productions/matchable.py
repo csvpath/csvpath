@@ -1,12 +1,11 @@
-from enum import Enum
-from typing import Any, Self, Optional
+from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
 
 
 class Matchable(Qualified):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
-        super().__init__(matcher, value=value, name=name)
+        super().__init__(name=name)
         self.parent = None
         self.children = []
         self.matcher = matcher
@@ -31,30 +30,25 @@ class Matchable(Qualified):
         es = self.matcher.expressions
         for e in es:
             m = e[1] is True or e[0].matches(skip=[self])
-            # m = e[0].matches(skip=[self])
             if not m:
                 return False
         return True
 
-    def has_not_yet(self):
-        id = self.get_id()
-        v = self.matcher.get_variable(id, set_if_none=True)
-        return v
-
-    def set_has_happened(self) -> None:
-        id = self.get_id()
-        self.matcher.set_variable(id, value=False)
-
     def reset(self) -> None:
-        # let the subclasses handle value
-        # self.value = None
+        # let the subclasses handle self.value and self.match
         for child in self.children:
             child.reset()
 
     def matches(self, *, skip=[]) -> bool:
-        return True  # leave this for now for testing
+        #
+        # subclasses should override this method for clarity
+        #
+        return True
 
     def to_value(self, *, skip=[]) -> Any:
+        #
+        # subclasses should override this method for clarity
+        #
         return None
 
     def index_of_child(self, o) -> int:

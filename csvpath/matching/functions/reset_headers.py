@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
 from .function import Function
-from ..productions import ChildrenException
 
 
 class ResetHeaders(Function):
@@ -30,7 +29,7 @@ class ResetHeaders(Function):
                     or key.endswith("_misordered")
                 ):
                     self.matcher.csvpath.logger.warning(
-                        "Deleting variable {key} because it appears to be an out of date header name mismatch var."
+                        "Deleting variable {key} as an old header name mismatch var"
                     )
                     del self.matcher.csvpath.variables[key]
             self.matcher.csvpath.logger.warning(

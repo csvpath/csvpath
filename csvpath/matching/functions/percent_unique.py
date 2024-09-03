@@ -5,18 +5,17 @@ from ..productions import Header
 
 
 class PercentUnique(Function):
+    """return the % of a value that is unique over lines so far seen"""
+
     def check_valid(self) -> None:
         self.validate_one_arg(types=[Header])
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:
-        """return the % of a value that is unique over lines so far seen"""
-
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
-            om = self.has_onmatch()
-            if not om or self.line_matches():
+            if not self.onmatch or self.line_matches():
                 tracking = self.children[0].to_value()
                 name = self.first_non_term_qualifier("percent_unique")
 
