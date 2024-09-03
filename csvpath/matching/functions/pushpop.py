@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..util.expression_utility import ExpressionUtility
@@ -9,8 +10,8 @@ class Push(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             if not self.onmatch or self.line_matches:
@@ -36,8 +37,8 @@ class Push(Function):
         self.value = True
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         return self.to_value(skip=skip)
 
@@ -46,7 +47,7 @@ class PushDistinct(Push):
     def check_valid(self) -> None:
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:
         self.add_qualifier("distinct")
         return super().to_value(skip=skip)
 
@@ -56,8 +57,8 @@ class Pop(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             k = self.children[0].to_value()
@@ -68,8 +69,8 @@ class Pop(Function):
                 self.matcher.set_variable(k, value=stack)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         if self.asbool:
@@ -84,8 +85,8 @@ class Stack(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             k = self.children[0].to_value()
@@ -97,7 +98,7 @@ class Stack(Function):
             self.value = stack
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()
 
 
@@ -106,8 +107,8 @@ class Peek(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             eq = self.children[0]
@@ -119,8 +120,8 @@ class Peek(Function):
                 self.value = stack[v]
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         if self.asbool:
@@ -135,8 +136,8 @@ class PeekSize(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             k = self.children[0].to_value()
@@ -144,5 +145,5 @@ class PeekSize(Function):
             self.value = len(stack)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover

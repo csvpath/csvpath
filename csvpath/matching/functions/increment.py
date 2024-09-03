@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function, ChildrenException
 from ..productions import Equality
@@ -8,12 +9,10 @@ class Increment(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
-
         tv = self.children[0].right.to_value()
-
         if not isinstance(tv, int):
             raise ChildrenException("increment value must be a positive int")
         tv = int(tv)
@@ -56,6 +55,6 @@ class Increment(Function):
                 self.value = inc
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
         return self.match

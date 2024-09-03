@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any, Type, List
 from ..productions.matchable import Matchable
 from ..util.exceptions import ChildrenException
@@ -26,11 +27,11 @@ class Function(Validation):
     def _noop_value(self) -> bool:
         return self.value if self.value is not None else self._noop_match()
 
-    def to_value(self, *, skip=[]) -> bool:
+    def to_value(self, *, skip=None) -> bool:
         #
         # in most cases, even trivial ones, a function overrides this method.
         #
-        if self in skip:
+        if skip and self in skip:  # pragma: no cover
             return True
         if self._function_or_equality:
             if not self._function_or_equality.matches(skip=skip):

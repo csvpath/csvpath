@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Equality, Term
@@ -9,8 +10,8 @@ class Subtract(Function):
         self.validate_one_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             child = self.children[0]
@@ -25,7 +26,7 @@ class Subtract(Function):
                 self.value = self._do_sub(child, skip=skip)
         return self.value
 
-    def _do_sub(self, child, skip=[]):
+    def _do_sub(self, child, skip=None):
         siblings = child.commas_to_list()
         ret = 0
         for i, sib in enumerate(siblings):
@@ -43,5 +44,5 @@ class Subtract(Function):
                     raise err
         return ret
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover

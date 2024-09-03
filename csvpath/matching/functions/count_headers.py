@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 
@@ -7,8 +8,8 @@ class CountHeaders(Function):
         self.validate_zero_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return True
         if self.name == "count_headers":
             ret = len(self.matcher.csvpath.headers)

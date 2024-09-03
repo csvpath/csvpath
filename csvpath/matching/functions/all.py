@@ -1,3 +1,5 @@
+# pylint: disable=C0114
+
 from typing import Any
 from .function import Function
 from .headers import Headers
@@ -11,11 +13,11 @@ class All(Function):
         self.validate_zero_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:
         return self.matches(skip=skip)  # pragma: no cover
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
             om = self.has_onmatch()

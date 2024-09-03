@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 
@@ -13,13 +14,13 @@ class Headers(Function):
         self.validate_zero_or_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         return self.matches(skip=skip)
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
             if len(self.children) == 1:

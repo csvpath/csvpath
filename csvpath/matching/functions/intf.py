@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import ChildrenException
@@ -8,8 +9,8 @@ class Int(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             child = self.children[0]
@@ -28,5 +29,5 @@ class Int(Function):
             self.value = i
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover

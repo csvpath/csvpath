@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Term
@@ -55,8 +56,8 @@ class Import(Function):
                 new_e[0].matcher = self.matcher
             self.value = True
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:
         return self._noop_value()
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()

@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Equality
@@ -8,13 +9,13 @@ class Or(Function):
         self.validate_two_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         return self.matches(skip=skip)
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         else:
             skip.append(self)

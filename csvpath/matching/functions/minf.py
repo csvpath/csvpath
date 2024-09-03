@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Equality, Variable, Term, Header
@@ -94,8 +95,8 @@ class Min(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             # skip lines we should ignore
@@ -108,7 +109,7 @@ class Min(MinMax):
             self.value = m
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
 
 
@@ -121,8 +122,8 @@ class Max(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             # skip lines we should ignore
@@ -135,7 +136,7 @@ class Max(MinMax):
             self.value = m
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
 
 
@@ -151,8 +152,8 @@ class Average(MinMax):
         super().__init__(matcher, name, child)
         self.ave_or_med = ave_or_med
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             v = self.get_the_value()
@@ -184,5 +185,5 @@ class Average(MinMax):
                     self.value = median(m)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_value()  # pragma: no cover

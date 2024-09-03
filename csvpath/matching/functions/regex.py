@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from ..productions import Term
 from .function import Function
@@ -16,8 +17,8 @@ class Regex(Function):
             restr = right.to_value()
         re.compile(restr)
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             child = self.children[0]
@@ -67,8 +68,8 @@ class Regex(Function):
                 )
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
             if self.name == "regex":

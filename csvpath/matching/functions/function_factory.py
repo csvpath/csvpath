@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .count import Count

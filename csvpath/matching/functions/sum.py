@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..util.expression_utility import ExpressionUtility
@@ -8,8 +9,8 @@ class Sum(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             var = self.first_non_term_qualifier(self.name)
@@ -27,7 +28,7 @@ class Sum(Function):
                 self.value = val
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         return self.to_value()  # pragma: no cover

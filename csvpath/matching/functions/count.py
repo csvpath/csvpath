@@ -1,14 +1,15 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 
 
 class Count(Function):
     def check_valid(self) -> None:
-        # TODO: no specific validity checks from way back
+        # note to self: no specific validity checks from way back
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
             # return self.value if self.value is not None else True
         if self.value is None:
@@ -24,7 +25,7 @@ class Count(Function):
     #
     # we always match. regardless of if any contained condition matches.  good? :/
     #
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         # we get a value because that's how we are sure to count
         self.to_value(skip=skip)
         return self._noop_match()  # pragma: no cover
@@ -35,7 +36,9 @@ class Count(Function):
             return -1
         return self.matcher.csvpath.current_match_count
 
-    def _get_contained_value(self, *, skip=[]) -> Any:
+    def _get_contained_value(self, *, skip=None) -> Any:
+        if skip is None:
+            skip = []
         self._id = self.first_non_term_qualifier(
             self.get_id(self._function_or_equality)
         )

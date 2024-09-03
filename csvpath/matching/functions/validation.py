@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any, Type, List
 from ..productions.matchable import Matchable
 from ..util.exceptions import ChildrenException
@@ -20,7 +21,9 @@ class Validation(Matchable):
         if len(self.children) > 0:
             raise ChildrenException(f"{self.name}() cannot have arguments")
 
-    def validate_zero_or_one_arg(self, types=[]) -> None:
+    def validate_zero_or_one_arg(self, types=None) -> None:
+        if types is None:
+            types = []
         if len(self.children) > 1:
             raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
         elif len(self.children) == 0:
@@ -51,7 +54,9 @@ class Validation(Matchable):
                 f"{self.name}() must have 0 or more than 1 argument"
             )
 
-    def validate_zero_or_more_args(self, types=[]) -> None:
+    def validate_zero_or_more_args(self, types=None) -> None:
+        if types is None:
+            types = []
         if len(self.children) == 0:
             pass
         elif hasattr(self.children[0], "commas_to_list"):
@@ -70,7 +75,7 @@ class Validation(Matchable):
                     )
 
     def validate_zero_one_or_two_args(
-        self, *, first_arg=[], second_arg=[], solo_arg=[]
+        self, *, first_arg=None, second_arg=None, solo_arg=None
     ) -> None:
         if len(self.children) == 0:
             pass
@@ -87,7 +92,9 @@ class Validation(Matchable):
                     f"{self.name}()'s second argument must be {second_arg}"
                 )
 
-    def validate_one_arg(self, types=[]) -> None:
+    def validate_one_arg(self, types=None) -> None:
+        if types is None:
+            types = []
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have 1 argument")
         if hasattr(self.children[0], "op") and self.children[0].op == ",":
@@ -106,7 +113,7 @@ class Validation(Matchable):
         elif hasattr(self.children[0], "op") and self.children[0].op != ",":
             raise ChildrenException(f"{self.name}() must have 1 or more arguments")
 
-    def validate_one_or_two_args(self, one=[], left=[], right=[]) -> None:
+    def validate_one_or_two_args(self, one=None, left=None, right=None) -> None:
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have at least 1 argument")
         if hasattr(self.children[0], "op"):
@@ -114,25 +121,29 @@ class Validation(Matchable):
                 raise ChildrenException(
                     f"{self.name}() must have at least 1 argument and may have 2 arguments"
                 )
-            if len(left) > 0:
+            if left and len(left) > 0:
                 if not self._class_match(self.children[0].left, left):
                     raise ChildrenException(
                         f"{self.name}()'s first argument must be of type: {left}, not {self.children[0].left.__class__}"
                     )
-            if len(right) > 0:
+            if right and len(right) > 0:
                 if not self._class_match(self.children[0].right, right):
                     raise ChildrenException(
                         f"{self.name}()'s second argument must be of type: {right}"
                     )
         else:
-            if len(one) > 0:
+            if one and len(one) > 0:
                 if not self._class_match(self.children[0], one):
                     raise ChildrenException(
                         f"{self.name}()'s argument must be of type: {one}"
                     )
 
-    def validate_two_args(self, left=[], right=[]) -> None:
+    def validate_two_args(self, left=None, right=None) -> None:
         """allows an equality of op '==' in left"""
+        if left is None:
+            left = []
+        if right is None:
+            right = []
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have 2 arguments")
         elif not hasattr(self.children[0], "op"):

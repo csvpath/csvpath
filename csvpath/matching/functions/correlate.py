@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import ChildrenException
@@ -9,8 +10,8 @@ class Correlate(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             om = self.has_onmatch()
@@ -29,7 +30,7 @@ class Correlate(Function):
                 self.value = f
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
         return self._noop_match()  # pragma: no cover
 

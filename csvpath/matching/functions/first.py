@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Equality
@@ -18,8 +19,8 @@ class First(Function):
         super().reset()
         self._my_value_or_none = First.NEVER
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._my_value_or_none
         if self._my_value_or_none == First.NEVER:
             om = self.has_onmatch()
@@ -51,8 +52,8 @@ class First(Function):
                 self._my_value_or_none = v
         return self._my_value_or_none
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return True
         om = self.has_onmatch()
         if om and not self.line_matches():

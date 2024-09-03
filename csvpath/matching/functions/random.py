@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from random import randrange
@@ -8,8 +9,8 @@ class Random(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             lower = self.children[0].left.to_value()
@@ -28,5 +29,5 @@ class Random(Function):
                 pass
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         return self._noop_value()  # pragma: no cover

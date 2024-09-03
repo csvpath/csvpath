@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function, ChildrenException
 
@@ -7,8 +8,8 @@ class StartsWith(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             v = self.children[0].left.to_value()
@@ -18,8 +19,8 @@ class StartsWith(Function):
             self.value = v.startswith(sw)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
             self.match = self.to_value(skip=skip)

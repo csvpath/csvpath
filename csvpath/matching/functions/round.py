@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Term, Variable, Header
@@ -12,8 +13,8 @@ class Round(Function):
         )
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             value = self._value_one()
@@ -30,6 +31,6 @@ class Round(Function):
             self.value = round(value, places)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
         return self._noop_match()

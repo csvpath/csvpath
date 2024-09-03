@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Term, ChildrenException, Equality, DataException
@@ -10,8 +11,8 @@ class HeaderNamesMismatch(Function):
     optionally are in the same order
     """
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
             varname = self.first_non_term_qualifier(self.name)
@@ -54,9 +55,9 @@ class HeaderNamesMismatch(Function):
                 self.value = len(present) != len(self.matcher.csvpath.headers)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
-            return self._noop_match()  # pragma: no cover
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
+            return self._noop_match()
         if self.match is None:
             self.matches = self.to_value(skip=skip)
         return self.match

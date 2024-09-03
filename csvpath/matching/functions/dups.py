@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from .function import Function
 from ..productions import Header, Equality, ChildrenException
@@ -9,8 +10,8 @@ class HasDups(Function):
         self.validate_zero_or_more_args(types=[Header])
         super().check_valid()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:  # pragma: no cover
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             om = self.has_onmatch()
@@ -44,8 +45,8 @@ class HasDups(Function):
                 self.matcher.set_variable(name, value=values)
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:  # pragma: no cover
             self._noop_match()
         if self.match is None:
             om = self.has_onmatch()
