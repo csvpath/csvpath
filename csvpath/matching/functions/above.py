@@ -6,6 +6,8 @@ from datetime import date, datetime
 
 
 class AboveBelow(Function):
+    """this class implements greater-than, less-than"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

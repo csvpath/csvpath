@@ -4,6 +4,8 @@ from .function import Function
 
 
 class PrintQueue(Function):
+    """returns the number of lines printed to the Printer instances"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

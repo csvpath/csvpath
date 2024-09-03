@@ -6,6 +6,8 @@ from csvpath import ConfigurationException
 
 
 class Length(Function):
+    """returns the length of a string"""
+
     def check_valid(self) -> None:
         self.validate_one_arg(types=[Term, Variable, Header, Function])
         super().check_valid()

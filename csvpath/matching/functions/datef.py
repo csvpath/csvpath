@@ -5,6 +5,8 @@ import datetime
 
 
 class Date(Function):
+    """parses a date from a string"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

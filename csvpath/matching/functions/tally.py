@@ -5,6 +5,8 @@ from ..productions import Equality
 
 
 class Tally(Function):
+    """collects the number of times values are seen"""
+
     def check_valid(self) -> None:
         self.validate_one_or_more_args()
         super().check_valid()

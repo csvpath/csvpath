@@ -8,13 +8,13 @@ from ..productions import Equality, Term, ChildrenException
 
 
 class Any(Function):
-    """
-    any()
-    any(header())
-    any(variable())
-    any(term)
-    any(header(), term)
-    any(variable(), term)
+    """this class checks various places to find any values present.
+    - any()
+    - any(header())
+    - any(variable())
+    - any(term)
+    - any(header(), term)
+    - any(variable(), term)
     """
 
     def check_valid(self) -> None:

@@ -5,6 +5,8 @@ from ..productions import ChildrenException
 
 
 class Int(Function):
+    """attempts to convert a value to an int"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

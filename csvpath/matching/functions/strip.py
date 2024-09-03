@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Strip(Function):
+    """removes whitespace from the beginning and end of a string"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

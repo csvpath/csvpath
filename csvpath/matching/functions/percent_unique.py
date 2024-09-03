@@ -10,6 +10,8 @@ class PercentUnique(Function):
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:
+        """return the % of a value that is unique over lines so far seen"""
+
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:

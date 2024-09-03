@@ -6,6 +6,8 @@ from ..util.exceptions import DataException
 
 
 class Subtract(Function):
+    """subtracts numbers"""
+
     def check_valid(self) -> None:
         self.validate_one_or_more_args()
         super().check_valid()

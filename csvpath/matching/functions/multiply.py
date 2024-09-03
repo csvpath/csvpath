@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Multiply(Function):
+    """multiplies numbers"""
+
     def check_valid(self) -> None:
         self.validate_two_or_more_args()
         super().check_valid()

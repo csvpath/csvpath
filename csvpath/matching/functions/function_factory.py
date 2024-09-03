@@ -86,6 +86,8 @@ class InvalidChildException(Exception):
 
 
 class FunctionFactory:
+    """this class creates instances of functions according to what
+    name is used in a csvpath"""
 
     NOT_MY_FUNCTION = {}
 

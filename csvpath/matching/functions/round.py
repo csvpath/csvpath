@@ -7,6 +7,8 @@ from ..util.expression_utility import ExpressionUtility
 
 
 class Round(Function):
+    """rounds a number to a certain number of places"""
+
     def check_valid(self) -> None:
         self.validate_one_or_two_args(
             left=[Term, Variable, Header, Function], right=[Term]

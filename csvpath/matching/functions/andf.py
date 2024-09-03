@@ -6,6 +6,10 @@ from ..productions import Equality
 
 
 class And(Function):
+    """ANDs match components. remember that csvpath is
+    AND by default; however, there are times when you
+    need more control."""
+
     def check_valid(self) -> None:
         self.validate_two_or_more_args()
         super().check_valid()

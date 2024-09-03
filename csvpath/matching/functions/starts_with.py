@@ -4,6 +4,8 @@ from .function import Function, ChildrenException
 
 
 class StartsWith(Function):
+    """checks if a string begins with another string"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

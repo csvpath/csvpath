@@ -5,6 +5,8 @@ from ..productions import ChildrenException
 
 
 class Concat(Function):
+    """concats two strings"""
+
     def check_valid(self) -> None:
         self.validate_two_or_more_args()
         super().check_valid()

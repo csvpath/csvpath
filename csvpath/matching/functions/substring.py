@@ -4,6 +4,8 @@ from .function import Function, ChildrenException
 
 
 class Substring(Function):
+    """returns a substring of a value from 0 to N"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

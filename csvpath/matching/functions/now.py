@@ -5,6 +5,8 @@ import datetime
 
 
 class Now(Function):
+    """returns the current datetime"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg()
         super().check_valid()

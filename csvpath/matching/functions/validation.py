@@ -5,6 +5,8 @@ from ..util.exceptions import ChildrenException
 
 
 class Validation(Matchable):
+    """validations on the number of child match component productions expected and their types"""
+
     def _class_match(self, obj, ok: List[Type]) -> bool:
         if not ok or len(ok) == 0:
             return True

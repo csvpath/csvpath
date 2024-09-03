@@ -6,6 +6,8 @@ import hashlib
 
 
 class HasDups(Function):
+    """checks for duplicate lines, in whole or part, by hashing."""
+
     def check_valid(self) -> None:
         self.validate_zero_or_more_args(types=[Header])
         super().check_valid()

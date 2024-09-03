@@ -5,6 +5,9 @@ from ..productions import ChildrenException
 
 
 class Track(Function):
+    """uses a match component value to set a tracking
+    value, from another match component, on a variable."""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

@@ -4,6 +4,8 @@ from .function import Function
 
 
 class TotalLines(Function):
+    """returns the total data lines count for the file (1-based"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

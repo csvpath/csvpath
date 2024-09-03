@@ -5,6 +5,10 @@ from .printf import Print
 
 
 class Jinjaf(Function):
+    """uses Jinja to transform a template using csvpath to get
+    values. this is basically a fancy (and relatively slow) form
+    of print()."""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

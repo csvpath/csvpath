@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Not(Function):
+    """returns the boolean inverse of a value"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

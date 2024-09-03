@@ -4,6 +4,9 @@ from .function import Function
 
 
 class CountHeaders(Function):
+    """returns the current number of headers expected or
+    the actual number of headers in a given line"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

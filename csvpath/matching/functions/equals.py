@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Equals(Function):
+    """tests the equality of two values"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

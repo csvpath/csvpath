@@ -7,6 +7,8 @@ from datetime import date, datetime
 
 
 class Between(Function):
+    """this class implements a date, number or string between test"""
+
     def check_valid(self) -> None:
         self.validate_three_args()
         super().check_valid()

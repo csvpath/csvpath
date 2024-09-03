@@ -5,6 +5,9 @@ from ..productions import ChildrenException
 
 
 class Percent(Function):
+    """return the percent scanned, matched or data lines seen of
+    the count of total data lines"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()
@@ -31,9 +34,6 @@ class Percent(Function):
             value = count / total
             self.value = round(value, 2)
             self.matcher.csvpath.logger.debug(
-                f"Percent.to_value: value: {value}, count: {count}, total: {total}, rounded: {self.value}"
-            )
-            print(
                 f"Percent.to_value: value: {value}, count: {count}, total: {total}, rounded: {self.value}"
             )
         return self.value

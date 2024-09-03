@@ -5,6 +5,8 @@ from ..productions import Equality, ChildrenException
 
 
 class Mod(Function):
+    """takes the modulus of numbers"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

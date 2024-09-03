@@ -5,6 +5,8 @@ from ..productions import Equality
 
 
 class Or(Function):
+    """does a logical OR of match components"""
+
     def check_valid(self) -> None:
         self.validate_two_or_more_args()
         super().check_valid()

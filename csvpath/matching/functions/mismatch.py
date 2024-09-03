@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Mismatch(Function):
+    """tests the current headers against an expectation"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg()
         super().check_valid()

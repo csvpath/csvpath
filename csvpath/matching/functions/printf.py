@@ -9,6 +9,9 @@ from ..util.print_parser import PrintParser
 
 
 class Print(Function):
+    """the print function handles parsing print lines, interpolating
+    values, and sending to the Printer instances"""
+
     def check_valid(self) -> None:
         self.validate_one_or_two_args(
             one=[Term], left=[Term], right=[Function, Equality]

@@ -6,6 +6,8 @@ from ..productions import Header, Variable
 
 
 class Exists(Function):
+    """tests if a value exists"""
+
     def check_valid(self) -> None:
         self.validate_one_arg(types=[Variable, Header])
         super().check_valid()

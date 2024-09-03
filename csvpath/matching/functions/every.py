@@ -5,6 +5,8 @@ from ..productions import Equality, Term, Header, Variable, ChildrenException
 
 
 class Every(Function):
+    """collects a regularly sampled subset of a value"""
+
     def check_valid(self) -> None:
         self.validate_two_args(right=[Term, Variable, Function, Header])
         super().check_valid()

@@ -4,13 +4,14 @@ from .function import Function
 from ..productions import Header, Variable
 
 #
-# TODO: when we have functions.header() sorted out (to headers())
-# it should be possible to use it to request a check of all
+# note to self: should be possible to request a check of all
 # headers.
 #
 
 
 class Empty(Function):
+    """checks for empty or blank header values in a given line"""
+
     def check_valid(self) -> None:
         self.validate_one_arg([Header, Variable])
         super().check_valid()

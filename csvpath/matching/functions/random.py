@@ -5,6 +5,8 @@ from random import randrange
 
 
 class Random(Function):
+    """returns a random int within a range"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

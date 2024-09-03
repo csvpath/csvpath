@@ -5,6 +5,8 @@ from ..productions import ChildrenException
 
 
 class ResetHeaders(Function):
+    """resets the headers to be the values in the current row, rather then the 0th row"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg()
         super().check_valid()

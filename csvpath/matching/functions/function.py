@@ -6,6 +6,8 @@ from .validation import Validation
 
 
 class Function(Validation):
+    """base class for all functions"""
+
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name)
         self.matcher = matcher

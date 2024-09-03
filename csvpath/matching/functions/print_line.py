@@ -4,6 +4,8 @@ from .function import Function, ChildrenException
 
 
 class PrintLine(Function):
+    """prints the current line using a delimiter"""
+
     def check_valid(self) -> None:
         self.validate_zero_one_or_two_args()
         super().check_valid()

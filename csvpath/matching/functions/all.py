@@ -9,6 +9,8 @@ from csvpath import ConfigurationException
 
 
 class All(Function):
+    """checks that a number of match components return True"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_more_args()
         super().check_valid()

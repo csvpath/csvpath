@@ -6,6 +6,8 @@ from ..productions import ChildrenException
 
 
 class Advance(Function):
+    """this class lets a csvpath skip to a future line"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

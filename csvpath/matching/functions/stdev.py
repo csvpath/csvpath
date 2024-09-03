@@ -6,6 +6,8 @@ from statistics import stdev, pstdev
 
 
 class Stdev(Function):
+    """takes the running sample or population standard deviation for a value"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

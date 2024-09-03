@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Last(Function):
+    """matches on the last line that will be scanned. last() will always run."""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg()
         super().check_valid()

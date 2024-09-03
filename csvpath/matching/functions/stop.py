@@ -5,6 +5,8 @@ from ..productions import Term
 
 
 class Stop(Function):
+    """when called halts the scan. the current row will be returned."""
+
     def check_valid(self) -> None:
         self.validate_zero_or_more_args()
         super().check_valid()

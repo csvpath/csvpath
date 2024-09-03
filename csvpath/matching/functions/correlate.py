@@ -6,6 +6,8 @@ import pandas as pd
 
 
 class Correlate(Function):
+    """does a statistical correlation test on the values of two headers"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

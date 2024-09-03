@@ -8,8 +8,10 @@ from statistics import mean, median
 
 
 class MinMax(Function):
+    """base class for some of the math functions"""
+
     """
-    # TODO:
+    # note to self:
     # longest value
     # quintile
     # decile
@@ -87,6 +89,8 @@ class MinMax(Function):
 
 
 class Min(MinMax):
+    """matches when its value is the smallest"""
+
     def check_valid(self) -> None:
         types = [Variable, Term, Header, Function]
         self.validate_one_or_two_args(one=types, left=types, right=types)
@@ -114,6 +118,8 @@ class Min(MinMax):
 
 
 class Max(MinMax):
+    """matches when its value is the largest"""
+
     def check_valid(self) -> None:
         types = [Variable, Term, Header, Function]
         self.validate_one_or_two_args(one=types, left=types, right=types)
@@ -141,6 +147,8 @@ class Max(MinMax):
 
 
 class Average(MinMax):
+    """returns the running average"""
+
     def check_valid(self) -> None:
         types = [Variable, Term, Header, Function]
         self.validate_one_or_two_args(one=types, left=types, right=types)

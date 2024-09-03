@@ -5,6 +5,9 @@ from ..productions import Equality
 
 
 class Collect(Function):
+    """use this class to identify what headers should be collected when
+    a line matches. by default all headers are collected."""
+
     def check_valid(self) -> None:
         self.validate_one_or_more_args()
         super().check_valid()

@@ -5,6 +5,8 @@ from ..productions import Equality
 
 
 class First(Function):
+    """captures the first sighting line number for values"""
+
     NEVER = -9999999999
 
     def check_valid(self) -> None:

@@ -6,6 +6,8 @@ from ..util.expression_utility import ExpressionUtility
 
 
 class Add(Function):
+    """this class adds numbers"""
+
     def check_valid(self) -> None:
         self.validate_two_or_more_args()
         super().check_valid()

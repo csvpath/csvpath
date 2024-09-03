@@ -5,6 +5,8 @@ from ..productions import Term, ChildrenException
 
 
 class End(Function):
+    """returns the value of the last header"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg([Term])
         super().check_valid()

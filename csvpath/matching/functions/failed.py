@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Failed(Function):
+    """matches when the current file is in the failed/invalid state"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

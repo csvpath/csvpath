@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Upper(Function):
+    """uppercases a string"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

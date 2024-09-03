@@ -5,6 +5,8 @@ from ..productions import Term, Variable, Header
 
 
 class Lower(Function):
+    """lowercases a string"""
+
     def check_valid(self) -> None:
         self.validate_one_arg(types=[Term, Variable, Header, Function])
         super().check_valid()

@@ -4,6 +4,9 @@ from .function import Function
 
 
 class Count(Function):
+    """counts matches by default. when fed other match components
+    it can count more specific things."""
+
     def check_valid(self) -> None:
         # note to self: no specific validity checks from way back
         super().check_valid()

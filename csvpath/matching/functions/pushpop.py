@@ -6,6 +6,8 @@ from ..productions.equality import Equality
 
 
 class Push(Function):
+    """pushes values onto a stack variable"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
@@ -44,6 +46,8 @@ class Push(Function):
 
 
 class PushDistinct(Push):
+    """pushes only distinct values to a stack variable"""
+
     def check_valid(self) -> None:
         super().check_valid()
 
@@ -53,6 +57,8 @@ class PushDistinct(Push):
 
 
 class Pop(Function):
+    """poppes the top value off a stack variable"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()
@@ -81,6 +87,8 @@ class Pop(Function):
 
 
 class Stack(Function):
+    """returns a stack variable"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()
@@ -103,6 +111,8 @@ class Stack(Function):
 
 
 class Peek(Function):
+    """gets the value of the top item in a stack variable"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
@@ -132,6 +142,8 @@ class Peek(Function):
 
 
 class PeekSize(Function):
+    """gets the number of items in a stack variable"""
+
     def check_valid(self) -> None:
         self.validate_one_arg()
         super().check_valid()

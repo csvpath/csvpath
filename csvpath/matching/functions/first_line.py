@@ -6,6 +6,8 @@ from ..productions import ChildrenException, Equality
 
 
 class FirstLine(Function):
+    """True when on the first line, scan, or match"""
+
     def check_valid(self) -> None:
         self.validate_zero_or_one_arg(types=[Function, Equality])
         if len(self.children) == 1 and isinstance(self.children[0], Equality):

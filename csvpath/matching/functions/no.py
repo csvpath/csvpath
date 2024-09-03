@@ -4,6 +4,8 @@ from .function import Function
 
 
 class No(Function):
+    """returns False"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

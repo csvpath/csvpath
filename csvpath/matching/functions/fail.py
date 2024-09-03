@@ -4,6 +4,8 @@ from .function import Function
 
 
 class Fail(Function):
+    """when called this function fails the file that is being processed"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()

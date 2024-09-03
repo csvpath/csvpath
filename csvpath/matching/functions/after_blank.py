@@ -5,6 +5,9 @@ from .function import Function
 
 
 class AfterBlank(Function):
+    """this class is True if the immediately preceding
+    physical line was blank or had no data values"""
+
     def check_valid(self) -> None:
         self.validate_zero_args()
         super().check_valid()
