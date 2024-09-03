@@ -1,11 +1,12 @@
+# pylint: disable=C0114
 from lark import Lark
-from lark.tree import Tree
-from lark.lexer import Token
-import os
-from .productions import *
 
 
-class LarkParser:
+class LarkParser:  # pylint: disable=R0903
+    """LarkParser implements the match part of CsvPath. is the replacement for the
+    original Ply parser. It offers easier control of the grammar and a more
+    intuitative way of building the parse tree. until 1.0 all of the four parsers
+    in CsvPath should be considered under active development."""
 
     GRAMMAR = r"""
         match: _LB (expression)* _RB
@@ -52,10 +53,10 @@ class LarkParser:
 
     """
 
-    def __init__(self):
+    def __init__(self):  # pylint: disable=C0116
         self.parser = Lark(LarkParser.GRAMMAR, start="match", ambiguity="explicit")
         self.tree = None
 
-    def parse(self, matchpart):
+    def parse(self, matchpart):  # pylint: disable=C0116
         self.tree = self.parser.parse(f"{matchpart}")
         return self.tree
