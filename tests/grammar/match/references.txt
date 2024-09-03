@@ -1,4 +1,0 @@
-[
-    @l = add( 4, length("this"))
-    @visitors = $test.path.variables.city.Boston
-]

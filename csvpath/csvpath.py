@@ -810,11 +810,13 @@ class CsvPath(CsvPathPublic):
     def _line_numbers(
         self,
         *,
-        these: List[int] = [],
+        these: List[int] = None,
         from_line: int = None,
         to_line: int = None,
         all_lines: bool = None,
     ) -> Iterator[int | str]:
+        if these is None:
+            these = []
         if len(these) > 0:
             for i in these:
                 yield i

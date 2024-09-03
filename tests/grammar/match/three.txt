@@ -1,9 +1,0 @@
-
-    [
-    ~ are there lines with blanks ~
-    count.blanks( not(all()) )
-    below( @blanks.True, 11 ) -> print("$.variables.blank_count, $.count_lines has a blank column")
-    @blanks.True == 11 -> print("More than 10 lines with blanks")
-    last() -> print( "$.variables")]
-
-

@@ -32,7 +32,9 @@ class CsvPathsFilesManager(ABC):
 
 
 class FilesManager(CsvPathsFilesManager):
-    def __init__(self, *, named_files: Dict[str, str] = {}, csvpaths):
+    def __init__(self, *, named_files: Dict[str, str] = None, csvpaths):
+        if named_files is None:
+            named_files = {}
         self.named_files: Dict[str, str] = named_files
         self.csvpaths = csvpaths
 

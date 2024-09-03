@@ -12,4 +12,16 @@ repos:
     hooks:
     -   id: flake8
         exclude: ^csvpath/matching/productions/equality\.py$
-
+#- repo: local
+#  hooks:
+#    - id: pylint
+#      name: pylint
+#      entry: pylint
+#      language: system
+#      types: [python]
+#      args:
+#        [
+#          "-rn", # Only display messages
+#          "-sn", # Don't display the score
+#          "--rcfile=.pylintrc", # Use your pylint config file
+#        ]

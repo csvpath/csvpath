@@ -1,3 +1,6 @@
+""" CsvPaths' intent is to help you manage and automate your use
+    of the CsvPath library. it makes it easier to scale your CSV quality control. """
+
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Tuple
 import csv
@@ -29,39 +32,35 @@ class CsvPathsPublic(ABC):
     @abstractmethod
     def csvpath(self) -> CsvPath:  # pragma: no cover
         """Gets a CsvPath object primed with a reference to this CsvPaths"""
-        pass
 
     @abstractmethod
     def collect_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.collect() on filename for every named path"""
-        pass
 
     @abstractmethod
     def fast_forward_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.fast_forward() on filename for every named path"""
-        pass
 
     @abstractmethod
     def next_paths(self, pathsname, filename) -> None:  # pragma: no cover
         """Does a CsvPath.next() on filename for every line against every named path in sequence"""
-        pass
 
     @abstractmethod
     def collect_by_line(self, pathsname, filename):  # pragma: no cover
-        """Does a CsvPath.collect() on filename where each row is considered by every named path before the next row starts"""
-        pass
+        """Does a CsvPath.collect() on filename where each row is considered
+        by every named path before the next row starts"""
 
     @abstractmethod
     def fast_forward_by_line(self, pathsname, filename):  # pragma: no cover
-        """Does a CsvPath.fast_forward() on filename where each row is considered by every named path before the next row starts"""
-        pass
+        """Does a CsvPath.fast_forward() on filename where each row is
+        considered by every named path before the next row starts"""
 
     @abstractmethod
     def next_by_line(
         self, pathsname, filename, collect: bool = False
     ) -> List[Any]:  # pragma: no cover
-        """Does a CsvPath.next() on filename where each row is considered by every named path before the next row starts"""
-        pass
+        """Does a CsvPath.next() on filename where each row is considered
+        by every named path before the next row starts"""
 
 
 class CsvPaths(CsvPathsPublic):
@@ -79,7 +78,7 @@ class CsvPaths(CsvPathsPublic):
         self.delimiter = delimiter
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
-        self.current_matchers: List[CsvPath] = []
+        self.current_matcher: CsvPath = None
         self.config = CsvPathConfig()
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
@@ -265,36 +264,43 @@ class CsvPaths(CsvPathsPublic):
             )
             stopped_count: List[int] = []
             for line in reader:
-                #
-                # ErrorHandler needs a reference it can see
-                #
-                acsvpath = None
+                # note to self: this default should be determined in a central place
+                # so that we can switch to OR, in part by changing the default to False
+                line_matched = True
                 try:
-                    self.current_matchers: List[CsvPath] = []
+                    #
+                    # p is a (CsvPath, List[List[str]]) where the second item is
+                    # the line by line results of the first item's matching
+                    #
                     for p in csvpath_objects:
-                        acsvpath = p[0]
-                        if acsvpath.stopped:
-                            stopped_count.append(1)
+                        self.current_matcher = p[0]
+                        if self.current_matcher.stopped:
+                            continue
                         else:
-                            acsvpath.track_line(line)
-                            b = acsvpath._consider_line(line)
-                            if b and collect:
-                                line = acsvpath.limit_collection(line)
+                            self.current_matcher.track_line(line)
+                            matched = self.current_matcher._consider_line(line)
+                            line_matched = line_matched and matched
+                            if matched and collect:
+                                line = self.current_matcher.limit_collection(line)
                                 p[1].append(line)
-                            if b:
-                                self.current_matchers.append(acsvpath)
-                    if len(self.current_matchers) > 0:
-                        yield line
-                    if sum(stopped_count) == len(csvpath_objects):
-                        break
+                            if matched or self.current_matcher.stopped:
+                                if self.current_matcher.stopped:
+                                    stopped_count.append(1)
                 except Exception as ex:
                     ex.trace = traceback.format_exc()
                     ex.source = self
                     ErrorHandler(
                         logger=self.logger,
-                        error_collector=acsvpath,
+                        error_collector=self.current_matcher,
                         component="csvpaths",
                     ).handle_error(ex)
+                # we yield even if we stopped in this iteration.
+                # caller needs to see what we stopped on.
+                yield line
+                if sum(stopped_count) == len(csvpath_objects):
+                    break
+                # TODO: we have the lines in p[1]. we could, optionally, iteratively
+                # move them to the results here.
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str

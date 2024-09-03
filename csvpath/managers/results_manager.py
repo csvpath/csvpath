@@ -102,7 +102,10 @@ class ResultsManager(CsvPathsResultsManager):
             meta["csvpaths_applied"] = paths
             meta["csvpaths_completed"] = paths == len(results)
             meta["valid"] = self.is_valid(name)
-            meta["all_variables"] = self.get_variables(name)
+            #
+            # this isn't where variables belong
+            #
+            # meta["all_variables"] = self.get_variables(name)
             meta = {**meta, **rs.csvpath.metadata}
         return meta
 

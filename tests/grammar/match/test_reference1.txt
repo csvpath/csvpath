@@ -1,4 +1,0 @@
-[
-                            count.t()
-                            @a = $ref.headers.zipcodes
-                        ]

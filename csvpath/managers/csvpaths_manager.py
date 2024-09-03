@@ -8,7 +8,11 @@ from csvpath.util.config import CsvPathConfig
 
 class CsvPathsManager(ABC):
     @abstractmethod
-    def add_named_paths_from_dir(self, *, dirname: str) -> None:
+    def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
+        """adds named paths found in a directory. files with multiple paths
+        will be handled. if thename is not None the named paths for all files
+        in the directory will be keyed by thename.
+        """
         pass
 
     @abstractmethod
@@ -21,6 +25,10 @@ class CsvPathsManager(ABC):
 
     @abstractmethod
     def add_named_paths(self, name: str, path: List[str]) -> None:
+        """aggregates the path list under the name. if there is no
+        existing list of paths, the name will be added. otherwise,
+        the lists will be joined. duplicates are not added.
+        """
         pass
 
     @abstractmethod
@@ -31,25 +39,33 @@ class CsvPathsManager(ABC):
     def remove_named_paths(self, name: str) -> None:
         pass
 
+    @abstractmethod
+    def has_named_paths(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def number_of_named_paths(self) -> bool:
+        pass
+
 
 class PathsManager(CsvPathsManager):
     MARKER: str = "---- CSVPATH ----"
 
-    def __init__(self, *, named_paths: Dict[str, List[str]] = {}, csvpaths):
+    def __init__(self, *, csvpaths, named_paths=None):
+        if named_paths is None:
+            named_paths = {}
         self.named_paths = named_paths
         self.csvpaths = csvpaths
 
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         self.named_paths = np
 
-    def add_named_paths_from_dir(self, dirname: str) -> None:
-        if dirname is None:
+    def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
+        if directory is None:
             raise ConfigurationException("Named paths collection name needed")
-        elif os.path.isdir(dirname):
-            if self.named_paths is None:
-                self.named_files = {}
-            dlist = os.listdir(dirname)
-            base = dirname
+        elif os.path.isdir(directory):
+            dlist = os.listdir(directory)
+            base = directory
             for p in dlist:
                 if p[0] == ".":
                     continue
@@ -67,7 +83,8 @@ class PathsManager(CsvPathsManager):
                         for apath in cp.split(PathsManager.MARKER)
                         if apath.strip() != ""
                     ]
-                    self.add_named_paths(name, _)
+                    aname = name if thename is None else thename
+                    self.add_named_paths(aname, _)
         else:
             raise ConfigurationException("dirname must point to a directory")
 
@@ -89,8 +106,15 @@ class PathsManager(CsvPathsManager):
         except Exception as e:
             raise ConfigurationException(f"Error: cannot load {file_path}: {e}")
 
-    def add_named_paths(self, name: str, path: List[str]) -> None:
-        self.named_paths[name] = path
+    def add_named_paths(self, name: str, paths: List[str]) -> None:
+        if name in self.named_paths:
+            for p in paths:
+                if p in self.named_paths[name]:
+                    pass
+                else:
+                    self.named_paths[name].append(paths)
+        else:
+            self.named_paths[name] = paths
 
     def get_named_paths(self, name: str) -> List[str]:
         if name in self.named_paths:
@@ -103,6 +127,12 @@ class PathsManager(CsvPathsManager):
             del self.named_paths[name]
         else:
             raise ConfigurationException("{name} not found")
+
+    def has_named_paths(self, name: str) -> bool:
+        return name in self.named_paths
+
+    def number_of_named_paths(self) -> bool:
+        return len(self.named_paths)
 
     def _name_from_name_part(self, name):
         i = name.rfind(".")

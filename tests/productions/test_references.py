@@ -58,7 +58,7 @@ class TestReferences(unittest.TestCase):
         #
         cs = CsvPaths()
         cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
-        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
         rm = cs.results_manager
         resultset = rm.get_named_results("zips")
@@ -99,7 +99,7 @@ class TestReferences(unittest.TestCase):
     def test_parse_variable_reference2(self):
         cs = CsvPaths()
         cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
-        cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
+        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
         rm = cs.results_manager
         resultset = rm.get_named_results("zips")

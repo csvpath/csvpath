@@ -206,7 +206,9 @@ class TestPrint(unittest.TestCase):
         LogUtility.logger(paths, "debug")
 
         paths.files_manager.add_named_files_from_dir("tests/test_resources/named_files")
-        paths.paths_manager.add_named_paths_from_dir("tests/test_resources/named_paths")
+        paths.paths_manager.add_named_paths_from_dir(
+            directory="tests/test_resources/named_paths"
+        )
 
         paths.fast_forward_paths(pathsname="food", filename="food")
 

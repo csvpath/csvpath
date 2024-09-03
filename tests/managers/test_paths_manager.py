@@ -1,5 +1,5 @@
 import unittest
-from csvpath import CsvPaths
+from csvpath import CsvPaths, PathsManager
 
 DIR = "tests/test_resources/named_paths"
 JSON = "tests/test_resources/named_paths.json"
@@ -45,3 +45,22 @@ class TestPathsManager(unittest.TestCase):
         pm.remove_named_paths("many")
         assert len(pm.named_paths) == 1
         assert "many" not in pm.named_paths
+
+    # need:
+    # . all in directory under one name
+    # . add duplicates to name
+    def test_named_paths_dir(self):
+        print("")
+        paths = CsvPaths()
+        pm = paths.paths_manager
+        pm.add_named_paths_from_dir(directory=DIR)
+        assert pm.named_paths
+        assert len(pm.named_paths) == 5
+
+        paths2 = CsvPaths()
+        pm2 = paths2.paths_manager
+        pm2.add_named_paths_from_dir(directory=DIR, thename="many")
+        assert paths2.paths_manager.named_paths
+        for k, v in paths2.paths_manager.named_paths.items():
+            print(f"test_named_paths_dir: k: {k} = {len(v)}")
+        assert len(pm2.named_paths) == 1

@@ -1,3 +1,5 @@
+""" this is the main entry point for the CsvPath library """
+
 from csvpath.util.exceptions import (
     InputException,
     ParsingException,

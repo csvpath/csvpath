@@ -1,7 +1,0 @@
-
-[
-    ~ what are the headers ~
-    print("The headers are $.headers")
-]
-
-
