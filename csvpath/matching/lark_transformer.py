@@ -1,5 +1,7 @@
+""" implements the transformer that receives trees and tokens from Lark
+    and turns them into the match components Matcher uses """
+
 from lark import Transformer, v_args
-from lark.tree import Tree
 from lark.lexer import Token
 
 from .productions import (
@@ -11,23 +13,24 @@ from .productions import (
     Header,
     Reference,
 )
-from .functions.function import Function
 from .functions.function_factory import FunctionFactory
+from ..util.exceptions import ParsingException
 
 
 @v_args(inline=True)
-class LarkTransformer(Transformer):
+class LarkTransformer(Transformer):  # pylint: disable=C0115
     def __init__(self, matcher):
         self.matcher = matcher
+        super().__init__()
 
-    def match(self, *expressions):
+    def match(self, *expressions):  # pylint: disable=C0116
         return list(expressions)
 
     # left (WHEN action)?
     # equality (WHEN action)?
     # assignment
     # COMMENT
-    def expression(self, acted_on, when=None, action=None):
+    def expression(self, acted_on, when=None, action=None):  # pylint: disable=C0116
         e = Expression(self.matcher)
         if when is None:
             e.add_child(acted_on)
@@ -40,11 +43,11 @@ class LarkTransformer(Transformer):
         return e
 
     # (function|assignment)
-    def action(self, arg):
+    def action(self, arg):  # pylint: disable=C0116
         return arg
 
     # VARIABLE ASSIGN (left|TERM)
-    def assignment(self, variable, equals, value):
+    def assignment(self, variable, equals, value):  # pylint: disable=C0116
         e = Equality(self.matcher)
         e.left = variable
         e.right = value
@@ -52,11 +55,12 @@ class LarkTransformer(Transformer):
         return e
 
     # HEADER|VARIABLE|function
-    def left(self, arg):
+    def left(self, arg):  # pylint: disable=C0116
         return arg
 
     # left EQUALS (left|TERM)
-    def equality(self, left, op, right):
+    def equality(self, left, op, right):  # pylint: disable=W0613, C0116
+        # re: W0613: in this case we don't care because we need the placeholder
         e = Equality(self.matcher)
         e.op = "=="
         e.left = left
@@ -64,31 +68,31 @@ class LarkTransformer(Transformer):
         return e
 
     # token
-    def HEADER(self, token):
+    def HEADER(self, token):  # pylint: disable=C0116, C0103
         h = Header(self.matcher, name=token.value[1:])
         return h
 
     # token
-    def VARIABLE(self, token):
+    def VARIABLE(self, token):  # pylint: disable=C0116, C0103
         v = Variable(self.matcher, name=token.value[1:])
         return v
 
     # token
-    def REFERENCE(self, token):
+    def REFERENCE(self, token):  # pylint: disable=C0116, C0103
         v = Reference(self.matcher, name=token.value[1:])
         return v
 
     # function: /[a-zA-Z][a-zA-Z-0-9\._]*/ args
-    def function(self, name, args):
+    def function(self, name, args):  # pylint: disable=C0116
         f = FunctionFactory.get_function(self.matcher, name=f"{name}", child=args)
         return f
 
-    def term(self, aterm):
+    def term(self, aterm):  # pylint: disable=C0116
         return aterm
 
     # LP RP
     # | LP a (COMMA a)* RP
-    def args(self, *args):
+    def args(self, *args):  # pylint: disable=C0116
         if len(args) == 3:
             return args[1]
         e = Equality(self.matcher)
@@ -97,42 +101,37 @@ class LarkTransformer(Transformer):
                 e.children.append(_)
         if len(e.children) == 1:
             return e.children[0]
-        elif len(e.children) > 1:
+        if len(e.children) > 1:
             e.op = ","
             return e
-        else:
-            return None
+        return None
 
     # TERM
     # VARIABLE
     # HEADER
     # function
     # equality
-    def a(self, arg):
+    def a(self, arg):  # pylint: disable=C0116
         return arg
 
-    def TERM(self, token):
+    def TERM(self, token):  # pylint: disable=C0116, C0103
         t = None
         if isinstance(token, Token):
             t = token.value
-        elif isinstance(token, Tree):
-            t = token
-        if isinstance(token, Token):
             t = token.value
             if t[0] == "@" or t[0] == "#":
                 t = token.value[1:-1]
             return Term(self.matcher, value=t)
-        elif isinstance(token, Tree):
-            raise Exception("Cannot make a Term from a Tree")
+        raise ParsingException(f"Cannot make a Term from a {type(token)}")
 
     # token
-    def STRING(self, token):
+    def STRING(self, token):  # pylint: disable=C0116, C0103
         return Term(self.matcher, value=token.value[1:-1])
 
     # token
-    def SIGNED_NUMBER(self, token):
+    def SIGNED_NUMBER(self, token):  # pylint: disable=C0116, C0103
         t = token.value
-        if isinstance(token.value, int) or isinstance(token.value, float):
+        if isinstance(token.value, (int, float)):
             pass
         elif f"{token.value}".find(".") > -1:
             t = float(token.value)
@@ -141,9 +140,9 @@ class LarkTransformer(Transformer):
         return Term(self.matcher, value=t)
 
     # token
-    def REGEX(self, token):
+    def REGEX(self, token):  # pylint: disable=C0116, C0103
         return Term(self.matcher, value=token.value)
 
     # token
-    def COMMENT(self, token):
+    def COMMENT(self, token):  # pylint: disable=C0116, C0103, W0613
         return None
