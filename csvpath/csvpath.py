@@ -108,7 +108,7 @@ class CsvPath(CsvPathPublic):
         #
         self._when_not_matched = False
         #
-        # TODO: by default CsvPath's matcher does an AND match. if we set this property
+        # note-to-self: by default CsvPath's matcher does an AND match. if we set this property
         # to True we tell the matcher to do an OR. i.e. if any of the match components
         # return true there is a match. HOWEVER, this would be a big change because
         # default values and nocontrib would have to be negative when ORing. we
@@ -418,12 +418,16 @@ class CsvPath(CsvPathPublic):
     def _save_parts_if(self, scan, match):
         if self._save_scan_dir and self._run_name:
             with open(
-                os.path.join(self._save_scan_dir, f"{self._run_name}.txt"), "w"
+                os.path.join(self._save_scan_dir, f"{self._run_name}.txt"),
+                "w",
+                encoding="utf-8",
             ) as f:
                 f.write(scan)
         if self._save_match_dir and self._run_name:
             with open(
-                os.path.join(self._save_match_dir, f"{self._run_name}.txt"), "w"
+                os.path.join(self._save_match_dir, f"{self._run_name}.txt"),
+                "w",
+                encoding="utf-8",
             ) as f:
                 f.write(match)
 
@@ -547,7 +551,7 @@ class CsvPath(CsvPathPublic):
         #
         if self.scanner.filename is None:
             raise FileException("There is no filename")
-        with open(self.scanner.filename, "r") as file:
+        with open(self.scanner.filename, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
@@ -666,7 +670,7 @@ class CsvPath(CsvPathPublic):
         ):
             start = time.time()
             self.line_monitor.reset()
-            with open(self.scanner.filename, "r") as file:
+            with open(self.scanner.filename, "r", encoding="utf-8") as file:
                 reader = csv.reader(
                     file, delimiter=self.delimiter, quotechar=self.quotechar
                 )

@@ -2,20 +2,16 @@
     of the CsvPath library. it makes it easier to scale your CSV quality control. """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Tuple
+from typing import List, Any, Tuple
 import csv
-import os
-import json
 import traceback
 from csvpath.util.error import ErrorHandler
 from csvpath.util.config import CsvPathConfig
 from csvpath.util.log_utility import LogUtility
 from csvpath.util.metadata_parser import MetadataParser
 from . import CsvPath
-from . import FileException
 from . import ConfigurationException
-from . import PathsManager
-from . import FilesManager
+from . import PathsManager, FilesManager
 from . import ResultsManager, CsvPathResult
 
 
@@ -34,30 +30,30 @@ class CsvPathsPublic(ABC):
         """Gets a CsvPath object primed with a reference to this CsvPaths"""
 
     @abstractmethod
-    def collect_paths(self, pathsname, filename) -> None:  # pragma: no cover
+    def collect_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.collect() on filename for every named path"""
 
     @abstractmethod
-    def fast_forward_paths(self, pathsname, filename) -> None:  # pragma: no cover
+    def fast_forward_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
         """Sequentially does a CsvPath.fast_forward() on filename for every named path"""
 
     @abstractmethod
-    def next_paths(self, pathsname, filename) -> None:  # pragma: no cover
+    def next_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
         """Does a CsvPath.next() on filename for every line against every named path in sequence"""
 
     @abstractmethod
-    def collect_by_line(self, pathsname, filename):  # pragma: no cover
+    def collect_by_line(self, *, pathsname, filename):  # pragma: no cover
         """Does a CsvPath.collect() on filename where each row is considered
         by every named path before the next row starts"""
 
     @abstractmethod
-    def fast_forward_by_line(self, pathsname, filename):  # pragma: no cover
+    def fast_forward_by_line(self, *, pathsname, filename):  # pragma: no cover
         """Does a CsvPath.fast_forward() on filename where each row is
         considered by every named path before the next row starts"""
 
     @abstractmethod
     def next_by_line(
-        self, pathsname, filename, collect: bool = False
+        self, *, pathsname, filename, collect: bool = False
     ) -> List[Any]:  # pragma: no cover
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts"""
@@ -67,6 +63,8 @@ class CsvPaths(CsvPathsPublic):
     """Manages the application of csvpaths to files. Csvpaths must be grouped and named.
     Files must be named. Results are held by the results_manager.
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
@@ -94,7 +92,9 @@ class CsvPaths(CsvPathsPublic):
             print_default=self.print_default,
         )
 
-    def clean(self, *, file, paths) -> None:
+    def clean(self, *, paths) -> None:
+        """at this time we do not recommend reusing CsvPaths, but it is doable
+        you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
 
     def collect_paths(self, *, pathsname, filename) -> None:
@@ -104,10 +104,10 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
-        self.clean(file=filename, paths=pathsname)
+        self.logger.info("Cleaning out any %s and % results", filename, pathsname)
+        self.clean(paths=pathsname)
         self.logger.info(
-            f"Beginning collect_paths '{pathsname}' with {len(paths)} paths"
+            "Beginning collect_paths %s with %s paths", pathsname, len(paths)
         )
         for path in paths:
             csvpath = self.csvpath()
@@ -119,14 +119,14 @@ class CsvPaths(CsvPathsPublic):
                 self._load_csvpath(csvpath, path=path, file=file)
                 lines = csvpath.collect()
                 result.lines = lines
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(
                     logger=self.logger, error_collector=result, component="csvpaths"
                 ).handle_error(ex)
         self.logger.info(
-            f"Completed collect_paths '{pathsname}' with {len(paths)} paths"
+            "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
 
     def _load_csvpath(self, csvpath: CsvPath, path: str, file: str) -> None:
@@ -144,10 +144,10 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
-        self.clean(file=filename, paths=pathsname)
+        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.clean(paths=pathsname)
         self.logger.info(
-            f"Beginning fast_forward_paths '{pathsname}' with {len(paths)} paths"
+            "Beginning fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
@@ -157,19 +157,19 @@ class CsvPaths(CsvPathsPublic):
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
-                self.logger.info(f"Parsed csvpath {i} pointed at {file}")
+                self.logger.info("Parsed csvpath %s pointed at %s", i, file)
                 csvpath.fast_forward()
                 self.logger.info(
-                    f"Completed fast forward of csvpath {i} against {file}"
+                    "Completed fast forward of csvpath %s against %s", i, file
                 )
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(
                     logger=self.logger, error_collector=result, component="csvpaths"
                 ).handle_error(ex)
         self.logger.info(
-            f"Completed fast_forward_paths '{pathsname}' with {len(paths)} paths"
+            "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
 
     def next_paths(self, *, pathsname, filename):
@@ -184,9 +184,9 @@ class CsvPaths(CsvPathsPublic):
             raise ConfigurationException(f"Filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
-        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
-        self.clean(file=filename, paths=pathsname)
-        self.logger.info(f"Beginning next_paths with {len(paths)} paths")
+        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.clean(paths=pathsname)
+        self.logger.info("Beginning next_paths with %s paths", len(paths))
         for path in paths:
             csvpath = self.csvpath()
             result = CsvPathResult(
@@ -198,7 +198,7 @@ class CsvPaths(CsvPathsPublic):
                 for line in csvpath.next():
                     line.append(result)
                     yield line
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(
@@ -209,31 +209,40 @@ class CsvPaths(CsvPathsPublic):
 
     def collect_by_line(self, *, pathsname, filename):
         self.logger.info(
-            f"Starting collect_by_line for paths: {pathsname} and file: {filename}"
+            "Starting collect_by_line for paths: %s and file: %s", pathsname, filename
         )
-        for line in self.next_by_line(
+        for line in self.next_by_line(  # pylint: disable=W0612
             pathsname=pathsname, filename=filename, collect=True
         ):
+            # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
             pass
         self.logger.info(
-            f"Completed collect_by_line for paths: {pathsname} and file: {filename}"
+            "Completed collect_by_line for paths: %s and file: %s", pathsname, filename
         )
 
     def fast_forward_by_line(self, *, pathsname, filename):
         self.logger.info(
-            f"Starting fast_forward_by_line for paths: {pathsname} and file: {filename}"
+            "Starting fast_forward_by_line for paths: %s and file: %s",
+            pathsname,
+            filename,
         )
-        for line in self.next_by_line(
+        for line in self.next_by_line(  # pylint: disable=W0612
             pathsname=pathsname, filename=filename, collect=False
         ):
+            # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
             pass
         self.logger.info(
-            f"Completed fast_forward_by_line for paths: {pathsname} and file: {filename}"
+            "Completed fast_forward_by_line for paths: %s and file: %s",
+            pathsname,
+            filename,
         )
 
-    def next_by_line(self, *, pathsname, filename, collect: bool = False) -> List[Any]:
-        self.logger.info(f"Cleaning out any {filename} and {pathsname} results")
-        self.clean(file=filename, paths=pathsname)
+    def next_by_line(
+        self, *, pathsname, filename, collect: bool = False
+    ) -> List[Any]:  # pylint: disable=R0912
+        # re: R0912 -- absolutely does have too many branches. will refactor later.
+        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.clean(paths=pathsname)
         if filename not in self.files_manager.named_files:
             raise ConfigurationException(f"Filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)
@@ -257,13 +266,16 @@ class CsvPaths(CsvPathsPublic):
         # setting fn into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
         #
-        self.logger.info(f"Beginning next_by_line with {len(csvpath_objects)} paths")
-        with open(fn, "r") as file:
+        self.logger.info("Beginning next_by_line with %s paths", len(csvpath_objects))
+        with open(fn, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
-            )
+            )  # pylint: disable=R1702
+            #
+            # re: R1702 -- totally agreed! deferring.
+            #
             stopped_count: List[int] = []
-            for line in reader:
+            for line in reader:  # pylint: disable=R1702
                 # note to self: this default should be determined in a central place
                 # so that we can switch to OR, in part by changing the default to False
                 line_matched = True
@@ -271,14 +283,19 @@ class CsvPaths(CsvPathsPublic):
                     #
                     # p is a (CsvPath, List[List[str]]) where the second item is
                     # the line by line results of the first item's matching
-                    #
                     for p in csvpath_objects:
                         self.current_matcher = p[0]
-                        if self.current_matcher.stopped:
+                        if self.current_matcher.stopped:  # pylint: disable=R1724
+                            # using if/else and continue just to be over-clear
                             continue
                         else:
                             self.current_matcher.track_line(line)
-                            matched = self.current_matcher._consider_line(line)
+                            #
+                            # treating _consider_line something like package private
+                            #
+                            matched = self.current_matcher._consider_line(
+                                line
+                            )  # pylint:disable=W0212
                             line_matched = line_matched and matched
                             if matched and collect:
                                 line = self.current_matcher.limit_collection(line)
@@ -286,7 +303,7 @@ class CsvPaths(CsvPathsPublic):
                             if matched or self.current_matcher.stopped:
                                 if self.current_matcher.stopped:
                                     stopped_count.append(1)
-                except Exception as ex:
+                except Exception as ex:  # pylint: disable=W0718
                     ex.trace = traceback.format_exc()
                     ex.source = self
                     ErrorHandler(
@@ -299,8 +316,8 @@ class CsvPaths(CsvPathsPublic):
                 yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
-                # TODO: we have the lines in p[1]. we could, optionally, iteratively
-                # move them to the results here.
+                # note to self: we have the lines in p[1]. we could, optionally, iteratively
+                # move them to the results here. probably a future requirement.
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str
@@ -311,7 +328,7 @@ class CsvPaths(CsvPathsPublic):
             try:
                 self._load_csvpath(csvpath, path=path, file=named_file)
                 csvpath_objects.append((csvpath, []))
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 # the error handler is the CsvPathResults. it registers itself with
@@ -334,9 +351,9 @@ class CsvPaths(CsvPathsPublic):
                     csvpath=csvpath[0], file_name=filename, paths_name=pathsname
                 )
                 self.results_manager.add_named_result(result)
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(
-                    logger=self.logger, csvpaths=self, component="csvpaths"
+                    logger=self.logger, error_collector=csvpath, component="csvpaths"
                 ).handle_error(ex)
