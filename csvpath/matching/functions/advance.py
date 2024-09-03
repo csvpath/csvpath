@@ -18,7 +18,7 @@ class Advance(Function):
                 v = int(v)
                 self.matcher.csvpath.advance(v)
             except Exception:
-                raise ChildrenException(f"Advance must contain an int, not {v}")
+                raise ChildrenException(f"Advance must contain an int, not {type(v)}")
             self.value = True
         return self.value
 

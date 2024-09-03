@@ -16,7 +16,9 @@ from . import ResultsManager, CsvPathResult
 
 
 class CsvPathsPublic(ABC):
-    """A CsvPaths instance manages appying any number of csvpaths
+    """this abstract class is the public interface for CsvPaths.
+
+    a CsvPaths instance manages applying any number of csvpaths
     to any number of files. CsvPaths applies sets of csvpaths
     to a given file, on demand. Think of CsvPaths as a session
     object. It gives you a way to manage files, csvpaths, and
@@ -237,9 +239,9 @@ class CsvPaths(CsvPathsPublic):
             filename,
         )
 
-    def next_by_line(
+    def next_by_line(  # pylint: disable=R0912
         self, *, pathsname, filename, collect: bool = False
-    ) -> List[Any]:  # pylint: disable=R0912
+    ) -> List[Any]:
         # re: R0912 -- absolutely does have too many branches. will refactor later.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
@@ -291,11 +293,11 @@ class CsvPaths(CsvPathsPublic):
                         else:
                             self.current_matcher.track_line(line)
                             #
-                            # treating _consider_line something like package private
+                            # re: W0212: treating _consider_line something like package private
                             #
-                            matched = self.current_matcher._consider_line(
+                            matched = self.current_matcher._consider_line(  # pylint:disable=W0212
                                 line
-                            )  # pylint:disable=W0212
+                            )
                             line_matched = line_matched and matched
                             if matched and collect:
                                 line = self.current_matcher.limit_collection(line)
