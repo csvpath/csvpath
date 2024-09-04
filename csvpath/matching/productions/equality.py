@@ -33,6 +33,7 @@ class Equality(Matchable):
     def left(self):  # pylint: disable=C0116
         if len(self.children) > 0:
             return self.children[0]
+        return None
 
     @left.setter
     def left(self, o):
@@ -41,13 +42,13 @@ class Equality(Matchable):
             self.children = [None, None]
         while len(self.children) < 2:
             self.children.append(None)
-        else:
-            self.children[0] = o
+        self.children[0] = o
 
     @property
     def right(self):  # pylint: disable=C0116
         if len(self.children) > 1:
             return self.children[1]
+        return None
 
     @right.setter
     def right(self, o):
@@ -171,10 +172,11 @@ class Equality(Matchable):
 
         return self._do_assignment_new_impl(name=name, tracking=tracking, args=args)
 
-    def _do_assignment_new_impl(
+    def _do_assignment_new_impl(  # pylint: disable=R0915,R0912,R0914
         self, *, name: str, tracking: str = None, args: dict
     ) -> bool:
-
+        # re: R0915,R0912,R0914: definitely too much complexity.
+        # but well tested. not time.
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]
@@ -215,7 +217,10 @@ class Equality(Matchable):
             elif latch:
                 pass  # == TEST MARKER 6
             else:
-                raise Exception("this state should never happen")
+                s = "Equality:_do_assignment_new_impl:218:"
+                s = f"{s} this state is unknown. {ret}, {args}"
+                self.matcher.csvpath.logger.error(s)
+                # raise Exception("this state should never happen")
         #
         # if onmatch we are True if the line matches,
         # potentially overriding latch and/or onchange,
@@ -242,7 +247,8 @@ class Equality(Matchable):
                 if ret and onchange:  # == TEST MARKER 11
                     # why are we returning here?
                     return False
-                pass  # == TEST MARKER 12
+                pass  # == TEST MARKER 12 pylint: disable=W0107
+                # re: W0107: the pass is here for clarity
         #
         # count() is only for matches so implies count.onmatch
         # return set y and return true if the line matches
@@ -268,10 +274,10 @@ class Equality(Matchable):
             self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
             ret = True
         else:
-            # never happens. remove?
-            raise Exception(
-                f"Equality._do_assignment_new_impl: ret: {ret}, args: {args}"
-            )
+            # never happens
+            s = "Equality:_do_assignment_new_impl:272:"
+            s = f"{s} this state is unknown. {ret}, {args}"
+            self.matcher.csvpath.logger.error(s)
         #
         # if asbool we apply our interpretation to value of y,
         # if we set y, otherwise we are False,
@@ -301,10 +307,7 @@ class Equality(Matchable):
                 b = True
                 self.right.matches(skip=skip)
             else:
-                if self._left_nocontrib(self.left):
-                    b = True
-                else:
-                    b = False
+                b = self._left_nocontrib(self.left)
         else:
             raise ChildrenException("Not a when operation")  # this can't really happen
         return b

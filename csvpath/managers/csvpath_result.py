@@ -8,6 +8,7 @@ class CsvPathErrorCollector(ABC):
     """error collectors collect errors primarily from expressions,
     but also matcher, scanner, and elsewhere."""
 
+    @property
     @abstractmethod
     def errors(self) -> List[Error]:  # pylint: disable=C0116
         pass
@@ -21,11 +22,13 @@ class CsvPathErrorCollector(ABC):
         pass
 
 
-class CsvPathResult(CsvPathErrorCollector, Printer):
+class CsvPathResult(CsvPathErrorCollector, Printer):  # pylint: disable=R0902
     """This class handles the results for a single CsvPath in the
     context of a CsvPaths run that may apply any number of CsvPath
     instances against the same file.
     """
+
+    # re: R0902: disagree that there's too many attributes in this case
 
     def __init__(
         self,
@@ -42,12 +45,10 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._errors = []
         self._printouts = {}
         self._print_count = 0
-        #
+        self._last_line = None
         # use the properties so error_collector, etc. is set correctly
-        #
         self.csvpath = csvpath
         self.lines = lines
-        self._last_line = None
 
     @property
     def variables(self) -> Dict[str, Any]:  # pylint: disable=C0116

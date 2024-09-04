@@ -25,7 +25,9 @@ class Expression(Matchable):
                     if not child.matches(skip=skip):
                         ret = False
                 self.match = ret
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
+                # re: W0718: there may be a better way, but however we
+                # do it we have to let nothing through
                 e.trace = traceback.format_exc()
                 e.source = self
                 e.json = self.matcher.to_json(self)
@@ -46,7 +48,11 @@ class Expression(Matchable):
         warnings.filterwarnings("error")
         try:
             super().check_valid()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
+            # re: W0718: there may be a better way. this case is
+            # less clear-cut than the above. still, we probably want
+            # to err on the side of over-protecting in case dataops/
+            # automation doesn't fully control the csvpaths.
             e.trace = traceback.format_exc()
             e.source = self
             e.message = f"Failed csvpath validity check with: {e}"

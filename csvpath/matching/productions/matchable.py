@@ -94,8 +94,7 @@ class Matchable(Qualified):
             return None
         if hasattr(self.children[0], "left"):
             return self.children[0].left.to_value(skip=skip)
-        else:
-            return self.children[0].to_value(skip=skip)
+        return self.children[0].to_value(skip=skip)
 
     # convenience method for one or two arg functions
     def _value_two(self, skip=None):

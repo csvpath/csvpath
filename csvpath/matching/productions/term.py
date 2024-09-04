@@ -14,8 +14,9 @@ class Term(Matchable):
             value = value.lstrip('"').rstrip('"')
         super().__init__(matcher=matcher, name=name, value=value)
 
-    def reset(self) -> None:
+    def reset(self) -> None:  # pylint: disable=W0246
         super().reset()
+        # re: W0246: Matchable handles this class's children
 
     def to_value(self, *, skip=None) -> Any:
         return self.value

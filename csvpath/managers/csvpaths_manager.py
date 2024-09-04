@@ -29,7 +29,7 @@ class CsvPathsManager(ABC):
         """overwrites"""
 
     @abstractmethod
-    def add_named_paths(self, name: str, path: List[str]) -> None:
+    def add_named_paths(self, name: str, paths: List[str]) -> None:
         """aggregates the path list under the name. if there is no
         existing list of paths, the name will be added. otherwise,
         the lists will be joined. duplicates are not added.
@@ -52,7 +52,7 @@ class CsvPathsManager(ABC):
         pass
 
 
-class PathsManager(CsvPathsManager):  # pytest: disable=C0115, C0116
+class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     MARKER: str = "---- CSVPATH ----"
 
     def __init__(self, *, csvpaths, named_paths=None):
@@ -80,7 +80,7 @@ class PathsManager(CsvPathsManager):  # pytest: disable=C0115, C0116
                     continue
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
-                with open(path, "r") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     cp = f.read()
                     _ = [
                         apath.strip()

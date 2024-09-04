@@ -10,7 +10,8 @@ class Reference(Matchable):
     test against a header's values
     """
 
-    def check_valid(self) -> None:
+    def check_valid(self) -> None:  # pylint: disable=W0246
+        # re: W0246: Matchable handles this class's children
         super().check_valid()
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):

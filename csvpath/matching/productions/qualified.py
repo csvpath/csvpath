@@ -53,7 +53,7 @@ class Qualified:
         if self.name is not None and self.name.strip() == "":
             raise ChildrenException(f"Name of {self} cannot be the empty string")
 
-    def first_non_term_qualifier(self, default: None) -> Optional[str]:
+    def first_non_term_qualifier(self, default=None) -> Optional[str]:
         """non-term qualifiers are arbitrary names that may or may not affect
         the operation of the component they are placed on"""
         if not self.qualifiers:  # this shouldn't happen but what if it did
@@ -63,7 +63,7 @@ class Qualified:
                 return q
         return default
 
-    def second_non_term_qualifier(self, default: None) -> Optional[str]:
+    def second_non_term_qualifier(self, default=None) -> Optional[str]:
         """non-term qualifiers are arbitrary names that may or may not affect
         the operation of the component they are placed on"""
         first = self.first_non_term_qualifier()
@@ -205,12 +205,12 @@ class Qualified:
         qualified doesn't have the qualfication."""
         if not self.onchange:
             return True
-        id = self.get_id()  # pylint: disable=E1101
-        v = self.matcher.get_variable(id)  # pylint: disable=E1101
+        _id = self.get_id()  # pylint: disable=E1101
+        v = self.matcher.get_variable(_id)  # pylint: disable=E1101
         me = hashlib.sha256(
-            f"{self.to_value()}".encode("utf-8")
-        ).hexdigest()  # pylint: disable=E1101
-        self.matcher.set_variable(id, value=me)  # pylint: disable=E1101
+            f"{self.to_value()}".encode("utf-8")  # pylint: disable=E1101
+        ).hexdigest()
+        self.matcher.set_variable(_id, value=me)  # pylint: disable=E1101
         return me != v
 
     @property
@@ -239,23 +239,23 @@ class Qualified:
 
     def do_once(self):  # pylint: disable=C0116
         ret = not self.once or self._has_not_yet()
-        self.matcher.csvpath.logger.debug(
+        self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
             f"Qualified.do_ononce: {ret} for {self.name}"
-        )  # pylint: disable=E1101
+        )
         return ret
 
     def _has_not_yet(self):
         #
         # supports ONCE
         #
-        id = self.get_id()  # pylint: disable=E1101
-        v = self.matcher.get_variable(id, set_if_none=True)  # pylint: disable=E1101
+        _id = self.get_id()  # pylint: disable=E1101
+        v = self.matcher.get_variable(_id, set_if_none=True)  # pylint: disable=E1101
         return v
 
     def _set_has_happened(self) -> None:
         #
         # supports ONCE
         #
-        id = self.get_id()  # pylint: disable=E1101
-        self.matcher.set_variable(id, value=False)  # pylint: disable=E1101
+        _id = self.get_id()  # pylint: disable=E1101
+        self.matcher.set_variable(_id, value=False)  # pylint: disable=E1101
         # re: E1101: inheritance structure. good point, but not the time to fix it.

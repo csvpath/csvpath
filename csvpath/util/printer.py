@@ -6,10 +6,12 @@ class Printer(ABC):
     ERROR = "stderr"
     DEFAULT = "default"
 
+    @property
     @abstractmethod
     def last_line(self):
         pass
 
+    @property
     @abstractmethod
     def lines_printed(self) -> int:
         pass

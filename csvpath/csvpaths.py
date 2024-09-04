@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 from typing import List, Any, Tuple
 import csv
 import traceback
-from csvpath.util.error import ErrorHandler
-from csvpath.util.config import CsvPathConfig
-from csvpath.util.log_utility import LogUtility
-from csvpath.util.metadata_parser import MetadataParser
+from .util.error import ErrorHandler
+from .util.config import CsvPathConfig
+from .util.log_utility import LogUtility
+from .util.metadata_parser import MetadataParser
 from . import CsvPath
 from . import ConfigurationException
 from . import PathsManager, FilesManager
