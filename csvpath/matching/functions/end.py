@@ -22,7 +22,8 @@ class End(Function):
                     i = i - int(v)
                 else:
                     raise ChildrenException("end()'s term must be a positive int")
-            if i >= 0 and i < len(self.matcher.line):
+            if 0 <= i < len(self.matcher.line):
+                # if i >= 0 and i < len(self.matcher.line):
                 self.value = self.matcher.line[i]
 
     def matches(self, *, skip=None) -> bool:

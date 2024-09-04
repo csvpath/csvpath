@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+import math
 from .function import Function
 
 
@@ -18,7 +19,7 @@ class Divide(Function):
             if i == 0:
                 ret = v
             else:
-                if ret == float("nan") or float(v) == 0:
+                if math.isnan(ret) or float(v) == 0:
                     ret = float("nan")
                 else:
                     ret = float(ret) / float(v)

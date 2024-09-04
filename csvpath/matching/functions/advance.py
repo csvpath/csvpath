@@ -17,8 +17,10 @@ class Advance(Function):
         try:
             v = int(v)
             self.matcher.csvpath.advance(v)
-        except Exception:
-            raise ChildrenException(f"Advance must contain an int, not {type(v)}")
+        except (TypeError, ValueError) as e:
+            raise ChildrenException(
+                f"Advance must contain an int, not {type(v)}"
+            ) from e
         self.value = True
 
     def matches(self, *, skip=None) -> bool:

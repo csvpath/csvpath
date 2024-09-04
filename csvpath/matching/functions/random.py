@@ -1,6 +1,7 @@
 # pylint: disable=C0114
-from .function import Function
 from random import randrange
+from .function import Function
+from ..productions import ChildrenException
 
 
 class Random(Function):
@@ -14,9 +15,9 @@ class Random(Function):
         lower = self.children[0].left.to_value(skip=skip)
         upper = self.children[0].right.to_value(skip=skip)
         if lower is None:
-            lower == 0
+            lower = 0
         if upper is None or upper <= lower:
-            upper == 1
+            raise ChildrenException("Upper must be an int > than the first arg")
         lower = int(lower)
         upper = int(upper)
         # we are inclusive, but randrange is not

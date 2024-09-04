@@ -1,7 +1,7 @@
 # pylint: disable=C0114
+import re
 from ..productions import Term
 from .function import Function
-import re
 
 
 class Regex(Function):
@@ -55,9 +55,10 @@ class Regex(Function):
                 self.value = v
             elif self.name == "exact":
                 self.value = v == thevalue
-            self.matcher.csvpath.logger.info(
-                f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
-            )
+            s = f"Regex.to_value: mode: {self.name}, capture group at {group}: {v},"
+            s = f"{s} with regex: {theregex}, original value: {thevalue},"
+            s = f"{s} returning: {self.value}"
+            self.matcher.csvpath.logger.info(s)
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

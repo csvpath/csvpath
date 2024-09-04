@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
+from csvpath import ConfigurationException
 from .function import Function
 from ..productions import Term
 from ..util.expression_utility import ExpressionUtility
-from csvpath import ConfigurationException
 
 
 class Import(Function):

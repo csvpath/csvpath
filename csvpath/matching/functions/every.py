@@ -39,8 +39,10 @@ class Every(Function):
             # what's the best option? a default int? for now just raising.
             try:
                 every = int(every)
-            except Exception:
-                raise ChildrenException("every()'s second argument must be an int")
+            except (TypeError, ValueError) as e:
+                raise ChildrenException(
+                    "every()'s second argument must be an int"
+                ) from e
             if cnt % every == 0:
                 self.value = True
             else:

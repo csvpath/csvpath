@@ -1,27 +1,17 @@
 # pylint: disable=C0114
 from typing import Any
+from statistics import mean, median
 from .function import Function
 from ..productions import Equality, Variable, Term, Header
 from ..util.expression_utility import ExpressionUtility
 from ..productions.expression import Matchable
-from statistics import mean, median
 
 
 class MinMax(Function):
     """base class for some of the math functions"""
 
-    """
-    # note to self:
-    # longest value
-    # quintile
-    # decile
-    """
-
     MAX = True
     MIN = False
-
-    def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
-        super().__init__(matcher, name, child)
 
     def _get_the_value(self) -> Any:
         if isinstance(self.children[0], Equality):
@@ -73,11 +63,11 @@ class MinMax(Function):
             "min" if maxormin is MinMax.MIN else "max"
         )
         m = None
-        for k, v in enumerate(all_values.items()):  # pylint: disable=W0612
+        for k, val in enumerate(all_values.items()):  # pylint: disable=W0612
             # re: W0612: can change, but not now
-            v = v[1]
-            if not m or ((v < m) if maxormin is MinMax.MIN else (v > m)):
-                m = v
+            val = val[1]
+            if not m or ((val < m) if maxormin is MinMax.MIN else (val > m)):
+                m = val
         return m
 
 
@@ -92,12 +82,9 @@ class Min(MinMax):
         self.validate_one_or_two_args(one=types, left=types, right=types)
         super().check_valid()
 
-    def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
-        super().__init__(matcher, name, child)
-
     def _produce_value(self, skip=None) -> None:
         if self._ignore():
-            return self.value
+            return
         v = self._get_the_value_conformed()
         self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
         m = self._store_and_compare(v, MinMax.MIN)
@@ -115,12 +102,9 @@ class Max(MinMax):
         self.validate_one_or_two_args(one=types, left=types, right=types)
         super().check_valid()
 
-    def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
-        super().__init__(matcher, name, child)
-
     def _produce_value(self, skip=None) -> None:
         if self._ignore():
-            return self.value
+            return
         v = self._get_the_value_conformed()
         self.matcher.set_variable("max", tracking=f"{self._get_the_line()}", value=v)
         m = self._store_and_compare(v, MinMax.MAX)
@@ -151,10 +135,12 @@ class Average(MinMax):
             self._get_the_name() in self.matcher.csvpath.headers
             and self.matcher.csvpath.line_monitor.physical_line_number == 0
         ):
-            return self.value
+            return
+            # return self.value
         # if the line must match and it doesn't stop here and return
         if self.is_match() and not self.line_matches():
-            return self.value
+            return
+            # return self.value
         n = self.first_non_term_qualifier(self.ave_or_med)
         # set the "average" or "median" variable tracking the value by line, scan, or match count
         self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)

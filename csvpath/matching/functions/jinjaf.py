@@ -1,7 +1,8 @@
 # pylint: disable=C0114
-from typing import Dict
+from typing import Dict, Any
 from .function import Function
 from .printf import Print
+from ..productions import Matchable
 from ..util.exceptions import ChildrenException
 
 
@@ -9,6 +10,10 @@ class Jinjaf(Function):
     """uses Jinja to transform a template using csvpath to get
     values. this is basically a fancy (and relatively slow) form
     of print()."""
+
+    def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
+        super().__init__(matcher, name=name, child=child)
+        self._engine = None
 
     def check_valid(self) -> None:
         self.validate_two_args()
@@ -44,7 +49,9 @@ class Jinjaf(Function):
 
     def _simplify_tokens(self) -> dict:
         ts2 = {}
-        ts = Print.tokens(self.matcher)
+        ts = Print.tokens(self.matcher)  # pylint: disable=E1101
+        # re: E1101: jinja is current broken due to the new print parser, etc.
+        # no point fixing this line till the class is rebuilt
         for k, v in ts.items():
             _ = k[2:]
             ts2[_] = v
@@ -60,23 +67,22 @@ class Jinjaf(Function):
         return self._engine.a(word)
 
     def _transform(self, content: str, tokens: Dict[str, str] = None) -> str:
-        #
-        # leave these imports here so we don't add latency
-        # unless we're actually rendering a template.
-        #
-        from jinja2 import Template
-        import inflect
-        import traceback
+        from jinja2 import Template, TemplateError  # pylint: disable=C0415
+        import inflect  # pylint: disable=C0415
+        import traceback  # pylint: disable=C0415
+
+        # re: C0415: leave these imports here. they are super slow.
+        # so we don't want the latency in testing or ever unless we're
+        # actually rendering a template.
 
         self._engine = inflect.engine()
-
         tokens["plural"] = self._plural
         tokens["cap"] = self._cap
         tokens["article"] = self._article
         try:
             template = Template(content)
             content = template.render(tokens)
-        except Exception:
+        except TemplateError:
             print(traceback.format_exc())
 
         return content

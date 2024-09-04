@@ -1,11 +1,10 @@
 # pylint: disable=C0114
 from .function import Function
 from ..productions import Header, Variable
+from ..util.expression_utility import ExpressionUtility
 
-#
 # note to self: should be possible to request a check of all
 # headers.
-#
 
 
 class Empty(Function):
@@ -25,17 +24,8 @@ class Empty(Function):
             v = self.children[0].to_value()
             ab = self.children[0].asbool
             if ab:
-                try:
-                    v = bool(v)
-                    self.match = v
-                except Exception:
-                    #
-                    # TODO: use ExpressionUtility.asbool. note it existence tests different.
-                    #
-                    self.matcher.csvpath.logger.warning(
-                        f"Cannot convert {v} to bool; therefore the asbool match is False"
-                    )
-                    self.match = False
+                v = ExpressionUtility.asbool(v)
+                self.match = v
             elif v is None:
                 self.match = True
             elif isinstance(v, list) and len(v) == 0:

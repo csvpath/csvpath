@@ -8,12 +8,13 @@ class HeaderNamesMismatch(Function):
     optionally are in the same order
     """
 
-    def _produce_value(self, skip=None) -> None:
+    def _produce_value(self, skip=None) -> None:  # pylint: disable=R0912
+        # re: R0912: not pretty, but tested, can come back
         varname = self.first_non_term_qualifier(self.name)
         present = self.matcher.get_variable(f"{varname}_present")
         if present and len(present) == len(self.matcher.csvpath.headers):
             self.value = True
-        elif present:
+        elif present:  # pylint: disable=R1702
             self.value = False
         else:
             header_names = self._value_one(skip=skip)

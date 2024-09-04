@@ -11,7 +11,10 @@ class Increment(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
+    def to_value(self, *, skip=None) -> Any:  # pylint: disable=R0912
+        # re: R0912: not pretty, but tested. whole needs to be reworked in
+        # any case so we can get it into _produce_value() -- current
+        # onmatch is too low.
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         tv = self.children[0].right.to_value()

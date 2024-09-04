@@ -15,7 +15,9 @@ class Function(Validation):
             self.add_child(child)
 
     def __str__(self) -> str:
-        return f"""{self._simple_class_name()}.{self.name}({self._function_or_equality if self._function_or_equality is not None else ""})"""
+        scn = self._simple_class_name()
+        foe = self._function_or_equality
+        return f"""{scn}.{self.name}({foe if foe is not None else ""})"""
 
     def reset(self) -> None:
         self.value = None

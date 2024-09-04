@@ -106,7 +106,7 @@ class ExpressionUtility:
         else:
             try:
                 ret = bool(v)
-            except Exception:
+            except (TypeError, ValueError):
                 ret = True  # we're not None so we exist
         return ret
 

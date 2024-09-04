@@ -1,6 +1,6 @@
 # pylint: disable=C0114
+from typing import Any as AnyType
 
-from typing import Any
 from .headers import Headers
 from .variables import Variables
 from .function import Function
@@ -23,19 +23,13 @@ class Any(Function):
             solo_arg=[Term, Headers, Variables],
             second_arg=[Term],
         )
-        """
-            raise ChildrenException(
-                f" ""
-                    Left side of equality child of any() must be header() or variable(),
-                    not {self.children[0].left}" ""
-            )
-            """
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
+    def to_value(self, *, skip=None) -> AnyType:
         return self.matches(skip=skip)  # pragma: no cover
 
     def matches(self, *, skip=None) -> bool:
+        # re: R0912: complexity is too high. _bare_any() should help. plan to refactor.
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         if self.match is None:
@@ -55,22 +49,25 @@ class Any(Function):
                         self.check_value()
                 else:
                     # any()
-                    for h in self.matcher.line:
-                        if h is None:
-                            continue
-                        if h is f"{h}".strip() == "":
-                            continue
-                        self.match = True
-                        break
-                    if self.match is False:
-                        for v in self.matcher.csvpath.variables.values():
-                            if v is None:
-                                continue
-                            if v is f"{v}".strip() == "":
-                                continue
-                            self.match = True
-                            break
+                    self._bare_any()
         return self.match
+
+    def _bare_any(self) -> None:
+        for h in self.matcher.line:
+            if h is None:
+                continue
+            if f"{h}".strip() == "":
+                continue
+            self.match = True
+            break
+        if self.match is False:
+            for v in self.matcher.csvpath.variables.values():
+                if v is None:
+                    continue
+                if f"{v}".strip() == "":
+                    continue
+                self.match = True
+                break
 
     def check_value(self):  # pylint: disable=C0116
         value = self.children[0].to_value()
@@ -88,7 +85,7 @@ class Any(Function):
         for h in self.matcher.line:
             if h is None:
                 continue
-            elif h is f"{h}".strip() == "":
+            if f"{h}".strip() == "":
                 continue
             self.match = True
             break
@@ -97,7 +94,7 @@ class Any(Function):
         for v in self.matcher.csvpath.variables.values():
             if v is None:
                 continue
-            elif v is f"{v}".strip() == "":
+            if f"{v}".strip() == "":
                 continue
             self.match = True
             break
@@ -115,6 +112,7 @@ class Any(Function):
                     self.match = True
                     break
         else:
+            c = self.children[0].left
             raise ChildrenException(
-                f"Left side of equality child of any() must be header() or variable(), not {self.children[0].left}"
+                f"Left child of any() must be header or variable, not {c}"
             )

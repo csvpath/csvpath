@@ -1,11 +1,11 @@
 # pylint: disable=C0114
 
 from typing import Any
+from csvpath import ConfigurationException
 from .function import Function
 from .headers import Headers
 from .variables import Variables
 from ..productions import Equality
-from csvpath import ConfigurationException
 
 
 class All(Function):

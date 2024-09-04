@@ -1,6 +1,6 @@
 # pylint: disable=C0114
-from .function import Function
 import datetime
+from .function import Function
 
 
 class Now(Function):
@@ -11,14 +11,14 @@ class Now(Function):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        format = None
+        form = None
         if len(self.children) == 1:
-            format = self.children[0].to_value(skip=skip)
-            format = f"{format}".strip()
+            form = self.children[0].to_value(skip=skip)
+            form = f"{form}".strip()
         x = datetime.datetime.now()
         xs = None
-        if format:
-            xs = x.strftime(format)
+        if form:
+            xs = x.strftime(form)
         else:
             xs = f"{x}"
         self.value = xs

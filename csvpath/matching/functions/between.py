@@ -12,29 +12,6 @@ class Between(Function):
         self.validate_three_args()
         super().check_valid()
 
-    """
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            siblings = self.children[0].commas_to_list()
-            me = siblings[0].to_value(skip=skip)
-            a = siblings[1].to_value(skip=skip)
-            b = siblings[2].to_value(skip=skip)
-            if me is None or a is None or b is None:
-                self.value = False
-            else:
-                # simple approach for now.
-                self.value = self._try_numbers(me, a, b)
-                if self.value is None:
-                    self.value = self._try_dates(me, a, b)
-                if self.value is None:
-                    self.value = self._try_strings(me, a, b)
-            if self.value is None:
-                self.value = False
-        return self.value
-    """
-
     def _produce_value(self, skip=None) -> None:
         siblings = self.children[0].commas_to_list()
         me = siblings[0].to_value(skip=skip)
@@ -61,7 +38,7 @@ class Between(Function):
     def _between(self) -> bool:
         if self.name in ["between", "inside"]:
             return True
-        elif self.name in ["beyond", "outside"]:
+        if self.name in ["beyond", "outside"]:
             return False
         raise ChildrenException(f"{self.name}() is not a known function")
 
@@ -98,5 +75,5 @@ class Between(Function):
     def _compare(self, high, med, low):
         between = self._between()
         if between:
-            return high > med and med > low
+            return high > med > low
         return (high < med and low < med) or (high > med and low > med)

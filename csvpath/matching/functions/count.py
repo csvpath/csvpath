@@ -7,9 +7,10 @@ class Count(Function):
     """counts matches by default. when fed other match components
     it can count more specific things."""
 
-    def check_valid(self) -> None:
+    def check_valid(self) -> None:  # pylint: disable=W0246
         # note to self: no specific validity checks from way back
-        super().check_valid()
+        super().check_valid()  # pylint: disable=W0246
+        # re: W0246: Matchable handles this class's children
 
     #
     # not easy to move this to _produce_value() because it does onmatch

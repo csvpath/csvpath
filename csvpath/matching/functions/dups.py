@@ -1,7 +1,7 @@
 # pylint: disable=C0114
+import hashlib
 from .function import Function
 from ..productions import Header, Equality, ChildrenException
-import hashlib
 
 
 class HasDups(Function):

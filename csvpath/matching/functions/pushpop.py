@@ -26,7 +26,7 @@ class Push(Function):
             stack.append(v)
         else:
             self.matcher.csvpath.logger.warning(
-                "Push cannot do its work because no default stack was created. The run may be ending."
+                "No default stack was created. Run may be ending."
             )
         self.value = True
 
@@ -39,7 +39,8 @@ class Push(Function):
 class PushDistinct(Push):
     """pushes only distinct values to a stack variable"""
 
-    def check_valid(self) -> None:
+    def check_valid(self) -> None:  # pylint: disable=W0246
+        # re: W0246: Matchable handles the children's validity
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:

@@ -128,8 +128,9 @@ class Validation(Matchable):
                 )
             if left and len(left) > 0:
                 if not self._class_match(self.children[0].left, left):
+                    t = type(self.children[0].left)
                     raise ChildrenException(
-                        f"{self.name}()'s first argument must be of type: {left}, not {self.children[0].left.__class__}"
+                        f"{self.name}()'s first arg must be {left}, not {t}"
                     )
             if right and len(right) > 0:
                 if not self._class_match(self.children[0].right, right):
@@ -196,17 +197,17 @@ class Validation(Matchable):
                 f"{self}() must have 2 or more arguments, not {len(self.children)}"
             )
         # , indicates arguments, at least 2
-        elif not hasattr(self.children[0], "op"):
+        if not hasattr(self.children[0], "op"):
             raise ChildrenException(
                 f"{self}() must have 2 or more arguments, not {self.children}"
             )
-        elif self.children[0].op != ",":
+        if self.children[0].op != ",":
             raise ChildrenException(
                 f"{self.name}() must have 2 or more arguments, op: {self.children[0].op}"
             )
         # if we can't find left or right we have < 2 arguments. left or right
         # could be equalities so the number may be more than 2
-        elif self.children[0].left is None or self.children[0].right is None:
+        if self.children[0].left is None or self.children[0].right is None:
             raise ChildrenException(f"{self.name}() must have 2 or more arguments")
 
     def validate_three_args(self) -> None:  # pylint: disable=C0116

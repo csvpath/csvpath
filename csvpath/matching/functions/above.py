@@ -38,9 +38,9 @@ class AboveBelow(Function):
             self.value = False
 
     def _above(self) -> bool:
-        if self.name == "gt" or self.name == "above" or self.name == "after":
+        if self.name in ["gt", "above", "after"]:
             return True
-        if self.name == "lt" or self.name == "below" or self.name == "before":
+        if self.name in ["lt", "below", "before"]:
             return False
         raise ChildrenException(f"{self.name}() is not a known function")
 

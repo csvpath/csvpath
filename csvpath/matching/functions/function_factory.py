@@ -127,7 +127,7 @@ class FunctionFactory:
         return aname, qualifier
 
     @classmethod
-    def get_function(  # noqa: C901 #pylint: disable=C0116
+    def get_function(  # noqa: C901 #pylint: disable=C0116,R0912, R0915
         cls,
         matcher,
         *,
