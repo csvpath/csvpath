@@ -8,8 +8,9 @@ from .. import ConfigurationException
 
 
 class CsvPathsManager(ABC):
-    """holds paths in a named set. this allows all paths to be run
-    as a unit, with the results manager holding the set's outcomes."""
+    """holds paths (the path itself, not a file name or reference) in a named set.
+    this allows all paths to be run as a unit, with the results manager holding
+    the set's outcomes."""
 
     @abstractmethod
     def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
@@ -20,10 +21,13 @@ class CsvPathsManager(ABC):
 
     @abstractmethod
     def set_named_paths_from_json(self, filename: str) -> None:
+        """replaces the named paths dict with a dict found in a JSON file. lists
+        of paths are keyed by names."""
         pass
 
     @abstractmethod
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
+        """overwrites"""
         pass
 
     @abstractmethod
@@ -34,19 +38,19 @@ class CsvPathsManager(ABC):
         """
 
     @abstractmethod
-    def get_named_paths(self, name: str) -> List[str]:
+    def get_named_paths(self, name: str) -> List[str]:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def remove_named_paths(self, name: str) -> None:
+    def remove_named_paths(self, name: str) -> None:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def has_named_paths(self, name: str) -> bool:
+    def has_named_paths(self, name: str) -> bool:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def number_of_named_paths(self) -> bool:
+    def number_of_named_paths(self) -> bool:  # pylint: disable=C0116
         pass
 
 

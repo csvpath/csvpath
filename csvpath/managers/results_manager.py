@@ -83,7 +83,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         self.csvpaths = csvpaths
 
     @property
-    def csvpaths(self):  # noqa: F821
+    def csvpaths(self):  # noqa: F821 pylint: disable=C0116
         return self._csvpaths
 
     @csvpaths.setter
@@ -91,9 +91,12 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         self._csvpaths = cs
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
+        """gets the run metadata. will include the metadata complete from
+        the first results. however, the metadata for individual results must
+        come direct from them in order to not overwrite"""
         results = self.get_named_results(name)
         meta = {}
-        if results and len(results):
+        if results and len(results) > 0:
             rs = results[0]
             path = rs.csvpath
             meta["paths_name"] = rs.paths_name
@@ -103,10 +106,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             meta["csvpaths_applied"] = paths
             meta["csvpaths_completed"] = paths == len(results)
             meta["valid"] = self.is_valid(name)
-            #
-            # this isn't where variables belong
-            #
-            # meta["all_variables"] = self.get_variables(name)
             meta = {**meta, **rs.csvpath.metadata}
         return meta
 

@@ -48,7 +48,7 @@ class MinMax(Function):
             return self.matcher.csvpath.line_monitor.physical_line_number
         return self.matcher.csvpath.line_monitor.physical_line_number
 
-    def is_match(self) -> bool:
+    def is_match(self) -> bool:  # pylint: disable=C0116
         if self.onmatch:
             return True
         if isinstance(self.children[0], Equality):

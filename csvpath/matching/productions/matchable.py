@@ -22,6 +22,8 @@ class Matchable(Qualified):
         return f"""{self.__class__}"""
 
     def check_valid(self) -> None:
+        """structural check; doesn't test the values. nothing should
+        test or use the values until this test is completed."""
         for _ in self.children:
             _.check_valid()
 
@@ -38,37 +40,45 @@ class Matchable(Qualified):
         return self.value if self.value is not None else self._noop_match()
 
     def reset(self) -> None:
+        """called after every line to make the match components ready
+        for the next line"""
         # let the subclasses handle self.value and self.match
         for child in self.children:
             child.reset()
 
     def matches(self, *, skip=None) -> bool:  # pylint: disable=W0613
+        """
+        subclasses should override this method for clarity even if
+        not doing any processing.
+        """
         #
-        # subclasses should override this method for clarity
         # we can ignore W0613. this method essentially defines an interface.
         #
         return True
 
     def to_value(self, *, skip=None) -> Any:  # pylint: disable=W0613
+        """
+        subclasses should prefer to override _produce_value(), but they may
+        override this method if there are special requirements.
+        """
         #
-        # subclasses should override this method for clarity.
         # we can ignore W0613. this method essentially defines an interface.
         #
         return None
 
-    def index_of_child(self, o) -> int:
+    def index_of_child(self, o) -> int:  # pylint: disable=C0116
         return self.children.index(o)
 
-    def set_parent(self, parent: Self) -> None:
+    def set_parent(self, parent: Self) -> None:  # pylint: disable=C0116
         self.parent = parent
 
-    def add_child(self, child: Self) -> None:
+    def add_child(self, child: Self) -> None:  # pylint: disable=C0116
         if child:
             child.set_parent(self)
             if child not in self.children:
                 self.children.append(child)
 
-    def get_id(self, child: Self = None) -> str:
+    def get_id(self, child: Self = None) -> str:  # pylint: disable=C0116
         self.matcher.csvpath.logger.debug(
             f"Matchable.get_id: for child: {child} or self: {self}"
         )

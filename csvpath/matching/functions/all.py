@@ -41,7 +41,7 @@ class All(Function):
                         raise ConfigurationException("Child cannot be {child}")
         return self.match
 
-    def all_variables(self) -> None:
+    def all_variables(self) -> None:  # pylint: disable=C0116
         # default is True in case no vars
         self.match = True
         for v in self.matcher.csvpath.variables.values():
@@ -50,7 +50,7 @@ class All(Function):
                 return
         self.match = True
 
-    def all_exist(self):
+    def all_exist(self):  # pylint: disable=C0116
         if len(self.matcher.line) != len(self.matcher.csvpath.headers):
             self.match = False
             return
@@ -60,7 +60,7 @@ class All(Function):
                 return
         self.match = True
 
-    def equality(self):
+    def equality(self):  # pylint: disable=C0116
         siblings = self.children[0].commas_to_list()
         for s in siblings:
             v = s.to_value(skip=[self])

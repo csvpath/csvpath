@@ -30,7 +30,7 @@ class Equality(Matchable):
         super().reset()
 
     @property
-    def left(self):
+    def left(self):  # pylint: disable=C0116
         if len(self.children) > 0:
             return self.children[0]
 
@@ -45,7 +45,7 @@ class Equality(Matchable):
             self.children[0] = o
 
     @property
-    def right(self):
+    def right(self):  # pylint: disable=C0116
         if len(self.children) > 1:
             return self.children[1]
 
@@ -58,7 +58,7 @@ class Equality(Matchable):
             self.children.append(None)
         self.children[1] = o
 
-    def other_child(self, o):
+    def other_child(self, o):  # pylint: disable=C0116
         if self.left == o:
             return (self.right, 1)
         if self.right == o:
@@ -66,6 +66,7 @@ class Equality(Matchable):
         return None
 
     def is_terminal(self, o):
+        """is non equality. a bit misleading because children of functions can be equalities."""
         return (
             isinstance(o, Variable)
             or isinstance(o, Term)
@@ -75,22 +76,17 @@ class Equality(Matchable):
         )
 
     def both_terminal(self):
+        """both are non-equalities"""
         return self.is_terminal(self.left) and self.is_terminal(self.right)
 
     def commas_to_list(self) -> List[Any]:
+        """gets the children of op==',' equalities as a list of args"""
         ls = []
         for _ in self.children:
             ls.append(_)
         return ls
 
-    def _to_list(self, ls: List, p):
-        if isinstance(p, Equality) and p.op == ",":
-            self._to_list(ls, p.left)
-            self._to_list(ls, p.right)
-        else:
-            ls.append(p)
-
-    def set_operation(self, op):
+    def set_operation(self, op):  # pylint: disable=C0116
         self.op = op
 
     def __str__(self) -> str:

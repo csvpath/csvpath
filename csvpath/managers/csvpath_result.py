@@ -9,15 +9,15 @@ class CsvPathErrorCollector(ABC):
     but also matcher, scanner, and elsewhere."""
 
     @abstractmethod
-    def errors(self) -> List[Error]:
+    def errors(self) -> List[Error]:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def collect_error(self, error: Error) -> None:
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def has_errors(self) -> bool:
+    def has_errors(self) -> bool:  # pylint: disable=C0116
         pass
 
 
@@ -50,15 +50,15 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._last_line = None
 
     @property
-    def variables(self) -> Dict[str, Any]:
+    def variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.variables
 
     @property
-    def all_variables(self) -> Dict[str, Any]:
+    def all_variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.csvpaths.results_manager.get_variables(self.paths_name)
 
     @property
-    def paths_name(self) -> str:
+    def paths_name(self) -> str:  # pylint: disable=C0116
         return self._paths_name
 
     @paths_name.setter
@@ -66,7 +66,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._paths_name = paths_name
 
     @property
-    def file_name(self) -> str:
+    def file_name(self) -> str:  # pylint: disable=C0116
         return self._file_name
 
     @file_name.setter
@@ -74,7 +74,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._file_name = file_name
 
     @property
-    def lines(self) -> List[List[Any]]:
+    def lines(self) -> List[List[Any]]:  # pylint: disable=C0116
         return self._lines
 
     @lines.setter
@@ -82,7 +82,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._lines = ls
 
     @property
-    def csvpath(self) -> CsvPath:
+    def csvpath(self) -> CsvPath:  # pylint: disable=C0116
         return self._csvpath
 
     @csvpath.setter
@@ -92,19 +92,19 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
         self._csvpath = path
 
     @property
-    def errors(self) -> List[Error]:
+    def errors(self) -> List[Error]:  # pylint: disable=C0116
         return self._errors
 
-    def errors_count(self) -> int:
+    def errors_count(self) -> int:  # pylint: disable=C0116
         return len(self._errors) if self._errors else 0
 
-    def collect_error(self, error: Error) -> None:
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         self._errors.append(error)
 
-    def has_errors(self) -> bool:
+    def has_errors(self) -> bool:  # pylint: disable=C0116
         return len(self.errors) > 0
 
-    def is_valid(self) -> bool:
+    def is_valid(self) -> bool:  # pylint: disable=C0116
         if self._csvpath:
             return self._csvpath.is_valid
         return False
@@ -117,12 +117,12 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
             self._printouts = []
         return self._printouts["default"] if "default" in self._printouts else []
 
-    def get_printout_by_name(self, name: str) -> List[str]:
+    def get_printout_by_name(self, name: str) -> List[str]:  # pylint: disable=C0116
         if self._printouts is None:
             self._printouts = []
         return self._printouts[name] if name in self._printouts else []
 
-    def has_printouts(self) -> bool:
+    def has_printouts(self) -> bool:  # pylint: disable=C0116
         return len(self._printouts) > 0 if self._printouts else False
 
     @property
@@ -143,14 +143,13 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     def last_line(self):
         return self._last_line
 
-    def dump_printing(self) -> None:
+    def dump_printing(self) -> None:  # pylint: disable=C0116
         for name in self._printouts:
-            print(f"dumping printed lines named '{name}'")
             for line in self._printouts[name]:
                 print(line)
             print("")
 
-    def print_statements_count(self) -> int:
+    def print_statements_count(self) -> int:  # pylint: disable=C0116
         i = 0
         for name in self._printouts:
             i += len(self._printouts[name]) if self._printouts[name] else 0

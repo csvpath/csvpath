@@ -94,6 +94,7 @@ class FunctionFactory:
 
     @classmethod
     def add_function(cls, name: str, function: Function) -> None:
+        """use to add a new, external function at runtime"""
         if name is None:
             name = function.name
         if name is None:
@@ -115,7 +116,7 @@ class FunctionFactory:
         cls.NOT_MY_FUNCTION[name] = function.__class__
 
     @classmethod
-    def get_name_and_qualifier(cls, name: str):
+    def get_name_and_qualifier(cls, name: str):  # pylint: disable=C0116
         aname = name
         qualifier = None
         dot = name.find(".")
@@ -126,7 +127,7 @@ class FunctionFactory:
         return aname, qualifier
 
     @classmethod
-    def get_function(  # noqa: C901
+    def get_function(  # noqa: C901 #pylint: disable=C0116
         cls,
         matcher,
         *,

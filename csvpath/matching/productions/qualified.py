@@ -54,6 +54,8 @@ class Qualified:
             raise ChildrenException(f"Name of {self} cannot be the empty string")
 
     def first_non_term_qualifier(self, default: None) -> Optional[str]:
+        """non-term qualifiers are arbitrary names that may or may not affect
+        the operation of the component they are placed on"""
         if not self.qualifiers:  # this shouldn't happen but what if it did
             return default
         for q in self.qualifiers:
@@ -62,6 +64,8 @@ class Qualified:
         return default
 
     def second_non_term_qualifier(self, default: None) -> Optional[str]:
+        """non-term qualifiers are arbitrary names that may or may not affect
+        the operation of the component they are placed on"""
         first = self.first_non_term_qualifier()
         if first is None:
             return default
@@ -72,16 +76,16 @@ class Qualified:
                 return q
         return default
 
-    def set_qualifiers(self, qs) -> None:
+    def set_qualifiers(self, qs) -> None:  # pylint: disable=C0116
         self.qualifier = qs
         if qs is not None:
             self.qualifiers = qs.split(".")
 
-    def add_qualifier(self, q) -> None:
+    def add_qualifier(self, q) -> None:  # pylint: disable=C0116
         if q not in self.qualifiers:
             self.qualifiers.append(q)
 
-    def has_qualifier(self, q) -> bool:
+    def has_qualifier(self, q) -> bool:  # pylint: disable=C0116
         return q in self.qualifiers
 
     def _set(self, string: str, on: bool):
@@ -94,7 +98,7 @@ class Qualified:
                 pass
 
     @property
-    def variables(self) -> bool:
+    def variables(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.VARIABLES.value in self.qualifiers
         return False
@@ -104,7 +108,7 @@ class Qualified:
         self._set(Qualities.VARIABLES.value, v)
 
     @property
-    def headers(self) -> bool:
+    def headers(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.HEADERS.value in self.qualifiers
         return False
@@ -114,7 +118,7 @@ class Qualified:
         self._set(Qualities.HEADERS.value, h)
 
     @property
-    def notnone(self) -> bool:
+    def notnone(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.NOTNONE.value in self.qualifiers
         return False
@@ -124,7 +128,7 @@ class Qualified:
         self._set(Qualities.NOTNONE.value, nn)
 
     @property
-    def latch(self) -> bool:
+    def latch(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.LATCH.value in self.qualifiers
         return False
@@ -134,7 +138,7 @@ class Qualified:
         self._set(Qualities.LATCH.value, latch)
 
     @property
-    def nocontrib(self) -> bool:
+    def nocontrib(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.NOCONTRIB.value in self.qualifiers
         return False
@@ -144,7 +148,7 @@ class Qualified:
         self._set(Qualities.NOCONTRIB.value, nc)
 
     @property
-    def asbool(self) -> bool:
+    def asbool(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.ASBOOL.value in self.qualifiers
         return False
@@ -158,7 +162,7 @@ class Qualified:
     # =============
 
     @property
-    def onmatch(self) -> bool:
+    def onmatch(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.ONMATCH.value in self.qualifiers
         return False
@@ -167,7 +171,10 @@ class Qualified:
     def onmatch(self, om: bool) -> None:
         self._set(Qualities.ONMATCH.value, om)
 
-    def do_onmatch(self):
+    def do_onmatch(self):  # pylint: disable=C0116
+        """if True, proceed. True does not mean this
+        circumstance obtained, it could just be that this
+        qualified doesn't have the qualfication."""
         # re: E1101: inheritance structure. good point, but not the time to fix it.
         ret = not self.onmatch or self.line_matches()  # pylint: disable=E1101
         self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
@@ -176,6 +183,11 @@ class Qualified:
         return ret
 
     def line_matches(self):
+        """checks that all other match components report True. this can result in
+        multiple iterations over the match component tree; however, we minimize
+        the impact by cutting off at the expression and shortcircuting using the
+        self.value and self.match properties. we also take care to not recurse
+        by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
             m = e[1] is True or e[0].matches(skip=[self])  # pylint: disable=E1101
@@ -188,6 +200,9 @@ class Qualified:
     # =============
 
     def do_onchange(self):
+        """if True, proceed. True does not mean this
+        circumstance obtained, it could just be that this
+        qualified doesn't have the qualfication."""
         if not self.onchange:
             return True
         id = self.get_id()  # pylint: disable=E1101
@@ -199,7 +214,7 @@ class Qualified:
         return me != v
 
     @property
-    def onchange(self) -> bool:
+    def onchange(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.ONCHANGE.value in self.qualifiers
         return False
@@ -213,7 +228,7 @@ class Qualified:
     # =============
 
     @property
-    def once(self) -> bool:
+    def once(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.ONCE.value in self.qualifiers
         return False
@@ -222,7 +237,7 @@ class Qualified:
     def once(self, o: bool) -> None:
         self._set(Qualities.ONCE.value, o)
 
-    def do_once(self):
+    def do_once(self):  # pylint: disable=C0116
         ret = not self.once or self._has_not_yet()
         self.matcher.csvpath.logger.debug(
             f"Qualified.do_ononce: {ret} for {self.name}"

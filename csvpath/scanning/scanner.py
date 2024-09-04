@@ -46,6 +46,7 @@ class Scanner:
         all_lines: bool = None,
         these: List[int] = None,
     ) -> bool:
+        """identifies the last line to be scanned"""
         from_line = self.from_line if from_line == -1 else from_line
         to_line = self.to_line if to_line == -1 else to_line
         all_lines = self.all_lines if all_lines is None else all_lines
@@ -69,6 +70,7 @@ class Scanner:
         all_lines: bool = None,
         these: List[int] = None,
     ) -> bool:
+        """determines if a line is included in scanning"""
         from_line = self.from_line if from_line == -1 else from_line
         to_line = self.to_line if to_line == -1 else to_line
         all_lines = self.all_lines if all_lines is None else all_lines
@@ -96,6 +98,7 @@ class Scanner:
     # ===================
 
     def parse(self, data):
+        """loads the scanner and parses the scan part of the csvpath"""
         self.path = data
         self.parser.parse(data, lexer=self.lexer.lexer)
         return self.parser
@@ -104,11 +107,11 @@ class Scanner:
     # productions
     # ===================
 
-    def p_error(self, p):
+    def p_error(self, p):  # pylint: disable=C0116
         ParserUtility().error(self.parser, p)
         raise ScanException(f"Halting for scanner parsing error on {self.path}")
 
-    def p_path(self, p):
+    def p_path(self, p):  # pylint: disable=C0116
         "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"
         filename = p[1].strip()
         if filename[0] != "$":
@@ -118,7 +121,7 @@ class Scanner:
 
     # ===================
 
-    def p_expression(self, p):
+    def p_expression(self, p):  # pylint: disable=C0116
         """expression : expression PLUS term
         | expression MINUS term
         | term"""
@@ -131,7 +134,7 @@ class Scanner:
             self._collect_a_line_number(p)
         p[0] = self.these if self.these else [self.from_line]
 
-    def p_term(self, p):
+    def p_term(self, p):  # pylint: disable=C0116
         """term : NUMBER
         | NUMBER ALL_LINES
         | ALL_LINES"""
@@ -148,14 +151,14 @@ class Scanner:
     # production support
     # ===================
 
-    def _add_two_lines(self, p):
+    def _add_two_lines(self, p):  # pylint: disable=C0116
         self._move_range_to_these()
         if p[1] and p[1][0] not in self.these:
             self.these.extend(p[1])
         if p[3] and p[3][0] not in self.these:
             self.these.extend(p[3])
 
-    def _collect_a_line_range(self, p):
+    def _collect_a_line_range(self, p):  # pylint: disable=C0116
         if not isinstance(p[1], list):
             raise UnexpectedProductionException(
                 "Non array in p[1]. You should fix this."
@@ -194,14 +197,14 @@ class Scanner:
                 self.from_line = p[1][len(p[1]) - 1]
                 self._move_range_to_these()
 
-    def _collect_a_line_number(self, p):
+    def _collect_a_line_number(self, p):  # pylint: disable=C0116
         if isinstance(p[1], list):
             if p[1] and p[1][0] not in self.these:
                 self.these.extend(p[1])
         elif not self.from_line:
             self.from_line = p[1]
 
-    def _move_range_to_these(self):
+    def _move_range_to_these(self):  # pylint: disable=C0116
         if not self.from_line or not self.to_line:
             return
         for i in range(self.from_line, self.to_line + 1):
@@ -210,7 +213,7 @@ class Scanner:
         self.from_line = None
         self.to_line = None
 
-    def _add_range_to_these(self, fline, tline):
+    def _add_range_to_these(self, fline, tline):  # pylint: disable=C0116
         for i in range(fline, tline + 1):
             if i not in self.these:
                 self.these.append(i)

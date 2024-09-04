@@ -72,7 +72,7 @@ class Any(Function):
                             break
         return self.match
 
-    def check_value(self):
+    def check_value(self):  # pylint: disable=C0116
         value = self.children[0].to_value()
         for h in self.matcher.line:
             if f"{h}" == f"{value}":
@@ -84,7 +84,7 @@ class Any(Function):
                         self.match = True
                         break
 
-    def header(self):
+    def header(self):  # pylint: disable=C0116
         for h in self.matcher.line:
             if h is None:
                 continue
@@ -93,7 +93,7 @@ class Any(Function):
             self.match = True
             break
 
-    def variable(self):
+    def variable(self):  # pylint: disable=C0116
         for v in self.matcher.csvpath.variables.values():
             if v is None:
                 continue
@@ -102,7 +102,7 @@ class Any(Function):
             self.match = True
             break
 
-    def equality(self):
+    def equality(self):  # pylint: disable=C0116
         value = self.children[0].right.to_value()
         if isinstance(self.children[0].left, Headers):
             for h in self.matcher.line:

@@ -5,7 +5,9 @@ from ..util.exceptions import ChildrenException
 
 
 class Validation(Matchable):
-    """validations on the number of child match component productions expected and their types"""
+    """validations on the number of child match component productions expected
+    and their types. there are no value tests and cannot be until all the
+    structural tests (these) are completed."""
 
     def _class_match(self, obj, ok: List[Type]) -> bool:
         if not ok or len(ok) == 0:
@@ -18,11 +20,11 @@ class Validation(Matchable):
                 return True
         return False
 
-    def validate_zero_args(self) -> None:
+    def validate_zero_args(self) -> None:  # pylint: disable=C0116
         if len(self.children) > 0:
             raise ChildrenException(f"{self.name}() cannot have arguments")
 
-    def validate_zero_or_one_arg(self, types=None) -> None:
+    def validate_zero_or_one_arg(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
             types = []
         if len(self.children) > 1:
@@ -37,7 +39,7 @@ class Validation(Matchable):
                     f"If {self.name}() has an argument it must be of type: {types}"
                 )
 
-    def validate_zero_or_more_than_one_arg(self) -> None:
+    def validate_zero_or_more_than_one_arg(self) -> None:  # pylint: disable=C0116
         if len(self.children) == 1 and not hasattr(self.children[0], "op"):
             raise ChildrenException(
                 f"{self.name}() must have 0 or more than 1 argument"
@@ -55,7 +57,7 @@ class Validation(Matchable):
                 f"{self.name}() must have 0 or more than 1 argument"
             )
 
-    def validate_zero_or_more_args(self, types=None) -> None:
+    def validate_zero_or_more_args(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
             types = []
         if len(self.children) == 0:
@@ -75,7 +77,7 @@ class Validation(Matchable):
                         f"{self.name}() can only have these arguments: {types}"
                     )
 
-    def validate_zero_one_or_two_args(
+    def validate_zero_one_or_two_args(  # pylint: disable=C0116
         self, *, first_arg=None, second_arg=None, solo_arg=None
     ) -> None:
         if len(self.children) == 0:
@@ -93,7 +95,7 @@ class Validation(Matchable):
                     f"{self.name}()'s second argument must be {second_arg}"
                 )
 
-    def validate_one_arg(self, types=None) -> None:
+    def validate_one_arg(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
             types = []
         if len(self.children) != 1:
@@ -108,13 +110,15 @@ class Validation(Matchable):
                     f"{self.name}() must have an argument of type: {types}"
                 )
 
-    def validate_one_or_more_args(self) -> None:
+    def validate_one_or_more_args(self) -> None:  # pylint: disable=C0116
         if len(self.children) == 0:
             raise ChildrenException(f"{self.name}() must have 1 or more arguments")
         if hasattr(self.children[0], "op") and self.children[0].op != ",":
             raise ChildrenException(f"{self.name}() must have 1 or more arguments")
 
-    def validate_one_or_two_args(self, one=None, left=None, right=None) -> None:
+    def validate_one_or_two_args(
+        self, one=None, left=None, right=None
+    ) -> None:  # pylint: disable=C0116
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have at least 1 argument")
         if hasattr(self.children[0], "op"):
@@ -139,7 +143,7 @@ class Validation(Matchable):
                         f"{self.name}()'s argument must be of type: {one}"
                     )
 
-    def validate_two_args(self, left=None, right=None) -> None:
+    def validate_two_args(self, left=None, right=None) -> None:  # pylint: disable=C0116
         """allows an equality of op '==' in left"""
         if left is None:
             left = []
@@ -164,7 +168,7 @@ class Validation(Matchable):
                     f"{self.name}() must have a second argument of type: {right}"
                 )
 
-    def validate_two_or_three_args(self) -> None:
+    def validate_two_or_three_args(self) -> None:  # pylint: disable=C0116
         cs = self.children
         if cs is None:
             raise ChildrenException(
@@ -185,7 +189,7 @@ class Validation(Matchable):
                 f"{self.name}() must have two or three args, not: {cs}"
             )
 
-    def validate_two_or_more_args(self) -> None:
+    def validate_two_or_more_args(self) -> None:  # pylint: disable=C0116
         # must be an equality
         if len(self.children) != 1:
             raise ChildrenException(
@@ -205,7 +209,7 @@ class Validation(Matchable):
         elif self.children[0].left is None or self.children[0].right is None:
             raise ChildrenException(f"{self.name}() must have 2 or more arguments")
 
-    def validate_three_args(self) -> None:
+    def validate_three_args(self) -> None:  # pylint: disable=C0116
         cs = self.children
         if cs is None:
             raise ChildrenException(f"{self.name}() must have three args, not none")
