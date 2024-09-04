@@ -31,13 +31,11 @@ class Matchable(Qualified):
         name = name[0 : name.rfind("'>")]
         return name
 
-    def line_matches(self):
-        es = self.matcher.expressions
-        for e in es:
-            m = e[1] is True or e[0].matches(skip=[self])
-            if not m:
-                return False
-        return True
+    def _noop_match(self) -> bool:
+        return self.match if self.match is not None else True
+
+    def _noop_value(self) -> bool:
+        return self.value if self.value is not None else self._noop_match()
 
     def reset(self) -> None:
         # let the subclasses handle self.value and self.match

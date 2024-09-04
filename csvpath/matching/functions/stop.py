@@ -68,7 +68,7 @@ class Skip(Function):
                     else:
                         self.matcher.skip = True
                         if self.once:
-                            self.set_has_happened()
+                            self._set_has_happened()
                         self.matcher.csvpath.logger.info(
                             f"skipping line {self.matcher.csvpath.line_monitor.physical_line_number}"
                         )

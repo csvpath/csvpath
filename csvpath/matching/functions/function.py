@@ -22,12 +22,6 @@ class Function(Validation):
         self.match = None
         super().reset()
 
-    def _noop_match(self) -> bool:
-        return self.match if self.match is not None else True
-
-    def _noop_value(self) -> bool:
-        return self.value if self.value is not None else self._noop_match()
-
     def to_value(self, *, skip=None) -> bool:
         """implements a standard to_value. subclasses either override this
         method or provide an implementation of _produce_value. the latter
@@ -43,6 +37,9 @@ class Function(Validation):
             else:
                 self._get_default_value()
         return self.value
+
+    def _produce_value(self, skip=None) -> None:
+        pass
 
     def _get_default_value(self) -> None:
         """provides the default when to_value is not producing a value.

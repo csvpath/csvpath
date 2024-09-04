@@ -38,9 +38,8 @@ class Qualified:
 
     def __init__(self, *, name: str = None):
         self.name = name
-        #
-        # keep the original name so we can look up non-term secondary qualifiers
-        #
+        # keep the original name so we can look up non-term
+        # secondary qualifiers
         self.qualified_name = name
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
@@ -169,11 +168,20 @@ class Qualified:
         self._set(Qualities.ONMATCH.value, om)
 
     def do_onmatch(self):
-        ret = not self.onmatch or self.line_matches()
-        self.matcher.csvpath.logger.debug(
+        # re: E1101: inheritance structure. good point, but not the time to fix it.
+        ret = not self.onmatch or self.line_matches()  # pylint: disable=E1101
+        self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
             f"Qualified.do_onmatch: {ret} for {self.name}"
         )
         return ret
+
+    def line_matches(self):
+        es = self.matcher.expressions  # pylint: disable=E1101
+        for e in es:
+            m = e[1] is True or e[0].matches(skip=[self])  # pylint: disable=E1101
+            if not m:
+                return False
+        return True
 
     # =============
     # onchange
@@ -182,10 +190,12 @@ class Qualified:
     def do_onchange(self):
         if not self.onchange:
             return True
-        id = self.get_id()
-        v = self.matcher.get_variable(id)
-        me = hashlib.sha256(f"{self.to_value()}".encode("utf-8")).hexdigest()
-        self.matcher.set_variable(id, value=me)
+        id = self.get_id()  # pylint: disable=E1101
+        v = self.matcher.get_variable(id)  # pylint: disable=E1101
+        me = hashlib.sha256(
+            f"{self.to_value()}".encode("utf-8")
+        ).hexdigest()  # pylint: disable=E1101
+        self.matcher.set_variable(id, value=me)  # pylint: disable=E1101
         return me != v
 
     @property
@@ -214,20 +224,23 @@ class Qualified:
 
     def do_once(self):
         ret = not self.once or self._has_not_yet()
-        self.matcher.csvpath.logger.debug(f"Qualified.do_ononce: {ret} for {self.name}")
+        self.matcher.csvpath.logger.debug(
+            f"Qualified.do_ononce: {ret} for {self.name}"
+        )  # pylint: disable=E1101
         return ret
 
     def _has_not_yet(self):
         #
         # supports ONCE
         #
-        id = self.get_id()
-        v = self.matcher.get_variable(id, set_if_none=True)
+        id = self.get_id()  # pylint: disable=E1101
+        v = self.matcher.get_variable(id, set_if_none=True)  # pylint: disable=E1101
         return v
 
     def _set_has_happened(self) -> None:
         #
         # supports ONCE
         #
-        id = self.get_id()
-        self.matcher.set_variable(id, value=False)
+        id = self.get_id()  # pylint: disable=E1101
+        self.matcher.set_variable(id, value=False)  # pylint: disable=E1101
+        # re: E1101: inheritance structure. good point, but not the time to fix it.
