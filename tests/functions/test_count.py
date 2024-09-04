@@ -25,9 +25,9 @@ class TestFunctionsCount(unittest.TestCase):
         assert len(lines) == 1
         assert lines[0][0] == "Frog"
 
-    def test_function_count_header_in_22(self):
+    def test_function_count_headers_in(self):
         path = CsvPath()
-        Save._save(path, "test_function_count_header_in_22")
+        Save._save(path, "test_function_count_headers_in")
         path.parse(
             f"""
                 ${PATH}
@@ -37,10 +37,10 @@ class TestFunctionsCount(unittest.TestCase):
              """
         )
         lines = path.collect()
-        print(f"test_function_count_header_in_22: lines: {len(lines)}")
+        print(f"test_function_count_headers_in: lines: {len(lines)}")
         for line in lines:
-            print(f"test_function_count_header_in_22: line: {line}")
-        print(f"test_function_count_header_in_22: path vars: {path.variables}")
+            print(f"test_function_count_headers_in: line: {line}")
+        print(f"test_function_count_headers_in: path vars: {path.variables}")
         assert len(lines) == 1
         assert "firstname_is_one" in path.variables
         assert path.variables["firstname_is_one"][True] == 3

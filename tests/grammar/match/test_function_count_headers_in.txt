@@ -1,0 +1,3 @@
+[
+                    count.firstname_is_one.onmatch( in(#firstname,"Bug|Bird|Ants") ) == 2
+                ]

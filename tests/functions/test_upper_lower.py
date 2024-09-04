@@ -10,7 +10,8 @@ class TestFunctionsUpperLower(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_function_upper_and_lower")
         path.parse(
-            f"${PATH}[*][ @upper = upper(#firstname) @lower = lower(#firstname) ]"
+            f"""${PATH}[*][ @upper = upper(#firstname)
+            @lower = lower(#firstname) ]"""
         )
         lines = path.collect()
         print(f"test_function_upper_and_lower: lines: {len(lines)}")

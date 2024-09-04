@@ -1,1 +1,2 @@
-[ @upper = upper(#firstname) @lower = lower(#firstname) ]
+[ @upper = upper(#firstname)
+            @lower = lower(#firstname) ]
