@@ -1,8 +1,8 @@
 # pylint: disable=C0114
 from typing import Any
+from csvpath import ConfigurationException
 from .function import Function
 from ..productions import Term, Variable, Header
-from csvpath import ConfigurationException
 
 
 class Length(Function):
@@ -38,9 +38,9 @@ class MinMaxLength(Function):  # pylint: disable=C0115
             value = self.children[0].left.to_value()
             length = self.children[0].right.to_value()
             length = int(length)
-            if self.name == "min_length" or self.name == "too_long":
+            if self.name in ["min_length", "too_long"]:
                 self.value = len(value) >= length
-            elif self.name == "max_length" or self.name == "too_short":
+            elif self.name in ["max_length", "too_short"]:
                 self.value = len(value) <= length
             else:
                 raise ConfigurationException("Unknown function name: {self.name}")

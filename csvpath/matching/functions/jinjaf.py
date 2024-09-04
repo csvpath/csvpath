@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from typing import Any, Dict
+from typing import Dict
 from .function import Function
 from .printf import Print
 from ..util.exceptions import ChildrenException

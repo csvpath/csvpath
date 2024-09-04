@@ -159,7 +159,8 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
 
     def set_named_results(self, results: Dict[str, List[CsvPathResult]]) -> None:
         self.named_results = {}
-        for key, value in results.items():
+        # for key, value in results.items():
+        for value in results.values():
             self.add_named_results(value)
 
     def add_named_results(self, results: List[CsvPathResult]) -> None:

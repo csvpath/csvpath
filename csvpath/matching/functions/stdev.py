@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-from typing import Any
 from statistics import stdev, pstdev
 from .function import Function
 from ..productions import ChildrenException

@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-from typing import Any
 from ..productions import Term
 from .function import Function
 import re

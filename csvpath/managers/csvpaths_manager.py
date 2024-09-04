@@ -54,7 +54,7 @@ class CsvPathsManager(ABC):
         pass
 
 
-class PathsManager(CsvPathsManager):  # pytest: disable=C0115
+class PathsManager(CsvPathsManager):  # pytest: disable=C0115, C0116
     MARKER: str = "---- CSVPATH ----"
 
     def __init__(self, *, csvpaths, named_paths=None):

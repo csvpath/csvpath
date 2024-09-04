@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-from typing import Any
 import math
 from .function import Function
 from ..productions import Header, Variable

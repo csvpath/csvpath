@@ -1,4 +1,4 @@
-# from __future__ import annotations
+# pylint: disable=C0114
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .. import CsvPath, Error, Printer

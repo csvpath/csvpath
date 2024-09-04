@@ -116,9 +116,9 @@ class Validation(Matchable):
         if hasattr(self.children[0], "op") and self.children[0].op != ",":
             raise ChildrenException(f"{self.name}() must have 1 or more arguments")
 
-    def validate_one_or_two_args(
+    def validate_one_or_two_args(  # pylint: disable=C0116
         self, one=None, left=None, right=None
-    ) -> None:  # pylint: disable=C0116
+    ) -> None:
         if len(self.children) != 1:
             raise ChildrenException(f"{self.name}() must have at least 1 argument")
         if hasattr(self.children[0], "op"):

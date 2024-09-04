@@ -1,6 +1,5 @@
 # pylint: disable=C0114
 
-from typing import Any
 from datetime import datetime
 from .function import Function
 from ..productions import ChildrenException
