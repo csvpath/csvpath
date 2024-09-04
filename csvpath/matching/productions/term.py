@@ -6,13 +6,13 @@ class Term(Matchable):
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}({self.value})"""
 
+    def __init__(self, matcher, *, value: Any = None, name: str = None):
+        if isinstance(value, str):
+            value = value.lstrip('"').rstrip('"')
+        super().__init__(matcher=matcher, name=name, value=value)
+
     def reset(self) -> None:
         super().reset()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if isinstance(self.value, str) and self.value[0] == '"':
-            self.value = self.value[1:]
-        if isinstance(self.value, str) and self.value[len(self.value) - 1] == '"':
-            self.value = self.value[0 : len(self.value) - 1]
-        v = self.value
-        return v
+    def to_value(self, *, skip=None) -> Any:
+        return self.value

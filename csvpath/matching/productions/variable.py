@@ -23,7 +23,9 @@ class Variable(Matchable):
         self.match = None
         super().reset()
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:
+            return self._noop_match()
         if self.match is None:
             if self.asbool:
                 v = self.to_value(skip=skip)
@@ -32,7 +34,9 @@ class Variable(Matchable):
                 self.match = self.value is not None
         return self.match
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:
+            return self._noop_value()
         if not self.value:
             track = self.first_non_term_qualifier(None)
             self.value = self.matcher.get_variable(self.name, tracking=track)

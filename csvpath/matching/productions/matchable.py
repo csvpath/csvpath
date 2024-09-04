@@ -39,15 +39,17 @@ class Matchable(Qualified):
         for child in self.children:
             child.reset()
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:  # pylint: disable=W0613
         #
         # subclasses should override this method for clarity
+        # we can ignore W0613. this method essentially defines an interface.
         #
         return True
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:  # pylint: disable=W0613
         #
-        # subclasses should override this method for clarity
+        # subclasses should override this method for clarity.
+        # we can ignore W0613. this method essentially defines an interface.
         #
         return None
 
@@ -89,6 +91,5 @@ class Matchable(Qualified):
             return None
         if hasattr(self.children[0], "right"):
             return self.children[0].right.to_value()
-        else:
-            # with the current parse tree this shouldn't happen
-            return None
+        # with the current parse tree this shouldn't happen
+        return None

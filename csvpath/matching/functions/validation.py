@@ -13,10 +13,9 @@ class Validation(Matchable):
         cls = obj.__class__
         if cls in ok:
             return True
-        else:
-            for _ in ok:
-                if isinstance(obj, _):
-                    return True
+        for _ in ok:
+            if isinstance(obj, _):
+                return True
         return False
 
     def validate_zero_args(self) -> None:

@@ -1,18 +1,17 @@
-from . import DataException, ChildrenException, Matchable
-from csvpath.util.error import ErrorHandler
-from datetime import datetime
 import traceback
 import warnings
+from csvpath.util.error import ErrorHandler
+from . import Matchable
 
 
 class Expression(Matchable):
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:
             return True
-        if not self.match:
+        if self.match is None:
             try:
                 ret = True
-                for i, child in enumerate(self.children):
+                for child in self.children:
                     if not child.matches(skip=skip):
                         ret = False
                 self.match = ret

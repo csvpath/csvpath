@@ -18,8 +18,7 @@ class Or(Function):
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
-        else:
-            skip.append(self)
+        skip.append(self)
         if not self.value:
             child = self.children[0]
             siblings = child.commas_to_list()

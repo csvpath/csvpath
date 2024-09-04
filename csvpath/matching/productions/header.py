@@ -22,9 +22,9 @@ class Header(Matchable):
         self.match = None
         super().reset()
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
-            return self.value
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:
+            return self._noop_value()
         if self.value == Header.NEVER:
             ret = Header.NEVER
             if isinstance(self.name, int) or self.name.isdecimal():
@@ -48,7 +48,9 @@ class Header(Matchable):
                 self.value = ret
         return self.value
 
-    def matches(self, *, skip=[]) -> bool:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:
+            return self._noop_match()
         if self.match is None:
             v = self.to_value(skip=skip)
             if self.asbool:

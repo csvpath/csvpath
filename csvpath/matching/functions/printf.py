@@ -2,7 +2,6 @@
 from typing import Any
 from .function import Function
 from ..productions import Equality, Term
-import hashlib
 
 # from ..util.lark_print_parser import LarkPrintParser, LarkPrintTransformer
 from ..util.print_parser import PrintParser

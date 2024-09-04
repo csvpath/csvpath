@@ -70,23 +70,17 @@ class Between(Function):
             return ret
 
     def _try_strings(self, me, a, b) -> bool:
-        try:
-            if isinstance(a, str) and isinstance(b, str):
-                return self._order(me.strip(), a.strip(), b.strip())
-            else:
-                return self._order(f"{me}".strip(), f"{a}".strip(), f"{b}".strip())
-        except Exception:
-            return None
+        if isinstance(a, str) and isinstance(b, str):
+            return self._order(me.strip(), a.strip(), b.strip())
+        return self._order(f"{me}".strip(), f"{a}".strip(), f"{b}".strip())
 
     def _order(self, me, a, b):
         if a > b:
             return self._compare(a, me, b)
-        else:
-            return self._compare(b, me, a)
+        return self._compare(b, me, a)
 
     def _compare(self, high, med, low):
         between = self._between()
         if between:
             return high > med and med > low
-        else:
-            return (high < med and low < med) or (high > med and low > med)
+        return (high < med and low < med) or (high > med and low > med)

@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import Dict, List, Any
-import os
-import json
 from abc import ABC, abstractmethod
 from .. import ConfigurationException
-from .. import CsvPath, Error, CsvPathResult
+from .. import CsvPathResult
 
 
 class CsvPathsResultsManager(ABC):
@@ -56,17 +54,14 @@ class CsvPathsResultsManager(ABC):
         Named files: For each named file, keeps and returns the results of
         running any paths on the named file
         """
-        pass
 
     @abstractmethod
     def remove_named_results(self, name: str) -> None:
         """should raise an exception if no such results"""
-        pass
 
     @abstractmethod
     def clean_named_results(self, name: str) -> None:
         """should remove any results, completing silently if no such results"""
-        pass
 
 
 class ResultsManager(CsvPathsResultsManager):
@@ -82,11 +77,11 @@ class ResultsManager(CsvPathsResultsManager):
         self.csvpaths = csvpaths
 
     @property
-    def csvpaths(self) -> CsvPaths:  # noqa: F821
+    def csvpaths(self):  # noqa: F821
         return self._csvpaths
 
     @csvpaths.setter
-    def csvpaths(self, cs: CsvPaths) -> None:  # noqa: F821
+    def csvpaths(self, cs) -> None:  # noqa: F821
         self._csvpaths = cs
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
@@ -129,8 +124,7 @@ class ResultsManager(CsvPathsResultsManager):
         nr = self.get_named_results(name)
         if nr is None:
             return 0
-        else:
-            return len(nr)
+        return len(nr)
 
     def has_errors(self, name: str) -> bool:
         results = self.get_named_results(name)
@@ -176,7 +170,7 @@ class ResultsManager(CsvPathsResultsManager):
             #
             # we treat this as a recoverable error because typically the user
             # has complete control of the csvpaths environment, making the
-            # problem likely due to config issues that should be addressed.
+            # problem config that should be addressed.
             #
             # if reached by a reference this error should be trapped at an
             # expression and handled according to the error policy.
@@ -190,13 +184,12 @@ class ResultsManager(CsvPathsResultsManager):
     def get_named_results(self, name) -> List[List[Any]]:
         if name in self.named_results:
             return self.named_results[name]
-        else:
-            #
-            # we treat this as a recoverable error because typically the user
-            # has complete control of the csvpaths environment, making the
-            # problem likely due to config issues that should be addressed.
-            #
-            # if reached by a reference this error should be trapped at an
-            # expression and handled according to the error policy.
-            #
-            raise ConfigurationException(f"Results '{name}' not found")
+        #
+        # we treat this as a recoverable error because typically the user
+        # has complete control of the csvpaths environment, making the
+        # problem config that should be addressed.
+        #
+        # if reached by a reference this error should be trapped at an
+        # expression and handled according to the error policy.
+        #
+        raise ConfigurationException(f"Results '{name}' not found")

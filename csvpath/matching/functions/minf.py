@@ -26,8 +26,7 @@ class MinMax(Function):
     def _get_the_value(self) -> Any:
         if isinstance(self.children[0], Equality):
             return self.children[0].left.to_value()
-        else:
-            return self.children[0].to_value()
+        return self.children[0].to_value()
 
     def _get_the_value_conformed(self) -> Any:
         v = self._get_the_value()
@@ -36,8 +35,7 @@ class MinMax(Function):
     def _get_the_name(self) -> Any:
         if isinstance(self.children[0], Equality):
             return self.children[0].left.name
-        else:
-            return self.children[0].name
+        return self.children[0].name
 
     def _get_the_line(self) -> int:
         if isinstance(self.children[0], Equality):
@@ -75,7 +73,8 @@ class MinMax(Function):
             "min" if maxormin is MinMax.MIN else "max"
         )
         m = None
-        for k, v in enumerate(all_values.items()):
+        for k, v in enumerate(all_values.items()):  # pylint: disable=W0612
+            # re: W0612: can change, but not now
             v = v[1]
             if not m or ((v < m) if maxormin is MinMax.MIN else (v > m)):
                 m = v
@@ -181,7 +180,8 @@ class Average(MinMax):
             # get value for all the line counts
             all_values = self.matcher.get_variable(n)
             m = []
-            for k, v in enumerate(all_values.items()):
+            for k, v in enumerate(all_values.items()):  # pylint: disable=W0612
+                # re: W0612: can be changed, but not now
                 v = v[1]
                 try:
                     v = float(v)

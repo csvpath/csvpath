@@ -1,11 +1,11 @@
+from typing import List
 import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from ..util.parser_utility import ParserUtility
-from typing import List
 from .exceptions import ScanException, UnexpectedException
 
 
-class Scanner(object):
+class Scanner:
     tokens = ScanningLexer.tokens
 
     def __init__(self, csvpath=None):

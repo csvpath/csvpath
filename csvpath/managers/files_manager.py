@@ -1,8 +1,8 @@
 import os
 import json
-from typing import Dict, List, Any
+from json import JSONDecodeError
+from typing import Dict
 from abc import ABC, abstractmethod
-from .. import FileException, ConfigurationException
 
 
 class CsvPathsFilesManager(ABC):
@@ -46,8 +46,8 @@ class FilesManager(CsvPathsFilesManager):
             with open(filename) as f:
                 j = json.load(f)
                 self.named_files = j
-        except Exception:
-            print(f"Error: cannot load {filename}")
+        except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
+            print(f"Error: cannot load {filename}: {ex}")
 
     def add_named_files_from_dir(self, dirname: str):
         dlist = os.listdir(dirname)

@@ -1,9 +1,9 @@
-from typing import Dict, List, Any
+from typing import Dict, List
 import os
 import json
+from json import JSONDecodeError
 from abc import ABC, abstractmethod
 from .. import ConfigurationException
-from csvpath.util.config import CsvPathConfig
 
 
 class CsvPathsManager(ABC):
@@ -13,7 +13,6 @@ class CsvPathsManager(ABC):
         will be handled. if thename is not None the named paths for all files
         in the directory will be keyed by thename.
         """
-        pass
 
     @abstractmethod
     def set_named_paths_from_json(self, filename: str) -> None:
@@ -29,7 +28,6 @@ class CsvPathsManager(ABC):
         existing list of paths, the name will be added. otherwise,
         the lists will be joined. duplicates are not added.
         """
-        pass
 
     @abstractmethod
     def get_named_paths(self, name: str) -> List[str]:
@@ -103,8 +101,8 @@ class PathsManager(CsvPathsManager):
                             f"Unexpected object in JSON key: {k}: {v}"
                         )
                 self.named_paths = j
-        except Exception as e:
-            raise ConfigurationException(f"Error: cannot load {file_path}: {e}")
+        except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
+            print(f"Error: cannot load {file_path}: {ex}")
 
     def add_named_paths(self, name: str, paths: List[str]) -> None:
         if name in self.named_paths:
@@ -119,8 +117,7 @@ class PathsManager(CsvPathsManager):
     def get_named_paths(self, name: str) -> List[str]:
         if name in self.named_paths:
             return self.named_paths[name]
-        else:
-            raise ConfigurationException("{name} not found")
+        raise ConfigurationException("{name} not found")
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:

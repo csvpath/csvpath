@@ -96,21 +96,17 @@ class Equality(Matchable):
             for c in self.children:
                 string = f"{c}" if string == "" else f"{string}, {c}"
             return f"""{self._simple_class_name()}({string})"""
-
-        else:
-            return f"""{self._simple_class_name()}(left:{self.left} {self.op} right:{self.right})"""
+        return f"""{self._simple_class_name()}(left:{self.left} {self.op} right:{self.right})"""
 
     def _left_nocontrib(self, m) -> bool:
         if isinstance(m, Equality):
             return self._left_nocontrib(m.left)
-        else:
-            return m.nocontrib
+        return m.nocontrib
 
     def _test_friendly_line_matches(self, matches: bool = None) -> bool:
         if isinstance(matches, bool):
             return matches
-        else:
-            return self.line_matches()
+        return self.line_matches()
 
     # ----------------------------------------------
     #
@@ -128,7 +124,7 @@ class Equality(Matchable):
     # this talks about the expression x = y and the row
     # x.[anything].nocontrib = y             == True
     #
-    def _do_assignment(self, *, skip=[]) -> bool:
+    def _do_assignment(self, *, skip=None) -> bool:
         #
         # the count() function implies onmatch
         #
@@ -253,8 +249,7 @@ class Equality(Matchable):
                 if ret and onchange:  # == TEST MARKER 11
                     # why are we returning here?
                     return False
-                else:
-                    pass  # == TEST MARKER 12
+                pass  # == TEST MARKER 12
         #
         # count() is only for matches so implies count.onmatch
         # return set y and return true if the line matches
@@ -303,10 +298,9 @@ class Equality(Matchable):
     def _set_variable(self, name, *, value, tracking=None, notnone=False) -> None:
         if notnone and value is None:
             return
-        else:
-            self.matcher.set_variable(name, value=value, tracking=tracking)
+        self.matcher.set_variable(name, value=value, tracking=tracking)
 
-    def _do_when(self, *, skip=[]) -> bool:
+    def _do_when(self, *, skip=None) -> bool:
         b = None
         if self.op == "->":
             lm = self.left.matches(skip=skip)
@@ -322,7 +316,7 @@ class Equality(Matchable):
             raise ChildrenException("Not a when operation")  # this can't really happen
         return b
 
-    def _do_equality(self, *, skip=[]) -> bool:
+    def _do_equality(self, *, skip=None) -> bool:
         b = None
         left = self.left.to_value(skip=skip)
         right = self.right.to_value(skip=skip)
@@ -336,8 +330,8 @@ class Equality(Matchable):
             b = left == right
         return b
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:
             return True
         if not self.left or not self.right:
             # this should never happen
@@ -353,7 +347,7 @@ class Equality(Matchable):
             self.match = b
         return self.match
 
-    def to_value(self, *, skip=[]) -> Any:
+    def to_value(self, *, skip=None) -> Any:
         if self.value is None:
             self.value = self.matches(skip=skip)
         return self.value

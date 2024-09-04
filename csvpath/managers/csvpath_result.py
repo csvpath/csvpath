@@ -104,8 +104,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):
     def is_valid(self) -> bool:
         if self._csvpath:
             return self._csvpath.is_valid
-        else:
-            return False
+        return False
 
     @property
     def printouts(self) -> List[str]:

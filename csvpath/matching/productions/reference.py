@@ -40,8 +40,8 @@ class Reference(Matchable):
         self.match = None
         super().reset()
 
-    def matches(self, *, skip=[]) -> bool:
-        if self in skip:
+    def matches(self, *, skip=None) -> bool:
+        if skip and self in skip:
             return self._noop_match()
         if self.match is None:
             if self.value is None:
@@ -52,8 +52,8 @@ class Reference(Matchable):
                 self.match = self.value is not None
         return self.match
 
-    def to_value(self, *, skip=[]) -> Any:
-        if self in skip:
+    def to_value(self, *, skip=None) -> Any:
+        if skip and self in skip:
             return self._noop_value()
         if self.value is None:
             ref = self._get_reference()

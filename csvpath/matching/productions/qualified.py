@@ -1,6 +1,6 @@
 from enum import Enum
 import hashlib
-from typing import Any, Optional
+from typing import Optional
 from ..util.expression_utility import ExpressionUtility
 from . import ChildrenException
 

@@ -32,8 +32,7 @@ class HeaderName(Function):
     def _header_matches(self, actual, expected):
         if actual is None:
             return False
-        else:
-            return actual == expected
+        return actual == expected
 
     def _look_up_header(self, v):
         ret = None

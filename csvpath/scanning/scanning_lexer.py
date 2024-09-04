@@ -1,7 +1,8 @@
-import ply.lex as lex
+# import ply.lex as lex
+from ply import lex
 
 
-class ScanningLexer(object):
+class ScanningLexer:
     tokens = [
         "NUMBER",
         "PLUS",
@@ -23,12 +24,12 @@ class ScanningLexer(object):
     t_NAME = r"[A-Z,a-z,0-9\._]+"
     t_ALL_LINES = r"\*"
 
-    def t_NUMBER(self, t):
+    def t_NUMBER(self, t):  # pylint: disable=C0103
         r"\d+"
         t.value = int(t.value)
         return t
 
-    def t_FILENAME(self, t):
+    def t_FILENAME(self, t):  # pylint: disable=C0103
         r"\$[A-Z,a-z,0-9\._/\-\\#& ]*"
         return t
 

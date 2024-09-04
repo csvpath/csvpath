@@ -81,10 +81,9 @@ class AboveBelow(Function):
             if self._above():
                 return a.strip() > b.strip()
             return a.strip() < b.strip()
-        else:
-            if self._above():
-                return f"{a}".strip() > f"{b}".strip()
-            return f"{a}".strip() < f"{b}".strip()
+        if self._above():
+            return f"{a}".strip() > f"{b}".strip()
+        return f"{a}".strip() < f"{b}".strip()
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
