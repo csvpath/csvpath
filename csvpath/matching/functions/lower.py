@@ -11,13 +11,9 @@ class Lower(Function):
         self.validate_one_arg(types=[Term, Variable, Header, Function])
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-
+    def _produce_value(self, skip=None) -> None:
         value = self.children[0].to_value(skip=skip)
-        value = f"{value}".lower()
-        return value
+        self.value = f"{value}".lower()
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)

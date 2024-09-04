@@ -11,30 +11,24 @@ class Tally(Function):
         self.validate_one_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is not None:
-            return True
-        if not self.onmatch or self.line_matches():
-            child = self.children[0]
-            siblings = None
-            if isinstance(child, Equality):
-                siblings = child.commas_to_list()
-            else:
-                siblings = [child]
-            tally = ""
-            for _ in siblings:
-                tally += f"{_.to_value(skip=skip)}|"
-                value = f"{_.to_value(skip=skip)}"
-                self._store(_.name, value)
-            if len(siblings) > 1:
-                self._store(
-                    self.first_non_term_qualifier("tally"),
-                    tally[0 : len(tally) - 1],
-                )
-            self.value = True
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        child = self.children[0]
+        siblings = None
+        if isinstance(child, Equality):
+            siblings = child.commas_to_list()
+        else:
+            siblings = [child]
+        tally = ""
+        for _ in siblings:
+            tally += f"{_.to_value(skip=skip)}|"
+            value = f"{_.to_value(skip=skip)}"
+            self._store(_.name, value)
+        if len(siblings) > 1:
+            self._store(
+                self.first_non_term_qualifier("tally"),
+                tally[0 : len(tally) - 1],
+            )
+        self.value = True
 
     def _store(self, name, value):
         count = self.matcher.get_variable(name, tracking=value)

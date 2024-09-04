@@ -15,13 +15,13 @@ class PrintLine(Function):
             return self._noop_value()
         if self.value is None:
             if self.do_onmatch():
-                v = self._value_one()
+                v = self._value_one(skip=skip)
                 if v is None:
                     v = ","
                 else:
                     v = f"{v}".strip()
                 delimiter = v
-                v = self._value_two()
+                v = self._value_two(skip=skip)
                 quoted = ""
                 if v is None:
                     pass

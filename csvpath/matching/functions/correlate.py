@@ -11,24 +11,19 @@ class Correlate(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            if not self.onmatch or self.line_matches():
-                child = self.children[0]
-                left = child.left
-                right = child.right
-                leftlist = left.to_value()
-                rightlist = right.to_value()
-                leftlist, rightlist = self._trim(leftlist, rightlist)
-                ll = pd.Series(leftlist)
-                rl = pd.Series(rightlist)
-                corr = ll.corr(rl)
-                f = float(corr)
-                f = round(f, 2)
-                self.value = f
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        child = self.children[0]
+        left = child.left
+        right = child.right
+        leftlist = left.to_value(skip=skip)
+        rightlist = right.to_value(skip=skip)
+        leftlist, rightlist = self._trim(leftlist, rightlist)
+        ll = pd.Series(leftlist)
+        rl = pd.Series(rightlist)
+        corr = ll.corr(rl)
+        f = float(corr)
+        f = round(f, 2)
+        self.value = f
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)

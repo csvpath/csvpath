@@ -1,1 +1,4 @@
-[ @l = sum.onmatch(#0) lt(count_lines(),3)]
+[
+                @l = sum.onmatch(#0)
+                lt(count_lines(),3)
+            ]

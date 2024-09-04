@@ -17,56 +17,46 @@ class Regex(Function):
             restr = right.to_value()
         re.compile(restr)
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            child = self.children[0]
-            siblings = child.commas_to_list()
-            if len(siblings) < 2 or len(siblings) > 3:
-                raise Exception(
-                    "wrong number of siblings. should have been caught in check_valid!"
-                )
-            left = siblings[0]
-            right = siblings[1]
-            group = 0 if len(siblings) == 2 else siblings[2].to_value()
-            group = int(group)
-            regex = None
-            value = None
-            if isinstance(left, Term):
-                regex = left
-                value = right
-            else:
-                regex = right
-                value = left
-            thevalue = value.to_value(skip=skip)
-            theregex = regex.to_value(skip=skip)
-            if theregex[0] == "/":
-                theregex = theregex[1:]
-            if theregex[len(theregex) - 1] == "/":
-                theregex = theregex[0 : len(theregex) - 1]
-            if thevalue is None:
-                #
-                # this could happen if the line is blank
-                #
-                pass
-            else:
-                m = re.search(theregex, thevalue)
-                # in the case of no match we're going to potentially
-                # do extra regexing because self.value remains None
-                # problem? self.match will be set so that may protect
-                # us.
-                v = None
-                if m:
-                    v = m.group(group)
-                if self.name == "regex":
-                    self.value = v
-                elif self.name == "exact":
-                    self.value = v == thevalue
-                self.matcher.csvpath.logger.info(
-                    f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
-                )
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        child = self.children[0]
+        siblings = child.commas_to_list()
+        left = siblings[0]
+        right = siblings[1]
+        group = 0 if len(siblings) == 2 else siblings[2].to_value(skip=skip)
+        group = int(group)
+        regex = None
+        value = None
+        if isinstance(left, Term):
+            regex = left
+            value = right
+        else:
+            regex = right
+            value = left
+        thevalue = value.to_value(skip=skip)
+        theregex = regex.to_value(skip=skip)
+        if theregex[0] == "/":
+            theregex = theregex[1:]
+        if theregex[len(theregex) - 1] == "/":
+            theregex = theregex[0 : len(theregex) - 1]
+        if thevalue is None:
+            # this could happen if the line is blank
+            pass
+        else:
+            m = re.search(theregex, thevalue)
+            # in the case of no match we're going to potentially
+            # do extra regexing because self.value remains None
+            # problem? self.match will be set so that may protect
+            # us.
+            v = None
+            if m:
+                v = m.group(group)
+            if self.name == "regex":
+                self.value = v
+            elif self.name == "exact":
+                self.value = v == thevalue
+            self.matcher.csvpath.logger.info(
+                f"Regex.to_value: mode: {self.name}, capture group at {group}: {v}, with regex: {theregex}, original value: {thevalue}, returning: {self.value}"
+            )
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

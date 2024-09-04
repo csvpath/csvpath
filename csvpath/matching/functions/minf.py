@@ -95,21 +95,13 @@ class Min(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            # skip lines we should ignore
-            if self._ignore():
-                return self.value
-            # track and compare
-            v = self._get_the_value_conformed()
-            self.matcher.set_variable(
-                "min", tracking=f"{self._get_the_line()}", value=v
-            )
-            m = self._store_and_compare(v, MinMax.MIN)
-            self.value = m
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        if self._ignore():
+            return self.value
+        v = self._get_the_value_conformed()
+        self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
+        m = self._store_and_compare(v, MinMax.MIN)
+        self.value = m
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
@@ -126,21 +118,13 @@ class Max(MinMax):
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name, child)
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            # skip lines we should ignore
-            if self._ignore():
-                return self.value
-            # track and compare
-            v = self._get_the_value_conformed()
-            self.matcher.set_variable(
-                "max", tracking=f"{self._get_the_line()}", value=v
-            )
-            m = self._store_and_compare(v, MinMax.MAX)
-            self.value = m
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        if self._ignore():
+            return self.value
+        v = self._get_the_value_conformed()
+        self.matcher.set_variable("max", tracking=f"{self._get_the_line()}", value=v)
+        m = self._store_and_compare(v, MinMax.MAX)
+        self.value = m
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
@@ -160,39 +144,35 @@ class Average(MinMax):
         super().__init__(matcher, name, child)
         self.ave_or_med = ave_or_med
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            v = self._get_the_value()
-            # if we're watching a header and we're in the header row skip it.
-            if (
-                self._get_the_name() in self.matcher.csvpath.headers
-                and self.matcher.csvpath.line_monitor.physical_line_number == 0
-            ):
-                return self.value
-            # if the line must match and it doesn't stop here and return
-            if self.is_match() and not self.line_matches():
-                return self.value
-            n = self.first_non_term_qualifier(self.ave_or_med)
-            # set the "average" or "median" variable tracking the value by line, scan, or match count
-            self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)
-            # get value for all the line counts
-            all_values = self.matcher.get_variable(n)
-            m = []
-            for k, v in enumerate(all_values.items()):  # pylint: disable=W0612
-                # re: W0612: can be changed, but not now
-                v = v[1]
-                try:
-                    v = float(v)
-                    m.append(v)
-                except (ValueError, TypeError):
-                    pass
-                if self.ave_or_med == "average":
-                    self.value = mean(m)
-                else:
-                    self.value = median(m)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        v = self._get_the_value()
+        # if we're watching a header and we're in the header row skip it.
+        if (
+            self._get_the_name() in self.matcher.csvpath.headers
+            and self.matcher.csvpath.line_monitor.physical_line_number == 0
+        ):
+            return self.value
+        # if the line must match and it doesn't stop here and return
+        if self.is_match() and not self.line_matches():
+            return self.value
+        n = self.first_non_term_qualifier(self.ave_or_med)
+        # set the "average" or "median" variable tracking the value by line, scan, or match count
+        self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)
+        # get value for all the line counts
+        all_values = self.matcher.get_variable(n)
+        m = []
+        for k, v in enumerate(all_values.items()):  # pylint: disable=W0612
+            # re: W0612: can be changed, but not now
+            v = v[1]
+            try:
+                v = float(v)
+                m.append(v)
+            except (ValueError, TypeError):
+                pass
+            if self.ave_or_med == "average":
+                self.value = mean(m)
+            else:
+                self.value = median(m)
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_value()  # pragma: no cover

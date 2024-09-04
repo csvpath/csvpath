@@ -46,8 +46,8 @@ class HeaderName(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
         if not self.value:
-            v = self._value_one()
-            expected = self._value_two()
+            v = self._value_one(skip=skip)
+            expected = self._value_two(skip=skip)
             actual = self._look_up_header(v)
             if expected is None:
                 self.value = actual

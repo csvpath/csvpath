@@ -11,24 +11,24 @@ class Sum(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            var = self.first_non_term_qualifier(self.name)
-            val = self.matcher.get_variable(var, set_if_none=0)
-            self.value = val
-            if self.do_onmatch():
-                child = self.children[0]
-                cval = child.to_value()
-                if ExpressionUtility.is_none(cval):
-                    cval = 0
-                else:
-                    cval = ExpressionUtility.to_float(cval)
-                val += cval
-                self.matcher.set_variable(var, value=val)
-                self.value = val
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        var = self.first_non_term_qualifier(self.name)
+        val = self.matcher.get_variable(var, set_if_none=0)
+        self.value = val
+        child = self.children[0]
+        cval = child.to_value(skip=skip)
+        if ExpressionUtility.is_none(cval):
+            cval = 0
+        else:
+            cval = ExpressionUtility.to_float(cval)
+        val += cval
+        self.matcher.set_variable(var, value=val)
+        self.value = val
+
+    def _get_default_value(self) -> None:
+        var = self.first_non_term_qualifier(self.name)
+        val = self.matcher.get_variable(var, set_if_none=0)
+        self.value = val
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

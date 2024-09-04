@@ -25,7 +25,7 @@ class Import(Function):
             if self.matcher.csvpath.csvpaths is None:
                 raise ConfigurationException("No CsvPaths instance available")
 
-            name = self._value_one()
+            name = self._value_one(skip=[self])
             if name is None:
                 raise ConfigurationException("Name of import csvpath cannot be None")
 

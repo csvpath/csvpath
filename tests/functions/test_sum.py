@@ -21,12 +21,16 @@ class TestFunctionsSum(unittest.TestCase):
         assert path.variables["l"] == 6
 
     def test_function_sum2(self):
+        print("")
         path = CsvPath()
         Save._save(path, "test_function_sum2")
         path.parse(
             f"""
             ${PATH}[1*]
-            [ @l = sum.onmatch(#0) lt(count_lines(),3)]"""
+            [
+                @l = sum.onmatch(#0)
+                lt(count_lines(),3)
+            ]"""
         )
         lines = path.collect()
         print(f"test_function_sum2: lines: {lines}")

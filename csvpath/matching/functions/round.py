@@ -14,18 +14,14 @@ class Round(Function):
         )
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            value = self._value_one()
-            places = self._value_two()
-            if places is None:
-                places = 2
-            places = ExpressionUtility.to_int(places)
-            value = ExpressionUtility.to_float(value)
-            self.value = round(value, places)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        value = self._value_one(skip=skip)
+        places = self._value_two(skip=skip)
+        if places is None:
+            places = 2
+        places = ExpressionUtility.to_int(places)
+        value = ExpressionUtility.to_float(value)
+        self.value = round(value, places)
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)

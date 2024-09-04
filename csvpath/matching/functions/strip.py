@@ -10,14 +10,10 @@ class Strip(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            v = self.children[0].to_value()
-            string = f"{v}"
-            self.value = string.strip()
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        v = self.children[0].to_value()
+        string = f"{v}"
+        self.value = string.strip()
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

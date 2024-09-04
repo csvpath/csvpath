@@ -20,7 +20,7 @@ class HeaderNamesMismatch(Function):
             elif present:
                 self.value = False
             else:
-                header_names = self._value_one()
+                header_names = self._value_one(skip=skip)
                 names = header_names.split("|")
                 present = []
                 unmatched = []

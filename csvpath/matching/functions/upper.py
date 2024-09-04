@@ -10,12 +10,9 @@ class Upper(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
+    def _produce_value(self, skip=None) -> None:
         value = self.children[0].to_value(skip=skip)
-        value = f"{value}".upper()
-        return value
+        self.value = f"{value}".upper()
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

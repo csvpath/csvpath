@@ -75,21 +75,21 @@ class Matchable(Qualified):
         return self._id
 
     # convenience method for one or two arg functions
-    def _value_one(self):
+    def _value_one(self, skip=None):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
         elif hasattr(self.children[0], "left"):
-            return self.children[0].left.to_value()
+            return self.children[0].left.to_value(skip=skip)
         else:
-            return self.children[0].to_value()
+            return self.children[0].to_value(skip=skip)
 
     # convenience method for one or two arg functions
-    def _value_two(self):
+    def _value_two(self, skip=None):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
         if hasattr(self.children[0], "right"):
-            return self.children[0].right.to_value()
+            return self.children[0].right.to_value(skip=skip)
         # with the current parse tree this shouldn't happen
         return None
