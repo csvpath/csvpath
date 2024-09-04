@@ -65,7 +65,7 @@ class PathsManager(CsvPathsManager):  # pytest: disable=C0115
     def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
         if directory is None:
             raise ConfigurationException("Named paths collection name needed")
-        elif os.path.isdir(directory):
+        if os.path.isdir(directory):
             dlist = os.listdir(directory)
             base = directory
             for p in dlist:
@@ -98,7 +98,7 @@ class PathsManager(CsvPathsManager):  # pytest: disable=C0115
                     v = j[k]
                     if isinstance(v, list):
                         continue
-                    elif isinstance(v, str):
+                    if isinstance(v, str):
                         j[k] = [av.strip() for av in v.split(PathsManager.MARKER)]
                     else:
                         raise ConfigurationException(

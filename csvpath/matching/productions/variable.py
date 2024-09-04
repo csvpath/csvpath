@@ -19,7 +19,7 @@ class Variable(Matchable):
         self.qualifiers = qs
         if n is None:
             raise ChildrenException("Name cannot be None")
-        elif n.strip() == "":
+        if n.strip() == "":
             raise ChildrenException("Name cannot be the empty string")
 
     def __str__(self) -> str:

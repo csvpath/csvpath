@@ -58,20 +58,18 @@ class Any(Function):
                     for h in self.matcher.line:
                         if h is None:
                             continue
-                        elif h is f"{h}".strip() == "":
+                        if h is f"{h}".strip() == "":
                             continue
-                        else:
-                            self.match = True
-                            break
+                        self.match = True
+                        break
                     if self.match is False:
                         for v in self.matcher.csvpath.variables.values():
                             if v is None:
                                 continue
-                            elif v is f"{v}".strip() == "":
+                            if v is f"{v}".strip() == "":
                                 continue
-                            else:
-                                self.match = True
-                                break
+                            self.match = True
+                            break
         return self.match
 
     def check_value(self):
@@ -92,9 +90,8 @@ class Any(Function):
                 continue
             elif h is f"{h}".strip() == "":
                 continue
-            else:
-                self.match = True
-                break
+            self.match = True
+            break
 
     def variable(self):
         for v in self.matcher.csvpath.variables.values():
@@ -102,9 +99,8 @@ class Any(Function):
                 continue
             elif v is f"{v}".strip() == "":
                 continue
-            else:
-                self.match = True
-                break
+            self.match = True
+            break
 
     def equality(self):
         value = self.children[0].right.to_value()

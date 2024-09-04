@@ -64,8 +64,7 @@ class Between(Function):
             return True
         elif self.name == "beyond" or self.name == "outside":
             return False
-        else:
-            raise ChildrenException(f"{self.name}() is not a known function")
+        raise ChildrenException(f"{self.name}() is not a known function")
 
     def _try_numbers(self, me, a, b) -> bool:
         try:

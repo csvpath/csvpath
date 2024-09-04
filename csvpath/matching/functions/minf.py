@@ -43,7 +43,7 @@ class MinMax(Function):
             v = f"{v}".strip()
             if v == "match":
                 return self.matcher.csvpath.current_match_count
-            elif v == "scan":
+            if v == "scan":
                 return self.matcher.csvpath.current_scan_count
             return self.matcher.csvpath.line_monitor.physical_line_number
         return self.matcher.csvpath.line_monitor.physical_line_number
@@ -51,7 +51,7 @@ class MinMax(Function):
     def is_match(self) -> bool:
         if self.onmatch:
             return True
-        elif isinstance(self.children[0], Equality):
+        if isinstance(self.children[0], Equality):
             v = self.children[0].right.to_value()
             v = f"{v}".strip()
             return v == "match"

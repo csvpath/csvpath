@@ -54,7 +54,7 @@ class Scanner:
             return (
                 line == self.csvpath.line_monitor.physical_end_line_number
             )  # total_lines + 1
-        elif line == to_line:
+        if line == to_line:
             return True
         if len(these) > 0 and max(these) == line and not to_line and not all_lines:
             return True
@@ -75,19 +75,19 @@ class Scanner:
         these = self.these if these is None else these
         if line is None:
             return False
-        elif from_line is None and all_lines:
+        if from_line is None and all_lines:
             return True
-        elif from_line is not None and all_lines:
+        if from_line is not None and all_lines:
             return line >= from_line
-        elif from_line == line:
+        if from_line == line:
             return True
-        elif from_line is not None and to_line is not None and from_line > to_line:
+        if from_line is not None and to_line is not None and from_line > to_line:
             return line >= to_line and line <= from_line
-        elif from_line is not None and to_line is not None:
+        if from_line is not None and to_line is not None:
             return line >= from_line and line <= to_line
-        elif line in these:
+        if line in these:
             return True
-        elif to_line is not None:
+        if to_line is not None:
             return line < to_line
         return False
 

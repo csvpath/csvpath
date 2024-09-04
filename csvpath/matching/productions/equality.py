@@ -61,10 +61,9 @@ class Equality(Matchable):
     def other_child(self, o):
         if self.left == o:
             return (self.right, 1)
-        elif self.right == o:
+        if self.right == o:
             return (self.left, 0)
-        else:
-            return None
+        return None
 
     def is_terminal(self, o):
         return (

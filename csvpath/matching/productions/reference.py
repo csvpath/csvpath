@@ -17,7 +17,7 @@ class Reference(Matchable):
         super().__init__(matcher, value=value, name=name)
         if name is None:
             raise ChildrenException("Name cannot be None")
-        elif name.strip() == "":
+        if name.strip() == "":
             raise ChildrenException("Name cannot be the empty string")
         #
         # references are in the form:

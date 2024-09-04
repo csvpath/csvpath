@@ -68,7 +68,7 @@ class Qualified:
         for q in self.qualifiers:
             if q == first:
                 continue
-            elif q not in Qualified.QUALIFIERS:
+            if q not in Qualified.QUALIFIERS:
                 return q
         return default
 

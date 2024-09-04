@@ -82,7 +82,7 @@ class Matchable(Qualified):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
-        elif hasattr(self.children[0], "left"):
+        if hasattr(self.children[0], "left"):
             return self.children[0].left.to_value(skip=skip)
         else:
             return self.children[0].to_value(skip=skip)
