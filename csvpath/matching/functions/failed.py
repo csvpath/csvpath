@@ -11,12 +11,13 @@ class Failed(Function):
         self.validate_zero_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
+    def _produce_value(self, skip=None) -> None:
         if self.name == "failed":
-            return not self.matcher.csvpath.is_valid
-        if self.name == "valid":
-            return self.matcher.csvpath.is_valid
-        raise ChildrenException(f"Incorrect function name {self.name}")
+            self.value = not self.matcher.csvpath.is_valid
+        elif self.name == "valid":
+            self.value = self.matcher.csvpath.is_valid
+        else:
+            raise ChildrenException(f"Incorrect function name {self.name}")
 
     def matches(self, *, skip=None) -> bool:
         return self.to_value(skip=skip)

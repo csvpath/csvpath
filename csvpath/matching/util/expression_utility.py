@@ -33,16 +33,16 @@ class ExpressionUtility:
         try:
             v = int(v)
             return v
-        except Exception:
+        except ValueError:
             v = v.replace(",", "")
             v = v.replace(";", "")
             v = v.replace("$", "")
             v = v.replace("€", "")
             v = v.replace("£", "")
-        #
-        # if this doesn't work we'll handle the higher in the stack
-        #
-        return int(v)
+            if f"{v}".find(".") > -1:
+                v = float(v)
+            # if this doesn't work we'll handle the higher in the stack
+            return int(v)
 
     @classmethod
     def to_float(self, v: Any) -> float:

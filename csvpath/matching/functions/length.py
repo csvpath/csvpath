@@ -12,14 +12,12 @@ class Length(Function):
         self.validate_one_arg(types=[Term, Variable, Header, Function])
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
+    def _produce_value(self, skip=None) -> None:
         val = self.children[0].to_value(skip=skip)
         ret = 0
         if val:
             ret = len(f"{val}")
-        return ret
+        self.value = ret
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

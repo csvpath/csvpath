@@ -11,10 +11,7 @@ class Now(Function):
         self.validate_zero_or_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-
+    def _produce_value(self, skip=None) -> None:
         format = None
         if len(self.children) == 1:
             format = self.children[0].to_value(skip=skip)
@@ -25,7 +22,7 @@ class Now(Function):
             xs = x.strftime(format)
         else:
             xs = f"{x}"
-        return xs
+        self.value = xs
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover

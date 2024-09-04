@@ -17,9 +17,7 @@ class Percent(Function):
         if which not in ["scan", "match", "line"]:
             raise ChildrenException("percent() argument must be scan, match, or line")
         if which == "line":
-            #
             # line_number is a pointer, not a count, so we add 1
-            #
             count = self.matcher.csvpath.line_monitor.data_line_count
         elif which == "scan":
             count = self.matcher.csvpath.current_scan_count

@@ -11,18 +11,14 @@ class Subtract(Function):
         self.validate_one_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            child = self.children[0]
-            if isinstance(child, Term):
-                v = child.to_value()
-                v = int(v)
-                self.value = v * -1
-            elif isinstance(child, Equality):
-                self.value = self._do_sub(child, skip=skip)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        child = self.children[0]
+        if isinstance(child, Term):
+            v = child.to_value()
+            v = int(v)
+            self.value = v * -1
+        elif isinstance(child, Equality):
+            self.value = self._do_sub(child, skip=skip)
 
     def _do_sub(self, child, skip=None):
         siblings = child.commas_to_list()

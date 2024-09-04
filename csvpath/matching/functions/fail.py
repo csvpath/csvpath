@@ -10,9 +10,9 @@ class Fail(Function):
         self.validate_zero_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
+    def _produce_value(self, skip=None) -> None:
         self.matcher.csvpath.is_valid = False
-        return False
+        self.value = False
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)

@@ -14,9 +14,7 @@ class Jinjaf(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
+    def _produce_value(self, skip=None) -> None:
         template_path = self.children[0].left.to_value(skip=skip)
         if template_path is None or f"{template_path}".strip() == "":
             raise ChildrenException(
@@ -33,7 +31,7 @@ class Jinjaf(Function):
         page = self._transform(content=page, tokens=self._simplify_tokens())
         with open(output_path, "w", encoding="utf-8") as file:
             file.write(page)
-        return True
+        self.value = True
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

@@ -16,12 +16,8 @@ class Empty(Function):
         self.validate_one_arg([Header, Variable])
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            self.value = self.matches(skip=skip)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

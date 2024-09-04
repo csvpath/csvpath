@@ -16,10 +16,8 @@ class FirstLine(Function):
                 )
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        return self.match(skip=skip)
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.match(skip=skip)
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

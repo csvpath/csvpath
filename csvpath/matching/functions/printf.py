@@ -17,6 +17,7 @@ class Print(Function):
         )
         super().check_valid()
 
+    """
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
@@ -30,6 +31,17 @@ class Print(Function):
             parser = PrintParser(self.matcher.csvpath)
             self.value = parser.transform(string)
         return self.value
+    """
+
+    def _produce_value(self, skip=None) -> None:
+        child = None
+        if isinstance(self.children[0], Equality):
+            child = self.children[0].left
+        else:
+            child = self.children[0]
+        string = child.to_value()
+        parser = PrintParser(self.matcher.csvpath)
+        self.value = parser.transform(string)
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

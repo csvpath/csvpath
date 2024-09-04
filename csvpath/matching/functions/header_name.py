@@ -42,20 +42,16 @@ class HeaderName(Function):
             ret = self.matcher.header_index(v)
         return ret
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if not self.value:
-            v = self._value_one(skip=skip)
-            expected = self._value_two(skip=skip)
-            actual = self._look_up_header(v)
-            if expected is None:
-                self.value = actual
-            else:
-                self.value = self._header_matches(actual, expected)
-                if self.name == "header_name_mismatch":
-                    self.value = not self.value
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        v = self._value_one(skip=skip)
+        expected = self._value_two(skip=skip)
+        actual = self._look_up_header(v)
+        if expected is None:
+            self.value = actual
+        else:
+            self.value = self._header_matches(actual, expected)
+            if self.name == "header_name_mismatch":
+                self.value = not self.value
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
