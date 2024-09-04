@@ -5,6 +5,9 @@ from .. import CsvPath, Error, Printer
 
 
 class CsvPathErrorCollector(ABC):
+    """error collectors collect errors primarily from expressions,
+    but also matcher, scanner, and elsewhere."""
+
     @abstractmethod
     def errors(self) -> List[Error]:
         pass

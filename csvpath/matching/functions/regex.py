@@ -6,6 +6,8 @@ import re
 
 
 class Regex(Function):
+    """does a regex match on a value"""
+
     def check_valid(self) -> None:
         self.validate_two_or_three_args()
         super().check_valid()

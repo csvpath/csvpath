@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any, List
 from csvpath.matching.productions.variable import Variable
 from csvpath.matching.productions.matchable import Matchable
@@ -9,6 +10,13 @@ from ..util.exceptions import ChildrenException
 
 
 class Equality(Matchable):
+    """represents one of:
+    1. an equals test;
+    2. an assignment;
+    3. a when/do;
+    4. a comma separated list of arguments
+    """
+
     def __init__(self, matcher):
         super().__init__(matcher)
         self.op: str = (
@@ -28,9 +36,7 @@ class Equality(Matchable):
 
     @left.setter
     def left(self, o):
-        #
-        # TODO: should make sure we are child's parent
-        #
+        # note to self: should make sure we are child's parent
         if not self.children:
             self.children = [None, None]
         while len(self.children) < 2:
@@ -45,9 +51,7 @@ class Equality(Matchable):
 
     @right.setter
     def right(self, o):
-        #
-        # TODO: should make sure we are child's parent
-        #
+        # note to self: should make sure we are child's parent
         if not self.children:
             self.children = [None, None]
         while len(self.children) < 2:

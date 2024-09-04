@@ -26,7 +26,7 @@ class Length(Function):
         return self.to_value(skip=skip) > 0
 
 
-class MinMaxLength(Function):
+class MinMaxLength(Function):  # pylint: disable=C0115
     def check_valid(self) -> None:
         self.validate_two_args(left=[Term, Variable, Header, Function], right=[Term])
         super().check_valid()

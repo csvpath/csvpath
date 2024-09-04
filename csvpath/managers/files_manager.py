@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 import os
 import json
 from json import JSONDecodeError
@@ -6,8 +7,10 @@ from abc import ABC, abstractmethod
 
 
 class CsvPathsFilesManager(ABC):
+    """files managers map fully qualified or relative file paths to simple names to make it easier to trigger csvpath runs. unlike paths and results manager, files managers are mostly a convenience."""
+
     @abstractmethod
-    def add_named_files_from_dir(self, *, dirname: str) -> None:
+    def add_named_files_from_dir(self, dirname: str) -> None:
         pass
 
     @abstractmethod
@@ -31,7 +34,7 @@ class CsvPathsFilesManager(ABC):
         pass
 
 
-class FilesManager(CsvPathsFilesManager):
+class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
     def __init__(self, *, named_files: Dict[str, str] = None, csvpaths):
         if named_files is None:
             named_files = {}
@@ -43,7 +46,7 @@ class FilesManager(CsvPathsFilesManager):
 
     def set_named_files_from_json(self, filename: str) -> None:
         try:
-            with open(filename) as f:
+            with open(filename, encoding="utf-8") as f:
                 j = json.load(f)
                 self.named_files = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:

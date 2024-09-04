@@ -1,11 +1,14 @@
+# pylint: disable=C0114
 from typing import List
 import ply.yacc as yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from ..util.parser_utility import ParserUtility
-from .exceptions import ScanException, UnexpectedException
+from .exceptions import ScanException, UnexpectedProductionException
 
 
 class Scanner:
+    """scanner is responsible for picking out what lines will be considered from a file"""
+
     tokens = ScanningLexer.tokens
 
     def __init__(self, csvpath=None):
@@ -154,7 +157,9 @@ class Scanner:
 
     def _collect_a_line_range(self, p):
         if not isinstance(p[1], list):
-            raise UnexpectedException("Non array in p[1]. You should fix this.")
+            raise UnexpectedProductionException(
+                "Non array in p[1]. You should fix this."
+            )
         if self.from_line and self.to_line:
             # we have a from and to range. we have to move the range into
             # these, then add this new range to these too
@@ -170,13 +175,17 @@ class Scanner:
             elif isinstance(p[1], list):
                 pass  # this is a list of several items -- i.e. it is self.these
             else:
-                raise UnexpectedException("Non array in p[1]. You should fix this.")
+                raise UnexpectedProductionException(
+                    "Non array in p[1]. You should fix this."
+                )
                 self.from_line = p[1]  # does this ever happen?
 
             if isinstance(p[3], list):
                 self.to_line = p[3][0]
             else:
-                raise UnexpectedException("Non array in p[3]. You should fix this.")
+                raise UnexpectedProductionException(
+                    "Non array in p[3]. You should fix this."
+                )
                 self.to_line = p[3]  # does this ever happen?
             # if we have a multi-element list on the left we set a range
             # using the last item in the list as the from_line and

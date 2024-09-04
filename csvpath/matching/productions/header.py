@@ -1,9 +1,13 @@
+# pylint: disable=C0114
 from typing import Any
 from .matchable import Matchable
 from ..util.expression_utility import ExpressionUtility
 
 
 class Header(Matchable):
+    """a header is analogous to a column in a spreadsheet or
+    RDBMS but with CSV characteristics"""
+
     NEVER = -9999999999
 
     def __str__(self) -> str:

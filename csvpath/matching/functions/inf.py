@@ -4,6 +4,8 @@ from .function import Function
 
 
 class In(Function):
+    """checks if the component value is in a delimited string of values"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

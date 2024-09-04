@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -5,6 +6,12 @@ from . import ChildrenException
 
 
 class Variable(Matchable):
+    """a variable that persists for the life of the csvpath run.
+    variables may live longer bound to results when they are in
+    the context of a CsvPaths, rather than just a single
+    CsvPath.
+    """
+
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
         n, qs = ExpressionUtility.get_name_and_qualifiers(name)

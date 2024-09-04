@@ -74,15 +74,16 @@ from .print_queue import PrintQueue
 
 
 class UnknownFunctionException(Exception):
-    pass
+    """thrown when the name used is not registered"""
 
 
 class InvalidNameException(Exception):
-    pass
+    """thrown when a name is for some reason not allowed"""
 
 
 class InvalidChildException(Exception):
-    pass
+    """thrown when an incorrect subclass is seen;
+    e.g. a function that is not Function."""
 
 
 class FunctionFactory:
@@ -107,9 +108,7 @@ class FunctionFactory:
         if cls.get_function(None, name=name, find_external_functions=False) is not None:
             raise InvalidNameException("Built-in functions cannot be overriden")
         if not isinstance(function, Function):
-            #
             # pass as an instance, not a class, for specificity. good to do?
-            #
             raise InvalidChildException(
                 "Function being registered must be passed as an instance"
             )

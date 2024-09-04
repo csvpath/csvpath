@@ -1,8 +1,11 @@
+# pylint: disable=C0114
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 
 
 class Term(Matchable):
+    """represents any plain int, string, or regex value"""
+
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}({self.value})"""
 

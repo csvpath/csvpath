@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from typing import Dict, List
 import os
 import json
@@ -7,6 +8,9 @@ from .. import ConfigurationException
 
 
 class CsvPathsManager(ABC):
+    """holds paths in a named set. this allows all paths to be run
+    as a unit, with the results manager holding the set's outcomes."""
+
     @abstractmethod
     def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
         """adds named paths found in a directory. files with multiple paths
@@ -46,7 +50,7 @@ class CsvPathsManager(ABC):
         pass
 
 
-class PathsManager(CsvPathsManager):
+class PathsManager(CsvPathsManager):  # pytest: disable=C0115
     MARKER: str = "---- CSVPATH ----"
 
     def __init__(self, *, csvpaths, named_paths=None):

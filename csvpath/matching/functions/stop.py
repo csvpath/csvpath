@@ -40,6 +40,9 @@ class Stop(Function):
 
 
 class Skip(Function):
+    """skips to the next line. will probably leave later match components
+    unconsidered; although, there is not certainty that will happen."""
+
     def check_valid(self) -> None:
         self.validate_zero_or_more_args()
         super().check_valid()

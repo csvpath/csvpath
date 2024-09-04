@@ -7,6 +7,8 @@ from csvpath import ConfigurationException
 
 
 class Import(Function):
+    """imports one csvpath into another"""
+
     def check_valid(self) -> None:
         self.validate_one_arg(types=[Term])
         super().check_valid()

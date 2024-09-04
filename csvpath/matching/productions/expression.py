@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 import traceback
 import warnings
 from csvpath.util.error import ErrorHandler
@@ -5,6 +6,15 @@ from . import Matchable
 
 
 class Expression(Matchable):
+    """root of a match component. the match components are expressions,
+    even if we think of them as variables, headers, etc. expressions
+    live in a list in the matcher. matcher tracks their activation
+    status (True/False) to minimize the number of activations during
+    onmatch lookups. expressions' most important job is error
+    handling. the expression is responsible for catching and
+    handling any error in its descendants.
+    """
+
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
             return True

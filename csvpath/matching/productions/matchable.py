@@ -1,9 +1,14 @@
+# pylint: disable=C0114
 from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
 
 
 class Matchable(Qualified):
+    """intermediate ancestor of match productions providing
+    utility functions and the core to_value and matches
+    methods"""
+
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(name=name)
         self.parent = None

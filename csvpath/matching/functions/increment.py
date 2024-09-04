@@ -5,6 +5,8 @@ from ..util.exceptions import ChildrenException
 
 
 class Increment(Function):
+    """increments a var every n-times a each different value is seen"""
+
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()

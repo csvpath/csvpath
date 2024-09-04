@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from __future__ import annotations
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
@@ -64,7 +65,7 @@ class CsvPathsResultsManager(ABC):
         """should remove any results, completing silently if no such results"""
 
 
-class ResultsManager(CsvPathsResultsManager):
+class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
     FILES_MANAGER_TYPE = "files"
     PATHS_MANAGER_TYPE = "paths"
 

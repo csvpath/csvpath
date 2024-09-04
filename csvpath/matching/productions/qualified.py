@@ -1,3 +1,4 @@
+# pylint: disable=C0114
 from enum import Enum
 import hashlib
 from typing import Optional
@@ -6,6 +7,8 @@ from . import ChildrenException
 
 
 class Qualities(Enum):
+    """specifies the well-known qualifiers"""
+
     ONMATCH = "onmatch"
     ONCHANGE = "onchange"
     ASBOOL = "asbool"
@@ -19,6 +22,8 @@ class Qualities(Enum):
 
 
 class Qualified:
+    """base class for productions that can have qualifiers"""
+
     QUALIFIERS = [
         Qualities.ONMATCH.value,
         Qualities.ONCHANGE.value,
