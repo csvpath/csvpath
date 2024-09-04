@@ -19,18 +19,15 @@ class CsvPathsResultsManager(ABC):
     def get_variables(self, name: str) -> bool:
         """gets all the variables from all csvpaths in one dict. variables may
         overwrite each other"""
-        pass
 
     @abstractmethod
     def is_valid(self, name: str) -> bool:
         """True if all csvpaths are valid"""
-        pass
 
     @abstractmethod
     def has_errors(self, name: str) -> bool:
         """True if the error collectors for any of the csvpaths under name
         have any errors"""
-        pass
 
     @abstractmethod
     def get_number_of_errors(self, name: str) -> bool:  # pylint: disable=C0116

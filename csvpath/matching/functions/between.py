@@ -59,9 +59,9 @@ class Between(Function):
     # =====================
 
     def _between(self) -> bool:
-        if self.name == "between" or self.name == "inside":
+        if self.name in ["between", "inside"]:
             return True
-        elif self.name == "beyond" or self.name == "outside":
+        elif self.name in ["beyond", "outside"]:
             return False
         raise ChildrenException(f"{self.name}() is not a known function")
 

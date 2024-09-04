@@ -1,14 +1,16 @@
 # pylint: disable=C0114
 from typing import List
-import ply.yacc as yacc
+from ply import yacc
 from csvpath.scanning.scanning_lexer import ScanningLexer
 from ..util.parser_utility import ParserUtility
 from .exceptions import ScanException, UnexpectedProductionException
 
 
-class Scanner:
+class Scanner:  # pylint: disable=R0902
     """scanner is responsible for picking out what lines will be considered from a file"""
 
+    # re: R0902: attributes all required. could pack
+    # them up, but not worth it.
     tokens = ScanningLexer.tokens
 
     def __init__(self, csvpath=None):
@@ -37,7 +39,7 @@ class Scanner:
             these: {self.these}
         """
 
-    def is_last(
+    def is_last(  # pylint: disable=R0913
         self,
         line: int,
         *,
@@ -61,7 +63,7 @@ class Scanner:
             return True
         return False
 
-    def includes(
+    def includes(  # pylint: disable=R0913
         self,
         line: int,
         *,
@@ -75,23 +77,28 @@ class Scanner:
         to_line = self.to_line if to_line == -1 else to_line
         all_lines = self.all_lines if all_lines is None else all_lines
         these = self.these if these is None else these
+        ret = None
         if line is None:
-            return False
-        if from_line is None and all_lines:
-            return True
-        if from_line is not None and all_lines:
-            return line >= from_line
-        if from_line == line:
-            return True
-        if from_line is not None and to_line is not None and from_line > to_line:
-            return line >= to_line and line <= from_line
-        if from_line is not None and to_line is not None:
-            return line >= from_line and line <= to_line
-        if line in these:
-            return True
-        if to_line is not None:
-            return line < to_line
-        return False
+            ret = False
+        elif from_line is None and all_lines:
+            ret = True
+        elif from_line is not None and all_lines:
+            ret = line >= from_line
+        elif from_line == line:
+            ret = True
+        elif from_line is not None and to_line is not None and from_line > to_line:
+            ret = to_line <= line <= from_line
+            # return line >= to_line and line <= from_line
+        elif from_line is not None and to_line is not None:
+            ret = from_line <= line <= to_line
+            # return line >= from_line and line <= to_line
+        elif line in these:
+            ret = True
+        elif to_line is not None:
+            ret = line < to_line
+        if ret is None:
+            ret = False
+        return ret
 
     # ===================
     # parse
@@ -181,15 +188,14 @@ class Scanner:
                 raise UnexpectedProductionException(
                     "Non array in p[1]. You should fix this."
                 )
-                self.from_line = p[1]  # does this ever happen?
-
+                # self.from_line = p[1]  # does this ever happen?
             if isinstance(p[3], list):
                 self.to_line = p[3][0]
             else:
                 raise UnexpectedProductionException(
                     "Non array in p[3]. You should fix this."
                 )
-                self.to_line = p[3]  # does this ever happen?
+                # self.to_line = p[3]  # does this ever happen?
             # if we have a multi-element list on the left we set a range
             # using the last item in the list as the from_line and
             # the right side in the to_line. then we clear the range into these

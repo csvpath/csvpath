@@ -146,7 +146,7 @@ class FunctionFactory:
             f = Count(matcher, name, child)
         elif name == "length":
             f = Length(matcher, name, child)
-        elif name == "regex" or name == "exact":
+        elif name in ["regex", "exact"]:
             f = Regex(matcher, name, child)
         elif name == "not":
             f = Not(matcher, name, child)
@@ -162,13 +162,13 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
-        elif name == "below" or name == "lt" or name == "before":
+        elif name in ["below", "lt", "before"]:
             f = AboveBelow(matcher, name, child)
-        elif name == "above" or name == "gt" or name == "after":
+        elif name in ["above", "gt", "after"]:
             f = AboveBelow(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)
-        elif name == "firstline" or name == "firstmatch" or name == "firstscan":
+        elif name in ["firstline", "firstmatch", "firstscan"]:
             f = FirstLine(matcher, name, child)
         elif name == "count_lines":
             f = CountLines(matcher, name, child)
@@ -176,9 +176,9 @@ class FunctionFactory:
             f = CountScans(matcher, name, child)
         elif name == "or":
             f = Or(matcher, name, child)
-        elif name == "no" or name == "false":
+        elif name in ["no", "false"]:
             f = No(matcher, name, child)
-        elif name == "yes" or name == "true":
+        elif name in ["yes", "true"]:
             f = Yes(matcher, name, child)
         elif name == "max":
             f = Max(matcher, name, child)
@@ -196,7 +196,7 @@ class FunctionFactory:
             f = Length(matcher, name, child)
         elif name == "add":
             f = Add(matcher, name, child)
-        elif name == "subtract" or name == "minus":
+        elif name in ["subtract", "minus"]:
             f = Subtract(matcher, name, child)
         elif name == "multiply":
             f = Multiply(matcher, name, child)
@@ -210,15 +210,13 @@ class FunctionFactory:
             f = Print(matcher, name, child)
         elif name == "increment":
             f = Increment(matcher, name, child)
-        # elif name == "column":
-        #    f = Column(matcher, name, child)
-        elif name == "header_name" or name == "header_index":
+        elif name in ["header_name", "header_index"]:
             f = HeaderName(matcher, name, child)
         elif name == "header_names_mismatch":
             f = HeaderNamesMismatch(matcher, name, child)
         elif name == "substring":
             f = Substring(matcher, name, child)
-        elif name == "stop" or name == "fail_and_stop":
+        elif name in ["stop", "fail_and_stop"]:
             f = Stop(matcher, name, child)
         elif name == "variables":
             f = Variables(matcher, name, child)
@@ -242,7 +240,7 @@ class FunctionFactory:
             f = Jinjaf(matcher, name, child)
         elif name == "correlate":
             f = Correlate(matcher, name, child)
-        elif name == "count_headers" or name == "count_headers_in_line":
+        elif name in ["count_headers", "count_headers_in_line"]:
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
             f = PercentUnique(matcher, name, child)
@@ -258,17 +256,17 @@ class FunctionFactory:
             f = Pop(matcher, name, child)
         elif name == "peek":
             f = Peek(matcher, name, child)
-        elif name == "peek_size" or name == "size":
+        elif name in ["peek_size", "size"]:
             f = PeekSize(matcher, name, child)
-        elif name == "date" or name == "datetime":
+        elif name in ["date", "datetime"]:
             f = Date(matcher, name, child)
         elif name == "fail":
             f = Fail(matcher, name, child)
-        elif name == "failed" or name == "valid":
+        elif name in ["failed", "valid"]:
             f = Failed(matcher, name, child)
         elif name == "stack":
             f = Stack(matcher, name, child)
-        elif name == "stdev" or name == "pstdev":
+        elif name in ["stdev", "pstdev"]:
             f = Stdev(matcher, name, child)
         elif name == "has_dups":
             f = HasDups(matcher, name, child)
@@ -306,19 +304,9 @@ class FunctionFactory:
             f = PrintLine(matcher, name, child)
         elif name == "print_queue":
             f = PrintQueue(matcher, name, child)
-        elif (
-            name == "min_length"
-            or name == "max_length"
-            or name == "too_long"
-            or name == "too_short"
-        ):
+        elif name in ["min_length", "max_length", "too_long", "too_short"]:
             f = MinMaxLength(matcher, name, child)
-        elif (
-            name == "between"
-            or name == "inside"
-            or name == "beyond"
-            or name == "outside"
-        ):
+        elif name in ["between", "inside", "beyond", "outside"]:
             f = Between(matcher, name, child)
         else:
             if (

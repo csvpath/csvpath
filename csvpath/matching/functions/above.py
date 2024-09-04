@@ -20,10 +20,12 @@ class AboveBelow(Function):
             self.value = False
         else:
             typed = False
-            if isinstance(a, int) or isinstance(a, float):
+            if isinstance(a, (float, int)):  # or isinstance(a, float):
                 self.value = self._try_numbers(a, b)
                 typed = True
-            elif self.value is None and isinstance(a, datetime) or isinstance(a, date):
+            elif self.value is None and isinstance(
+                a, (datetime, date)
+            ):  # or isinstance(a, date):
                 self.value = self._try_dates(a, b)
                 typed = True
             if typed:

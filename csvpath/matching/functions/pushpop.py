@@ -85,8 +85,9 @@ class Stack(Function):
         stack = self.matcher.get_variable(k, set_if_none=[])
         if not isinstance(stack, list):
             thelist = []
-            stack = thelist.append(stack)
-            self.matcher.set_variable(k, value=thelist)
+            thelist.append(stack)
+            stack = thelist
+            self.matcher.set_variable(k, value=stack)
         self.value = stack
 
     def matches(self, *, skip=None) -> bool:

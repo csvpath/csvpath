@@ -20,15 +20,13 @@ class CsvPathsManager(ABC):
         """
 
     @abstractmethod
-    def set_named_paths_from_json(self, filename: str) -> None:
+    def set_named_paths_from_json(self, file_path: str) -> None:
         """replaces the named paths dict with a dict found in a JSON file. lists
         of paths are keyed by names."""
-        pass
 
     @abstractmethod
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         """overwrites"""
-        pass
 
     @abstractmethod
     def add_named_paths(self, name: str, path: List[str]) -> None:
@@ -96,7 +94,7 @@ class PathsManager(CsvPathsManager):  # pytest: disable=C0115, C0116
 
     def set_named_paths_from_json(self, file_path: str) -> None:
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 j = json.load(f)
                 for k in j:
                     v = j[k]

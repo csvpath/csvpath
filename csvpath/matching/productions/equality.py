@@ -67,13 +67,7 @@ class Equality(Matchable):
 
     def is_terminal(self, o):
         """is non equality. a bit misleading because children of functions can be equalities."""
-        return (
-            isinstance(o, Variable)
-            or isinstance(o, Term)
-            or isinstance(o, Header)
-            or isinstance(o, Function)
-            or o is None
-        )
+        return isinstance(o, (Variable, Term, Header, Function)) or o is None
 
     def both_terminal(self):
         """both are non-equalities"""
