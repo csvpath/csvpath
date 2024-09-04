@@ -7,30 +7,35 @@ from abc import ABC, abstractmethod
 
 
 class CsvPathsFilesManager(ABC):
-    """files managers map fully qualified or relative file paths to simple names to make it easier to trigger csvpath runs. unlike paths and results manager, files managers are mostly a convenience."""
+    """files managers map fully qualified or relative file paths to
+    simple names to make it easier to trigger csvpath runs. unlike
+    paths and results manager, files managers are mostly a
+    convenience."""
 
     @abstractmethod
     def add_named_files_from_dir(self, dirname: str) -> None:
-        pass
+        """each file is named by its simple name, minus extension.
+        files are added so you can add multiple directories."""
 
     @abstractmethod
     def set_named_files_from_json(self, filename: str) -> None:
-        pass
+        """files are keyed by their simple name, minus extension,
+        in a dict. the files are set so each time you do this you overwrite"""
 
     @abstractmethod
     def set_named_files(self, nf: Dict[str, str]) -> None:
-        pass
+        """overwrite"""
 
     @abstractmethod
     def add_named_file(self, *, name: str, path: str) -> None:
+        """additive"""
+
+    @abstractmethod
+    def get_named_file(self, name: str) -> str:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def get_named_file(self, name: str) -> str:
-        pass
-
-    @abstractmethod
-    def remove_named_file(self, name: str) -> None:
+    def remove_named_file(self, name: str) -> None:  # pylint: disable=C0116
         pass
 
 

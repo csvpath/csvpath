@@ -17,35 +17,40 @@ class CsvPathsResultsManager(ABC):
 
     @abstractmethod
     def get_variables(self, name: str) -> bool:
+        """gets all the variables from all csvpaths in one dict. variables may
+        overwrite each other"""
         pass
 
     @abstractmethod
     def is_valid(self, name: str) -> bool:
+        """True if all csvpaths are valid"""
         pass
 
     @abstractmethod
     def has_errors(self, name: str) -> bool:
+        """True if the error collectors for any of the csvpaths under name
+        have any errors"""
         pass
 
     @abstractmethod
-    def get_number_of_errors(self, name: str) -> bool:
+    def get_number_of_errors(self, name: str) -> bool:  # pylint: disable=C0116
         pass
 
     @abstractmethod
-    def get_number_of_results(self, name: str) -> int:
+    def get_number_of_results(self, name: str) -> int:  # pylint: disable=C0116
         pass
 
     @abstractmethod
     def set_named_results(self, results: Dict[str, List[CsvPathResult]]) -> None:
-        pass
+        """overwrite"""
 
     @abstractmethod
-    def add_named_result(self, name: str, result: CsvPathResult) -> None:
-        pass
+    def add_named_result(self, result: CsvPathResult) -> None:
+        """additive. the results are named in the result object."""
 
     @abstractmethod
-    def add_named_results(self, name: str, results: List[CsvPathResult]) -> None:
-        pass
+    def add_named_results(self, results: List[CsvPathResult]) -> None:
+        """additive. the results are named in the result object."""
 
     @abstractmethod
     def get_named_results(self, name: str) -> List[CsvPathResult]:
@@ -70,7 +75,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
     PATHS_MANAGER_TYPE = "paths"
 
     def __init__(self, *, csvpaths=None):
-        self.named_results = dict()
+        self.named_results = {}
         self._csvpaths = None
         self._variables = None
 
@@ -153,12 +158,12 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             self.named_results[name].append(result)
         self._variables = None
 
-    def set_named_results(self, *, results: Dict[str, List[CsvPathResult]]) -> None:
+    def set_named_results(self, results: Dict[str, List[CsvPathResult]]) -> None:
         self.named_results = {}
         for key, value in results.items():
-            self.add_named_results(key, value)
+            self.add_named_results(value)
 
-    def add_named_results(self, name: str, results: List[CsvPathResult]) -> None:
+    def add_named_results(self, results: List[CsvPathResult]) -> None:
         for r in results:
             self.add_named_result(r)
 
