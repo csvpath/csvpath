@@ -13,8 +13,7 @@ class Stdev(Function):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        child = self.children[0]
-        v = child.to_value(skip=skip)
+        v = self.children[0].to_value(skip=skip)
         stack = None
         f = None
         if isinstance(v, list):

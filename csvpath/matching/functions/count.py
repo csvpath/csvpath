@@ -11,6 +11,10 @@ class Count(Function):
         # note to self: no specific validity checks from way back
         super().check_valid()
 
+    #
+    # not easy to move this to _produce_value() because it does onmatch
+    # deeper in the logic. can be done, but a PIA. later.
+    #
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
@@ -26,7 +30,7 @@ class Count(Function):
         return self.value  # or not. we have to act as if.
 
     #
-    # we always match. regardless of if any contained condition matches.  good? :/
+    # we always match. regardless of if any contained condition matches.
     #
     def matches(self, *, skip=None) -> bool:
         # we get a value because that's how we are sure to count

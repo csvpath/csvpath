@@ -11,32 +11,24 @@ class Push(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            if not self.onmatch or self.line_matches:
-                eq = self.children[0]
-                k = eq.left.to_value()
-                v = eq.right.to_value()
-                stack = self.matcher.get_variable(k, set_if_none=[])
-                if self.has_qualifier("distinct") and v in stack:
-                    pass
-                elif isinstance(stack, tuple):
-                    self.matcher.csvpath.logger.warning(
-                        "Push cannot add to the stack because it is a tuple. The run may be ending."
-                    )
-                elif stack is not None:
-                    stack.append(v)
-                else:
-                    self.matcher.csvpath.logger.warning(
-                        "Push cannot do its work because no default stack was created. The run may be ending."
-                    )
-                    # self.matcher.set_variable(
-                    #     k, value=stack
-                    # )  # technically we don't have to call set because refs
+    def _produce_value(self, skip=None) -> None:
+        eq = self.children[0]
+        k = eq.left.to_value(skip=skip)
+        v = eq.right.to_value(skip=skip)
+        stack = self.matcher.get_variable(k, set_if_none=[])
+        if self.has_qualifier("distinct") and v in stack:
+            pass
+        elif isinstance(stack, tuple):
+            self.matcher.csvpath.logger.warning(
+                "Push cannot add to the stack because it is a tuple. The run may be ending."
+            )
+        elif stack is not None:
+            stack.append(v)
+        else:
+            self.matcher.csvpath.logger.warning(
+                "Push cannot do its work because no default stack was created. The run may be ending."
+            )
         self.value = True
-        return self.value
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
@@ -62,17 +54,13 @@ class Pop(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            k = self.children[0].to_value()
-            stack = self.matcher.get_variable(k, set_if_none=[])
-            if len(stack) > 0:
-                self.value = stack[len(stack) - 1]
-                stack = stack[0 : len(stack) - 2]
-                self.matcher.set_variable(k, value=stack)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        k = self.children[0].to_value(skip=skip)
+        stack = self.matcher.get_variable(k, set_if_none=[])
+        if len(stack) > 0:
+            self.value = stack[len(stack) - 1]
+            stack = stack[0 : len(stack) - 2]
+            self.matcher.set_variable(k, value=stack)
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
@@ -92,18 +80,14 @@ class Stack(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            k = self.children[0].to_value()
-            stack = self.matcher.get_variable(k, set_if_none=[])
-            if not isinstance(stack, list):
-                thelist = []
-                stack = thelist.append(stack)
-                self.matcher.set_variable(k, value=thelist)
-            self.value = stack
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        k = self.children[0].to_value(skip=skip)
+        stack = self.matcher.get_variable(k, set_if_none=[])
+        if not isinstance(stack, list):
+            thelist = []
+            stack = thelist.append(stack)
+            self.matcher.set_variable(k, value=thelist)
+        self.value = stack
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()
@@ -116,18 +100,14 @@ class Peek(Function):
         self.validate_two_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            eq = self.children[0]
-            k = eq.left.to_value()
-            v = eq.right.to_value()
-            v = int(v)
-            stack = self.matcher.get_variable(k, set_if_none=[])
-            if v < len(stack):
-                self.value = stack[v]
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        eq = self.children[0]
+        k = eq.left.to_value(skip=skip)
+        v = eq.right.to_value(skip=skip)
+        v = int(v)
+        stack = self.matcher.get_variable(k, set_if_none=[])
+        if v < len(stack):
+            self.value = stack[v]
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
@@ -147,14 +127,10 @@ class PeekSize(Function):
         self.validate_one_arg()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            k = self.children[0].to_value()
-            stack = self.matcher.get_variable(k, set_if_none=[])
-            self.value = len(stack)
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        k = self.children[0].to_value(skip=skip)
+        stack = self.matcher.get_variable(k, set_if_none=[])
+        self.value = len(stack)
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover

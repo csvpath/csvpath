@@ -27,4 +27,5 @@ class Substring(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
-        return v is not None
+        self.match = v is not None
+        return self.match

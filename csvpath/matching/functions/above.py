@@ -12,6 +12,7 @@ class AboveBelow(Function):
         self.validate_two_args()
         super().check_valid()
 
+    """
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
@@ -44,6 +45,31 @@ class AboveBelow(Function):
             if self.value is None:
                 self.value = False
         return self.value
+    """
+
+    def _produce_value(self, skip=None) -> None:
+        thischild = self.children[0].children[0]
+        abovethatchild = self.children[0].children[1]
+        a = thischild.to_value(skip=skip)
+        b = abovethatchild.to_value(skip=skip)
+        if a is None and b is not None or b is None and a is not None:
+            self.value = False
+        else:
+            typed = False
+            if isinstance(a, int) or isinstance(a, float):
+                self.value = self._try_numbers(a, b)
+                typed = True
+            elif self.value is None and isinstance(a, datetime) or isinstance(a, date):
+                self.value = self._try_dates(a, b)
+                typed = True
+            if typed:
+                # we're done
+                pass
+            else:
+                if self.value is None:
+                    self.value = self._try_strings(a, b)
+        if self.value is None:
+            self.value = False
 
     def _above(self) -> bool:
         if self.name == "gt" or self.name == "above" or self.name == "after":

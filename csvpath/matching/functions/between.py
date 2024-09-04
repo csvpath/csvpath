@@ -13,6 +13,7 @@ class Between(Function):
         self.validate_three_args()
         super().check_valid()
 
+    """
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
@@ -33,6 +34,23 @@ class Between(Function):
             if self.value is None:
                 self.value = False
         return self.value
+    """
+
+    def _produce_value(self, skip=None) -> None:
+        siblings = self.children[0].commas_to_list()
+        me = siblings[0].to_value(skip=skip)
+        a = siblings[1].to_value(skip=skip)
+        b = siblings[2].to_value(skip=skip)
+        if me is None or a is None or b is None:
+            self.value = False
+        else:
+            self.value = self._try_numbers(me, a, b)
+            if self.value is None:
+                self.value = self._try_dates(me, a, b)
+            if self.value is None:
+                self.value = self._try_strings(me, a, b)
+        if self.value is None:
+            self.value = False
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover

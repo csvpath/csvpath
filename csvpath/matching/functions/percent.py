@@ -13,7 +13,7 @@ class Percent(Function):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        which = self.children[0].to_value()
+        which = self.children[0].to_value(skip=skip)
         if which not in ["scan", "match", "line"]:
             raise ChildrenException("percent() argument must be scan, match, or line")
         if which == "line":
@@ -36,4 +36,5 @@ class Percent(Function):
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
-        return v is not None
+        self.match = v is not None
+        return self.match

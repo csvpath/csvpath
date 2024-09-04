@@ -10,18 +10,11 @@ class PrintQueue(Function):
         self.validate_zero_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            if (
-                not self.matcher.csvpath.printers
-                or len(self.matcher.csvpath.printers) == 0
-            ):
-                self.value = 0
-            else:
-                self.value = self.matcher.csvpath.printers[0].lines_printed
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        if not self.matcher.csvpath.printers or len(self.matcher.csvpath.printers) == 0:
+            self.value = 0
+        else:
+            self.value = self.matcher.csvpath.printers[0].lines_printed
 
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()
