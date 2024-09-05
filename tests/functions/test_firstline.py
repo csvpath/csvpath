@@ -2,7 +2,7 @@ import unittest
 import pytest
 from csvpath.csvpath import CsvPath
 from tests.save import Save
-from csvpath.matching.productions import ChildrenException
+from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"

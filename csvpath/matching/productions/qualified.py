@@ -3,7 +3,7 @@ from enum import Enum
 import hashlib
 from typing import Optional
 from ..util.expression_utility import ExpressionUtility
-from . import ChildrenException
+from ..util.exceptions import ChildrenException
 
 
 class Qualities(Enum):

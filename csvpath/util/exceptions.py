@@ -1,5 +1,5 @@
-class ConfigurationException(Exception):
-    """for when CsvPaths is incorrectly setup or some other config problem"""
+class CsvPathsException(Exception):
+    """general CsvPaths issues"""
 
 
 class ParsingException(Exception):
@@ -7,7 +7,7 @@ class ParsingException(Exception):
 
 
 class InputException(Exception):
-    """for when an input cannot be identified as a csvpath"""
+    """for when an input is missing or cannot be identified"""
 
 
 class FormatException(Exception):

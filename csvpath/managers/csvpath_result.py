@@ -1,7 +1,9 @@
 # pylint: disable=C0114
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
-from .. import CsvPath, Error, Printer
+from ..util.error import Error
+from ..util.printer import Printer
+from .. import CsvPath
 
 
 class CsvPathErrorCollector(ABC):
@@ -127,13 +129,13 @@ class CsvPathResult(CsvPathErrorCollector, Printer):  # pylint: disable=R0902
         return len(self._printouts) > 0 if self._printouts else False
 
     @property
-    def lines_printed(self) -> int:
+    def lines_printed(self) -> int:  # pylint: disable=C0116
         return self._print_count
 
-    def print(self, string: str) -> None:
+    def print(self, string: str) -> None:  # pylint: disable=C0116
         self.print_to("default", string)
 
-    def print_to(self, name: str, string: str) -> None:
+    def print_to(self, name: str, string: str) -> None:  # pylint: disable=C0116
         self._print_count += 1
         if name not in self._printouts:
             self._printouts[name] = []
@@ -141,7 +143,7 @@ class CsvPathResult(CsvPathErrorCollector, Printer):  # pylint: disable=R0902
         self._last_line = string
 
     @property
-    def last_line(self):
+    def last_line(self):  # pylint: disable=C0116
         return self._last_line
 
     def dump_printing(self) -> None:  # pylint: disable=C0116

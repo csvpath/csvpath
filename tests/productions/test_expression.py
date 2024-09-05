@@ -2,7 +2,8 @@ import unittest
 import pytest
 from csvpath.matching.productions import Expression
 from csvpath.matching.util.exceptions import DataException, MatchException
-from csvpath import CsvPath, CsvPaths, CsvPathResult
+from csvpath import CsvPath, CsvPaths
+from csvpath.managers.csvpath_result import CsvPathResult
 from csvpath.matching.matcher import Matcher
 
 

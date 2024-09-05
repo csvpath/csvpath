@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import List
 from ply import yacc
-from csvpath.scanning.scanning_lexer import ScanningLexer
-from ..util.parser_utility import ParserUtility
+from csvpath.util.parser_utility import ParserUtility
 from .exceptions import ScanException, UnexpectedProductionException
+from .scanning_lexer import ScanningLexer
 
 
 class Scanner:  # pylint: disable=R0902

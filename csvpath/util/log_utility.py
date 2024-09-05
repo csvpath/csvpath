@@ -1,7 +1,10 @@
 import traceback
 from logging.handlers import RotatingFileHandler
 import logging
-from csvpath.util.exceptions import ConfigurationException
+
+
+class LogException(Exception):
+    pass
 
 
 class LogUtility:
@@ -23,9 +26,7 @@ class LogUtility:
     @classmethod
     def logger(cls, component, level: str = None):
         if component is None:
-            raise ConfigurationException(
-                "component must be a CsvPaths or CsvPath instance"
-            )
+            raise LogException("component must be a CsvPaths or CsvPath instance")
         #
         # component name
         #
@@ -36,9 +37,7 @@ class LogUtility:
         elif c.find("CsvPath") > -1:
             name = "csvpath"
         else:
-            raise ConfigurationException(
-                "component must be a CsvPaths or CsvPath instance"
-            )
+            raise LogException("component must be a CsvPaths or CsvPath instance")
         #
         # level
         #
@@ -57,7 +56,7 @@ class LogUtility:
         elif level == "info":
             level = logging.INFO
         else:
-            raise ConfigurationException(f"Unknown log level '{level}'")
+            raise LogException(f"Unknown log level '{level}'")
         #
         # instance
         #

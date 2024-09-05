@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from statistics import stdev, pstdev
 from .function import Function
-from ..productions import ChildrenException
+from ..util.exceptions import ChildrenException
 
 
 class Stdev(Function):

@@ -9,10 +9,12 @@ from .util.error import ErrorHandler
 from .util.config import CsvPathConfig
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
+from .util.exceptions import InputException
+from .managers.csvpaths_manager import PathsManager
+from .managers.files_manager import FilesManager
+from .managers.results_manager import ResultsManager
+from .managers.csvpath_result import CsvPathResult
 from . import CsvPath
-from . import ConfigurationException
-from . import PathsManager, FilesManager
-from . import ResultsManager, CsvPathResult
 
 
 class CsvPathsPublic(ABC):
@@ -101,9 +103,9 @@ class CsvPaths(CsvPathsPublic):
 
     def collect_paths(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:
-            raise ConfigurationException("Pathsname must be a named set of paths")
+            raise InputException("Pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException("Filename must be a named file")
+            raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and % results", filename, pathsname)
@@ -141,9 +143,9 @@ class CsvPaths(CsvPathsPublic):
 
     def fast_forward_paths(self, *, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
-            raise ConfigurationException("pathsname must be a named set of paths")
+            raise InputException("pathsname must be a named set of paths")
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException("Filename must be a named file")
+            raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
@@ -179,11 +181,11 @@ class CsvPaths(CsvPathsPublic):
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
         if pathsname not in self.paths_manager.named_paths:
-            raise ConfigurationException(
+            raise InputException(
                 f"Pathsname '{pathsname}' must be a named set of paths"
             )
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException(f"Filename '{filename}' must be a named file")
+            raise InputException(f"Filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
@@ -246,17 +248,15 @@ class CsvPaths(CsvPathsPublic):
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         if filename not in self.files_manager.named_files:
-            raise ConfigurationException(f"Filename '{filename}' must be a named file")
+            raise InputException(f"Filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)
         if not fn:
-            raise ConfigurationException(f"Filename '{filename}' must be a named file")
+            raise InputException(f"Filename '{filename}' must be a named file")
         if pathsname not in self.paths_manager.named_paths:
-            raise ConfigurationException(
-                f"Pathsname '{pathsname}' must name a set of csvpaths"
-            )
+            raise InputException(f"Pathsname '{pathsname}' must name a set of csvpaths")
         paths = self.paths_manager.get_named_paths(pathsname)
         if not isinstance(paths, list) or len(paths) == 0:
-            raise ConfigurationException(
+            raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
 

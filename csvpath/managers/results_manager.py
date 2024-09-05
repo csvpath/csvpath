@@ -2,8 +2,8 @@
 from __future__ import annotations
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
-from .. import ConfigurationException
-from .. import CsvPathResult
+from .csvpath_result import CsvPathResult
+from ..util.exceptions import InputException
 
 
 class CsvPathsResultsManager(ABC):
@@ -144,9 +144,9 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
 
     def add_named_result(self, result: CsvPathResult) -> None:
         if result.file_name is None:
-            raise ConfigurationException("Results must have a named-file name")
+            raise InputException("Results must have a named-file name")
         if result.paths_name is None:
-            raise ConfigurationException("Results must have a named-paths name")
+            raise InputException("Results must have a named-paths name")
         name = result.paths_name
         if name not in self.named_results:
             self.named_results[name] = [result]
@@ -178,7 +178,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             # if reached by a reference this error should be trapped at an
             # expression and handled according to the error policy.
             #
-            raise ConfigurationException(f"Results '{name}' not found")
+            raise InputException(f"Results '{name}' not found")
 
     def clean_named_results(self, name: str) -> None:
         if name in self.named_results:
@@ -195,4 +195,4 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         # if reached by a reference this error should be trapped at an
         # expression and handled according to the error policy.
         #
-        raise ConfigurationException(f"Results '{name}' not found")
+        raise InputException(f"Results '{name}' not found")

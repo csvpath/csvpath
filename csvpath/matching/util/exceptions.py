@@ -1,13 +1,13 @@
 class MatchException(Exception):
     """most general exception when matching"""
 
-    pass
+
+class MatchComponentException(Exception):
+    """most general exception for the matching part of a csvpath"""
 
 
-class ChildrenException(Exception):
+class ChildrenException(MatchComponentException):
     """raised when the structure of a match part is incorrect"""
-
-    pass
 
 
 class DataException(Exception):

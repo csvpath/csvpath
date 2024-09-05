@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from .function import Function
-from ..productions import ChildrenException
+from ..util.exceptions import ChildrenException
 
 
 class Between(Function):

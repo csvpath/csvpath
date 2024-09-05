@@ -1,6 +1,9 @@
 from typing import Any, List, Dict
 from ..util.lark_print_parser import LarkPrintParser, LarkPrintTransformer
-from csvpath.util.exceptions import ConfigurationException
+
+
+class PrintParserException(Exception):
+    pass
 
 
 class PrintParser:
@@ -199,7 +202,7 @@ class PrintParser:
 
         if "delimiter" in runtime:
             if runtime["delimiter"] != csvpath.delimiter:
-                raise ConfigurationException(
+                raise PrintParserException(
                     "Unalike delimiter for same run: {runtime['name']}"
                 )
         else:
@@ -207,7 +210,7 @@ class PrintParser:
 
         if "quotechar" in runtime:
             if runtime["quotechar"] != csvpath.delimiter:
-                raise ConfigurationException(
+                raise PrintParserException(
                     "Unalike quotechar for same run: {runtime['name']}"
                 )
         else:

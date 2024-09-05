@@ -4,7 +4,7 @@ import os
 import json
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
-from .. import ConfigurationException
+from ..util.exceptions import InputException
 
 
 class CsvPathsManager(ABC):
@@ -66,7 +66,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
         if directory is None:
-            raise ConfigurationException("Named paths collection name needed")
+            raise InputException("Named paths collection name needed")
         if os.path.isdir(directory):
             dlist = os.listdir(directory)
             base = directory
@@ -90,7 +90,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                     aname = name if thename is None else thename
                     self.add_named_paths(aname, _)
         else:
-            raise ConfigurationException("dirname must point to a directory")
+            raise InputException("dirname must point to a directory")
 
     def set_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -103,9 +103,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                     if isinstance(v, str):
                         j[k] = [av.strip() for av in v.split(PathsManager.MARKER)]
                     else:
-                        raise ConfigurationException(
-                            f"Unexpected object in JSON key: {k}: {v}"
-                        )
+                        raise InputException(f"Unexpected object in JSON key: {k}: {v}")
                 self.named_paths = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             print(f"Error: cannot load {file_path}: {ex}")
@@ -123,13 +121,13 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     def get_named_paths(self, name: str) -> List[str]:
         if name in self.named_paths:
             return self.named_paths[name]
-        raise ConfigurationException("{name} not found")
+        raise InputException("{name} not found")
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:
             del self.named_paths[name]
         else:
-            raise ConfigurationException("{name} not found")
+            raise InputException("{name} not found")
 
     def has_named_paths(self, name: str) -> bool:
         return name in self.named_paths

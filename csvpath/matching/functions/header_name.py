@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from .function import Function
-from ..productions import DataException
+from ..util.exceptions import DataException
 
 
 class HeaderName(Function):

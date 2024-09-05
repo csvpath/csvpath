@@ -2,7 +2,7 @@
 from typing import Any
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from . import ChildrenException
+from ..util.exceptions import ChildrenException
 
 
 class Variable(Matchable):

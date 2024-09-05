@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from .function import Function
-from ..productions import Term, ChildrenException
+from ..productions import Term
+from ..util.exceptions import ChildrenException
 
 
 class End(Function):

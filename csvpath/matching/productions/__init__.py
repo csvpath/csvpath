@@ -1,5 +1,4 @@
 """ classes supporting the parse tree transformation and match components """
-from csvpath.matching.util.exceptions import ChildrenException, DataException
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.equality import Equality

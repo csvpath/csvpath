@@ -1,6 +1,7 @@
 import unittest
 from csvpath import CsvPaths
-from csvpath import ResultsManager, CsvPathResult
+from csvpath.managers.results_manager import ResultsManager
+from csvpath.managers.csvpath_result import CsvPathResult
 
 
 class TestResultsManager(unittest.TestCase):

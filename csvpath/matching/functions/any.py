@@ -4,7 +4,8 @@ from typing import Any as AnyType
 from .headers import Headers
 from .variables import Variables
 from .function import Function
-from ..productions import Equality, Term, ChildrenException
+from ..productions import Equality, Term
+from ..util.exceptions import ChildrenException
 
 
 class Any(Function):

@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath import ConfigurationException
 from .function import Function
+from ..util.exceptions import MatchComponentException
 from ..productions import Term, Variable, Header
 
 
@@ -43,7 +43,7 @@ class MinMaxLength(Function):  # pylint: disable=C0115
             elif self.name in ["max_length", "too_short"]:
                 self.value = len(value) <= length
             else:
-                raise ConfigurationException("Unknown function name: {self.name}")
+                raise MatchComponentException("Unknown function name: {self.name}")
         return self.value
 
     def matches(self, *, skip=None) -> bool:

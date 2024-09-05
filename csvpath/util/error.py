@@ -3,7 +3,12 @@ from datetime import datetime
 from enum import Enum
 import traceback
 from csvpath.util.config import OnError, CsvPathConfig
-from csvpath import ConfigurationException
+from .exceptions import InputException
+from .log_utility import LogException
+
+
+class ErrorHandlingException(Exception):
+    pass
 
 
 class Error:
@@ -47,13 +52,13 @@ class ErrorHandler:
         self._csvpath = csvpath
         self.logger = logger
         if self.logger is None:
-            raise ConfigurationException("Logger cannot be None")
+            raise LogException("Logger cannot be None")
         self.component = component
         if self.component not in ["csvpath", "csvpaths"]:
-            raise ConfigurationException(f"Unknown component: {self.component}")
+            raise InputException(f"Unknown component: {self.component}")
         self._error_collector = error_collector
         if self._error_collector is None:
-            raise ConfigurationException(
+            raise ErrorHandlingException(
                 "A CsvPathErrorCollector collector must be available"
             )
 
@@ -73,7 +78,7 @@ class ErrorHandler:
             f"Handling an error with {self._error_collector.__class__} and policy: {policy}"
         )
         if error is None:
-            raise ConfigurationException("Error handler cannot handle a None error")
+            raise InputException("Error handler cannot handle a None error")
         try:
             if OnError.QUIET.value in policy:
                 self.logger.error(f"{error}")

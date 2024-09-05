@@ -4,7 +4,7 @@ from os import path, environ
 from typing import Dict, List
 from enum import Enum
 import logging
-from csvpath import ConfigurationException
+from ..util.config_exception import ConfigurationException
 
 
 class OnError(Enum):
@@ -90,7 +90,7 @@ class CsvPathConfig:
                     _.strip().lower() for _ in exts.split(",")
                 ]
             except KeyError:
-                raise ConfigurationException(
+                raise Exception(
                     f"Config failed on {Sections.CSVPATH_FILES.value}[extensions]: {self._config}"
                 )
 
@@ -100,7 +100,7 @@ class CsvPathConfig:
                     exts = CsvPathConfig.DEFAULT_CSV_FILE_EXTENSIONS
                 self.CSV_FILE_EXTENSIONS = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
-                raise ConfigurationException(
+                raise Exception(
                     f"Config failed on {Sections.CSV_FILES.value}[extensions]"
                 )
 
@@ -110,12 +110,10 @@ class CsvPathConfig:
                     exts = CsvPathConfig.DEFAULT_CSVPATH_ON_ERROR
                 self.CSVPATH_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
-                raise ConfigurationException(
-                    f"Config failed on {Sections.ERRORS.value}[csvpath]"
-                )
+                raise Exception(f"Config failed on {Sections.ERRORS.value}[csvpath]")
             for _ in self.CSVPATH_ON_ERROR:
                 if _ not in OnError:
-                    raise ConfigurationException(
+                    raise Exception(
                         f"Config failed on unknown CsvPath error option '{_}'"
                     )
             try:
@@ -124,12 +122,10 @@ class CsvPathConfig:
                     exts = CsvPathConfig.DEFAULT_CSVPATHS_ON_ERROR
                 self.CSVPATHS_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
             except KeyError:
-                raise ConfigurationException(
-                    f"Config failed on {Sections.ERRORS.value}[csvpaths]"
-                )
+                raise Exception(f"Config failed on {Sections.ERRORS.value}[csvpaths]")
             for _ in self.CSVPATHS_ON_ERROR:
                 if _ not in OnError:
-                    raise ConfigurationException(
+                    raise Exception(
                         f"Config failed on unknown CsvPaths error option '{_}'"
                     )
             self._set_log_levels()

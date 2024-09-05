@@ -1,8 +1,8 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath import ConfigurationException
 from .function import Function
 from ..productions import Term
+from ..util.exceptions import MatchComponentException
 from ..util.expression_utility import ExpressionUtility
 
 
@@ -25,15 +25,15 @@ class Import(Function):
             # before line 0
             #
             if self.matcher.csvpath.csvpaths is None:
-                raise ConfigurationException("No CsvPaths instance available")
+                raise MatchComponentException("No CsvPaths instance available")
 
             name = self._value_one(skip=[self])
             if name is None:
-                raise ConfigurationException("Name of import csvpath cannot be None")
+                raise MatchComponentException("Name of import csvpath cannot be None")
 
             e = ExpressionUtility.get_my_expression(self)
             if e is None:
-                raise ConfigurationException("Cannot find my expression: {self}")
+                raise MatchComponentException("Cannot find my expression: {self}")
 
             amatcher = self.matcher.csvpath.parse_named_path(name=name, disposably=True)
             if (
@@ -41,7 +41,7 @@ class Import(Function):
                 or not amatcher.expressions
                 or len(amatcher.expressions) == 0
             ):
-                raise ConfigurationException("Parse named path failed: {name}")
+                raise MatchComponentException("Parse named path failed: {name}")
             #
             # find where we do injection of the imported expressions
             #

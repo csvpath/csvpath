@@ -1,11 +1,11 @@
 # pylint: disable=C0114
 
 from typing import Any
-from csvpath import ConfigurationException
 from .function import Function
 from .headers import Headers
 from .variables import Variables
 from ..productions import Equality
+from ..util.exceptions import ChildrenException
 
 
 class All(Function):
@@ -38,7 +38,7 @@ class All(Function):
                     elif isinstance(child, Variables):
                         self.all_variables()
                     else:
-                        raise ConfigurationException("Child cannot be {child}")
+                        raise ChildrenException("Child cannot be {child}")
         return self.match
 
     def all_variables(self) -> None:  # pylint: disable=C0116

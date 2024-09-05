@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from .function import Function
-from ..productions import ChildrenException
+from ..util.exceptions import ChildrenException
 
 
 class Percent(Function):

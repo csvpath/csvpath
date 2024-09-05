@@ -11,14 +11,17 @@ from abc import ABC, abstractmethod
 from csvpath.util.config import CsvPathConfig
 from csvpath.util.line_monitor import LineMonitor
 from csvpath.util.log_utility import LogUtility
+from .matching.matcher import Matcher
+from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
-from . import Error, Matcher, Scanner, StdOutPrinter
-from . import VariableException, InputException, ParsingException
-from . import (
+from .util.error import Error
+from .util.printer import StdOutPrinter
+from .util.exceptions import VariableException, InputException, ParsingException
+from .util.exceptions import (
     FileException,
     FormatException,
     ProcessingException,
-    ConfigurationException,
+    CsvPathsException,
 )
 
 
@@ -343,7 +346,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             #
             return matcher
         if self.scanner.filename is None:
-            raise ConfigurationException("Cannot proceed without a filename")
+            raise FileException("Cannot proceed without a filename")
         self.get_total_lines_and_headers()
         return self.scanner
 
@@ -356,12 +359,12 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         also note: the path must have a name or full filename. $[*] is not enough.
         """
         if not self.csvpaths:
-            raise ConfigurationException("No CsvPaths object available")
+            raise CsvPathsException("No CsvPaths object available")
         np = self.csvpaths.paths_manager.get_named_paths(name)
         if not np:
-            raise ConfigurationException(f"Named paths {name} not found")
+            raise CsvPathsException(f"Named paths {name} not found")
         if len(np) == 0:
-            raise ConfigurationException(f"Named paths {name} has no csvpaths")
+            raise CsvPathsException(f"Named paths {name} has no csvpaths")
         if len(np) > 1:
             self.logger.warning(
                 "parse_named_path %s has %s csvpaths. Parsing just the first one.",
