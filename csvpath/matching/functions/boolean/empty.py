@@ -1,7 +1,7 @@
 # pylint: disable=C0114
-from .function import Function
-from ..productions import Header, Variable
-from ..util.expression_utility import ExpressionUtility
+from ..function import Function
+from csvpath.matching.productions import Header, Variable
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 # note to self: should be possible to request a check of all
 # headers.

@@ -1,6 +1,6 @@
 # pylint: disable=C0114
-from .function import Function
-from ..productions import Equality
+from ..function import Function
+from csvpath.matching.productions import Equality
 
 
 class Collect(Function):

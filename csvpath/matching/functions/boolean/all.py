@@ -4,7 +4,7 @@ from typing import Any
 from csvpath.matching.productions import Equality
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function import Function
-from ..variables import Variables
+from ..misc.variables import Variables
 from ..headers.headers import Headers
 
 

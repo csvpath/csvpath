@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 import datetime
-from .function import Function
+from ..function import Function
 
 
 class Date(Function):

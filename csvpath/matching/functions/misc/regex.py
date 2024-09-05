@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 import re
-from ..productions import Term
-from .function import Function
+from csvpath.matching.productions import Term
+from ..function import Function
 
 
 class Regex(Function):

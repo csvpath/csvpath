@@ -9,12 +9,12 @@ from csvpath.matching.functions.boolean.no import No
 from csvpath.matching.functions.lines.first import First
 from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.functions.boolean.any import Any
-from csvpath.matching.functions.empty import Empty
+from csvpath.matching.functions.boolean.empty import Empty
 from csvpath.matching.functions.math.equals import Equals
 from csvpath.matching.functions.headers.end import End
 from csvpath.matching.functions.lines.dups import HasDups
 from csvpath.matching.functions.print.printf import Print
-from csvpath.matching.functions.regex import Regex
+from csvpath.matching.functions.misc.regex import Regex
 
 VAR = Variable(None, name="no", value=None)
 TERM = Term(None, name=None, value="term")

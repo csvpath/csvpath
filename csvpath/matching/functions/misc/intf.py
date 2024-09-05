@@ -1,6 +1,6 @@
 # pylint: disable=C0114
-from .function import Function
-from ..util.expression_utility import ExpressionUtility
+from ..function import Function
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class Int(Function):

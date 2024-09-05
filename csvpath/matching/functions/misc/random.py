@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from random import randrange
-from .function import Function
-from ..util.exceptions import ChildrenException
+from ..function import Function
+from csvpath.matching.util.exceptions import ChildrenException
 
 
 class Random(Function):

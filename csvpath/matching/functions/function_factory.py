@@ -34,8 +34,10 @@ from .math.mod import Mod
 from .boolean.notf import Not
 from .boolean.inf import In
 from .boolean.orf import Or
+from .boolean.empty import Empty
 from .boolean.no import No
 from .boolean.yes import Yes
+from .boolean.between import Between
 from .boolean.andf import And
 from .boolean.any import Any
 from .boolean.all import All
@@ -56,21 +58,19 @@ from .lines.dups import HasDups
 from .lines.first_line import FirstLine
 from .lines.advance import Advance
 from .lines.after_blank import AfterBlank
-from .random import Random
-from .regex import Regex
-from .now import Now
-from .between import Between
-from .variables import Variables
-from .nonef import Nonef
-from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
-from .datef import Date
-from .fail import Fail
-from .failed import Failed
-from .empty import Empty
-from .collect import Collect
-from .intf import Int
-from .track import Track
-from .importf import Import
+from .misc.random import Random
+from .misc.regex import Regex
+from .misc.now import Now
+from .misc.variables import Variables
+from .misc.nonef import Nonef
+from .misc.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
+from .misc.datef import Date
+from .misc.collect import Collect
+from .misc.intf import Int
+from .misc.track import Track
+from .misc.importf import Import
+from .validity.failed import Failed
+from .validity.fail import Fail
 
 
 class UnknownFunctionException(Exception):
