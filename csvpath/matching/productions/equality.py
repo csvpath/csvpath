@@ -90,7 +90,9 @@ class Equality(Matchable):
             for c in self.children:
                 string = f"{c}" if string == "" else f"{string}, {c}"
             return f"""{self._simple_class_name()}({string})"""
-        return f"""{self._simple_class_name()}(left:{self.left} {self.op} right:{self.right})"""
+        ln = None if self.left is None else self.left._simple_class_name()
+        rn = None if self.right is None else self.right._simple_class_name()
+        return f"""{ self._simple_class_name() }(left:{ ln } {self.op} right:{rn})"""
 
     def _left_nocontrib(self, m) -> bool:
         if isinstance(m, Equality):
@@ -146,6 +148,9 @@ class Equality(Matchable):
         # WHAT WE WANT TO SET X TO
         #
         y = self.right.to_value(skip=skip)
+        self.matcher.csvpath.logger.debug(
+            f"pre-assignment: right value: {self.right}: {y}"
+        )
         #
         # WE CHECK THE NAME BECAUSE WE MIGHT BE USING A TRACKING VARIABLE
         name = self.left.name
@@ -190,12 +195,12 @@ class Equality(Matchable):
             "line_matches"
         ]  # if None we'll check in real-time; otherwise, testing
         ret = True
-
         #
         # SET THE X TO Y IF APPROPRIATE. THE RETURN STARTS AS TRUE.
         #
         if noqualifiers:  # == TEST MARKER 1
             self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
+            self.matcher.csvpath.logger.debug("assignment: marker 1")
             ret = True
         #
         # FIND THE RETURN VALUE
@@ -206,21 +211,24 @@ class Equality(Matchable):
         elif not onmatch and (latch or onchange):
             if current_value != y:
                 if latch and current_value is not None:
+                    self.matcher.csvpath.logger.debug("assignment: marker 2")
                     pass  # == TEST MARKER 2
                 else:
                     self._set_variable(
                         name, value=y, tracking=tracking, notnone=notnone
                     )
+                    self.matcher.csvpath.logger.debug("assignment: marker 3 and 4")
                     ret = True  # == TEST MARKER 3  #== TEST MARKER 4
             elif onchange:
+                self.matcher.csvpath.logger.debug("assignment: marker 5")
                 ret = False  # == TEST MARKER 5
             elif latch:
+                self.matcher.csvpath.logger.debug("assignment: marker 6")
                 pass  # == TEST MARKER 6
             else:
                 s = "Equality:_do_assignment_new_impl:218:"
                 s = f"{s} this state is unknown. {ret}, {args}"
                 self.matcher.csvpath.logger.error(s)
-                # raise Exception("this state should never happen")
         #
         # if onmatch we are True if the line matches,
         # potentially overriding latch and/or onchange,
@@ -230,10 +238,13 @@ class Equality(Matchable):
         # we do not set y and we are False.
         # not setting y makes a difference to onchange and latch
         elif onmatch and (latch or onchange):  # == TEST MARKER 1
+            self.matcher.csvpath.logger.debug("assignment: marker 1 (240)")
             if current_value != y:
                 if latch and current_value is not None:
+                    self.matcher.csvpath.logger.debug("assignment: marker 7")
                     pass  # == TEST MARKER 7
                 else:
+                    self.matcher.csvpath.logger.debug("assignment: marker 8, 9, 10")
                     # == TEST MARKER 8  #== TEST MARKER 9 #== TEST MARKER 10
                     #
                     # not none here. and still return ret = True, regardless
@@ -245,8 +256,10 @@ class Equality(Matchable):
                 ret = self._test_friendly_line_matches(line_matches)
                 # the outcome of onchange only matters if the line matches for onmatch
                 if ret and onchange:  # == TEST MARKER 11
+                    self.matcher.csvpath.logger.debug("assignment: marker 11")
                     # why are we returning here?
                     return False
+                self.matcher.csvpath.logger.debug("assignment: marker 12")
                 pass  # == TEST MARKER 12 pylint: disable=W0107
                 # re: W0107: the pass is here for clarity
         #
@@ -264,13 +277,16 @@ class Equality(Matchable):
                     self.matcher.set_if_all_match(
                         name, value=y, tracking=tracking
                     )  # == TEST MARKER 13
+                    self.matcher.csvpath.logger.debug("assignment: marker 13")
             else:
+                self.matcher.csvpath.logger.debug("assignment: marker 14")
                 pass  # == TEST MARKER 14
         #
         # we don't have any qualifiers that have to do with x = y
         # but we may have asbool or nocontrib
         # so set y and prepare the return to be True
         elif not onmatch and not (latch or onchange):  # == TEST MARKER 15
+            self.matcher.csvpath.logger.debug("assignment: marker 15")
             self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
             ret = True
         else:
@@ -284,14 +300,18 @@ class Equality(Matchable):
         # but we can be overridden by nocontrib
         if asbool:
             if ret is True:  # == TEST MARKER 16 #== TEST MARKER 17
+                self.matcher.csvpath.logger.debug("assignment: marker 16, 17")
                 ret = ExpressionUtility.asbool(y)
             else:
+                self.matcher.csvpath.logger.debug("assignment: marker 16, 17 (305)")
                 ret = False
         #
         # if nocontrib no matter what we return True because we're
         # removing ourselves from consideration
         if nocontrib:  # == TEST MARKER 18
+            self.matcher.csvpath.logger.debug("assignment: marker 18")
             ret = True
+        self.matcher.csvpath.logger.debug(f"done with assignment: ret: {ret}")
         return ret
 
     def _set_variable(self, name, *, value, tracking=None, notnone=False) -> None:
@@ -332,7 +352,7 @@ class Equality(Matchable):
         if not self.left or not self.right:
             # this should never happen
             return False
-        if not self.match:
+        if self.match is None:
             b = None
             if isinstance(self.left, Variable) and self.op == "=":
                 b = self._do_assignment(skip=skip)

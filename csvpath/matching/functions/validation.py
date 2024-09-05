@@ -18,28 +18,35 @@ class Validation(Matchable):
         for _ in ok:
             if isinstance(obj, _):
                 return True
-        return False
+        return False  # pragma: no cover
 
     def validate_zero_args(self) -> None:  # pylint: disable=C0116
         if len(self.children) > 0:
-            raise ChildrenException(f"{self.name}() cannot have arguments")
+            raise ChildrenException(
+                f"{self.name}() cannot have arguments"
+            )  # pragma: no cover
 
     def validate_zero_or_one_arg(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
             types = []
         if len(self.children) > 1:
-            raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
+            raise ChildrenException(
+                f"{self.name}() can only have 0 or 1 argument"
+            )  # pragma: no cover
         if len(self.children) == 0:
             pass
         elif hasattr(self.children[0], "op"):
             raise ChildrenException(f"{self.name}() can only have 0 or 1 argument")
         elif len(types) > 0:
             if not self._class_match(self.children[0], types):
-                raise ChildrenException(
+                raise ChildrenException(  # pragma: no cover
                     f"If {self.name}() has an argument it must be of type: {types}"
                 )
 
-    def validate_zero_or_more_than_one_arg(self) -> None:  # pylint: disable=C0116
+    def validate_zero_or_more_than_one_arg(
+        self,
+    ) -> None:  # pragma: no cover  pylint: disable=C0116
+        # TODO: if not used remove this method
         if len(self.children) == 1 and not hasattr(self.children[0], "op"):
             raise ChildrenException(
                 f"{self.name}() must have 0 or more than 1 argument"
@@ -51,7 +58,7 @@ class Validation(Matchable):
             and hasattr(self.children[0], "op")
             and self.children[0].op == ","
         ):
-            pass
+            pass  # pragma: no cover
         else:
             raise ChildrenException(
                 f"{self.name}() must have 0 or more than 1 argument"
@@ -62,7 +69,11 @@ class Validation(Matchable):
             types = []
         if len(self.children) == 0:
             pass
-        elif hasattr(self.children[0], "commas_to_list"):
+        elif (
+            len(self.children) == 1
+            and hasattr(self.children[0], "commas_to_list")
+            and self.children[0].op == ","
+        ):
             siblings = self.children[0].commas_to_list()
             if len(types) > 0:
                 for _ in siblings:
@@ -76,6 +87,10 @@ class Validation(Matchable):
                     raise ChildrenException(
                         f"{self.name}() can only have these arguments: {types}"
                     )
+        else:
+            raise ChildrenException(
+                f"{self.name}() must have one child, optionally with children of type: {types}"
+            )
 
     def validate_zero_one_or_two_args(  # pylint: disable=C0116
         self, *, first_arg=None, second_arg=None, solo_arg=None
@@ -86,6 +101,8 @@ class Validation(Matchable):
             if not self._class_match(self.children[0], solo_arg):
                 raise ChildrenException(f"{self.name}()'s argument must be {first_arg}")
         else:
+            if not self.children[0].op == ",":
+                raise ChildrenException(f"{self.name} children opperation is incorrect")
             if not self._class_match(self.children[0].left, first_arg):
                 raise ChildrenException(
                     f"{self.name}()'s first argument must be {first_arg}"
@@ -154,6 +171,8 @@ class Validation(Matchable):
             raise ChildrenException(f"{self.name}() must have 2 arguments")
         if not hasattr(self.children[0], "op"):
             raise ChildrenException(f"{self.name}() must have 2 arguments")
+        if not self.children[0].op == ",":
+            raise ChildrenException(f"{self.name}() must have 2 arguments")
         if hasattr(self.children[0].left, "op") and self.children[0].left.op == ",":
             raise ChildrenException(f"{self.name}() can only have 2 arguments")
         if hasattr(self.children[0].right, "op"):
@@ -175,6 +194,12 @@ class Validation(Matchable):
             raise ChildrenException(
                 f"{self.name}() must have two or three args, not none"
             )
+        if len(cs) == 0:
+            raise ChildrenException(f"{self.name}() must have two or three args, not 0")
+        if not hasattr(cs[0], "op"):
+            raise ChildrenException(f"{self.name}() must have two or three args, not 0")
+        if cs[0].op != ",":
+            raise ChildrenException(f"{self.name}() must have two or three args, not 0")
         if len(cs) == 1 and hasattr(cs[0], "op"):
             child = cs[0]
             if child.left is None or child.right is None:

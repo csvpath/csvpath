@@ -1,76 +1,76 @@
 # pylint: disable=C0114
 from csvpath.matching.productions.expression import Matchable
 from .function import Function
-from .count import Count
-from .regex import Regex
-from .length import Length, MinMaxLength
-from .notf import Not
-from .now import Now
-from .inf import In
-from .concat import Concat
-from .lower import Lower
-from .upper import Upper
-from .percent import Percent
-from .above import AboveBelow
-from .between import Between
-from .first import First
-from .count_lines import CountLines, LineNumber
-from .count_scans import CountScans
-from .count_headers import CountHeaders
-from .orf import Or
-from .no import No
-from .yes import Yes
-from .minf import Min, Max, Average
-from .end import End
+from .strings.lower import Lower
+from .strings.upper import Upper
+from .strings.substring import Substring
+from .strings.starts_with import StartsWith
+from .strings.strip import Strip
+from .strings.length import Length, MinMaxLength
+from .strings.concat import Concat
+from .counting.count import Count
+from .counting.count_lines import CountLines, LineNumber
+from .counting.count_scans import CountScans
+from .counting.count_headers import CountHeaders
+from .counting.total_lines import TotalLines
+from .counting.tally import Tally
+from .counting.every import Every
+from .counting.increment import Increment
+from .headers.reset_headers import ResetHeaders
+from .headers.header_name import HeaderName
+from .headers.header_names_mismatch import HeaderNamesMismatch
+from .headers.headers import Headers
+from .headers.mismatch import Mismatch
+from .headers.end import End
+from .math.above import AboveBelow
+from .math.add import Add
+from .math.subtract import Subtract
+from .math.multiply import Multiply
+from .math.divide import Divide
+from .math.sum import Sum
+from .math.equals import Equals
+from .math.round import Round
+from .math.mod import Mod
+from .boolean.notf import Not
+from .boolean.inf import In
+from .boolean.orf import Or
+from .boolean.no import No
+from .boolean.yes import Yes
+from .boolean.andf import And
+from .boolean.any import Any
+from .boolean.all import All
+from .boolean.exists import Exists
+from .stats.percent import Percent
+from .stats.minf import Min, Max, Average
+from .stats.percent_unique import PercentUnique
+from .stats.stdev import Stdev
+from .stats.correlate import Correlate
+from .print.printf import Print
+from .print.print_line import PrintLine
+from .print.jinjaf import Jinjaf
+from .print.print_queue import PrintQueue
+from .lines.stop import Stop, Skip
+from .lines.first import First
+from .lines.last import Last
+from .lines.dups import HasDups
+from .lines.first_line import FirstLine
+from .lines.advance import Advance
+from .lines.after_blank import AfterBlank
 from .random import Random
-from .add import Add
-from .subtract import Subtract
-from .multiply import Multiply
-from .divide import Divide
-from .tally import Tally
-from .every import Every
-from .printf import Print
-from .increment import Increment
-from .round import Round
-from .print_line import PrintLine
-from .header_name import HeaderName
-from .header_names_mismatch import HeaderNamesMismatch
-from .substring import Substring
-from .starts_with import StartsWith
-from .stop import Stop, Skip
-from .any import Any
+from .regex import Regex
+from .now import Now
+from .between import Between
 from .variables import Variables
-from .headers import Headers
 from .nonef import Nonef
-from .last import Last
-from .exists import Exists
-from .mod import Mod
-from .equals import Equals
-from .strip import Strip
-from .jinjaf import Jinjaf
-from .correlate import Correlate
-from .percent_unique import PercentUnique
-from .all import All
-from .total_lines import TotalLines
 from .pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .datef import Date
 from .fail import Fail
 from .failed import Failed
-from .stdev import Stdev
-from .dups import HasDups
 from .empty import Empty
-from .first_line import FirstLine
-from .advance import Advance
 from .collect import Collect
 from .intf import Int
-from .andf import And
 from .track import Track
-from .sum import Sum
-from .reset_headers import ResetHeaders
-from .mismatch import Mismatch
-from .after_blank import AfterBlank
 from .importf import Import
-from .print_queue import PrintQueue
 
 
 class UnknownFunctionException(Exception):
@@ -141,6 +141,7 @@ class FunctionFactory:
         if child and not isinstance(child, Matchable):
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
+        qname = name
         name, qualifier = cls.get_name_and_qualifier(name)
         if name == "count":
             f = Count(matcher, name, child)
@@ -324,6 +325,7 @@ class FunctionFactory:
             child.parent = f
         if qualifier:
             f.set_qualifiers(qualifier)
+            f.qualified_name = qname
         if f.matcher is None:
             f.matcher = matcher
         return f

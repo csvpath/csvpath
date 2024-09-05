@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from typing import List
 from ply import yacc
-from csvpath.util.parser_utility import ParserUtility
+from ply.yacc import YaccProduction
 from .exceptions import ScanException, UnexpectedProductionException
 from .scanning_lexer import ScanningLexer
 
@@ -114,8 +114,39 @@ class Scanner:  # pylint: disable=R0902
     # productions
     # ===================
 
+    def _error(self, parser, p: YaccProduction) -> None:
+        if p:
+            print(
+                f"Syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}"
+            )
+            print(f"Unexpected token: {p.value}")
+            print("Symbol stack: ")
+            stack = parser.symstack
+
+            import inspect
+
+            for _ in stack:
+                print(f"  {_}")
+            print("")
+        else:
+            print("syntax error at EOF")
+
     def p_error(self, p):  # pylint: disable=C0116
-        ParserUtility().error(self.parser, p)
+        if p:
+            print(
+                f"syntax error at token {p.type}, line {p.lineno}, position {p.lexpos}"
+            )
+            print(f"unexpected token: {p.value}")
+            print("symbol stack: ")
+            stack = self.parser.symstack
+
+            import inspect
+
+            for _ in stack:
+                print(f"  {_}")
+            print("")
+        else:
+            print("syntax error at EOF")
         raise ScanException(f"Halting for scanner parsing error on {self.path}")
 
     def p_path(self, p):  # pylint: disable=C0116

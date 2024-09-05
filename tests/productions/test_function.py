@@ -4,7 +4,7 @@ from csvpath.matching.functions.function_factory import (
     FunctionFactory,
     InvalidNameException,
 )
-from csvpath.matching.functions.count import Count
+from csvpath.matching.functions.counting.count import Count
 from csvpath.matching.functions.function import Function
 from csvpath.csvpath import CsvPath
 

@@ -8,6 +8,8 @@ class LogException(Exception):
 
 
 class LogUtility:
+    LOGGERS = {}
+
     @classmethod
     def log_brief_trace(cls, logger) -> None:
         trace = "".join(traceback.format_stack())
@@ -19,9 +21,7 @@ class LogUtility:
             aline = aline.strip()
             if aline[0:4] != "File":
                 continue
-            logger.info(f"{aline}")
-
-    LOGGERS = {}
+            logger.debug(f"{aline}")
 
     @classmethod
     def logger(cls, component, level: str = None):

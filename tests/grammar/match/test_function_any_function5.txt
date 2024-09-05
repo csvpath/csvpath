@@ -1,6 +1,16 @@
 [
-                @found = any.onmatch(headers())
-                @found2 = any(headers())
-                @notfound = not(any.onmatch(headers()))
                 no()
+                ~ 81 is returning its value, not its match, because it's being
+                  assigned. it isn't participating because onmatch fails so
+                  its value is None, rather than its default match which is
+                  True, as for all components. so None is the right answer ~
+                @found = any.onmatch.81(headers())
+                @found2 = any.82(headers())
+                ~ 83 is similar to 81; however, we are getting the match
+                  not the value because we're not being assigned. that means True.
+                  when not(True) False. the trick is realizing that not() is being
+                  assigned, but the contents of not() are being matched.
+                  assignment is not transitive.
+                ~
+                @notfound = not(any.onmatch.83(headers()))
             ]

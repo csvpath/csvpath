@@ -68,7 +68,9 @@ class ExpressionEncoder:
                 f'{json} "value":"{self._no_quotes(m.value)}" {"," if m.name else ""} '
             )
         if m.name is not None:
-            json = f'{json} "name":"{m.name}" {"," if m.children and len(m.children) > 0 else ""} '
+            json = f'{json} "name":"{m.name}"'
+            json = f'{json}, "qualified_name":"{m.qualified_name}"'
+            json = f'{json} {"," if m.children and len(m.children) > 0 else ""} '
         if m.children and len(m.children) > 0:
             json = f'{json} "children": [ '
             for i, _ in enumerate(m.children):

@@ -127,7 +127,10 @@ class Matcher:  # pylint: disable=R0902
 
         ret = True
         failed = False
-        for et in self.expressions:
+        for i, et in enumerate(self.expressions):
+            self.csvpath.logger.debug(
+                "Beginning to consider expression: et[%s]: %s: %s", i, et[0], et[1]
+            )
             if self.csvpath and self.csvpath.stopped:
                 #
                 # stopped is like a system halt. this csvpath is calling it

@@ -1,7 +1,7 @@
 import unittest
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.log_utility import LogUtility
-from csvpath.matching.functions.printf import Print, PrintParser
+from csvpath.matching.functions.print.printf import Print, PrintParser
 from csvpath.matching.util.lark_print_parser import (
     LarkPrintParser,
     LarkPrintTransformer,

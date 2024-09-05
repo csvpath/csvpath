@@ -10,6 +10,7 @@ class Regex(Function):
     def check_valid(self) -> None:
         self.validate_two_or_three_args()
         super().check_valid()
+
         left = self._function_or_equality.left
         right = self._function_or_equality.right
         if isinstance(left, Term):
