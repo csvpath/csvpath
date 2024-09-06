@@ -239,14 +239,14 @@ class PrintParser:
         runtime["file_name"] = csvpath.scanner.filename
         runtime["scan_part"] = csvpath.scan
         runtime["match_part"] = csvpath.match
-        runtime["last_row_time"] = csvpath.last_row_time
+        runtime["last_line_time"] = csvpath.last_row_time
 
         if "rows_time" in runtime:
-            runtime["rows_time"] += csvpath.rows_time
+            runtime["lines_time"] += csvpath.rows_time
         else:
-            runtime["rows_time"] = csvpath.rows_time
+            runtime["lines_time"] = csvpath.rows_time
 
-        runtime["rows_time"] = csvpath.rows_time
+        # runtime["rows_time"] = csvpath.rows_time
         runtime["total_lines"] = csvpath.line_monitor.data_end_line_count
         #
         # headers can change so we need a way to easily show what we're
@@ -256,10 +256,10 @@ class PrintParser:
         #
         # if the author named the csvpath use that to identify if it is valid.
         #
-        id = "csvpath" if "name" not in csvpath.metadata else csvpath.metadata["name"]
-        if id.strip() == "":
-            id = "csvpath"
+        _id = "csvpath" if "name" not in csvpath.metadata else csvpath.metadata["name"]
+        if _id.strip() == "":
+            _id = "csvpath"
         if "failed" not in runtime:
             runtime["failed"] = {}
-        runtime["failed"][id] = not csvpath.is_valid
+        runtime["failed"][_id] = not csvpath.is_valid
         runtime["stopped"] = csvpath.stopped

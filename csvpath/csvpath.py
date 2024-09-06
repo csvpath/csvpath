@@ -104,8 +104,6 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         #
         self.line_monitor = LineMonitor()
-        # self._last_line:LastLineStats = None
-
         #
         # the scanning part of the csvpath. e.g. $test.csv[*]
         #
@@ -288,7 +286,6 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
 
     def print(self, string: str) -> None:  # pylint: disable=C0116
         for p in self.printers:
-            print(f"CsvPath.print: string: {string}")
             p.print(string)
 
     @property
