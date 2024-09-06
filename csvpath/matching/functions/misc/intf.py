@@ -1,9 +1,9 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import ValueProducer
 
 
-class Int(Function):
+class Int(ValueProducer):
     """attempts to convert a value to an int"""
 
     def check_valid(self) -> None:

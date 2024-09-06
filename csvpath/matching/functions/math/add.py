@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 
-from ..function import Function
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import ValueProducer
 
 
-class Add(Function):
+class Add(ValueProducer):
     """this class adds numbers"""
 
     def check_valid(self) -> None:

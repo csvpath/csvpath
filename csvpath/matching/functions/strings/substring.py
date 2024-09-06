@@ -1,9 +1,9 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.util.exceptions import ChildrenException
+from ..function_focus import ValueProducer
 
 
-class Substring(Function):
+class Substring(ValueProducer):
     """returns a substring of a value from 0 to N"""
 
     def check_valid(self) -> None:

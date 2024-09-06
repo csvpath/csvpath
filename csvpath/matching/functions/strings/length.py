@@ -2,10 +2,11 @@
 from typing import Any
 from csvpath.matching.util.exceptions import MatchComponentException
 from csvpath.matching.productions import Term, Variable, Header
+from ..function_focus import ValueProducer
 from ..function import Function
 
 
-class Length(Function):
+class Length(ValueProducer):
     """returns the length of a string"""
 
     def check_valid(self) -> None:
@@ -26,7 +27,7 @@ class Length(Function):
         return self.to_value(skip=skip) > 0
 
 
-class MinMaxLength(Function):  # pylint: disable=C0115
+class MinMaxLength(ValueProducer):  # pylint: disable=C0115
     def check_valid(self) -> None:
         self.validate_two_args(left=[Term, Variable, Header, Function], right=[Term])
         super().check_valid()

@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 import math
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Divide(Function):
+class Divide(ValueProducer):
     """divides numbers"""
 
     def check_valid(self) -> None:

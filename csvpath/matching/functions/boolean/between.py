@@ -2,10 +2,10 @@
 
 from datetime import datetime
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Between(Function):
+class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:

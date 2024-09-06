@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Percent(Function):
+class Percent(ValueProducer):
     """return the percent scanned, matched or data lines seen of
     the count of total data lines"""
 

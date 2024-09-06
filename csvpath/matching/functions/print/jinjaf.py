@@ -1,12 +1,12 @@
 # pylint: disable=C0114
 from typing import Dict, Any
-from ..function import Function
-from .printf import Print
 from csvpath.matching.productions import Matchable
 from csvpath.matching.util.exceptions import ChildrenException
+from .printf import Print
+from ..function_focus import SideEffect
 
 
-class Jinjaf(Function):
+class Jinjaf(SideEffect):
     """uses Jinja to transform a template using csvpath to get
     values. this is basically a fancy (and relatively slow) form
     of print()."""

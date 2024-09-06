@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Headers(Function):
+class Headers(MatchDecider):
     """directs functions like any() to look in the headers.
     secondary purpose: do existence test for a header name or
     index for the current headers/whole file. header_name

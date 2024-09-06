@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 import datetime
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Date(Function):
+class Date(ValueProducer):
     """parses a date from a string"""
 
     def check_valid(self) -> None:

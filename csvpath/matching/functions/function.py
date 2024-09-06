@@ -37,6 +37,7 @@ class Function(Validation):
             return self._noop_value()
         if self.value is None:
             if not self.onmatch or self.line_matches():
+                self.matcher.csvpath.logger.debug("%s calling produce value", self)
                 self._produce_value(skip=skip)
             else:
                 self._apply_default_value()
@@ -53,6 +54,9 @@ class Function(Validation):
         in its _produce_value doesn't obtain.
         """
         self.value = None
+        self.matcher.csvpath.logger.debug(
+            "%s applying default value: %s", self, self.value
+        )
 
     def _apply_default_match(self) -> None:
         """provides the default when to_match is not producing a value.
@@ -60,3 +64,6 @@ class Function(Validation):
         default.
         """
         self.match = True
+        self.matcher.csvpath.logger.debug(
+            "%s applying default match: %s", self, self.match
+        )

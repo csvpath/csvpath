@@ -15,6 +15,14 @@ class Expression(Matchable):
     handling any error in its descendants.
     """
 
+    def __str__(self) -> str:
+        s = ""
+        for i, c in enumerate(self.children):
+            if i > 0:
+                s += ", "
+            s = f"{c}"
+        return f"""{self._simple_class_name()}(children: {s})"""
+
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
             return True

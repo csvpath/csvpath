@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Mod(Function):
+class Mod(ValueProducer):
     """takes the modulus of numbers"""
 
     def check_valid(self) -> None:

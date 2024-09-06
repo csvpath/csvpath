@@ -1,10 +1,11 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.productions import Term, Variable, Header
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import ValueProducer
+from ..function import Function
 
 
-class Round(Function):
+class Round(ValueProducer):
     """rounds a number to a certain number of places"""
 
     def check_valid(self) -> None:

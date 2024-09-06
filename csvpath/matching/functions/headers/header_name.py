@@ -1,9 +1,9 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.util.exceptions import DataException
+from ..function_focus import ValueProducer
 
 
-class HeaderName(Function):
+class HeaderName(ValueProducer):
     """looks up a header name by index or an index by header name
     if given an expected result as a 2nd argument we return
     True/False on the match of expected to actual

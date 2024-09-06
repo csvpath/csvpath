@@ -90,8 +90,8 @@ class Equality(Matchable):
             for c in self.children:
                 string = f"{c}" if string == "" else f"{string}, {c}"
             return f"""{self._simple_class_name()}({string})"""
-        ln = None if self.left is None else self.left._simple_class_name()
-        rn = None if self.right is None else self.right._simple_class_name()
+        ln = None if self.left is None else f"{self.left}"
+        rn = None if self.right is None else f"{self.right}"
         return f"""{ self._simple_class_name() }(left:{ ln } {self.op} right:{rn})"""
 
     def _left_nocontrib(self, m) -> bool:

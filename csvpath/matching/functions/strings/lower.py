@@ -1,9 +1,10 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.productions import Term, Variable, Header
+from ..function_focus import ValueProducer
+from ..function import Function
 
 
-class Lower(Function):
+class Lower(ValueProducer):
     """lowercases a string"""
 
     def check_valid(self) -> None:

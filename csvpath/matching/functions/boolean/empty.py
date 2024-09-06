@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 from csvpath.matching.productions import Header, Variable
 from csvpath.matching.util.expression_utility import ExpressionUtility
 
@@ -7,7 +7,7 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 # headers.
 
 
-class Empty(Function):
+class Empty(MatchDecider):
     """checks for empty or blank header values in a given line"""
 
     def check_valid(self) -> None:

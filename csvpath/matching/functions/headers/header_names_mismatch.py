@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class HeaderNamesMismatch(Function):
+class HeaderNamesMismatch(MatchDecider):
     """
     given a delimited list of headers, checks that they all exist and
     optionally are in the same order

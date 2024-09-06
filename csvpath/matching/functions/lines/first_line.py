@@ -1,10 +1,11 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Equality
 from csvpath.matching.util.exceptions import ChildrenException
+from ..function_focus import MatchDecider
 from ..function import Function
 
 
-class FirstLine(Function):
+class FirstLine(MatchDecider):
     """True when on the first line, scan, or match"""
 
     def check_valid(self) -> None:

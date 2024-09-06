@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Equality
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Tally(Function):
+class Tally(ValueProducer):
     """collects the number of times values are seen"""
 
     def check_valid(self) -> None:

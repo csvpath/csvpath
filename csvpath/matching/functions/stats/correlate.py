@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 import pandas as pd
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Correlate(Function):
+class Correlate(ValueProducer):
     """does a statistical correlation test on the values of two headers"""
 
     def check_valid(self) -> None:

@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from typing import Any
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Increment(Function):
+class Increment(ValueProducer):
     """increments a var every n-times a each different value is seen"""
 
     def check_valid(self) -> None:

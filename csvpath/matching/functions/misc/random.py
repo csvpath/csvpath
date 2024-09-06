@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from random import randrange
-from ..function import Function
 from csvpath.matching.util.exceptions import ChildrenException
+from ..function_focus import ValueProducer
 
 
-class Random(Function):
+class Random(ValueProducer):
     """returns a random int within a range"""
 
     def check_valid(self) -> None:

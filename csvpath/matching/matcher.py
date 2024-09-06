@@ -31,6 +31,8 @@ class Matcher:  # pylint: disable=R0902
         if data is not None:
             self.parser = LarkParser()
             tree = self.parser.parse(data)
+            if self.csvpath:
+                self.csvpath.logger.debug("Raw parse tree: %s", tree)
             transformer = LarkTransformer(self)
             es = transformer.transform(tree)
             expressions = []
@@ -98,6 +100,7 @@ class Matcher:  # pylint: disable=R0902
             self._find_and_actvate_lasts(e)
 
     def _find_and_actvate_lasts(self, e) -> None:
+        self.csvpath.logger.debug("Looking for last()s to activate")
         cs = e.children[:]
         while len(cs) > 0:
             c = cs.pop()
@@ -138,6 +141,8 @@ class Matcher:  # pylint: disable=R0902
                 # so we may miss out on some side effects. we just return
                 # because the function already let the CsvPath know to stop.
                 #
+                pln = self.csvpath.line_monitor.physical_line_number
+                self.csvpath.logger.debug("Stopped at line %s", pln)
                 return False
             if self.skip is True:
                 #
@@ -146,6 +151,8 @@ class Matcher:  # pylint: disable=R0902
                 # we might gain from continuing to check for a match;
                 # but we also don't want to stop the run or fail validation
                 #
+                pln = self.csvpath.line_monitor.physical_line_number
+                self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
                 return False
             if et[1] is True:
@@ -166,6 +173,7 @@ class Matcher:  # pylint: disable=R0902
             if failed:
                 ret = False
         if ret is True:
+            self.csvpath.logger.debug("Setting any vars deferred till match")
             self.do_set_if_all_match()
         else:
             pass
@@ -175,6 +183,8 @@ class Matcher:  # pylint: disable=R0902
         # would recheck all self.expressions[.][1] for a True. if at least one
         # were found, we would respond True; else, False.
         #
+        pln = self.csvpath.line_monitor.physical_line_number
+        self.csvpath.logger.debug("Match result for line %s: %s", pln, ret)
         return ret
 
     def check_valid(self) -> None:  # pylint: disable=C0116

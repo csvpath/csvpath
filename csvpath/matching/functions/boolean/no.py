@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class No(Function):
+class No(MatchDecider):
     """returns False"""
 
     def check_valid(self) -> None:

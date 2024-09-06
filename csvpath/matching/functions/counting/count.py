@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Count(Function):
+class Count(ValueProducer):
     """counts matches by default. when fed other match components
     it can count more specific things."""
 

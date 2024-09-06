@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Strip(Function):
+class Strip(ValueProducer):
     """removes whitespace from the beginning and end of a string"""
 
     def check_valid(self) -> None:

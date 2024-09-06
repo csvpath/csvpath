@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Last(Function):
+class Last(MatchDecider):
     """matches on the last line that will be scanned. last() will always run."""
 
     def check_valid(self) -> None:

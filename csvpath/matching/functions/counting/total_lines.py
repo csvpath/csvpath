@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class TotalLines(Function):
+class TotalLines(ValueProducer):
     """returns the total data lines count for the file (1-based"""
 
     def check_valid(self) -> None:

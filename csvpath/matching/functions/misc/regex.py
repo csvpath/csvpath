@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 import re
 from csvpath.matching.productions import Term
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Regex(Function):
+class Regex(MatchDecider):
     """does a regex match on a value"""
 
     def check_valid(self) -> None:

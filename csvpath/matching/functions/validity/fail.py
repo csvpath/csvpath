@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Fail(Function):
+class Fail(MatchDecider):
     """when called this function fails the file that is being processed"""
 
     def check_valid(self) -> None:

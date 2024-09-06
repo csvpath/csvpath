@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Or(Function):
+class Or(MatchDecider):
     """does a logical OR of match components"""
 
     def check_valid(self) -> None:

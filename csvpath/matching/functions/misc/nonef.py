@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Nonef(Function):
+class Nonef(ValueProducer):
     """returns None"""
 
     def check_valid(self) -> None:

@@ -3,12 +3,12 @@
 from typing import Any
 from csvpath.matching.productions import Equality
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import MatchDecider
 from ..misc.variables import Variables
 from ..headers.headers import Headers
 
 
-class All(Function):
+class All(MatchDecider):
     """checks that a number of match components return True"""
 
     def check_valid(self) -> None:  # pragma: no cover

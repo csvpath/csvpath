@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Equals(Function):
+class Equals(MatchDecider):
     """tests the equality of two values"""
 
     def check_valid(self) -> None:

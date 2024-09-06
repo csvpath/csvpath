@@ -1,10 +1,11 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Term, Header, Variable
 from csvpath.matching.util.exceptions import ChildrenException
+from ..function_focus import ValueProducer
 from ..function import Function
 
 
-class Every(Function):
+class Every(ValueProducer):
     """collects a regularly sampled subset of a value"""
 
     def check_valid(self) -> None:

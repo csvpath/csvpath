@@ -2,11 +2,11 @@
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.exceptions import ChildrenException
 from ..misc.variables import Variables
-from ..function import Function
+from ..function_focus import MatchDecider
 from ..headers.headers import Headers
 
 
-class Any(Function):
+class Any(MatchDecider):
     """this class checks various places to find any values present.
     - any()
     - any(header())

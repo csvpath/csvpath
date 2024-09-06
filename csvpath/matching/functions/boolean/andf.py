@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 
 from typing import Any
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class And(Function):
+class And(MatchDecider):
     """ANDs match components. remember that csvpath is
     AND by default; however, there are times when you
     need more control."""

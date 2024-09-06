@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 import math
 from csvpath.matching.productions import Equality, Variable, Header
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Exists(Function):
+class Exists(MatchDecider):
     """tests if a value exists"""
 
     def check_valid(self) -> None:

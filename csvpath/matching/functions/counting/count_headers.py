@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class CountHeaders(Function):
+class CountHeaders(ValueProducer):
     """returns the current number of headers expected or
     the actual number of headers in a given line"""
 

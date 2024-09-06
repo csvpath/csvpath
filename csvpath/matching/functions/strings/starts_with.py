@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class StartsWith(Function):
+class StartsWith(ValueProducer):
     """checks if a string begins with another string"""
 
     def check_valid(self) -> None:

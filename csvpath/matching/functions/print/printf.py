@@ -1,10 +1,11 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.print_parser import PrintParser
+from ..function_focus import SideEffect
+from ..function import Function
 
 
-class Print(Function):
+class Print(SideEffect):
     """the print function handles parsing print lines, interpolating
     values, and sending to the Printer instances"""
 

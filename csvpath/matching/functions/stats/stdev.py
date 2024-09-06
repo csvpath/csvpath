@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from statistics import stdev, pstdev
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Stdev(Function):
+class Stdev(ValueProducer):
     """takes the running sample or population standard deviation for a value"""
 
     def check_valid(self) -> None:

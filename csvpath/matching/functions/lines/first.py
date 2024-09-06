@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from typing import Any
 from csvpath.matching.productions import Equality
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class First(Function):
+class First(ValueProducer):
     """captures the first sighting line number for values"""
 
     NEVER = -9999999999

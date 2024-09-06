@@ -23,7 +23,7 @@ class Variable(Matchable):
             raise ChildrenException("Name cannot be the empty string")
 
     def __str__(self) -> str:
-        return f"""{self.__class__}: {self.name}"""
+        return f"""{self._simple_class_name()}({self.qualified_name})"""
 
     def reset(self) -> None:
         self.value = None

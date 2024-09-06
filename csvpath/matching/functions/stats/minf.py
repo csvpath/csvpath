@@ -3,10 +3,11 @@ from typing import Any
 from statistics import mean, median
 from csvpath.matching.productions import Equality, Variable, Term, Header, Matchable
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import ValueProducer
 from ..function import Function
 
 
-class MinMax(Function):
+class MinMax(ValueProducer):
     """base class for some of the math functions"""
 
     MAX = True

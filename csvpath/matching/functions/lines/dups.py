@@ -2,10 +2,10 @@
 import hashlib
 from csvpath.matching.productions import Header, Equality
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class HasDups(Function):
+class HasDups(MatchDecider):
     """checks for duplicate lines, in whole or part, by hashing."""
 
     def check_valid(self) -> None:

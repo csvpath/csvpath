@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import SideEffect
 
 
-class ResetHeaders(Function):
+class ResetHeaders(SideEffect):
     """resets the headers to be the values in the current row, rather then the 0th row"""
 
     def check_valid(self) -> None:

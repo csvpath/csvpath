@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import SideEffect
 
 
-class PrintLine(Function):
+class PrintLine(SideEffect):
     """prints the current line using a delimiter"""
 
     def check_valid(self) -> None:

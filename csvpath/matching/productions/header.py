@@ -11,7 +11,7 @@ class Header(Matchable):
     NEVER = -9999999999
 
     def __str__(self) -> str:
-        return f"""{self._simple_class_name()}({self.name}) """
+        return f"""{self._simple_class_name()}({self.qualified_name}) """
 
     def __init__(self, matcher, *, value: Any = None, name: str = None) -> None:
         # header names can be quoted like "Last Year Number"

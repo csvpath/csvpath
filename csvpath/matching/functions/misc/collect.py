@@ -1,9 +1,9 @@
 # pylint: disable=C0114
-from ..function import Function
 from csvpath.matching.productions import Equality
+from ..function_focus import SideEffect
 
 
-class Collect(Function):
+class Collect(SideEffect):
     """use this class to identify what headers should be collected when
     a line matches. by default all headers are collected."""
 

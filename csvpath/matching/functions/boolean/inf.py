@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class In(Function):
+class In(MatchDecider):
     """checks if the component value is in a delimited string of values"""
 
     def check_valid(self) -> None:

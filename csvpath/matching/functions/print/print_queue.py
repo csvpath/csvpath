@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class PrintQueue(Function):
+class PrintQueue(ValueProducer):
     """returns the number of lines printed to the Printer instances"""
 
     def check_valid(self) -> None:

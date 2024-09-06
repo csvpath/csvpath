@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Equality, Term
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Subtract(Function):
+class Subtract(ValueProducer):
     """subtracts numbers"""
 
     def check_valid(self) -> None:

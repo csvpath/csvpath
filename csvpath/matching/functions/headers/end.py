@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Term
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class End(Function):
+class End(ValueProducer):
     """returns the value of the last header"""
 
     def check_valid(self) -> None:

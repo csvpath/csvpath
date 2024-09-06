@@ -35,7 +35,7 @@ class Reference(Matchable):
         self.ref = None
 
     def __str__(self) -> str:
-        return f"""{self.__class__}: {self.name}"""
+        return f"""{self.__class__}({self.qualified_name})"""
 
     def reset(self) -> None:
         self.value = None

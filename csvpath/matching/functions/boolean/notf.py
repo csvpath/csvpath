@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Not(Function):
+class Not(MatchDecider):
     """returns the boolean inverse of a value"""
 
     def check_valid(self) -> None:

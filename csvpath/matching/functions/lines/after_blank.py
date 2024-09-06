@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class AfterBlank(Function):
+class AfterBlank(MatchDecider):
     """this class is True if the immediately preceding
     physical line was blank or had no data values"""
 

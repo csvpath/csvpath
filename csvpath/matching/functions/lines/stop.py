@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
+from ..function_focus import SideEffect
 
 
-class Stop(Function):
+class Stop(SideEffect):
     """when called halts the scan. the current row will be returned."""
 
     def check_valid(self) -> None:
@@ -39,7 +39,7 @@ class Stop(Function):
         return self.match
 
 
-class Skip(Function):
+class Skip(SideEffect):
     """skips to the next line. will probably leave later match components
     unconsidered; although, there is not certainty that will happen."""
 

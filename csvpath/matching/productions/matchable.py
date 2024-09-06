@@ -19,7 +19,7 @@ class Matchable(Qualified):
         self._id: str = None
 
     def __str__(self) -> str:
-        return f"""{self.__class__}"""
+        return f"""{self._simple_class_name()}"""
 
     def check_valid(self) -> None:
         """structural check; doesn't test the values. nothing should

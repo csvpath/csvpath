@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import SideEffect, ValueProducer
 
 
-class Push(Function):
+class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
@@ -48,7 +48,7 @@ class PushDistinct(Push):
         return super().to_value(skip=skip)
 
 
-class Pop(Function):
+class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
@@ -74,7 +74,7 @@ class Pop(Function):
         return self.match
 
 
-class Stack(Function):
+class Stack(SideEffect):
     """returns a stack variable"""
 
     def check_valid(self) -> None:
@@ -95,7 +95,7 @@ class Stack(Function):
         return self._noop_match()
 
 
-class Peek(Function):
+class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
@@ -122,7 +122,7 @@ class Peek(Function):
         return self.match
 
 
-class PeekSize(Function):
+class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:

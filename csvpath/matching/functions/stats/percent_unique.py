@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Header
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class PercentUnique(Function):
+class PercentUnique(ValueProducer):
     """return the % of a value that is unique over lines so far seen"""
 
     def check_valid(self) -> None:

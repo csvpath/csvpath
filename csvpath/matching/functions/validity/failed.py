@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import MatchDecider
 
 
-class Failed(Function):
+class Failed(MatchDecider):
     """matches when the current file is in the failed/invalid state"""
 
     def check_valid(self) -> None:

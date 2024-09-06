@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
-from ..function import Function
+from ..function_focus import SideEffect
 
 
-class Advance(Function):
+class Advance(SideEffect):
     """this class lets a csvpath skip to a future line"""
 
     def check_valid(self) -> None:

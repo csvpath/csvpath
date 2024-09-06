@@ -1,12 +1,12 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
 from csvpath.matching.productions import Term
 from csvpath.matching.util.exceptions import MatchComponentException
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import SideEffect
 
 
-class Import(Function):
+class Import(SideEffect):
     """imports one csvpath into another"""
 
     def check_valid(self) -> None:

@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Mismatch(Function):
+class Mismatch(ValueProducer):
     """tests the current headers against an expectation"""
 
     def check_valid(self) -> None:

@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Concat(Function):
+class Concat(ValueProducer):
     """concats two strings"""
 
     def check_valid(self) -> None:

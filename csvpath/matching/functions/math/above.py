@@ -1,10 +1,10 @@
 # pylint: disable=C0114
 from datetime import date, datetime
-from ..function import Function
 from csvpath.matching.util.exceptions import ChildrenException
+from ..function_focus import MatchDecider
 
 
-class AboveBelow(Function):
+class AboveBelow(MatchDecider):
     """this class implements greater-than, less-than"""
 
     def check_valid(self) -> None:

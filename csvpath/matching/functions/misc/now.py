@@ -1,9 +1,9 @@
 # pylint: disable=C0114
 import datetime
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Now(Function):
+class Now(ValueProducer):
     """returns the current datetime"""
 
     def check_valid(self) -> None:

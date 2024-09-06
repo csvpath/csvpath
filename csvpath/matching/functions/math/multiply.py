@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import ValueProducer
 
 
-class Multiply(Function):
+class Multiply(ValueProducer):
     """multiplies numbers"""
 
     def check_valid(self) -> None:
