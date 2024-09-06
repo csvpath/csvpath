@@ -25,6 +25,18 @@ class Print(SideEffect):
         parser = PrintParser(self.matcher.csvpath)
         self.value = parser.transform(string)
 
+    def _decide_match(self, skip=None) -> None:
+        right = None
+        if isinstance(self.children[0], Equality):
+            right = self.children[0].right
+        if self.do_onmatch():
+            if self.do_onchange():
+                self.matcher.csvpath.print(f"{self.to_value()}")
+                if right:
+                    right.matches(skip=skip)
+        self.match = True
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
@@ -39,3 +51,4 @@ class Print(SideEffect):
                         right.matches(skip=skip)
             self.match = True
         return self.match
+    """

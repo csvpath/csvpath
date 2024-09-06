@@ -24,5 +24,5 @@ class Random(ValueProducer):
         upper += 1
         self.value = randrange(lower, upper, 1)
 
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_value()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_value()  # pragma: no cover

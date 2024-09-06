@@ -15,5 +15,10 @@ class PrintQueue(ValueProducer):
         else:
             self.value = self.matcher.csvpath.printers[0].lines_printed
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()
+
+    """
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()
+    """

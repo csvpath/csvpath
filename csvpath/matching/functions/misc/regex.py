@@ -61,12 +61,8 @@ class Regex(MatchDecider):
             s = f"{s} returning: {self.value}"
             self.matcher.csvpath.logger.info(s)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        if self.match is None:
-            if self.name == "regex":
-                self.match = self.to_value(skip=skip) is not None
-            elif self.name == "exact":
-                self.match = bool(self.to_value(skip=skip))
-        return self.match
+    def _decide_match(self, skip=None) -> None:
+        if self.name == "regex":
+            self.match = self.to_value(skip=skip) is not None
+        elif self.name == "exact":
+            self.match = bool(self.to_value(skip=skip))

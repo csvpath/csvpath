@@ -37,7 +37,7 @@ class TestPrint(unittest.TestCase):
         assert ps
         assert j == 5
 
-    def test_print_parser_transform_csvpath_data(self):
+    def test_print_parser_transform_csvpath_data1(self):
         path = CsvPath()
         path.parse(f"""${PATH}[*] [ yes() ]""")
         lines = path.collect()
@@ -69,12 +69,15 @@ class TestPrint(unittest.TestCase):
         assert result
         assert result.strip() == "[ yes() ]"
 
+    def test_print_parser_transform_csvpath_data2(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[1*] [
                 not( count_lines() == 3 )
                 print("count of lines: $.csvpath.count_lines")
-                count_lines.nocontrib() == 6 -> stop() ]"""
+
+                count_lines.nocontrib() == 6 -> stop()
+            ]"""
         )
         lines = path.collect()
         print(f"test_function_concat: lines: {len(lines)}")

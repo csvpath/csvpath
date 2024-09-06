@@ -30,10 +30,8 @@ class Push(SideEffect):
             )
         self.value = True
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)
 
 
 class PushDistinct(Push):
@@ -63,15 +61,12 @@ class Pop(ValueProducer):
             stack = stack[0 : len(stack) - 2]
             self.matcher.set_variable(k, value=stack)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
+    def _decide_match(self, skip=None) -> None:
         v = self.to_value(skip=skip)
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
             self.match = True
-        return self.match
 
 
 class Stack(SideEffect):
@@ -91,8 +86,8 @@ class Stack(SideEffect):
             self.matcher.set_variable(k, value=stack)
         self.value = stack
 
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()
 
 
 class Peek(ValueProducer):
