@@ -90,8 +90,13 @@ class Min(MinMax):
         m = self._store_and_compare(v, MinMax.MIN)
         self.value = m
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()  # pragma: no cover
+
+    """
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
+    """
 
 
 class Max(MinMax):
@@ -110,8 +115,13 @@ class Max(MinMax):
         m = self._store_and_compare(v, MinMax.MAX)
         self.value = m
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()  # pragma: no cover
+
+    """
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
+    """
 
 
 class Average(MinMax):
@@ -160,5 +170,11 @@ class Average(MinMax):
             else:
                 self.value = median(m)
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_value()
+
+    """
     def matches(self, *, skip=None) -> bool:
         return self._noop_value()  # pragma: no cover
+
+    """

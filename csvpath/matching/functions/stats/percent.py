@@ -29,9 +29,15 @@ class Percent(ValueProducer):
             f"Percent: val: {value}, cnt: {count}, total: {total}, rounded: {self.value}"  # pylint: disable=C0301
         )
 
+    def _decide_match(self, skip=None) -> None:
+        v = self.to_value(skip=skip)
+        self.match = v is not None
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         self.match = v is not None
         return self.match
+    """

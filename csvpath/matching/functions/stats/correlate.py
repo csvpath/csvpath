@@ -24,9 +24,15 @@ class Correlate(ValueProducer):
         f = round(f, 2)
         self.value = f
 
+    def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
+        self.match = self._noop_match()  # pragma: no cover
+
+    """
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
         return self._noop_match()  # pragma: no cover
+    """
 
     def _trim(self, leftlist, rightlist):
         n = len(leftlist) if len(leftlist) < len(rightlist) else len(rightlist)

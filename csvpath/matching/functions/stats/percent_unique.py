@@ -25,8 +25,14 @@ class PercentUnique(ValueProducer):
         t += 1
         self.value = round(uniques / t, 2) * 100
 
+    def _decide_match(self, skip=None) -> None:
+        v = self.to_value(skip=skip)
+        self.match = v is not None
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         v = self.to_value(skip=skip)
         return v is not None
+    """
