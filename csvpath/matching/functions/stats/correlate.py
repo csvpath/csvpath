@@ -28,12 +28,6 @@ class Correlate(ValueProducer):
         self.to_value(skip=skip)
         self.match = self._noop_match()  # pragma: no cover
 
-    """
-    def matches(self, *, skip=None) -> bool:
-        self.to_value(skip=skip)
-        return self._noop_match()  # pragma: no cover
-    """
-
     def _trim(self, leftlist, rightlist):
         n = len(leftlist) if len(leftlist) < len(rightlist) else len(rightlist)
         ll = []

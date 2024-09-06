@@ -38,12 +38,6 @@ class Stdev(ValueProducer):
         self.to_value(skip=skip)
         self.match = self._noop_match()  # pragma: no cover
 
-    """
-    def matches(self, *, skip=None) -> bool:
-        self.to_value(skip=skip)
-        return self._noop_match()  # pragma: no cover
-    """
-
     def _to_floats(self, stack):
         for i in range(0, len(stack)):  # pylint: disable=C0200
             # re: C0200 better to not mutate while iterating.

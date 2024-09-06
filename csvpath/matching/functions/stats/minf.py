@@ -93,11 +93,6 @@ class Min(MinMax):
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_match()  # pragma: no cover
 
-    """
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
-    """
-
 
 class Max(MinMax):
     """matches when its value is the largest"""
@@ -117,11 +112,6 @@ class Max(MinMax):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_match()  # pragma: no cover
-
-    """
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
-    """
 
 
 class Average(MinMax):
@@ -172,9 +162,3 @@ class Average(MinMax):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_value()
-
-    """
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_value()  # pragma: no cover
-
-    """
