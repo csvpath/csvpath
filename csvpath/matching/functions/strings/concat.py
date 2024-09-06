@@ -17,6 +17,6 @@ class Concat(ValueProducer):
             v = f"{v}{s.to_value(skip=skip)}"
         self.value = v
 
-    def matches(self, *, skip=None) -> bool:
+    def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)
-        return self._noop_match()
+        self.match = self._noop_match()

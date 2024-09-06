@@ -20,11 +20,8 @@ class Length(ValueProducer):
             ret = len(f"{val}")
         self.value = ret
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-
-        return self.to_value(skip=skip) > 0
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip) > 0
 
 
 class MinMaxLength(ValueProducer):  # pylint: disable=C0115
@@ -47,8 +44,5 @@ class MinMaxLength(ValueProducer):  # pylint: disable=C0115
                 raise MatchComponentException("Unknown function name: {self.name}")
         return self.value
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-
-        return self.to_value(skip=skip) > 0
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip) > 0

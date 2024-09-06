@@ -13,8 +13,6 @@ class Upper(ValueProducer):
         value = self.children[0].to_value(skip=skip)
         self.value = f"{value}".upper()
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
+    def _decide_match(self, skip=None) -> None:
         v = self.to_value(skip=skip)
-        return v is not None
+        self.match = v is not None
