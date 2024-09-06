@@ -36,7 +36,12 @@ class ResetHeaders(SideEffect):
             self.children[0].matches(skip=skip)
         self.value = True
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         return self.to_value(skip=skip)
+    """

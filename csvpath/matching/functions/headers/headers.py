@@ -16,6 +16,21 @@ class Headers(MatchDecider):
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
+    def _decide_match(self, skip=None) -> None:
+        if len(self.children) == 1:
+            v = self.children[0].to_value()
+            if isinstance(v, int) or v.isdigit():
+                i = int(v)
+                if i < 0 or i >= len(self.matcher.csvpath.headers):
+                    self.match = False
+                else:
+                    self.match = True
+            else:
+                self.match = self.matcher.header_index(v) is not None
+        else:
+            self.match = True
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
@@ -33,3 +48,4 @@ class Headers(MatchDecider):
             else:
                 self.match = True
         return self.match
+    """

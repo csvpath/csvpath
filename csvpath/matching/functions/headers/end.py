@@ -24,10 +24,14 @@ class End(ValueProducer):
                 else:
                     raise ChildrenException("end()'s term must be a positive int")
             if 0 <= i < len(self.matcher.line):
-                # if i >= 0 and i < len(self.matcher.line):
                 self.value = self.matcher.line[i]
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip) is not None
+
+    """
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:  # pragma: no cover
             return self._noop_match()
         return self.to_value(skip=skip) is not None
+    """
