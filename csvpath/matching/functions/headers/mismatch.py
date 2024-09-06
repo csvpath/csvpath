@@ -36,12 +36,3 @@ class Mismatch(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip) != 0
-
-    """
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        if self.match is None:
-            self.match = self.to_value(skip=skip) != 0
-        return self.match
-    """

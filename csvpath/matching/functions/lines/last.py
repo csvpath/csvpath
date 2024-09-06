@@ -12,25 +12,21 @@ class Last(MatchDecider):
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return True
-        if self.match is None:
-            last = self.matcher.csvpath.line_monitor.is_last_line()
-            last_scan = (
-                self.matcher.csvpath.scanner
-                and self.matcher.csvpath.scanner.is_last(
-                    self.matcher.csvpath.line_monitor.physical_line_number
-                )
+    def _decide_match(self, skip=None) -> None:
+        last = self.matcher.csvpath.line_monitor.is_last_line()
+        last_scan = (
+            self.matcher.csvpath.scanner
+            and self.matcher.csvpath.scanner.is_last(
+                self.matcher.csvpath.line_monitor.physical_line_number
             )
-            if last or last_scan:
-                if not self.onmatch or self.line_matches():
-                    self.match = True
-                    if self.match:
-                        if len(self.children) == 1:
-                            self.children[0].matches(skip=[self])
-                else:
-                    self.match = False
+        )
+        if last or last_scan:
+            if not self.onmatch or self.line_matches():
+                self.match = True
+                if self.match:
+                    if len(self.children) == 1:
+                        self.children[0].matches(skip=[self])
             else:
                 self.match = False
-        return self.match
+        else:
+            self.match = False

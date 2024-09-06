@@ -22,6 +22,10 @@ class First(ValueProducer):
         self._my_value_or_none = First.NEVER
 
     def to_value(self, *, skip=None) -> Any:
+        #
+        # TODO: needs refactoring. for now cannot do
+        # _produce_value() because of how NEVER works.
+        #
         if skip and self in skip:  # pragma: no cover
             return self._my_value_or_none
         if self._my_value_or_none == First.NEVER:
@@ -47,23 +51,14 @@ class First(ValueProducer):
                         #
                         value=self.matcher.csvpath.line_monitor.physical_line_number,
                     )
-                #
                 # when we have no earlier value we are first, so we match
-                #
                 self._my_value_or_none = v
         return self._my_value_or_none
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return True
-        if self.onmatch and not self.line_matches():
-            ret = False
-        else:
-            #
-            # when there is no earlier value we match
-            #
-            if self._my_value_or_none == First.NEVER:
-                self.to_value(skip=skip)
-            v = self._my_value_or_none
-            ret = v is None
-        return ret
+    def _decide_match(self, skip=None) -> None:
+        # when there is no earlier value we match
+        if self._my_value_or_none == First.NEVER:
+            self.to_value(skip=skip)
+        v = self._my_value_or_none
+        ret = v is None
+        self.match = ret

@@ -22,7 +22,5 @@ class Advance(SideEffect):
             ) from e
         self.value = True
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)

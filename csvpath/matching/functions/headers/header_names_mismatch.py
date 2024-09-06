@@ -51,12 +51,3 @@ class HeaderNamesMismatch(MatchDecider):
 
     def _decide_match(self, skip=None) -> None:
         self.matches = self.to_value(skip=skip)
-
-    """
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        if self.match is None:
-            self.matches = self.to_value(skip=skip)
-        return self.match
-    """

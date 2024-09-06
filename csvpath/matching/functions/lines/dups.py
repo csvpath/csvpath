@@ -41,14 +41,10 @@ class HasDups(MatchDecider):
         )
         self.matcher.set_variable(name, value=values)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            self._noop_match()
-        if self.match is None:
-            if not self.onmatch or self.line_matches():
-                ls = self.to_value()
-                if len(ls) > 0:
-                    self.match = True
-                else:
-                    self.match = False
-        return self.match  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        if not self.onmatch or self.line_matches():
+            ls = self.to_value()
+            if len(ls) > 0:
+                self.match = True
+            else:
+                self.match = False

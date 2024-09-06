@@ -1,1 +1,1 @@
-[tally(#lastname) no()]
+[ @l = subtract( count(), length("this") ) ]
