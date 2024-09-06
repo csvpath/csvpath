@@ -29,7 +29,6 @@ class Sum(ValueProducer):
         val = self.matcher.get_variable(var, set_if_none=0)
         self.value = val
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
+        self.match = self._noop_match()

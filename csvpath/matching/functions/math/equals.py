@@ -9,6 +9,9 @@ class Equals(MatchDecider):
         self.validate_two_args()
         super().check_valid()
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()
+
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         ret = False
@@ -25,9 +28,6 @@ class Equals(MatchDecider):
         else:
             ret = False
         self.value = ret
-
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
 
     def _is_float(self, fs) -> bool:
         try:

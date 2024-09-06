@@ -30,5 +30,10 @@ class Subtract(ValueProducer):
                 ret = float(ret) - float(v)
         return ret
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()
+
+    """
     def matches(self, *, skip=None) -> bool:
         return self._noop_match()  # pragma: no cover
+    """

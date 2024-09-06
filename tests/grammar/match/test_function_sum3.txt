@@ -1,4 +1,3 @@
 [
-                @notsum = add( @notsum, #0)
                 sum(#0)
             ]

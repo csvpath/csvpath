@@ -25,5 +25,5 @@ class Divide(ValueProducer):
                     ret = float(ret) / float(v)
         self.value = ret
 
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()

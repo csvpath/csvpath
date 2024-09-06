@@ -11,6 +11,9 @@ class AboveBelow(MatchDecider):
         self.validate_two_args()
         super().check_valid()
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)
+
     def _produce_value(self, skip=None) -> None:
         thischild = self.children[0].children[0]
         abovethatchild = self.children[0].children[1]
@@ -76,8 +79,3 @@ class AboveBelow(MatchDecider):
         if self._above():
             return f"{a}".strip() > f"{b}".strip()
         return f"{a}".strip() < f"{b}".strip()
-
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
