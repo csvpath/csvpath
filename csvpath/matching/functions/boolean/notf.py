@@ -10,11 +10,9 @@ class Not(MatchDecider):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
         m = self.children[0].matches(skip=skip)
         m = not m
-        self.value = m
-
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
+        self.match = m

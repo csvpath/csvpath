@@ -1,8 +1,8 @@
 # pylint: disable=C0114
-from ..function import Function
+from ..function_focus import SideEffect
 
 
-class Track(Function):
+class Track(SideEffect):
     """uses a match component value to set a tracking
     value, from another match component, on a variable."""
 
@@ -22,7 +22,5 @@ class Track(Function):
         self.matcher.set_variable(varname, tracking=tracking, value=value)
         self.value = True
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)

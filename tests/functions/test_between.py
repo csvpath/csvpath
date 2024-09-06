@@ -102,7 +102,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_string_and_int(self):
         path = CsvPath()
-        Save._save(path, "test_function_after_dates2")
+        Save._save(path, "test_function_between_string_and_int")
         path.parse(
             f"""
             ${DATES}[1][
@@ -112,7 +112,7 @@ class TestFunctionsBetween(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"\ntest_function_after_dates2: path vars: {path.variables}")
+        print(f"\n test_function_between_string_and_int: path vars: {path.variables}")
         assert path.variables["1"] is True
         assert path.variables["2"] is True
         assert path.variables["3"] is True

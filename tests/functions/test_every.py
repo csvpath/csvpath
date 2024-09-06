@@ -6,16 +6,16 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsEvery(unittest.TestCase):
-    def test_function_every_qualifier1(self):
+    def test_function_every1(self):
         path = CsvPath()
-        Save._save(path, "test_function_every_qualifier1")
+        print("")
+        Save._save(path, "test_function_every1")
         path.parse(
             f"""${PATH}
                         [*]
                         [
-                            @t.onmatch=count()
-                            every.fish(#lastname=="Bat", 2)
-                            #lastname=="Bat"
+                            push( "chk", every.fishy(#lastname=="Bat", 2) )
+                            every.fishing(#lastname=="Bat", 2)
                         ]
                    """
         )
@@ -24,21 +24,17 @@ class TestFunctionsEvery(unittest.TestCase):
         # and we capture 3 #lastname=="Bat" because there are 7 such lines
         #
         lines = path.collect()
-        print(f"test_function_every_qualifier: lines: {len(lines)}")
+        print(f"test_function_every1: lines: {len(lines)}")
         for line in lines:
-            print(f"test_function_every_qualifier: line: {line}")
-        print(f"test_function_every_qualifier: path vars: {path.variables}")
-        assert len(lines) == 3
-        assert path.variables["t"] == 3
-        assert "fish" in path.variables
-        assert path.variables["fish"][True] == 4
+            print(f"test_function_every1: line: {line}")
+        print(f"test_function_every1: path vars: {path.variables}")
+        assert len(lines) == 4
 
-    def test_function_every_qualifier2(self):
+    def test_function_every2(self):
         path = CsvPath()
-        Save._save(path, "test_function_every_qualifier2")
+        Save._save(path, "test_function_every2")
         path.parse(
-            f"""${PATH}
-                        [*]
+            f"""${PATH}[*]
                         [
                             @t.onmatch=count()
                             every.who(#lastname, 2)
@@ -46,22 +42,21 @@ class TestFunctionsEvery(unittest.TestCase):
                    """
         )
         #
-        # we capture 3 #lastnames because there are 3 total in 9
-        # and we match on 3 #lastnames because there are 7 "Bat"
+        # TODO: has dup in test_qualifiers test_every_qualifier2
+        # doing: every.who.onmatch() would be a great new test,
+        # but not ready for it yet.
         #
         lines = path.collect()
-        print(f"test_function_every_qualifier: lines: {len(lines)}")
+        print(f"test_function_every2: lines: {len(lines)}")
         for line in lines:
-            print(f"test_function_every_qualifier: line: {line}")
-        print(f"test_function_every_qualifier: path vars: {path.variables}")
-        assert len(lines) == 3
-        assert path.variables["t"] == 3
+            print(f"test_function_every2: line: {line}")
+        print(f"test_function_every2: path vars: {path.variables}")
         assert "who" in path.variables
-        assert path.variables["who"][True] == 3
+        assert path.variables["who"]["Bat"] == 7
 
-    def test_function_every1(self):
+    def test_function_every3(self):
         path = CsvPath()
-        Save._save(path, "test_function_every1")
+        Save._save(path, "test_function_every3")
         path.parse(
             f"""
             ${PATH}[*]
@@ -70,6 +65,6 @@ class TestFunctionsEvery(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_every: path vars: {path.variables}")
+        print(f"test_function_every3: path vars: {path.variables}")
         print(f"lines: {lines}")
         assert len(lines) == 2

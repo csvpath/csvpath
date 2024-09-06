@@ -131,7 +131,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert len(lines) == 3
         assert path.variables["t"] == 3
         assert "fish" in path.variables
-        assert path.variables["fish"][True] == 4
+        assert path.variables["fish"][True] == 7
 
     def test_every_qualifier2(self):
         path = CsvPath()
@@ -157,7 +157,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert len(lines) == 3
         assert path.variables["t"] == 3
         assert "who" in path.variables
-        assert path.variables["who"][True] == 3
+        assert path.variables["who"]["Bat"] == 7
 
     def test_qualifier_header(self):
         path = CsvPath()

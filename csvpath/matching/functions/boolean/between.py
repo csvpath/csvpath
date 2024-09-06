@@ -13,25 +13,23 @@ class Between(MatchDecider):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
         siblings = self.children[0].commas_to_list()
         me = siblings[0].to_value(skip=skip)
         a = siblings[1].to_value(skip=skip)
         b = siblings[2].to_value(skip=skip)
         if me is None or a is None or b is None:
-            self.value = False
+            self.match = False
         else:
-            self.value = self._try_numbers(me, a, b)
-            if self.value is None:
-                self.value = self._try_dates(me, a, b)
-            if self.value is None:
-                self.value = self._try_strings(me, a, b)
-        if self.value is None:
-            self.value = False
-
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        return self.to_value(skip=skip)
+            self.match = self._try_numbers(me, a, b)
+            if self.match is None:
+                self.match = self._try_dates(me, a, b)
+            if self.match is None:
+                self.match = self._try_strings(me, a, b)
+        if self.match is None:
+            self.match = False
 
     # =====================
 
@@ -64,7 +62,7 @@ class Between(MatchDecider):
 
     def _try_strings(self, me, a, b) -> bool:
         if isinstance(a, str) and isinstance(b, str):
-            return self._order(me.strip(), a.strip(), b.strip())
+            return self._order(f"{me}".strip(), a.strip(), b.strip())
         return self._order(f"{me}".strip(), f"{a}".strip(), f"{b}".strip())
 
     def _order(self, me, a, b):

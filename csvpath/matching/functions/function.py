@@ -33,17 +33,32 @@ class Function(Validation):
         """
         if not skip:
             skip = []
-        if skip and self in skip:  # pragma: no cover
+        if self in skip:  # pragma: no cover
             return self._noop_value()
         if self.value is None:
             if not self.onmatch or self.line_matches():
-                self.matcher.csvpath.logger.debug("%s calling produce value", self)
+                self.matcher.csvpath.logger.debug(
+                    "%s, a %s, calling produce value", self, self.FOCUS
+                )
                 self._produce_value(skip=skip)
             else:
                 self._apply_default_value()
         return self.value
 
+    def matches(self, *, skip=None) -> bool:
+        if not skip:
+            skip = []
+        if self in skip:  # pragma: no cover
+            return self._noop_match()
+        if not self.match:
+            self._decide_match(skip=skip)
+
+        return self.match
+
     def _produce_value(self, skip=None) -> None:
+        pass
+
+    def _decide_match(self, skip=None) -> None:
         pass
 
     def _apply_default_value(self) -> None:

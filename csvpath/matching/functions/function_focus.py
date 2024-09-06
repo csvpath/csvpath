@@ -9,6 +9,8 @@ class ValueProducer(Function):
     primarily ValueProducers are about returning
     specific values."""
 
+    FOCUS = "ValueProducer"
+
 
 class MatchDecider(Function):
     """base class for all match-oriented functions. a
@@ -22,6 +24,8 @@ class MatchDecider(Function):
     header_names_mismatch would be a good example of
     this dual-use capability."""
 
+    FOCUS = "MatchDecider"
+
 
 class SideEffect(Function):
     """base class for functions that are primarily available
@@ -30,3 +34,5 @@ class SideEffect(Function):
 
     examples of SideEffect functions include print(), stop()
     skip() and collect()."""
+
+    FOCUS = "SideEffect"

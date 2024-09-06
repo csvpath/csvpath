@@ -12,17 +12,12 @@ class Or(MatchDecider):
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        skip.append(self)
-        if not self.value:
-            child = self.children[0]
-            siblings = child.commas_to_list()
-            ret = False
-            for sib in siblings:
-                if sib.matches(skip=skip):
-                    ret = True
-                    break
-            self.value = ret
-        return self.value
+    def _decide_match(self, skip=None) -> None:
+        child = self.children[0]
+        siblings = child.commas_to_list()
+        ret = False
+        for sib in siblings:
+            if sib.matches(skip=skip):
+                ret = True
+                break
+        self.match = ret
