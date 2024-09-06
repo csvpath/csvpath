@@ -13,6 +13,12 @@ class Fail(MatchDecider):
         self.matcher.csvpath.is_valid = False
         self.value = False
 
+    def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
+        self.match = False
+
+    """
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
         return False
+    """
