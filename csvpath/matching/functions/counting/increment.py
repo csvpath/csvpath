@@ -60,6 +60,12 @@ class Increment(ValueProducer):
                 self.value = inc
         return self.value
 
+    """
+    def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
+    """
+
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
+        print(f"Increment.matches: self.match: {self.match}")
         return self.match

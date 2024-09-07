@@ -106,15 +106,12 @@ class Peek(ValueProducer):
         if v < len(stack):
             self.value = stack[v]
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
+    def _decide_match(self, skip=None) -> None:
         v = self.to_value(skip=skip)
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
             self.match = True
-        return self.match
 
 
 class PeekSize(ValueProducer):
@@ -130,4 +127,4 @@ class PeekSize(ValueProducer):
         self.value = len(stack)
 
     def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
+        self.matches = self._noop_match()

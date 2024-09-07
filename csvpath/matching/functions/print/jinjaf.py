@@ -41,14 +41,6 @@ class Jinjaf(SideEffect):
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
 
-    """
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-
-        v = self.to_value(skip=skip)
-        return v
-    """
     # --------------------
 
     def _simplify_tokens(self) -> dict:

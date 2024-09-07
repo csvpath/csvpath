@@ -16,5 +16,5 @@ class Int(ValueProducer):
         i = ExpressionUtility.to_int(i)
         self.value = i
 
-    def matches(self, *, skip=None) -> bool:
-        return self._noop_match()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        self.match = self._noop_match()  # pragma: no cover
