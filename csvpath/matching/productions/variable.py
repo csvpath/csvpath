@@ -38,7 +38,12 @@ class Variable(Matchable):
                 v = self.to_value(skip=skip)
                 self.match = ExpressionUtility.asbool(v)
             else:
-                self.match = self.value is not None
+                self.match = self.to_value(skip=skip) is not None
+                self.matcher.csvpath.logger.debug(
+                    "Variable %s returning existance test result of %s",
+                    self.name,
+                    self.match,
+                )
         return self.match
 
     def to_value(self, *, skip=None) -> Any:

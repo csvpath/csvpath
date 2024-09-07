@@ -89,19 +89,31 @@ class Matchable(Qualified):
 
     # convenience method for one or two arg functions
     def _value_one(self, skip=None):
+        c = self._child_one()
+        if c is None:
+            return None
+        return c.to_value(skip=skip)
+
+    def _child_one(self):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
         if hasattr(self.children[0], "left"):
-            return self.children[0].left.to_value(skip=skip)
-        return self.children[0].to_value(skip=skip)
+            return self.children[0].left
+        return self.children[0]
+
+    def _value_two(self, skip=None):
+        c = self._child_two()
+        if c is None:
+            return None
+        return c.to_value(skip=skip)
 
     # convenience method for one or two arg functions
-    def _value_two(self, skip=None):
+    def _child_two(self):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
         if hasattr(self.children[0], "right"):
-            return self.children[0].right.to_value(skip=skip)
+            return self.children[0].right
         # with the current parse tree this shouldn't happen
         return None

@@ -1,0 +1,6 @@
+[
+                push("names", #firstname)
+                @fourth = get(@names, 4)
+                ~ this existance test should fail until we have 4 items in the stack ~
+                @fourth -> print("fourth: $.variables.fourth ")
+            ]

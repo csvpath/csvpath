@@ -67,6 +67,7 @@ from .misc.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .misc.datef import Date
 from .misc.collect import Collect
 from .misc.intf import Int
+from .misc.get import Get
 from .misc.track import Track
 from .misc.importf import Import
 from .validity.failed import Failed
@@ -309,6 +310,8 @@ class FunctionFactory:
             f = MinMaxLength(matcher, name, child)
         elif name in ["between", "inside", "beyond", "outside"]:
             f = Between(matcher, name, child)
+        elif name == "get":
+            f = Get(matcher, name, child)
         else:
             if (
                 f is None
