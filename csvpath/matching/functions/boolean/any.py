@@ -27,31 +27,23 @@ class Any(MatchDecider):
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
         self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:
-        # re: R0912: complexity. plan to refactor.
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        if self.match is None:
-            if not self.onmatch or self.line_matches():
-                self.match = False
-                if len(self.children) == 1:
-                    if isinstance(self.children[0], Equality):
-                        self.equality()
-                    elif isinstance(self.children[0], Variables):
-                        # any(variable())
-                        self.variable()
-                    elif isinstance(self.children[0], Headers):
-                        # any(header())
-                        self.header()
-                    else:
-                        # any(Term) we check in both headers and vars for any matches
-                        self.check_value()
-                else:
-                    # any()
-                    self._bare_any()
+    def _decide_match(self, skip=None) -> None:
+        self.match = False
+        if len(self.children) == 1:
+            if isinstance(self.children[0], Equality):
+                self.equality()
+            elif isinstance(self.children[0], Variables):
+                # any(variable())
+                self.variable()
+            elif isinstance(self.children[0], Headers):
+                # any(header())
+                self.header()
             else:
-                self.match = self._noop_match()
-        return self.match
+                # any(Term) we check in both headers and vars for any matches
+                self.check_value()
+        else:
+            # any()
+            self._bare_any()
 
     def _bare_any(self) -> None:
         for h in self.matcher.line:

@@ -18,28 +18,23 @@ class All(MatchDecider):
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
         self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_match()
-        if self.match is None:
-            if not self.onmatch or self.line_matches():
-                self.match = False
-                cs = len(self.children)
-                if cs == 0:
-                    # all headers have a value
-                    self.all_exist()
-                if len(self.children) == 1:
-                    child = self.children[0]
-                    # a list of headers have values
-                    if isinstance(child, Equality):
-                        self.equality()
-                    elif isinstance(child, Headers):
-                        self.all_exist()
-                    elif isinstance(child, Variables):
-                        self.all_variables()
-                    else:
-                        raise ChildrenException("Child cannot be {child}")
-        return self.match
+    def _decide_match(self, skip=None) -> None:
+        self.match = False
+        cs = len(self.children)
+        if cs == 0:
+            # all headers have a value
+            self.all_exist()
+        if len(self.children) == 1:
+            child = self.children[0]
+            # a list of headers have values
+            if isinstance(child, Equality):
+                self.equality()
+            elif isinstance(child, Headers):
+                self.all_exist()
+            elif isinstance(child, Variables):
+                self.all_variables()
+            else:
+                raise ChildrenException("Child cannot be {child}")
 
     def all_variables(self) -> None:  # pylint: disable=C0116
         # default is True in case no vars

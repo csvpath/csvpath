@@ -10,6 +10,9 @@ class AfterBlank(MatchDecider):
         self.validate_zero_args()
         super().check_valid()
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)
+
     def _produce_value(self, skip=None) -> None:
         ll = self.matcher.csvpath.line_monitor.last_line
         if ll:
@@ -25,6 +28,3 @@ class AfterBlank(MatchDecider):
         else:
             # should be the first line.
             self.value = False
-
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
