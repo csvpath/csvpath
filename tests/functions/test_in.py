@@ -192,3 +192,4 @@ class TestFunctionsIn(unittest.TestCase):
         assert path.variables["oc"] is False
         assert path.variables["ln"] == 5
         assert path.variables["lc"] == 6
+        assert path.variables["cnt"] == 1

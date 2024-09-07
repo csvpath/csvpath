@@ -185,7 +185,7 @@ class Qualified:
     def line_matches(self):
         """checks that all other match components report True. this can result in
         multiple iterations over the match component tree; however, we minimize
-        the impact by cutting off at the expression and shortcircuting using the
+        the impact by cutting off at the expression and short-circuiting using the
         self.value and self.match properties. we also take care to not recurse
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
@@ -193,6 +193,13 @@ class Qualified:
             m = e[1] is True or e[0].matches(skip=[self])  # pylint: disable=E1101
             if not m:
                 return False
+        #
+        # if we know there's a match (we do!) then we need to propagate it
+        # in case this or a later onmatch match component wants to use the
+        # match count. if we wait for matcher to report to csvpath the count
+        # will be hard to explain.
+        #
+        self.matcher.csvpath.raise_match_count_if()
         return True
 
     # =============

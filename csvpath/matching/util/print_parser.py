@@ -49,7 +49,7 @@ class PrintParser:
             data = self.csvpath.metadata
         elif atype == "csvpath":
             data = {}
-            self._get_data(self.csvpath, data)
+            self._get_runtime_data_from_local(self.csvpath, data)
         ref["data"] = data
         self.csvpath.logger.debug(f"PrintParser._handle_local: local vars are: {data}")
         return self._transform_reference(ref)
@@ -77,7 +77,7 @@ class PrintParser:
         elif atype == "metadata":
             data = self._get_metadata(ref, results)
         elif atype == "csvpath":
-            data = self._get_runtime_data(ref, results)
+            data = self._get_runtime_data_from_results(ref, results)
         ref["data"] = data
         return self._transform_reference(ref)
 
@@ -196,14 +196,14 @@ class PrintParser:
             data = {**data, **csvpath.metadata}
         return data
 
-    def _get_runtime_data(self, ref, results) -> None:
+    def _get_runtime_data_from_results(self, ref, results) -> None:
         data = {}
         for result in results:
             csvpath = result.csvpath
-            self._get_data(csvpath, data)
+            self._get_runtime_data_from_local(csvpath, data)
         return data
 
-    def _get_data(self, csvpath, runtime: Dict[str, Any]) -> None:
+    def _get_runtime_data_from_local(self, csvpath, runtime: Dict[str, Any]) -> None:
 
         if "delimiter" in runtime:
             if runtime["delimiter"] != csvpath.delimiter:

@@ -214,6 +214,13 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         self.metadata: Dict[str, Any] = {}
         #
+        # holds the current match count while we're in the middle of a match
+        # so that anyone who wants to can increase the match count using
+        # raise_match_count_if(). it is important to do the raise asap so that
+        # components that are onmatch have the right match count available.
+        #
+        self._current_match_count = 0
+        #
         # printers receive print lines from the print function. the default
         # printer prints to standard out. a CsvPath that is managed by a
         # CsvPaths has its CsvPathResults as a printer, as well as having
@@ -616,6 +623,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         if self.scanner.includes(self.line_monitor.physical_line_number):
             self.scan_count = self.scan_count + 1
             matches = None
+            self._current_match_count = self.match_count
             if self._advance > 0:
                 self._advance -= 1
                 matches = False
@@ -627,7 +635,20 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 self.last_row_time = t
                 self.rows_time += t
             if matches is True:
-                self.match_count = self.match_count + 1
+                #
+                # current_match_count is a placeholder that
+                # allows anyone who calls a match early to
+                # update the count. this is important when there is
+                # an onmatch component that needs to use the
+                # match_count. e.g. an onmatch print statement.
+                # we would want the onmatch to propagate asap. we
+                # can accept that there could be a variable set to
+                # match count prior to the onmatch upping the count.
+                # that wouldn't be great for explainability, but we
+                # say that order is important and match components
+                # impact each other left to right, top to bottom.
+                #
+                self.raise_match_count_if()
                 if self.collect_when_not_matched:
                     return False
                 return True
@@ -635,6 +656,12 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 return True
             return False
         return False
+
+    def raise_match_count_if(self):
+        if self._current_match_count == self.match_count:
+            self.match_count += 1
+        else:
+            self.logger.debug("Match count was already raised, so not doing it again")
 
     def limit_collection(self, line: List[Any]) -> List[Any]:
         """this method creates a line based on the given line that holds only the headers
