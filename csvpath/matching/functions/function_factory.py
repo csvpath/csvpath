@@ -233,7 +233,7 @@ class FunctionFactory:
             f = Exists(matcher, name, child)
         elif name == "mod":
             f = Mod(matcher, name, child)
-        elif name == "equals":
+        elif name in ["equals", "eq"]:
             f = Equals(matcher, name, child)
         elif name == "strip":
             f = Strip(matcher, name, child)

@@ -84,7 +84,6 @@ class CsvPaths(CsvPathsPublic):
         self.config = CsvPathConfig()
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
-        self._error_collector = None
 
     def csvpath(self) -> CsvPath:
         return CsvPath(
