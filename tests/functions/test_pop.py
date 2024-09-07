@@ -23,7 +23,7 @@ class TestPop(unittest.TestCase):
         assert len(path.variables["pushed"]) == 0
         assert path.variables["popped"] == 9
 
-    def test_function_push2(self):
+    def test_function_peek(self):
         path = CsvPath()
         Save._save(path, "test_function_push2")
         path.parse(

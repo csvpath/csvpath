@@ -29,9 +29,8 @@ class Print(SideEffect):
         right = None
         if isinstance(self.children[0], Equality):
             right = self.children[0].right
-        if self.do_onmatch():
-            if self.do_onchange():
-                self.matcher.csvpath.print(f"{self.to_value()}")
-                if right:
-                    right.matches(skip=skip)
+        if self.do_onchange():
+            self.matcher.csvpath.print(f"{self.to_value()}")
+            if right:
+                right.matches(skip=skip)
         self.match = True

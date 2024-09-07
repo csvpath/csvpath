@@ -1,0 +1,12 @@
+[
+                ~ changes from None to True on line 1; after that no changes
+                  we determine matches in assignment when onchange; therefore,
+                  just 1 match.
+                ~
+                @oc.onchange = in(#firstname, #firstname)
+                ~ we only print on match so one print ~
+                @cnt = count()
+                print.onmatch(
+                    "printing: oc: $.variables.oc, $.variables.cnt,
+                    count: $.csvpath.count_matches @ $.csvpath.line_number")
+            ]

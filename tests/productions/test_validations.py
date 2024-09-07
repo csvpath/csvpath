@@ -6,6 +6,7 @@ from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.header import Header
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.functions.boolean.no import No
+from csvpath.matching.functions.boolean.inf import In
 from csvpath.matching.functions.lines.first import First
 from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.functions.boolean.any import Any
@@ -20,6 +21,7 @@ VAR = Variable(None, name="no", value=None)
 TERM = Term(None, name=None, value="term")
 HEADER = Header(None, name=None, value="header")
 FUNC = Stop(None, name="stop")
+EQ = Equality(None)
 
 
 class TestValidations(unittest.TestCase):
@@ -169,3 +171,26 @@ class TestValidations(unittest.TestCase):
         v.children = [TERM]
         with pytest.raises(ChildrenException):
             v.check_valid()
+
+    def test_validate_two_or_more_args(self):
+        v = In(matcher=None, name="in")
+        EQ.op = ","
+        v.children = [EQ]
+        # no args, bad
+        with pytest.raises(ChildrenException):
+            v.check_valid()
+            # left only, bad
+            EQ.left = VAR
+        with pytest.raises(ChildrenException):
+            v.check_valid()
+            # left term, bad
+            EQ.left = TERM
+        with pytest.raises(ChildrenException):
+            v.check_valid()
+            # left var, right equality, bad
+            EQ.right = VAR
+            EQ.right = TERM
+        with pytest.raises(ChildrenException):
+            v.check_valid()
+            # left equality, right header, bad
+            EQ.right = TERM

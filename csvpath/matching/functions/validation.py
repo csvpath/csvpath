@@ -1,6 +1,8 @@
 # pylint: disable=C0114
 from typing import Type, List
-from ..productions.matchable import Matchable
+
+# from csvpath.matching.productions.equality import Equality
+from csvpath.matching.productions.matchable import Matchable
 from ..util.exceptions import ChildrenException
 
 
@@ -215,7 +217,13 @@ class Validation(Matchable):
                 f"{self.name}() must have two or three args, not: {cs}"
             )
 
-    def validate_two_or_more_args(self) -> None:  # pylint: disable=C0116
+    def validate_two_or_more_args(
+        self,
+        one_when_two=None,
+        one_when_more=None,
+        two_when_two=None,
+        two_when_more=None,
+    ) -> None:  # pylint: disable=C0116
         # must be an equality
         if len(self.children) != 1:
             raise ChildrenException(
@@ -234,6 +242,40 @@ class Validation(Matchable):
         # could be equalities so the number may be more than 2
         if self.children[0].left is None or self.children[0].right is None:
             raise ChildrenException(f"{self.name}() must have 2 or more arguments")
+
+        if (
+            one_when_two
+            and two_when_two
+            and not hasattr(self.children[0].children[0], "op")
+            and not hasattr(self.children[0].children[1], "op")
+        ):
+            if not self._class_match(self.children[0].left, one_when_two):
+                raise ChildrenException(
+                    f"""{self.name}() must have 2 or more arguments.
+                    when there are 2 arguments the 1st must be in %s.", one_when_two
+                    """
+                )
+            if not self._class_match(self.children[0].right, two_when_two):
+                raise ChildrenException(
+                    f"""{self.name}() must have 2 or more arguments.
+                    when there are 2 arguments the 2st must be in %s.", two_when_two
+                    """
+                )
+        elif one_when_more and two_when_more:
+            if not self._class_match(self.children[0].left, one_when_more):
+                raise ChildrenException(
+                    f"""{self.name}() must have 2 or more arguments.
+                    when there are more than 2 arguments
+                    the 1st must be in %s.", one_when_more
+                    """
+                )
+            if not self._class_match(self.children[0].right, two_when_more):
+                raise ChildrenException(
+                    f"""{self.name}() must have 2 or more arguments.
+                    when there are more than 2 arguments
+                    the 2st must be in %s.", two_when_more
+                    """
+                )
 
     def validate_three_args(self) -> None:  # pylint: disable=C0116
         cs = self.children

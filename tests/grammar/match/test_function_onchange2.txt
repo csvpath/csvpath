@@ -1,4 +1,6 @@
 [
-                @oc.onchange.onmatch = in(#firstname, "Frog|Bug|Fish")
-                print.onmatch("printing: oc: $.variables.oc, count: $.csvpath.match_count")
+                yes()
+                @oc.onchange.onmatch = in(#firstname, #firstname)
+                print.onmatch(
+                   "printing: oc: $.variables.oc, count: $.csvpath.count_matches")
             ]
