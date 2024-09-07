@@ -14,7 +14,7 @@ class LarkPrintParser:
         ROOT: /\$[^\.\$]*\./
         type: (VARIABLES|HEADERS|METADATA|CSVPATH)
         name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))?
-        SIMPLE_NAME: /[^\.\$\s!\:\?"']+/
+        SIMPLE_NAME: /[^\.\$\s!\:\,;%\(\)@#\{\}\[\]&<>\/\|\?"']+/
         QUOTED_NAME: /'[^']+'/
         VARIABLES: "variables"
         HEADERS: "headers"
@@ -28,7 +28,8 @@ class LarkPrintParser:
     #    NAME: /(\.([^\.\$\s!\:\?"]+|"[^"]+")){1,2}/
     #
 
-    def __init__(self):
+    def __init__(self, csvpath=None):
+        self.csvpath = csvpath
         self.parser = Lark(
             LarkPrintParser.GRAMMAR, start="printed", ambiguity="explicit"
         )
@@ -37,19 +38,15 @@ class LarkPrintParser:
     def parse(self, printstr):
         self.tree = self.parser.parse(f"{printstr}")
         return self.tree
-        """
-        transformer = LarkPrintTransformer()
-        #print(f"LarkPrintParser.parese: {self.tree.pretty()}")
-        ps = transformer.transform(self.tree)
-        printstr = self.create_printstr(self, ps)
-        return printstr
-        """
 
 
 @v_args(inline=True)
 class LarkPrintTransformer(Transformer):
     def printed(self, *items) -> List[Any]:
         return items
+
+    def __init__(self, csvpath=None):
+        self.csvpath = csvpath
 
     def to_string(self, *items):
         res = ""

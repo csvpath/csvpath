@@ -1,0 +1,1 @@
+[in(#firstname,"Bug|Bird|Ants")]

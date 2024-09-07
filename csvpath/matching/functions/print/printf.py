@@ -22,7 +22,7 @@ class Print(SideEffect):
         else:
             child = self.children[0]
         string = child.to_value()
-        parser = PrintParser(self.matcher.csvpath)
+        parser = PrintParser(csvpath=self.matcher.csvpath)
         self.value = parser.transform(string)
 
     def _decide_match(self, skip=None) -> None:

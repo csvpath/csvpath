@@ -114,24 +114,24 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         self.match = None
         #
         # when True the lines that do not match are returned from next()
-        # and collect(). this switches CsvPath from being an AND machine
-        # to being an OR machine. in the default, we say:
+        # and collect(). this effectively switches CsvPath from being an
+        # AND machine to being an OR machine; though we do not actually
+        # create an OR expression. in the default, we say:
         #     are all of these things true?
         # but when collect_when_not_matched is True we ask:
         #     are any of these things not true?
         #
         self._when_not_matched = False
         #
-        # note-to-self: by default CsvPath's matcher does an AND match. if we set this property
-        # to True we tell the matcher to do an OR. i.e. if any of the match components
-        # return true there is a match. HOWEVER, this would be a big change because
-        # default values and nocontrib would have to be negative when ORing. we
-        # don't have a way to do that today -- defaults aren't centralized. they
-        # should be. if they were, easy.
+        # note-to-self: by default CsvPath's matcher does an AND match. if
+        # we set this property to True we tell the matcher to do an OR.
+        # i.e. if any of the match components return true there is a match.
+        # HOWEVER, this would be a big change because default values and
+        # nocontrib would have to be negative when ORing. we don't have a
+        # way to do that today -- defaults aren't completely centralized.
+        # they are, easy.
         #
         # self._or_match = False
-        #
-        #
         #
         self.headers = None
         self.variables: Dict[str, Any] = {}

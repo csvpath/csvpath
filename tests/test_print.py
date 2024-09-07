@@ -234,3 +234,95 @@ class TestPrint(unittest.TestCase):
         printstr = """ $food.metadata.valid """
         result = parser.transform(printstr)
         assert result.strip() == "False"
+
+    # ==================
+
+    def test_print_parser_variables0(self):
+        path = CsvPath()
+        LogUtility.logger(path, "debug")
+
+        pathstr = f"""
+            ${PATH}[*] [
+                ~ problem: seeing the first var, but not the second ~
+                @a = "test"
+                @b = #firstname
+        ]"""
+        path.parse(pathstr)
+        lines = path.collect()
+        print(f"test_print_parser_variables1: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        printstr = """ $.variables.a, $.variables.b """
+        result = parser.transform(printstr)
+        assert result.strip() == "test, Frog"
+
+    def test_print_parser_variables1(self):
+        path = CsvPath()
+        LogUtility.logger(path, "info")
+
+        pathstr = f"""
+            ${PATH}[*] [
+                @a = "test"
+                @b = #firstname
+                @c = "see"
+                @d = "dee"
+                @e = "eee"
+                @f = "f"
+                @g = "g"
+                @h = "h"
+                @i = "i"
+                @j = "j"
+                @k = "k"
+                @l = "l"
+                @m = "m"
+                @n = "n"
+                @o = "o"
+                @p = "p"
+        ]"""
+        path.parse(pathstr)
+        lines = path.collect()
+        print(f"test_print_parser_variables1: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        printstr = """
+            b: $.variables.b,
+            a: $.variables.a.
+            c: $.variables.c;
+            d: $.variables.d%
+            (e: $.variables.e)
+            f: $.variables.f#
+            g: $.variables.g@
+            h: $.variables.h{
+            i: $.variables.i}
+            j: $.variables.j[
+            k: $.variables.k]
+            l: $.variables.l/
+            m: $.variables.m|
+            n: $.variables.n<
+            o: $.variables.o>
+            p: $.variables.p&
+        """
+
+        result = parser.transform(printstr)
+        print(f"test_print_parser_variables1: result: {result}")
+        assert (
+            result.strip()
+            == """
+            b: Frog,
+            a: test.
+            c: see;
+            d: dee%
+            (e: eee)
+            f: f#
+            g: g@
+            h: h{
+            i: i}
+            j: j[
+            k: k]
+            l: l/
+            m: m|
+            n: n<
+            o: o>
+            p: p&
+        """.strip()
+        )

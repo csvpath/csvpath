@@ -17,12 +17,9 @@ class In(MatchDecider):
     def _decide_match(self, skip=None) -> None:
         siblings = self.children[0].commas_to_list()
         t = siblings[0].to_value(skip=skip)
-        pln = self.matcher.csvpath.line_monitor.physical_line_number
-        print(f"In._decide_match: pln: {pln}")
         inf = []
         for s in siblings[1:]:
             v = s.to_value(skip=skip)
-            # print(f"In._decide_match: v: {v}")
             if isinstance(s, Term):
                 vs = f"{v}".split("|")
                 inf += vs
@@ -34,6 +31,4 @@ class In(MatchDecider):
                         inf.append(k)
                 else:
                     inf.append(v)
-        # print(f"In._decide_match: inf: {inf}, t: {t}")
-
         self.match = t in inf

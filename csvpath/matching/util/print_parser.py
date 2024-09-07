@@ -7,18 +7,17 @@ class PrintParserException(Exception):
 
 
 class PrintParser:
-    def __init__(self, csvpath):
+    def __init__(self, csvpath=None):
         self.parser = None
         self.csvpath = csvpath
 
     def transform(self, printstr) -> str:
-        self.parser = LarkPrintParser()
+        self.parser = LarkPrintParser(csvpath=self.csvpath)
+
         tree = self.parser.parse(printstr)
-        transformer = LarkPrintTransformer(self)
+        transformer = LarkPrintTransformer(self.csvpath)
         ts = transformer.transform(tree)
-        self.csvpath.logger.debug(
-            f"PrintParser.transform: printstr: {printstr} ==> transformed tree: {ts}"
-        )
+
         return self._to_string(ts)
 
     def _to_string(self, ts) -> str:
@@ -52,12 +51,14 @@ class PrintParser:
             data = {}
             self._get_data(self.csvpath, data)
         ref["data"] = data
+        self.csvpath.logger.debug(f"PrintParser._handle_local: local vars are: {data}")
         return self._transform_reference(ref)
 
     def _handle_reference(self, ref) -> str:
         name = ref["root"]
         name = name[1:]
         name = name.rstrip(".")
+        self.csvpath.logger.error(f"_handle_ref: name '{name}'")
         if name == "":
             self.csvpath.logger.error("Name cannot be empty")
             raise Exception("Name cannot be ''")
@@ -86,6 +87,9 @@ class PrintParser:
         if len(ref["name"]) > 1:
             tracking = ref["name"][1]
         data = ref["data"]
+        self.csvpath.logger.debug(
+            f"PrintParser._transform_reference: name: {name}; vars are: {data}"
+        )
         if isinstance(data, dict):
             return self._ref_from_dict(ref, data, name, tracking)
         elif isinstance(data, list):
@@ -167,6 +171,7 @@ class PrintParser:
         for i, result in enumerate(results):
             csvpath = result.csvpath
             v = csvpath.variables
+            self.csvpath.logger.debug(f"PrintParser._get_variables: v: {v}")
             data = {**data, **v}
         return data
 
