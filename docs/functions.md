@@ -123,6 +123,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/after_blank.md'>after_blank()</a></td><td> matches when a line was preceded by a blank line </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> identifies the headers to collect when a row matches </td></tr>
 
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>get(value, value)</a></td><td> gets a varible value </td></tr>
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstline()</a></td><td> matches on the 0th line, if scanned </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstscan()</a></td><td> matches on the 1st line scanned </td></tr>
