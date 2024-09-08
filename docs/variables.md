@@ -3,6 +3,8 @@
 
 Variables are identified by an `@` followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an `=` its value is set.  When it is used on either side of an `==` it is an equality test.
 
+## Tracking Values
+
 Variables may have "tracking values". A tracking value is a key into a dict stored as the variable. Tracked values are often used by functions for internal bookkeeping. A csvpath can get or set a tracking value by using a qualifier on the variable name. E.g.
 
 ```bash
@@ -13,15 +15,19 @@ The tracking value qualifier must not match any of the predefined qualifiers, li
 
 Note that a variable's name and tracking value are strings. If you request a variable with a boolean tracking value that looks like `@empty.True`, the value will nevertheless be found. This often happens when using `count()` or another bool producing function.
 
-The interaction of variables and their qualifiers can be complex. That is particularly true in variable assignment. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>. As, of course, if you don't need the nuance, you can just do simpler assignments.
-
-_Note: as of Aug 2024 there is a grammar problem that may keep variables from being used as an existence test all on their own. In that situation use the `exists()` function as a work-around until this bug is fixed. The problem should not be seen in using the when operator (`->`)._
-
 ## Qualifiers
+
+Qualifiers are words appended to variable names after a dot. They modify -- or qualify -- how the variable works. The functionality of qualifiers on variables is essentially the same as for the other match components. You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>read about qualifiers here</a>.
+
+The interaction of variables and their qualifiers can be significant. That is particularly true in variable assignment. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>. As, of course, if you don't need the nuance of qualifiers, you don't need to use them.
+
+### Onmatch
 Variables can take an `onmatch` qualifier to indicate that the variable should only be set when the row matches all parts of the path.
 
+### Onchange
 A variable can also take an `onchange` qualifier to make its assignment only match when its value changes. In the usual case, a variable assignment always matches, making it not a factor in the row's matching or not matching. With `onchange` the assignment can determine if the row fails to match the csvpath.
 
+### Asbool
 A variable value can be treated as a boolean (Python bool) by using the `asbool` qualifier. Without `asbool` a variable used alone is an existence test.
 
 Note, too, that a variable with `asbool` that is assigned a value will return matching, or not, based on interpreting the assigned value as a bool. Without the `asbool` qualifier the assignment operation always allows the row to match, regardless of the value assigned.
@@ -69,6 +75,29 @@ Variable names are relatively restrictive. The CsvPath grammar currently defines
 ```
 
 A.k.a., one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
+
+## Printing
+
+The `print()` function uses references to give you access to variables. You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/references.md'>read about references here</a>. A reference points to metadata within a csvpath or that is held by another csvpath. They look like:
+```bash
+    $.variables.my_var.my_tracking_value
+```
+
+There are two types of references:
+- "Local" - these references are to the same csvpath the reference is made in
+- "Remote" - remote reference are pointer to the results and metadata of other csvpaths
+
+A local reference does not need a name after the `$`. Remote references require a named-result name that the CsvPaths instance can use to provide access to the data. Remote references look like:
+```bash
+    $mynamed_paths.variables.my_other_var.my_other_tracking_value
+```
+
+The variable references you use in `print()` can also point to indexes into stack variables. Stack variables are the list-type variables created with the `push()` function. References to stack variable indexes in print strings look like:
+```bash
+    $.variables.my_stack.2
+```
+
+Since stack indexes are 0-based, this reference would resolve to the third item on the stack.
 
 # Examples
 - `@weather="cloudy"`
