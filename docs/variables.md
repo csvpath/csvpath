@@ -19,7 +19,7 @@ Note that a variable's name and tracking value are strings. If you request a var
 
 Qualifiers are words appended to variable names after a dot. They modify -- or qualify -- how the variable works. The functionality of qualifiers on variables is essentially the same as for the other match components. You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>read about qualifiers here</a>.
 
-The interaction of variables and their qualifiers can be significant. That is particularly true in variable assignment. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>. As, of course, if you don't need the nuance of qualifiers, you don't need to use them.
+The action of qualifiers on their variables can be significant. That is particularly true in variable assignment. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>. If you don't need the nuance of qualifiers, you don't need to use them.
 
 ### Onmatch
 Variables can take an `onmatch` qualifier to indicate that the variable should only be set when the row matches all parts of the path.
@@ -32,7 +32,7 @@ A variable value can be treated as a boolean (Python bool) by using the `asbool`
 
 Note, too, that a variable with `asbool` that is assigned a value will return matching, or not, based on interpreting the assigned value as a bool. Without the `asbool` qualifier the assignment operation always allows the row to match, regardless of the value assigned.
 
-<a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
+<a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about these qualifiers and more here.</a>
 
 ## Assignment
 
