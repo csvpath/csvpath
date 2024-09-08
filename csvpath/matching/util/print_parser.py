@@ -15,6 +15,8 @@ class PrintParser:
         self.parser = LarkPrintParser(csvpath=self.csvpath)
 
         tree = self.parser.parse(printstr)
+        print(tree.pretty())
+
         transformer = LarkPrintTransformer(self.csvpath)
         ts = transformer.transform(tree)
 
@@ -84,7 +86,7 @@ class PrintParser:
     def _transform_reference(self, ref) -> str:
         name = ref["name"][0]
         tracking = None
-        if len(ref["name"]) > 1:
+        if len(ref["name"]) > 1 and ref["name"][1] and ref["name"][1].strip() != "":
             tracking = ref["name"][1]
         data = ref["data"]
         self.csvpath.logger.debug(

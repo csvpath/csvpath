@@ -156,7 +156,7 @@ This is a very basic programmatic use of CsvPath.
 The csvpath says:
 - Open test.csv
 - Scan lines 5 through 25
-- Match the second time we see a line where the first column equals `Frog` and set the variable called  `lastname` to "Bats"
+- Match the second time we see a line where the first header equals `Frog` and set the variable called  `lastname` to "Bats"
 
 Another path that does the same thing a bit more simply might look like:
 
@@ -285,7 +285,8 @@ A stored value that is set or retrieved once per row scanned.
 
 <a name="headers"></a>
 ## Header
-A named column or a column identified by 0-based index.
+A named header or a header identified by 0-based index.
+_(CsvPath avoids the word "column" for reasons we'll go into later in the docs)._
 
 |Returns | Matches | Examples      |
 |--------|---------|---------------|

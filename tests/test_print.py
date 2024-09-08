@@ -41,7 +41,7 @@ class TestPrint(unittest.TestCase):
         path = CsvPath()
         path.parse(f"""${PATH}[*] [ yes() ]""")
         lines = path.collect()
-        print(f"test_function_concat: lines: {len(lines)}")
+        print(f"test_print_parser_transform_csvpath_data1: lines: {len(lines)}")
         parser = PrintParser(path)
 
         printstr = """ $.csvpath.count_lines """
@@ -80,7 +80,7 @@ class TestPrint(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_concat: lines: {len(lines)}")
+        print(f"test_print_parser_transform_csvpath_data2: lines: {len(lines)}")
         parser = PrintParser(path)
 
         printstr = """ $.csvpath.count_lines """
@@ -103,11 +103,11 @@ class TestPrint(unittest.TestCase):
         assert result
         assert result.strip() == "9"
 
-    def test_print_parser_transform_variables(self):
+    def test_print_parser_transform_variables1(self):
         path = CsvPath()
         path.parse(f"""${PATH}[*] [ yes() ]""")
         lines = path.collect()
-        print(f"test_function_concat: lines: {len(lines)}")
+        print(f"test_print_parser_transform_variables1: lines: {len(lines)}")
         parser = PrintParser(path)
 
         path.variables["test"] = "test"
@@ -127,29 +127,101 @@ class TestPrint(unittest.TestCase):
         assert result
         assert result.strip() == "1"
 
-        """
-        printstr = "" $.variables.stack.1 ""
-        result = parser.transform(printstr)
-        assert result
-        assert result.strip() == "b"
-        """
-        """
-        printstr = "" $.variables.stack.length ""
-        result = parser.transform(printstr)
-        assert result
-        assert result.strip() == "3"
-        """
-        """
-        printstr = "" $.variables.tracking.value ""
-        result = parser.transform(printstr)
-        assert result
-        assert result.strip() == "fish"
-        """
-
         printstr = """ $.variables.'a name with spaces' """
         result = parser.transform(printstr)
         assert result
         assert result.strip() == "whoohoo"
+
+    def test_print_parser_transform_variables2(self):
+        path = CsvPath()
+        path.parse(f"""${PATH}[*] [ yes() ]""")
+        lines = path.collect()
+        print(f"test_print_parser_transform_variables2: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        path.variables["test"] = "test"
+        path.variables["one"] = 1
+        path.variables["stack"] = ["a", "b", "c"]
+        path.variables["tracking"] = {}
+        path.variables["tracking"]["value"] = "fish"
+        path.variables["a name with spaces"] = "whoohoo"
+
+        if True:
+            #
+            # space
+            #
+            printstr = """ $.variables.tracking.value """
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "fish"
+            #
+            # escaped .
+            #
+            printstr = """ $.variables.tracking.value.. another thing """
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "fish. another thing"
+            #
+            # EOL
+            #
+            printstr = """ $.variables.tracking.value"""
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "fish"
+            #
+            # space word
+            #
+            printstr = """ $.variables.tracking.value after"""
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "fish after"
+            #
+            # non-alnum
+            #
+            printstr = """ $.variables.tracking.value-- after"""
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "fish-- after"
+            #
+            # quoted reference
+            #
+            printstr = """ "$.variables.tracking.value" after"""
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == """ "fish" after""".strip()
+            #
+            # single quoted reference
+            #
+            printstr = """ '$.variables.tracking.value' after"""
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == """ 'fish' after""".strip()
+
+    def test_print_parser_transform_variables3(self):
+        path = CsvPath()
+        path.parse(f"""${PATH}[*] [ yes() ]""")
+        lines = path.collect()
+        print(f"test_print_parser_transform_variables3: lines: {len(lines)}")
+        parser = PrintParser(path)
+
+        path.variables["test"] = "test"
+        path.variables["one"] = 1
+        path.variables["stack"] = ["a", "b", "c"]
+        path.variables["tracking"] = {}
+        path.variables["tracking"]["value"] = "fish"
+        path.variables["a name with spaces"] = "whoohoo"
+
+        if True:
+            printstr = """ $.variables.stack.1 """
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "b"
+
+        if True:
+            printstr = """ $.variables.stack.length """
+            result = parser.transform(printstr)
+            assert result
+            assert result.strip() == "3"
 
     def test_print_parser_transform_headers(self):
         path = CsvPath()
@@ -237,7 +309,7 @@ class TestPrint(unittest.TestCase):
 
     # ==================
 
-    def test_print_parser_variables0(self):
+    def test_print_parser_variables1(self):
         path = CsvPath()
         LogUtility.logger(path, "debug")
 
@@ -256,7 +328,7 @@ class TestPrint(unittest.TestCase):
         result = parser.transform(printstr)
         assert result.strip() == "test, Frog"
 
-    def test_print_parser_variables1(self):
+    def test_print_parser_variables2(self):
         path = CsvPath()
         LogUtility.logger(path, "info")
 
@@ -281,12 +353,14 @@ class TestPrint(unittest.TestCase):
         ]"""
         path.parse(pathstr)
         lines = path.collect()
-        print(f"test_print_parser_variables1: lines: {len(lines)}")
+        print(f"test_print_parser_variables2: lines: {len(lines)}")
         parser = PrintParser(path)
-
+        #
+        # notice the double dot escape for $.variables.a..
+        #
         printstr = """
             b: $.variables.b,
-            a: $.variables.a.
+            a: $.variables.a..
             c: $.variables.c;
             d: $.variables.d%
             (e: $.variables.e)
@@ -304,7 +378,7 @@ class TestPrint(unittest.TestCase):
         """
 
         result = parser.transform(printstr)
-        print(f"test_print_parser_variables1: result: {result}")
+        print(f"test_print_parser_variables2: result: {result}")
         assert (
             result.strip()
             == """

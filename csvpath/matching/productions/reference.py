@@ -22,7 +22,7 @@ class Reference(Matchable):
             raise ChildrenException("Name cannot be the empty string")
         #
         # references are in the form:
-        #    $file[.path].(variable|header).name[.tracking_name]
+        #    $file[.path/name].(csvpath|metadata|variable|header).name[.tracking_name/index]
         #
         # results are always the most recent. at this time we don't have a way to:
         #   - access results that are not the most recent
@@ -139,7 +139,6 @@ class Reference(Matchable):
         #
         # if the csvpath changes the collect columns our headers
         # will not be correct here. leaving that for now.
-        # TODO: document the potential gotcha
         #
         print(f"\nReference._header_values: ref: {ref}")
         i = csvpath.header_index(ref["name"])

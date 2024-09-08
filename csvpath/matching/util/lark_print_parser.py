@@ -13,8 +13,9 @@ class LarkPrintParser:
         reference: ROOT type name
         ROOT: /\$[^\.\$]*\./
         type: (VARIABLES|HEADERS|METADATA|CSVPATH)
-        name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))?
-        SIMPLE_NAME: /[^\.\$\s!\:\,;%\(\)@#\{\}\[\]&<>\/\|\?"']+/
+        name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))? SENTINEL
+        SENTINEL: /[^\.]|\.\./
+        SIMPLE_NAME: /[^\.\$\s!\^\:\,;%\(\)\-\+@#\{\}\[\]&<>\/\|\?"']+/
         QUOTED_NAME: /'[^']+'/
         VARIABLES: "variables"
         HEADERS: "headers"
@@ -36,7 +37,16 @@ class LarkPrintParser:
         self.tree = None
 
     def parse(self, printstr):
-        self.tree = self.parser.parse(f"{printstr}")
+        #
+        # BLANK is important. the grammar currently requires
+        # a sentinel token at the end of a name. it can be anything except
+        # a single period. (... is the escape). if EOL w/o the char parsing
+        # fails. the blank char fixes for that without changing the
+        # language rules. obviously there other ways to do it, but this is
+        # practical for the moment.
+        #
+        BLANK = " "
+        self.tree = self.parser.parse(f"{printstr}{BLANK}")
         return self.tree
 
 
@@ -47,6 +57,7 @@ class LarkPrintTransformer(Transformer):
 
     def __init__(self, csvpath=None):
         self.csvpath = csvpath
+        self.pending_text = []
 
     def to_string(self, *items):
         res = ""
@@ -68,18 +79,26 @@ class LarkPrintTransformer(Transformer):
         return res
 
     def TEXT(self, token):
+        if len(self.pending_text):
+            for _ in self.pending_text:
+                token.value = f"{_}{token.value}"
+            self.pending_text = []
         return token.value
 
     def reference(self, root=None, datatype=None, name=None):
         return {"root": root, "data_type": datatype, "name": name}
 
     def WS(self, whitespace):
+        if len(self.pending_text):
+            for _ in self.pending_text:
+                whitespace.value = f"{_}{whitespace.value}"
+            self.pending_text = []
         return whitespace.value
 
     def ROOT(self, token):
         return token.value
 
-    def name(self, simple, tracking=None):
+    def name(self, simple, tracking=None, sentinel=None):
         name = simple.lstrip(".").strip()
         names = name.split(".")
         names_unquoted = []
@@ -87,6 +106,8 @@ class LarkPrintTransformer(Transformer):
             if aname[0] == "'" and aname[len(aname) - 1] == "'":
                 aname = aname[1 : len(aname) - 1]
             names_unquoted.append(aname)
+        if tracking is not None:
+            names_unquoted.append(tracking)
         return names_unquoted
 
     def SIMPLE_NAME(self, token):
@@ -109,3 +130,10 @@ class LarkPrintTransformer(Transformer):
 
     def CSVPATH(self, token):
         return token.value
+
+    def SENTINEL(self, token):
+        if token.value == "..":
+            self.pending_text.append(".")
+        else:
+            self.pending_text.append(token.value)
+        return ""
