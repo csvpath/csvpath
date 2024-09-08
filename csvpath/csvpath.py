@@ -217,7 +217,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         # holds the current match count while we're in the middle of a match
         # so that anyone who wants to can increase the match count using
         # raise_match_count_if(). it is important to do the raise asap so that
-        # components that are onmatch have the right match count available.
+        # components that are onmatched have the right match count available.
         #
         self._current_match_count = 0
         #
@@ -636,16 +636,16 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 self.rows_time += t
             if matches is True:
                 #
-                # current_match_count is a placeholder that
-                # allows anyone who calls a match early to
-                # update the count. this is important when there is
+                # _current_match_count is a placeholder that
+                # allows anyone to call a match early and update
+                # the count. this is important when there is
                 # an onmatch component that needs to use the
                 # match_count. e.g. an onmatch print statement.
                 # we would want the onmatch to propagate asap. we
                 # can accept that there could be a variable set to
-                # match count prior to the onmatch upping the count.
-                # that wouldn't be great for explainability, but we
-                # say that order is important and match components
+                # match count prior to the onmatch upping the
+                # count. that wouldn't be great for explainability,
+                # but order is important -- match components
                 # impact each other left to right, top to bottom.
                 #
                 self.raise_match_count_if()

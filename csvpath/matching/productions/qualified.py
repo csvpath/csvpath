@@ -174,7 +174,7 @@ class Qualified:
     def do_onmatch(self):  # pylint: disable=C0116
         """if True, proceed. True does not mean this
         circumstance obtained, it could just be that this
-        qualified doesn't have the qualfication."""
+        qualified doesn't have the qualification."""
         # re: E1101: inheritance structure. good point, but not the time to fix it.
         ret = not self.onmatch or self.line_matches()  # pylint: disable=E1101
         self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
@@ -194,8 +194,8 @@ class Qualified:
             if not m:
                 return False
         #
-        # if we know there's a match (we do!) then we need to propagate it
-        # in case this or a later onmatch match component wants to use the
+        # when we know there's a match we need to propagate it asap
+        # in case this or a later onmatched match component wants to use the
         # match count. if we wait for matcher to report to csvpath the count
         # will be hard to explain.
         #
@@ -209,7 +209,7 @@ class Qualified:
     def do_onchange(self):
         """if True, proceed. True does not mean this
         circumstance obtained, it could just be that this
-        qualified doesn't have the qualfication."""
+        qualified doesn't have the qualification."""
         if not self.onchange:
             return True
         _id = self.get_id()  # pylint: disable=E1101

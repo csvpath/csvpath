@@ -159,6 +159,30 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert "who" in path.variables
         assert path.variables["who"]["Bat"] == 7
 
+    def test_qualifier_first_and_second_non_term(self):
+        path = CsvPath()
+        Save._save(path, "test_qualifier_header")
+        path.parse(
+            f"""${BOOL}
+                [*]
+                [
+                    count.fred.sally()
+                ]
+                """
+        )
+        path.fast_forward()
+        es = path.matcher.expressions
+        assert len(es) == 1
+        e = es[0][0]
+        print(f"\n test_qualifier_first_and_second_non_term: e: {e}")
+        count = e.children[0]
+        print(f"test_qualifier_first_and_second_non_term: count: {count}")
+        assert count.name == "count"
+        first = count.first_non_term_qualifier()
+        assert first == "fred"
+        second = count.second_non_term_qualifier()
+        assert second == "sally"
+
     def test_qualifier_header(self):
         path = CsvPath()
         Save._save(path, "test_qualifier_header")

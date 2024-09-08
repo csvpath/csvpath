@@ -1,1 +1,0 @@
-[count.one( in(#firstname,"Bug|Bird|Ants") ) == 2]
