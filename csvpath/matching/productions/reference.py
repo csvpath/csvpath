@@ -124,7 +124,8 @@ class Reference(Matchable):
             raise ChildrenException(
                 "Results exist but there is no CsvPath that created them"
             )
-        return csvpath.get_variable(name=ref["name"], tracking=ref["tracking"])
+        ret = csvpath.get_variable(name=ref["name"], tracking=ref["tracking"])
+        return ret
 
     def _header_value(self) -> Any:
         """for right now we just need an existence test"""
@@ -140,9 +141,7 @@ class Reference(Matchable):
         # if the csvpath changes the collect columns our headers
         # will not be correct here. leaving that for now.
         #
-        print(f"\nReference._header_values: ref: {ref}")
         i = csvpath.header_index(ref["name"])
-        print(f"\nReference._header_values: i: {i}")
         if i < 0:
             self.matcher.csvpath.logger.warn(
                 f"Index of header {ref['name']} is negative. Check the headers for your reference."

@@ -60,7 +60,7 @@ class TestPathsManager(unittest.TestCase):
 
         paths2 = CsvPaths()
         pm2 = paths2.paths_manager
-        pm2.add_named_paths_from_dir(directory=DIR, thename="many")
+        pm2.add_named_paths_from_dir(directory=DIR, name="many")
         assert paths2.paths_manager.named_paths
         for k, v in paths2.paths_manager.named_paths.items():
             print(f"test_named_paths_dir: k: {k} = {len(v)}")

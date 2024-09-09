@@ -13,10 +13,10 @@ class CsvPathsManager(ABC):
     the set's outcomes."""
 
     @abstractmethod
-    def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
+    def add_named_paths_from_dir(self, *, directory: str, name: str = None) -> None:
         """adds named paths found in a directory. files with multiple paths
-        will be handled. if thename is not None the named paths for all files
-        in the directory will be keyed by thename.
+        will be handled. if name is not None the named paths for all files
+        in the directory will be keyed by name.
         """
 
     @abstractmethod
@@ -37,7 +37,13 @@ class CsvPathsManager(ABC):
 
     @abstractmethod
     def get_named_paths(self, name: str) -> List[str]:  # pylint: disable=C0116
-        pass
+        """returns the csvpaths grouped under the name. remember
+        that your csvpaths are in ordered list that determines the
+        execution order. when the paths are run serially each csvpath
+        completes before the next starts, in the list order. when you
+        run the paths breadth-first, line-by-line, the csvpaths are
+        applied to each line in the order of the list.
+        """
 
     @abstractmethod
     def remove_named_paths(self, name: str) -> None:  # pylint: disable=C0116
@@ -64,7 +70,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         self.named_paths = np
 
-    def add_named_paths_from_dir(self, *, directory: str, thename: str = None) -> None:
+    def add_named_paths_from_dir(self, *, directory: str, name: str = None) -> None:
         if directory is None:
             raise InputException("Named paths collection name needed")
         if os.path.isdir(directory):
@@ -78,7 +84,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 ext = p[p.rfind(".") + 1 :].strip().lower()
                 if ext not in self.csvpaths.config.CSVPATH_FILE_EXTENSIONS:
                     continue
-                name = self._name_from_name_part(p)
+                thename = self._name_from_name_part(p)
                 path = os.path.join(base, p)
                 with open(path, "r", encoding="utf-8") as f:
                     cp = f.read()
@@ -87,7 +93,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                         for apath in cp.split(PathsManager.MARKER)
                         if apath.strip() != ""
                     ]
-                    aname = name if thename is None else thename
+                    aname = thename if name is None else name
                     self.add_named_paths(aname, _)
         else:
             raise InputException("dirname must point to a directory")

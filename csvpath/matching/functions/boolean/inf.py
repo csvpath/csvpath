@@ -24,8 +24,9 @@ class In(MatchDecider):
                 vs = f"{v}".split("|")
                 inf += vs
             else:
-                if isinstance(v, list):
-                    inf += v
+                if isinstance(v, list) or isinstance(v, tuple):
+                    for _ in v:
+                        inf.append(_)
                 elif isinstance(v, dict):
                     for k in v:
                         inf.append(k)

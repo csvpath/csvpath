@@ -44,11 +44,9 @@ class Matcher:  # pylint: disable=R0902
             self.csvpath.logger.info("initialized Matcher")
 
     def __str__(self):
-        return f"""
-            line: {self.line}
-            csvpath: {self.csvpath}
-            parser: {self.parser}
-        """
+        return f"""{type(self)}:
+            expressions: {self.expressions}
+            line: {self.line}"""
 
     @property
     def line(self) -> List[List[Any]]:  # pylint: disable=C0116

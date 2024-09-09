@@ -1,0 +1,11 @@
+
+---- CSVPATH ----
+
+~ name: food names
+  description: look ups on the names of foods
+~
+
+$[*][
+    push( "food_names", #food )
+]
+

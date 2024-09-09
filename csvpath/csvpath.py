@@ -459,11 +459,14 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
     def __str__(self):
         return f"""
             path: {self.scanner.path if self.scanner else None}
-            parser: {self.scanner}
+            parsers: [scanner=Ply, matcher=Lark, print=Lark]
             from_line: {self.scanner.from_line if self.scanner else None}
             to_line: {self.scanner.to_line if self.scanner else None}
             all_lines: {self.scanner.all_lines if self.scanner else None}
             these: {self.scanner.these if self.scanner else None}
+            matcher: {self.matcher}
+            variables: {len(self.variables)}
+            metadata: {len(self.metadata)}
         """
 
     @property
