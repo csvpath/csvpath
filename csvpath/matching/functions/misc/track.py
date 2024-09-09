@@ -19,8 +19,16 @@ class Track(SideEffect):
         if isinstance(v, str):
             v = f"{v}".strip()
         value = v
+        print(
+            f"Track._produce_value: varname: {varname}, tracking: {tracking}, frozen: {self.matcher.csvpath.is_frozen}"
+        )
         self.matcher.set_variable(varname, tracking=tracking, value=value)
         self.value = True
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        self._apply_default_match()
+        self.to_value(skip=skip)
+        print(
+            f"Track._decide_match: after applying: self.match: {self.match} in {self}"
+        )
+        # self.match = self.to_value(skip=skip)

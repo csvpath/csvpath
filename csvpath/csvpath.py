@@ -23,6 +23,7 @@ from .util.exceptions import (
     ProcessingException,
     CsvPathsException,
 )
+from .matching.util.exceptions import MatchException
 
 
 class CsvPathPublic(ABC):
@@ -152,7 +153,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         # freeze is_valid or stop, which can be useful signaling, even in an
         # inconsistent state.
         #
-        self._freeze_variables = False
+        self._freeze_path = False
         #
         # counts are 1-based
         #
@@ -294,6 +295,14 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
     def print(self, string: str) -> None:  # pylint: disable=C0116
         for p in self.printers:
             p.print(string)
+
+    @property
+    def is_frozen(self) -> bool:
+        return self._freeze_path
+
+    @is_frozen.setter
+    def is_frozen(self, freeze: bool) -> None:
+        self._freeze_path = freeze
 
     @property
     def collect_when_not_matched(self) -> bool:
@@ -562,10 +571,18 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             b = self._consider_line(line)
             if b:
                 line = self.limit_collection(line)
+                if line is None:
+                    msg = "Line cannot be None"
+                    self.logger.error(msg)
+                    raise MatchException(msg)
+                elif len(line) == 0:
+                    msg = "Line cannot be len() == 0"
+                    self.logger.error(msg)
+                    raise MatchException(msg)
                 yield line
             if self.stopped:
                 break
-        self._freeze_variables = True
+        self._freeze_path = True
         end = time.time()
         self.total_iteration_time = end - start
         self.logger.info("Run against %s is complete.", self.scanner.filename)
@@ -615,7 +632,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         if self.line_monitor.is_last_line_and_empty(line):
             self.logger.info("last line is empty. freezing, matching, returning false")
-            self._freeze_variables = True
+            self._freeze_path = True
             self.matches(line)
             return False
         if self.skip_blank_lines and len(line) == 0:
@@ -630,6 +647,9 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             if self._advance > 0:
                 self._advance -= 1
                 matches = False
+                self.logger.debug(
+                    "Advancing one line with {self._advance} more skips to go"
+                )
             else:
                 startmatch = time.perf_counter_ns()
                 matches = self.matches(line)
@@ -779,7 +799,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         """sets a variable and the tracking variable as a key within
         it, if a tracking value is provided."""
-        if self._freeze_variables:
+        if self._freeze_path:
             self.logger.warning(
                 "Run is ending, variables are frozen. Cannot set %s to %s.", name, value
             )
@@ -816,7 +836,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         if not name:
             raise VariableException("Name cannot be None")
-        if self._freeze_variables:
+        if self._freeze_path:
             #
             # run is ending, no more changes
             #
@@ -847,7 +867,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                     thevalue = set_if_none
             else:
                 thevalue = self.variables[name]
-        if self._freeze_variables:
+        if self._freeze_path:
             if isinstance(thevalue, list):
                 #
                 # run is ending, no more changes

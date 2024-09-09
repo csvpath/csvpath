@@ -15,7 +15,8 @@ class PrintParser:
         self.parser = LarkPrintParser(csvpath=self.csvpath)
 
         tree = self.parser.parse(printstr)
-        print(tree.pretty())
+        if self.csvpath:
+            self.csvpath.logger.debug(tree.pretty())
 
         transformer = LarkPrintTransformer(self.csvpath)
         ts = transformer.transform(tree)

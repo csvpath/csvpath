@@ -158,6 +158,36 @@ class Qualified:
         self._set(Qualities.ASBOOL.value, ab)
 
     # =============
+    # frozen
+    # =============
+
+    def do_frozen(self):
+        """doing frozen means we execute the code behind the if statement only
+        if a) our csvpath.is_frozen() AND b) we are not self.override_frozen().
+        if we execute the do_frozen code we can assume we're shutting down.
+        perhaps there is some other reason. regardless, do_frozen() is the
+        no-op, or the loop continue keyword, that makes us do nothing. fail()
+        and last() will override so that they never do_frozen(). everyone else
+        (?) will do_frozen() when the freeze is on.
+        """
+        if self.matcher.csvpath.is_frozen:
+            if self.override_frozen():
+                self.matcher.csvpath.logger.debug("Overriding frozen in %s", self)
+                return False
+            self.matcher.csvpath.logger.debug("Not overriding frozen in %s", self)
+            return True
+        else:
+            self.matcher.csvpath.logger.debug("Not overriding frozen in %s", self)
+            return False
+
+    def override_frozen(self) -> bool:
+        """fail() and last() must override to return True"""
+        self.matcher.csvpath.logger.debug(
+            "Not overriding frozen in Qualified for %s", self
+        )
+        return False
+
+    # =============
     # onmatch
     # =============
 

@@ -17,6 +17,7 @@ class TestCsvPath(unittest.TestCase):
         path.parse(
             """$tests/test_resources/empty2.csv[*][
                             @c = count()
+                            push.onmatch("line", line_number())
                             last.nocontrib() -> push("chk", "True")
                    ]"""
         )
@@ -24,7 +25,10 @@ class TestCsvPath(unittest.TestCase):
         print(f"test_csvpath_vars_frozen: vars: {path.variables}")
         assert "c" in path.variables
         assert path.variables["c"] == 3
-        assert "chk" not in path.variables
+        assert "chk" in path.variables
+        assert path.variables["chk"] == ["True"]
+        assert "line" in path.variables
+        assert path.variables["line"] == [0, 1, 2]
 
     def test_csvpath_a_lot_of_csvpaths(self):
         #

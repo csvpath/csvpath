@@ -25,11 +25,19 @@ class Empty(MatchDecider):
             self.match = v
         elif v is None:
             self.match = True
-        elif isinstance(v, list) and len(v) == 0:
-            self.match = True
+        elif isinstance(v, list) or isinstance(v, tuple):
+            if len(v) == 0:
+                self.match = True
+            else:
+                self.match = True
+                for _ in v:
+                    if _ is not None and not f"{_}".strip() == "":
+                        self.match = False
+                        break
         elif isinstance(v, dict) and len(dict) == 0:
-            self.match = True
-        elif isinstance(v, tuple) and len(v) == 0:
+            # leaving this without checking values because the keys themselves
+            # are distinct information, unlike for list and tuple where the
+            # indexes are barely information without values.
             self.match = True
         elif isinstance(v, str) and v.strip() == "":
             self.match = True

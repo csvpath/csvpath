@@ -14,7 +14,7 @@ class TestFunctionsAdvance(unittest.TestCase):
             ${PATH}[1*]
             [
                 push.onmatch("cnt", count_lines())
-                print("$.csvpath.count_lines ")
+                print("count_lines is: $.csvpath.count_lines ")
                 count.nocontrib() == 3 -> advance(2)
             ]"""
         )

@@ -1,5 +1,7 @@
 import unittest
+import pytest
 from csvpath import CsvPaths, CsvPath
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -209,6 +211,44 @@ class TestFunctionsIn(unittest.TestCase):
         path.parse(
             f""" ${FOOD}[1*] [
                 @food_found = in(#food, $food_lookup.variables.food_names)
+            ]
+            """
+        )
+        print("")
+        lines = path.collect()
+        print(f"test_function_new_in5: path vars: {path.variables}")
+        print(f"test_function_new_in5: lines: {lines}")
+        assert len(lines) == 10
+        assert path.variables["food_found"] is True
+
+    def test_function_new_in6(self):
+        path = CsvPath()
+        with pytest.raises(MatchException):
+            path.parse(
+                f""" ${FOOD}[1*] [
+                    ~ we have no CsvPaths so we should blow up ~
+                    @food_found = in(#food, $food_lookup.variables.food)
+                ]
+                """
+            )
+            path.fast_forward()
+        print("raised MatchException because no CsvPaths")
+
+    def test_function_new_in7(self):
+        paths = CsvPaths()
+        paths.files_manager.add_named_file(
+            name="food", path="tests/test_resources/named_files/food.csv"
+        )
+        paths.paths_manager.add_named_paths_from_dir(
+            directory="tests/test_resources/named_paths"
+        )
+        paths.collect_paths(pathsname="food_lookup", filename="food")
+
+        path = paths.csvpath()
+        Save._save(path, "test_function_new_in5")
+        path.parse(
+            f""" ${FOOD}[1*] [
+                @food_found = in(#food, $food_lookup.headers.food)
             ]
             """
         )

@@ -9,6 +9,16 @@ class Last(MatchDecider):
         self.validate_zero_or_one_arg()
         super().check_valid()
 
+    def override_frozen(self) -> bool:
+        """fail() and last() must override to return True so that we execute them even on
+        an otherwise skipped last line.
+        """
+        print(f"Last.override_frozen: overriding frozen in {self}")
+        self.matcher.csvpath.logger.info(
+            f"Last.override_frozen: overriding frozen in {self}"
+        )
+        return True
+
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
@@ -25,7 +35,15 @@ class Last(MatchDecider):
                 self.match = True
                 if self.match:
                     if len(self.children) == 1:
+                        self.matcher.csvpath.logger.debug(
+                            "Overriding frozen in last(): %s", self
+                        )
+                        self.matcher.csvpath.is_frozen = False
                         self.children[0].matches(skip=[self])
+                        self.matcher.csvpath.is_frozen = True
+                        self.matcher.csvpath.logger.debug(
+                            "Resetting frozen after last(): %s", self
+                        )
             else:
                 self.match = False
         else:

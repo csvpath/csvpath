@@ -25,6 +25,10 @@ class CsvPathsResultsManager(ABC):
         """True if all csvpaths are valid"""
 
     @abstractmethod
+    def has_lines(self, name: str) -> bool:
+        """True if lines were captured by any of the csvpaths under name"""
+
+    @abstractmethod
     def has_errors(self, name: str) -> bool:
         """True if the error collectors for any of the csvpaths under name
         have any errors"""
@@ -51,11 +55,18 @@ class CsvPathsResultsManager(ABC):
 
     @abstractmethod
     def get_named_results(self, name: str) -> List[CsvPathResult]:
-        """Named csvpaths: For each named paths, keeps and returns the most recent
+        """For each named-paths, keeps and returns the most recent
         run of the paths producing results
+        """
 
-        Named files: For each named file, keeps and returns the results of
-        running any paths on the named file
+    @abstractmethod
+    def get_specific_named_result(self, name: str, name_or_id: str) -> CsvPathResult:
+        """Finds a result with a metadata field named id or name that has a
+        value matching name_or_id. id is wins over name. first results with either
+        wins. the name or id comes from a comment's metadata field that would look
+        like ~ id: my_path ~ or ~ name: my_path ~
+        The allowable forms of id or name are all lower, all upper or initial case.
+        i.e.: id, ID, Id and name, NAME, Name.
         """
 
     @abstractmethod
@@ -106,6 +117,23 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             meta = {**meta, **rs.csvpath.metadata}
         return meta
 
+    def get_specific_named_result(self, name: str, name_or_id: str) -> CsvPathResult:
+        results = self.get_named_results(name)
+        if results and len(results) > 0:
+            for r in results:
+                m = r.csvpath.metadata
+                _id = m.get("id")
+                _id = _id or m.get("Id")
+                _id = _id or m.get("ID")
+                if _id == name_or_id:
+                    return r
+                _id = m.get("name")
+                _id = _id or m.get("Name")
+                _id = _id or m.get("NAME")
+                if _id == name_or_id:
+                    return r
+        return None
+
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)
         for r in results:
@@ -121,6 +149,13 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
                 vs = {**r.csvpath.variables, **vs}
             self._variables = vs
         return self._variables
+
+    def has_lines(self, name: str) -> bool:
+        results = self.get_named_results(name)
+        for r in results:
+            if r.lines and len(r.lines) > 0:
+                return True
+        return False
 
     def get_number_of_results(self, name: str) -> int:
         nr = self.get_named_results(name)

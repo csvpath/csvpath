@@ -325,7 +325,26 @@ class Equality(Matchable):
             lm = self.left.matches(skip=skip)
             if lm is True:
                 b = True
+                #
+                # adding complication..., but if left is last() we want to unfreeze
+                # to let it do what it does. e.g. last() -> print("done!")
+                # that opens us to variable changes but even that is probably
+                # desirable in this case.
+                #
+                override = (
+                    isinstance(self.left, Function) and self.left.override_frozen()
+                )
+                if override:
+                    self.matcher.csvpath.is_frozen = False
+                    self.matcher.csvpath.logger.debug(
+                        "Overriding frozen in when/do: %s", self
+                    )
                 self.right.matches(skip=skip)
+                if override:
+                    self.matcher.csvpath.logger.debug(
+                        "Resetting frozen after when/do: %s", self
+                    )
+                    self.matcher.csvpath.is_frozen = True
             else:
                 b = self._left_nocontrib(self.left)
         else:

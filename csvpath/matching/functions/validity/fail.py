@@ -9,6 +9,10 @@ class Fail(MatchDecider):
         self.validate_zero_args()
         super().check_valid()
 
+    def override_frozen(self) -> bool:
+        """fail() and last() must override to return True"""
+        return True
+
     def _produce_value(self, skip=None) -> None:
         self.matcher.csvpath.is_valid = False
         self.value = False

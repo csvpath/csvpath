@@ -15,32 +15,15 @@ class TestReferences(unittest.TestCase):
         reference = Reference(matcher=None, name="zipcodes.variables.zipcodes.Boston")
         nameparts = ["zipcodes", "variables", "zipcodes", "Boston"]
         ref = reference._get_reference_for_parts(nameparts)
-        assert ref["file"] == "zipcodes"
-        assert ref["paths_name"] is None
+        # assert ref["file"] ==
+        assert ref["paths_name"] == "zipcodes"
         assert ref["var_or_header"] == "variables"
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] == "Boston"
 
-        nameparts = ["zipcodes", "apath", "variables", "zipcodes", "Boston"]
+        nameparts = ["zipcodes", "headers", "zipcodes"]
         ref = reference._get_reference_for_parts(nameparts)
-        assert ref["file"] == "zipcodes"
-        assert ref["paths_name"] == "apath"
-        assert ref["var_or_header"] == "variables"
-        assert ref["name"] == "zipcodes"
-        assert ref["tracking"] == "Boston"
-
-        nameparts = ["zipcodes", "apath", "headers", "zipcodes", "Boston"]
-        ref = reference._get_reference_for_parts(nameparts)
-        assert ref["file"] == "zipcodes"
-        assert ref["paths_name"] == "apath"
-        assert ref["var_or_header"] == "headers"
-        assert ref["name"] == "zipcodes"
-        assert ref["tracking"] == "Boston"
-
-        nameparts = ["zipcodes", "apath", "headers", "zipcodes"]
-        ref = reference._get_reference_for_parts(nameparts)
-        assert ref["file"] == "zipcodes"
-        assert ref["paths_name"] == "apath"
+        assert ref["paths_name"] == "zipcodes"
         assert ref["var_or_header"] == "headers"
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] is None
@@ -101,13 +84,20 @@ class TestReferences(unittest.TestCase):
         cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
+        print("\n test_parse_variable_reference2: done collecting!! ")
+
         rm = cs.results_manager
         resultset = rm.get_named_results("zips")
+        print(f"\n test_parse_variable_reference2: resultset: {resultset} ")
+
         assert resultset
         assert len(resultset) == 1
         results = resultset[0]
         rcp = results.csvpath
         assert rcp
+        assert results.lines
+        assert len(results.lines) > 0
+        print(f"\n test_parse_variable_reference2: lookup lines: {results.lines}")
         #
         # now test if the header `points` has any values
         #
@@ -116,9 +106,10 @@ class TestReferences(unittest.TestCase):
             f"""
             ${PATH}[1]
             [
-                @zip = $zips.headers.points
+                @zips = $zips.headers.points
                 @cities = $zips.headers.city
-
+                @empty_zips = empty(@zip)
+                @empty_cities = empty(@cities)
             ]"""
         )
         path.fast_forward()
@@ -132,5 +123,12 @@ class TestReferences(unittest.TestCase):
         print("test_parse_variable_reference1: done with fast forward")
         print(f"test_parse_variable_reference1: variables: {path.variables}")
 
-        assert path.variables["zip"] is False
-        assert path.variables["cities"] is True
+        assert "zips" in path.variables
+        assert isinstance(path.variables["zips"], list)
+        assert "empty_zips" in path.variables
+        assert path.variables["empty_zips"] is True
+
+        assert "cities" in path.variables
+        assert isinstance(path.variables["cities"], list)
+        assert "empty_cities" in path.variables
+        assert path.variables["empty_cities"] is False

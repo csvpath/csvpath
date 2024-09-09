@@ -35,6 +35,13 @@ class Function(Validation):
             skip = []
         if self in skip:  # pragma: no cover
             return self._noop_value()
+        if self.do_frozen():
+            # doing frozen means not doing anything else. this is the
+            # inverse of onmatch and other qualifiers. but it makes sense
+            # and we're not talking about a qualifier, in any case. the
+            # csvpath writer doesn't know anything about this.
+            self.matcher.csvpath.logger.debug("We're frozen in %s", self)
+            return self._noop_value()
         if self.value is None:
             if self.do_onmatch():
                 # if not self.onmatch or self.line_matches():
@@ -54,6 +61,13 @@ class Function(Validation):
             skip = []
         if self in skip:  # pragma: no cover
             return self._noop_match()
+        if self.do_frozen():
+            # doing frozen means not doing anything else. this is the
+            # inverse of onmatch and other qualifiers. but it makes sense
+            # and we're not talking about a qualifier, in any case. the
+            # csvpath writer doesn't know anything about this.
+            self.matcher.csvpath.logger.debug("We're frozen in %s", self)
+            return self._noop_value()
         if not self.match:
             if self.do_onmatch():
                 self.matcher.csvpath.logger.debug(
@@ -85,7 +99,7 @@ class Function(Validation):
             "%s applying default value: %s", self, self.value
         )
 
-    def _apply_default_match(self) -> None:
+    def _apply_default_match(self) -> bool:
         """provides the default when to_match is not producing a value.
         subclasses may override this method if they need a different
         default.

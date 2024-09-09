@@ -2,7 +2,7 @@
 from typing import Any, Dict, List
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..util.exceptions import ChildrenException
+from ..util.exceptions import ChildrenException, MatchException, DataException
 
 
 class Reference(Matchable):
@@ -58,8 +58,12 @@ class Reference(Matchable):
         if skip and self in skip:
             return self._noop_value()
         if self.value is None:
+            self.matcher.csvpath.logger.info("Beginning a lookup on %s", self)
             ref = self._get_reference()
             if ref["var_or_header"] == "headers":
+                #
+                # Warning this may be broken :/
+                #
                 self.value = self._header_value()
             else:
                 self.value = self._variable_value()
@@ -68,7 +72,13 @@ class Reference(Matchable):
     def _get_results(self):
         cs = self.matcher.csvpath.csvpaths
         if cs is None:
-            return None
+            self.matcher.csvpath.logger.error(
+                "Attemped to make a reference %s without a CsvPaths instance available",
+                self,
+            )
+            raise MatchException(
+                "References cannot be used without a CsvPaths instance"
+            )
         ref = self._get_reference()
         #
         # our name less the '$' is the name of the named-paths's results
@@ -77,7 +87,7 @@ class Reference(Matchable):
         # the syntax is $named-path.headers-qualifier.headername
         # the syntax is $named-connection.query.queryname.columnname
         #
-        results_list = cs.results_manager.get_named_results(ref["file"])
+        results_list = cs.results_manager.get_named_results(ref["paths_name"])
         if results_list and len(results_list) > 0:
             if self.ref["paths_name"] is None:
                 results = results_list[0]
@@ -86,6 +96,17 @@ class Reference(Matchable):
                     if r.paths_name == ref["paths_name"]:
                         results = r
                         break
+        elif results_list:
+            # the results exist but are empty. when would this happen?
+            self.matcher.csvpath.logger.error(
+                "Unknown state: results for %s came back empty", self
+            )
+        else:
+            #
+            #
+            #
+            raise MatchException("Results cannot be None for reference %s", self)
+
         return results
 
     def _get_reference(self) -> Dict[str, str]:
@@ -94,22 +115,17 @@ class Reference(Matchable):
         return self.ref
 
     def _get_reference_for_parts(self, name_parts: List[str]) -> Dict[str, str]:
-        # this method is not persistent to facilitate testing
-        # file . variable/header . name . tracking
-        # file . path . variable/header . name . tracking
         ref = {}
         if name_parts[1] in ["variables", "headers"]:
-            ref["file"] = name_parts[0]
-            ref["paths_name"] = None
+            ref["paths_name"] = name_parts[0]
             ref["var_or_header"] = name_parts[1]
             ref["name"] = name_parts[2]
             ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
         else:
-            ref["file"] = name_parts[0]
-            ref["paths_name"] = name_parts[1]
-            ref["var_or_header"] = name_parts[2]
-            ref["name"] = name_parts[3]
-            ref["tracking"] = name_parts[4] if len(name_parts) == 5 else None
+            ref["paths_name"] = name_parts[0]
+            ref["var_or_header"] = name_parts[1]
+            ref["name"] = name_parts[2]
+            ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
         if ref["var_or_header"] not in ["variables", "headers"]:
             raise ChildrenException(
                 f"""References must be to variables or headers, not {ref["var_or_header"]}"""
@@ -118,36 +134,76 @@ class Reference(Matchable):
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
-        results = self._get_results()
-        csvpath = results.csvpath
-        if csvpath is None:
-            raise ChildrenException(
-                "Results exist but there is no CsvPath that created them"
+        if ref is None:
+            # unlikely but we'll check
+            raise MatchException("Reference for name returned None")
+        cs = self.matcher.csvpath.csvpaths
+        if cs is None:
+            raise MatchException(
+                "References cannot be used without a CsvPaths instance"
             )
-        ret = csvpath.get_variable(name=ref["name"], tracking=ref["tracking"])
+        vs = cs.results_manager.get_variables(ref["paths_name"])
+        ret = None
+        if ref["name"] in vs:
+            v = vs[ref["name"]]
+            if ref["tracking"] and ref["tracking"] in v:
+                ret = v[ref["tracking"]]
+            else:
+                ret = v
+        else:
+            raise DataException("Results exist but the variable is unknown: %s", self)
         return ret
 
     def _header_value(self) -> Any:
-        """for right now we just need an existence test"""
-        results = self._get_results()
-        csvpath = results.csvpath
-        if csvpath is None:
-            raise ChildrenException(
-                "Results exist but there is no CsvPath that created them"
-            )
-        value = False
         ref = self._get_reference()
-        #
-        # if the csvpath changes the collect columns our headers
-        # will not be correct here. leaving that for now.
-        #
+        name = ref["paths_name"]
+        rm = self.matcher.csvpath.csvpaths.results_manager
+        ret = None
+        if rm.has_lines(name):
+            #
+            # we pull data. if we have a tracking value we can pull a specific csvpath's result
+            #
+            if rm.get_number_of_results(name) == 1:
+                rs = rm.get_named_results(name)
+                ret = self._get_value_from_results(ref, rs[0])
+            elif ref["tracking"]:
+                #
+                # find the specific path if we have a tracking value
+                #
+                r = rm.get_specific_named_result(name, ref["tracking"])
+                if r is None:
+                    raise MatchException(
+                        "No results in %s for metadata id or name %s in %s",
+                        name,
+                        ref["tracking"],
+                        self,
+                    )
+                ret = self._get_value_from_results(ref, rs[0])
+            else:
+                #
+                # are we really going to aggregate all the values from all the
+                # csvpaths here? that would likely be too expensive in a large
+                # fraction of cases.
+                #
+                raise MatchException(
+                    """Too many results. At this time references must be to a
+                    single path. A named-paths with just one path or a path which is
+                    identified by a metadata id or name matched to a tracking value
+                    in the reference"""
+                )
+        else:
+            raise MatchException("Results may exist but no data was captured")
+        return ret
+
+    def _get_value_from_results(self, ref, result):
+        csvpath = result.csvpath
         i = csvpath.header_index(ref["name"])
         if i < 0:
-            self.matcher.csvpath.logger.warn(
+            raise MatchException(
                 f"Index of header {ref['name']} is negative. Check the headers for your reference."
             )
-        for line in results.lines:
-            if len(line) > i and line[i] is not None and f"{line[i]}".strip() != "":
-                value = True
-                break
-        return value
+        ls = []
+        for line in result.lines:
+            if len(line) > i and line[i] is not None:
+                ls.append(f"{line[i]}".strip())
+        return ls

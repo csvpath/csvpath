@@ -15,6 +15,7 @@ class Advance(SideEffect):
         v = child.to_value(skip=skip)
         try:
             v = int(v)
+            print("Advance._produce_value: v: {v}")
             self.matcher.csvpath.advance(v)
         except (TypeError, ValueError) as e:
             raise ChildrenException(

@@ -121,6 +121,18 @@ class CsvPaths(CsvPathsPublic):
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
                 lines = csvpath.collect()
+                if lines is None:
+                    self.logger.error(
+                        "Unexpected None for lines after collect_paths: file: %s, match: %s",
+                        file,
+                        csvpath.match,
+                    )
+                if len(lines) == 0:
+                    self.logger.warning(
+                        "No lines collected in collect_paths: file: %s match: %s",
+                        file,
+                        csvpath.match,
+                    )
                 result.lines = lines
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()

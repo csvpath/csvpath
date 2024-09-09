@@ -24,6 +24,8 @@ class In(MatchDecider):
                 vs = f"{v}".split("|")
                 inf += vs
             else:
+                # tuple would mean vars were frozen. this would not be
+                # surprising from a reference
                 if isinstance(v, list) or isinstance(v, tuple):
                     for _ in v:
                         inf.append(_)
