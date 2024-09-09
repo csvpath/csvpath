@@ -98,7 +98,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>length(value)</a>             </td><td> returns the length of the value                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>lower(value)</a>              </td><td> makes a value lowercase                                     </td></tr>
 
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>min_length(value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/metaphone.md'>metaphone(value, value)</a>  </td><td> returns the metaphone transformation of a string or does a reference look up </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/metaphone.md'>metaphone(value, value)</a>  </td><td> returns the metaphone transformation of a string or does a reference look up </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>min_length(value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>max_length(value)</a>  </td><td> returns the length of the value                           </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>starts_with(value, value)</a>   </td><td> checks if the first value starts with the second    </td></tr>
