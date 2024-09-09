@@ -39,7 +39,7 @@ class TestPathsManager(unittest.TestCase):
         pm.add_named_paths("many", np)
         assert pm.named_paths
         assert len(pm.named_paths) == 1
-        pm.add_named_paths("numbers", "a third path")
+        pm.add_named_paths("numbers", ["a third path"])
         assert len(pm.named_paths) == 2
         apaths = pm.get_named_paths("many")
         assert len(apaths) == 2
@@ -56,7 +56,7 @@ class TestPathsManager(unittest.TestCase):
         pm = paths.paths_manager
         pm.add_named_paths_from_dir(directory=DIR)
         assert pm.named_paths
-        assert len(pm.named_paths) == 6
+        assert len(pm.named_paths) == 7
 
         paths2 = CsvPaths()
         pm2 = paths2.paths_manager

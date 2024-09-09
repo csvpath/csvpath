@@ -582,7 +582,9 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 yield line
             if self.stopped:
                 break
-        self._freeze_path = True
+        self.finalize()
+        # moving to finalize
+        # self._freeze_path = True
         end = time.time()
         self.total_iteration_time = end - start
         self.logger.info("Run against %s is complete.", self.scanner.filename)
@@ -609,6 +611,17 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             for line in reader:
                 self.track_line(line=line)
                 yield line
+        self.finalize()
+
+    def finalize(self) -> None:
+        """clears caches, etc. this is an internal method, but not _ because
+        it is part of the lifecycle and we might find a reason to call it
+        from higher up.
+        """
+        # this method can run multiple times w/np, but that
+        # shouldn't happen anyway.
+        self._freeze_path = True
+        self.matcher.clear_caches()
 
     def track_line(self, line) -> None:
         """csvpaths needs to handle some of the iteration logic, and we don't want

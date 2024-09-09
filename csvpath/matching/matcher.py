@@ -1,7 +1,7 @@
 """ Matching is the core of CsvPath. """
 
 from typing import Any, List
-from .productions import Equality
+from .productions import Equality, Matchable
 from .functions.function import Function
 from .util.expression_encoder import ExpressionEncoder
 from .util.exceptions import MatchException
@@ -28,6 +28,7 @@ class Matcher:  # pylint: disable=R0902
         self.expressions = []
         self.if_all_match = []
         self.skip = False
+        self.cachers = []
         if data is not None:
             self.parser = LarkParser()
             tree = self.parser.parse(data)
@@ -114,6 +115,14 @@ class Matcher:  # pylint: disable=R0902
                 c.matches(skip=[])
             else:
                 cs += c.children
+
+    def _cache_me(self, matchable: Matchable) -> None:
+        self.cachers.append(matchable)
+
+    def clear_caches(self) -> None:
+        for _ in self.cachers:
+            _.clear_caches()
+        self.cachers = []
 
     def matches(self, *, syntax_only=False) -> bool:
         """this is the main work of the Matcher. we enumerate the self.expressions.

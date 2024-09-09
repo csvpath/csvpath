@@ -154,7 +154,10 @@ class CsvPaths(CsvPathsPublic):
 
     def fast_forward_paths(self, *, pathsname, filename):
         if pathsname not in self.paths_manager.named_paths:
-            raise InputException("pathsname must be a named set of paths")
+            raise InputException(
+                f"Paths not found. {pathsname} must be a named set of paths"
+            )
+
         if filename not in self.files_manager.named_files:
             raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)

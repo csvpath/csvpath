@@ -1,0 +1,11 @@
+
+---- CSVPATH ----
+
+~ name: metaphone lookup
+  description: lookups using a soundex-like algorithm
+~
+
+$[1*][
+    track.meta( metaphone(#names), #names )
+]
+

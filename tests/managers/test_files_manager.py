@@ -12,7 +12,7 @@ class TestFilesManager(unittest.TestCase):
         fm = paths.files_manager
         fm.add_named_files_from_dir(DIR)
         assert fm.named_files
-        assert len(fm.named_files) == 5
+        assert len(fm.named_files) == 6
 
     def test_files_mgr_json1(self):
         print("")

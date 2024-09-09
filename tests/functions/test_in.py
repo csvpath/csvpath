@@ -204,6 +204,11 @@ class TestFunctionsIn(unittest.TestCase):
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"
         )
+
+        print(
+            f"test_function_new_in5: named paths available: \n: {paths.paths_manager.named_paths}"
+        )
+
         paths.fast_forward_paths(pathsname="food_lookup", filename="food")
 
         path = paths.csvpath()

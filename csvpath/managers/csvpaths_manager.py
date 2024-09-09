@@ -20,6 +20,11 @@ class CsvPathsManager(ABC):
         """
 
     @abstractmethod
+    def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
+        """adds one or more csvpaths from a single file. the
+        contents of the file is straight cvspath, not json."""
+
+    @abstractmethod
     def set_named_paths_from_json(self, file_path: str) -> None:
         """replaces the named paths dict with a dict found in a JSON file. lists
         of paths are keyed by names."""
@@ -84,19 +89,23 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 ext = p[p.rfind(".") + 1 :].strip().lower()
                 if ext not in self.csvpaths.config.CSVPATH_FILE_EXTENSIONS:
                     continue
-                thename = self._name_from_name_part(p)
                 path = os.path.join(base, p)
-                with open(path, "r", encoding="utf-8") as f:
-                    cp = f.read()
-                    _ = [
-                        apath.strip()
-                        for apath in cp.split(PathsManager.MARKER)
-                        if apath.strip() != ""
-                    ]
-                    aname = thename if name is None else name
-                    self.add_named_paths(aname, _)
+                aname = name
+                if aname is None:
+                    aname = self._name_from_name_part(p)
+                self.add_named_paths_from_file(name=aname, file_path=path)
         else:
             raise InputException("dirname must point to a directory")
+
+    def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
+        with open(file_path, "r", encoding="utf-8") as f:
+            cp = f.read()
+            _ = [
+                apath.strip()
+                for apath in cp.split(PathsManager.MARKER)
+                if apath.strip() != ""
+            ]
+            self.add_named_paths(name, _)
 
     def set_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -112,9 +121,18 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                         raise InputException(f"Unexpected object in JSON key: {k}: {v}")
                 self.named_paths = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            print(f"Error: cannot load {file_path}: {ex}")
+            self.csvpaths.logger.error(f"Error: cannot load {file_path}: {ex}")
+            #
+            # raise?
+            #
 
     def add_named_paths(self, name: str, paths: List[str]) -> None:
+        if not isinstance(paths, list):
+            raise InputException(
+                """Paths must be a list of csvpaths.
+                                 If you want to load a file use add_named_paths_from_file or
+                                 set_named_paths_from_json."""
+            )
         if name in self.named_paths:
             for p in paths:
                 if p in self.named_paths[name]:

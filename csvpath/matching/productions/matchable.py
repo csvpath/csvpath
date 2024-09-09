@@ -27,6 +27,10 @@ class Matchable(Qualified):
         for _ in self.children:
             _.check_valid()
 
+    def clear_caches(self) -> None:
+        """most matchables won't cache anything, but references will. we
+        don't want that info after a run completes"""
+
     def _simple_class_name(self) -> str:
         cn = str(self.__class__)
         name = cn[(cn.rfind(".") + 1) :]

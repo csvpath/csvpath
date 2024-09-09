@@ -33,6 +33,16 @@ class Reference(Matchable):
         #
         self.name_parts = name.split(".")
         self.ref = None
+        self._cache_vars = None
+        self._cache_headers = None
+        if self.matcher:
+            # it is possible unit tests might not give us a matcher
+            # don't know any other reason. doesn't hurt to check tho.
+            self.matcher._cache_me(self)
+
+    def clear_caches(self) -> None:
+        self._cache_vars = None
+        self._cache_headers = None
 
     def __str__(self) -> str:
         return f"""{self.__class__}({self.qualified_name})"""
@@ -61,12 +71,17 @@ class Reference(Matchable):
             self.matcher.csvpath.logger.info("Beginning a lookup on %s", self)
             ref = self._get_reference()
             if ref["var_or_header"] == "headers":
-                #
-                # Warning this may be broken :/
-                #
-                self.value = self._header_value()
+                if self._cache_vars is not None:
+                    self.value = self._cache_headers
+                else:
+                    self.value = self._header_value()
+                    self._cache_headers = self.value
             else:
-                self.value = self._variable_value()
+                if self._cache_vars is not None:
+                    self.value = self._cache_vars
+                else:
+                    self.value = self._variable_value()
+                    self._cache_vars = self.value
         return self.value
 
     def _get_results(self):

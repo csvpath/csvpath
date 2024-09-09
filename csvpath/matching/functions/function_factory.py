@@ -8,6 +8,7 @@ from .strings.starts_with import StartsWith
 from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
 from .strings.concat import Concat
+from .strings.metaphone import Metaphone
 from .counting.count import Count
 from .counting.count_lines import CountLines, LineNumber
 from .counting.count_scans import CountScans
@@ -312,6 +313,8 @@ class FunctionFactory:
             f = Between(matcher, name, child)
         elif name == "get":
             f = Get(matcher, name, child)
+        elif name == "metaphone":
+            f = Metaphone(matcher, name, child)
         else:
             if (
                 f is None
