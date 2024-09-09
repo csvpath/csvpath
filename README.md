@@ -167,7 +167,7 @@ Another path that does the same thing a bit more simply might look like:
         [
             #0=="Frog"
             @lastname.onmatch="Bats"
-            count()==2 -> print( "$.match_count: $.line")
+            count()==2 -> print( "$.csvpath.match_count: $.csvpath.line")
         ]
 ```
 
@@ -194,7 +194,7 @@ There is no "standard" way to do CsvPath validation. The simplest way is to crea
 
 ```bash
     $test.csv[*][@failed = equals(#firstname, "Frog")
-                 @failed.asbool -> print("Error: Check line $.line_count for a row with the name Frog")]
+                 @failed.asbool -> print("Error: Check line $.csvpath.line_count for a row with the name Frog")]
 ```
 
 Several rules can exist in the same csvpath for convenience and/or performance. Alternatively, you can run separate csvpaths for each rule. You can read more <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about managing csvpaths here</a>.
