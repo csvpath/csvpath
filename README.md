@@ -18,6 +18,8 @@ And do it all in an automation-friendly way.
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 
+Read more about CsvPath and see realistic CSV validation examples at <a href='csvpath.org'>csvpath.org</a>.
+
 # Contents
 
 - [Motivation](#motivation)
