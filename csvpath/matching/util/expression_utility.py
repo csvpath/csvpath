@@ -5,7 +5,7 @@ from typing import Tuple, Any
 
 class ExpressionUtility:
     @classmethod
-    def is_none(self, v: Any) -> bool:
+    def is_none(cls, v: Any) -> bool:
         if v is None:
             return True
         elif v == "None":
@@ -17,7 +17,7 @@ class ExpressionUtility:
         return False
 
     @classmethod
-    def to_int(self, v: Any) -> float:
+    def to_int(cls, v: Any) -> float:
         if v is None:
             return 0
         if v is True:
@@ -45,7 +45,7 @@ class ExpressionUtility:
             return int(v)
 
     @classmethod
-    def to_float(self, v: Any) -> float:
+    def to_float(cls, v: Any) -> float:
         if v is None:
             return float(0)
         if type(v) is int:
@@ -72,7 +72,7 @@ class ExpressionUtility:
         return float(v)
 
     @classmethod
-    def ascompariable(self, v: Any) -> Any:
+    def ascompariable(cls, v: Any) -> Any:
         if v is None:
             return v
         elif v is False or v is True:
@@ -165,7 +165,7 @@ class ExpressionUtility:
         return ret
 
     @classmethod
-    def get_id(self, thing):
+    def get_id(cls, thing):
         # gets a durable ID so funcs like count() can persist throughout the scan
         id = str(thing)
         p = thing.parent
@@ -178,7 +178,7 @@ class ExpressionUtility:
         return hashlib.sha256(id.encode("utf-8")).hexdigest()
 
     @classmethod
-    def get_my_expression(self, thing):
+    def get_my_expression(cls, thing):
         p = thing.parent
         ret = p
         while p:

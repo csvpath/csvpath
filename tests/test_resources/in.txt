@@ -1,8 +1,14 @@
 
 this is a jinja template
 
-line: {{line}}
-name: {{name}}
-scan count: {{count_scans}}
-headers: {{headers}}
+line: {{local.csvpath.line}}
+name: {{local.csvpath.file_name}}
+scan count: {{local.csvpath.count_scans}}
+headers: {{local.csvpath.headers}}
+
+
+~
+jinja: {{ local.variables.name }}, {{ local.headers.firstname }}
+~
+$[*][ $test.variables.orders.cities ]
 

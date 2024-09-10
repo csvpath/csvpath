@@ -13,7 +13,6 @@ class Last(MatchDecider):
         """fail() and last() must override to return True so that we execute them even on
         an otherwise skipped last line.
         """
-        print(f"Last.override_frozen: overriding frozen in {self}")
         self.matcher.csvpath.logger.info(
             f"Last.override_frozen: overriding frozen in {self}"
         )

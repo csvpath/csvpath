@@ -21,7 +21,7 @@ class Matcher:  # pylint: disable=R0902
             # this could be a dry-run or unit testing
             pass
         if not data:
-            raise MatchException(f"need data input: data: {data}")
+            raise MatchException(f"Inputs needed: data: {data}, headers: {headers}")
         self.path = data
         self.csvpath = csvpath
         self._line = line

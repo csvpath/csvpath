@@ -108,6 +108,10 @@ class Reference(Matchable):
                 results = results_list[0]
             else:
                 for r in results_list:
+                    # this is a legacy that should be removed when time.
+                    # we should have paths_name on every result, so always
+                    # the 1st one. we could use tracking value to identify
+                    # a specific csvpath.
                     if r.paths_name == ref["paths_name"]:
                         results = r
                         break
@@ -118,10 +122,9 @@ class Reference(Matchable):
             )
         else:
             #
-            #
+            # this is almost certainly a misconfiguration
             #
             raise MatchException("Results cannot be None for reference %s", self)
-
         return results
 
     def _get_reference(self) -> Dict[str, str]:

@@ -18,7 +18,7 @@ Our lookup needs access to a Dict[str, str]. The dictionary holds lookup keys to
 A simple use that would result in an identical Metaphone translation for the words "Sacks" and "Sax" looks like this:
 
 ```bash
-    $[*][ @meta = metaphone(#keyword) ]
+    $[*][ @meta = metaphone(#name) ]
 ```
 
 To set up a canonicalization match component takes a bit more effort, but not too much. First you need your lookup table.
