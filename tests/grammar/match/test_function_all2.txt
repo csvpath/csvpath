@@ -1,3 +1,4 @@
 [
                @a.asbool = all()
+               print("all.asbool: $.variables.a  $.csvpath.line_number")
             ]

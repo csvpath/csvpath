@@ -116,7 +116,6 @@ class TestNewCsvPaths(unittest.TestCase):
         assert meta != meta2
 
     def test_csvpaths_import_function(self):
-
         cs = CsvPaths()
         cs.files_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
@@ -130,3 +129,18 @@ class TestNewCsvPaths(unittest.TestCase):
         print(f"\n test_csvpaths_import_function: vars from import paths: {vs}")
         assert "import" in vs
         assert vs["import"] is True
+
+    def test_csvpaths_stopping(self):
+        cs = CsvPaths()
+        cs.files_manager.set_named_files(FILES)
+        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        i = 0
+        for line in cs.next_by_line(filename="food", pathsname="stopping"):
+            print(f"....lines[{i}]: {line}")
+            i += 1
+        cs.results_manager.get_named_results("stopping")
+        vs = cs.results_manager.get_variables("stopping")
+        print(f"stopping vs: {vs}")
+        assert i == 8
+        assert vs["one"] == [0, 1, 2]
+        assert vs["two"] == [0, 1, 2, 3, 4, 5, 6]

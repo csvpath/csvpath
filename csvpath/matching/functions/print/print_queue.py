@@ -15,5 +15,5 @@ class PrintQueue(ValueProducer):
         else:
             self.value = self.matcher.csvpath.printers[0].lines_printed
 
-    def _decide_match(self, skip=None) -> None:
+    def _decide_match(self, skip=None) -> None:  # pragma: no cover
         self.match = self._noop_match()

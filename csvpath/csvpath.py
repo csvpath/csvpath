@@ -643,7 +643,8 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         # if we're empty, but last, we need to make sure the
         # matcher runs a final time so that any last() can run.
         #
-        if self.line_monitor.is_last_line_and_empty(line):
+        if self.line_monitor.is_last_line_and_blank(line):
+            # if self.line_monitor.is_last_line_and_empty(line):
             self.logger.info("last line is empty. freezing, matching, returning false")
             self._freeze_path = True
             self.matches(line)
@@ -654,6 +655,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             )
             return False
         if self.scanner.includes(self.line_monitor.physical_line_number):
+            self.logger.debug("Scanner includes line")
             self.scan_count = self.scan_count + 1
             matches = None
             self._current_match_count = self.match_count
@@ -664,6 +666,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                     "Advancing one line with {self._advance} more skips to go"
                 )
             else:
+                self.logger.debug("Starting matching")
                 startmatch = time.perf_counter_ns()
                 matches = self.matches(line)
                 endmatch = time.perf_counter_ns()

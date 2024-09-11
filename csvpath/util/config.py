@@ -130,7 +130,9 @@ class CsvPathConfig:
                     )
             self._set_log_levels()
         else:
-            print(f"No config file at {self.CONFIG}. Using hardcoded defaults.")
+            print(
+                f"No config file at {self.CONFIG}. Using hardcoded defaults."
+            )  # pragma: no cover
 
     def _set_log_levels(self):
         level = self._get(Sections.LOGGING.value, "csvpath")
@@ -147,11 +149,11 @@ class CsvPathConfig:
             i = -1
             try:
                 i = int(log_files_to_keep.strip().lower())
-            except Exception:
+            except Exception:  # pragma: no cover
                 pass
             if i > 0 and i < 101:
                 self.LOG_FILES_TO_KEEP = i
-            else:
+            else:  # pragma: no cover
                 print("[log_files_to_keep] must be between 1-100. Using the default.")
                 self.LOG_FILES_TO_KEEP = CsvPathConfig.DEFAULT_LOG_FILES_TO_KEEP
 

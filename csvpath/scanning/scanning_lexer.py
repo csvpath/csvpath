@@ -35,7 +35,7 @@ class ScanningLexer:
         r"\$[A-Z,a-z,0-9\._/\-\\#& ]*"
         return t
 
-    def t_error(self, t):  # pylint: disable=C0116
+    def t_error(self, t):  # pylint: disable=C0116   pragma: no cover
         print(f"Illegal character '{t.value[0]}'")
         t.lexer.skip(1)
 

@@ -39,17 +39,17 @@ class TestJinja(unittest.TestCase):
         print(f"test_function_jinja_get_tokens: tokens: {tokens}")
         assert tokens
         assert "zips" in tokens
-        assert "." in tokens
+        assert "local" in tokens
         assert "metadata" in tokens["zips"]
         assert "headers" in tokens["zips"]
         assert "csvpath" in tokens["zips"]
         assert "variables" in tokens["zips"]
 
-        assert tokens["."]["variables"]["fish"] == "bluefish"
+        assert tokens["local"]["variables"]["fish"] == "bluefish"
         assert isinstance(tokens["zips"]["variables"]["zipcodes"], dict)
         assert tokens["zips"]["variables"]["zipcodes"]["Boston"] == "01915"
 
-        assert tokens["."]["csvpath"]["file_name"] == PATH
+        assert tokens["local"]["csvpath"]["file_name"] == PATH
         assert isinstance(tokens["zips"]["headers"], dict)
         for z in tokens["zips"]:
             print(f"\n test_function_jinja_get_tokens: z: {z}")

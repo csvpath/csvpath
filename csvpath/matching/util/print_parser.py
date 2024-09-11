@@ -61,7 +61,6 @@ class PrintParser:
         name = ref["root"]
         name = name[1:]
         name = name.rstrip(".")
-        self.csvpath.logger.error(f"_handle_ref: name '{name}'")
         if name == "":
             self.csvpath.logger.error("Name cannot be empty")
             raise Exception("Name cannot be ''")

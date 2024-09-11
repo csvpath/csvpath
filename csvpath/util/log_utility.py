@@ -11,10 +11,11 @@ class LogUtility:
     LOGGERS = {}
 
     @classmethod
-    def log_brief_trace(cls, logger) -> None:
+    def log_brief_trace(cls, logger) -> str:
         trace = "".join(traceback.format_stack())
         i = 13
         lines = trace.split("\n")
+        ret = ""
         while i > 0:
             i = i - 1
             aline = lines[len(lines) - i - 1]
@@ -22,6 +23,8 @@ class LogUtility:
             if aline[0:4] != "File":
                 continue
             logger.debug(f"{aline}")
+            ret = f"{ret}{aline}\n"
+        return ret
 
     @classmethod
     def logger(cls, component, level: str = None):
@@ -48,9 +51,9 @@ class LogUtility:
                 else component.config.CSVPATH_LOG_LEVEL
             )
         if level == "error":
-            level = logging.ERROR
+            level = logging.ERROR  # pragma: no cover
         elif level == "warn":
-            level = logging.WARNING
+            level = logging.WARNING  # pragma: no cover
         elif level == "debug":
             level = logging.DEBUG
         elif level == "info":

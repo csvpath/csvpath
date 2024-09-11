@@ -17,9 +17,11 @@ class Reference(Matchable):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
         if name is None:
-            raise ChildrenException("Name cannot be None")
+            raise ChildrenException("Name cannot be None")  # pragma: no cover
         if name.strip() == "":
-            raise ChildrenException("Name cannot be the empty string")
+            raise ChildrenException(
+                "Name cannot be the empty string"
+            )  # pragma: no cover
         #
         # references are in the form:
         #    $file[.path/name].(csvpath|metadata|variable|header).name[.tracking_name/index]
@@ -54,19 +56,27 @@ class Reference(Matchable):
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
-            return self._noop_match()
+            return self._noop_match()  # pragma: no cover
         if self.match is None:
             if self.value is None:
                 self.to_value(skip=skip)
-            if self.asbool:
-                self.match = ExpressionUtility.asbool(self.value)
-            else:
-                self.match = self.value is not None
+                """
+                #
+                # references cannot take qualifiers
+                #
+                if self.asbool:
+                    self.match = ExpressionUtility.asbool(self.value) # pragma: no cover
+                """
+            # else:
+            self.match = self.value is not None
+            print(
+                f"\nReference.matches: self.match: {self.match}, self.value: {self.value}\n"
+            )
         return self.match
 
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:
-            return self._noop_value()
+            return self._noop_value()  # pragma: no cover
         if self.value is None:
             self.matcher.csvpath.logger.info("Beginning a lookup on %s", self)
             ref = self._get_reference()
@@ -103,18 +113,19 @@ class Reference(Matchable):
         # the syntax is $named-connection.query.queryname.columnname
         #
         results_list = cs.results_manager.get_named_results(ref["paths_name"])
+        print(f"Reference._get_results: results_list: {results_list}")
         if results_list and len(results_list) > 0:
-            if self.ref["paths_name"] is None:
-                results = results_list[0]
-            else:
-                for r in results_list:
-                    # this is a legacy that should be removed when time.
-                    # we should have paths_name on every result, so always
-                    # the 1st one. we could use tracking value to identify
-                    # a specific csvpath.
-                    if r.paths_name == ref["paths_name"]:
-                        results = r
-                        break
+            # if self.ref["paths_name"] is None:
+            results = results_list[0]
+            # else:
+            #    for r in results_list:
+            # this is a legacy that should be removed when time.
+            # we should have paths_name on every result, so always
+            # the 1st one. with headers we use the tracking value
+            # to identify a specific csvpath.
+            #        if r.paths_name == ref["paths_name"]:
+            #            results = r
+            #            break
         elif results_list:
             # the results exist but are empty. when would this happen?
             self.matcher.csvpath.logger.error(
@@ -144,6 +155,11 @@ class Reference(Matchable):
             ref["var_or_header"] = name_parts[1]
             ref["name"] = name_parts[2]
             ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
+        #
+        # assuming we're cutting this off here because we don't yet support
+        # metadata and csvpaths in plain references yet. we do support
+        # them in print references.
+        #
         if ref["var_or_header"] not in ["variables", "headers"]:
             raise ChildrenException(
                 f"""References must be to variables or headers, not {ref["var_or_header"]}"""
@@ -152,9 +168,6 @@ class Reference(Matchable):
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
-        if ref is None:
-            # unlikely but we'll check
-            raise MatchException("Reference for name returned None")
         cs = self.matcher.csvpath.csvpaths
         if cs is None:
             raise MatchException(
@@ -166,6 +179,8 @@ class Reference(Matchable):
             v = vs[ref["name"]]
             if ref["tracking"] and ref["tracking"] in v:
                 ret = v[ref["tracking"]]
+            elif ref["tracking"]:
+                ret = None
             else:
                 ret = v
         else:
@@ -196,7 +211,7 @@ class Reference(Matchable):
                         ref["tracking"],
                         self,
                     )
-                ret = self._get_value_from_results(ref, rs[0])
+                ret = self._get_value_from_results(ref, r)
             else:
                 #
                 # are we really going to aggregate all the values from all the

@@ -25,6 +25,7 @@ class TestFunctionsAll(unittest.TestCase):
         assert path.variables["a"] is True
 
     def test_function_all2(self):
+        print("")
         path = CsvPath()
         Save._save(path, "test_function_all2")
         path.parse(
@@ -32,6 +33,7 @@ class TestFunctionsAll(unittest.TestCase):
             ${EMPTY}[1*]
             [
                @a.asbool = all()
+               print("all.asbool: $.variables.a  $.csvpath.line_number")
             ]"""
         )
         lines = path.collect()

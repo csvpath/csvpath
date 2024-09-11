@@ -54,14 +54,25 @@ class LineMonitor:
     def is_last_line(self) -> bool:
         return self._physical_end_line_number == self._physical_line_number
 
-    def is_last_line_and_empty(self, line: List[Any]) -> bool:
+    def is_last_line_and_blank(self, line: List[Any]) -> bool:
         ret = True
         if self._physical_end_line_number is None or self._physical_line_number is None:
             ret = False
         same = self._physical_end_line_number == self._physical_line_number
         if same and line is not None and len(line) == 0:
             ret = True
-        elif same and line:
+        else:
+            ret = False
+        return ret
+
+    def is_last_line_and_empty(self, line: List[Any]) -> bool:
+        ret = True
+        if self._physical_end_line_number is None or self._physical_line_number is None:
+            ret = False
+        same = self._physical_end_line_number == self._physical_line_number
+        if same and line is not None and len(line) == 0:
+            return True
+        if same and line:
             for d in line:
                 if f"{d}".strip() != "":
                     ret = False

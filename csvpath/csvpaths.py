@@ -101,9 +101,9 @@ class CsvPaths(CsvPathsPublic):
         self.results_manager.clean_named_results(paths)
 
     def collect_paths(self, *, pathsname, filename) -> None:
-        if pathsname not in self.paths_manager.named_paths:
+        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException("Pathsname must be a named set of paths")
-        if filename not in self.files_manager.named_files:
+        if filename not in self.files_manager.named_files:  # pragma: no cover
             raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
@@ -153,12 +153,11 @@ class CsvPaths(CsvPathsPublic):
         csvpath.parse(apath)
 
     def fast_forward_paths(self, *, pathsname, filename):
-        if pathsname not in self.paths_manager.named_paths:
+        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException(
                 f"Paths not found. {pathsname} must be a named set of paths"
             )
-
-        if filename not in self.files_manager.named_files:
+        if filename not in self.files_manager.named_files:  # pragma: no cover
             raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
@@ -194,11 +193,11 @@ class CsvPaths(CsvPathsPublic):
         """appends the CsvPathResult for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
-        if pathsname not in self.paths_manager.named_paths:
+        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException(
                 f"Pathsname '{pathsname}' must be a named set of paths"
             )
-        if filename not in self.files_manager.named_files:
+        if filename not in self.files_manager.named_files:  # pragma: no cover
             raise InputException(f"Filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.files_manager.get_named_file(filename)
@@ -261,19 +260,18 @@ class CsvPaths(CsvPathsPublic):
         # re: R0912 -- absolutely does have too many branches. will refactor later.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
-        if filename not in self.files_manager.named_files:
-            raise InputException(f"Filename '{filename}' must be a named file")
         fn = self.files_manager.get_named_file(filename)
-        if not fn:
+        if fn is None:  # pragma: no cover
             raise InputException(f"Filename '{filename}' must be a named file")
         if pathsname not in self.paths_manager.named_paths:
             raise InputException(f"Pathsname '{pathsname}' must name a set of csvpaths")
         paths = self.paths_manager.get_named_paths(pathsname)
-        if not isinstance(paths, list) or len(paths) == 0:
+        if (
+            paths is None or not isinstance(paths, list) or len(paths) == 0
+        ):  # pragma: no cover
             raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
-
         csvpath_objects = self._load_csvpath_objects(paths=paths, named_file=fn)
         self._prep_csvpath_results(
             csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname

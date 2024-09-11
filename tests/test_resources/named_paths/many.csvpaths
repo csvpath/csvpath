@@ -1,4 +1,6 @@
 
+~ name: many one ~
+
 $[*][
     print("this is line $.csvpath.line_number of a path")
     @test = "one"
@@ -6,6 +8,8 @@ $[*][
 ]
 
 ---- CSVPATH ----
+
+~ id: many two ~
 
 $[*][
     print("this is line another validation message for a path")

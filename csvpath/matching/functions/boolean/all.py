@@ -46,14 +46,14 @@ class All(MatchDecider):
         self.match = True
 
     def all_exist(self):  # pylint: disable=C0116
+        ret = True
         if len(self.matcher.line) != len(self.matcher.csvpath.headers):
-            self.match = False
-            return
-        for h in self.matcher.line:
-            if h is None or f"{h}".strip() == "":
-                self.match = False
-                return
-        self.match = True
+            ret = False
+        if ret is True:
+            for h in self.matcher.line:
+                if h is None or f"{h}".strip() == "":
+                    ret = False
+        self.match = ret
 
     def equality(self):  # pylint: disable=C0116
         siblings = self.children[0].commas_to_list()

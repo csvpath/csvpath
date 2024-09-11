@@ -11,6 +11,7 @@ class LarkParser:  # pylint: disable=R0903
     GRAMMAR = r"""
         match: _LB (expression)* _RB
         expression: left (WHEN action)?
+                  | REFERENCE (WHEN action)?
                   | equality (WHEN action)?
                   | assignment
                   | COMMENT

@@ -56,7 +56,7 @@ class TestPathsManager(unittest.TestCase):
         pm = paths.paths_manager
         pm.add_named_paths_from_dir(directory=DIR)
         assert pm.named_paths
-        assert len(pm.named_paths) == 7
+        assert len(pm.named_paths) == 9
 
         paths2 = CsvPaths()
         pm2 = paths2.paths_manager

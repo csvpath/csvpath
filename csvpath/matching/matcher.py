@@ -36,6 +36,7 @@ class Matcher:  # pylint: disable=R0902
                 self.csvpath.logger.debug("Raw parse tree: %s", tree)
             transformer = LarkTransformer(self)
             es = transformer.transform(tree)
+            # print(tree.pretty())
             expressions = []
             for e in es:
                 expressions.append([e, None])
@@ -131,12 +132,20 @@ class Matcher:  # pylint: disable=R0902
         # is this a blank last line? if so, we just want to activate any/all
         # last() in the csvpath.
         #
-        if self.csvpath.line_monitor.is_last_line_and_empty(self.line):
+        if self.csvpath.line_monitor.is_last_line_and_blank(self.line):
+            # if self.csvpath.line_monitor.is_last_line_and_empty(self.line):
+            self.csvpath.logger.debug(
+                "Is last line and blank. Doing lasts and then returning True"
+            )
             self._do_lasts()
             return True
-
         ret = True
         failed = False
+        self.csvpath.logger.debug(
+            "beginning to match against line[%s]: %s",
+            self.csvpath.line_monitor.physical_line_number,
+            str(self.line),
+        )
         for i, et in enumerate(self.expressions):
             self.csvpath.logger.debug(
                 "Beginning to consider expression: et[%s]: %s: %s", i, et[0], et[1]

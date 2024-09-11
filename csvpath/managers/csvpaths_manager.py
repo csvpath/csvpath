@@ -142,10 +142,15 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         else:
             self.named_paths[name] = paths
 
+    #
+    # changed to not raise IE when not found in order to match
+    # files_manager and let csvpaths call the shots.
+    #
     def get_named_paths(self, name: str) -> List[str]:
         if name in self.named_paths:
             return self.named_paths[name]
-        raise InputException("{name} not found")
+        return None
+        # raise InputException("{name} not found")
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:
