@@ -35,5 +35,5 @@ This csvpath matches when `all()` returns True. The row match depends on `all()`
     [ all(#firstname, #middlename, #lastname) ]
 ```
 
-This path matches when a row has values in all of the columns indicated.
+This path matches when a row has values under all of the headers indicated.
 

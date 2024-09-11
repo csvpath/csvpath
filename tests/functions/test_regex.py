@@ -7,6 +7,26 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsRegex(unittest.TestCase):
+    def test_function_exact(self):
+        path = CsvPath()
+        Save._save(path, "test_function_regex_quick_parse")
+        path.parse(
+            rf"""
+            ${PATH}[0-3]
+            [
+                push( "e", exact( #2, /blurgh\.\.\./ ) )
+                push( "ne", exact( #2, /blurgh/ ) )
+                push( "r", regex( #2, /blurgh/ ) )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_exact: path vars: {path.variables}")
+        print(f"test_function_exact: lines: {lines}")
+        assert len(lines) == 4
+        assert path.variables["e"] == [False, False, True, False]
+        assert path.variables["ne"] == [False, False, False, False]
+        assert path.variables["r"] == [None, None, "blurgh", None]
+
     def test_function_regex_quick_parse(self):
         path = CsvPath()
         Save._save(path, "test_function_regex_quick_parse")

@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import re
 from csvpath.matching.productions import Term
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 
 
@@ -65,4 +66,5 @@ class Regex(MatchDecider):
         if self.name == "regex":
             self.match = self.to_value(skip=skip) is not None
         elif self.name == "exact":
-            self.match = bool(self.to_value(skip=skip))
+            self.match = ExpressionUtility.asbool(self.to_value(skip=skip))
+            # self.match = bool(self.to_value(skip=skip))
