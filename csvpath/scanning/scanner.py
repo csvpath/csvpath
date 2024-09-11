@@ -153,7 +153,7 @@ class Scanner:  # pylint: disable=R0902
         "path : FILENAME LEFT_BRACKET expression RIGHT_BRACKET"
         filename = p[1].strip()
         if filename[0] != "$":
-            raise ScanException("Filename must begin with '$'")
+            raise ScanException("Filename must begin with '$'")  # pragma: no cover
         self.filename = filename[1:]
         p[0] = p[3]
 

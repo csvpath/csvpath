@@ -324,7 +324,6 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         parsed csvpath for its own purposes. when True, we create and return the
         Matcher, but then forget it ever existed.
         """
-        # self.scanner = Scanner(csvpath=self)
         #
         # strip off any comments and collect any metadata
         # CsvPaths will do this earlier but it stripped off

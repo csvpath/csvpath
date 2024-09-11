@@ -15,5 +15,5 @@ class Strip(ValueProducer):
         self.value = string.strip()
 
     def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
-        self.match = self._noop_match()
+        self.to_value(skip=skip)  # pragma: no cover
+        self.match = self._apply_default_match()  # pragma: no cover

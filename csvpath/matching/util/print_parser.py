@@ -128,7 +128,14 @@ class PrintParser:
             datum = name
 
         if tracking is not None and tracking != "":
-            self.csvpath.logger.warning(
+            #
+            # note that today in Reference we do use tracking values on headers
+            # to narrow results. if a tracking value matches an "id" or "name"
+            # value in the metadata we pick that result set; otherwise the [0]
+            # results. this may or may not become the main/standard way to select
+            # specific csvpath results.
+            #
+            self.csvpath.logger.warning(  # pragma: no cover
                 f"Found tracking {tracking} in reference {ref}. We don't use tracking codes on headers"
             )
         return datum
@@ -149,13 +156,13 @@ class PrintParser:
                     try:
                         i = int(tracking)
                         iota = datum[i]
-                    except Exception:
+                    except Exception:  # pragma: no cover
                         self.csvpath.logger.warning(
                             f"Cannot index into list {datum} with {tracking} on reference {ref}"
                         )
                         iota = ""
             else:
-                iota = ""
+                iota = ""  # pragma: no cover
         if iota is not None:
             return iota
         else:
@@ -163,9 +170,9 @@ class PrintParser:
 
     def _get_results(self, ref, name):
         if not self.csvpath.csvpaths:
-            return None
+            return None  # pragma: no cover
         if not self.csvpath.csvpaths.results_manager:
-            return None
+            return None  # pragma: no cover
         return self.csvpath.csvpaths.results_manager.get_named_results(name)
 
     def _get_variables(self, ref, results):

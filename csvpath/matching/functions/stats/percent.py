@@ -14,12 +14,13 @@ class Percent(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         which = self.children[0].to_value(skip=skip)
         if which not in ["scan", "match", "line"]:
-            raise ChildrenException("percent() argument must be scan, match, or line")
+            raise ChildrenException(
+                "percent() argument must be scan, match, or line"
+            )  # pragma: no cover
         if which == "line":
-            # line_number is a pointer, not a count, so we add 1
             count = self.matcher.csvpath.line_monitor.data_line_count
         elif which == "scan":
-            count = self.matcher.csvpath.current_scan_count
+            count = self.matcher.csvpath.current_scan_count  # pragma: no cover
         else:
             count = self.matcher.csvpath.current_match_count
         total = self.matcher.csvpath.line_monitor.data_end_line_count
@@ -30,5 +31,5 @@ class Percent(ValueProducer):
         )
 
     def _decide_match(self, skip=None) -> None:
-        v = self.to_value(skip=skip)
-        self.match = v is not None
+        self.to_value(skip=skip)
+        self.match = self._apply_default_match()

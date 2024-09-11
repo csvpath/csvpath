@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..misc.variables import Variables
 from ..function_focus import MatchDecider
 from ..headers.headers import Headers
@@ -42,10 +43,11 @@ class Any(MatchDecider):
                 # any(Term) we check in both headers and vars for any matches
                 self.check_value()
         else:
-            # any()
+            # just any()
             self._bare_any()
 
     def _bare_any(self) -> None:
+        self.match = False
         for h in self.matcher.line:
             if h is None:
                 continue
@@ -55,9 +57,7 @@ class Any(MatchDecider):
             break
         if self.match is False:
             for v in self.matcher.csvpath.variables.values():
-                if v is None:
-                    continue
-                if f"{v}".strip() == "":
+                if ExpressionUtility.is_none(v):
                     continue
                 self.match = True
                 break

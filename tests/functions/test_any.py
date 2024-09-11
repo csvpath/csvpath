@@ -1,5 +1,8 @@
 import unittest
 from csvpath import CsvPath
+from csvpath.matching.matcher import Matcher
+from csvpath.matching.functions.boolean.any import Any
+from csvpath.matching.productions import Expression
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -7,6 +10,41 @@ EMPTY = "tests/test_resources/empty.csv"
 
 
 class TestFunctionsAny(unittest.TestCase):
+    def test_function_bare_any(self):
+        path = CsvPath()
+
+        matcher = Matcher(csvpath=path, data="[]")
+        path.headers = ["a"]
+        e = Expression(matcher)
+        a = Any(matcher, "any")
+        e.children.append(a)
+        matcher.expressions.append(
+            [
+                e,
+            ]
+        )
+
+        matcher.line = [None]
+        a._bare_any()
+        assert a.match is False
+
+        matcher.line = [""]
+        a._bare_any()
+        assert a.match is False
+
+        path.variables["b"] = ""
+        a._bare_any()
+        assert a.match is False
+
+        path.variables["b"] = "b"
+        a._bare_any()
+        assert a.match is True
+
+        matcher.line = ["a"]
+        del path.variables["b"]
+        a._bare_any()
+        assert a.match is True
+
     def test_function_any_function1(self):
         path = CsvPath()
         Save._save(path, "test_function_any_function1")

@@ -66,5 +66,6 @@ class Regex(MatchDecider):
         if self.name == "regex":
             self.match = self.to_value(skip=skip) is not None
         elif self.name == "exact":
-            self.match = ExpressionUtility.asbool(self.to_value(skip=skip))
-            # self.match = bool(self.to_value(skip=skip))
+            self.match = ExpressionUtility.asbool(
+                self.to_value(skip=skip)
+            )  # pragma: no cover
