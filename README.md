@@ -40,6 +40,7 @@ Read more about CsvPath and see realistic CSV validation examples at <a href='ht
    - [Comments Within Match](#comments)
    - [The When Operator](#when)
    - [Qualifiers](#qualifiers)
+   - [Error Handling](#errors)
 - [More Examples](#examples)
 - [Grammar](#grammar)
 
@@ -374,7 +375,7 @@ Qualifiers are tokens added to variable, header, and function names. They are se
 
 Qualifiers are quite powerful and deserve a close look. <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
-<a name="qualifiers"></a>
+<a name="errors"></a>
 ## Error Handling
 
 The CsvPath library handles errors according to policies set for the CsvPath and CsvPaths classes. Each class can have multiple approaches to errors configured together. The options are:
