@@ -1,9 +1,21 @@
 import hashlib
 
-from typing import Tuple, Any
+from typing import Tuple, Any, List
 
 
 class ExpressionUtility:
+    @classmethod
+    def all(cls, ls: List, aclasslist=None) -> bool:
+        if len(ls) == 0:
+            return True
+        t = type(ls[0])
+        if aclasslist and t not in aclasslist:
+            return False
+        for _ in ls:
+            if type(_) is t:
+                return False
+        return True
+
     @classmethod
     def is_none(cls, v: Any) -> bool:
         if v is None:

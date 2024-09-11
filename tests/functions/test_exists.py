@@ -6,7 +6,7 @@ PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
 
 
-class TestFunctionsExistsAndEmpty(unittest.TestCase):
+class TestFunctionsExists(unittest.TestCase):
     def test_function_exists1(self):
         path = CsvPath()
         Save._save(path, "test_function_exists1")

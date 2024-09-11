@@ -12,7 +12,7 @@ class TestFunctionsDate(unittest.TestCase):
         Save._save(path, "test_function_date1")
         path.parse(
             f"""
-            ${DATES}[0-8]
+            ${DATES}[1-8]
             [
                 print("line $.csvpath.line_number")
                 push( "dates", date( #date, #format ) )
@@ -23,13 +23,9 @@ class TestFunctionsDate(unittest.TestCase):
         print(f"\ntest_function_date1: path vars: {path.variables}")
         for d in path.variables["dates"]:
             print(f"...d: {d}")
-        assert len(path.variables["dates"]) == 9
-        assert path.variables["dates"][0] == "date"
+        assert len(path.variables["dates"]) == 8
         for i, _ in enumerate(path.variables["dates"]):
-            if i == 0:
-                assert isinstance(_, str)
-            else:
-                assert isinstance(_, date)
+            assert isinstance(_, date)
 
     def test_function_date2(self):
         path = CsvPath()

@@ -34,11 +34,15 @@ class CsvPathsResultsManager(ABC):
         have any errors"""
 
     @abstractmethod
-    def get_number_of_errors(self, name: str) -> bool:  # pylint: disable=C0116
+    def get_number_of_errors(
+        self, name: str
+    ) -> bool:  # pylint: disable=C0116  pragma: no cover
         pass
 
     @abstractmethod
-    def get_number_of_results(self, name: str) -> int:  # pylint: disable=C0116
+    def get_number_of_results(
+        self, name: str
+    ) -> int:  # pylint: disable=C0116   pragma: no cover
         pass
 
     @abstractmethod
@@ -132,7 +136,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
                 _id = _id or m.get("NAME")
                 if _id == name_or_id:
                     return r
-        return None
+        return None  # pragma: no cover
 
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)

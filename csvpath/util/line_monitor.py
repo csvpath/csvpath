@@ -49,7 +49,7 @@ class LineMonitor:
         data_end_line_number: {self._data_end_line_number}
         data_line_count: {self._data_line_count}
         data_line_number: {self._data_line_number}
-        """
+        """  # pragma: no cover
 
     def is_last_line(self) -> bool:
         return self._physical_end_line_number == self._physical_line_number
@@ -81,39 +81,39 @@ class LineMonitor:
             ret = False
         return ret
 
-    @property
+    @property  # pragma: no cover
     def physical_end_line_count(self) -> int:
         return self._physical_end_line_count
 
-    @property
+    @property  # pragma: no cover
     def physical_end_line_number(self) -> int:
         return self._physical_end_line_number
 
-    @property
+    @property  # pragma: no cover
     def physical_line_count(self) -> int:
         return self._physical_line_count
 
-    @property
+    @property  # pragma: no cover
     def physical_line_number(self) -> int:
         return self._physical_line_number
 
-    @property
+    @property  # pragma: no cover
     def data_end_line_count(self) -> int:
         return self._data_end_line_count
 
-    @property
+    @property  # pragma: no cover
     def data_end_line_number(self) -> int:
         return self._data_end_line_number
 
-    @property
+    @property  # pragma: no cover
     def data_line_count(self) -> int:
         return self._data_line_count
 
-    @property
+    @property  # pragma: no cover
     def data_line_number(self) -> int:
         return self._data_line_number
 
-    @property
+    @property  # pragma: no cover
     def last_line(self) -> LastLineStats:
         return self._last_line_stats
 

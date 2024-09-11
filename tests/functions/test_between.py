@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from csvpath.csvpath import CsvPath
 from datetime import date, datetime
 from tests.save import Save
@@ -26,6 +27,72 @@ class TestFunctionsBetween(unittest.TestCase):
         path.fast_forward()
         print(f"\ntest_function_before_dates1: path vars: {path.variables}")
         assert path.variables["date"] is True
+
+    def test_function_between_dates_none(self):
+        path = CsvPath()
+        Save._save(path, "test_function_between_dates_none")
+        path.parse(
+            f"""
+            ~ dates + None ~
+            ${DATES}[1][
+                beyond( none(),
+                         date( "2000-10-01", "%Y-%m-%d" ),
+                         date( "2000-10-03", "%Y-%m-%d" ) )
+                ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_between_dates_none: path vars: {path.variables}")
+        assert len(lines) == 0
+
+    def test_function_between_datetimes1(self):
+        print()
+        path = CsvPath()
+        Save._save(path, "test_function_between_dates_none")
+        path.parse(
+            f"""
+            ~ mix date format with datetime format ~
+            ${DATES}[1][
+                beyond( datetime( "2000-10-01", "%Y-%m-%d" ),
+                         datetime( "2000-10-02", "%Y-%m-%d" ),
+                         datetime( "2000-10-04 1:30:04", "%Y-%m-%d %I:%M:%S" ) )
+                ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_between_dates_none: path vars: {path.variables}")
+        assert len(lines) == 1
+
+    def test_function_between_datetimes2(self):
+        print()
+        path = CsvPath()
+        Save._save(path, "test_function_between_dates_none")
+        path.parse(
+            f"""
+            ~ mixed date and datetime ~
+            ${DATES}[1][
+                beyond( date( "2000-10-01", "%Y-%m-%d" ),
+                         date( "2000-10-02", "%Y-%m-%d" ),
+                         datetime( "2000-10-04 1:30:04", "%Y-%m-%d %I:%M:%S" ) )
+                ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_between_dates_none: path vars: {path.variables}")
+        assert len(lines) == 1
+
+    def test_function_between_datetimes3(self):
+        print()
+        path = CsvPath()
+        Save._save(path, "test_function_between_datetimes3")
+        with pytest.raises(ValueError):
+            path.parse(
+                f"""
+                ~ value error ~
+                ${DATES}[1][
+                    beyond( date( "2000-10-01", "%Y-%m-%d" ),
+                             date( "2000-10-02", "%Y-%m-%d" ),
+                             int( datetime( "2000-10-04 1:30:04", "%Y-%m-%d %I:%M:%S" ) ) )
+                    ]"""
+            )
+            path.collect()
 
     def test_function_between_not_between_dates1(self):
         path = CsvPath()

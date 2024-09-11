@@ -229,7 +229,7 @@ class Validation(Matchable):
             raise ChildrenException(
                 f"{self}() must have 2 or more arguments, not {len(self.children)}"
             )
-        # , indicates arguments, at least 2
+        # indicates arguments, at least 2
         if not hasattr(self.children[0], "op"):
             raise ChildrenException(
                 f"{self}() must have 2 or more arguments, not {self.children}"

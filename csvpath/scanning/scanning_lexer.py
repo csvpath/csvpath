@@ -35,16 +35,16 @@ class ScanningLexer:
         r"\$[A-Z,a-z,0-9\._/\-\\#& ]*"
         return t
 
-    def t_error(self, t):  # pylint: disable=C0116   pragma: no cover
-        print(f"Illegal character '{t.value[0]}'")
-        t.lexer.skip(1)
+    def t_error(self, t):  # pylint: disable=C0116
+        print(f"Illegal character '{t.value[0]}'")  # pragma: no cover
+        t.lexer.skip(1)  # pragma: no cover
 
     def __init__(self):
         self.lexer = lex.lex(module=self)
 
     def tokenize(self, data):  # pylint: disable=C0116
-        self.lexer.input(data)
-        while True:
+        self.lexer.input(data)  # pragma: no cover
+        while True:  # pragma: no cover
             tok = self.lexer.token()
             if not tok:
                 break

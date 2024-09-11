@@ -1,1 +1,1 @@
-$tests/test_resources/dates.csv[0-8]
+$tests/test_resources/dates.csv[1-8]

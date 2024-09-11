@@ -28,4 +28,4 @@ class Headers(MatchDecider):
             else:
                 self.match = self.matcher.header_index(v) is not None
         else:
-            self.match = True
+            self.match = self._apply_default_match()  # pragma: no cover

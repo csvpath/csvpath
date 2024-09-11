@@ -16,13 +16,10 @@ class Date(ValueProducer):
         v = f"{v}".strip()
         fmt = eq.right.to_value(skip=skip)
         fmt = f"{fmt}".strip()
-        try:
-            d = datetime.datetime.strptime(v, fmt)
-            if not self.name == "datetime":
-                d = d.date()
-            self.value = d
-        except (UnicodeError, ValueError):
-            self.value = v
+        d = datetime.datetime.strptime(v, fmt)
+        if not self.name == "datetime":
+            d = d.date()
+        self.value = d
 
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_match()  # pragma: no cover

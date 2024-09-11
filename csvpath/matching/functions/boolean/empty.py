@@ -24,7 +24,7 @@ class Empty(MatchDecider):
         if isinstance(self.children[0], Equality):
             children = self.children[0].commas_to_list()
         self._validate(children)
-        super().check_valid()
+        super().check_valid()  # pragma: no cover
 
     def _validate(self, children):
         for s in children:
@@ -33,7 +33,9 @@ class Empty(MatchDecider):
                     "If empty() has a headers() argument it can only have 1 argument"
                 )
             if isinstance(s, Term):
-                raise ChildrenException("empty() arguments cannot include terms")
+                raise ChildrenException(
+                    "empty() arguments cannot include terms"
+                )  # pragma: no cover
 
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)

@@ -1,7 +1,8 @@
 # pylint: disable=C0114
-
 from datetime import datetime
+from datetime import date
 from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 
 
@@ -38,25 +39,35 @@ class Between(MatchDecider):
             return True
         if self.name in ["beyond", "outside"]:
             return False
-        raise ChildrenException(f"{self.name}() is not a known function")
 
     def _try_numbers(self, me, a, b) -> bool:
         try:
             return self._order(float(me), float(a), float(b))
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            self.matcher.csvpath.logger.debug(
+                f"Between._try_numbers: error: {e} caught and continuing"
+            )
             return None
 
     def _try_dates(self, me, a, b) -> bool:
+        if not ExpressionUtility.all([me, a, b], [date, datetime]):
+            return None
         if isinstance(a, datetime):
             try:
                 return self._order(me.timestamp(), a.timestamp(), b.timestamp())
-            except (TypeError, AttributeError):
+            except (ValueError, TypeError, AttributeError) as e:
+                self.matcher.csvpath.logger.debug(
+                    f"Between._try_dates: error: {e} caught and continuing"
+                )
                 return None
         else:
             ret = None
             try:
                 return self._order(me, a, b)
-            except TypeError:
+            except (ValueError, TypeError) as e:
+                self.matcher.csvpath.logger.debug(
+                    f"Between._try_dates: error: {e} caught and continuing"
+                )
                 ret = None
             return ret
 

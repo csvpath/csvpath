@@ -374,6 +374,21 @@ Qualifiers are tokens added to variable, header, and function names. They are se
 
 Qualifiers are quite powerful and deserve a close look. <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
+<a name="qualifiers"></a>
+## Error Handling
+
+The CsvPath library handles errors according to policies set for the CsvPath and CsvPaths classes. Each class can have multiple approaches to errors configured together. The options are:
+- Collect - an error collector collects errors for later inspection
+- Raise - an exception is (re)raised that may halt the CsvPath process
+- Stop - the CsvPath instance containing the offending problem is stopped; any others continue
+- Fail - the CsvPath instance containing the offending problem is failed; processing continues
+- Quiet - minimal error information is logged but otherwise handling is quiet
+
+Raise and quiet are not useful together, but the others combine well. You can set the error policy in the config.ini that lives by default in the ./config directory.
+
+Because of this nuanced approach to errors, the library will tend to raise data exceptions rather than handle them internally at the point of error. This is particularly true of matching, and especially the functions. When a function sees a problem, or fails to anticipate a problem, the exception is bubbled up to the top Expression within the list of Expressions held by the Matcher. From there it is routed to an error handler to be kept with other results of the run, or an exception is re-raised, or other actions are taken.
+
+
 <a name="examples"></a>
 ## More Examples
 
