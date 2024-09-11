@@ -17,13 +17,16 @@ class Stdev(ValueProducer):
         f = None
         if isinstance(v, list):
             stack = v
-        elif isinstance(v, str):
+        #
+        # frozen vars at end of run may be tupleized due to a blank end line
+        #
+        elif isinstance(v, (str, tuple)):
             stack = self.matcher.get_variable(v, set_if_none=[])
         else:
             raise ChildrenException(
                 "Stdev must have 1 child naming a stack variable or returning a stack"
             )
-        if stack is None or len(stack) == 0:
+        if len(stack) == 0:
             pass
         else:
             if self.name == "pstdev":
@@ -35,15 +38,11 @@ class Stdev(ValueProducer):
         self.value = f
 
     def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
+        self.to_value(skip=skip)  # pragma: no cover
         self.match = self._noop_match()  # pragma: no cover
 
     def _to_floats(self, stack):
+        astack = []
         for i in range(0, len(stack)):  # pylint: disable=C0200
-            # re: C0200 better to not mutate while iterating.
-            # doesn't matter in this case, but still.
-            try:
-                stack[i] = float(stack[i])
-            except (TypeError, ValueError):
-                pass
-        return stack
+            astack.append(float(stack[i]))
+        return astack

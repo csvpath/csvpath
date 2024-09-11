@@ -247,7 +247,7 @@ class FunctionFactory:
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
             f = PercentUnique(matcher, name, child)
-        elif name == "all":
+        elif name in ["missing", "all"]:
             f = All(matcher, name, child)
         elif name == "total_lines":
             f = TotalLines(matcher, name, child)

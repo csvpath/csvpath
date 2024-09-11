@@ -1,18 +1,20 @@
 import hashlib
-
+import math
 from typing import Tuple, Any, List
 
 
 class ExpressionUtility:
     @classmethod
-    def all(cls, ls: List, aclasslist=None) -> bool:
-        if len(ls) == 0:
+    def all(cls, objects: List, aclasslist=None) -> bool:
+        if len(objects) == 0:
             return True
-        t = type(ls[0])
+        t = type(objects[0])
         if aclasslist and t not in aclasslist:
             return False
-        for _ in ls:
-            if type(_) is t:
+        for _ in objects:
+            if aclasslist and type(_) not in aclasslist:
+                return False
+            elif not aclasslist and type(_) is not t:
                 return False
         return True
 
@@ -27,6 +29,13 @@ class ExpressionUtility:
         elif f"{v}".strip() == "":
             return True
         return False
+
+    @classmethod
+    def isnan(cls, v) -> bool:
+        try:
+            return math.isnan(v)
+        except TypeError:
+            return False
 
     @classmethod
     def to_int(cls, v: Any) -> float:

@@ -1,0 +1,4 @@
+[
+                    ~ not stack, not string ~
+                    last.nocontrib() -> @sd = pstdev(1)
+                ]

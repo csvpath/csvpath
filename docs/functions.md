@@ -43,7 +43,11 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>lt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>below( value, value)</a></td><td> finds things before a date, number, string       </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>outside(value, value, value)</a> </td><td> returns true when a value is found between to others     </td></tr>
 
-<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> existence test for all selected values or all headers </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> existence test for all selected values or all headers, or all variables </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> existence test for all selected values, all headers, or all variables </td></tr>
+
+
+
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> existence test across a range of places </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> always false                                  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>                    </td><td> negates a value                                           </td></tr>

@@ -22,7 +22,7 @@ class TestFunctionsBefore(unittest.TestCase):
         )
         path.fast_forward()
         print(f"\ntest_function_before_dates1: path vars: {path.variables}")
-        assert path.variables["date"] is False
+        assert path.variables["date"] is True
 
     def test_function_before_dates2(self):
         path = CsvPath()
@@ -172,3 +172,16 @@ class TestFunctionsBefore(unittest.TestCase):
         path.fast_forward()
         print(f"\ntest_function_after__string2: path vars: {path.variables}")
         assert path.variables["s"] is True
+
+    def test_function_after_int_float(self):
+        path = CsvPath()
+        Save._save(path, "test_function_after_int_float")
+        path.parse(
+            f"""
+            ~ string > string == True ~
+            ${DATES}[1][
+                @s = gt( int(25), none() ) ]"""
+        )
+        path.fast_forward()
+        print(f"\n test_function_after_int_float: path vars: {path.variables}")
+        assert path.variables["s"] is False

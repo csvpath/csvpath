@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import math
-from csvpath.matching.productions import Equality, Variable, Header
+from csvpath.matching.productions import Variable, Header
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 
 
@@ -18,19 +19,13 @@ class Exists(MatchDecider):
         v = self.children[0].to_value()
         ab = self.children[0].asbool
         if ab:
-            v = bool(v)
+            v = ExpressionUtility.asbool(v)
             self.match = v
         elif v is None:
             self.match = False
-        elif self._isnan(v):
+        elif ExpressionUtility.isnan(v):
             self.match = False
         elif f"{v}".strip() != "":
             self.match = True
         else:
             self.match = False
-
-    def _isnan(self, v) -> bool:
-        try:
-            return math.isnan(v)
-        except TypeError:
-            return False

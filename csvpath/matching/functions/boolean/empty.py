@@ -10,13 +10,15 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class Empty(MatchDecider):
-    """checks for empty or blank header values in a given line"""
+    """checks for empty or blank header values in a given line.
+    it reports True only if all the places it is directed to look are empty.
+    if you pass it headers() it checks for all headers being empty."""
 
     def check_valid(self) -> None:
         if len(self.children) == 0:
             raise ChildrenException("empty() must have at least 1 argument")
         elif isinstance(self.children[0], Headers):
-            if len(self.children) != 1:
+            if len(self.children) != 1:  # pragma: no cover
                 raise ChildrenException(
                     "If empty() has a headers() argument it can only have 1 argument"
                 )
@@ -50,8 +52,12 @@ class Empty(MatchDecider):
     #
 
     def _decide_match(self, skip=None) -> None:
+        print(f"empty._decide: chs: {self.children}")
         if len(self.children) == 1 and isinstance(self.children[0], Headers):
             self._do_headers(skip=skip)
+        elif len(self.children) == 1 and isinstance(self.children[0], Equality):
+            print(f"\nempty._decide: chs: {self.children[0].children}")
+            self._do_many(skip=skip)
         elif len(self.children) == 1:
             self._do_one(self.children[0], skip=skip)
         else:
@@ -66,8 +72,15 @@ class Empty(MatchDecider):
         self.match = ret
 
     def _do_many(self, skip=None):
-        siblings = self.children[0].commas_to_list()
+        siblings = None
+        if isinstance(self.children[0], Equality):
+            siblings = self.children[0].commas_to_list()
+        else:
+            siblings = self.children[0]
+        print(f"empty._do_many: sibs: {siblings}")
+
         for s in siblings:
+            print(f"empty._do_many: a sib: {s}")
             self._do_one(s)
             if self.match is False:
                 break

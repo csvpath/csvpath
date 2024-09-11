@@ -41,6 +41,21 @@ class TestFunctionsEmpty(unittest.TestCase):
         print(f"test_function_empty2: path vars: {path.variables}")
         assert len(lines) == 1
 
+    def test_function_empty_many1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_empty_many1")
+        path.parse(
+            f"""
+            ${FOOD}[*]
+            [
+                empty(#year, #food, #type)
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_empty_many1: lines: {lines}")
+        print(f"test_function_empty_many1: path vars: {path.variables}")
+        assert len(lines) == 0
+
     def test_function_empty3(self):
         path = CsvPath()
         Save._save(path, "test_function_empty3")

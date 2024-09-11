@@ -38,12 +38,14 @@ class All(MatchDecider):
 
     def all_variables(self) -> None:  # pylint: disable=C0116
         # default is True in case no vars
-        self.match = True
+        ret = True
         for v in self.matcher.csvpath.variables.values():
             if v is None or f"{v}".strip() == "":
-                self.match = False
-                return
-        self.match = True
+                ret = False
+                break
+        if self.name == "missing":
+            ret = not ret
+        self.match = ret
 
     def all_exist(self):  # pylint: disable=C0116
         ret = True
@@ -53,13 +55,19 @@ class All(MatchDecider):
             for h in self.matcher.line:
                 if h is None or f"{h}".strip() == "":
                     ret = False
+                    break
+        if self.name == "missing":
+            ret = not ret
         self.match = ret
 
     def equality(self):  # pylint: disable=C0116
         siblings = self.children[0].commas_to_list()
+        ret = True
         for s in siblings:
             v = s.to_value(skip=[self])
             if v is None or f"{v}".strip() == "":
-                self.match = False
-                return
-        self.match = True
+                ret = False
+                break
+        if self.name == "missing":
+            ret = not ret
+        self.match = ret

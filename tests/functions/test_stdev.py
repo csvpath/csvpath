@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 COR = "tests/test_resources/correlation.csv"
@@ -39,3 +41,52 @@ class TestFunctionsStdev(unittest.TestCase):
         print(f"lines: {lines}")
         assert "sd" in path.variables
         assert path.variables["sd"] == 14361.41
+
+    def test_function_stdev3(self):
+        path = CsvPath()
+        Save._save(path, "test_function_stdev3")
+        path.parse(
+            f"""${COR}[1-10][
+                    ~ not stack, not string ~
+                    last.nocontrib() -> @sd = pstdev(1)
+                ]
+             """
+        )
+        with pytest.raises(ChildrenException):
+            path.collect()
+
+    def test_function_stdev4(self):
+        path = CsvPath()
+        Save._save(path, "test_function_stdev4")
+        path.parse(
+            f"""${COR}[1-10][
+                    ~ stack name in pstdev ~
+                    push("a", #1)
+                    last.nocontrib() -> @sd = pstdev("a")
+                    last.nocontrib() -> print("pstdev $.variables.sd")
+                ]
+             """
+        )
+        lines = path.collect()
+        print(f"test_function_stdev2: variables: {path.variables}")
+        print(f"lines: {lines}")
+        assert "sd" in path.variables
+        assert path.variables["sd"] == 14361.41
+
+    def test_function_stdev5(self):
+        path = CsvPath()
+        Save._save(path, "test_function_stdev4")
+        path.parse(
+            f"""${COR}[1-10][
+                    ~ stack name in pstdev ~
+                    push("a", #1)
+                    last.nocontrib() -> @sd = pstdev("b")
+                    last.nocontrib() -> print("pstdev $.variables.sd")
+                ]
+             """
+        )
+        lines = path.collect()
+        print(f"test_function_stdev2: variables: {path.variables}")
+        print(f"lines: {lines}")
+        assert "sd" in path.variables
+        # assert path.variables["sd"] == 14361.41

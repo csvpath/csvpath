@@ -9,24 +9,24 @@ class Printer(ABC):
     @property
     @abstractmethod
     def last_line(self):
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
     def lines_printed(self) -> int:
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def print(self, string: str) -> None:
         """prints string with a newline. same as print_to(None, string)."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def print_to(self, name: str, string: str) -> None:
         """name is a file, stream, or string collection indicator.
         string is the value to be printed/stored with the addition
         of a newline."""
-        pass
+        pass  # pragma: no cover
 
 
 class StdOutPrinter(Printer):
@@ -48,9 +48,9 @@ class StdOutPrinter(Printer):
     def print_to(self, name: str, string: str) -> None:
         self._count += 1
         if name == Printer.ERROR:
-            print(string, file=sys.stderr)
+            print(string, file=sys.stderr)  # pragma: no cover
         elif name:
-            print(string, file=name)
+            print(string, file=name)  # pragma: no cover
         else:
             print(string)
         self._last_line = string
