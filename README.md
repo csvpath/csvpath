@@ -412,7 +412,7 @@ There are more examples scattered throughout the documentation. Good places to l
 - The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
 - The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> _(not realistic, but a good source of ideas)_
 - A few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
-- The getting start examples on <a href='www.csvpath.org'>csvpath.org</a>
+- The Getting Started examples on <a href='www.csvpath.org'>www.csvpath.org</a>
 
 <a name="grammar"></a>
 ## Grammar
