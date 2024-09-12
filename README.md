@@ -422,7 +422,7 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more
 
 # More Info
 
-Visit <a http="csvpath.org">http://csvpath.org</a>
+Visit <a href="csvpath.org">http://csvpath.org</a>
 
 
 
