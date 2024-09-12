@@ -30,8 +30,8 @@ class TestExpressions(unittest.TestCase):
         expr.children.append(child)
         with pytest.raises(DataException):
             expr.matches(skip=[])
-        assert "stop" in path.config.CSVPATH_ON_ERROR
-        assert "fail" in path.config.CSVPATH_ON_ERROR
+        assert "stop" in path.config.csvpath_errors_policy
+        assert "fail" in path.config.csvpath_errors_policy
         assert path.errors
         assert len(path.errors) == 1
         assert not path.is_valid
@@ -51,8 +51,8 @@ class TestExpressions(unittest.TestCase):
         expr.children.append(child)
         with pytest.raises(DataException):
             expr.matches(skip=[])
-        assert "stop" in path.config.CSVPATH_ON_ERROR
-        assert "fail" in path.config.CSVPATH_ON_ERROR
+        assert "stop" in path.config.csvpath_errors_policy
+        assert "fail" in path.config.csvpath_errors_policy
         assert len(path.errors) == 1
         print(f"path._errors: {path._errors}")
         assert path._errors is None

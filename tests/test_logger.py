@@ -8,16 +8,18 @@ from csvpath.util.log_utility import LogUtility, LogException
 class TestLogger(unittest.TestCase):
     def test_logger_wrong_log_level(self):
         path = CsvPath()
+        config = path.config
+        config.csvpath_log_level = "noway"
         with pytest.raises(LogException):
-            LogUtility.logger(path, "noway")
+            LogUtility.logger(path)
 
     def test_logger_wrong_component(self):
         matcher = Matcher(csvpath=None, data="[]", headers=[])
         with pytest.raises(LogException):
-            LogUtility.logger(matcher, "noway")
+            LogUtility.logger(matcher, "error")
 
         with pytest.raises(LogException):
-            LogUtility.logger(None, "noway")
+            LogUtility.logger(None, "error")
 
     def test_logger_brief_stack_trace(self):
         path = CsvPath()

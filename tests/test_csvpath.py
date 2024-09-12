@@ -1,6 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 from csvpath.scanning.scanner import Scanner
+from csvpath.util.config import OnError
 
 PATH = "tests/test_resources/test.csv"
 
@@ -11,6 +12,21 @@ class TestCsvPath(unittest.TestCase):
         path.parse(f"${PATH}[*][yes()]")
         path.fast_forward()
         assert path.line_monitor.data_line_count == 9
+
+    def test_csvpath_has_errors(self):
+        path = CsvPath()
+        path.config.csvpath_errors_policy = [OnError.COLLECT.value]
+        print(f"path's policy: {path.config.csvpath_errors_policy}")
+        path.parse(
+            """$tests/test_resources/test.csv[1][
+                            push.onmatch("i", int("five"))
+                   ]"""
+        )
+        path.fast_forward()
+        assert path.has_errors()
+        errors = path.errors
+        for e in errors:
+            print(f">>> error: \n{e}\n")
 
     def test_csvpath_vars_frozen(self):
         path = CsvPath()

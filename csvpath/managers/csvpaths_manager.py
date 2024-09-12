@@ -87,7 +87,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 if p.find(".") == -1:
                     continue
                 ext = p[p.rfind(".") + 1 :].strip().lower()
-                if ext not in self.csvpaths.config.CSVPATH_FILE_EXTENSIONS:
+                if ext not in self.csvpaths.config.csvpath_file_extensions:
                     continue
                 path = os.path.join(base, p)
                 aname = name

@@ -12,6 +12,10 @@ class ErrorHandlingException(Exception):
 
 
 class Error:
+    """ErrorHandler will build errors from exceptions. creating errors is
+    not something CsvPath users should need to do
+    """
+
     def __init__(self):
         self.line_count: int = -1
         self.match_count: int = -1
@@ -48,26 +52,42 @@ json: {self.json if self.json else ""}
 
 
 class ErrorHandler:
-    def __init__(self, *, csvpath=None, logger, error_collector, component: str):
+    """creates errors given an exception and uses the csvpaths's or
+    csvpath's error policy to handle them. you must provide either
+    a CsvPaths or a CsvPath and an ErrorCollector. ErrorCollectors
+    are either a CsvPath instance (in which case, just pass the
+    instance as both csvpaths=inst and error_collector=inst) or a
+    CsvPathResult.
+    """
+
+    def __init__(self, *, csvpaths=None, csvpath=None, error_collector):
         self._csvpath = csvpath
-        self.logger = logger
-        if self.logger is None:
-            raise LogException("Logger cannot be None")
-        self.component = component
-        if self.component not in ["csvpath", "csvpaths"]:
-            raise InputException(f"Unknown component: {self.component}")
+        self._csvpaths = csvpaths
         self._error_collector = error_collector
         if self._error_collector is None:
             raise ErrorHandlingException(
                 "A CsvPathErrorCollector collector must be available"
             )
+        self._logger = None
+
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = (
+                self._csvpaths.logger
+                if self._csvpaths is not None
+                else self._csvpath.logger
+            )
+        return self._logger
 
     def handle_error(self, ex: Exception) -> Error:
         error = self.build(ex)
         if self._csvpath:
-            policy = self._csvpath.config.CSVPATH_ON_ERROR
+            policy = self._csvpath.config.csvpath_errors_policy
+        elif self._csvpath:
+            policy = self._csvpath.csvpaths.config.csvpaths_errors_policy
         else:
-            policy = CsvPathConfig().CSVPATHS_ON_ERROR
+            raise ErrorHandlingException("Csvpath or CsvPaths must be present")
         self._handle_if(
             policy=policy,
             error=error,
@@ -79,21 +99,21 @@ class ErrorHandler:
         )
         if error is None:
             raise InputException("Error handler cannot handle a None error")
-        try:
-            if OnError.QUIET.value in policy:
-                self.logger.error(f"{error}")
-            else:
-                self.logger.error(f"{error}")
-            if OnError.STOP.value in policy:
-                if self._csvpath:
-                    self._csvpath.stopped = True
-            if OnError.COLLECT.value in policy:
-                self._error_collector.collect_error(error)
-            if OnError.FAIL.value in policy:
-                if self._csvpath:
-                    self._csvpath.is_valid = False
-        except Exception:
-            print(f"Error during handling error: {traceback.format_exc()}")
+        if OnError.QUIET.value in policy:
+            self.logger.error(f"Quiet error: {error.exception}")
+            self.logger.error(f"Quiet class: {error.exception_class}")
+            self.logger.error(f"Quiet file: {error.filename}")
+            self.logger.error(f"Quiet line_count: {error.line_count}")
+        else:
+            self.logger.error(f"{error}")
+        if OnError.STOP.value in policy:
+            if self._csvpath:
+                self._csvpath.stopped = True
+        if OnError.COLLECT.value in policy:
+            self._error_collector.collect_error(error)
+        if OnError.FAIL.value in policy:
+            if self._csvpath:
+                self._csvpath.is_valid = False
         if OnError.RAISE.value in policy:
             raise error.error
 
@@ -113,6 +133,10 @@ class ErrorHandler:
                 if self._csvpath and self._csvpath.scanner
                 else None
             )
+            error.match = self._csvpath.match
+        else:
+            error.line_count = "unknown"
+            error.match = "unknown"
         if hasattr(ex, "json"):
             error.json = ex.json
         if hasattr(ex, "datum") and error.datum != "":

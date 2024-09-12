@@ -40,10 +40,7 @@ class Expression(Matchable):
                 e.source = self
                 e.json = self.matcher.to_json(self)
                 ErrorHandler(
-                    csvpath=self.matcher.csvpath,
-                    logger=self.matcher.csvpath.logger,
-                    error_collector=self.matcher.csvpath,
-                    component="csvpath",
+                    csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
                 ).handle_error(e)
         return self.match
 
@@ -66,9 +63,7 @@ class Expression(Matchable):
             e.message = f"Failed csvpath validity check with: {e}"
             e.json = self.matcher.to_json(self)
             ErrorHandler(
-                logger=self.matcher.csvpath.logger,
-                error_collector=self.matcher.csvpath,
-                component="csvpath",
+                csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
             ).handle_error(e)
             #
             # We always stop if the csvpath itself is found to be invalid

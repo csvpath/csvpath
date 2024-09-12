@@ -81,7 +81,7 @@ class CsvPaths(CsvPathsPublic):
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
         self.current_matcher: CsvPath = None
-        self.config = CsvPathConfig()
+        self._config = CsvPathConfig(self)
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
 
@@ -91,9 +91,15 @@ class CsvPaths(CsvPathsPublic):
             delimiter=self.delimiter,
             quotechar=self.quotechar,
             skip_blank_lines=self.skip_blank_lines,
-            config=self.config,
+            config=None,
             print_default=self.print_default,
         )
+
+    @property
+    def config(self) -> CsvPathConfig:  # pylint: disable=C0116
+        if not self._config:
+            self._config = CsvPathConfig()
+        return self._config
 
     def clean(self, *, paths) -> None:
         """at this time we do not recommend reusing CsvPaths, but it is doable
@@ -137,9 +143,7 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(
-                    logger=self.logger, error_collector=result, component="csvpaths"
-                ).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
@@ -182,9 +186,7 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(
-                    logger=self.logger, error_collector=result, component="csvpaths"
-                ).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
@@ -218,9 +220,7 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(
-                    logger=self.logger, error_collector=result, component="csvpaths"
-                ).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
 
     # =============== breadth first processing ================
 
@@ -321,9 +321,7 @@ class CsvPaths(CsvPathsPublic):
                     ex.trace = traceback.format_exc()
                     ex.source = self
                     ErrorHandler(
-                        logger=self.logger,
-                        error_collector=self.current_matcher,
-                        component="csvpaths",
+                        csvpaths=self, error_collector=self.current_matcher
                     ).handle_error(ex)
                 # we yield even if we stopped in this iteration.
                 # caller needs to see what we stopped on.
@@ -348,9 +346,7 @@ class CsvPaths(CsvPathsPublic):
                 # the error handler is the CsvPathResults. it registers itself with
                 # the csvpath as the error collector. not as straightforward a way to
                 # get ErrorHandler what it needs, but effectively same as we do above
-                ErrorHandler(
-                    logger=self.logger, error_collector=csvpath, component="csvpaths"
-                ).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
@@ -368,6 +364,4 @@ class CsvPaths(CsvPathsPublic):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                ErrorHandler(
-                    logger=self.logger, error_collector=csvpath, component="csvpaths"
-                ).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)

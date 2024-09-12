@@ -30,5 +30,5 @@ class Metaphone(ValueProducer):
             self.value = mappings.get(meta)
 
     def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
-        self.match = True
+        self.to_value(skip=skip)  # pragma: no cover
+        self.match = self._apply_default_match()  # pragma: no cover

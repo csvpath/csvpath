@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -33,3 +35,9 @@ class TestFunctionsAdvance(unittest.TestCase):
         print(f"test_function_advance1: path vars: {path.variables}")
         assert len(lines) == 6
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
+
+    def test_function_advance2(self):
+        path = CsvPath()
+        path.parse(f""" ${PATH}[1*] [ advance("please") ]""")
+        with pytest.raises(ChildrenException):
+            path.collect()

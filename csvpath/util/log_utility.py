@@ -46,9 +46,9 @@ class LogUtility:
         #
         if level is None:
             level = (
-                component.config.CSVPATHS_LOG_LEVEL
+                component.config.csvpaths_log_level
                 if name == "csvpaths"
-                else component.config.CSVPATH_LOG_LEVEL
+                else component.config.csvpath_log_level
             )
         if level == "error":
             level = logging.ERROR  # pragma: no cover
@@ -68,9 +68,9 @@ class LogUtility:
             logger = LogUtility.LOGGERS[name]
         else:
             log_file_handler = RotatingFileHandler(
-                filename=component.config.LOG_FILE,
-                maxBytes=component.config.LOG_FILE_SIZE,
-                backupCount=component.config.LOG_FILES_TO_KEEP,
+                filename=component.config.log_file,
+                maxBytes=component.config.log_file_size,
+                backupCount=component.config.log_files_to_keep,
             )
             formatter = logging.Formatter(
                 "%(asctime)s - %(levelname)s - %(name)s - %(message)s"

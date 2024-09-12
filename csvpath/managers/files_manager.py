@@ -63,7 +63,7 @@ class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
         for p in dlist:
             _ = p.lower()
             ext = p[p.rfind(".") + 1 :].strip().lower()
-            if ext in self.csvpaths.config.CSV_FILE_EXTENSIONS:
+            if ext in self.csvpaths.config.csv_file_extensions:
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
                 self.named_files[name] = path

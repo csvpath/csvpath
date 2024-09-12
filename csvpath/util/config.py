@@ -6,6 +6,14 @@ from enum import Enum
 import logging
 from ..util.config_exception import ConfigurationException
 
+#
+#   1 csvpaths & csvpath own their own config
+#   2 start up to sensible defaults in config.ini
+#   3 reloading is easy
+#   4 programmatically changing values is easy
+#   5 config validation is easy
+#
+
 
 class OnError(Enum):
     RAISE = "raise"
@@ -22,6 +30,12 @@ class LogLevels(Enum):
     ERROR = "error"
 
 
+class LogFile(Enum):
+    LOG_FILE = "log_file"
+    LOG_FILES_TO_KEEP = "log_files_to_keep"
+    LOG_FILE_SIZE = "log_file_size"
+
+
 class Sections(Enum):
     CSVPATH_FILES = "csvpath_files"
     CSV_FILES = "csv_files"
@@ -29,140 +43,228 @@ class Sections(Enum):
     LOGGING = "logging"
 
 
-# @dataclass
 class CsvPathConfig:
     """by default finds config files at ./config/config.ini.
     To set a different location:
-    - set a CSVPATH_CONFIG_FILE env var
-    - create a CsvPathConfig instance set its CONFIG member and call reload
-    - or set CsvPathConfig.CONFIG and reload to reset all instances w/o own specific settings
+     - set a CSVPATH_CONFIG_FILE env var
+     - create a CsvPathConfig instance set its CONFIG member and call reload
+     - or set CsvPathConfig.CONFIG and reload to reset all instances w/o own specific settings
     """
 
     CONFIG: str = "config/config.ini"
-    CSVPATH_CONFIG_FILE = "CSVPATH_CONFIG_FILE"
-    # extensions
-    DEFAULT_CSV_FILE_EXTENSIONS = "csv,tsv,psv,dat,ssv,txt"
-    DEFAULT_CSVPATH_FILE_EXTENSIONS = "txt,csvpaths"
-    # errors
-    DEFAULT_CSVPATH_ON_ERROR = f"{OnError.RAISE.value},{OnError.STOP.value}"
-    DEFAULT_CSVPATHS_ON_ERROR = (
-        "{OnError.QUIET.value},{OnError.COLLECT.value},{OnError.FAIL.value}"
-    )
-    # logging
-    DEFAULT_CSVPATH_LOG_LEVEL = LogLevels.ERROR.value
-    DEFAULT_CSVPATHS_LOG_LEVEL = LogLevels.ERROR.value
-    DEFAULT_LOG_FILE = "./logs/csvpath.log"
-    DEFAULT_LOG_FILES_TO_KEEP = 1
-    DEFAULT_LOG_FILE_SIZE = 2048
-    CONFIG_INSTANCE = RawConfigParser()
+    CSVPATH_CONFIG_FILE_ENV: str = "CSVPATH_CONFIG_PATH"
 
-    def __init__(self):
-        self.options: Dict[str, str] = {}
-        self.CSVPATH_ON_ERROR: List[str] = []
-        self.CSVPATHS_ON_ERROR: List[str] = []
-        self.CSV_FILE_EXTENSIONS: List[str] = []
-        self.CSVPATH_FILE_EXTENSIONS: List[str] = []
-        self.CSVPATH_LOG_LEVEL = CsvPathConfig.DEFAULT_CSVPATH_LOG_LEVEL
-        self.CSVPATHS_LOG_LEVEL = CsvPathConfig.DEFAULT_CSVPATHS_LOG_LEVEL
-        self.LOG_FILE = CsvPathConfig.DEFAULT_LOG_FILE
-        self.LOG_FILES_TO_KEEP = CsvPathConfig.DEFAULT_LOG_FILES_TO_KEEP
-        self.LOG_FILE_SIZE = CsvPathConfig.DEFAULT_LOG_FILE_SIZE
-        configpath = environ.get(CsvPathConfig.CSVPATH_CONFIG_FILE)
+    def __init__(self, holder):
+        self._holder = holder
+        self._config = RawConfigParser()
+        self._configpath = environ.get(CsvPathConfig.CSVPATH_CONFIG_FILE_ENV)
+        if self._configpath is None:
+            self._configpath = CsvPathConfig.CONFIG
         self.log_file_handler = None
-        if configpath is not None:
-            self.CONFIG = configpath.strip()
         self._load_config()
-
-    def _get(self, section: str, name: str) -> str:
-        return CsvPathConfig.CONFIG_INSTANCE[section][name]
 
     def reload(self):
         self._load_config()
 
+    def set_config_path_and_reload(self, path: str) -> None:
+        self._config = RawConfigParser()
+        self._configpath = path
+        self.reload()
+
+    @property
+    def config_path(self) -> str:
+        return self._configpath
+
+    def _get(self, section: str, name: str):
+        try:
+            if self._config is None:
+                raise ConfigurationException("No config object available")
+            s = self._config[section][name]
+            s = s.strip()
+            ret = None
+            if s.find(",") > -1:
+                ret = [s.strip() for s in s.split(",")]
+            else:
+                ret = s
+            return ret
+        except KeyError:
+            raise ConfigurationException(
+                f"Check config at {self.config_path} for [{section}][{name}]"
+            )
+
     def _load_config(self):
-        if path.isfile(self.CONFIG):
-            CsvPathConfig.CONFIG_INSTANCE.read(self.CONFIG)
-            try:
-                exts = self._get(Sections.CSVPATH_FILES.value, "extensions")
-                if exts is None or len(exts.strip()) == 0:
-                    exts = CsvPathConfig.DEFAULT_CSVPATH_FILE_EXTENSIONS
-                self.CSVPATH_FILE_EXTENSIONS = [
-                    _.strip().lower() for _ in exts.split(",")
-                ]
-            except KeyError:
-                raise Exception(
-                    f"Config failed on {Sections.CSVPATH_FILES.value}[extensions]: {self._config}"
-                )
-
-            try:
-                exts = self._get(Sections.CSV_FILES.value, "extensions")
-                if exts is None or len(exts.strip()) == 0:
-                    exts = CsvPathConfig.DEFAULT_CSV_FILE_EXTENSIONS
-                self.CSV_FILE_EXTENSIONS = [_.strip().lower() for _ in exts.split(",")]
-            except KeyError:
-                raise Exception(
-                    f"Config failed on {Sections.CSV_FILES.value}[extensions]"
-                )
-
-            try:
-                exts = self._get(Sections.ERRORS.value, "csvpath")
-                if exts is None or len(exts.strip()) == 0:
-                    exts = CsvPathConfig.DEFAULT_CSVPATH_ON_ERROR
-                self.CSVPATH_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
-            except KeyError:
-                raise Exception(f"Config failed on {Sections.ERRORS.value}[csvpath]")
-            for _ in self.CSVPATH_ON_ERROR:
-                if _ not in OnError:
-                    raise Exception(
-                        f"Config failed on unknown CsvPath error option '{_}'"
-                    )
-            try:
-                exts = self._get(Sections.ERRORS.value, "csvpaths")
-                if exts is None or len(exts.strip()) == 0:
-                    exts = CsvPathConfig.DEFAULT_CSVPATHS_ON_ERROR
-                self.CSVPATHS_ON_ERROR = [_.strip().lower() for _ in exts.split(",")]
-            except KeyError:
-                raise Exception(f"Config failed on {Sections.ERRORS.value}[csvpaths]")
-            for _ in self.CSVPATHS_ON_ERROR:
-                if _ not in OnError:
-                    raise Exception(
-                        f"Config failed on unknown CsvPaths error option '{_}'"
-                    )
-            self._set_log_levels()
+        if not path.isfile(self._configpath):
+            raise ConfigurationException("No config file at {self._configpath}")
         else:
-            print(
-                f"No config file at {self.CONFIG}. Using hardcoded defaults."
-            )  # pragma: no cover
+            self._config.read(self._configpath)
+            self.csvpath_file_extensions = self._get(
+                Sections.CSVPATH_FILES.value, "extensions"
+            )
+            self.csv_file_extensions = self._get(Sections.CSV_FILES.value, "extensions")
 
-    def _set_log_levels(self):
-        level = self._get(Sections.LOGGING.value, "csvpath")
-        if level and level.strip() != "":
-            self.CSVPATH_LOG_LEVEL = level.strip().lower()
-        level = self._get(Sections.LOGGING.value, "csvpaths")
-        if level and level.strip() != "":
-            self.CSVPATHS_LOG_LEVEL = level.strip().lower()
-        log_file = self._get(Sections.LOGGING.value, "log_file")
-        if log_file and log_file.strip() != "":
-            self.LOG_FILE = log_file.strip().lower()
-        log_files_to_keep = self._get(Sections.LOGGING.value, "log_files_to_keep")
-        if log_files_to_keep and log_files_to_keep.strip() != "":
-            i = -1
-            try:
-                i = int(log_files_to_keep.strip().lower())
-            except Exception:  # pragma: no cover
-                pass
-            if i > 0 and i < 101:
-                self.LOG_FILES_TO_KEEP = i
-            else:  # pragma: no cover
-                print("[log_files_to_keep] must be between 1-100. Using the default.")
-                self.LOG_FILES_TO_KEEP = CsvPathConfig.DEFAULT_LOG_FILES_TO_KEEP
+            self.csvpath_errors_policy = self._get(Sections.ERRORS.value, "csvpath")
+            self.csvpaths_errors_policy = self._get(Sections.ERRORS.value, "csvpaths")
 
-        log_file_size = self._get(Sections.LOGGING.value, "log_file_size")
-        if log_file_size and log_file_size.strip() != "":
-            try:
-                i = int(log_file_size.strip().lower())
-                if i > 0:
-                    self.LOG_FILE_SIZE = i
-            except Exception:
-                print("[log_file_size] must be an integer. Using the default.")
-                self.LOG_FILE_SIZE = CsvPathConfig.DEFAULT_LOG_FILE_SIZE
+            self.csvpath_log_level = self._get(Sections.LOGGING.value, "csvpath")
+            self.csvpaths_log_level = self._get(Sections.LOGGING.value, "csvpaths")
+
+            self.log_file = self._get(Sections.LOGGING.value, LogFile.LOG_FILE.value)
+            self.log_files_to_keep = self._get(
+                Sections.LOGGING.value, LogFile.LOG_FILES_TO_KEEP.value
+            )
+            self.log_file_size = self._get(
+                Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value
+            )
+        self.validate_config()
+
+    def validate_config(self) -> None:
+        #
+        # files
+        #
+        if (
+            self.csvpath_file_extensions is None
+            or not isinstance(self.csvpath_file_extensions, list)
+            or not len(self.csvpath_file_extensions) > 0
+        ):
+            raise ConfigurationException(
+                f"CsvPath file extensions are wrong: {self.csvpath_file_extensions}"
+            )
+        if (
+            self.csv_file_extensions is None
+            or not isinstance(self.csv_file_extensions, list)
+            or not len(self.csv_file_extensions) > 0
+        ):
+            raise ConfigurationException("CSV file extensions are wrong")
+        #
+        # error policies
+        #
+        if (
+            self.csvpath_errors_policy is None
+            or not isinstance(self.csvpath_errors_policy, list)
+            or not len(self.csvpath_errors_policy) > 0
+        ):
+            raise ConfigurationException("CsvPath error policy is wrong")
+        for _ in self.csvpath_errors_policy:
+            if _ not in OnError:
+                raise ConfigurationException(f"CsvPath error policy {_} is wrong")
+        if (
+            self.csvpaths_errors_policy is None
+            or not isinstance(self.csvpaths_errors_policy, list)
+            or not len(self.csvpaths_errors_policy) > 0
+        ):
+            raise ConfigurationException("CsvPaths error policy is wrong")
+        for _ in self.csvpaths_errors_policy:
+            if _ not in OnError:
+                raise ConfigurationException(f"CsvPaths error policy {_} is wrong")
+        #
+        # log levels
+        #
+        if self.csvpath_log_level is None or not isinstance(
+            self.csvpath_log_level, str
+        ):
+            raise ConfigurationException(
+                f"CsvPath log level is wrong: {self.csvpath_log_level}"
+            )
+        if self.csvpath_log_level not in LogLevels:
+            raise ConfigurationException(f"CsvPath log level {_} is wrong")
+        if self.csvpaths_log_level is None or not isinstance(
+            self.csvpaths_log_level, str
+        ):
+            raise ConfigurationException("CsvPaths log level is wrong")
+        if self.csvpaths_log_level not in LogLevels:
+            raise ConfigurationException(f"CsvPaths log level {_} is wrong")
+        #
+        # log files
+        #
+        if self.log_file is None or not isinstance(self.log_file, str):
+            raise ConfigurationException(f"Log file path is wrong: {self.log_file}")
+        if self.log_files_to_keep is None or not isinstance(
+            self.log_files_to_keep, int
+        ):
+            raise ConfigurationException(
+                f"Log files to keep is wrong: {type(self.log_files_to_keep)}"
+            )
+        if self.log_file_size is None or not isinstance(self.log_file_size, int):
+            raise ConfigurationException("Log files size is wrong")
+
+    # ======================================
+
+    @property
+    def csvpath_file_extensions(self) -> list[str]:
+        return self._csvpath_file_extensions
+
+    @csvpath_file_extensions.setter
+    def csvpath_file_extensions(self, ss: list[str]) -> None:
+        if isinstance(ss, str):
+            ss = [ss]
+        self._csvpath_file_extensions = ss
+
+    @property
+    def csv_file_extensions(self) -> list[str]:
+        return self._csv_file_extensions
+
+    @csv_file_extensions.setter
+    def csv_file_extensions(self, ss: list[str]) -> None:
+        if isinstance(ss, str):
+            ss = [ss]
+        self._csv_file_extensions = ss
+
+    @property
+    def csvpath_errors_policy(self) -> list[str]:
+        return self._csvpath_errors_policy
+
+    @csvpath_errors_policy.setter
+    def csvpath_errors_policy(self, ss: list[str]) -> None:
+        if isinstance(ss, str):
+            ss = [ss]
+        self._csvpath_errors_policy = ss
+
+    @property
+    def csvpaths_errors_policy(self) -> list[str]:
+        return self._csvpaths_errors_policy
+
+    @csvpaths_errors_policy.setter
+    def csvpaths_errors_policy(self, ss: list[str]) -> None:
+        if isinstance(ss, str):
+            ss = [ss]
+        self._csvpaths_errors_policy = ss
+
+    @property
+    def csvpath_log_level(self) -> str:
+        return self._csvpath_log_level
+
+    @csvpath_log_level.setter
+    def csvpath_log_level(self, s: str) -> None:
+        self._csvpath_log_level = s
+
+    @property
+    def csvpaths_log_level(self) -> str:
+        return self._csvpaths_log_level
+
+    @csvpaths_log_level.setter
+    def csvpaths_log_level(self, s: str) -> None:
+        self._csvpaths_log_level = s
+
+    @property
+    def log_file(self) -> str:
+        return self._log_file
+
+    @log_file.setter
+    def log_file(self, s: str) -> None:
+        self._log_file = s
+
+    @property
+    def log_files_to_keep(self) -> int:
+        return self._log_files_to_keep
+
+    @log_files_to_keep.setter
+    def log_files_to_keep(self, i: int) -> None:
+        self._log_files_to_keep = int(i)
+
+    @property
+    def log_file_size(self) -> int:
+        return self._log_file_size
+
+    @log_file_size.setter
+    def log_file_size(self, i: int) -> None:
+        self._log_file_size = int(i)

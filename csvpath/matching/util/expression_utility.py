@@ -5,17 +5,31 @@ from typing import Tuple, Any, List
 
 class ExpressionUtility:
     @classmethod
-    def all(cls, objects: List, aclasslist=None) -> bool:
+    def all(cls, objects: List, classlist: tuple = None) -> bool:
+        if objects is None:
+            return False
+        if not isinstance(objects, (list, tuple)):
+            return True
         if len(objects) == 0:
             return True
-        t = type(objects[0])
-        if aclasslist and t not in aclasslist:
+        #
+        # check first item
+        #
+        if classlist is not None:
+            tup = classlist
+            if not isinstance(classlist, tuple):
+                tup = tuple(classlist)
+            if not isinstance(objects[0], tup):
+                return False
+        #
+        # check all items against each other
+        #
+        for i, o in enumerate(objects):
+            if i == 0:
+                continue
+            if isinstance(o, type(objects[i - 1])):
+                continue
             return False
-        for _ in objects:
-            if aclasslist and type(_) not in aclasslist:
-                return False
-            elif not aclasslist and type(_) is not t:
-                return False
         return True
 
     @classmethod
@@ -46,8 +60,7 @@ class ExpressionUtility:
         elif v is False:
             return 0
         if type(v) is int:
-            # still convert jic
-            return int(v)
+            return v
         v = f"{v}".strip()
         if v == "":
             return 0
@@ -55,6 +68,11 @@ class ExpressionUtility:
             v = int(v)
             return v
         except ValueError:
+            if v.find(",") == len(v) - 3:
+                a = v[0 : v.find(",")]
+                a += "."
+                a += v[v.find(",") + 1 :]
+                v = a
             v = v.replace(",", "")
             v = v.replace(";", "")
             v = v.replace("$", "")
@@ -62,7 +80,7 @@ class ExpressionUtility:
             v = v.replace("£", "")
             if f"{v}".find(".") > -1:
                 v = float(v)
-            # if this doesn't work we'll handle the higher in the stack
+            # if this doesn't work, handle upstack
             return int(v)
 
     @classmethod
@@ -82,14 +100,17 @@ class ExpressionUtility:
             v = float(v)
             return v
         except Exception:
+            if v.find(",") == len(v) - 3:
+                a = v[0 : v.find(",")]
+                a += "."
+                a += v[v.find(",") + 1 :]
+                v = a
             v = v.replace(",", "")
             v = v.replace(";", "")
             v = v.replace("$", "")
             v = v.replace("€", "")
             v = v.replace("£", "")
-        #
-        # if this doesn't work we'll presumably handle the error above
-        #
+        # if this doesn't work, handle upstack
         return float(v)
 
     @classmethod
@@ -114,14 +135,16 @@ class ExpressionUtility:
     @classmethod
     def asbool(cls, v) -> bool:
         ret = None
-        if v is None:
+        if v in [False, None] or cls.isnan(v):
             ret = False
-        elif v is False:
-            ret = False
+        elif v in [True, [], (), {}]:
+            # an empty set is a valid, positive thing in its own right
+            ret = True
         elif f"{v}".lower().strip() == "false":
             ret = False
-        elif v is True:
-            ret = True
+        elif f"{v}".strip() == "nan" or f"{v}".strip() == "NaN":
+            # we don't lowercase. nan is very specific.
+            ret = False
         elif f"{v}".lower().strip() == "true":
             ret = True
         else:
@@ -155,39 +178,10 @@ class ExpressionUtility:
             quals.append(name)
 
     @classmethod
-    def is_simple_name(cls, s: str) -> bool:
-        ret = False
-        if s.isdigit():
-            return False
-        elif s.isalnum():
-            ret = True
-        elif s.find(".") > -1:
-            dotted = True
-            dots = s.split(".")
-            for d in dots:
-                dotted = cls._is_underscored_or_simple(d)
-                if dotted is False:
-                    break
-            ret = dotted
-        else:
-            ret = cls._is_underscored_or_simple(s)
-        return ret
-
-    @classmethod
-    def _is_underscored_or_simple(cls, s: str) -> bool:
-        us = s.split("_")
-        ret = True
-        for u in us:
-            if u.strip() == "":
-                continue
-            if not u.isalnum():
-                ret = False
-                break
-        return ret
-
-    @classmethod
     def get_id(cls, thing):
-        # gets a durable ID so funcs like count() can persist throughout the scan
+        # gets a durable ID so funcs like count() can persist
+        # throughout the scan. for most purposes this is more
+        # than we need.
         id = str(thing)
         p = thing.parent
         while p:
