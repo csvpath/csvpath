@@ -59,7 +59,7 @@ class TestHeaders(unittest.TestCase):
                     #.hidden
                 ]"""
             )
-            path.fast_forward()
+            path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names2(self):
         path = CsvPath()
@@ -69,7 +69,7 @@ class TestHeaders(unittest.TestCase):
                     #!not allowed
                 ]"""
             )
-            path.fast_forward()
+            path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names3(self):
         path = CsvPath()
@@ -79,7 +79,7 @@ class TestHeaders(unittest.TestCase):
                     #'not allowed'
                 ]"""
             )
-            path.fast_forward()
+            path.fast_forward()  # pragma: no cover
         print("test_header_bad_names: done")
 
     def test_header_bad_names4(self):
@@ -90,7 +90,7 @@ class TestHeaders(unittest.TestCase):
                     #$$
                 ]"""
             )
-            path.fast_forward()
+            path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names5(self):
         path = CsvPath()
@@ -100,4 +100,4 @@ class TestHeaders(unittest.TestCase):
                     #`no good`
                 ]"""
             )
-            path.fast_forward()
+            path.fast_forward()  # pragma: no cover

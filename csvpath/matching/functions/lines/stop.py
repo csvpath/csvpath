@@ -11,7 +11,7 @@ class Stop(SideEffect):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self.value = self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         self.match = True
@@ -43,8 +43,8 @@ class Skip(SideEffect):
         self.validate_zero_or_more_args()
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:
-        return self.matches(skip=skip)
+    def _produce_value(self, skip=None) -> None:
+        self.value = self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         if self.do_once():

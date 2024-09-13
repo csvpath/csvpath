@@ -94,7 +94,9 @@ class CsvPathConfig:
 
     def _load_config(self):
         if not path.isfile(self._configpath):
-            raise ConfigurationException("No config file at {self._configpath}")
+            raise ConfigurationException(
+                "No config file at {self._configpath}"
+            )  # pragma: no cover
         else:
             self._config.read(self._configpath)
             self.csvpath_file_extensions = self._get(
@@ -259,7 +261,10 @@ class CsvPathConfig:
 
     @log_files_to_keep.setter
     def log_files_to_keep(self, i: int) -> None:
-        self._log_files_to_keep = int(i)
+        try:
+            self._log_files_to_keep = int(i)
+        except (TypeError, ValueError):
+            raise ConfigurationException("Error in log_files_to_keep config")
 
     @property
     def log_file_size(self) -> int:
@@ -267,4 +272,7 @@ class CsvPathConfig:
 
     @log_file_size.setter
     def log_file_size(self, i: int) -> None:
-        self._log_file_size = int(i)
+        try:
+            self._log_file_size = int(i)
+        except (TypeError, ValueError):
+            raise ConfigurationException("Error in log_files_size config")

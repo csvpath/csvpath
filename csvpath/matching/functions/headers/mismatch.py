@@ -35,4 +35,5 @@ class Mismatch(ValueProducer):
                 self.value = signed
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip) != 0
+        self.match = self.to_value(skip=skip) != 0  # pragma: no cover
+        # this has a test

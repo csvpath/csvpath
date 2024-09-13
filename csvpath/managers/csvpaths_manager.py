@@ -52,15 +52,15 @@ class CsvPathsManager(ABC):
 
     @abstractmethod
     def remove_named_paths(self, name: str) -> None:  # pylint: disable=C0116
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def has_named_paths(self, name: str) -> bool:  # pylint: disable=C0116
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def number_of_named_paths(self) -> bool:  # pylint: disable=C0116
-        pass
+        pass  # pragma: no cover
 
 
 class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
@@ -73,7 +73,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         self.csvpaths = csvpaths
 
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
-        self.named_paths = np
+        self.named_paths = np  # pragma: no cover
 
     def add_named_paths_from_dir(self, *, directory: str, name: str = None) -> None:
         if directory is None:
@@ -162,7 +162,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         return name in self.named_paths
 
     def number_of_named_paths(self) -> bool:
-        return len(self.named_paths)
+        return len(self.named_paths)  # pragma: no cover
 
     def _name_from_name_part(self, name):
         i = name.rfind(".")

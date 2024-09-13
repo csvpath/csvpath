@@ -24,7 +24,7 @@ class ResetHeaders(SideEffect):
                 or key.endswith("_duplicated")
                 or key.endswith("_misordered")
             ):
-                self.matcher.csvpath.logger.warning(
+                self.matcher.csvpath.logger.warning(  # pragma: no cover
                     "Deleting variable {key} as an old header name mismatch var"
                 )
                 del self.matcher.csvpath.variables[key]

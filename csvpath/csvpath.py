@@ -327,6 +327,8 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         the run we were created to do. could be that a match component wanted a
         parsed csvpath for its own purposes. when True, we create and return the
         Matcher, but then forget it ever existed.
+
+        when disposably is False we build the scanner and return that
         """
         #
         # strip off any comments and collect any metadata
@@ -339,11 +341,14 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         csvpath = self._update_file_path(csvpath)
         s, mat = self._find_scan_and_match_parts(csvpath)
+        #
+        # a disposable matcher still needs the match part
+        #
+        self.match = mat
         if disposably:
             pass
         else:
             self.scan = s
-            self.match = mat
             self.scanner = Scanner(csvpath=self)
             self.scanner.parse(s)
         #
@@ -369,8 +374,9 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
     def parse_named_path(self, name, disposably=False):
         """disposably is True when a Matcher is needed for some purpose other than
         the run we were created to do. could be that a match component wanted a
-        parsed csvpath for its own purposes. when True, we create and return the
-        Matcher, but then forget it ever existed.
+        parsed csvpath for its own purposes. import() uses this method.
+
+        when True, we create and return the Matcher, but then forget it ever existed.
 
         also note: the path must have a name or full filename. $[*] is not enough.
         """
@@ -388,8 +394,13 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 len(np),
             )
         path = np[0]
+        print(f"CsvPath.parse_named_path: path before update file path: {path}")
+        path = MetadataParser().extract_metadata(instance=self, csvpath=path)
+        print(f"CsvPath.parse_named_path: path after metadata parser: {path}")
         path = self._update_file_path(path)
+        print(f"CsvPath.parse_named_path: path after update file path: {path}")
         dis = self.parse(path, disposably=disposably)
+        print(f"CsvPath.parse_named_path: dis: {dis}")
         if disposably is True:
             return dis
         return None
@@ -802,6 +813,20 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
     def matches(self, line) -> bool:  # pylint: disable=C0116
         if not self.match:
             return True
+        #
+        # when we first consider a line we don't have a matcher. we build
+        # it on the fly. later, we just reset the matcher for the new lines.
+        #
+        # when we originally call parse we're just parsing for the scanner:
+        #
+        #   path = CsvPath()
+        #   path.parse ("$file[*][yes()]")
+        #   path.fast_forward()
+        #
+        # "find_file" would be a more intuitive method name. we don't create
+        # the path's matcher until the 3rd line. by then we're on the 3rd parser
+        # and 4 parse.
+        #
         if self.matcher is None:
             h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
             self.logger.info("Loading matcher with data. match part hash: %s", h)

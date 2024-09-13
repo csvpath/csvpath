@@ -1,5 +1,7 @@
 import unittest
 from csvpath.csvpath import CsvPath
+from csvpath.matching.matcher import Matcher
+from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from tests.save import Save
 
@@ -204,3 +206,35 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert "b" in path.variables
         assert path.variables["a"] is True
         assert path.variables["b"] == "true"
+
+    def test_qualified_properties(self):
+        path = CsvPath()
+        matcher = Matcher(csvpath=path, data="[]")
+        stop = Stop(matcher, name="stop")
+        assert not stop.asbool
+        stop.asbool = True
+        assert stop.asbool
+
+        assert not stop.onmatch
+        stop.onmatch = True
+        assert stop.onmatch
+
+        assert not stop.onchange
+        stop.onchange = True
+        assert stop.onchange
+
+        assert not stop.latch
+        stop.latch = True
+        assert stop.latch
+
+        assert not stop.nocontrib
+        stop.nocontrib = True
+        assert stop.nocontrib
+
+        assert not stop.notnone
+        stop.notnone = True
+        assert stop.notnone
+
+        assert not stop.once
+        stop.once = True
+        assert stop.once

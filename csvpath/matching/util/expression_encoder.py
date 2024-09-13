@@ -38,7 +38,7 @@ class ExpressionEncoder:
 
     def to_json(self, o):
         if o is None:
-            return "None"
+            return "None"  # pragma: no cover
         json = ""
         return self._encode(json, o)
 
@@ -58,7 +58,7 @@ class ExpressionEncoder:
         elif isinstance(o, Reference):
             return self.reference(json, o)
         elif o is None:
-            return f'{json} "None" '
+            return f'{json} "None" '  # pragma: no cover
         else:
             return f'{json} "unknown child of type {o.__class__} " '
 

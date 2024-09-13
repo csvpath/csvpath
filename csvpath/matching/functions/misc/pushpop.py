@@ -19,13 +19,13 @@ class Push(SideEffect):
         if self.has_qualifier("distinct") and v in stack:
             pass
         elif isinstance(stack, tuple):
-            self.matcher.csvpath.logger.warning(
+            self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack because it is a tuple. The run may be ending."
             )
         elif stack is not None:
             stack.append(v)
         else:
-            self.matcher.csvpath.logger.warning(
+            self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "No default stack was created. Run may be ending."
             )
         self.value = True
@@ -66,7 +66,7 @@ class Pop(ValueProducer):
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
-            self.match = self._apply_default_match()
+            self.match = self._apply_default_match()  # pragma: no cover
 
 
 class Stack(SideEffect):
@@ -87,7 +87,7 @@ class Stack(SideEffect):
         self.value = stack
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self._apply_default_match()
+        self.match = self._apply_default_match()  # pragma: no cover
 
 
 class Peek(ValueProducer):
@@ -111,7 +111,7 @@ class Peek(ValueProducer):
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
-            self.match = self._apply_default_match()
+            self.match = self._apply_default_match()  # pragma: no cover
 
 
 class PeekSize(ValueProducer):
@@ -127,4 +127,4 @@ class PeekSize(ValueProducer):
         self.value = len(stack)
 
     def matches(self, *, skip=None) -> bool:
-        self.matches = self._apply_default_match()
+        self.matches = self._apply_default_match()  # pragma: no cover

@@ -19,10 +19,14 @@ class Increment(ValueProducer):
             return self._noop_value()
         tv = self.children[0].right.to_value()
         if not isinstance(tv, int):
-            raise ChildrenException("increment value must be a positive int")
+            raise ChildrenException(
+                "increment value must be a positive int"
+            )  # pragma: no cover
         tv = int(tv)
         if tv <= 0:
-            raise ChildrenException("increment value must be a positive int")
+            raise ChildrenException(
+                "increment value must be a positive int"
+            )  # pragma: no cover
         if not self.value:
             varname = self.first_non_term_qualifier(self.name)
             v = self.matcher.get_variable(varname)

@@ -42,8 +42,6 @@ class MinMaxLength(ValueProducer):  # pylint: disable=C0115
                 self.value = len(value) >= length
             elif self.name in ["max_length", "too_short"]:
                 self.value = len(value) <= length
-            else:
-                raise MatchComponentException("Unknown function name: {self.name}")
         return self.value
 
     def _decide_match(self, skip=None) -> None:

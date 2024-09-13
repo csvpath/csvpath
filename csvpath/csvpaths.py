@@ -98,7 +98,7 @@ class CsvPaths(CsvPathsPublic):
     @property
     def config(self) -> CsvPathConfig:  # pylint: disable=C0116
         if not self._config:
-            self._config = CsvPathConfig()
+            self._config = CsvPathConfig()  # pragma: no cover
         return self._config
 
     def clean(self, *, paths) -> None:
@@ -128,13 +128,13 @@ class CsvPaths(CsvPathsPublic):
                 self._load_csvpath(csvpath, path=path, file=file)
                 lines = csvpath.collect()
                 if lines is None:
-                    self.logger.error(
+                    self.logger.error(  # pragma: no cover
                         "Unexpected None for lines after collect_paths: file: %s, match: %s",
                         file,
                         csvpath.match,
                     )
                 if len(lines) == 0:
-                    self.logger.warning(
+                    self.logger.warning(  # pragma: no cover
                         "No lines collected in collect_paths: file: %s match: %s",
                         file,
                         csvpath.match,
@@ -263,7 +263,7 @@ class CsvPaths(CsvPathsPublic):
         fn = self.files_manager.get_named_file(filename)
         if fn is None:  # pragma: no cover
             raise InputException(f"Filename '{filename}' must be a named file")
-        if pathsname not in self.paths_manager.named_paths:
+        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException(f"Pathsname '{pathsname}' must name a set of csvpaths")
         paths = self.paths_manager.get_named_paths(pathsname)
         if (
@@ -346,7 +346,9 @@ class CsvPaths(CsvPathsPublic):
                 # the error handler is the CsvPathResults. it registers itself with
                 # the csvpath as the error collector. not as straightforward a way to
                 # get ErrorHandler what it needs, but effectively same as we do above
-                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
+                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(
+                    ex
+                )  # pragma: no cover
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):

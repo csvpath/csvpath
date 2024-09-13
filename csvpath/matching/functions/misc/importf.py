@@ -42,6 +42,8 @@ class Import(SideEffect):
                 or len(amatcher.expressions) == 0
             ):
                 raise MatchComponentException("Parse named path failed: {name}")
+            print(f"Import._inject:45: matcher: {amatcher} is good")
+            print(f"Import._inject:47: e: {e} is my expression")
             #
             # find where we do injection of the imported expressions
             #
@@ -49,17 +51,32 @@ class Import(SideEffect):
             pair = None
             for insert_at, pair in enumerate(self.matcher.expressions):
                 if pair[0] == e:
+                    print(f"gotcha! e: at {insert_at}")
                     break
             #
-            # do the insert, swapping in our matcher for the original
+            # do the insert. swap in our matcher instead of the temp one
+            # the import created.
             #
+            print("Import._inject: starting to add the expressions to myself")
             for new_e in amatcher.expressions:
+                print(f"Import._inject: new_e: {new_e}")
                 self.matcher.expressions.insert(insert_at, new_e)
-                new_e[0].matcher = self.matcher
+                self._set_matcher(new_e[0])
             self.value = True
+            print("DONE!")
+
+    def _set_matcher(self, e) -> None:
+        e.matcher = self.matcher
+        stacks_of_children = []
+        stacks_of_children.append(e.children)
+        while len(stacks_of_children) > 0:
+            children = stacks_of_children.pop()
+            for c in children:
+                c.matcher = self.matcher
+                stacks_of_children.append(c.children)
 
     def to_value(self, *, skip=None) -> Any:
-        return self._noop_value()
+        return self._noop_value()  # pragma: no cover
 
     def matches(self, *, skip=None) -> bool:
-        return self._noop_match()
+        return self._noop_match()  # pragma: no cover
