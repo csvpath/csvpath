@@ -424,6 +424,9 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more
 
 Visit <a href="csvpath.org">http://csvpath.org</a>
 
+# Sponsors
+
+<a href='https://www.atestaanalytics.com/'><img src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-trimmed.png" alt="Atesta Analytics"/></a>
 
 
 
