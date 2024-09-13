@@ -11,6 +11,19 @@ from typing import Any, List
 
 
 class ExpressionEncoder:
+    def __init__(self):
+        self.indent = []
+
+    def push(self, s="{"):
+        c = "".join(self.indent)
+        self.indent.append("  ")
+        return f"{s}\n{c}"
+
+    def pop(self, s="}"):
+        self.indent.pop()
+        c = "".join(self.indent)
+        return f"\n{c}{s}"
+
     def list_to_json(self, alist: List[Any]) -> str:
         json = "[ "
         for _ in alist:
@@ -92,44 +105,45 @@ class ExpressionEncoder:
             return v
 
     def expression(self, json: str, e) -> str:
-        json = f"{json} " + '{ "type":"expression", '
+        json = f"{json} " + f'{self.push()} "type":"expression", '
         json = self.matchable(json, e)
-        json = f"{json} " + "} "
+        json = f'{json} "matcher_id":"{e.matcher._id}"'
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def equality(self, json: str, e) -> str:
-        json = f"{json} " + '{ "type":"equality", '
+        json = f"{json} " + f'{self.push()} "type":"equality", '
         json = self.matchable(json, e)
         json = f'{json}, "op":"{e.op}" '
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def function(self, json: str, f) -> str:
-        json = f"{json} " + '{ "type":"function", '
+        json = f"{json} " + f'{self.push()} "type":"function", '
         json = self.matchable(json, f)
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def header(self, json: str, h) -> str:
-        json = f"{json} " + '{ "type":"header", '
+        json = f"{json} " + f'{self.push()} "type":"header", '
         json = self.matchable(json, h)
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def variable(self, json: str, v) -> str:
-        json = f"{json} " + '{ "type":"variable", '
+        json = f"{json} " + f'{self.push()} "type":"variable", '
         json = self.matchable(json, v)
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def term(self, json: str, t) -> str:
-        json = f"{json} " + '{ "type":"term", '
+        json = f"{json} " + f'{self.push()} "type":"term", '
         json = self.matchable(json, t)
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json
 
     def reference(self, json: str, r) -> str:
-        json = f"{json} " + '{ "type":"reference", '
+        json = f"{json} " + f'{self.push()} "type":"reference", '
         json = self.matchable(json, r)
-        json = f"{json} " + "} "
+        json = f"{json} " + f"{self.pop()} "
         return json

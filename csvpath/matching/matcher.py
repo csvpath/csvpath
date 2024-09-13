@@ -16,7 +16,7 @@ class Matcher:  # pylint: disable=R0902
 
     # re: R0902: no obvious improvements
 
-    def __init__(self, *, csvpath=None, data=None, line=None, headers=None):
+    def __init__(self, *, csvpath=None, data=None, line=None, headers=None, myid=None):
         if not headers:
             # this could be a dry-run or unit testing
             pass
@@ -25,6 +25,7 @@ class Matcher:  # pylint: disable=R0902
         self.path = data
         self.csvpath = csvpath
         self._line = line
+        self._id = f"{myid}"
         self.expressions = []
         self.if_all_match = []
         self.skip = False

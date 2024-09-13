@@ -394,13 +394,9 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 len(np),
             )
         path = np[0]
-        print(f"CsvPath.parse_named_path: path before update file path: {path}")
         path = MetadataParser().extract_metadata(instance=self, csvpath=path)
-        print(f"CsvPath.parse_named_path: path after metadata parser: {path}")
         path = self._update_file_path(path)
-        print(f"CsvPath.parse_named_path: path after update file path: {path}")
         dis = self.parse(path, disposably=disposably)
-        print(f"CsvPath.parse_named_path: dis: {dis}")
         if disposably is True:
             return dis
         return None
@@ -831,7 +827,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
             self.logger.info("Loading matcher with data. match part hash: %s", h)
             self.matcher = Matcher(
-                csvpath=self, data=self.match, line=line, headers=self.headers
+                csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
         else:
             self.logger.debug("Resetting and reloading matcher")
