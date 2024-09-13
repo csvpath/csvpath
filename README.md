@@ -426,7 +426,7 @@ Visit <a href="csvpath.org">http://csvpath.org</a>
 
 # Sponsors
 
-<a href='https://www.atestaanalytics.com/'><img width="25%" style="max-width: 100%;background-color:#000;padding:10px 10px" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-trimmed.png" alt="Atesta Analytics"/></a>
+<a href='https://www.atestaanalytics.com/' style="max-width: 100%;background-color:#000;padding:10px 10px" ><img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-trimmed.png" alt="Atesta Analytics"/></a>
 
 
 
