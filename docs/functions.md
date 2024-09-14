@@ -5,6 +5,14 @@ Functions perform work within a csvpath. A function is represented by a name fol
 
 There are dozens of functions listed below. More functions can be easily created.
 
+- Boolean
+- Counting
+- Headers
+- [Math](#math)
+- Misc
+- Strings
+- Stats
+
 Functions can contain:
 - Terms
 - Variables
@@ -64,7 +72,9 @@ Most of the work of matching is done in functions. The match functions are the f
 
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
-<tr><td> Math      </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>
+    <a name="math"></a>
+    Math      </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td>  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>        </td><td> adds numbers                                              </td></tr>
 <tr><td>           </td><td>  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>     </td><td> divides numbers                                           </td></tr>
 <tr><td>           </td><td>  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>   </td><td> multiplies numbers                                        </td></tr>
