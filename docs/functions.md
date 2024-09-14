@@ -8,8 +8,8 @@ Most of the work of matching is done in match component functions. There are doz
 - [Headers](#headers)
 - [Math](#math)
 - [Misc](#misc)
-- [Strings](#stats)
-- [Stats](#strings)
+- [Strings](#strings)
+- [Stats](#stats)
 
 ## Overview
 
