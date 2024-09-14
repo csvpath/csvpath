@@ -5,13 +5,13 @@ Functions perform work within a csvpath. A function is represented by a name fol
 
 There are dozens of functions listed below. More functions can be easily created.
 
-- Boolean
-- Counting
-- Headers
+- [Boolean](#boolean)
+- [Counting](#counting)
+- [Headers](#headers)
 - [Math](#math)
-- Misc
-- Strings
-- Stats
+- [Misc](#misc)
+- [Strings](#strings)
+- [Stats](#strings)
 
 Functions can contain:
 - Terms
@@ -46,7 +46,9 @@ Most of the work of matching is done in functions. The match functions are the f
 
 <table>
 <tr><th> Group     </th><th>Function                       </th><th> What it does                                              </th></tr>
-<tr><td> Boolean   </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>
+    <a name="boolean">
+    Boolean   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>gt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>above( value, value)</a> </td><td> finds things after a date, number, string        </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>lt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>below( value, value)</a></td><td> finds things before a date, number, string       </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>outside(value, value, value)</a> </td><td> returns true when a value is found between to others     </td></tr>
@@ -86,7 +88,8 @@ Most of the work of matching is done in functions. The match functions are the f
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/sum.md'>sum(value)</a> </td><td> returns a running subtotal of the value </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a> </td><td> rounds a number </td></tr>
-<tr><td> Stats     </td><td>                               </td><td>                                                           </td></tr>
+<tr><td> <a name="stats">
+    Stats     </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/correlate.md'>correlate(value, value)</a> </td><td> gives the running correlation between two values </td></tr>
 <tr><td>           </td><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
@@ -96,7 +99,8 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/percent_unique.md'>percent_unique(header)</a> </td><td> % of unique values found in the header values  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>stdev(stack)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>pstdev(stack)</a> </td><td> returns the standard deviation of numbers pushed on a stack  </td></tr>
 
-<tr><td> Counting  </td><td>                               </td><td>                                                           </td></tr>
+<tr><td> <a name="counting">
+    Counting  </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count()</a> </td><td> counts the number of matches            </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count(value)</a> </td><td> count matches of value              </td></tr>
 <tr><td>           </td><td> count_lines()                 </td><td> count the lines of data to this point in the file                     </td></tr>
@@ -108,7 +112,9 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/tally.md'>tally(value, value, ...)</a></td><td> counts times values are seen, including as a set   </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/total_lines.md'>total_lines()</a></td><td> returns the number of rows in the file being scanned   </td></tr>
-<tr><td> Strings   </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>
+    <a name="strings">
+    Strings   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>concat(value, value, ...)</a> </td><td> joins any number of values                 </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>length(value)</a>             </td><td> returns the length of the value                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>lower(value)</a>              </td><td> makes a value lowercase                                     </td></tr>
@@ -124,7 +130,9 @@ Most of the work of matching is done in functions. The match functions are the f
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> applies a Jinja2 template                           </td></tr>
 
-<tr><td> Headers   </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>
+    <a name="headers">
+    Headers   </td><td>                               </td><td>                                                           </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last header value                      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> returns header name for an index or index for a name      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>headers(value)</a>  </td><td> indicates to another function that it should look in headers.      </td></tr>
@@ -134,7 +142,9 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> sets the headers to the values of the current line      </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> returns the difference in number of value vs. number of headers      </td></tr>
 
-<tr><td> Other     </td><td>                               </td><td>                                                           </td></tr>
+<tr><td>
+    <a name="misc">
+Misc     </td><td>                               </td><td>                                                           </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/advance.md'>advance(int)</a></td><td> skips the next n-rows </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/after_blank.md'>after_blank()</a></td><td> matches when a line was preceded by a blank line </td></tr>
