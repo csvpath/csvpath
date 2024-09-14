@@ -1,4 +1,4 @@
 [
-                @d = has_dups()
-                empty(@d)
+                @d = dup_lines()
+                empty(dup_lines())
             ]

@@ -5,9 +5,6 @@ from csvpath.matching.util.exceptions import ChildrenException
 from ..headers.headers import Headers
 from csvpath.matching.util.expression_utility import ExpressionUtility
 
-# note to self: should be possible to request a check of all
-# headers.
-
 
 class Empty(MatchDecider):
     """checks for empty or blank header values in a given line.
@@ -50,13 +47,11 @@ class Empty(MatchDecider):
     # empty(var)
     # empty(ref)
     #
-
     def _decide_match(self, skip=None) -> None:
         print(f"empty._decide: chs: {self.children}")
         if len(self.children) == 1 and isinstance(self.children[0], Headers):
             self._do_headers(skip=skip)
         elif len(self.children) == 1 and isinstance(self.children[0], Equality):
-            print(f"\nempty._decide: chs: {self.children[0].children}")
             self._do_many(skip=skip)
         elif len(self.children) == 1:
             self._do_one(self.children[0], skip=skip)
@@ -77,7 +72,6 @@ class Empty(MatchDecider):
             siblings = self.children[0].commas_to_list()
         else:
             siblings = self.children[0]
-        print(f"empty._do_many: sibs: {siblings}")
 
         for s in siblings:
             print(f"empty._do_many: a sib: {s}")

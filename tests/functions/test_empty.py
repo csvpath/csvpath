@@ -15,15 +15,19 @@ class TestFunctionsEmpty(unittest.TestCase):
         Save._save(path, "test_function_empty1")
         path.parse(
             f"""
-            ${PATH}[*]
-            [
-                @d = has_dups()
-                empty(@d)
-            ]"""
+            ${PATH}[*][ @d2 = dup_lines(#0) empty(dup_lines(#0)) ]"""
         )
         lines = path.collect()
         print(f"\n test_function_empty1: lines: {lines}")
         print(f"test_function_empty1: path vars: {path.variables}")
+        assert len(lines) == 8
+        path.parse(
+            f""" ${PATH}[*][
+                @d = dup_lines()
+                empty(dup_lines())
+            ]"""
+        )
+        lines = path.collect()
         assert len(lines) == 9
 
     def test_function_empty2(self):

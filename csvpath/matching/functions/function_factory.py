@@ -55,7 +55,7 @@ from .print.print_queue import PrintQueue
 from .lines.stop import Stop, Skip
 from .lines.first import First
 from .lines.last import Last
-from .lines.dups import HasDups
+from .lines.dups import HasDups, DupLines, CountDups
 from .lines.first_line import FirstLine
 from .lines.advance import Advance
 from .lines.after_blank import AfterBlank
@@ -271,8 +271,15 @@ class FunctionFactory:
             f = Stack(matcher, name, child)
         elif name in ["stdev", "pstdev"]:
             f = Stdev(matcher, name, child)
+        #
+        # dup_lines can also decide matches
+        #
         elif name == "has_dups":
             f = HasDups(matcher, name, child)
+        elif name == "count_dups":
+            f = CountDups(matcher, name, child)
+        elif name == "dup_lines":
+            f = DupLines(matcher, name, child)
         elif name == "empty":
             f = Empty(matcher, name, child)
         elif name == "advance":

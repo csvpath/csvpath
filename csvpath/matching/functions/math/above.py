@@ -12,27 +12,27 @@ class AboveBelow(MatchDecider):
         self.validate_two_args()
         super().check_valid()
 
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
-
     def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
         thischild = self.children[0].children[0]
         abovethatchild = self.children[0].children[1]
         a = thischild.to_value(skip=skip)
         b = abovethatchild.to_value(skip=skip)
         if a is None and b is not None or b is None and a is not None:
-            self.value = False
+            self.match = False
         else:
             if ExpressionUtility.all([a, b], [float, int]):
-                self.value = self._try_numbers(a, b)
+                self.match = self._try_numbers(a, b)
             elif ExpressionUtility.all([a, b], [datetime]):
-                self.value = self._try_dates(a, b)
+                self.match = self._try_dates(a, b)
             elif ExpressionUtility.all([a, b], [date]):
-                self.value = self._try_dates(a, b)
+                self.match = self._try_dates(a, b)
             else:
-                self.value = self._try_strings(a, b)
-        if self.value is None:
-            self.value = False  # pragma: no cover
+                self.match = self._try_strings(a, b)
+        if self.match is None:
+            self.match = False  # pragma: no cover
 
     def _above(self) -> bool:
         if self.name in ["gt", "above", "after"]:

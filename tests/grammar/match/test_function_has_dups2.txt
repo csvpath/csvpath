@@ -1,5 +1,5 @@
 [
-                @d = has_dups(#0,#1)
-                not(empty(@d)) -> print("line $.csvpath.line_count has dups in $.variables.d")
-
-            ]
+                @d = dup_lines(#0,#1)
+                dup_lines(#0,#1) -> print("line $.csvpath.line_count has dups in $.variables.d")
+                @c = count_dups(#0,#1)
+           ]
