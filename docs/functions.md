@@ -1,9 +1,7 @@
 
 # Functions
 
-Most of the work of matching is done in match component functions. The functions are the following.
-
-There are dozens of functions. They are listed below. More functions can be easily created.
+Most of the work of matching is done in match component functions. There are dozens of functions in several groups.
 
 - [Boolean](#boolean)
 - [Counting](#counting)
