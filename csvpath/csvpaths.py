@@ -347,25 +347,6 @@ class CsvPaths(CsvPathsPublic):
                         # side-effects or to have the different results in
                         # different named-results, as well as the union
                         #
-                        """
-                        #
-                        # we are not keeping the line but we have to have all
-                        # csvpaths have a crack at it just to keep them in sync.
-                        # we could advance 1 for efficiency. maybe. but that would
-                        # eliminate expected side-effects.
-                        #
-                         if if_all_agree and not keep:
-                            self.current_matcher.track_line(line)
-                            self.current_matcher._consider_line(  # pylint:disable=W0212
-                                line
-                            )
-                            if self.current_matcher.stopped:
-                                stopped_count.append(1)
-                            continue
-                        """
-                        #
-                        #
-                        #
                         self.logger.debug(
                             "considering line with csvpath: %s",
                             self.current_matcher.identity,
@@ -380,9 +361,6 @@ class CsvPaths(CsvPathsPublic):
                                 line
                             )
                         )
-                        print(
-                            f"CsvPaths.next_by_line: {self.current_matcher.identity}, if_all_agree: {if_all_agree}, matched: {matched}, line: {line[0]}, when_not_matched: {self.current_matcher.collect_when_not_matched}"
-                        )
                         if self.current_matcher.stopped:
                             stopped_count.append(1)
                         if if_all_agree:
@@ -390,11 +368,9 @@ class CsvPaths(CsvPathsPublic):
                         else:
                             keep = keep or matched
                         #
-                        # not doing continue allows individual results to have lines that
-                        # in aggregate we do not keep. is that good? seems like it.
-                        #
-                        # if if_all_agree and not keep:
-                        #   continue
+                        # not doing continue if we have if_all_agree and not keep as we
+                        # used to do allows individual results to have lines that in
+                        # aggregate we do not keep.
                         #
                         if matched and collect:
                             line = self.current_matcher.limit_collection(line)
