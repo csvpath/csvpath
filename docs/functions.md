@@ -1,7 +1,7 @@
 
 # Functions
 
-Most of the work of matching is done in functions. The match functions are the following.
+Most of the work of matching is done in match component functions. The functions are the following.
 
 There are dozens of functions. They are listed below. More functions can be easily created.
 
@@ -27,7 +27,7 @@ Functions can contain:
 - Variable assignment
 - Other functions
 
-Some functions take a specific or unlimited number of types as arguments.
+They can not include when/do expressions. This means you cannot use `->` within a function.
 
 Certain functions have qualifiers. An `onmatch` qualifier indicates that
 the function should be applied only when the whole path matches.
