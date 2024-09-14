@@ -136,11 +136,72 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping"):
-            print(f"....lines[{i}]: {line}")
+            print(f"test_csvpaths_stopping: lines[{i}]: {line}")
             i += 1
         cs.results_manager.get_named_results("stopping")
         vs = cs.results_manager.get_variables("stopping")
-        print(f"stopping vs: {vs}")
-        assert i == 8
+        print(f"test_csvpaths_stopping: stopping vs: {vs}")
+        assert i == 7
         assert vs["one"] == [0, 1, 2]
         assert vs["two"] == [0, 1, 2, 3, 4, 5, 6]
+
+    def test_csvpaths_correct_lines_returned1(self):
+        paths = CsvPaths()
+        paths.files_manager.set_named_files(FILES)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        #
+        # from 2 csvpaths we want to see:
+        #   - 3 from 9 because both agree
+        #   - 6 from 9 because just one agrees
+        #
+        lines = paths.collect_by_line(
+            filename="test", pathsname="all_agree", if_all_agree=True
+        )
+        print(f"\n test_csvpaths_correct_lines_returned: expect 1st 3 lines: {lines}")
+        assert len(lines) == 3
+
+        lines = paths.collect_by_line(
+            filename="test", pathsname="all_agree", if_all_agree=False
+        )
+        print(f"\n test_csvpaths_correct_lines_returned: expect first 6 lines: {lines}")
+        assert len(lines) == 6
+
+    def test_csvpaths_correct_lines_returned2(self):
+        paths = CsvPaths()
+        paths.files_manager.set_named_files(FILES)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        #
+        # from 2 csvpaths we want to see:
+        #   - 3 of 9 returned because both agree
+        #   - 6 of 9 returned because just one
+        #
+        lines = paths.collect_by_line(
+            filename="test",
+            pathsname="all_agree",
+            if_all_agree=True,
+            collect_when_not_matched=True,
+        )
+        print(
+            f"\n test_csvpaths_correct_lines_returned: not matched expect last 3 lines: {lines}"
+        )
+        assert len(lines) == 3
+        assert lines[0] == ["Ants", "Bat", "skriffle..."]
+        assert lines[1] == ["Slug", "Bat", "oozeeee..."]
+        assert lines[2] == ["Frog", "Bat", "growl"]
+
+        lines = paths.collect_by_line(
+            filename="test",
+            pathsname="all_agree",
+            if_all_agree=False,
+            collect_when_not_matched=True,
+        )
+        print(
+            f"\n test_csvpaths_correct_lines_returned: not matched expect last 6 lines: {lines}"
+        )
+        assert len(lines) == 6
+        assert lines[0] == ["Frog", "Bat", "ribbit..."]
+        assert lines[1] == ["Bug", "Bat", "sniffle sniffle..."]
+        assert lines[2] == ["Bird", "Bat", "flap flap..."]
+        assert lines[3] == ["Ants", "Bat", "skriffle..."]
+        assert lines[4] == ["Slug", "Bat", "oozeeee..."]
+        assert lines[5] == ["Frog", "Bat", "growl"]

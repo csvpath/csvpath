@@ -46,18 +46,28 @@ class CsvPathsPublic(ABC):
         """Does a CsvPath.next() on filename for every line against every named path in sequence"""
 
     @abstractmethod
-    def collect_by_line(self, *, pathsname, filename):  # pragma: no cover
+    def collect_by_line(
+        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+    ):  # pragma: no cover
         """Does a CsvPath.collect() on filename where each row is considered
         by every named path before the next row starts"""
 
     @abstractmethod
-    def fast_forward_by_line(self, *, pathsname, filename):  # pragma: no cover
+    def fast_forward_by_line(
+        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+    ):  # pragma: no cover
         """Does a CsvPath.fast_forward() on filename where each row is
         considered by every named path before the next row starts"""
 
     @abstractmethod
     def next_by_line(
-        self, *, pathsname, filename, collect: bool = False
+        self,
+        *,
+        pathsname,
+        filename,
+        collect: bool = False,
+        if_all_agree=False,
+        collect_when_not_matched=False,
     ) -> List[Any]:  # pragma: no cover
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts"""
@@ -224,27 +234,48 @@ class CsvPaths(CsvPathsPublic):
 
     # =============== breadth first processing ================
 
-    def collect_by_line(self, *, pathsname, filename):
+    def collect_by_line(
+        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+    ):
         self.logger.info(
             "Starting collect_by_line for paths: %s and file: %s", pathsname, filename
         )
+        lines = []
         for line in self.next_by_line(  # pylint: disable=W0612
-            pathsname=pathsname, filename=filename, collect=True
+            pathsname=pathsname,
+            filename=filename,
+            collect=True,
+            if_all_agree=if_all_agree,
+            collect_when_not_matched=collect_when_not_matched,
         ):
             # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
-            pass
+            lines.append(line)
         self.logger.info(
             "Completed collect_by_line for paths: %s and file: %s", pathsname, filename
         )
+        #
+        # the results have all the lines according to what CsvPath captured them, but
+        # since we're doing if_all_agree T/F we should return the union here. for some
+        # files this obviously makes the data in memory problem even bigger, but it's
+        # operator's responsibility to know if that will be a problem for their use
+        # case.
+        #
+        return lines
 
-    def fast_forward_by_line(self, *, pathsname, filename):
+    def fast_forward_by_line(
+        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+    ):
         self.logger.info(
             "Starting fast_forward_by_line for paths: %s and file: %s",
             pathsname,
             filename,
         )
         for line in self.next_by_line(  # pylint: disable=W0612
-            pathsname=pathsname, filename=filename, collect=False
+            pathsname=pathsname,
+            filename=filename,
+            collect=False,
+            if_all_agree=if_all_agree,
+            collect_when_not_matched=collect_when_not_matched,
         ):
             # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
             pass
@@ -255,7 +286,13 @@ class CsvPaths(CsvPathsPublic):
         )
 
     def next_by_line(  # pylint: disable=R0912
-        self, *, pathsname, filename, collect: bool = False
+        self,
+        *,
+        pathsname,
+        filename,
+        collect: bool = False,
+        if_all_agree=False,
+        collect_when_not_matched=False,
     ) -> List[Any]:
         # re: R0912 -- absolutely does have too many branches. will refactor later.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
@@ -272,7 +309,11 @@ class CsvPaths(CsvPathsPublic):
             raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
-        csvpath_objects = self._load_csvpath_objects(paths=paths, named_file=fn)
+        csvpath_objects = self._load_csvpath_objects(
+            paths=paths,
+            named_file=fn,
+            collect_when_not_matched=collect_when_not_matched,
+        )
         self._prep_csvpath_results(
             csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname
         )
@@ -292,7 +333,7 @@ class CsvPaths(CsvPathsPublic):
             for line in reader:  # pylint: disable=R1702
                 # note to self: this default should be determined in a central place
                 # so that we can switch to OR, in part by changing the default to False
-                line_matched = True
+                keep = if_all_agree
                 try:
                     #
                     # p is a (CsvPath, List[List[str]]) where the second item is
@@ -300,23 +341,64 @@ class CsvPaths(CsvPathsPublic):
                     for p in csvpath_objects:
                         self.current_matcher = p[0]
                         if self.current_matcher.stopped:  # pylint: disable=R1724
-                            # using if/else and continue just to be over-clear
                             continue
-                        else:
+                        #
+                        # allowing the match to happen because we may want
+                        # side-effects or to have the different results in
+                        # different named-results, as well as the union
+                        #
+                        """
+                        #
+                        # we are not keeping the line but we have to have all
+                        # csvpaths have a crack at it just to keep them in sync.
+                        # we could advance 1 for efficiency. maybe. but that would
+                        # eliminate expected side-effects.
+                        #
+                         if if_all_agree and not keep:
                             self.current_matcher.track_line(line)
-                            #
-                            # re: W0212: treating _consider_line something like package private
-                            #
-                            matched = self.current_matcher._consider_line(  # pylint:disable=W0212
+                            self.current_matcher._consider_line(  # pylint:disable=W0212
                                 line
                             )
-                            line_matched = line_matched and matched
-                            if matched and collect:
-                                line = self.current_matcher.limit_collection(line)
-                                p[1].append(line)
-                            if matched or self.current_matcher.stopped:
-                                if self.current_matcher.stopped:
-                                    stopped_count.append(1)
+                            if self.current_matcher.stopped:
+                                stopped_count.append(1)
+                            continue
+                        """
+                        #
+                        #
+                        #
+                        self.logger.debug(
+                            "considering line with csvpath: %s",
+                            self.current_matcher.identity,
+                        )
+                        matched = False
+                        self.current_matcher.track_line(line)
+                        #
+                        # re: W0212: treating _consider_line something like package private
+                        #
+                        matched = (
+                            self.current_matcher._consider_line(  # pylint:disable=W0212
+                                line
+                            )
+                        )
+                        print(
+                            f"CsvPaths.next_by_line: {self.current_matcher.identity}, if_all_agree: {if_all_agree}, matched: {matched}, line: {line[0]}, when_not_matched: {self.current_matcher.collect_when_not_matched}"
+                        )
+                        if self.current_matcher.stopped:
+                            stopped_count.append(1)
+                        if if_all_agree:
+                            keep = keep and matched
+                        else:
+                            keep = keep or matched
+                        #
+                        # not doing continue allows individual results to have lines that
+                        # in aggregate we do not keep. is that good? seems like it.
+                        #
+                        # if if_all_agree and not keep:
+                        #   continue
+                        #
+                        if matched and collect:
+                            line = self.current_matcher.limit_collection(line)
+                            p[1].append(line)
                 except Exception as ex:  # pylint: disable=W0718
                     ex.trace = traceback.format_exc()
                     ex.source = self
@@ -325,18 +407,23 @@ class CsvPaths(CsvPathsPublic):
                     ).handle_error(ex)
                 # we yield even if we stopped in this iteration.
                 # caller needs to see what we stopped on.
-                yield line
+                #
+                # !!! we only yield if keep is True
+                #
+                if keep:
+                    yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
                 # note to self: we have the lines in p[1]. we could, optionally, iteratively
                 # move them to the results here. probably a future requirement.
 
     def _load_csvpath_objects(
-        self, *, paths: List[str], named_file: str
+        self, *, paths: List[str], named_file: str, collect_when_not_matched=False
     ) -> List[Tuple[CsvPath, List]]:
         csvpath_objects = []
         for path in paths:
             csvpath = self.csvpath()
+            csvpath.collect_when_not_matched = collect_when_not_matched
             try:
                 self._load_csvpath(csvpath, path=path, file=named_file)
                 csvpath_objects.append((csvpath, []))
@@ -367,3 +454,6 @@ class CsvPaths(CsvPathsPublic):
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
+                #
+                # keep for modelines avoidance
+                #

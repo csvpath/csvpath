@@ -1,0 +1,16 @@
+
+~ name: one ~
+
+$[*][
+    from_to( line_number(), 0, 2)
+]
+
+---- CSVPATH ----
+
+~ id: two ~
+
+$[*][
+    from_to( line_number(), 0, 5)
+]
+
+

@@ -24,10 +24,6 @@ class LarkPrintParser:
         %import common.SIGNED_NUMBER
         %import common.WS
     """
-    #
-    #    NAME: ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
-    #    NAME: /(\.([^\.\$\s!\:\?"]+|"[^"]+")){1,2}/
-    #
 
     def __init__(self, csvpath=None):
         self.csvpath = csvpath
@@ -40,9 +36,9 @@ class LarkPrintParser:
         #
         # BLANK is important. the grammar currently requires
         # a sentinel token at the end of a name. it can be anything except
-        # a single period. (... is the escape). if EOL w/o the char parsing
+        # a single period. (.. is the escape). if EOL w/o the char parsing
         # fails. the blank char fixes for that without changing the
-        # language rules. obviously there other ways to do it, but this is
+        # language rules. obviously, there other ways to do it, but this is
         # practical for the moment.
         #
         BLANK = " "

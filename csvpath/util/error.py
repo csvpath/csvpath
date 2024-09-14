@@ -84,8 +84,8 @@ class ErrorHandler:
         error = self.build(ex)
         if self._csvpath:
             policy = self._csvpath.config.csvpath_errors_policy
-        elif self._csvpath:
-            policy = self._csvpath.csvpaths.config.csvpaths_errors_policy
+        elif self._csvpaths:
+            policy = self._csvpaths.config.csvpaths_errors_policy
         else:
             raise ErrorHandlingException("Csvpath or CsvPaths must be present")
         self._handle_if(

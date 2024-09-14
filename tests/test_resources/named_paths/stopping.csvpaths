@@ -2,7 +2,7 @@
 ~ name: one ~
 
 $[*][
-    line_number() == 3 -> stop()
+    line_number.nocontrib() == 3 -> stop()
     push("one", line_number())
 ]
 
@@ -11,7 +11,7 @@ $[*][
 ~ id: two ~
 
 $[*][
-    line_number() == 7 -> stop()
+    line_number.nocontrib() == 7 -> stop()
     push( "two", line_number())
 ]
 

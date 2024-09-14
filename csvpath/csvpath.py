@@ -248,6 +248,24 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         self.logger.info("initialized CsvPath")
 
     @property
+    def identity(self) -> str:
+        if not self.metadata:
+            return ""
+        if "id" in self.metadata:
+            return self.metadata["id"]
+        if "Id" in self.metadata:
+            return self.metadata["Id"]
+        if "ID" in self.metadata:
+            return self.metadata["ID"]
+        if "name" in self.metadata:
+            return self.metadata["name"]
+        if "Name" in self.metadata:
+            return self.metadata["Name"]
+        if "NAME" in self.metadata:
+            return self.metadata["NAME"]
+        return ""
+
+    @property
     def config(self) -> CsvPathConfig:  # pylint: disable=C0116
         if not self._config:
             self._config = CsvPathConfig(self)
@@ -683,6 +701,9 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
                 t = (endmatch - startmatch) / 1000000
                 self.last_row_time = t
                 self.rows_time += t
+                self.logger.debug(
+                    "CsvPath.matches:703: %s: matches: %s", self.identity, matches
+                )
             if matches is True:
                 #
                 # _current_match_count is a placeholder that
