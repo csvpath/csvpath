@@ -1,9 +1,9 @@
 
 # Functions
 
-Functions perform work within a csvpath. A function is represented by a name followed by parentheses.
+Most of the work of matching is done in functions. The match functions are the following.
 
-There are dozens of functions listed below. More functions can be easily created.
+There are dozens of functions. They are listed below. More functions can be easily created.
 
 - [Boolean](#boolean)
 - [Counting](#counting)
@@ -14,6 +14,10 @@ There are dozens of functions listed below. More functions can be easily created
 - [Stats](#strings)
 
 ## Overview
+
+Functions perform work within a csvpath. Some focus on creating values. Others on deciding if a line matches. And a few provide a side-effect, rather than contributing values or matching.
+
+Like a Python function, a CsvPath function is represented by a name followed by parentheses. They may take zero to an unlimited number of arguments within the parentheses, separated by commas.
 
 Functions can contain:
 - Terms
@@ -46,9 +50,6 @@ Creating your own function is easy. Once you create a function, you register it 
 There are lots more simple examples on the individual function pages.
 
 ## All the functions
-
-Most of the work of matching is done in functions. The match functions are the following.
-
 
 <table>
 <tr><th> Group     </th><th>Function                       </th><th> What it does                                              </th></tr>
