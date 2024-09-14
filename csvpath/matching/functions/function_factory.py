@@ -67,6 +67,7 @@ from .misc.nonef import Nonef
 from .misc.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .misc.datef import Date
 from .misc.collect import Collect
+from .misc.replace import Replace
 from .misc.intf import Int
 from .misc.get import Get
 from .misc.track import Track
@@ -286,6 +287,8 @@ class FunctionFactory:
             f = Advance(matcher, name, child)
         elif name == "collect":
             f = Collect(matcher, name, child)
+        elif name == "replace":
+            f = Replace(matcher, name, child)
         elif name == "int":
             f = Int(matcher, name, child)
         elif name == "and":

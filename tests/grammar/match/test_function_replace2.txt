@@ -1,0 +1,5 @@
+[
+                yes()
+                replace(0, count_lines())
+                replace(1, concat(#1, ", a friendly animal"))
+            ]

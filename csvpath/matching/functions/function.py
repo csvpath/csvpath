@@ -74,6 +74,9 @@ class Function(Validation):
                     "%s, a %s, calling decide match", self, self.FOCUS
                 )
                 self._decide_match(skip=skip)
+                self.matcher.csvpath.logger.debug(
+                    "Function.matches _decide_match returned %s", self.match
+                )
             else:
                 self._apply_default_match()
                 self.matcher.csvpath.logger.debug(
