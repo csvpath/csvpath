@@ -13,6 +13,8 @@ There are dozens of functions listed below. More functions can be easily created
 - [Strings](#strings)
 - [Stats](#strings)
 
+## Overview
+
 Functions can contain:
 - Terms
 - Variables
@@ -29,15 +31,19 @@ the function should be applied only when the whole path matches.
 Some functions optionally will make use of an arbitrary name qualifier to better name a tracking variable.
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
+## Custom Functions
+
 Creating your own function is easy. Once you create a function, you register it with the `FunctionFactory` class. You must register your functions each time you run CsvPath. Use your function in csvpaths by simply referring to it by name like any other function.
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/implementing_functions.md'>Read more about implementing your own functions here.</a>
 
-# Examples
+## A Few Examples
+
 - `not(count()==2)`
 - `add( 5, 3, 1 )`
 - `concat( end(), regex(#0, /[0-5]+abc/))`
 
+There are lots more simple examples on the individual function pages.
 
 ## All the functions
 
