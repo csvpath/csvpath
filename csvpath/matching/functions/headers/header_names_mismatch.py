@@ -1,11 +1,14 @@
 # pylint: disable=C0114
-from ..function_focus import MatchDecider
+from ..function_focus import ValueProducer
 
 
-class HeaderNamesMismatch(MatchDecider):
+class HeaderNamesMismatch(ValueProducer):
     """
     given a delimited list of headers, checks that they all exist and
-    optionally are in the same order
+    optionally are in the same order. seems like a match decision activity
+    and you have to dig for the generated data but given how much
+    good information we're creating the function's pretty clearly a val
+    producer.
     """
 
     def _produce_value(self, skip=None) -> None:  # pylint: disable=R0912

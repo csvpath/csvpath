@@ -3,16 +3,19 @@ from ..function_focus import MatchDecider
 
 
 class Equals(MatchDecider):
-    """tests the equality of two values"""
+    """tests the equality of two values. in most cases you don't
+    need a function to test equality but in some cases it may
+    help with clarity or a corner case that can't be handled
+    better another way."""
 
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
 
-    def _decide_match(self, skip=None) -> None:
-        self.match = self._noop_match()
-
     def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
         child = self.children[0]
         ret = False
         left = child.left.to_value()
@@ -27,7 +30,7 @@ class Equals(MatchDecider):
             ret = True
         else:
             ret = False
-        self.value = ret
+        self.match = ret
 
     def _is_float(self, fs) -> bool:
         try:

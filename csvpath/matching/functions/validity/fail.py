@@ -14,9 +14,13 @@ class Fail(MatchDecider):
         return True
 
     def _produce_value(self, skip=None) -> None:
-        self.matcher.csvpath.is_valid = False
-        self.value = False
+        self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
-        self.match = False
+        self.matcher.csvpath.is_valid = False
+        #
+        # the default match is approprate because this component
+        # is only responsible for registering the fail, it not a
+        # reason for it.
+        #
+        self.match = self._apply_default_match()
