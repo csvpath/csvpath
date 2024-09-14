@@ -91,6 +91,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count(value)</a> </td><td> count matches of value              </td></tr>
 <tr><td>           </td><td> count_lines()                 </td><td> count the lines of data to this point in the file                     </td></tr>
 <tr><td>           </td><td> count_scans()                 </td><td> count lines we checked for match   </td></tr>
+<tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>   </td><td> returns the number of duplicate lines   </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> give the physical line number    </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/first.md'>first(value, value, ...)</a> </td><td> match the first occurrence and capture line  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/increment.md'>increment(value, n)</a> </td><td> increments a variable by n each time seen   </td></tr>
@@ -145,7 +146,7 @@ Most of the work of matching is done in functions. The match functions are the f
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>has_dups(header, ...)</a>
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>dups_liness(header, ...)</a>
-</td><td> track duplicate rows  </td></tr>
+</td><td> these functions track duplicate lines  </td></tr>
 
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print.md'>print(str, value)</a></td><td> prints the interpolated string  </td></tr>
 <tr><td>           </td><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_line(value,value)</a></td><td> prints the current line unchanged  </td></tr>
