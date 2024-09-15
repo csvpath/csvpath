@@ -2,12 +2,74 @@ import unittest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.matcher import Matcher
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 BOOL = "tests/test_resources/bool.csv"
+NUMBERS = "tests/test_resources/numbers.csv"
 
 
 class TestAssignment(unittest.TestCase):
+    def test_qualifier_increment1(self):
+        path = CsvPath()
+        Save._save(path, "test_qualifier_increment1")
+        path.parse(
+            f"""${NUMBERS}[1-3][
+                    ~ should work ~
+                    @up.increase = #1
+                ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_qualifier_increment1: lines: {lines}")
+        print(f"test_qualifier_increment1: vars: {path.variables}")
+        assert lines
+        assert len(lines) == 3
+
+    def test_qualifier_increment2(self):
+        path = CsvPath()
+        Save._save(path, "test_qualifier_increment2")
+        path.parse(
+            f"""${NUMBERS}[1-3][
+                    ~ should not decrease @up ~
+                    @up.increase = #2
+                ]"""
+        )
+        lines = path.collect()
+        print(f"test_qualifier_increment2: vars: {path.variables}")
+        print(f"\n test_qualifier_increment2: lines: {lines}")
+        assert lines
+        assert len(lines) == 1
+
+    def test_qualifier_decrement1(self):
+        path = CsvPath()
+        Save._save(path, "test_qualifier_decrement1")
+        path.parse(
+            f"""${NUMBERS}[1-3][
+                    ~ should work ~
+                    @down.decrease = #2
+                ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_qualifier_decrement1: lines: {lines}")
+        print(f"test_qualifier_decrement1: vars: {path.variables}")
+        assert lines
+        assert len(lines) == 3
+
+    def test_qualifier_decrement2(self):
+        path = CsvPath()
+        Save._save(path, "test_qualifier_decrement2")
+        path.parse(
+            f"""${NUMBERS}[1-3][
+                    ~ should not increase @up ~
+                    @down.decrease = #1
+                ]"""
+        )
+        lines = path.collect()
+        print(f"test_qualifier_decrement2: vars: {path.variables}")
+        print(f"\n test_qualifier_decrement2: lines: {lines}")
+        assert lines
+        assert len(lines) == 1
+
     def test_qualifier_assignment(self):
         path = CsvPath()
         matcher = Matcher(csvpath=path, data="[yes()]")
@@ -23,6 +85,8 @@ class TestAssignment(unittest.TestCase):
             "asbool": False,
             "nocontrib": False,
             "notnone": False,
+            "increase": False,
+            "decrease": False,
             "noqualifiers": True,
             "count": False,
             "current_value": "x",

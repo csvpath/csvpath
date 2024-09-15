@@ -158,9 +158,8 @@ class ExpressionUtility:
     def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:
         aname = name
         dot = f"{name}".find(".")
-        quals = None
+        quals = []
         if dot > -1:
-            quals = []
             aname = name[0:dot]
             somequals = name[dot + 1 :]
             cls._next_qual(quals, somequals)

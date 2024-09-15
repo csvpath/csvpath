@@ -24,6 +24,8 @@ Qualifiers are relatively new and are being added opportunistically. Not all fun
 At the moment there are only a few "official" qualifiers that are broadly available.
 
 - `asbool`
+- `decrease`
+- `increase`
 - `latch`
 - `nocontrib`
 - `notnone`
@@ -39,6 +41,16 @@ When `asbool` is set on a variable or header its value is interpreted as a bool 
 | No       | Yes     | Yes       |
 
 Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/asbool.md'>more about asbool here</a>.
+
+### increase and decrease
+Adding `increase` to a variable makes the variable only set when it would go up in value. The first value set, when the current value is None, always works. Attempts to update the variable with a lower value do nothing, other than return False for matching. Setting `nocontrib` allows `increase` to function as a guard on the value without impacting the overall line match.
+
+`decrease` works exactly the same way, other than blocking increases in value. `decrease` always allows the first set, when the current value is None.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
+
 
 ### latch
 Adding `latch` to a variable makes the variable only set one time. The variable "latches" or locks on the first value. Subsequent attempts to update the variable do nothing, give no error or warning, and return `True` for matching, in order to not affect other components' matching.

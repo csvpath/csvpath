@@ -1,6 +1,7 @@
 import unittest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
+from csvpath.matching.productions import Variable
 from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from tests.save import Save
@@ -10,6 +11,21 @@ BOOL = "tests/test_resources/bool.csv"
 
 
 class TestFunctionsQualifiers(unittest.TestCase):
+    def test_qualifier_has_known_qualifiers(self):
+        # on the name
+        var = Variable(None, name="a.b.asbool", value="v")
+        assert var.has_known_qualifiers()
+        # set property
+        var = Variable(None, name="a", value="v")
+        var.onmatch = True
+        assert var.has_known_qualifiers()
+        # as tracking value (or unknown name for other prods)
+        var = Variable(None, name="a.me", value="v")
+        assert not var.has_known_qualifiers()
+        # no quals
+        var = Variable(None, name="a", value="v")
+        assert not var.has_known_qualifiers()
+
     def test_qualifier_notnone(self):
         #
         # baseline

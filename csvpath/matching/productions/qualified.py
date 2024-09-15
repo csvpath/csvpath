@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from enum import Enum
 import hashlib
+from typing import List
 from typing import Optional
 from ..util.expression_utility import ExpressionUtility
 from ..util.exceptions import ChildrenException
@@ -10,9 +11,9 @@ class Qualities(Enum):
     """specifies the well-known qualifiers"""
 
     # indicates that the value must go up or the match decision is negative
-    INCREMENT = "increment"
+    INCREASE = "increase"
     # indicates that the value must go down or the match decision is negative
-    DECREMENT = "decrement"
+    DECREASE = "decrease"
 
     # to indicate all other match components must match for the qualified to take effect
     ONMATCH = "onmatch"
@@ -24,11 +25,6 @@ class Qualities(Enum):
     LATCH = "latch"
     # to indicate that the match component should return the default, not help decide
     NOCONTRIB = "nocontrib"
-    #
-    # see note below
-    # VARIABLES = "variables"
-    # HEADERS = "headers"
-    #
     # indicates that the value will not be set unless to a non-none
     NOTNONE = "notnone"
     # indicates that the match component is only activated one time
@@ -51,11 +47,8 @@ class Qualified:
         Qualities.ASBOOL.value,
         Qualities.NOCONTRIB.value,
         Qualities.LATCH.value,
-        #
-        # see note below
-        #
-        # Qualities.VARIABLES.value,
-        # Qualities.HEADERS.value,
+        Qualities.INCREASE.value,
+        Qualities.DECREASE.value,
         Qualities.NOTNONE.value,
         Qualities.ONCE.value,
     ]
@@ -68,7 +61,8 @@ class Qualified:
         if self.name and self.name.__class__ == str:
             self.name = self.name.strip()
         self.qualifier = None
-        self.qualifiers = []
+        self._qualifiers = []
+        # self.qualifiers = []
         if name is not None:
             n, qs = ExpressionUtility.get_name_and_qualifiers(name)
             self.name = n
@@ -105,6 +99,19 @@ class Qualified:
         if qs is not None:
             self.qualifiers = qs.split(".")
 
+    @property
+    def qualifiers(self) -> List[str]:
+        return self._qualifiers
+
+    @qualifiers.setter
+    def qualifiers(self, qs: list[str]) -> None:
+        if qs is None:
+            self.matcher.csvpath.logger.warn(
+                "Qualifiers set with None. Changing to []."
+            )
+            qs = []
+        self._qualifiers = qs
+
     def add_qualifier(self, q) -> None:  # pylint: disable=C0116
         if q not in self.qualifiers:
             self.qualifiers.append(q)
@@ -112,7 +119,16 @@ class Qualified:
     def has_qualifier(self, q) -> bool:  # pylint: disable=C0116
         return q in self.qualifiers
 
+    def has_known_qualifiers(self) -> bool:  # pylint: disable=C0116
+        ret = False
+        for q in Qualified.QUALIFIERS:
+            if q in self.qualifiers:
+                ret = True
+                break
+        return ret
+
     def _set(self, string: str, on: bool):
+        print(f"qualified._set: self quals: {self.qualifiers}")
         if on and string not in self.qualifiers:
             self.qualifiers.append(string)
         elif not on:
@@ -121,33 +137,25 @@ class Qualified:
             except ValueError:
                 pass
 
-    """
-    #
-    # unclear what the headers and variables qualifiers
-    # were meant to be. they are not used now and should be retired
-    #
     @property
-    def variables(self) -> bool:  # pylint: disable=C0116
-        raise Exception("where?!")
+    def increase(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
-            return Qualities.VARIABLES.value in self.qualifiers
+            return Qualities.INCREASE.value in self.qualifiers
         return False
 
-    @variables.setter
-    def variables(self, v: bool) -> None:
-        self._set(Qualities.VARIABLES.value, v)
+    @increase.setter
+    def increase(self, ii: bool) -> None:
+        self._set(Qualities.INCREASE.value, ii)
 
     @property
-    def headers(self) -> bool:  # pylint: disable=C0116
-        raise Exception("where?!")
+    def decrease(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
-            return Qualities.HEADERS.value in self.qualifiers
+            return Qualities.DECREASE.value in self.qualifiers
         return False
 
-    @headers.setter
-    def headers(self, h: bool) -> None:
-        self._set(Qualities.HEADERS.value, h)
-    """
+    @decrease.setter
+    def decrease(self, dd: bool) -> None:
+        self._set(Qualities.DECREASE.value, dd)
 
     @property
     def notnone(self) -> bool:  # pylint: disable=C0116

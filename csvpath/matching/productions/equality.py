@@ -120,6 +120,9 @@ class Equality(Matchable):
     # this talks about the expression x = y and the row
     # x.[anything].nocontrib = y             == True
     #
+    # this denormalizing wrapper method exists to facilitate testing.
+    # anytime no longer needed it can go.
+    #
     def _do_assignment(self, *, skip=None) -> bool:
         #
         # the count() function implies onmatch
@@ -131,12 +134,18 @@ class Equality(Matchable):
         asbool = self.left.asbool
         nocontrib = self.left.nocontrib
         notnone = self.left.notnone
-        noqualifiers = (
+        increase = self.left.increase
+        decrease = self.left.decrease
+        noqualifiers = self.has_known_qualifiers()
+        """
+        (
             onchange is False
             and latch is False
             and asbool is False
             and nocontrib is False
             and onmatch is False
+            and increase is False
+            and decrease is False
             #
             # since we're treating notnone as a block on set_variable, rather than
             # as part of the qualifiers decision tree, we don't actually want to
@@ -144,6 +153,7 @@ class Equality(Matchable):
             #
             # and notnone is False
         )
+        """
         #
         # WHAT WE WANT TO SET X TO
         #
@@ -160,12 +170,20 @@ class Equality(Matchable):
         #
         current_value = self.matcher.get_variable(name, tracking=tracking)
         args = {
+            #
+            # quals
+            #
             "onchange": onchange,
             "latch": latch,
             "onmatch": onmatch,
             "asbool": asbool,
             "nocontrib": nocontrib,
             "notnone": notnone,
+            "increase": increase,
+            "decrease": decrease,
+            #
+            # other stuff
+            #
             "noqualifiers": noqualifiers,
             "count": count,
             "new_value": y,
@@ -180,13 +198,21 @@ class Equality(Matchable):
     def _do_assignment_new_impl(  # pylint: disable=R0915,R0912,R0914
         self, *, name: str, tracking: str = None, args: dict
     ) -> bool:
-        # re: R0915,R0912,R0914: definitely too much complexity.
+        # re: R0915,R0912,R0914: refactored.
+        #
+        # quals
+        #
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]
         asbool = args["asbool"]
         nocontrib = args["nocontrib"]
         notnone = args["notnone"]
+        increase = args["increase"]
+        decrease = args["decrease"]
+        #
+        # other stuff
+        #
         noqualifiers = args["noqualifiers"]
         y = args["new_value"]
         current_value = args["current_value"]
@@ -195,65 +221,96 @@ class Equality(Matchable):
         ]  # if None we'll check in real-time; otherwise, testing
         ret = self.default_match()
         #
-        # SET THE X TO Y IF APPROPRIATE. THE RETURN STARTS AS TRUE.
-        #
-        # none
-        #
-        if noqualifiers:  # == TEST MARKER 1
-            ret = self.default_match()
-            ret = self._set_variable_if(
-                ret, name, value=y, tracking=tracking, notnone=notnone
-            )
-            self.matcher.csvpath.logger.debug("assignment: marker 1")
-            return ret
-        #
         # onmatch
         #
         if (
             not onmatch
             or self._test_friendly_line_matches(line_matches) == self.default_match()
         ):
-            if latch or onchange:  # == TEST MARKER 1
+            if latch or onchange:
                 ret = self._latch_and_onchange(
-                    ret, current_value, y, name, tracking, latch, onchange, notnone
+                    ret=ret,
+                    current_value=current_value,
+                    new_value=y,
+                    name=name,
+                    tracking=tracking,
+                    latch=latch,
+                    onchange=onchange,
+                    notnone=notnone,
+                    increase=increase,
+                    decrease=decrease,
                 )
             else:
                 ret = self._set_variable_if(
-                    ret, name, value=y, tracking=tracking, notnone=notnone
-                )  # == TEST MARKER 13
+                    ret,
+                    name,
+                    current_value=current_value,
+                    value=y,
+                    tracking=tracking,
+                    notnone=notnone,
+                    increase=increase,
+                    decrease=decrease,
+                )
         else:
             ret = not ret
         #
         # asbool
         #
         if asbool:
-            if ret is self.default_match():  # == TEST MARKER 16 #== TEST MARKER 17
+            if ret is self.default_match():
                 self.matcher.csvpath.logger.debug("assignment: marker 16, 17")
                 ret = ExpressionUtility.asbool(y)
         #
         # nocontrib
         #
-        if nocontrib:  # == TEST MARKER 18
+        if nocontrib:
             self.matcher.csvpath.logger.debug("assignment: marker 18")
             ret = self.default_match()
         self.matcher.csvpath.logger.debug(f"done with assignment: ret: {ret}")
         return ret
 
     def _latch_and_onchange(
-        self, ret, current_value, new_value, name, tracking, latch, onchange, notnone
+        self,
+        *,
+        ret,
+        current_value,
+        new_value,
+        name,
+        tracking,
+        latch,
+        onchange,
+        notnone,
+        increase,
+        decrease,
     ):
         if current_value != new_value:
             if current_value is None or not latch:
                 ret = self.default_match()
                 ret = self._set_variable_if(
-                    ret, name, value=new_value, tracking=tracking, notnone=notnone
+                    ret,
+                    name,
+                    current_value=current_value,
+                    value=new_value,
+                    tracking=tracking,
+                    notnone=notnone,
+                    increase=increase,
+                    decrease=decrease,
                 )
         elif onchange:
             ret = not self.default_match()
         return ret
 
     def _set_variable_if(
-        self, ret, name, *, value, tracking=None, notnone=False
+        self,
+        ret,
+        name,
+        *,
+        current_value,
+        value,
+        tracking=None,
+        notnone=False,
+        increase=False,
+        decrease=False,
     ) -> bool:
         #
         # not none
@@ -262,9 +319,31 @@ class Equality(Matchable):
             # we don't penalize if None, just don't set
             return ret
         #
-        # increment and decrement
+        # increase and decrease:
+        #   if value not going the right way, don't set variable and return not self.default_match()
         #
-
+        if increase and (
+            (not current_value and not value)
+            or not value
+            or (current_value is not None and current_value >= value)
+        ):
+            self.matcher.csvpath.logger.info(
+                "Variable assignment not happening because increase: %s < %s",
+                value,
+                current_value,
+            )
+            return not ret
+        if decrease and (
+            (not current_value and not value)
+            or not value
+            or (current_value is not None and current_value <= value)
+        ):
+            self.matcher.csvpath.logger.info(
+                "Variable assignment not happening because decrease: %s > %s",
+                value,
+                current_value,
+            )
+            return not ret
         #
         # set the value
         #
