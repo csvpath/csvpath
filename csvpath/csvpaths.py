@@ -50,14 +50,20 @@ class CsvPathsPublic(ABC):
         self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
     ):  # pragma: no cover
         """Does a CsvPath.collect() on filename where each row is considered
-        by every named path before the next row starts"""
+        by every named path before the next row starts
+
+        next_by_line for if_all_agree and collect_when_not_matched.
+        """
 
     @abstractmethod
     def fast_forward_by_line(
         self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
     ):  # pragma: no cover
         """Does a CsvPath.fast_forward() on filename where each row is
-        considered by every named path before the next row starts"""
+        considered by every named path before the next row starts
+
+        next_by_line for if_all_agree and collect_when_not_matched.
+        """
 
     @abstractmethod
     def next_by_line(
@@ -70,7 +76,16 @@ class CsvPathsPublic(ABC):
         collect_when_not_matched=False,
     ) -> List[Any]:  # pragma: no cover
         """Does a CsvPath.next() on filename where each row is considered
-        by every named path before the next row starts"""
+        by every named path before the next row starts.
+
+        if_all_agree=True means all the CsvPath instances must match for
+        the line to be kept. However, every CsvPath instance will keep its
+        own matches in its results regardless of if every line kept was
+        returned to the caller by CsvPaths.
+
+        collect_when_not_matched=True inverts the match so that lines
+        which did not match are returned, rather than the default behavior.
+        """
 
 
 class CsvPaths(CsvPathsPublic):
@@ -331,21 +346,21 @@ class CsvPaths(CsvPathsPublic):
             #
             stopped_count: List[int] = []
             for line in reader:  # pylint: disable=R1702
-                # note to self: this default should be determined in a central place
-                # so that we can switch to OR, in part by changing the default to False
+                # question to self: should this default be in a central place
+                # so that we can switch to OR, in part by changing the default?
                 keep = if_all_agree
                 try:
-                    #
                     # p is a (CsvPath, List[List[str]]) where the second item is
-                    # the line by line results of the first item's matching
+                    # the line-by-line results of the first item's matching
                     for p in csvpath_objects:
                         self.current_matcher = p[0]
                         if self.current_matcher.stopped:  # pylint: disable=R1724
                             continue
                         #
-                        # allowing the match to happen because we may want
-                        # side-effects or to have the different results in
-                        # different named-results, as well as the union
+                        # allowing the match to happen regardless of keep
+                        # because we may want side-effects or to have different
+                        # results in different named-results, as well as the
+                        # union
                         #
                         self.logger.debug(
                             "considering line with csvpath: %s",

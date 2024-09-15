@@ -107,7 +107,7 @@ class Function(Validation):
         subclasses may override this method if they need a different
         default.
         """
-        self.match = True
+        self.match = self.default_match()
         self.matcher.csvpath.logger.debug(
             "%s applying default match: %s", self, self.match
         )

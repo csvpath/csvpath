@@ -121,3 +121,6 @@ class Matchable(Qualified):
             return self.children[0].right
         # with the current parse tree this shouldn't happen
         return None
+
+    def default_match(self) -> bool:
+        return True

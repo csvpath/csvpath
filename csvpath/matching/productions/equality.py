@@ -181,7 +181,6 @@ class Equality(Matchable):
         self, *, name: str, tracking: str = None, args: dict
     ) -> bool:
         # re: R0915,R0912,R0914: definitely too much complexity.
-        # but well tested. not time.
         onchange = args["onchange"]
         latch = args["latch"]
         onmatch = args["onmatch"]
@@ -194,130 +193,85 @@ class Equality(Matchable):
         line_matches = args[
             "line_matches"
         ]  # if None we'll check in real-time; otherwise, testing
-        ret = True
+        ret = self.default_match()
         #
         # SET THE X TO Y IF APPROPRIATE. THE RETURN STARTS AS TRUE.
         #
+        # none
+        #
         if noqualifiers:  # == TEST MARKER 1
-            self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
+            ret = self.default_match()
+            ret = self._set_variable_if(
+                ret, name, value=y, tracking=tracking, notnone=notnone
+            )
             self.matcher.csvpath.logger.debug("assignment: marker 1")
-            ret = True
+            return ret
         #
-        # FIND THE RETURN VALUE
+        # onmatch
         #
-        # in the usual case, when we're just talking about x = y,
-        # we don't consider the assignment as part of the match
-        #
-        elif not onmatch and (latch or onchange):
-            if current_value != y:
-                if latch and current_value is not None:
-                    self.matcher.csvpath.logger.debug("assignment: marker 2")
-                    pass  # == TEST MARKER 2
-                else:
-                    self._set_variable(
-                        name, value=y, tracking=tracking, notnone=notnone
-                    )
-                    self.matcher.csvpath.logger.debug("assignment: marker 3 and 4")
-                    ret = True  # == TEST MARKER 3  #== TEST MARKER 4
-            elif onchange:
-                self.matcher.csvpath.logger.debug("assignment: marker 5")
-                ret = False  # == TEST MARKER 5
-            elif latch:
-                self.matcher.csvpath.logger.debug("assignment: marker 6")
-                pass  # == TEST MARKER 6
+        if (
+            not onmatch
+            or self._test_friendly_line_matches(line_matches) == self.default_match()
+        ):
+            if latch or onchange:  # == TEST MARKER 1
+                ret = self._latch_and_onchange(
+                    ret, current_value, y, name, tracking, latch, onchange, notnone
+                )
             else:
-                s = "Equality:_do_assignment_new_impl:218:"
-                s = f"{s} this state is unknown. {ret}, {args}"
-                self.matcher.csvpath.logger.error(s)
-        #
-        # if onmatch we are True if the line matches,
-        # potentially overriding latch and/or onchange,
-        # and we set x = y after everything else about the line is done,
-        # doing the set in the order all after-match sets are registered,
-        # however, if we are onmatch and the line doesn't match
-        # we do not set y and we are False.
-        # not setting y makes a difference to onchange and latch
-        elif onmatch and (latch or onchange):  # == TEST MARKER 1
-            self.matcher.csvpath.logger.debug("assignment: marker 1 (240)")
-            if current_value != y:
-                if latch and current_value is not None:
-                    self.matcher.csvpath.logger.debug("assignment: marker 7")
-                    pass  # == TEST MARKER 7
-                else:
-                    self.matcher.csvpath.logger.debug("assignment: marker 8, 9, 10")
-                    # == TEST MARKER 8  #== TEST MARKER 9 #== TEST MARKER 10
-                    #
-                    # not none here. and still return ret = True, regardless
-                    #
-                    if not notnone or y is not None:
-                        self.matcher.set_if_all_match(name, value=y, tracking=tracking)
-                    ret = True
-            else:
-                ret = self._test_friendly_line_matches(line_matches)
-                # the outcome of onchange only matters if the line matches for onmatch
-                if ret and onchange:  # == TEST MARKER 11
-                    self.matcher.csvpath.logger.debug("assignment: marker 11")
-                    # why are we returning here?
-                    return False
-                self.matcher.csvpath.logger.debug("assignment: marker 12")
-                pass  # == TEST MARKER 12 pylint: disable=W0107
-                # re: W0107: the pass is here for clarity
-        #
-        # count() is only for matches so implies count.onmatch
-        # return set y and return true if the line matches
-        # but set y last after everything else about the line is done,
-        # doing the set in the order all after-match sets are registered
-        elif onmatch:
-            ret = self._test_friendly_line_matches(line_matches)
-            if ret is True:
-                #
-                # i'm not convinced this delayed set is a good idea but it's not a bad one
-                #
-                if not notnone or y is not None:
-                    self.matcher.set_if_all_match(
-                        name, value=y, tracking=tracking
-                    )  # == TEST MARKER 13
-                    self.matcher.csvpath.logger.debug("assignment: marker 13")
-            else:
-                self.matcher.csvpath.logger.debug("assignment: marker 14")
-                pass  # == TEST MARKER 14
-        #
-        # we don't have any qualifiers that have to do with x = y
-        # but we may have asbool or nocontrib
-        # so set y and prepare the return to be True
-        elif not onmatch and not (latch or onchange):  # == TEST MARKER 15
-            self.matcher.csvpath.logger.debug("assignment: marker 15")
-            self._set_variable(name, value=y, tracking=tracking, notnone=notnone)
-            ret = True
+                ret = self._set_variable_if(
+                    ret, name, value=y, tracking=tracking, notnone=notnone
+                )  # == TEST MARKER 13
         else:
-            # never happens
-            s = "Equality:_do_assignment_new_impl:272:"
-            s = f"{s} this state is unknown. {ret}, {args}"
-            self.matcher.csvpath.logger.error(s)
+            ret = not ret
         #
-        # if asbool we apply our interpretation to value of y,
-        # if we set y, otherwise we are False,
-        # but we can be overridden by nocontrib
+        # asbool
+        #
         if asbool:
-            if ret is True:  # == TEST MARKER 16 #== TEST MARKER 17
+            if ret is self.default_match():  # == TEST MARKER 16 #== TEST MARKER 17
                 self.matcher.csvpath.logger.debug("assignment: marker 16, 17")
                 ret = ExpressionUtility.asbool(y)
-            else:
-                self.matcher.csvpath.logger.debug("assignment: marker 16, 17 (305)")
-                ret = False
         #
-        # if nocontrib no matter what we return True because we're
-        # removing ourselves from consideration
+        # nocontrib
+        #
         if nocontrib:  # == TEST MARKER 18
             self.matcher.csvpath.logger.debug("assignment: marker 18")
-            ret = True
+            ret = self.default_match()
         self.matcher.csvpath.logger.debug(f"done with assignment: ret: {ret}")
         return ret
 
-    def _set_variable(self, name, *, value, tracking=None, notnone=False) -> None:
+    def _latch_and_onchange(
+        self, ret, current_value, new_value, name, tracking, latch, onchange, notnone
+    ):
+        if current_value != new_value:
+            if current_value is None or not latch:
+                ret = self.default_match()
+                ret = self._set_variable_if(
+                    ret, name, value=new_value, tracking=tracking, notnone=notnone
+                )
+        elif onchange:
+            ret = not self.default_match()
+        return ret
+
+    def _set_variable_if(
+        self, ret, name, *, value, tracking=None, notnone=False
+    ) -> bool:
+        #
+        # not none
+        #
         if notnone and value is None:
-            return
+            # we don't penalize if None, just don't set
+            return ret
+        #
+        # increment and decrement
+        #
+
+        #
+        # set the value
+        #
         self.matcher.set_variable(name, value=value, tracking=tracking)
+        return ret
+
+    # ==============================
 
     def _do_when(self, *, skip=None) -> bool:
         b = None

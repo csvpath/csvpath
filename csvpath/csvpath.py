@@ -249,6 +249,13 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
 
     @property
     def identity(self) -> str:
+        """returns id or name if found in metadata. the id or name gets
+        into metadata primarily if found in an "external" comment in
+        the csvpath. "external" meaning outside the []s. comments are
+        keyword:comment. we take id, Id, ID and name, Name, NAME. id
+        is preferred over name. E.g.:
+        ~ name: my path description: an example ~
+        """
         if not self.metadata:
             return ""
         if "id" in self.metadata:

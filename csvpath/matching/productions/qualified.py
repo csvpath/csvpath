@@ -9,15 +9,36 @@ from ..util.exceptions import ChildrenException
 class Qualities(Enum):
     """specifies the well-known qualifiers"""
 
+    # indicates that the value must go up or the match decision is negative
+    INCREMENT = "increment"
+    # indicates that the value must go down or the match decision is negative
+    DECREMENT = "decrement"
+
+    # to indicate all other match components must match for the qualified to take effect
     ONMATCH = "onmatch"
+    # to indicate that the match decision is only positive when there is a change
     ONCHANGE = "onchange"
+    # interpret the to_value as a bool, not an existence test
     ASBOOL = "asbool"
+    # indicates that the variable will only be set one time
     LATCH = "latch"
+    # to indicate that the match component should return the default, not help decide
     NOCONTRIB = "nocontrib"
-    VARIABLES = "variables"
-    HEADERS = "headers"
+    #
+    # see note below
+    # VARIABLES = "variables"
+    # HEADERS = "headers"
+    #
+    # indicates that the value will not be set unless to a non-none
     NOTNONE = "notnone"
+    # indicates that the match component is only activated one time
     ONCE = "once"
+    #
+    # there is only one function using distinct -- push -- and in an
+    # ad hoc kind of way. this token isn't used, but it is reasonable
+    # to keep it and formalize the use.
+    #
+    # indicates that the value being set must be unique in its context
     DISTINCT = "distinct"
 
 
@@ -30,8 +51,11 @@ class Qualified:
         Qualities.ASBOOL.value,
         Qualities.NOCONTRIB.value,
         Qualities.LATCH.value,
-        Qualities.VARIABLES.value,
-        Qualities.HEADERS.value,
+        #
+        # see note below
+        #
+        # Qualities.VARIABLES.value,
+        # Qualities.HEADERS.value,
         Qualities.NOTNONE.value,
         Qualities.ONCE.value,
     ]
@@ -97,8 +121,14 @@ class Qualified:
             except ValueError:
                 pass
 
+    """
+    #
+    # unclear what the headers and variables qualifiers
+    # were meant to be. they are not used now and should be retired
+    #
     @property
     def variables(self) -> bool:  # pylint: disable=C0116
+        raise Exception("where?!")
         if self.qualifiers:
             return Qualities.VARIABLES.value in self.qualifiers
         return False
@@ -109,6 +139,7 @@ class Qualified:
 
     @property
     def headers(self) -> bool:  # pylint: disable=C0116
+        raise Exception("where?!")
         if self.qualifiers:
             return Qualities.HEADERS.value in self.qualifiers
         return False
@@ -116,6 +147,7 @@ class Qualified:
     @headers.setter
     def headers(self, h: bool) -> None:
         self._set(Qualities.HEADERS.value, h)
+    """
 
     @property
     def notnone(self) -> bool:  # pylint: disable=C0116
@@ -220,9 +252,11 @@ class Qualified:
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
-            m = e[1] is True or e[0].matches(skip=[self])  # pylint: disable=E1101
+            m = e[1] is self.default_match() or e[0].matches(
+                skip=[self]
+            )  # pylint: disable=E1101
             if not m:
-                return False
+                return not self.default_match()
         #
         # when we know there's a match we need to propagate it asap
         # in case this or a later onmatched match component wants to use the
@@ -230,7 +264,7 @@ class Qualified:
         # will be hard to explain.
         #
         self.matcher.csvpath.raise_match_count_if()
-        return True
+        return self.default_match()
 
     # =============
     # onchange
