@@ -1,0 +1,3 @@
+[
+                    ~ this should match and not set ~
+                    @t.notnone.nocontrib=yes() ]

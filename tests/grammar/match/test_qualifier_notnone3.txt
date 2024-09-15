@@ -1,0 +1,3 @@
+[
+                    ~ this should set ~
+                    @t.notnone=yes() ]

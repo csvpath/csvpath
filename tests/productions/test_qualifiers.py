@@ -26,47 +26,72 @@ class TestFunctionsQualifiers(unittest.TestCase):
         var = Variable(None, name="a", value="v")
         assert not var.has_known_qualifiers()
 
-    def test_qualifier_notnone(self):
+    def test_qualifier_notnone1(self):
         #
         # baseline
         #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone")
+        Save._save(path, "test_qualifier_notnone1")
         path.parse(
             f"""${PATH}[*][
+                    ~ this should set and match ~
                     @t=none() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone a: lines: {len(lines)}")
-        print(f"test_qualifier_notnone a: path vars: {path.variables}\n")
+        print(f"test_qualifier_notnone1 a: lines: {len(lines)}")
+        print(f"test_qualifier_notnone1 a: path vars: {path.variables}\n")
         assert len(lines) == 9
         assert "t" in path.variables
+
+    def test_qualifier_notnone2(self):
         #
         # not None
         #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone")
+        Save._save(path, "test_qualifier_notnone2")
         path.parse(
             f"""${PATH}[*][
+                    ~ this should not set and not match ~
                     @t.notnone=none() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone b: lines: {len(lines)}")
-        print(f"test_qualifier_notnone b: path vars: {path.variables}\n")
-        assert len(lines) == 9
+        print(f"test_qualifier_notnone2 b: lines: {len(lines)}")
+        print(f"test_qualifier_notnone2 b: path vars: {path.variables}\n")
+        assert len(lines) == 0
         assert "t" not in path.variables
+
+    def test_qualifier_notnone3(self):
         #
         # not none and not none
         #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone")
+        Save._save(path, "test_qualifier_notnone3")
         path.parse(
             f"""${PATH}[*][
+                    ~ this should set ~
                     @t.notnone=yes() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone c: lines: {len(lines)}")
-        print(f"test_qualifier_notnone c: path vars: {path.variables}\n")
+        print(f"test_qualifier_notnone3 c: lines: {len(lines)}")
+        print(f"test_qualifier_notnone3 c: path vars: {path.variables}\n")
+        assert len(lines) == 9
+        assert "t" in path.variables
+        assert path.variables["t"] is True
+
+    def test_qualifier_notnone4(self):
+        #
+        # not none and nocontrib
+        #
+        path = CsvPath()
+        Save._save(path, "test_qualifier_notnone4")
+        path.parse(
+            f"""${PATH}[*][
+                    ~ this should match and not set ~
+                    @t.notnone.nocontrib=yes() ]"""
+        )
+        lines = path.collect()
+        print(f"test_qualifier_notnone4 c: lines: {len(lines)}")
+        print(f"test_qualifier_notnone4 c: path vars: {path.variables}\n")
         assert len(lines) == 9
         assert "t" in path.variables
         assert path.variables["t"] is True

@@ -316,11 +316,9 @@ class Equality(Matchable):
         # not none
         #
         if notnone and value is None:
-            # we don't penalize if None, just don't set
-            return ret
+            return not ret
         #
-        # increase and decrease:
-        #   if value not going the right way, don't set variable and return not self.default_match()
+        # increase and decrease
         #
         if increase and (
             (not current_value and not value)
