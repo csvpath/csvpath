@@ -68,7 +68,7 @@ Finally, `nocontrib` is superior to all the other variable qualifiers, from the 
 
 The primacy or order of consideration is:
 
-1. No qualifiers always succeeds
+1. Assignments with no qualifiers always succeed
 2. `nocontrib` overrides other assignment qualifiers
 3. `asbool` overlays all other assignment qualifiers except nocontrib
 4. `onmatch` determines if any of the below qualifiers come into play
