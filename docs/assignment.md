@@ -8,6 +8,7 @@ Assignments have this common `x = y` form:
 - `@x = #y`
 - `@x = "a value"`
 - `@x = @y`
+- `@x.y = @z`
 - `@x = count()`
 
 Where things get more interesting is qualifiers.
@@ -15,14 +16,19 @@ Where things get more interesting is qualifiers.
 There are a number of qualifiers. These are the ones that are involved with assignment:
 
 - `asbool`
+- `decrease`
+- `increase`
+- `latch`
+- `nocontrib`
+- `notnone`
 - `onchange`
 - `onmatch`
-- `nocontrib`
-- `latch`
 
-You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>read about them here</a>.
+These qualifiers are consistently applied to all variable assignments. This in contrast to the more case-by-case way qualifiers work in other match components.
 
-Qualifiers can go together in any order. CsvPath decides what to do in an assignment based on all the qualifiers that it finds and which are applicable. There are three ways a qualifier relates to an assignment:
+You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>read about all the qualifiers here</a>.
+
+Qualifiers can go together in any order. CsvPath decides what to do in an assignment based on all the qualifiers it finds and which are applicable. There are three ways a qualifier relates to an assignment:
 
 - It may qualify the specific act of the assignment
 - It may qualify the assignment's relationship to the whole row
@@ -35,13 +41,16 @@ You can think of these happening in layers.
 | Form                                               | Match value                                |
 |----------------------------------------------------|--------------------------------------------|
 | `@x = y`                                           | True                                       |
-| `@x.latch = y`                                     | True                                       |
-| `@x.onchange = y`                                  | if changed True otherwise False            |
-| `@x.onmatch = y`                                   | if row matches True otherwise False        |
+| `@x.latch = y`                                     | True on first assignment, otherwise False  |
+| `@x.onchange = y`                                  | True if changed, otherwise False           |
+| `@x.onmatch = y`                                   | True if row matches, otherwise False       |
+| `@x.increase = y`                                  | True if y is > x, otherwise False          |
+| `@x.decrease = y`                                  | True if y is < x, otherwise False          |
+| `@x.notnone = y`                                   | True if y is not None, otherwise False     |
 | `@x.[any-qualifiers-except-nocontrib].asbool = y`  | True or False determined by the value of x |
 | `@x.[any-other-qualifiers].nocontrib = y`          | True
 
-A typical assignment contributes `True` to the csvpath's match for a row. Likewise, latched and onchange assignments contribute to a match. One way to think about this is that returning True to indicate a match is basically saying that the assignment doesn't matter for matching.
+A typical assignment doesn't contribute to the match decision for a row. On the other hand, `increase`, `decrease`, `latch`, `notnone`, and `onchange` assignments contribute to matching.
 
 A latched assignment is one where the variable is set once and then never changes. For any row, regardless if the latched variable has been set, the match value is True. Again, the idea is that the latched assignment is a non-consideration for matching.
 
@@ -51,16 +60,17 @@ An `onchange` assignment is one that only happens when the variable's value chan
 
 `asbool` overrides the previously described variable qualifiers. If `asbool` is found, the assignment returns True or False in the match according to the value the variable is set to. The interpretation of the variable's new value as a bool is similar to Python's `bool(x)`, but with the addition of "true" and "false" being treated as the True and False value, respectively.
 
-Finally, `nocontrib` is superior to all the other variable qualifiers. If found, the match returns True. It is, again, a way of taking the assignment out of consideration for the match.
+Finally, `nocontrib` is superior to all the other variable qualifiers, from the perspective of match decision voting. If found, the assignment is not considered for matching.
 
 The primacy or order of consideration is:
 
-1. No qualifiers
-2. `nocontrib` overrides all below, making any other qualifiers meaningless
-3. `asbool` overlays all below, after any changes
-4. `onchange` or `latch` without `onmatch` are considered before any combinations that include `onmatch`
-5. `onmatch` plus `onchange` and/or `latch` is considered before just `onmatch`
-6. `onmatch`
+1. No qualifiers always succeeds
+2. `nocontrib` overrides other assignment qualifiers
+3. `asbool` overlays all other assignment qualifiers except nocontrib
+4. `onmatch` determines if any of the below qualifiers come into play
+4. `notnone` is the next highest priority
+5. `increase` and `decrease` are the next highest priority after `notnone`
+4. `onchange` or `latch` are the lowest priority, meaning that they can be overridden, blocked from consideration, or have their match vote (or absence of voting) modified by any of the other variable qualifiers.
 
 This may seem like a lot. And it is. The silver lining is that the qualifiers have a lot of expressive power that you can tap into when you need it, and ignore when you don't.
 
