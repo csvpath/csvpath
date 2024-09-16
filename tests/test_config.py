@@ -1,10 +1,18 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.util.config_exception import ConfigurationException
 
 
 class TestConfig(unittest.TestCase):
+    def test_config_assure_log_dir(self):
+        path = CsvPath()
+        config = path.config
+        dirpath = config._get_dir_path("tests/test_resources/config-1/config-1.ini")
+        print(f"test_config_assure_log_dir: dirpath: {dirpath}")
+        assert dirpath == "tests/test_resources/config-1"
+
     def test_config1(self):
         print("")
         path = CsvPath()

@@ -68,7 +68,10 @@ class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
                 path = os.path.join(base, p)
                 self.named_files[name] = path
             else:
-                pass
+                self.csvpaths.logger.debug(
+                    "Skipping %s because extension not in accept list",
+                    os.path.join(base, p),
+                )
 
     def add_named_file(self, *, name: str, path: str) -> None:
         self.named_files[name] = path
