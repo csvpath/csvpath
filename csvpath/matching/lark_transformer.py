@@ -24,13 +24,20 @@ class LarkTransformer(Transformer):  # pylint: disable=C0115
         super().__init__()
 
     def match(self, *expressions):  # pylint: disable=C0116
-        return list(expressions)
+        return [e for e in list(expressions) if e is not None]
 
     # left (WHEN action)?
     # equality (WHEN action)?
     # assignment
     # COMMENT
     def expression(self, acted_on, when=None, action=None):  # pylint: disable=C0116
+        # print(f"expression: acted_on: {acted_on}, when: {when}, action: {action}")
+        if acted_on is None and when is None and action is None:
+            # this is a comment
+            return None
+        #
+        #
+        #
         e = Expression(self.matcher)
         if when is None:
             e.add_child(acted_on)
