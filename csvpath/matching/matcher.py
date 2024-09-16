@@ -30,6 +30,7 @@ class Matcher:  # pylint: disable=R0902
         self.if_all_match = []
         self.skip = False
         self.cachers = []
+        self._AND = True
         if data is not None:
             self.parser = LarkParser()
             tree = self.parser.parse(data)
@@ -134,22 +135,25 @@ class Matcher:  # pylint: disable=R0902
         # last() in the csvpath.
         #
         if self.csvpath.line_monitor.is_last_line_and_blank(self.line):
-            # if self.csvpath.line_monitor.is_last_line_and_empty(self.line):
             self.csvpath.logger.debug(
                 "Is last line and blank. Doing lasts and then returning True"
             )
             self._do_lasts()
             return True
         ret = True
-        failed = False
+        failed = False if self._AND else True
         self.csvpath.logger.debug(
-            "beginning to match against line[%s]: %s",
+            "Beginning %s match against line[%s]: %s",
+            ("AND" if self._AND else "OR"),
             self.csvpath.line_monitor.physical_line_number,
             str(self.line),
         )
         for i, et in enumerate(self.expressions):
             self.csvpath.logger.debug(
-                "Beginning to consider expression: et[%s]: %s: %s", i, et[0], et[1]
+                "Beginning to consider expression: expressions[%s]: %s: %s",
+                i,
+                et[0],
+                et[1],
             )
             if self.csvpath and self.csvpath.stopped:
                 #
@@ -173,7 +177,7 @@ class Matcher:  # pylint: disable=R0902
                 self.skip = False
                 return False
             #
-            # from here down we care what the expressions tell us.
+            # from here down we care what the expression tells us.
             # we can require concordance or we can allow executive
             # decisons.
             #
@@ -187,13 +191,16 @@ class Matcher:  # pylint: disable=R0902
             else:
                 et[1] = True
                 ret = True
-            if not ret:
-                failed = True
             #
-            # if we're failed we need to (re)set ret in case this is the final iteration.
+            # now ret holds this expression's vote
             #
-            if failed:
-                ret = False
+            pln = self.csvpath.line_monitor.physical_line_number
+            if self._AND:
+                if ret is False:
+                    failed = True
+            else:
+                if ret is True:
+                    failed = False
         #
         # here we could be set to do an OR, not an AND.
         # we would do that only in the case that the answer was False. if so, we
@@ -201,9 +208,8 @@ class Matcher:  # pylint: disable=R0902
         # were found, we would respond True; else, False.
         #
         pln = self.csvpath.line_monitor.physical_line_number
-        print(f"Matcher.matches:202: pln: {pln}, ret: {ret}")
-        self.csvpath.logger.debug("Match result for line %s: %s", pln, ret)
-        return ret
+        self.csvpath.logger.debug("Match result for line %s: %s", pln, failed)
+        return not failed
 
     def check_valid(self) -> None:  # pylint: disable=C0116
         for _ in self.expressions:

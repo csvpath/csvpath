@@ -114,26 +114,27 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         self.match = None
         #
+        # when AND is True we do a logical AND of the match components
+        # to see if there is a match. this is the default. when AND is
+        # False (or set OR to True) the match components are ORed to
+        # determine if a line matches. in the former case all the match
+        # components must agree for a line to match. in the latter case,
+        # if any one match component votes True the line is matched.
+        # technically you can switch from AND to OR, or vice versa, in
+        # the middle of iterating a file using next(). probably not a
+        # good idea, tho.
+        #
+        self._AND = True
+        #
         # when True the lines that do not match are returned from next()
         # and collect(). this effectively switches CsvPath from being an
-        # AND machine to being an OR machine; though we do not actually
-        # create an OR expression. in the default, we say:
+        # AND machine to being a NOT AND machine. we do not actually
+        # create an OR expression in this case. in the default, we say:
         #     are all of these things true?
         # but when collect_when_not_matched is True we ask:
         #     are any of these things not true?
         #
         self._when_not_matched = False
-        #
-        # note-to-self: by default CsvPath's matcher does an AND match. if
-        # we set this property to True we tell the matcher to do an OR.
-        # i.e. if any of the match components return true there is a match.
-        # HOWEVER, this would be a big change because default values and
-        # nocontrib would have to be negative when ORing. we don't have a
-        # way to do that today -- defaults aren't completely centralized.
-        # they are, easy.
-        #
-        # self._or_match = False
-        #
         self.headers = None
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
@@ -246,6 +247,22 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
         #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
+
+    @property
+    def AND(self) -> bool:
+        return self._AND
+
+    @AND.setter
+    def AND(self, a: bool) -> bool:
+        self._AND = a
+
+    @property
+    def OR(self) -> bool:
+        return not self._AND
+
+    @OR.setter
+    def OR(self, a: bool) -> bool:
+        self._AND = not a
 
     @property
     def identity(self) -> str:
@@ -857,6 +874,7 @@ class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
+            self.matcher._AND = self._AND
         else:
             self.logger.debug("Resetting and reloading matcher")
             self.matcher.reset()
