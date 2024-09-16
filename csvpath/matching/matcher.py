@@ -126,7 +126,7 @@ class Matcher:  # pylint: disable=R0902
             _.clear_caches()
         self.cachers = []
 
-    def matches(self, *, syntax_only=False) -> bool:
+    def matches(self) -> bool:
         """this is the main work of the Matcher. we enumerate the self.expressions.
         if all evaluate to True in an AND operation we return True."""
         #
@@ -172,11 +172,16 @@ class Matcher:  # pylint: disable=R0902
                 self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
                 return False
+            #
+            # from here down we care what the expressions tell us.
+            # we can require concordance or we can allow executive
+            # decisons.
+            #
             if et[1] is True:
                 ret = True
             elif et[1] is False:
                 ret = False
-            elif not et[0].matches(skip=[]) and not syntax_only:
+            elif et[0].matches(skip=[]) is False:
                 et[1] = False
                 ret = False
             else:
@@ -189,9 +194,6 @@ class Matcher:  # pylint: disable=R0902
             #
             if failed:
                 ret = False
-        if ret is True:
-            self.csvpath.logger.debug("Setting any vars deferred till match")
-            self.do_set_if_all_match()
         #
         # here we could be set to do an OR, not an AND.
         # we would do that only in the case that the answer was False. if so, we
@@ -206,21 +208,6 @@ class Matcher:  # pylint: disable=R0902
     def check_valid(self) -> None:  # pylint: disable=C0116
         for _ in self.expressions:
             _[0].check_valid()
-
-    def do_set_if_all_match(self) -> None:  # pylint: disable=C0116
-        for _ in self.if_all_match:
-            name = _[0]
-            value = _[1]
-            tracking = _[2]
-            self.set_variable(name, value=value, tracking=tracking)
-        self.if_all_match = []
-
-    def set_if_all_match(self, name: str, value: Any, tracking=None) -> None:
-        """registers a variable set to happen only after the line's consideration
-        is complete and it is found to match. this is used for setting variables
-        when they have 'onmatch'; however, more recently we handle onmatch in
-        another way. you can see that in Matchable."""
-        self.if_all_match.append((name, value, tracking))
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         """see CsvPath.get_variable"""
