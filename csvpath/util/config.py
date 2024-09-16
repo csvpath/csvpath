@@ -98,21 +98,21 @@ class CsvPathConfig:
             os.makedirs("config")
             with open(CsvPathConfig.CONFIG, "w") as file:
                 c = """
-                    [csvpath_files]
-                    extensions = txt, csvpath, csvpaths
-                    [csv_files]
-                    extensions = txt, csv, tsv, dat, tab, psv, ssv
-                    [errors]
-                    csvpath = raise, collect, stop, fail
-                    csvpaths = raise, collect
-                    [logging]
-                    csvpath = info
-                    csvpaths = info
-                    log_file = logs/csvpath.log
-                    log_files_to_keep = 100
-                    log_file_size = 52428800
-                    [config]
-                    path =
+[csvpath_files]
+extensions = txt, csvpath, csvpaths
+[csv_files]
+extensions = txt, csv, tsv, dat, tab, psv, ssv
+[errors]
+csvpath = raise, collect, stop, fail
+csvpaths = raise, collect
+[logging]
+csvpath = info
+csvpaths = info
+log_file = logs/csvpath.log
+log_files_to_keep = 100
+log_file_size = 52428800
+[config]
+path =
                 """
                 file.write(c)
             print(f"Creating a default config file at {CsvPathConfig.CONFIG}.")

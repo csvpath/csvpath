@@ -180,7 +180,6 @@ class Validation(Matchable):
         if hasattr(self.children[0].right, "op"):
             raise ChildrenException(f"{self.name}() can only have 2 arguments")
         if len(left) > 0:
-            print(f"validate: 183: {self.children[0].left} === {left}")
             if not self._class_match(self.children[0].left, left):
                 raise ChildrenException(
                     f"{self.name}() must have a first argument of type: {left}"

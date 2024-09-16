@@ -153,3 +153,31 @@ class TestFunctionsLength(unittest.TestCase):
         assert path.variables["max"] == [False, False, True, True]
         assert path.variables["too_long"] == [True, True, False, False]
         assert path.variables["too_short"] == [False, False, True, True]
+
+    def test_too_long1(self):
+        csvpath = """$tests/test_resources/trivial.csv[*][
+                    ~ Apply three rules to check if a CSV file meets expectations ~
+                      too_long(#lastname, 30)
+                  ]"""
+
+        path = CsvPath()
+        path.parse(csvpath)
+        lines = path.collect()
+        print(f"Found {len(lines)} invalid lines")
+        assert len(lines) == 1
+
+    def test_too_long2(self):
+        print("")
+        csvpath = """$tests/test_resources/trivial.csv[*][
+                    ~ Apply three rules to check if a CSV file meets expectations ~
+                      or(
+                        missing(headers())
+                        ,
+                        too_long(#lastname, 30)
+                      )
+                  ]"""
+        path = CsvPath()
+        path.parse(csvpath)
+        lines = path.collect()
+        print(f"Found {len(lines)} invalid lines")
+        assert len(lines) == 2

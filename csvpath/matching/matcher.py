@@ -192,8 +192,6 @@ class Matcher:  # pylint: disable=R0902
         if ret is True:
             self.csvpath.logger.debug("Setting any vars deferred till match")
             self.do_set_if_all_match()
-        else:
-            pass
         #
         # here we could be set to do an OR, not an AND.
         # we would do that only in the case that the answer was False. if so, we
@@ -201,6 +199,7 @@ class Matcher:  # pylint: disable=R0902
         # were found, we would respond True; else, False.
         #
         pln = self.csvpath.line_monitor.physical_line_number
+        print(f"Matcher.matches:202: pln: {pln}, ret: {ret}")
         self.csvpath.logger.debug("Match result for line %s: %s", pln, ret)
         return ret
 

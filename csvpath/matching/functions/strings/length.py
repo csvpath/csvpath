@@ -45,4 +45,5 @@ class MinMaxLength(ValueProducer):  # pylint: disable=C0115
         return self.value
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip) > 0
+        v = self.to_value(skip=skip)
+        self.match = v
