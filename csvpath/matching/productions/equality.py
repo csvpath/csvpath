@@ -356,6 +356,9 @@ class Equality(Matchable):
             lm = self.left.matches(skip=skip)
             if lm is True:
                 b = True
+                # print(f"EQuality.do_when: matcher._AND: {self.matcher._AND}, b: {b}")
+                if self.matcher._AND is False:
+                    b = not b
                 #
                 # adding complication..., but if left is last() we want to unfreeze
                 # to let it do what it does. e.g. last() -> print("done!")

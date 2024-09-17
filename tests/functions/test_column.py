@@ -126,3 +126,20 @@ class TestFunctionsColumn(unittest.TestCase):
         assert len(v["order_duplicated"]) == 0
         assert len(v["dup_duplicated"]) == 1
         assert len(v["short_duplicated"]) == 0
+
+    def test_header_name_from_example(self):
+        path = CsvPath()
+        path.OR = True
+        path.parse(
+            """$tests/test_resources/trivial.csv[*][
+                ~ Apply three rules to check if a CSV file is invalid ~
+                missing(headers())
+                too_long(#lastname, 30)
+                header_name.nocontrib(0, "firstname") -> fail()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"Found {len(lines)} invalid lines")
+        print(f"The file as a whole is valid? {path.is_valid}")
+        assert not path.is_valid
+        assert len(lines) == 2
