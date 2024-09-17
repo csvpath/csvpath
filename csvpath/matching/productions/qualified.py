@@ -327,7 +327,7 @@ class Qualified:
         #
         # supports ONCE
         #
-        _id = self.get_id()  # pylint: disable=E1101
+        _id = f"{self.get_id()}_once"  # pylint: disable=E1101
         v = self.matcher.get_variable(_id, set_if_none=True)  # pylint: disable=E1101
         return v
 
@@ -335,6 +335,6 @@ class Qualified:
         #
         # supports ONCE
         #
-        _id = self.get_id()  # pylint: disable=E1101
+        _id = f"{self.get_id()}_once"  # pylint: disable=E1101
         self.matcher.set_variable(_id, value=False)  # pylint: disable=E1101
         # re: E1101: inheritance structure. good point, but not the time to fix it.

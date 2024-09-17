@@ -54,3 +54,22 @@ class StdOutPrinter(Printer):
         else:
             print(string)
         self._last_line = string
+
+
+class TestPrinter(Printer):
+    def __init__(self):
+        self.lines = []
+
+    @property
+    def lines_printed(self) -> int:
+        return len(self.lines)
+
+    @property
+    def last_line(self) -> str:
+        return self.lines[len(self.lines) - 1] if len(self.lines) > 0 else ""
+
+    def print(self, string: str) -> None:
+        self.print_to(None, string)
+
+    def print_to(self, name: str, string: str) -> None:
+        self.lines.append(string)

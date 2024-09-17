@@ -1,17 +1,60 @@
 import unittest
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.log_utility import LogUtility
+from csvpath.util.printer import TestPrinter
 from csvpath.matching.functions.print.printf import Print, PrintParser
 from csvpath.matching.util.lark_print_parser import (
     LarkPrintParser,
     LarkPrintTransformer,
 )
+from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 PATH2 = "tests/test_resources/test-3.csv"
+MISMATCH = "tests/test_resources/header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
+    def test_print_once1(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_print_once1")
+        printer = TestPrinter()
+        path.set_printers([printer])
+        path.parse(
+            f"""${MISMATCH}[*] [
+            yes()
+                print.once(
+                    "Number of headers changed by $.variables.header_change..")
+        ]"""
+        )
+        lines = path.collect()
+        print(f"test_print_once1: match lines: {len(lines)}")
+        print(f"test_print_once1: match lines: {lines}")
+        assert len(lines) == 4
+        print(f"test_print_once1: print lines: {printer.lines}")
+        assert len(printer.lines) == 1
+
+    def test_print_once2(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_print_once2")
+        printer = TestPrinter()
+        path.set_printers([printer])
+        path.parse(
+            f"""${MISMATCH}[*] [
+            yes()
+                print.onchange.once(
+                    "Number of headers changed by $.variables.header_change..")
+        ]"""
+        )
+        lines = path.collect()
+        print(f"test_print_once2: match lines: {len(lines)}")
+        print(f"test_print_once2: match lines: {lines}")
+        assert len(lines) == 4
+        print(f"test_print_once2: print lines: {printer.lines}")
+        assert len(printer.lines) == 1
+
     def test_lark_print_parser_parse_and_transform(self):
         printstr = """$me.headers.level
             $me.headers.message

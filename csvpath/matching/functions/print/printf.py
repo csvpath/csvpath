@@ -30,13 +30,16 @@ class Print(SideEffect):
         if isinstance(self.children[0], Equality):
             right = self.children[0].right
         if self.do_onchange():
-            v = self.to_value(skip=skip)
-            #
-            # we intentionally add a single char suffix
-            #
-            if v[len(v) - 1] == " ":
-                v = v[0 : len(v) - 1]
-            self.matcher.csvpath.print(f"{v}")
-            if right:
-                right.matches(skip=skip)
+            if self.do_once():
+                v = self.to_value(skip=skip)
+                #
+                # we intentionally add a single char suffix
+                #
+                if v[len(v) - 1] == " ":
+                    v = v[0 : len(v) - 1]
+                self.matcher.csvpath.print(f"{v}")
+                if right:
+                    right.matches(skip=skip)
+                self._set_has_happened()
+
         self.match = True
