@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.458"
+version = "0.0.459"
 description = "A declarative language for data extraction and validation of CSV files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
