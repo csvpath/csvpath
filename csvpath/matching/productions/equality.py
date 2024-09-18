@@ -27,11 +27,16 @@ class Equality(Matchable):
         # and the right-hand side was executed. This is so that a VoteStack-like
         # component could provide debugging access.
         self.DO_WHEN = None
+        self.sentinel = False
 
     def reset(self) -> None:
         self.value = None
         self.match = None
         self.DO_WHEN = False
+        #
+        # sentinel makes sure that the right-hand side is only executed 1x
+        #
+        self.sentinel = False
         super().reset()
 
     @property
@@ -48,6 +53,7 @@ class Equality(Matchable):
         while len(self.children) < 2:
             self.children.append(None)
         self.children[0] = o
+        o.parent = self
 
     @property
     def right(self):  # pylint: disable=C0116
@@ -63,6 +69,7 @@ class Equality(Matchable):
         while len(self.children) < 2:
             self.children.append(None)
         self.children[1] = o
+        o.parent = self
 
     def other_child(self, o):  # pylint: disable=C0116
         if self.left == o:
@@ -363,7 +370,22 @@ class Equality(Matchable):
     def _do_when(self, *, skip=None) -> bool:
         b = None
         if self.op == "->":
+            #
+            # when we use the skip list to prevent loops we are
+            # returning the default_match -- the affirmative --
+            # resulting in the right-hand side being considered
+            # early, before the left-hand side is ready. the
+            # sentinel makes sure we don't descend the right-hand
+            # side.
+            #
+            if self.sentinel:
+                return self.default_match()
+            else:
+                self.sentinel = True
+
             lm = self.left.matches(skip=skip)
+            pln = self.matcher.csvpath.line_monitor.physical_line_number
+
             if lm is True:
                 b = True
                 if self.matcher._AND is False and self._left_nocontrib(self.left):

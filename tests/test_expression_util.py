@@ -6,6 +6,46 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class TestExpressionUtil(unittest.TestCase):
+    def test_expression_utility_my_expression1(self):
+        csvpath = """$tests/test_resources/March-2024.csv[*][
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+                gt( @header_change, 9) -> reset_headers(print("Resetting headers"))
+                print.onchange.once("", skip())
+
+                last.onmatch() ->
+                      print("few", fail())
+
+          ]"""
+        path = CsvPath()
+        path.OR = True
+        path.parse(csvpath)
+        path.collect()
+        last = path.matcher.expressions[4][0].children[0].left
+        e = ExpressionUtility.get_my_expression(last)
+        assert e == path.matcher.expressions[4][0]
+
+    def test_expression_utility_any_of_my_descendants(self):
+        csvpath = """$tests/test_resources/March-2024.csv[*][
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+                gt( @header_change, 9) -> reset_headers(print("Resetting headers"))
+                print.onchange.once("", skip())
+
+                last.onmatch() ->
+                      print("few", fail())
+
+          ]"""
+        path = CsvPath()
+        path.OR = True
+        path.parse(csvpath)
+        path.collect()
+        last = path.matcher.expressions[4][0].children[0].left
+        e = ExpressionUtility.get_my_expression(last)
+
+        assert e == path.matcher.expressions[4][0]
+        assert ExpressionUtility.any_of_my_descendants(e, [last])
+
     def test_exp_util_to_int1(self):
         assert ExpressionUtility.to_int(1) == 1
         assert ExpressionUtility.to_int(1.0) == 1

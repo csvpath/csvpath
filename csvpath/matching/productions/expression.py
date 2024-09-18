@@ -2,6 +2,7 @@
 import traceback
 import warnings
 from csvpath.util.error import ErrorHandler
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from . import Matchable
 
 
@@ -25,7 +26,7 @@ class Expression(Matchable):
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
-            return True
+            return True  # should be default_match
         if self.match is None:
             try:
                 ret = True

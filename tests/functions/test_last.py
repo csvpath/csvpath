@@ -9,68 +9,28 @@ EMPTY = "tests/test_resources/empty2.csv"
 
 
 class TestFunctionsLast(unittest.TestCase):
-    """
     def test_function_last1(self):
-        print("")
-        path = CsvPath()
-        Save._save(path, "test_function_last1")
-        matchpart = ""
-            [
-                count_lines()==0 -> @first = 0
-                last() -> @last = count_lines()
-            ]""
+        csvpath = """$tests/test_resources/March-2024.csv[*][
+            ~ Capture metadata from comments ~
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+                gt( @header_change, 9) -> reset_headers(print("Resetting headers"))
+                print.onchange.once("headers changed", skip())
+                ~
+                below(total_lines(), 10)
+                ~
+                last.onmatch() ->
+                      push("lastish", line_number())
 
-        matcher = Matcher(
-            csvpath=path,
-            data=matchpart,
-            line=["Frog", "Bats", "ribbit..."],
-            headers=["firstname", "lastname", "say"],
-        )
-        print("")
-        count_lines = matcher.expressions[0][0].children[0].left.left.matches(skip=[])
-        assert count_lines is True
-        lines = matcher.expressions[0][0].children[0].left.left.to_value(skip=[])
-        assert lines == 0
-        is0 = matcher.expressions[0][0].children[0].left.matches(skip=[])
-        assert is0 is True
-        op = matcher.expressions[0][0].children[0].op
-        assert op == "->"
-        b1 = matcher.expressions[0][0].matches(skip=[])
-        #
-        # this was False because -1 < 0
-        # we have to be careful:
-        # .  line_number is a pointer
-        # .  total_lines is a count
-        # .  count_lines is a count
-        # for now just changing to True.
-        #
-        b2 = matcher.expressions[1][0].matches(skip=[])
-        print("")
-        print(f"test_function_last1: path vars: {path.variables}")
-        print(f"test_function_last1: b1: {b1}, b2: {b2}")
-        assert path.variables["first"] == 0
-        assert b1 is True
-        assert b2 is True
-    """
-
-    """
-    def test_function_last2(self):
+          ]"""
         path = CsvPath()
-        Save._save(path, "test_function_last2")
-        path.parse(
-            f"" ${PATH}[*] [
-                count_lines()==0 -> @first = 0
-                last() -> @last = count_lines()
-            ]
-            ""
-        )
-        print("")
+        path.OR = True
+        path.parse(csvpath)
         lines = path.collect()
-        print(f"test_function_last: path vars: {path.variables}")
-        print(f"test_function_last: lines: {lines}")
-        assert path.variables["last"] == 8
-        assert path.variables["first"] == 0
-    """
+        print(f"\n test_function_last1: lines: {len(lines)}")
+        print(f"\n test_function_last1: vars: {path.variables}")
+        assert len(path.variables["lastish"]) == 1
+
     # FIXME: this is not really a deterministic test.
     def test_function_last3(self):
         path = CsvPath()

@@ -30,20 +30,17 @@ class Last(MatchDecider):
             )
         )
         if last or last_scan:
-            if not self.onmatch or self.line_matches():
-                self.match = True
-                if self.match:
-                    if len(self.children) == 1:
-                        self.matcher.csvpath.logger.debug(
-                            "Overriding frozen in last(): %s", self
-                        )
-                        self.matcher.csvpath.is_frozen = False
-                        self.children[0].matches(skip=[self])
-                        self.matcher.csvpath.is_frozen = True
-                        self.matcher.csvpath.logger.debug(
-                            "Resetting frozen after last(): %s", self
-                        )
-            else:
-                self.match = False
+            self.match = True
         else:
             self.match = False
+        if self.match:
+            if len(self.children) == 1:
+                self.matcher.csvpath.logger.debug(
+                    "Overriding frozen in last(): %s", self
+                )
+                self.matcher.csvpath.is_frozen = False
+                self.children[0].matches(skip=[self])
+                self.matcher.csvpath.is_frozen = True
+                self.matcher.csvpath.logger.debug(
+                    "Resetting frozen after last(): %s", self
+                )

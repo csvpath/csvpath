@@ -200,3 +200,10 @@ class ExpressionUtility:
             if p:
                 ret = p
         return ret
+
+    @classmethod
+    def any_of_my_descendants(cls, expression, skips) -> bool:
+        for c in skips:
+            if cls.get_my_expression(c) == expression:
+                return True
+        return False

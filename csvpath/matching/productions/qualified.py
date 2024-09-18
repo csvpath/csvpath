@@ -259,7 +259,15 @@ class Qualified:
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
-
+            #
+            # this fix for 1 test (test_function_last1) is blowing 11 other tests!
+            #
+            # me = ExpressionUtility.get_my_expression(self)
+            # print(f"my expression: me: {me}")
+            # if e[0] == me: # added experiment
+            # print(f"found my expression!")
+            #    continue
+            # print(f"not my expression: {e[0]}")
             m = e[1] is self.default_match() or e[0].matches(
                 skip=[self]
             )  # pylint: disable=E1101
@@ -287,7 +295,7 @@ class Qualified:
         _id = f"{self.get_id()}_onchange"  # pylint: disable=E1101
         v = self.matcher.get_variable(_id)  # pylint: disable=E1101
         me = hashlib.sha256(
-            f"{self.to_value()}".encode("utf-8")  # pylint: disable=E1101
+            f"{self.to_value(skip=[self])}".encode("utf-8")  # pylint: disable=E1101
         ).hexdigest()
         self.matcher.set_variable(_id, value=me)  # pylint: disable=E1101
         # this might be better as an is True/is False test
