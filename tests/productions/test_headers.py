@@ -10,6 +10,37 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestHeaders(unittest.TestCase):
+    def test_header_names0(self):
+        print("")
+        path = CsvPath()
+        path.OR = True
+        Save._save(path, "test_header_names0")
+        path.parse(
+            """$tests/test_resources/March-2024.csv[*][
+                ~
+                line_number() == 9 -> debug()
+                line_number() == 11 -> debug("info")
+                ~
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+
+                gt( @header_change, 9) -> reset_headers(skip())
+
+                not(#SKU)
+
+                push("votes", vote_stack())
+
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_header_names0: lines: {lines}\n")
+        print(f"test_header_names0: lines cnt: {len(lines)}\n")
+        print(f"test_header_names0: vars: {path.variables}")
+
+        for s in path.variables["votes"]:
+            print(f">>> {s}")
+        assert len(lines) == 1
+
     def test_header_names1(self):
         path = CsvPath()
         Save._save(path, "test_header_names")

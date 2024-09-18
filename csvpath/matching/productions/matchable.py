@@ -123,4 +123,4 @@ class Matchable(Qualified):
         return None
 
     def default_match(self) -> bool:
-        return True
+        return self.matcher._AND

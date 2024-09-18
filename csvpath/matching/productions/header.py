@@ -50,6 +50,7 @@ class Header(Matchable):
                 self.value = ExpressionUtility.asbool(ret)
             else:
                 self.value = ret
+        # print(f"header.to_value: self.value: {self.value}<<<")
         return self.value
 
     def matches(self, *, skip=None) -> bool:
@@ -61,5 +62,6 @@ class Header(Matchable):
                 v = self.to_value(skip=skip)
                 self.match = ExpressionUtility.asbool(v)
             else:
-                self.match = v is not None
+                self.match = not ExpressionUtility.is_none(v)  # v is not None
+                # print(f"Header.matches: match? {self.match}")
         return self.match

@@ -106,6 +106,7 @@ class LarkTransformer(Transformer):  # pylint: disable=C0115
         for _ in args:
             if isinstance(_, Matchable):
                 e.children.append(_)
+                _.parent = e
         if len(e.children) == 1:
             return e.children[0]
         if len(e.children) > 1:

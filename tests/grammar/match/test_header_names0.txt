@@ -1,0 +1,15 @@
+[
+                ~
+                line_number() == 9 -> debug()
+                line_number() == 11 -> debug("info")
+                ~
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+
+                gt( @header_change, 9) -> reset_headers(skip())
+
+                not(#SKU)
+
+                push("votes", vote_stack())
+
+            ]

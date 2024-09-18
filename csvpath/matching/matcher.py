@@ -195,6 +195,13 @@ class Matcher:  # pylint: disable=R0902
             # now ret holds this expression's vote
             #
             pln = self.csvpath.line_monitor.physical_line_number
+            self.csvpath.logger.debug(
+                "Matcher.matches: ready to adjudicate %s component %s match: ret: %s, failed: %s",
+                "AND" if self._AND else "OR",
+                str(et[0]),
+                ret,
+                failed,
+            )
             if self._AND:
                 if ret is False:
                     failed = True
@@ -208,7 +215,12 @@ class Matcher:  # pylint: disable=R0902
         # were found, we would respond True; else, False.
         #
         pln = self.csvpath.line_monitor.physical_line_number
-        self.csvpath.logger.debug("Match result for line %s: %s", pln, failed)
+        self.csvpath.logger.debug(
+            "Matcher.matches: result (AND:%s) for line %s: %s",
+            self._AND,
+            pln,
+            not failed,
+        )
         return not failed
 
     def check_valid(self) -> None:  # pylint: disable=C0116

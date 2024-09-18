@@ -253,6 +253,7 @@ class Equality(Matchable):
                 )
         else:
             ret = not ret
+
         #
         # asbool
         #
@@ -356,7 +357,6 @@ class Equality(Matchable):
             lm = self.left.matches(skip=skip)
             if lm is True:
                 b = True
-                # print(f"EQuality.do_when: matcher._AND: {self.matcher._AND}, b: {b}")
                 if self.matcher._AND is False:
                     b = not b
                 #

@@ -36,6 +36,22 @@ class TestPrint(unittest.TestCase):
         assert len(printer.lines) == 1
 
     def test_print_once2(self):
+        #
+        # this test is unusual. the expected result is not intuitive:
+        # the a var should in fact == "a". the reason is:
+        #    - when a variable is not found the name requested is returned
+        #    - a is not found
+        #    - a comes before print, so you would think it had been set
+        #    - however, count() counts matches. it implies the onmatch
+        #           qualifier. the rest of the match components are run
+        #           before count(), same as for any onmatch component
+        #     - the result is that print() prints 'a == a' which we are
+        #           capturing from the printer for our test
+        # with this test we're just making sure the expected behavior
+        # doesn't change. I can't think of a logical way to improve how
+        # we make assignments, so I think we're just going to run across
+        # this gotcha every so often.
+        #
         print("")
         path = CsvPath()
         Save._save(path, "test_print_once2")
@@ -44,16 +60,18 @@ class TestPrint(unittest.TestCase):
         path.parse(
             f"""${MISMATCH}[*] [
             yes()
-                print.onchange.once(
-                    "Number of headers changed by $.variables.header_change..")
+            @a = count()
+            print.onchange.once("a == $.variables.a")
         ]"""
         )
         lines = path.collect()
-        print(f"test_print_once2: match lines: {len(lines)}")
+        print(f"\ntest_print_once2: match lines: {len(lines)}")
         print(f"test_print_once2: match lines: {lines}")
+        print(f"test_print_once2: match vars: {path.variables}")
         assert len(lines) == 4
         print(f"test_print_once2: print lines: {printer.lines}")
         assert len(printer.lines) == 1
+        assert printer.lines[0] == "a == a"
 
     def test_lark_print_parser_parse_and_transform(self):
         printstr = """$me.headers.level

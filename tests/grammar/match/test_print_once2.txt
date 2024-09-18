@@ -1,5 +1,5 @@
 [
             yes()
-                print.onchange.once(
-                    "Number of headers changed by $.variables.header_change..")
+            @a = count()
+            print.onchange.once("a == $.variables.a")
         ]

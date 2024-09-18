@@ -260,6 +260,7 @@ class Qualified:
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
+
             m = e[1] is self.default_match() or e[0].matches(
                 skip=[self]
             )  # pylint: disable=E1101
@@ -284,13 +285,17 @@ class Qualified:
         qualified doesn't have the qualification."""
         if not self.onchange:
             return True
-        _id = self.get_id()  # pylint: disable=E1101
+        _id = f"{self.get_id()}_onchange"  # pylint: disable=E1101
         v = self.matcher.get_variable(_id)  # pylint: disable=E1101
         me = hashlib.sha256(
             f"{self.to_value()}".encode("utf-8")  # pylint: disable=E1101
         ).hexdigest()
         self.matcher.set_variable(_id, value=me)  # pylint: disable=E1101
-        return me != v
+        # I think this would be better as an is True/is False test
+        # but this works fine
+        ret = me != v
+        # print(f"qualified.do_onchange: v: {v}, me: {me} == {ret}")
+        return ret
 
     @property
     def onchange(self) -> bool:  # pylint: disable=C0116

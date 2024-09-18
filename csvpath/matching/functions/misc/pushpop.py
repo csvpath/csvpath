@@ -31,7 +31,8 @@ class Push(SideEffect):
         self.value = True
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        self.to_value(skip=skip)
+        self.match = self.default_match()
 
 
 class PushDistinct(Push):

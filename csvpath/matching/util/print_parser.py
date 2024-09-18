@@ -144,6 +144,7 @@ class PrintParser:
         if name not in data:
             self.csvpath.logger.warning(f"No key '{name}' in data of ref {ref}")
             return name
+
         datum = data[name]
         iota = None
         if tracking is not None:

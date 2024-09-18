@@ -72,6 +72,7 @@ from .misc.intf import Int
 from .misc.get import Get
 from .misc.track import Track
 from .misc.importf import Import
+from .misc.debug import Debug, BriefStackTrace, VoteStack
 from .validity.failed import Failed
 from .validity.fail import Fail
 
@@ -323,6 +324,12 @@ class FunctionFactory:
             f = Between(matcher, name, child)
         elif name == "get":
             f = Get(matcher, name, child)
+        elif name == "debug":
+            f = Debug(matcher, name, child)
+        elif name == "brief_stack_trace":
+            f = BriefStackTrace(matcher, name, child)
+        elif name == "vote_stack":
+            f = VoteStack(matcher, name, child)
         elif name == "metaphone":
             f = Metaphone(matcher, name, child)
         else:

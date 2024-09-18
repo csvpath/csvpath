@@ -64,4 +64,4 @@ class Skip(SideEffect):
                     self._set_has_happened()
                 pln = self.matcher.csvpath.line_monitor.physical_line_number
                 self.matcher.csvpath.logger.info(f"skipping line {pln}")
-        self.match = True
+        self.match = self.default_match()
