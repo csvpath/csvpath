@@ -127,8 +127,9 @@ class TestFunctionsColumn(unittest.TestCase):
         assert len(v["dup_duplicated"]) == 1
         assert len(v["short_duplicated"]) == 0
 
-    def test_header_name_from_example(self):
+    def test_header_name_from_example1(self):
         path = CsvPath()
+        Save._save(path, "test_header_name_from_example1")
         path.OR = True
         path.parse(
             """$tests/test_resources/trivial.csv[*][
@@ -153,4 +154,33 @@ class TestFunctionsColumn(unittest.TestCase):
         # way, but it is exactly how it is supposed to work today.
         #
         assert path.is_valid
+        assert len(lines) == 2
+
+    def test_header_name_from_example2(self):
+        path = CsvPath()
+        Save._save(path, "test_header_name_from_example2")
+        path.OR = True
+        path.parse(
+            """$tests/test_resources/trivial.csv[*][
+                ~ Apply three rules to check if a CSV file is invalid ~
+                missing(headers())
+                too_long(#lastname, 30)
+                not.nocontrib(header_name(0, "firstname")) -> fail()
+                push( "votes", vote_stack() )
+                has_matches.nocontrib() -> fail()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"Found {len(lines)} invalid lines")
+        print(f"The file as a whole is valid? {path.is_valid}")
+        print(f"\nvars? {path.variables}")
+        """ """
+        for v in path.variables["votes"]:
+            print(v)
+        """ """
+        #
+        # we explicitly set fail() including in the case of header mismatch
+        # so our file is invalid.
+        #
+        assert not path.is_valid
         assert len(lines) == 2

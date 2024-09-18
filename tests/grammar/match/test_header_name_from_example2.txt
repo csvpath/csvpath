@@ -1,0 +1,8 @@
+[
+                ~ Apply three rules to check if a CSV file is invalid ~
+                missing(headers())
+                too_long(#lastname, 30)
+                not.nocontrib(header_name(0, "firstname")) -> fail()
+                push( "votes", vote_stack() )
+                has_matches.nocontrib() -> fail()
+            ]

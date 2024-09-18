@@ -132,7 +132,11 @@ class Equality(Matchable):
         #
         # the count() function implies onmatch
         #
-        count = self.right.name == "count" and len(self.right.children) == 0
+        count = (
+            self.right.name in ["count", "has_matches"]
+            and len(self.right.children) == 0
+        )
+        # count = self.right.name == "count" and len(self.right.children) == 0
         onchange = self.left.onchange
         latch = self.left.latch
         onmatch = self.left.onmatch or count

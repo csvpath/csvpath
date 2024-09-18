@@ -10,6 +10,7 @@ from .strings.length import Length, MinMaxLength
 from .strings.concat import Concat
 from .strings.metaphone import Metaphone
 from .counting.count import Count
+from .counting.has_matches import HasMatches
 from .counting.count_lines import CountLines, LineNumber
 from .counting.count_scans import CountScans
 from .counting.count_headers import CountHeaders
@@ -102,7 +103,7 @@ class FunctionFactory:
         if name is None:
             name = function.name
         if name is None:
-            raise InvalidNameException("Name passed in with function cannot be None")
+            raise InvalidNameException("Name of function cannot be None")
         if not isinstance(name, str):
             raise InvalidNameException("Name must be a string")
         name = name.strip()
@@ -149,6 +150,8 @@ class FunctionFactory:
         name, qualifier = cls.get_name_and_qualifier(name)
         if name == "count":
             f = Count(matcher, name, child)
+        elif name == "has_matches":
+            f = HasMatches(matcher, name, child)
         elif name == "length":
             f = Length(matcher, name, child)
         elif name in ["regex", "exact"]:
