@@ -42,4 +42,4 @@ class Print(SideEffect):
                     right.matches(skip=skip)
                 self._set_has_happened()
 
-        self.match = True
+        self.match = self.default_match()

@@ -3,6 +3,7 @@ import datetime
 from ..function_focus import SideEffect
 from csvpath.util.log_utility import LogUtility
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.productions import Equality
 
 
 class Debug(SideEffect):
@@ -71,3 +72,32 @@ class VoteStack(SideEffect):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()
+
+
+class DoWhenStack(SideEffect):
+    def check_valid(self) -> None:
+        self.validate_zero_args()
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        votes = []
+        dowhens = self._find_do_whens()
+        for c in dowhens:
+            votes.append(c.DO_WHEN)
+        self.value = votes
+
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.default_match()
+
+    def _find_do_whens(self) -> None:
+        self.matcher.csvpath.logger.debug("Looking for do-whens")
+        dowhens = []
+        cs = []
+        for es in self.matcher.expressions:
+            cs.append(es[0])
+        while len(cs) > 0:
+            c = cs.pop()
+            if isinstance(c, Equality) and c.op == "->":
+                dowhens.append(c)
+            cs += c.children
+        return dowhens

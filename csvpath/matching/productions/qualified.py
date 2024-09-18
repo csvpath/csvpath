@@ -128,7 +128,6 @@ class Qualified:
         return ret
 
     def _set(self, string: str, on: bool):
-        print(f"qualified._set: self quals: {self.qualifiers}")
         if on and string not in self.qualifiers:
             self.qualifiers.append(string)
         elif not on:
@@ -291,10 +290,9 @@ class Qualified:
             f"{self.to_value()}".encode("utf-8")  # pylint: disable=E1101
         ).hexdigest()
         self.matcher.set_variable(_id, value=me)  # pylint: disable=E1101
-        # I think this would be better as an is True/is False test
+        # this might be better as an is True/is False test
         # but this works fine
         ret = me != v
-        # print(f"qualified.do_onchange: v: {v}, me: {me} == {ret}")
         return ret
 
     @property

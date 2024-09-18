@@ -135,11 +135,22 @@ class TestFunctionsColumn(unittest.TestCase):
                 ~ Apply three rules to check if a CSV file is invalid ~
                 missing(headers())
                 too_long(#lastname, 30)
-                header_name.nocontrib(0, "firstname") -> fail()
+                not.nocontrib(header_name(0, "firstname")) -> fail()
+                push( "votes", vote_stack() )
             ]"""
         )
         lines = path.collect()
         print(f"Found {len(lines)} invalid lines")
         print(f"The file as a whole is valid? {path.is_valid}")
-        assert not path.is_valid
+        print(f"\nvars? {path.variables}")
+        """ """
+        for v in path.variables["votes"]:
+            print(v)
+        """ """
+        #
+        # we don't explicitly set the fail() except in the case of header mismatch
+        # so our file is considered valid. this is confusing and may change in some
+        # way, but it is exactly how it is supposed to work today.
+        #
+        assert path.is_valid
         assert len(lines) == 2

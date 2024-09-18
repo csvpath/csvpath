@@ -17,29 +17,48 @@ class TestHeaders(unittest.TestCase):
         Save._save(path, "test_header_names0")
         path.parse(
             """$tests/test_resources/March-2024.csv[*][
-                ~
-                line_number() == 9 -> debug()
-                line_number() == 11 -> debug("info")
-                ~
+                starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
+                starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
+
                 skip( lt(count_headers_in_line(), 9) )
+
                 @header_change = mismatch("signed")
+                gt( @header_change, 9) ->
+                      reset_headers(
+                        print("\nResetting headers to: $.csvpath.headers"))
 
-                gt( @header_change, 9) -> reset_headers(skip())
+                print.onchange.once(
+                    "\nNumber of headers changed by $.variables.header_change",
+                        print("See line $.csvpath.line_number", skip()))
 
-                not(#SKU)
+                not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
+                    print( "\nBad category $.headers.category at line $.csvpath.count_lines ", fail())
 
-                push("votes", vote_stack())
+
+                not( exact( end(), /\\$?(\\d*\\.\\d{0,2})/ ) ) ->
+                    print("\nBad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
+
+                not( #SKU ) -> print("\nNo SKU at line $.csvpath.count_lines in $.csvpath.headers", fail())
+                not( #UPC ) -> print("\nNo UPC at line $.csvpath.count_lines", fail())
 
             ]"""
         )
         lines = path.collect()
+        print("")
         print(f"test_header_names0: lines: {lines}\n")
+        print("")
         print(f"test_header_names0: lines cnt: {len(lines)}\n")
+        print("")
         print(f"test_header_names0: vars: {path.variables}")
-
+        print("")
+        """
         for s in path.variables["votes"]:
             print(f">>> {s}")
-        assert len(lines) == 1
+        for s in path.variables["dowhens"]:
+            print(f">>> {s}")
+        """
+
+        assert len(lines) == 3
 
     def test_header_names1(self):
         path = CsvPath()

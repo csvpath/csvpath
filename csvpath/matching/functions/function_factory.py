@@ -72,7 +72,7 @@ from .misc.intf import Int
 from .misc.get import Get
 from .misc.track import Track
 from .misc.importf import Import
-from .misc.debug import Debug, BriefStackTrace, VoteStack
+from .misc.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
 from .validity.failed import Failed
 from .validity.fail import Fail
 
@@ -330,6 +330,8 @@ class FunctionFactory:
             f = BriefStackTrace(matcher, name, child)
         elif name == "vote_stack":
             f = VoteStack(matcher, name, child)
+        elif name == "do_when_stack":
+            f = DoWhenStack(matcher, name, child)
         elif name == "metaphone":
             f = Metaphone(matcher, name, child)
         else:

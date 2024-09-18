@@ -21,12 +21,17 @@ class Equality(Matchable):
         super().__init__(matcher)
         self.op: str = (
             "="  # we assume = but if a function or other containing production
+            # wants to check we might have a different op
         )
-        # wants to check we might have a different op
+        # registed as True when a do/when left-hand side eval True
+        # and the right-hand side was executed. This is so that a VoteStack-like
+        # component could provide debugging access.
+        self.DO_WHEN = None
 
     def reset(self) -> None:
         self.value = None
         self.match = None
+        self.DO_WHEN = False
         super().reset()
 
     @property
@@ -357,7 +362,7 @@ class Equality(Matchable):
             lm = self.left.matches(skip=skip)
             if lm is True:
                 b = True
-                if self.matcher._AND is False:
+                if self.matcher._AND is False and self._left_nocontrib(self.left):
                     b = not b
                 #
                 # adding complication..., but if left is last() we want to unfreeze
@@ -373,6 +378,7 @@ class Equality(Matchable):
                     self.matcher.csvpath.logger.debug(
                         "Overriding frozen in when/do: %s", self
                     )
+                self.DO_WHEN = True
                 self.right.matches(skip=skip)
                 if override:
                     self.matcher.csvpath.logger.debug(
@@ -380,7 +386,11 @@ class Equality(Matchable):
                     )
                     self.matcher.csvpath.is_frozen = True
             else:
-                b = self._left_nocontrib(self.left)
+                self.DO_WHEN = False
+                if not self.matcher._AND and self._left_nocontrib(self.left):
+                    b = False
+                else:
+                    b = self._left_nocontrib(self.left)
         else:
             raise ChildrenException("Not a when operation")  # this can't really happen
         return b
