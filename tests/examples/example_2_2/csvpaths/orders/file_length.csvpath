@@ -1,0 +1,13 @@
+---- CSVPATH ----
+
+~ Check the file length ~
+
+$[*][
+    import("top_matter_import")
+
+    below(total_lines(), 27) ->
+      print.once("File has too few data lines: $.csvpath.total_lines", fail_and_stop())
+
+]
+
+

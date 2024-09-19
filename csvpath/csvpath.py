@@ -377,7 +377,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         # CsvPaths will do this earlier but it stripped off
         # the comments so we won't find them again
         #
-        csvpath = MetadataParser().extract_metadata(instance=self, csvpath=csvpath)
+        csvpath = MetadataParser(self).extract_metadata(instance=self, csvpath=csvpath)
         #
         #
         #
@@ -436,7 +436,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                 len(np),
             )
         path = np[0]
-        path = MetadataParser().extract_metadata(instance=self, csvpath=path)
+        path = MetadataParser(self).extract_metadata(instance=self, csvpath=path)
         path = self._update_file_path(path)
         dis = self.parse(path, disposably=disposably)
         if disposably is True:

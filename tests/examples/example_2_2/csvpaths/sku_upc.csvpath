@@ -1,0 +1,10 @@
+---- CSVPATH ----
+
+~ Check for SKUs and UPCs ~
+
+$[*][
+    import("top_matter_import")
+
+    not( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
+    not( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
+]

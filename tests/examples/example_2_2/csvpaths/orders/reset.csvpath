@@ -1,0 +1,13 @@
+---- CSVPATH ----
+
+~ print the line number when we reset headers ~
+
+$[*][
+    import("top_matter_import")
+
+    print.onchange.once(
+        "Line $.csvpath.count_lines: number of headers changed by $.variables.header_change", stop())
+
+]
+
+

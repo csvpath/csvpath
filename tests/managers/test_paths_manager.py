@@ -11,7 +11,7 @@ class TestPathsManager(unittest.TestCase):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
-        pm.set_named_paths_from_json(file_path=JSON)
+        pm.add_named_paths_from_json(file_path=JSON)
         assert pm.named_paths
         assert len(pm.named_paths) == 3
         assert "many" in pm.named_paths

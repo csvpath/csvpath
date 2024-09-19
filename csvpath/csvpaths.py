@@ -185,11 +185,14 @@ class CsvPaths(CsvPathsPublic):
         )
 
     def _load_csvpath(self, csvpath: CsvPath, path: str, file: str) -> None:
+        self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
         # we strip comments from above the path so we need to extract them first
-        path = MetadataParser().extract_metadata(instance=csvpath, csvpath=path)
-        # csvpath._extract_metadata(path)
+        path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
+        self.logger.debug("Csvpath after metadata extract: %s", path)
         f = path.find("[")
+        self.logger.debug("Csvpath matching part starts at char # %s", f)
         apath = f"${file}{path[f:]}"
+        self.logger.info("Parsing csvpath %s", apath)
         csvpath.parse(apath)
 
     def fast_forward_paths(self, *, pathsname, filename):
@@ -204,17 +207,25 @@ class CsvPaths(CsvPathsPublic):
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
-            "Beginning fast_forward_paths %s with %s paths", pathsname, len(paths)
+            "Beginning fast_forward_paths %s with %s paths against file %s",
+            pathsname,
+            len(paths),
+            filename,
         )
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
+            self.logger.info("Beginning CsvPath instance: %s", csvpath)
             result = CsvPathResult(
                 csvpath=csvpath, file_name=filename, paths_name=pathsname
             )
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
-                self.logger.info("Parsed csvpath %s pointed at %s", i, file)
+                self.logger.info(
+                    "Parsed csvpath %s pointed at %s and starting to fast-forward",
+                    i,
+                    file,
+                )
                 csvpath.fast_forward()
                 self.logger.info(
                     "Completed fast forward of csvpath %s against %s", i, file

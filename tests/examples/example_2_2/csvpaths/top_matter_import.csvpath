@@ -1,0 +1,13 @@
+---- CSVPATH ----
+
+~ reset headers when they go up and otherwise, if there
+  aren't enough headers, just skip ~
+
+$[*][
+    @header_change = mismatch("signed")
+    gt( @header_change, 9) -> reset_headers(skip())
+    lt(count_headers(), 9) -> skip()
+]
+
+
+

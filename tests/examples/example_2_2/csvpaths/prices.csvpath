@@ -1,0 +1,11 @@
+---- CSVPATH ----
+
+~ Check the prices ~
+
+$[*][
+    import("top_matter_import")
+
+    not( exact( end(), /\$?(\d*\.\d{0,2})/ ) ) ->
+        print("Line $.csvpath.count_lines: bad price $.headers.'a price' ", fail())
+
+]

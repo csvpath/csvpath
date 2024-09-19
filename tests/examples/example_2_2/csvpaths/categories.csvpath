@@ -1,0 +1,11 @@
+---- CSVPATH ----
+
+~ Check the categories ~
+
+$[*][
+    import("top_matter_import")
+
+    not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
+        print( "Line $.csvpath.count_lines: Bad category $.headers.category ", fail())
+
+]

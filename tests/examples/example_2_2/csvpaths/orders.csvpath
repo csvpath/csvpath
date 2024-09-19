@@ -1,0 +1,59 @@
+---- CSVPATH ----
+
+~ collect metadata fields from comments ~
+$[*][
+    starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
+    starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
+
+    and( @runid, @userid ) ->
+        print(" Contact: $.variables.userid for batch ID: $.variables.runid", stop())
+]
+
+---- CSVPATH ----
+
+~ print the line number when we reset headers ~
+$[*][
+    import("top_matter_import")
+
+    print.onchange.once(
+        "Line $.csvpath.count_lines: number of headers changed by $.variables.header_change", stop())
+]
+
+---- CSVPATH ----
+
+~ Check the file length ~
+$[*][
+    import("top_matter_import")
+
+    below(total_lines(), 27) ->
+      print.once("File has too few data lines: $.csvpath.total_lines", fail_and_stop())
+]
+
+---- CSVPATH ----
+
+~ Check the categories ~
+$[*][
+    import("top_matter_import")
+
+    not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
+        print( "Line $.csvpath.count_lines: Bad category $.headers.category ", fail())
+]
+
+---- CSVPATH ----
+
+~ Check the prices ~
+$[*][
+    import("top_matter_import")
+
+    not( exact( end(), /\$?(\d*\.\d{0,2})/ ) ) ->
+        print("Line $.csvpath.count_lines: bad price $.headers.'a price' ", fail())
+]
+---- CSVPATH ----
+
+~ Check for SKUs and UPCs ~
+$[*][
+    import("top_matter_import")
+
+    not( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
+    not( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
+]

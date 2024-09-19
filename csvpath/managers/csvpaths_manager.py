@@ -26,7 +26,7 @@ class CsvPathsManager(ABC):
         contents of the file is straight cvspath, not json."""
 
     @abstractmethod
-    def set_named_paths_from_json(self, file_path: str) -> None:
+    def add_named_paths_from_json(self, file_path: str) -> None:
         """replaces the named paths dict with a dict found in a JSON file. lists
         of paths are keyed by names."""
 
@@ -101,6 +101,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             ErrorHandler(self.csvpaths).handle_error(ie)
 
     def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
+        self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
         with open(file_path, "r", encoding="utf-8") as f:
             cp = f.read()
             _ = [
@@ -108,12 +109,15 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 for apath in cp.split(PathsManager.MARKER)
                 if apath.strip() != ""
             ]
+            self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
             self.add_named_paths(name, _)
 
-    def set_named_paths_from_json(self, file_path: str) -> None:
+    def add_named_paths_from_json(self, file_path: str) -> None:
         try:
+            self.csvpaths.logger.debug("Opening JSON file at %s", file_path)
             with open(file_path, encoding="utf-8") as f:
                 j = json.load(f)
+                self.csvpaths.logger.debug("Found JSON file with %s keys", len(j))
                 for k in j:
                     v = j[k]
                     for f in v:
@@ -130,14 +134,24 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                                  set_named_paths_from_json."""
             )
             ErrorHandler(self.csvpaths).handle_error(ie)
-
+        self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
         if name in self.named_paths:
             for p in paths:
                 if p in self.named_paths[name]:
+                    self.csvpaths.logger.debug(
+                        "csvpaths %s already exists in named-paths group %s", p, name
+                    )
                     pass
                 else:
-                    self.named_paths[name].append(paths)
+                    self.csvpaths.logger.debug("Adding %s to %s", p, name)
+                    if isinstance(self.named_paths[name], str):
+                        ps = []
+                        ps.append(self.named_paths[name])
+                        self.named_paths[name] = ps
+                    self.named_paths[name].append(p)
         else:
+            for _ in paths:
+                self.csvpaths.logger.debug("Adding %s to %s", _, name)
             self.named_paths[name] = paths
 
     #
