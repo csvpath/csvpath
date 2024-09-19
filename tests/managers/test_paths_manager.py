@@ -17,8 +17,8 @@ class TestPathsManager(unittest.TestCase):
         assert "many" in pm.named_paths
         assert "numbers" in pm.named_paths
         assert "needs split" in pm.named_paths
-        assert len(pm.named_paths["numbers"]) == 2
-        assert len(pm.named_paths["needs split"]) == 2
+        assert len(pm.named_paths["numbers"]) == 3
+        assert len(pm.named_paths["needs split"]) == 1
 
     def test_named_paths_dict1(self):
         print("")

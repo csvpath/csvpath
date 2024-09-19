@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any, Tuple
 import csv
 import traceback
-from .util.error import ErrorHandler
+from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import CsvPathConfig
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
@@ -109,6 +109,7 @@ class CsvPaths(CsvPathsPublic):
         self._config = CsvPathConfig(self)
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
+        self._errors = []
 
     def csvpath(self) -> CsvPath:
         return CsvPath(
@@ -119,6 +120,16 @@ class CsvPaths(CsvPathsPublic):
             config=None,
             print_default=self.print_default,
         )
+
+    @property
+    def errors(self) -> List[Error]:  # pylint: disable=C0116
+        return self._errors
+
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
+        self._errors.append(error)
+
+    def has_errors(self) -> bool:  # pylint: disable=C0116
+        return len(self._errors) > 0
 
     @property
     def config(self) -> CsvPathConfig:  # pylint: disable=C0116

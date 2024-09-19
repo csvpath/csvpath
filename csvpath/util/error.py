@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Any, List
 from datetime import datetime
 from enum import Enum
@@ -51,6 +52,24 @@ json: {self.json if self.json else ""}
         return string
 
 
+class ErrorCollector(ABC):
+    """error collectors collect errors primarily from expressions,
+    but also matcher, scanner, and elsewhere."""
+
+    @property
+    @abstractmethod
+    def errors(self) -> List[Error]:  # pylint: disable=C0116
+        pass
+
+    @abstractmethod
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
+        pass
+
+    @abstractmethod
+    def has_errors(self) -> bool:  # pylint: disable=C0116
+        pass
+
+
 class ErrorHandler:
     """creates errors given an exception and uses the csvpaths's or
     csvpath's error policy to handle them. you must provide either
@@ -60,24 +79,30 @@ class ErrorHandler:
     CsvPathResult.
     """
 
-    def __init__(self, *, csvpaths=None, csvpath=None, error_collector):
+    def __init__(self, *, csvpaths=None, csvpath=None, error_collector=None):
         self._csvpath = csvpath
         self._csvpaths = csvpaths
         self._error_collector = error_collector
         if self._error_collector is None:
-            raise ErrorHandlingException(
-                "A CsvPathErrorCollector collector must be available"
-            )
+            if self._csvpaths:
+                self._error_collector = self._csvpaths
+            elif self._csvpath:
+                self._error_collector = self._csvpath
+            else:
+                raise ErrorHandlingException(
+                    "A CsvPathErrorCollector collector must be available"
+                )
         self._logger = None
 
     @property
     def logger(self):
         if self._logger is None:
-            self._logger = (
-                self._csvpaths.logger
-                if self._csvpaths is not None
-                else self._csvpath.logger
-            )
+            if self._csvpaths:
+                self._logger = self._csvpaths.logger
+            elif self._csvpath:
+                self._logger = self._csvpath.logger
+            else:
+                raise ErrorHandlingException("No logger available")
         return self._logger
 
     def handle_error(self, ex: Exception) -> Error:

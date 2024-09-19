@@ -5,6 +5,7 @@ import json
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
 from ..util.exceptions import InputException
+from ..util.error import ErrorHandler
 
 
 class CsvPathsManager(ABC):
@@ -77,7 +78,8 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def add_named_paths_from_dir(self, *, directory: str, name: str = None) -> None:
         if directory is None:
-            raise InputException("Named paths collection name needed")
+            ie = InputException("Named paths collection name needed")
+            ErrorHandler(self.csvpaths).handle_error(ie)
         if os.path.isdir(directory):
             dlist = os.listdir(directory)
             base = directory
@@ -95,7 +97,8 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                     aname = self._name_from_name_part(p)
                 self.add_named_paths_from_file(name=aname, file_path=path)
         else:
-            raise InputException("dirname must point to a directory")
+            ie = InputException("dirname must point to a directory")
+            ErrorHandler(self.csvpaths).handle_error(ie)
 
     def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -113,26 +116,21 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 j = json.load(f)
                 for k in j:
                     v = j[k]
-                    if isinstance(v, list):
-                        continue
-                    if isinstance(v, str):
-                        j[k] = [av.strip() for av in v.split(PathsManager.MARKER)]
-                    else:
-                        raise InputException(f"Unexpected object in JSON key: {k}: {v}")
-                self.named_paths = j
+                    for f in v:
+                        self.add_named_paths_from_file(name=k, file_path=f)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.logger.error(f"Error: cannot load {file_path}: {ex}")
-            #
-            # raise?
-            #
+            ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
 
     def add_named_paths(self, name: str, paths: List[str]) -> None:
         if not isinstance(paths, list):
-            raise InputException(
+            ie = InputException(
                 """Paths must be a list of csvpaths.
                                  If you want to load a file use add_named_paths_from_file or
                                  set_named_paths_from_json."""
             )
+            ErrorHandler(self.csvpaths).handle_error(ie)
+
         if name in self.named_paths:
             for p in paths:
                 if p in self.named_paths[name]:

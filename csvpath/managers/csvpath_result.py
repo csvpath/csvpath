@@ -1,30 +1,11 @@
 # pylint: disable=C0114
 from typing import Dict, List, Any
-from abc import ABC, abstractmethod
-from ..util.error import Error
+from ..util.error import Error, ErrorCollector
 from ..util.printer import Printer
 from .. import CsvPath
 
 
-class CsvPathErrorCollector(ABC):
-    """error collectors collect errors primarily from expressions,
-    but also matcher, scanner, and elsewhere."""
-
-    @property
-    @abstractmethod
-    def errors(self) -> List[Error]:  # pylint: disable=C0116
-        pass
-
-    @abstractmethod
-    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
-        pass
-
-    @abstractmethod
-    def has_errors(self) -> bool:  # pylint: disable=C0116
-        pass
-
-
-class CsvPathResult(CsvPathErrorCollector, Printer):  # pylint: disable=R0902
+class CsvPathResult(ErrorCollector, Printer):  # pylint: disable=R0902
     """This class handles the results for a single CsvPath in the
     context of a CsvPaths run that may apply any number of CsvPath
     instances against the same file.

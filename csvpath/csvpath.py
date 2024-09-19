@@ -14,7 +14,7 @@ from csvpath.util.log_utility import LogUtility
 from .matching.matcher import Matcher
 from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
-from .util.error import Error
+from .util.error import Error, ErrorCollector
 from .util.printer import StdOutPrinter
 from .util.exceptions import VariableException, InputException, ParsingException
 from .util.exceptions import (
@@ -73,7 +73,7 @@ class CsvPathPublic(ABC):
         matching rows"""
 
 
-class CsvPath(CsvPathPublic):  # pylint: disable=R0902, R0904
+class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
     """CsvPath represents a csvpath string that contains a reference to
     a file, scanning instructions, and rules for matching lines.
     """
