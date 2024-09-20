@@ -22,7 +22,7 @@ The syntax is `put(varname, value)` or `put(varname, tracking_key, tracking_valu
 ```bash
             $[1*][
                 tally(#firstname)
-                @john = get(@firstname, "John")
+                @john = get("tally_firstname", "John")
                 @john == 2 -> print("We have seen $.variables.john humans")
             ]
 ```
