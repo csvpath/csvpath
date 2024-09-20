@@ -2,5 +2,5 @@
                                 tally(#lastname) no()
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                @lastname.Bat = "fred"
+                                @tally_lastname.Bat = "fred"
                             ]

@@ -54,7 +54,7 @@ class TestFunctionsLast(unittest.TestCase):
                                 tally(#lastname) no()
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                @lastname.Bat = "fred"
+                                @tally_lastname.Bat = "fred"
                             ]
                    """
         )
@@ -62,7 +62,7 @@ class TestFunctionsLast(unittest.TestCase):
         with pytest.raises(TypeError):
             path.collect()
             print(f"test_function_last4: path vars: {path.variables}")
-            assert path.variables["lastname"]["Bat"] == "fred"
+            assert path.variables["tally_lastname"]["Bat"] == "fred"
             assert path.variables["hmmm"] == 7
             assert path.variables["ohhh"] is None
 

@@ -76,6 +76,7 @@ from .misc.importf import Import
 from .misc.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
 from .validity.failed import Failed
 from .validity.fail import Fail
+from .print.table import HeaderTable, RowTable, VarTable
 
 
 class UnknownFunctionException(Exception):
@@ -176,7 +177,14 @@ class FunctionFactory:
             f = AboveBelow(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)
-        elif name in ["firstline", "firstmatch", "firstscan"]:
+        elif name in [
+            "firstline",
+            "firstmatch",
+            "firstscan",
+            "first_line",
+            "first_scan",
+            "first_match",
+        ]:
             f = FirstLine(matcher, name, child)
         elif name == "count_lines":
             f = CountLines(matcher, name, child)
@@ -337,6 +345,12 @@ class FunctionFactory:
             f = DoWhenStack(matcher, name, child)
         elif name == "metaphone":
             f = Metaphone(matcher, name, child)
+        elif name == "header_table":
+            f = HeaderTable(matcher, name, child)
+        elif name == "row_table":
+            f = RowTable(matcher, name, child)
+        elif name == "var_table":
+            f = VarTable(matcher, name, child)
         else:
             if (
                 f is None

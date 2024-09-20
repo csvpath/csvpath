@@ -13,7 +13,7 @@ class TestFunctionsTally(unittest.TestCase):
         path.parse(f"${PATH}[*][tally(#lastname) no()] ")
         path.collect()
         print(f"test_function_tally1: path vars: {path.variables}")
-        assert path.variables["lastname"]["Bat"] == 7
+        assert path.variables["tally_lastname"]["Bat"] == 7
 
     def test_function_tally2(self):
         path = CsvPath()
@@ -36,7 +36,7 @@ class TestFunctionsTally(unittest.TestCase):
         path.collect()
         print(f"test_function_tally3: path vars: {path.variables}")
         assert path.variables["sothere"]["Frog|Bat"] == 2
-        assert len(path.variables["firstname"]) == 2
+        assert len(path.variables["sothere_firstname"]) == 2
 
     def test_function_tally4(self):
         path = CsvPath()
@@ -47,7 +47,7 @@ class TestFunctionsTally(unittest.TestCase):
                                 tally(#lastname) no()
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
-                                @lastname.Bat = "fred"
+                                @tally_lastname.Bat = "fred"
                             ]
                    """
         )

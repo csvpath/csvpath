@@ -35,9 +35,9 @@ class TestVariables(unittest.TestCase):
                             [
                                 tally(#lastname)
                                 @ah.so = #firstname
-                                @hmmm = @lastname.Bat
+                                @hmmm = @tally_lastname.Bat
                                 @ohhh = @hmmm.fish
-                                @lastname.Bat = "fred"
+                                @tally_lastname.Bat = "fred"
                                 @tl = total_lines()
                                 no()
                             ]
@@ -50,7 +50,7 @@ class TestVariables(unittest.TestCase):
             print(
                 f"test_function_access_variable_tracking_values: path vars: {path.variables}"
             )
-            assert path.variables["lastname"]["Bat"] == "fred"
+            assert path.variables["tally_lastname"]["Bat"] == "fred"
             assert path.variables["hmmm"] == 7
             assert path.variables["ohhh"] is None
             assert path.variables["ah"]["so"]

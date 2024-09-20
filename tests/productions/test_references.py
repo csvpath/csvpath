@@ -211,7 +211,10 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
+        print(f"\n test_reference3: path.vars: {path.variables}")
         assert len(lines) == 0
+        assert "l" in path.variables
+        assert path.variables["l"] > 0
 
     #
     # this test separates path results by a metadata field.

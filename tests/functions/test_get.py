@@ -17,7 +17,7 @@ class TestFunctionsGet(unittest.TestCase):
             ${PATH}[1*]
             [
                 tally(#firstname)
-                @frog = get(@firstname, "Frog")
+                @frog = get(@tally_firstname, "Frog")
                 @frog == 2 -> print("frog: $.variables.frog ")
             ]"""
         )
@@ -77,7 +77,7 @@ class TestFunctionsGet(unittest.TestCase):
                 ~ tally is a value producer -- no impact on match ~
                 tally(#firstname)
                 ~ this is an assignment -- no impact on match ~
-                @frog = get("firstname", #firstname)
+                @frog = get("tally_firstname", #firstname)
                 ~ left side of when/do has impact on match unless .nocontrib ~
                 @frog == 2 -> print("frog: $.variables.frog ")
             ]"""

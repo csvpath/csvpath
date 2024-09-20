@@ -57,6 +57,8 @@ class StdOutPrinter(Printer):
 
 
 class TestPrinter(Printer):
+    __test__ = False
+
     def __init__(self):
         self.lines = []
 

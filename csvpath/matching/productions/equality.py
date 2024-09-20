@@ -88,10 +88,13 @@ class Equality(Matchable):
 
     def commas_to_list(self) -> List[Any]:
         """gets the children of op==',' equalities as a list of args"""
+        """
         ls = []
         for _ in self.children:
             ls.append(_)
         return ls
+        """
+        return self.children[:]
 
     def set_operation(self, op):  # pylint: disable=C0116
         self.op = op

@@ -22,16 +22,16 @@ class FirstLine(MatchDecider):
 
     def _decide_match(self, skip=None) -> None:
         t = self.name
-        if t == "firstmatch":
+        if t in ["firstmatch", "first_match"]:
             if self.matcher.csvpath.match_count == 0 and self.line_matches():  # 1-based
                 self.match = True
             else:
                 self.match = False
-        elif t == "firstscan":
+        elif t in ["firstscan", "first_scan"]:
             self.match = (
                 self.matcher.csvpath.scan_count == 1
             )  # 1-based, set before matcher is called.
-        elif t == "firstline":
+        elif t in ["firstline", "first_line"]:
             self.match = (
                 self.matcher.csvpath.line_monitor.data_line_number == 0
             )  # 0-based, updated after matcher is called.

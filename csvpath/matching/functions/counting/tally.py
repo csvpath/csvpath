@@ -18,18 +18,24 @@ class Tally(ValueProducer):
         else:
             siblings = [child]
         tally = ""
+
         for _ in siblings:
             tally += f"{_.to_value(skip=skip)}|"
             value = f"{_.to_value(skip=skip)}"
             self._store(_.name, value)
         if len(siblings) > 1:
             self._store(
-                self.first_non_term_qualifier("tally"),
+                "",  # we don't need to pass a name. this data just
+                # goes under "tally" or the qualifier
                 tally[0 : len(tally) - 1],
             )
         self.value = True
 
     def _store(self, name, value):
+        if name == "":
+            name = self.first_non_term_qualifier("tally")
+        else:
+            name = f"""{self.first_non_term_qualifier("tally")}_{name}"""
         count = self.matcher.get_variable(name, tracking=value)
         if count is None:
             count = 0
