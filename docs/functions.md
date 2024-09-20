@@ -106,8 +106,8 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function   <a name="headers"> </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>  </td><td> Returns the value of the line's last header value. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header name for an index.      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header index for a name.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> </td><td> Returns the header name for an index.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header index for a name.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>headers(value)</a>  </td><td> Indicates to another function that it should look in the headers.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_names_mismatch.md'>header_names_mismatch(value)</a>  </td><td> Checks the header names against a delimited list of expected headers.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers()</a> </td><td> Returns the number of headers expected.  </td></tr>
@@ -141,36 +141,36 @@ There are lots more simple examples on the individual function pages.
 ## Math
 <table>
 <tr><th>Function    <a name="math"></a>     </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>        </td><td> adds numbers                                              </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>     </td><td> divides numbers                                           </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>   </td><td> multiplies numbers                                        </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>subtract(value, value, ...)</a>    </td><td> subtracts numbers or makes a number negative                                        </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>mod(value, value)</a>    </td><td> returns the modulus of two numbers </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/sum.md'>sum(value)</a> </td><td> returns a running subtotal of the value </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a> </td><td> rounds a number </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>        </td><td> Adds numbers.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>     </td><td> Divides numbers.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>   </td><td> Multiplies numbers.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>subtract(value, value, ...)</a>    </td><td> Subtracts numbers or makes a number negative. Aliases: minus(). </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>mod(value, value)</a>    </td><td> Returns the modulus of two numbers. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/sum.md'>sum(value)</a> </td><td> Returns a running subtotal of the value. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a> </td><td> Rounds a number. </td></tr>
 </table>
 
 
 ## Misc
 <table>
 <tr><th>Function   <a name="misc">  </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> inject another csvpath into the current csvpath </td></tr>
-<tr><td> random(starting, ending)      </td><td> generates a random int from starting to ending            </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> returns None </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> returns a number as an int </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> Injects another csvpath into the current csvpath. </td></tr>
+<tr><td> random(starting, ending)      </td><td> Generates a random int from starting to ending.            </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> Returns a number as an int. </td></tr>
 </table>
 
 
 ## Print
 <table>
 <tr><th>Function            <a name="print"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print.md'>print(str, value)</a></td><td> prints the interpolated string  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_line(value,value)</a></td><td> prints the current line unchanged  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_queue(value,value)</a></td><td> returns the number of strings printed  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> applies a Jinja2 template                           </td></tr>
-<tr><td> header_Table(value, value) </td><td> prints a formatted table of the headers with header numbers  </td></tr>
-<tr><td> row_table(value, value) </td><td> prints a formatted table of a row  </td></tr>
-<tr><td> var_table(value, value) </td><td> prints a formatted table of the variables  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print.md'>print(str, value)</a></td><td> Prints the interpolated string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_line(value,value)</a></td><td> Prints the current line unchanged.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_queue(value,value)</a></td><td> Returns the number of strings printed.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> Applies a Jinja2 template.   </td></tr>
+<tr><td> header_Table(value, value) </td><td> Prints a formatted table of the headers with header numbers.  </td></tr>
+<tr><td> row_table(value, value) </td><td> Prints a formatted table of a row.  </td></tr>
+<tr><td> var_table(value, value) </td><td> Prints a formatted table of the variables.  </td></tr>
 </table>
 
 
@@ -179,14 +179,14 @@ There are lots more simple examples on the individual function pages.
 ## Stats
 <table>
 <tr><th>Function  <a name="stats">   </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/average.md'>average(number, type)</a> </td><td> returns the average up to current "line", "scan", "match" </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/correlate.md'>correlate(value, value)</a> </td><td> gives the running correlation between two values </td></tr>
-<tr><td> median(value, type)           </td><td> median value up to current "line", "scan", "match"        </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>max(value, type)</a> </td><td> largest value seen up to current "line", "scan", "match"  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>min(value, type)</a></td><td> smallest value seen up to current "line", "scan", "match" </td></tr>
-<tr><td> percent(type)                 </td><td> % of total lines for "scan", "match", "line"              </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/percent_unique.md'>percent_unique(header)</a> </td><td> % of unique values found in the header values  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>stdev(stack)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>pstdev(stack)</a> </td><td> returns the standard deviation of numbers pushed on a stack  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/average.md'>average(number, type)</a> </td><td> Returns the average up to current "line", "scan", "match". </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/correlate.md'>correlate(value, value)</a> </td><td> Gives the running correlation between two values. </td></tr>
+<tr><td> median(value, type)           </td><td> Returns the median value up to current "line", "scan", "match".  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>max(value, type)</a> </td><td> Returns the largest value seen up to current "line", "scan", "match".  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>min(value, type)</a></td><td> Returns the smallest value seen up to current "line", "scan", "match". </td></tr>
+<tr><td> percent(type)                 </td><td> Returns the percent of total lines for "scan", "match", "line".   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/percent_unique.md'>percent_unique(header)</a> </td><td> Returns the percent of unique values found in the header values.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>stdev(stack)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stdev.md'>pstdev(stack)</a> </td><td> Returns the standard deviation of numbers pushed on a stack.  </td></tr>
 </table>
 
 
