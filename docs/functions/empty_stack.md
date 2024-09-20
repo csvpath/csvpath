@@ -1,5 +1,5 @@
 
-# `empty_stack()`
+# Empty Stack
 
 The `empty_stack()` function collects the names of empty values. Its primary job is identifying headers without values. However, it can also check on variables.
 
@@ -27,10 +27,6 @@ This csvpath creates an `empties` variable that is a stack of stacks. Each item 
 │ ['lastname']              │
 ├───────────────────────────┤
 │ []                        │
-├───────────────────────────┤
-│ ['lastname', 'say']       │
-├───────────────────────────┤
-│ ['firstname', 'say']      │
 └───────────────────────────┘
 
 
