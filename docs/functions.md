@@ -105,6 +105,7 @@ There are lots more simple examples on the individual function pages.
 ## Headers
 <table>
 <tr><th>Function   <a name="headers"> </th><th> What it does                                              </th></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty_stack.md'>empty_stack(value, ...)</a>  </td><td> Returns a stack of the names of empty header values. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>  </td><td> Returns the value of the line's last header value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> </td><td> Returns the header name for an index.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header index for a name.      </td></tr>

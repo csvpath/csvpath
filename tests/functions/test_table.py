@@ -6,6 +6,7 @@ from csvpath.matching.productions import Expression
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
+EMPTIES = "tests/test_resources/test-4.csv"
 
 
 class TestFunctionsTable(unittest.TestCase):
@@ -131,6 +132,23 @@ class TestFunctionsTable(unittest.TestCase):
         )
         path.fast_forward()
         print(f"test_function_var_table3: path.vars: {path.variables}")
+        line = path.printers[0].last_line
+        assert line[0] == "┌"
+        assert line[len(line) - 1] == "┘"
+        assert line.find("firstname") > -1
+
+    def test_function_var_table4(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_function_var_table3")
+        path.parse(
+            f"""${EMPTIES}[1*][
+                push("empties", empty_stack())
+                last() -> var_table("empties")
+            ]"""
+        )
+        path.fast_forward()
+        print(f"test_function_var_table4: path.vars: {path.variables}")
         line = path.printers[0].last_line
         assert line[0] == "┌"
         assert line[len(line) - 1] == "┘"
