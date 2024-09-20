@@ -23,7 +23,7 @@ Multiple values can be used as arguments to tally().
 
     $file.csv[*][tally(#firstname, #lastname)]
 
-This path creates variables for firstname and lastname. In addition it creates a `tally_` variable that holds the concatenation of the values, pipe delimited. The set of variables are like:
+This path creates variables for firstname and lastname. In addition it creates a variable named `tally` that holds the concatenation of the values, pipe delimited. The set of variables are like:
 
     {
         'tally_firstname': {'David': 3, 'Bob':5},
