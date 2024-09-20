@@ -1,0 +1,3 @@
+[
+                push.notnone("empties", empty_stack(#year, #healthy) )
+            ]

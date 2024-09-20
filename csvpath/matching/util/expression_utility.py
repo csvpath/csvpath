@@ -38,11 +38,26 @@ class ExpressionUtility:
             return True
         elif v == "None":
             return True
-        elif f"{v}" == "nan":
+        elif cls.isnan(v) or v == "nan":
             return True
         elif f"{v}".strip() == "":
             return True
         return False
+
+    @classmethod
+    def is_empty(cls, v):
+        ret = cls.is_none(v)
+        if not ret and (isinstance(v, list) or isinstance(v, tuple)):
+            if len(v) == 0:
+                ret = True
+            else:
+                for item in v:
+                    ret = cls.is_empty(item)
+                    if not ret:
+                        break
+        elif not ret and isinstance(v, dict):
+            ret = len(v) == 0
+        return ret
 
     @classmethod
     def isnan(cls, v) -> bool:

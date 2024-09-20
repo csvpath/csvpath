@@ -16,23 +16,24 @@ class Push(SideEffect):
         k = eq.left.to_value(skip=skip)
         v = eq.right.to_value(skip=skip)
         stack = self.matcher.get_variable(k, set_if_none=[])
-        if self.has_qualifier("distinct") and v in stack:
+        if stack is None or isinstance(stack, tuple):
+            self.matcher.csvpath.logger.warning(  # pragma: no cover
+                "Push cannot add to the stack. The run may be ending."
+            )
+        elif self.has_qualifier("distinct") and v in stack:
             pass
-        elif isinstance(stack, tuple):
-            self.matcher.csvpath.logger.warning(  # pragma: no cover
-                "Push cannot add to the stack because it is a tuple. The run may be ending."
-            )
-        elif stack is not None:
-            stack.append(v)
+        elif self.notnone and ExpressionUtility.is_empty(v):
+            pass
         else:
-            self.matcher.csvpath.logger.warning(  # pragma: no cover
-                "No default stack was created. Run may be ending."
-            )
-        self.value = True
+            stack.append(v)
+        self.value = stack
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)
-        self.match = self.default_match()
+        if self.notnone:
+            self.match = not ExpressionUtility.is_empty(self.value)
+        else:
+            self.match = self.default_match()
 
 
 class PushDistinct(Push):

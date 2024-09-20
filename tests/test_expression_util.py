@@ -6,6 +6,23 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class TestExpressionUtil(unittest.TestCase):
+    def test_exp_util_empty1(self):
+        assert ExpressionUtility.is_empty([None])
+        assert ExpressionUtility.is_empty([None, None])
+        assert ExpressionUtility.is_empty([])
+        assert ExpressionUtility.is_empty(())
+        assert ExpressionUtility.is_empty((None, None))
+        assert ExpressionUtility.is_empty({})
+        assert ExpressionUtility.is_empty("")
+        assert ExpressionUtility.is_empty([""])
+        assert ExpressionUtility.is_empty(None)
+        assert ExpressionUtility.is_empty("None")
+        assert ExpressionUtility.is_empty(["None"])
+        assert not ExpressionUtility.is_empty(["a"])
+        assert not ExpressionUtility.is_empty("a")
+        assert not ExpressionUtility.is_empty({"a": 1})
+        assert not ExpressionUtility.is_empty(("a"))
+
     def test_expression_utility_my_expression1(self):
         csvpath = """$tests/test_resources/March-2024.csv[*][
                 skip( lt(count_headers_in_line(), 9) )

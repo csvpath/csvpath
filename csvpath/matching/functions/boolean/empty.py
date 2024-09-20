@@ -48,7 +48,6 @@ class Empty(MatchDecider):
     # empty(ref)
     #
     def _decide_match(self, skip=None) -> None:
-        print(f"empty._decide: chs: {self.children}")
         if len(self.children) == 1 and isinstance(self.children[0], Headers):
             self._do_headers(skip=skip)
         elif len(self.children) == 1 and isinstance(self.children[0], Equality):
@@ -61,7 +60,7 @@ class Empty(MatchDecider):
     def _do_headers(self, skip=None):
         ret = True
         for i, h in enumerate(self.matcher.line):
-            ret = self._is_empty(h)
+            ret = ExpressionUtility.is_empty(h)
             if ret is False:
                 break
         self.match = ret
@@ -74,15 +73,15 @@ class Empty(MatchDecider):
             siblings = self.children[0]
 
         for s in siblings:
-            print(f"empty._do_many: a sib: {s}")
             self._do_one(s)
             if self.match is False:
                 break
 
     def _do_one(self, child, skip=None):
         v = child.to_value(skip=skip)
-        self.match = self._is_empty(v)
+        self.match = ExpressionUtility.is_empty(v)
 
+    """
     def _is_empty(self, v):
         ret = True
         if v is None:
@@ -99,3 +98,4 @@ class Empty(MatchDecider):
         else:
             ret = False
         return ret
+    """

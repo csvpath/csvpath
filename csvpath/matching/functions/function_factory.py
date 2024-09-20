@@ -27,6 +27,7 @@ from .headers.header_names_mismatch import HeaderNamesMismatch
 from .headers.collect import Collect
 from .headers.replace import Replace
 from .headers.headers import Headers
+from .headers.empty_stack import EmptyStack
 from .headers.mismatch import Mismatch
 from .headers.end import End
 from .math.above import AboveBelow
@@ -354,6 +355,9 @@ class FunctionFactory:
             f = RowTable(matcher, name, child)
         elif name == "var_table":
             f = VarTable(matcher, name, child)
+        elif name == "empty_stack":
+            f = EmptyStack(matcher, name, child)
+
         else:
             if (
                 f is None
