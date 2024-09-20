@@ -60,7 +60,7 @@ There are lots more simple examples on the individual function pages.
 ## Boolean
 <table>
 <tr><th>Function <a name="boolean">  </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a>above( value, value) </td><td> Finds things after a date, number, string. Aliases: gt(), after().    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a> </td><td> Finds things after a date, number, string. Aliases: gt(), above().    </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a></td><td> Finds things before a date, number, string.  Aliases: lt(), below().     </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> </td><td> Returns true when a value is found between to others. Aliases: outside().     </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> An existence test for all selected values or all headers, or all variables. </td></tr>
