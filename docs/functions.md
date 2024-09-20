@@ -7,15 +7,15 @@ Most of the work of matching is done in match component functions. There are doz
 - [Counting](#counting)
 - [Dates]
 - [Headers](#headers)
-- [Lines]
+- [Lines] (#lines)
 - [Math](#math)
 - [Misc](#misc)
-- [Print]
+- [Print](#print)
 - [Stats](#stats)
 - [Strings](#strings)
-- [Testing]
-- [Validity]
-- [Variables]
+- [Testing](#testing)
+- [Validity](#validity)
+- [Variables](#variables)
 
 ## Overview
 
