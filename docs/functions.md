@@ -80,24 +80,24 @@ There are lots more simple examples on the individual function pages.
 ## Counting
 <table>
 <tr><th>Function            <a name="counting"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count()</a> </td><td> counts the number of matches            </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count(value)</a> </td><td> count matches of value              </td></tr>
-<tr><td> count_lines()      </td><td> count the lines of data to this point in the file                     </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count()</a> </td><td> Counts the number of matches. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count(value)</a> </td><td> Count the matches of values.  </td></tr>
+<tr><td> count_lines()      </td><td> count the lines of data to this point in the file. </td></tr>
 <tr><td> count_scans()      </td><td> count lines we checked for match   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>   </td><td> returns the number of duplicate lines   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> give the physical line number    </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/increment.md'>increment(value, n)</a> </td><td> increments a variable by n each time seen   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/every.md'>every(value, number)</a> </td><td> match every Nth time a value is seen  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/tally.md'>tally(value, value, ...)</a></td><td> counts times values are seen, including as a set   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/total_lines.md'>total_lines()</a></td><td> returns the number of rows in the file being scanned   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>   </td><td> Returns the number of duplicate lines.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> Gives the physical line number.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/increment.md'>increment(value, n)</a> </td><td> Increments a variable by n each time seen.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/every.md'>every(value, number)</a> </td><td> Matches every Nth time a value is seen.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/tally.md'>tally(value, value, ...)</a></td><td> Counts times values are seen, including as a set.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/total_lines.md'>total_lines()</a></td><td> Returns the number of rows in the file being scanned.   </td></tr>
 </table>
 
 ## Dates
 <table>
 <tr><th>Function            <a name="dates"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/now.md'>now(format)</a></td><td> a datetime, optionally formatted       </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> a date parsed according to a format string  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> a datetime parsed according to a format string  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/now.md'>now(format)</a></td><td> Returns a datetime, optionally formatted, for the current moment.       </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
 </table>
 
 
@@ -105,33 +105,34 @@ There are lots more simple examples on the individual function pages.
 ## Headers
 <table>
 <tr><th>Function   <a name="headers"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>                         </td><td> returns the value of the last header value                      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> returns header name for an index or index for a name      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>headers(value)</a>  </td><td> indicates to another function that it should look in headers.      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_names_mismatch.md'>header_names_mismatch(value)</a>  </td><td> checks the headers against a delimited list of expected headers   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers()</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers_in_line()</a>    </td><td> returns the number of headers expected or the number found in the line      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> sets the headers to the values of the current line      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> returns the difference in number of value vs. number of headers      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> identifies the headers to collect when a row matches </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>replace(value, value)</a> </td><td> replaces a header value with another value   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>  </td><td> Returns the value of the line's last header value. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header name for an index.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> and <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header index for a name.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>headers(value)</a>  </td><td> Indicates to another function that it should look in the headers.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_names_mismatch.md'>header_names_mismatch(value)</a>  </td><td> Checks the header names against a delimited list of expected headers.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers()</a> </td><td> Returns the number of headers expected.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers_in_line()</a> </td><td> Returns the number found in the line.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> Sets the headers to the values of the current line.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> Returns the difference in number of value vs. number of headers.      </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the headers to collect when a row matches. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>replace(value, value)</a> </td><td> Replaces a header value with another value.   </td>
 </table>
 
 ## Lines
 <table>
 <tr><th>Function            <a name="lines"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/advance.md'>advance(int)</a></td><td> skips the next n-rows </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/after_blank.md'>after_blank()</a></td><td> matches when a line was preceded by a blank line </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>has_dups(header, ...)</a>,
-<a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>, and
-<a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>dup_lines(header, ...)</a>
-</td><td> these functions track duplicate lines  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstline()</a></td><td> matches on the 0th line, if scanned </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstscan()</a></td><td> matches on the 1st line scanned </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstmatch()</a></td><td> matches on the 1st line matched </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>last()</a></td><td> true on the last row that will be scanned </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/first.md'>first(value, value, ...)</a> </td><td> match the first occurrence and capture line  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>skip(value)</a> </td><td> skips to the next line scanned if a condition is met   </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> stops path scanning if a condition is met                 </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/advance.md'>advance(int)</a></td><td> Skips the next n-rows </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/after_blank.md'>after_blank()</a></td><td> Matches when a line was preceded by a blank line </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>has_dups(header, ...)</a> </td><td> Returns true if there are duplicate lines.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a> </td><td> Counts duplicate lines.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>dup_lines(header, ...)</a> </td><td> Returns duplicate line numbers.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstline()</a></td><td> Matches on the 0th line, if scanned. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstscan()</a></td><td> Matches on the 1st line scanned. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstmatch()</a></td><td> Matches on the 1st line matched. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>last()</a></td><td> Returns true on the last row that will be scanned. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/first.md'>first(value, value, ...)</a> </td><td> Matches the first occurrence and captures the line number.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>skip(value)</a> </td><td> Skips to the next line scanned if a condition is met.   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> Stops scanning if a condition is met. </td>
 
 </table>
 
