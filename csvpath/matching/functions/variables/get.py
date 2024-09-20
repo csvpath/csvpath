@@ -9,7 +9,7 @@ class Get(ValueProducer):
 
     def check_valid(self) -> None:
         self.validate_one_or_two_args(
-            one=[Header, Term, Function],
+            one=[Header, Term, Function, Variable],
             left=[Header, Term, Function, Variable],
             right=[Header, Term, Function, Variable],
         )
@@ -17,11 +17,7 @@ class Get(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         varname = None
-        c1 = self._child_one()
-        if isinstance(c1, Variable):
-            varname = c1.name
-        else:
-            varname = self._value_one(skip=skip)
+        varname = self._value_one(skip=skip)
         c2 = self._child_two()
         v = self.matcher.get_variable(varname)
         if v is None:

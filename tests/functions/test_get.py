@@ -17,7 +17,7 @@ class TestFunctionsGet(unittest.TestCase):
             ${PATH}[1*]
             [
                 tally(#firstname)
-                @frog = get(@tally_firstname, "Frog")
+                @frog = get("tally_firstname", "Frog")
                 @frog == 2 -> print("frog: $.variables.frog ")
             ]"""
         )
@@ -32,18 +32,19 @@ class TestFunctionsGet(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_function_get1")
         print("")
-        with pytest.raises(ChildrenException):
-            path.parse(
-                f"""
-                ${PATH}[1*]
-                [
-                    ~ if 1st arg is Var there must be a 2nd arg ~
-                    tally(#firstname)
-                    @frog = get(@firstname)
-                    @frog == 2 -> print("frog: $.variables.frog ")
-                ]"""
-            )
-            path.collect()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                tally(#firstname)
+                @frog = get("tally_firstname")
+                @frog.Frog == 2 -> print("frog: $.variables.frog ")
+            ]"""
+        )
+        path.collect()
+        assert "frog" in path.variables
+        assert "Frog" in path.variables["frog"]
+        assert path.variables["frog"]["Frog"] == 2
 
     def test_function_get3(self):
         path = CsvPath()
@@ -54,7 +55,7 @@ class TestFunctionsGet(unittest.TestCase):
             ${PATH}[1*]
             [
                 push("names", #firstname)
-                @fourth = get(@names, 4)
+                @fourth = get("names", 4)
                 ~ this existance test should fail until we have 4 items in the stack ~
                 @fourth -> print("fourth: $.variables.fourth ")
             ]"""

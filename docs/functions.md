@@ -231,6 +231,7 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function            <a name="variables"> </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>get(value, value)</a></td><td> Gets a variable value. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>put(value, value)</a></td><td> Sets a variable value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>push(name, value)</a> </td><td> Pushes a value on a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>pop(name)</a> </td><td> Pops a value off a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>peek(name, int)</a> </td><td> Accesses a value at an index in a stack.    </td>

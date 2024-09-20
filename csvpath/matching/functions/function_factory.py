@@ -69,6 +69,7 @@ from .lines.after_blank import AfterBlank
 from .variables.variables import Variables
 from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .variables.get import Get
+from .variables.put import Put
 from .variables.track import Track
 from .misc.random import Random
 from .misc.nonef import Nonef
@@ -335,6 +336,8 @@ class FunctionFactory:
             f = Between(matcher, name, child)
         elif name == "get":
             f = Get(matcher, name, child)
+        elif name == "put":
+            f = Put(matcher, name, child)
         elif name == "debug":
             f = Debug(matcher, name, child)
         elif name == "brief_stack_trace":
