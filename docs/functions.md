@@ -1,7 +1,7 @@
 
 # Functions
 
-Most of the work of matching is done in match component functions. There are dozens of functions in several groups.
+Most of the work of matching is done in match component functions. There are over one hundred functions in several groups.
 
 - [Boolean](#boolean)
 - [Counting](#counting)
@@ -66,11 +66,11 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> An existence test for all selected values or all headers, or all variables. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> An existence test for all selected values, all headers, or all variables. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> An existence test across a range of places. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> Always false. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> Always false. Alias: false() </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>  </td><td> Negates a value.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>and(value, value,...)</a> </td><td> Returns true when all match.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>or(value, value,...)</a>  </td><td> Returns true when any match. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> Always returns true.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> Always returns true. Alias: true()   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>empty(value)</a>    </td><td> Tests if the value is empty. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>exists(value)</a> </td><td> Tests if the value exists.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/in.md'>in(value, list)</a>  </td><td> Match against a pipe-delimited list, values, or references. </td></tr>
@@ -114,7 +114,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers_in_line()</a> </td><td> Returns the number found in the line.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> Sets the headers to the values of the current line.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> Returns the difference in number of value vs. number of headers.      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the headers to collect when a row matches. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the header values to collect when a row matches. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>replace(value, value)</a> </td><td> Replaces a header value with another value.   </td>
 </table>
 
@@ -125,14 +125,14 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/after_blank.md'>after_blank()</a></td><td> Matches when a line was preceded by a blank line </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>has_dups(header, ...)</a> </td><td> Returns true if there are duplicate lines.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a> </td><td> Counts duplicate lines.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>dup_lines(header, ...)</a> </td><td> Returns duplicate line numbers.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>dup_lines(header, ...)</a> </td><td> Returns the line numbers of duplicate lines.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstline()</a></td><td> Matches on the 0th line, if scanned. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstscan()</a></td><td> Matches on the 1st line scanned. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>firstmatch()</a></td><td> Matches on the 1st line matched. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/last.md'>last()</a></td><td> Returns true on the last row that will be scanned. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/first.md'>first(value, value, ...)</a> </td><td> Matches the first occurrence and captures the line number.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>skip(value)</a> </td><td> Skips to the next line scanned if a condition is met.   </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> Stops scanning if a condition is met. </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> Stops scanning lines if a condition is met. </td>
 
 </table>
 
@@ -168,7 +168,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_line(value,value)</a></td><td> Prints the current line unchanged.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_queue(value,value)</a></td><td> Returns the number of strings printed.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> Applies a Jinja2 template.   </td></tr>
-<tr><td> header_Table(value, value) </td><td> Prints a formatted table of the headers with header numbers.  </td></tr>
+<tr><td> header_table(value, value) </td><td> Prints a formatted table of the headers with header numbers.  </td></tr>
 <tr><td> row_table(value, value) </td><td> Prints a formatted table of a row.  </td></tr>
 <tr><td> var_table(value, value) </td><td> Prints a formatted table of the variables.  </td></tr>
 </table>
@@ -214,7 +214,7 @@ There are lots more simple examples on the individual function pages.
 <tr><th>Function            <a name="testing"> </th><th> What it does                                              </th></tr>
 <tr><td> brief_stack_trace()  </td><td> Logs a slimmed-down stack trace.    </td></tr>
 <tr><td> debug()  </td><td> Changes the log level.       </td></tr>
-<tr><td> vote_stack()  </td><td> Returns a stack with True or False for each match components match decision. </td></tr>
+<tr><td> vote_stack()  </td><td> Returns a stack with True or False for each match component's match decision. </td></tr>
 <tr><td> do_when_stack()  </td><td> Returns a stack with True or False for each do/when to show which activated their right-hand side. </td></tr>
 </table>
 
@@ -235,7 +235,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>pop(name)</a> </td><td> Pops a value off a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>peek(name, int)</a> </td><td> Accesses a value at an index in a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>peek_size(name)</a> </td><td> Returns the size of a stack.    </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>stack(name)</a> </td><td> Returns a variable that is stack of values that were pushed.   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>stack(name)</a> </td><td> Returns a stack variable of pushed values.   </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>variables()</a>    </td><td> Indicates to another function that it should look in the variables.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/track.md'>track(value, value)</a> </td><td> Tracks a value by name.  </td>
 </table>
