@@ -728,6 +728,11 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                 self.logger.debug(
                     "CsvPath.matches:703: %s: matches: %s", self.identity, matches
                 )
+            #
+            # if we are done scanning we can stop
+            #
+            if self.scanner.is_last(self.line_monitor.physical_line_number):
+                self.stop()
             if matches is True:
                 #
                 # _current_match_count is a placeholder that

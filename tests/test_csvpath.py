@@ -7,6 +7,20 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestCsvPath(unittest.TestCase):
+    def test_csvpath_stop_when_last(self):
+        path = CsvPath()
+        path.parse(
+            """$tests/test_resources/test.csv[0-5][
+                push.onmatch("line", line_number())
+            ]"""
+        )
+        path.fast_forward()
+        print(f"\n test_csvpath_stop_when_last: path.vars: {path.variables}")
+        print(
+            f"\n test_csvpath_stop_when_last: last line: {path.line_monitor.physical_line_number}"
+        )
+        assert path.line_monitor.physical_line_number == 5
+
     def test_csvpath_total_lines_check(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][yes()]")
