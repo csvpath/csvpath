@@ -9,9 +9,10 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsTable(unittest.TestCase):
-    def test_function_header_table(self):
+    def test_function_header_table1(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_header_table1")
         path.parse(
             f"""${PATH}[1][
                 header_table()
@@ -27,6 +28,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_row_table1(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_row_table1")
         path.parse(
             f"""${PATH}[1][
                 row_table()
@@ -42,6 +44,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_row_table2(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_row_table2")
         path.parse(
             f"""${PATH}[1][
                 row_table(1)
@@ -59,6 +62,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_row_table3(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_row_table3")
         path.parse(
             f"""${PATH}[1][
                 row_table(1,2)
@@ -76,6 +80,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_var_table1(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_var_table1")
         path.parse(
             f"""${PATH}[1-3][
                 push("ln", line_number())
@@ -96,6 +101,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_var_table2(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_var_table2")
         path.parse(
             f"""${PATH}[1-3][
                 push("ln", line_number())
@@ -116,6 +122,7 @@ class TestFunctionsTable(unittest.TestCase):
     def test_function_var_table3(self):
         print("")
         path = CsvPath()
+        Save._save(path, "test_function_var_table3")
         path.parse(
             f"""${PATH}[1*][
                 tally(#firstname)

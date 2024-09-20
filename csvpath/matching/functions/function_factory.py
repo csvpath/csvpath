@@ -1,12 +1,15 @@
 # pylint: disable=C0114
 from csvpath.matching.productions.expression import Matchable
 from .function import Function
+from .dates.now import Now
+from .dates.datef import Date
 from .strings.lower import Lower
 from .strings.upper import Upper
 from .strings.substring import Substring
 from .strings.starts_with import StartsWith
 from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
+from .strings.regex import Regex
 from .strings.concat import Concat
 from .strings.metaphone import Metaphone
 from .counting.count import Count
@@ -21,6 +24,8 @@ from .counting.increment import Increment
 from .headers.reset_headers import ResetHeaders
 from .headers.header_name import HeaderName
 from .headers.header_names_mismatch import HeaderNamesMismatch
+from .headers.collect import Collect
+from .headers.replace import Replace
 from .headers.headers import Headers
 from .headers.mismatch import Mismatch
 from .headers.end import End
@@ -50,6 +55,7 @@ from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
 from .stats.correlate import Correlate
 from .print.printf import Print
+from .print.table import HeaderTable, RowTable, VarTable
 from .print.print_line import PrintLine
 from .print.jinjaf import Jinjaf
 from .print.print_queue import PrintQueue
@@ -60,23 +66,17 @@ from .lines.dups import HasDups, DupLines, CountDups
 from .lines.first_line import FirstLine
 from .lines.advance import Advance
 from .lines.after_blank import AfterBlank
+from .variables.variables import Variables
+from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
+from .variables.get import Get
+from .variables.track import Track
 from .misc.random import Random
-from .misc.regex import Regex
-from .misc.now import Now
-from .misc.variables import Variables
 from .misc.nonef import Nonef
-from .misc.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
-from .misc.datef import Date
-from .misc.collect import Collect
-from .misc.replace import Replace
 from .misc.intf import Int
-from .misc.get import Get
-from .misc.track import Track
 from .misc.importf import Import
-from .misc.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
+from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
 from .validity.failed import Failed
 from .validity.fail import Fail
-from .print.table import HeaderTable, RowTable, VarTable
 
 
 class UnknownFunctionException(Exception):

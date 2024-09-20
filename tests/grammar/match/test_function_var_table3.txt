@@ -1,0 +1,4 @@
+[
+                tally(#firstname)
+                last() -> var_table("tally_firstname")
+            ]

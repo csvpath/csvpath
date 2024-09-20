@@ -2,7 +2,7 @@
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..misc.variables import Variables
+from ..variables.variables import Variables
 from ..function_focus import MatchDecider
 from ..headers.headers import Headers
 

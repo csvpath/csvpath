@@ -1,0 +1,7 @@
+[
+                push("ln", line_number())
+                @a = concat(#firstname, " ", #lastname)
+                push("votes", vote_stack())
+                @b = "123456 7890 abcdef gh ijklmn op"
+                last() -> var_table("votes")
+            ]

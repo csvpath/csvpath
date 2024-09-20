@@ -15,7 +15,7 @@ from csvpath.matching.functions.math.equals import Equals
 from csvpath.matching.functions.headers.end import End
 from csvpath.matching.functions.lines.dups import HasDups
 from csvpath.matching.functions.print.printf import Print
-from csvpath.matching.functions.misc.regex import Regex
+from csvpath.matching.functions.strings.regex import Regex
 
 VAR = Variable(None, name="no", value=None)
 TERM = Term(None, name=None, value="term")
