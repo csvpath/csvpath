@@ -33,10 +33,10 @@ Functions can contain:
 
 They can not include when/do expressions. This means you cannot use `->` within a function.
 
-Certain functions have qualifiers. An `onmatch` qualifier indicates that
-the function should be applied only when the whole path matches.
+Many functions take qualifiers. With only a three exceptions, all functions can take the `onmatch` qualifier. An `onmatch` qualifier indicates that the function should be applied only when the whole path matches. See the individual function pages for what built-in qualifiers a function supports.
 
-Some functions optionally will make use of an arbitrary name qualifier to better name a tracking variable.
+Some functions will optionally make use of an arbitrary name qualifier to better name a tracking variable.
+
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
 ## Custom Functions
