@@ -60,20 +60,20 @@ There are lots more simple examples on the individual function pages.
 ## Boolean
 <table>
 <tr><th>Function <a name="boolean">  </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>gt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>above( value, value)</a> </td><td> finds things after a date, number, string        </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>lt(value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>below( value, value)</a></td><td> finds things before a date, number, string       </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> or <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>outside(value, value, value)</a> </td><td> returns true when a value is found between to others     </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> existence test for all selected values or all headers, or all variables </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> existence test for all selected values, all headers, or all variables </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> existence test across a range of places </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> always false                                  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>                    </td><td> negates a value                                           </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>and(value, value,...)</a>          </td><td> match all                                             </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>or(value, value,...)</a>          </td><td> match any one                                             </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> always true                                               </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>empty(value)</a>    </td><td> tests if the value is empty            </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>exists(value)</a> </td><td> tests if the value exists            </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/in.md'>in(value, list)</a>  </td><td> match in a pipe-delimited list    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a>above( value, value) </td><td> Finds things after a date, number, string. Aliases: gt(), after().    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a></td><td> Finds things before a date, number, string.  Aliases: lt(), below().     </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> </td><td> Returns true when a value is found between to others. Aliases: outside().     </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> An existence test for all selected values or all headers, or all variables. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> An existence test for all selected values, all headers, or all variables. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> An existence test across a range of places. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> Always false. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>  </td><td> Negates a value.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>and(value, value,...)</a> </td><td> Returns true when all match.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>or(value, value,...)</a>  </td><td> Returns true when any match. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> Always returns true.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>empty(value)</a>    </td><td> Tests if the value is empty. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>exists(value)</a> </td><td> Tests if the value exists.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/in.md'>in(value, list)</a>  </td><td> Match against a pipe-delimited list, values, or references. </td></tr>
 </table>
 
 
