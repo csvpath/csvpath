@@ -14,7 +14,9 @@ This family of functions allows you to create list variables.
 
 Push can be called in the form `push_distinct()` or it can take a `distinct` qualifier. (The `distinct` qualifier may become well-known, but at the moment is ad hoc just for `push()`).
 
-Peek will return None if you attempt to peek an index that doesn't exist. Likewise Popping when there is nothing on the list to pop returns None.
+Push can also take a `notnone` qualifier. When `notnone` is set `push()` will not add an empty value to the stack. It will also not match lines while the stack is empty.
+
+`peek()` will return None if you attempt to peek an index that doesn't exist. Likewise Popping when there is nothing on the list to pop returns None.
 
 Peek and Pop can take the `asbool` qualifier in order to make their match depend on interpreting the value returned as a bool.
 
