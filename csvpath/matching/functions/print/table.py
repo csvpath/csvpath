@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import textwrap
 from tabulate import tabulate
+from csvpath.matching.util.print_parser import PrintParser
 from ..function_focus import SideEffect
 
 
@@ -127,6 +128,56 @@ class VarTable(SideEffect):
             if len(v) > 30:
                 v = textwrap.fill(v, width=30)
             rows.append([v])
+        self.matcher.csvpath.print(
+            tabulate(rows, headers=headers, tablefmt="simple_grid")
+        )
+
+
+class RunTable(SideEffect):
+    """prints a table of runtime data and any metadata available"""
+
+    def check_valid(self) -> None:
+        self.validate_zero_args()
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
+        self.print_all()
+        self.match = self.default_match()
+
+    def print_all(self):
+        headers = ["Key", "Value"]
+        # do the metadata first, if any
+        rows = []
+        for k, v in self.matcher.csvpath.metadata.items():
+            headers.append(k)
+            v = str(v)
+            if len(v) > 50:
+                v = textwrap.fill(v, width=50)
+            rows.append([k, v])
+
+        if len(rows) > 0:
+            self.matcher.csvpath.print("Metadata")
+            self.matcher.csvpath.print(
+                tabulate(rows, headers=headers, tablefmt="simple_grid")
+            )
+        # there will definitely be runtime data, but just from this csvpath.
+        # it would be possible to get more, but not sure this would be the
+        # right way/place to do it.
+        parser = PrintParser()
+        table = {}
+        parser._get_runtime_data_from_local(self.matcher.csvpath, table)
+        rows = []
+        for k, v in table.items():
+            headers.append(k)
+            v = str(v)
+            if len(v) > 50:
+                v = textwrap.fill(v, width=50)
+            rows.append([k, v])
+
+        self.matcher.csvpath.print("Runtime data")
         self.matcher.csvpath.print(
             tabulate(rows, headers=headers, tablefmt="simple_grid")
         )

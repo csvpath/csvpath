@@ -153,3 +153,25 @@ class TestFunctionsTable(unittest.TestCase):
         assert line[0] == "┌"
         assert line[len(line) - 1] == "┘"
         assert line.find("firstname") > -1
+
+    def test_function_run_table1(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_function_run_table1")
+        path.parse(
+            f"""
+                ~ name: fishery ~
+                ${PATH}[*][
+                push("empties", empty_stack())
+                last() -> var_table()
+                last() -> run_table()
+            ]"""
+        )
+        path.fast_forward()
+        print(f"test_function_var_table4: path.vars: {path.variables}")
+        line = path.printers[0].last_line
+        assert line[0] == "┌"
+        assert line[len(line) - 1] == "┘"
+        # assert line.find("Runtime") > -1
+        # assert line.find("Metadata") > -1
+        # assert line.find("fishery") > -1

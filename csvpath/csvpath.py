@@ -637,9 +637,6 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                     "CsvPath has been stopped at line %s",
                     self.line_monitor.physical_line_number,
                 )
-                print(
-                    f"CsvPath.next: self.stopped: {self.stopped} at {self.line_monitor.physical_line_number}"
-                )
                 break
         self.finalize()
         # moving to finalize
@@ -740,10 +737,6 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
             # if we are done scanning we can stop
             #
             if self.scanner.is_last(self.line_monitor.physical_line_number):
-                pln = self.line_monitor.physical_line_number
-                print(
-                    f"CsvPath._consider_line: stopping at {pln}? {self.scanner.is_last(pln)}"
-                )
                 self.stop()
             if matches is True:
                 #

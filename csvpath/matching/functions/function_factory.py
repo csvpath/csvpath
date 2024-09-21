@@ -57,7 +57,7 @@ from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
 from .stats.correlate import Correlate
 from .print.printf import Print
-from .print.table import HeaderTable, RowTable, VarTable
+from .print.table import HeaderTable, RowTable, VarTable, RunTable
 from .print.print_line import PrintLine
 from .print.jinjaf import Jinjaf
 from .print.print_queue import PrintQueue
@@ -356,6 +356,8 @@ class FunctionFactory:
             f = RowTable(matcher, name, child)
         elif name == "var_table":
             f = VarTable(matcher, name, child)
+        elif name == "run_table":
+            f = RunTable(matcher, name, child)
         elif name == "empty_stack":
             f = EmptyStack(matcher, name, child)
         elif name == "num":

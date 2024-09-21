@@ -274,7 +274,8 @@ class PrintParser:
         _id = "csvpath" if "name" not in csvpath.metadata else csvpath.metadata["name"]
         if _id.strip() == "":
             _id = "csvpath"
-        if "failed" not in runtime:
-            runtime["failed"] = {}
-        runtime["failed"][_id] = not csvpath.is_valid
+        runtime["identity"] = csvpath.identity
+        if "valid" not in runtime:
+            runtime["valid"] = {}
+        runtime["valid"][csvpath.identity] = csvpath.is_valid
         runtime["stopped"] = csvpath.stopped
