@@ -53,9 +53,9 @@ class Scanner:  # pylint: disable=R0902
         to_line = self.to_line if to_line == -1 else to_line
         all_lines = self.all_lines if all_lines is None else all_lines
         these = self.these if these is None else these
-
         #
-        # exp: what if from is > to?
+        # what if from is > to? shouldn't be but we originally wanted
+        # to support that, way back, so we can do this swap.
         #
         if from_line and to_line and from_line > to_line:
             _ = from_line
