@@ -36,6 +36,11 @@ class Tally(ValueProducer):
             name = self.first_non_term_qualifier("tally")
         else:
             name = f"""{self.first_non_term_qualifier("tally")}_{name}"""
+        if f"{value}".strip() == "":
+            self.matcher.csvpath.logger.warn(
+                "Cannot store an empty tracking value in %s. >>%s<<", name, value
+            )
+            return
         count = self.matcher.get_variable(name, tracking=value)
         if count is None:
             count = 0

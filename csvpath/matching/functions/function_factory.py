@@ -11,6 +11,7 @@ from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
 from .strings.regex import Regex
 from .strings.concat import Concat
+from .strings.num import Num
 from .strings.metaphone import Metaphone
 from .counting.count import Count
 from .counting.has_matches import HasMatches
@@ -357,6 +358,8 @@ class FunctionFactory:
             f = VarTable(matcher, name, child)
         elif name == "empty_stack":
             f = EmptyStack(matcher, name, child)
+        elif name == "num":
+            f = Num(matcher, name, child)
 
         else:
             if (

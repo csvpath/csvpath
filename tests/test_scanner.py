@@ -267,3 +267,5 @@ class TestScanner(unittest.TestCase):
         )
 
         assert scanner.is_last(100, from_line=4, to_line=100, all_lines=False, these=[])
+
+        assert scanner.is_last(100, from_line=100, to_line=4, all_lines=False, these=[])

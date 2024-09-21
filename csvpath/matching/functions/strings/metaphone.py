@@ -10,7 +10,7 @@ class Metaphone(ValueProducer):
     first arg and expects a reference in the second arg. the
     reference must point to a lookup variable. the lookup variable
     must be in the form: Dict[metaphone,canonical]. the most
-    likely way of creating that variable today is to use tally(),
+    likely way of creating that variable today is to use track(),
     passing something like: tally(metaphone(#header), #header)"""
 
     def check_valid(self) -> None:

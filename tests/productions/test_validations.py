@@ -13,6 +13,7 @@ from csvpath.matching.functions.boolean.any import Any
 from csvpath.matching.functions.boolean.empty import Empty
 from csvpath.matching.functions.math.equals import Equals
 from csvpath.matching.functions.headers.end import End
+from csvpath.matching.functions.headers.headers import Headers
 from csvpath.matching.functions.lines.dups import HasDups
 from csvpath.matching.functions.print.printf import Print
 from csvpath.matching.functions.strings.regex import Regex
@@ -20,6 +21,7 @@ from csvpath.matching.functions.strings.regex import Regex
 VAR = Variable(None, name="no", value=None)
 TERM = Term(None, name=None, value="term")
 HEADER = Header(None, name=None, value="header")
+HEADERS = Headers(None, name="headers")
 FUNC = Stop(None, name="stop")
 EQ = Equality(None)
 
@@ -73,6 +75,15 @@ class TestValidations(unittest.TestCase):
     def test_validation_validate_zero_one_or_two_args3(self):
         e = Any(matcher=None, name="no")
         e.children = [FUNC]
+        with pytest.raises(ChildrenException):
+            e.check_valid()
+
+    def test_validation_validate_zero_one_or_two_args4(self):
+        e = Any(matcher=None, name="any")
+        eq = Equality(None)
+        eq.children = [HEADERS, TERM, TERM]
+        eq.op = ","
+        e.children = [eq]
         with pytest.raises(ChildrenException):
             e.check_valid()
 

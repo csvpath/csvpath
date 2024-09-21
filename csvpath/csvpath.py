@@ -633,6 +633,13 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                     raise MatchException(msg)
                 yield line
             if self.stopped:
+                self.logger.info(
+                    "CsvPath has been stopped at line %s",
+                    self.line_monitor.physical_line_number,
+                )
+                print(
+                    f"CsvPath.next: self.stopped: {self.stopped} at {self.line_monitor.physical_line_number}"
+                )
                 break
         self.finalize()
         # moving to finalize
@@ -673,7 +680,8 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         # this method can run multiple times w/np, but that
         # shouldn't happen anyway.
         self._freeze_path = True
-        self.matcher.clear_caches()
+        if self.matcher:
+            self.matcher.clear_caches()
 
     def track_line(self, line) -> None:
         """csvpaths needs to handle some of the iteration logic, and we don't want
@@ -732,6 +740,10 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
             # if we are done scanning we can stop
             #
             if self.scanner.is_last(self.line_monitor.physical_line_number):
+                pln = self.line_monitor.physical_line_number
+                print(
+                    f"CsvPath._consider_line: stopping at {pln}? {self.scanner.is_last(pln)}"
+                )
                 self.stop()
             if matches is True:
                 #

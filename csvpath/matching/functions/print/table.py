@@ -51,7 +51,6 @@ class RowTable(SideEffect):
             j = v2
         headers = []
         row = None
-        print(f"tables.i: {i}, {j}")
         if i == j:
             headers.append(self.matcher.csvpath.headers[i])
             row = [[self.matcher.line[i]]]

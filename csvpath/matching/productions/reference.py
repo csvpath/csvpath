@@ -24,7 +24,7 @@ class Reference(Matchable):
             )  # pragma: no cover
         #
         # references are in the form:
-        #    $file[.path/name].(csvpath|metadata|variable|header).name[.tracking_name/index]
+        #    $path.(csvpath|metadata|variable|header).name[.tracking_name/index]
         #
         # results are always the most recent unless we pull specific results for a
         # header ref using a tracking value against an "id" or "name" metadata
@@ -102,6 +102,28 @@ class Reference(Matchable):
                     self._cache_vars = self.value
         return self.value
 
+    def data_type(self):
+        ref = self._get_reference()
+        return ref["var_or_header"]
+
+    def is_header(self):
+        return self.data_type() == "headers"
+
+    def is_variable(self):
+        return self.data_type() != "headers"
+
+    def data_name(self):
+        """this is the name of the datum being referred to. however, it
+        is not the tracking value. that is on the "tracking" key in the ref."""
+        ref = self._get_reference()
+        return ref["name"]
+
+    def tracking_name(self):
+        """this is the name of the tracking value."""
+        ref = self._get_reference()
+        return ref["tracking"]
+
+    """"
     def _get_results(self):
         cs = self.matcher.csvpath.csvpaths
         if cs is None:
@@ -122,7 +144,6 @@ class Reference(Matchable):
         #
         results_list = cs.results_manager.get_named_results(ref["paths_name"])
         if results_list and len(results_list) > 0:
-            # if self.ref["paths_name"] is None:
             results = results_list[0]
             # else:
             #    for r in results_list:
@@ -144,6 +165,7 @@ class Reference(Matchable):
             #
             raise MatchException("Results cannot be None for reference %s", self)
         return results
+    """
 
     def _get_reference(self) -> Dict[str, str]:
         if self.ref is None:
@@ -198,6 +220,11 @@ class Reference(Matchable):
 
     def _header_value(self) -> Any:
         ref = self._get_reference()
+        r = self.get_results()
+        return self._get_value_from_results(ref, r)
+
+    def get_results(self) -> Any:
+        ref = self._get_reference()
         name = ref["paths_name"]
         rm = self.matcher.csvpath.csvpaths.results_manager
         ret = None
@@ -207,7 +234,8 @@ class Reference(Matchable):
             #
             if rm.get_number_of_results(name) == 1:
                 rs = rm.get_named_results(name)
-                ret = self._get_value_from_results(ref, rs[0])
+                return rs[0]
+                # ret = self._get_value_from_results(ref, rs[0])
             elif ref["tracking"]:
                 #
                 # find the specific path if we have a tracking value.
@@ -223,7 +251,8 @@ class Reference(Matchable):
                         ref["tracking"],
                         self,
                     )
-                ret = self._get_value_from_results(ref, r)
+                # ret = self._get_value_from_results(ref, r)
+                return r
             else:
                 #
                 # are we really going to aggregate all the values from all the

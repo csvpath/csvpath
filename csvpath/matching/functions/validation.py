@@ -104,7 +104,9 @@ class Validation(Matchable):
                 raise ChildrenException(f"{self.name}()'s argument must be {first_arg}")
         else:
             if not self.children[0].op == ",":
-                raise ChildrenException(f"{self.name} children opperation is incorrect")
+                raise ChildrenException(
+                    f"{self.name}'s children opperation is incorrect"
+                )
             if not self._class_match(self.children[0].left, first_arg):
                 raise ChildrenException(
                     f"{self.name}()'s first argument must be {first_arg}"
@@ -113,6 +115,8 @@ class Validation(Matchable):
                 raise ChildrenException(
                     f"{self.name}()'s second argument must be {second_arg}"
                 )
+            if len(self.children[0].children) > 2:
+                raise ChildrenException(f"{self.name} can have at most 2 args")
 
     def validate_one_arg(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
