@@ -345,7 +345,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         # here we're just collecting them if collect is
         # selected by our configuration
         #
-        if self._error_collector:
+        if self._error_collector is not None:
             self._error_collector.collect_error(e)
         else:
             if self._errors is None:

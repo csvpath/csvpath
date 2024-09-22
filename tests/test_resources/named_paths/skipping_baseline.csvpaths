@@ -1,0 +1,20 @@
+
+~ name: one ~
+
+$[*][
+    between.nocontrib( line_number(), 3, 6 ) -> print("i am between: $.csvpath.line_number ")
+
+    not( between( line_number(), 3, 6 ) ) ->
+        print("ONE: not between: $.csvpath.line_number, so pushing",
+            push.onmatch("one", line_number()))
+]
+
+---- CSVPATH ----
+
+~ id: two ~
+
+$[*][
+    print("TWO: $.csvpath.line_number", push( "two", line_number()))
+]
+
+

@@ -141,7 +141,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)
         for r in results:
-            if not r.is_valid():
+            if not r.is_valid:
                 return False
         return True
 

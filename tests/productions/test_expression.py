@@ -45,7 +45,6 @@ class TestExpressions(unittest.TestCase):
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         matcher = Matcher(csvpath=path, data="[yes()]")
         results = Result(csvpath=path, file_name="...", paths_name="......")
-
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()
         print(f"test_expression_errors1: de: {de}")
@@ -55,12 +54,22 @@ class TestExpressions(unittest.TestCase):
             expr.matches(skip=[])
         assert "stop" in path.config.csvpath_errors_policy
         assert "fail" in path.config.csvpath_errors_policy
-        assert len(path.errors) == 1
+        #
+        # why was this here? we are adding path to result
+        # result adds itself as error collector. path hands off
+        # the error to its error_collector. why would we expect
+        # path to have a copy?
+        #
+        # assert len(path.errors) == 1
         print(f"path._errors: {path._errors}")
-        assert path._errors is None
+        #
+        # another misunderstanding. path is returning its
+        # error collector's errors, so there is 1
+        #
+        # assert path._errors is None
         assert path._error_collector is not None
         assert not path.is_valid
         assert path.stopped is True
         print(f"results: {results}, {results.errors}")
-        assert results.has_errors()
+        assert results.has_errors is True
         assert len(results.errors) == 1

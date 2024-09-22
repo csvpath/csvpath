@@ -1,0 +1,32 @@
+
+~ name: one
+
+  description:
+    - the first path "one" skips two numbers
+      (4, 5) and captures line numbers for the other
+      lines.
+    - the second path "two" on its own would capture
+      all lines. but when "one" does skip_all(), "two"
+      should skip (4, 5) also
+~
+
+$[*][
+    between.nocontrib( line_number(), 3, 6 ) ->
+        print("i am between: $.csvpath.line_number ",
+            skip_all())
+
+    not( between( line_number(), 3, 6 ) ) ->
+        print("ONE: not between: $.csvpath.line_number, so pushing",
+            push.onmatch("one", line_number()))
+]
+
+---- CSVPATH ----
+
+~ id: two ~
+
+$[*][
+    print("TWO: $.csvpath.line_number",
+        push( "two", line_number()))
+]
+
+

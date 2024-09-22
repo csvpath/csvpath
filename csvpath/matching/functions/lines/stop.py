@@ -38,25 +38,6 @@ class Stop(Stopper):
     def _decide_match(self, skip=None) -> None:
         self.match = True
         self._stop_me(skip=skip)
-        """
-        if len(self.children) == 1:
-            b = self.children[0].matches(skip=skip)
-            if b is True:
-                self.matcher.csvpath.stop()
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                self.matcher.csvpath.logger.info(
-                    f"stopping at {pln}. contained child matches."
-                )
-                stopped = True
-        else:
-            self.matcher.csvpath.stop()
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
-            self.matcher.csvpath.logger.info(f"stopping at {pln}")
-            stopped = True
-        if stopped and self.name == "fail_and_stop":
-            self.matcher.csvpath.logger.info("setting invalid")
-            self.matcher.csvpath.is_valid = False
-        """
 
 
 class StopAll(Stopper):
@@ -103,30 +84,14 @@ class Skip(Skipper):
     def _decide_match(self, skip=None) -> None:
         if self.do_once():
             self._skip_me(skip=skip)
-            """
-            if len(self.children) == 1:
-                b = self.children[0].matches(skip=skip)
-                if b is True:
-                    self.matcher.skip = True
-                    if self.once:
-                        self._set_has_happened()
-                    pln = self.matcher.csvpath.line_monitor.physical_line_number
-                    self.matcher.csvpath.logger.info(
-                        f"skipping physical line {pln}. contained child matches."
-                    )
-            else:
-                self.matcher.skip = True
-                if self.once:
-                    self._set_has_happened()
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                self.matcher.csvpath.logger.info(f"skipping line {pln}")
-            """
         self.match = self.default_match()
 
 
 class SkipAll(Skipper):
     """skips to the next line. tells the CsvPaths instance, if any,
     to skip all the following CsvPath instances as well.
+    Note: skip_all() is only for the parallel/breadth-first methods.
+    for the serial/paths methods skip_all() works the same as skip().
     """
 
     def check_valid(self) -> None:

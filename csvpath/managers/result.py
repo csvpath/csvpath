@@ -57,6 +57,10 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def file_name(self, file_name: str) -> None:
         self._file_name = file_name
 
+    # ==========================
+    # lines collecting methods
+    #
+
     @property
     def lines(self) -> List[List[Any]]:  # pylint: disable=C0116
         return self._lines
@@ -64,6 +68,18 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     @lines.setter
     def lines(self, ls: List[List[Any]]) -> None:
         self._lines = ls
+
+    def append(self, line: List[Any]) -> None:
+        if self._lines is None:
+            self._lines = []
+        self._lines.append(line)
+
+    def __len__(self) -> int:
+        if self._lines is None:
+            self._lines = []
+        return len(self._lines)
+
+    # ==========================
 
     @property
     def csvpath(self) -> CsvPath:  # pylint: disable=C0116
@@ -79,15 +95,18 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def errors(self) -> List[Error]:  # pylint: disable=C0116
         return self._errors
 
+    @property
     def errors_count(self) -> int:  # pylint: disable=C0116
         return len(self._errors) if self._errors else 0
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         self._errors.append(error)
 
+    @property
     def has_errors(self) -> bool:  # pylint: disable=C0116
-        return len(self.errors) > 0
+        return len(self._errors) > 0
 
+    @property
     def is_valid(self) -> bool:  # pylint: disable=C0116
         if self._csvpath:
             return self._csvpath.is_valid

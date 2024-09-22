@@ -287,7 +287,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
 
-    def next_paths(self, *, pathsname, filename):
+    def next_paths(self, *, pathsname, filename, collect: bool = False):
         """appends the Result for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
@@ -303,13 +303,21 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
         for path in paths:
+            if self._skip_all:
+                skip_err = "Found the skip-all signal set. skip_all() is"
+                skip_err = (
+                    f"{skip_err} only for breadth-first runs using the '_by_line'"
+                )
+                skip_err = f"{skip_err} methods. It has the same effect as skip() in a"
+                skip_err = f"{skip_err} serial run like this one."
+                self.logger.error(skip_err)
             if self._stop_all:
-                self.logger.warn("Stop-all set. Shutting down run.")
+                self.logger.warning("Stop-all set. Shutting down run.")
                 break
             csvpath = self.csvpath()
             result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             if self._fail_all:
-                self.logger.warn(
+                self.logger.warning(
                     "Fail-all set. Failing all remaining CsvPath instances in the run."
                 )
                 csvpath.is_valid = False
@@ -318,6 +326,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                 self._load_csvpath(csvpath, path=path, file=file)
                 for line in csvpath.next():
                     line.append(result)
+                    if collect:
+                        result.append(line)
                     yield line
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
@@ -435,22 +445,37 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                     for p in csvpath_objects:
                         self.current_matcher = p[0]
                         if self._fail_all:
-                            self.logger.warn(
+                            self.logger.warning(
                                 "Fail-all set. Setting CsvPath is_valid to False."
                             )
                             self.current_matcher.is_valid = False
                         if self._stop_all:
-                            self.logger.warn("Stop-all set. Shutting down run.")
+                            self.logger.warning("Stop-all set. Shutting down run.")
                             self.current_matcher.stopped = True
                             continue
                         if self._skip_all:
-                            self.logger.warn("Skip-all set. Continuing to next.")
+                            self.logger.warning("Skip-all set. Continuing to next.")
+                            #
+                            # all following CsvPaths must have their
+                            # line_monitors incremented
+                            #
+                            self.current_matcher.track_line(line)
                             continue
                         if self._advance_all > 0:
-                            self.logger.warn(
+                            self.logger.warning(
                                 "Advance-all set. Setting advance. CsvPath and its Matcher will handle the advancing."
                             )
+                            #
+                            # CsvPath will handle advancing so we don't need to do
+                            # anything, including track_line(line)
+                            #
                             self.current_matcher.advance = self._advance_all
+                            #
+                            # all following CsvPaths must have their
+                            # advance incremented -- with the advance not being simply
+                            # additive, have to be mindful of any existing advance
+                            # count!
+                            #
                         if self.current_matcher.stopped:  # pylint: disable=R1724
                             continue
 
@@ -509,14 +534,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str, collect_when_not_matched=False
-    ) -> List[Tuple[CsvPath, List]]:
+    ):
         csvpath_objects = []
         for path in paths:
             csvpath = self.csvpath()
             csvpath.collect_when_not_matched = collect_when_not_matched
             try:
                 self._load_csvpath(csvpath, path=path, file=named_file)
-                csvpath_objects.append((csvpath, []))
+                csvpath_objects.append([csvpath, []])
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
@@ -537,8 +562,18 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                 # printer, etc.
                 #
                 result = Result(
-                    csvpath=csvpath[0], file_name=filename, paths_name=pathsname
+                    csvpath=csvpath[0],
+                    file_name=filename,
+                    paths_name=pathsname,
+                    lines=csvpath[1],
                 )
+                #
+                # experiment. replace the [] with the result so
+                # result can directly collect any lines. we had
+                # a shared reference, which should have worked fine
+                # :/
+                #
+                csvpath[1] = result
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()

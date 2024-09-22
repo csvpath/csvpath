@@ -1,0 +1,18 @@
+
+~ name: one ~
+
+$[*][
+    line_number.nocontrib() == 3 -> stop_all()
+    push("one", line_number())
+]
+
+---- CSVPATH ----
+
+~ id: two ~
+
+$[*][
+    line_number.nocontrib() == 7 -> stop()
+    push( "two", line_number())
+]
+
+
