@@ -9,11 +9,10 @@ from ..util.line_monitor import LineMonitor
 from ..util.error import ErrorHandler
 
 
-class CsvPathsFilesManager(ABC):
-    """files managers map fully qualified or relative file paths to
-    simple names to make it easier to trigger csvpath runs. unlike
-    paths and results manager, files managers are mostly a
-    convenience."""
+class CsvPathsFileManager(ABC):
+    """file managers map fully qualified or relative file paths to
+    simple names to make it easier to trigger csvpath runs.
+    """
 
     @abstractmethod
     def add_named_files_from_dir(self, dirname: str) -> None:
@@ -50,7 +49,7 @@ class CsvPathsFilesManager(ABC):
         pass
 
 
-class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
+class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
     def __init__(self, *, named_files: Dict[str, str] = None, csvpaths):
         if named_files is None:
             named_files = {}

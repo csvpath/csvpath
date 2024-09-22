@@ -62,7 +62,7 @@ class TestReferences(unittest.TestCase):
         # setup the city->zip variable
         #
         cs = CsvPaths()
-        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
         rm = cs.results_manager
@@ -103,7 +103,7 @@ class TestReferences(unittest.TestCase):
 
     def test_reference2(self):
         cs = CsvPaths()
-        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
 
@@ -156,7 +156,7 @@ class TestReferences(unittest.TestCase):
 
     def test_reference3(self):
         cs = CsvPaths()
-        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
 
@@ -232,7 +232,7 @@ class TestReferences(unittest.TestCase):
     #
     def test_reference_specific_header_lookup(self):
         cs = CsvPaths()
-        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="select")
         #

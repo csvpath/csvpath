@@ -29,7 +29,7 @@ class TestFunctionsImport(unittest.TestCase):
         paths = CsvPaths()
         paths.config.csvpath_errors_policy = [OnError.RAISE.value]
 
-        paths.files_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"
         )

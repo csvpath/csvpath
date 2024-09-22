@@ -12,9 +12,9 @@ from .util.line_monitor import LineMonitor
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException
 from .managers.csvpaths_manager import PathsManager
-from .managers.files_manager import FilesManager
+from .managers.file_manager import FileManager
 from .managers.results_manager import ResultsManager
-from .managers.csvpath_result import CsvPathResult
+from .managers.result import Result
 from . import CsvPath
 
 
@@ -125,7 +125,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
     ):
         self.paths_manager = PathsManager(csvpaths=self)
-        self.files_manager = FilesManager(csvpaths=self)
+        self.file_manager = FileManager(csvpaths=self)
         self.results_manager = ResultsManager(csvpaths=self)
         self.print_default = print_default
         self.delimiter = delimiter
@@ -196,10 +196,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
     def collect_paths(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException("Pathsname must be a named set of paths")
-        if filename not in self.files_manager.named_files:  # pragma: no cover
+        if filename not in self.file_manager.named_files:  # pragma: no cover
             raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
-        file = self.files_manager.get_named_file(filename)
+        file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and % results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
@@ -207,9 +207,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         )
         for path in paths:
             csvpath = self.csvpath()
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
+            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
@@ -252,10 +250,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
             raise InputException(
                 f"Paths not found. {pathsname} must be a named set of paths"
             )
-        if filename not in self.files_manager.named_files:  # pragma: no cover
+        if filename not in self.file_manager.named_files:  # pragma: no cover
             raise InputException("Filename must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
-        file = self.files_manager.get_named_file(filename)
+        file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
@@ -267,9 +265,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             self.logger.info("Beginning CsvPath instance: %s", csvpath)
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
+            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
@@ -292,17 +288,17 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         )
 
     def next_paths(self, *, pathsname, filename):
-        """appends the CsvPathResult for each CsvPath to the end of
+        """appends the Result for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
         if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
             raise InputException(
                 f"Pathsname '{pathsname}' must be a named set of paths"
             )
-        if filename not in self.files_manager.named_files:  # pragma: no cover
+        if filename not in self.file_manager.named_files:  # pragma: no cover
             raise InputException(f"Filename '{filename}' must be a named file")
         paths = self.paths_manager.get_named_paths(pathsname)
-        file = self.files_manager.get_named_file(filename)
+        file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
@@ -311,9 +307,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                 self.logger.warn("Stop-all set. Shutting down run.")
                 break
             csvpath = self.csvpath()
-            result = CsvPathResult(
-                csvpath=csvpath, file_name=filename, paths_name=pathsname
-            )
+            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             if self._fail_all:
                 self.logger.warn(
                     "Fail-all set. Failing all remaining CsvPath instances in the run."
@@ -396,7 +390,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         # re: R0912 -- absolutely does have too many branches. will refactor later.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
-        fn = self.files_manager.get_named_file(filename)
+        fn = self.file_manager.get_named_file(filename)
         if fn is None:  # pragma: no cover
             raise InputException(f"Filename '{filename}' must be a named file")
         if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
@@ -526,7 +520,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                # the error handler is the CsvPathResults. it registers itself with
+                # the error handler is the Results. it registers itself with
                 # the csvpath as the error collector. not as straightforward a way to
                 # get ErrorHandler what it needs, but effectively same as we do above
                 ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(
@@ -539,10 +533,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
             try:
                 #
                 # lines object is a shared reference between path and results.
-                # CsvPathResult will set itself into its CsvPath as error collector
+                # Result will set itself into its CsvPath as error collector
                 # printer, etc.
                 #
-                result = CsvPathResult(
+                result = Result(
                     csvpath=csvpath[0], file_name=filename, paths_name=pathsname
                 )
                 self.results_manager.add_named_result(result)

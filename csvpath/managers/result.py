@@ -5,7 +5,7 @@ from ..util.printer import Printer
 from .. import CsvPath
 
 
-class CsvPathResult(ErrorCollector, Printer):  # pylint: disable=R0902
+class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     """This class handles the results for a single CsvPath in the
     context of a CsvPaths run that may apply any number of CsvPath
     instances against the same file.

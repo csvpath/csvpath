@@ -5,7 +5,7 @@
 - The delimiter
 - "quotes" or "single" to indicate all values should be quoted or single-quoted
 
-As with all printing, the output goes to the Printer instances held by the CsvPath or CsvPathResults. In the case of a CsvPaths managed run, the results go to the CsvPathResults via the CsvPath, and will, by default, also be printed to standard out.
+As with all printing, the output goes to the Printer instances held by the CsvPath or Results. In the case of a CsvPaths managed run, the results go to the Results via the CsvPath, and will, by default, also be printed to standard out.
 
 `print_line()` takes the `onmatch` qualifier.
 

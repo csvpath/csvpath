@@ -6,35 +6,35 @@ JSON = "tests/test_resources/named_files.json"
 
 
 class TestFilesManager(unittest.TestCase):
-    def test_files_mgr_dir1(self):
+    def test_file_mgr_dir1(self):
         print("")
         paths = CsvPaths()
-        fm = paths.files_manager
+        fm = paths.file_manager
         fm.add_named_files_from_dir(DIR)
         assert fm.named_files
         assert len(fm.named_files) == 6
 
-    def test_files_mgr_json1(self):
+    def test_file_mgr_json1(self):
         print("")
         paths = CsvPaths()
-        fm = paths.files_manager
+        fm = paths.file_manager
         fm.set_named_files_from_json(JSON)
         assert fm.named_files
         assert len(fm.named_files) == 2
 
-    def test_files_mgr_dict1(self):
+    def test_file_mgr_dict1(self):
         print("")
         paths = CsvPaths()
-        fm = paths.files_manager
+        fm = paths.file_manager
         nf = {"wonderful": "a path", "amazing": "another path"}
         fm.set_named_files(nf)
         assert fm.named_files
         assert len(fm.named_files) == 2
 
-    def test_files_mgr_dict2(self):
+    def test_file_mgr_dict2(self):
         print("")
         paths = CsvPaths()
-        fm = paths.files_manager
+        fm = paths.file_manager
         nf = {"wonderful": "a path", "amazing": "another path"}
         fm.set_named_files(nf)
         assert fm.named_files

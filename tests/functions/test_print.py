@@ -341,7 +341,7 @@ class TestPrint(unittest.TestCase):
         paths = CsvPaths()
         LogUtility.logger(paths, "debug")
 
-        paths.files_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"
         )

@@ -24,22 +24,22 @@ You can use the `CsvPaths` class to set up a list of named files so that you can
 - A dict object passed into the CsvPaths object containing the same name-to-file-path structure
 - A file system path pointing to a directory that will be used to populate the named files with all contained files
 
-Using named files requires `CsvPaths`, but the configuration happens in a CsvPaths's <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/managers/files_manager.py'>FilesManager</a>.
+Using named files requires `CsvPaths`, but the configuration happens in a CsvPaths's <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/managers/file_manager.py'>FileManager</a>.
 
 ## Example
 
 ```python
     paths = CsvPaths()
-    paths.files_manager.add_named_file("test", "tests/test_resources/test.csv")
+    paths.file_manager.add_named_file("test", "tests/test_resources/test.csv")
     path = paths.csvpath()
     path.parse( """$test[*][#firstname=="Fred"]""" )
     rows = path.collect()
 ```
 This csvpath will be applied to the file named `"test"` and match rows where the `firstname` is `"Fred"`. The matched rows will be returned from the `collect()` method.
 
-## FilesManager
+## FileManager
 
-The FilesManager methods are:
+The FileManager methods are:
 
 | Method                              | Description                                                         |
 |-------------------------------------|---------------------------------------------------------------------|
@@ -51,5 +51,5 @@ The FilesManager methods are:
 | remove_named_file(name)             | Removes a named file                                                |
 
 
-Using these methods you can setup a CsvPaths, like the example above, then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `files_manager`. This use is easy and nearly transparent.
+Using these methods you can setup a CsvPaths, like the example above, then use a csvpath like `$logical_name[*][yes()]` to apply the csvpath to the file named `logical_name` in your CsvPaths object's `file_manager`. This use is easy and nearly transparent.
 

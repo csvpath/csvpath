@@ -1,7 +1,7 @@
 import unittest
 from csvpath import CsvPaths
 from csvpath.managers.results_manager import ResultsManager
-from csvpath.managers.csvpath_result import CsvPathResult
+from csvpath.managers.result import Result
 
 
 class TestResultsManager(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestResultsManager(unittest.TestCase):
         pathsname = "many"
         filename = "food"
         path = paths.csvpath()
-        result = CsvPathResult(
+        result = Result(
             lines=[], csvpath=path, file_name=filename, paths_name=pathsname
         )
         results = [result]
@@ -26,7 +26,7 @@ class TestResultsManager(unittest.TestCase):
         assert some
         assert len(some) == 1
 
-        more_result = CsvPathResult(
+        more_result = Result(
             lines=[], csvpath=path, file_name=filename, paths_name=pathsname
         )
 
@@ -47,7 +47,7 @@ class TestResultsManager(unittest.TestCase):
         # get a csvpath. the csvpaths is not 100% configured but we don't need it.
         path = paths.csvpath()
         # create a result as if we'd run paths against file
-        result = CsvPathResult(
+        result = Result(
             lines=[], csvpath=path, file_name=filename, paths_name=pathsname
         )
         results = [result]
@@ -65,7 +65,7 @@ class TestResultsManager(unittest.TestCase):
 
         # create new results for new file
         filename = "drink"
-        more_result = CsvPathResult(
+        more_result = Result(
             lines=[], csvpath=path, file_name=filename, paths_name=pathsname
         )
         rm.add_named_result(more_result)

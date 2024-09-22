@@ -199,7 +199,7 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_new_in5(self):
         paths = CsvPaths()
-        paths.files_manager.add_named_file(
+        paths.file_manager.add_named_file(
             name="food", path="tests/test_resources/named_files/food.csv"
         )
         paths.paths_manager.add_named_paths_from_dir(
@@ -242,7 +242,7 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_new_in7(self):
         paths = CsvPaths()
-        paths.files_manager.add_named_file(
+        paths.file_manager.add_named_file(
             name="food", path="tests/test_resources/named_files/food.csv"
         )
         paths.paths_manager.add_named_paths_from_dir(

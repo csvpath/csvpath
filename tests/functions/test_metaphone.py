@@ -32,7 +32,7 @@ class TestFunctionsMetaphone(unittest.TestCase):
         print("")
         # load the lookup table
         paths = CsvPaths()
-        paths.files_manager.add_named_file(
+        paths.file_manager.add_named_file(
             name="lookups", path="tests/test_resources/named_files/lookup_names.csv"
         )
         paths.paths_manager.add_named_paths_from_file(

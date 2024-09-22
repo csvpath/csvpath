@@ -226,7 +226,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         # printers receive print lines from the print function. the default
         # printer prints to standard out. a CsvPath that is managed by a
-        # CsvPaths has its CsvPathResults as a printer, as well as having
+        # CsvPaths has its Results as a printer, as well as having
         # the default printer.
         #
         self.printers = []
@@ -476,7 +476,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         if self.csvpaths is None:
             return data
         name = self._get_name(data)
-        path = self.csvpaths.files_manager.get_named_file(name)
+        path = self.csvpaths.file_manager.get_named_file(name)
         if path is None:
             return data
         if path == name:
@@ -838,10 +838,10 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
 
     def get_total_lines_and_headers(self) -> int:  # pylint: disable=C0116
         if self.csvpaths:
-            self.line_monitor = self.csvpaths.files_manager.get_new_line_monitor(
+            self.line_monitor = self.csvpaths.file_manager.get_new_line_monitor(
                 self.scanner.filename
             )
-            self.headers = self.csvpaths.files_manager.get_original_headers(
+            self.headers = self.csvpaths.file_manager.get_original_headers(
                 self.scanner.filename
             )
         else:

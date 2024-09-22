@@ -76,7 +76,7 @@ class ErrorHandler:
     a CsvPaths or a CsvPath and an ErrorCollector. ErrorCollectors
     are either a CsvPath instance (in which case, just pass the
     instance as both csvpaths=inst and error_collector=inst) or a
-    CsvPathResult.
+    Result.
     """
 
     def __init__(self, *, csvpaths=None, csvpath=None, error_collector=None):

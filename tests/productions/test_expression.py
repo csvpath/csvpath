@@ -3,7 +3,7 @@ import pytest
 from csvpath.matching.productions import Expression
 from csvpath.matching.util.exceptions import DataException, MatchException
 from csvpath import CsvPath, CsvPaths
-from csvpath.managers.csvpath_result import CsvPathResult
+from csvpath.managers.result import Result
 from csvpath.matching.matcher import Matcher
 
 
@@ -44,7 +44,7 @@ class TestExpressions(unittest.TestCase):
         path = paths.csvpath()
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         matcher = Matcher(csvpath=path, data="[yes()]")
-        results = CsvPathResult(csvpath=path, file_name="...", paths_name="......")
+        results = Result(csvpath=path, file_name="...", paths_name="......")
 
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()

@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
-from .csvpath_result import CsvPathResult
+from .result import Result
 from ..util.exceptions import InputException
 
 
@@ -46,25 +46,25 @@ class CsvPathsResultsManager(ABC):
         pass
 
     @abstractmethod
-    def set_named_results(self, results: Dict[str, List[CsvPathResult]]) -> None:
+    def set_named_results(self, results: Dict[str, List[Result]]) -> None:
         """overwrite"""
 
     @abstractmethod
-    def add_named_result(self, result: CsvPathResult) -> None:
+    def add_named_result(self, result: Result) -> None:
         """additive. the results are named in the result object."""
 
     @abstractmethod
-    def add_named_results(self, results: List[CsvPathResult]) -> None:
+    def add_named_results(self, results: List[Result]) -> None:
         """additive. the results are named in the result object."""
 
     @abstractmethod
-    def get_named_results(self, name: str) -> List[CsvPathResult]:
+    def get_named_results(self, name: str) -> List[Result]:
         """For each named-paths, keeps and returns the most recent
         run of the paths producing results
         """
 
     @abstractmethod
-    def get_specific_named_result(self, name: str, name_or_id: str) -> CsvPathResult:
+    def get_specific_named_result(self, name: str, name_or_id: str) -> Result:
         """Finds a result with a metadata field named id or name that has a
         value matching name_or_id. id is wins over name. first results with either
         wins. the name or id comes from a comment's metadata field that would look
@@ -121,7 +121,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             meta = {**meta, **rs.csvpath.metadata}
         return meta
 
-    def get_specific_named_result(self, name: str, name_or_id: str) -> CsvPathResult:
+    def get_specific_named_result(self, name: str, name_or_id: str) -> Result:
         results = self.get_named_results(name)
         if results and len(results) > 0:
             for r in results:
@@ -181,7 +181,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             errors += r.errors_count()
         return errors
 
-    def add_named_result(self, result: CsvPathResult) -> None:
+    def add_named_result(self, result: Result) -> None:
         if result.file_name is None:
             raise InputException("Results must have a named-file name")
         if result.paths_name is None:
@@ -193,13 +193,13 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             self.named_results[name].append(result)
         self._variables = None
 
-    def set_named_results(self, results: Dict[str, List[CsvPathResult]]) -> None:
+    def set_named_results(self, results: Dict[str, List[Result]]) -> None:
         self.named_results = {}
         # for key, value in results.items():
         for value in results.values():
             self.add_named_results(value)
 
-    def add_named_results(self, results: List[CsvPathResult]) -> None:
+    def add_named_results(self, results: List[Result]) -> None:
         for r in results:
             self.add_named_result(r)
 
