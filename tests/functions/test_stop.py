@@ -61,3 +61,42 @@ class TestFunctionStop(unittest.TestCase):
         print(f"\n test_function_skip2: path vars: {path.variables}")
         assert "line" in path.variables
         assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
+
+    def test_function_skip_all1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_skip_all1")
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                ~ no change in function in skip_all ~
+                skip_all.once(#lastname == "Bat")
+                push.onmatch("line", count_lines())
+            ]"""
+        )
+        path.fast_forward()
+        print(f"\n test_function_skip_all1: path vars: {path.variables}")
+        assert "line" in path.variables
+        assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
+
+    def test_function_stop_all1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_stop_all1")
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                ~ no change in behavior in stop_all() ~
+                @i = concat( #firstname, #lastname)
+                @c = count_lines()
+                yes()
+                stop_all(@i == "FishBat")
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_stop_all1: path vars: {path.variables}")
+        print(f"test_function_stop_all1: lines: {lines}")
+        assert path.stopped is True
+        assert path.variables["i"] == "FishBat"
+        assert path.variables["c"] == 3
+        assert len(lines) == 3

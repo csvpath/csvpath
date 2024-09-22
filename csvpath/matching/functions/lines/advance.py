@@ -24,3 +24,17 @@ class Advance(SideEffect):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
+
+
+class AdvanceAll(Advance):
+    """this class does an advance on this CsvPath and asks the CsvPaths
+    instance, if any, to also advance all the following CsvPath
+    instances
+    """
+
+    def _produce_value(self, skip=None) -> None:
+        super()._produce_value(skip=skip)
+        if self.matcher.csvpath.csvpaths:
+            v = self._child_one().to_value(skip=skip)
+            v = int(v)
+            self.matcher.csvpath.csvpaths.advance_all(v)

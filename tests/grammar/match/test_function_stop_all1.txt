@@ -1,0 +1,7 @@
+[
+                ~ no change in behavior in stop_all() ~
+                @i = concat( #firstname, #lastname)
+                @c = count_lines()
+                yes()
+                stop_all(@i == "FishBat")
+            ]

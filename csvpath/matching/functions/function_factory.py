@@ -61,12 +61,12 @@ from .print.table import HeaderTable, RowTable, VarTable, RunTable
 from .print.print_line import PrintLine
 from .print.jinjaf import Jinjaf
 from .print.print_queue import PrintQueue
-from .lines.stop import Stop, Skip
+from .lines.stop import Stop, Skip, StopAll, SkipAll
 from .lines.first import First
 from .lines.last import Last
 from .lines.dups import HasDups, DupLines, CountDups
 from .lines.first_line import FirstLine
-from .lines.advance import Advance
+from .lines.advance import Advance, AdvanceAll
 from .lines.after_blank import AfterBlank
 from .variables.variables import Variables
 from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
@@ -79,7 +79,7 @@ from .misc.intf import Int
 from .misc.importf import Import
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
 from .validity.failed import Failed
-from .validity.fail import Fail
+from .validity.fail import Fail, FailAll
 
 
 class UnknownFunctionException(Exception):
@@ -237,6 +237,8 @@ class FunctionFactory:
             f = Substring(matcher, name, child)
         elif name in ["stop", "fail_and_stop"]:
             f = Stop(matcher, name, child)
+        elif name == "stop_all":
+            f = StopAll(matcher, name, child)
         elif name == "variables":
             f = Variables(matcher, name, child)
         elif name == "headers":
@@ -281,6 +283,8 @@ class FunctionFactory:
             f = Date(matcher, name, child)
         elif name == "fail":
             f = Fail(matcher, name, child)
+        elif name == "fail_all":
+            f = FailAll(matcher, name, child)
         elif name in ["failed", "valid"]:
             f = Failed(matcher, name, child)
         elif name == "stack":
@@ -300,6 +304,8 @@ class FunctionFactory:
             f = Empty(matcher, name, child)
         elif name == "advance":
             f = Advance(matcher, name, child)
+        elif name == "advance_all":
+            f = AdvanceAll(matcher, name, child)
         elif name == "collect":
             f = Collect(matcher, name, child)
         elif name == "replace":
@@ -318,6 +324,8 @@ class FunctionFactory:
             f = StartsWith(matcher, name, child)
         elif name == "skip":
             f = Skip(matcher, name, child)
+        elif name == "skip_all":
+            f = SkipAll(matcher, name, child)
         elif name == "mismatch":
             f = Mismatch(matcher, name, child)
         elif name == "line_number":

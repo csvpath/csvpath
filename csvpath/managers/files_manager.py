@@ -2,8 +2,11 @@
 import os
 import json
 from json import JSONDecodeError
-from typing import Dict
+from typing import Dict, List
 from abc import ABC, abstractmethod
+from ..util.line_counter import LineCounter
+from ..util.line_monitor import LineMonitor
+from ..util.error import ErrorHandler
 
 
 class CsvPathsFilesManager(ABC):
@@ -38,6 +41,14 @@ class CsvPathsFilesManager(ABC):
     def remove_named_file(self, name: str) -> None:  # pylint: disable=C0116
         pass
 
+    @abstractmethod
+    def get_new_line_monitor(self, filename: str) -> LineMonitor:
+        pass
+
+    @abstractmethod
+    def get_original_headers(self, filename: str) -> List[str]:
+        pass
+
 
 class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
     def __init__(self, *, named_files: Dict[str, str] = None, csvpaths):
@@ -45,6 +56,24 @@ class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
             named_files = {}
         self.named_files: Dict[str, str] = named_files
         self.csvpaths = csvpaths
+        self.pathed_lines_and_headers = {}
+
+    def get_new_line_monitor(self, filename: str) -> LineMonitor:
+        if filename not in self.pathed_lines_and_headers:
+            self._find_lines_and_headers(filename)
+        lm = self.pathed_lines_and_headers[filename][0]
+        lm = lm.copy()
+        return lm
+
+    def get_original_headers(self, filename: str) -> List[str]:
+        if filename not in self.pathed_lines_and_headers:
+            self._find_lines_and_headers(filename)
+        return self.pathed_lines_and_headers[filename][1][:]
+
+    def _find_lines_and_headers(self, filename: str) -> None:
+        lc = LineCounter(self.csvpaths)
+        lm, headers = lc.get_lines_and_headers(filename)
+        self.pathed_lines_and_headers[filename] = (lm, headers)
 
     def set_named_files(self, nf: Dict[str, str]) -> None:
         self.named_files = nf
@@ -55,7 +84,7 @@ class FilesManager(CsvPathsFilesManager):  # pylint: disable=C0115
                 j = json.load(f)
                 self.named_files = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            print(f"Error: cannot load {filename}: {ex}")
+            ErrorHandler(self.csvpaths).handle_error(ex)
 
     def add_named_files_from_dir(self, dirname: str):
         dlist = os.listdir(dirname)

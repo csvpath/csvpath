@@ -8,6 +8,7 @@ import traceback
 from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import CsvPathConfig
 from .util.log_utility import LogUtility
+from .util.line_monitor import LineMonitor
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException
 from .managers.csvpaths_manager import PathsManager
@@ -88,7 +89,32 @@ class CsvPathsPublic(ABC):
         """
 
 
-class CsvPaths(CsvPathsPublic):
+class CsvPathsCoordinator(ABC):
+    """This abstract class defines callbacks for CsvPath instances to
+    broadcast state to their siblings through CsvPaths. A CsvPath
+    instance might stop the entire run, rather than each CsvPath
+    instance needing to contain the same logic that stops their
+    participation in a run.
+    """
+
+    @abstractmethod
+    def stop_all(self) -> None:  # pragma: no cover
+        """Stops every CsvPath instance in a run"""
+
+    @abstractmethod
+    def fail_all(self) -> None:  # pragma: no cover
+        """Fails every CsvPath instance in a run"""
+
+    @abstractmethod
+    def skip_all(self) -> None:  # pragma: no cover
+        """Fails every CsvPath instance in a run"""
+
+    @abstractmethod
+    def advance_all(self, lines: int) -> None:  # pragma: no cover
+        """Fails every CsvPath instance in a run"""
+
+
+class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
     """Manages the application of csvpaths to files. Csvpaths must be grouped and named.
     Files must be named. Results are held by the results_manager.
     """
@@ -110,9 +136,21 @@ class CsvPaths(CsvPathsPublic):
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
         self._errors = []
+        # coordinator attributes
+        self._stop_all = False
+        self._fail_all = False
+        self._skip_all = False
+        self._advance_all = 0
+
+    def clear_run_coordination(self) -> None:
+        self._stop_all = False
+        self._fail_all = False
+        self._skip_all = False
+        self._advance_all = 0
+        self.logger.debug("Cleared run coordination")
 
     def csvpath(self) -> CsvPath:
-        return CsvPath(
+        path = CsvPath(
             csvpaths=self,
             delimiter=self.delimiter,
             quotechar=self.quotechar,
@@ -120,6 +158,19 @@ class CsvPaths(CsvPathsPublic):
             config=None,
             print_default=self.print_default,
         )
+        return path
+
+    def stop_all(self) -> None:  # pragma: no cover
+        self._stop_all = True
+
+    def fail_all(self) -> None:  # pragma: no cover
+        self._fail_all = True
+
+    def skip_all(self) -> None:  # pragma: no cover
+        self._skip_all = True
+
+    def advance_all(self, lines: int) -> None:  # pragma: no cover
+        self._advance_all = lines
 
     @property
     def errors(self) -> List[Error]:  # pylint: disable=C0116
@@ -180,6 +231,7 @@ class CsvPaths(CsvPathsPublic):
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+        self.clear_run_coordination()
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
@@ -234,6 +286,7 @@ class CsvPaths(CsvPathsPublic):
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+        self.clear_run_coordination()
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
@@ -254,10 +307,18 @@ class CsvPaths(CsvPathsPublic):
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
         for path in paths:
+            if self._stop_all:
+                self.logger.warn("Stop-all set. Shutting down run.")
+                break
             csvpath = self.csvpath()
             result = CsvPathResult(
                 csvpath=csvpath, file_name=filename, paths_name=pathsname
             )
+            if self._fail_all:
+                self.logger.warn(
+                    "Fail-all set. Failing all remaining CsvPath instances in the run."
+                )
+                csvpath.is_valid = False
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
@@ -268,6 +329,7 @@ class CsvPaths(CsvPathsPublic):
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+        self.clear_run_coordination()
 
     # =============== breadth first processing ================
 
@@ -371,13 +433,33 @@ class CsvPaths(CsvPathsPublic):
                 # question to self: should this default be in a central place
                 # so that we can switch to OR, in part by changing the default?
                 keep = if_all_agree
+                self._skip_all = False
+                self._advance_all = 0
                 try:
                     # p is a (CsvPath, List[List[str]]) where the second item is
                     # the line-by-line results of the first item's matching
                     for p in csvpath_objects:
                         self.current_matcher = p[0]
+                        if self._fail_all:
+                            self.logger.warn(
+                                "Fail-all set. Setting CsvPath is_valid to False."
+                            )
+                            self.current_matcher.is_valid = False
+                        if self._stop_all:
+                            self.logger.warn("Stop-all set. Shutting down run.")
+                            self.current_matcher.stopped = True
+                            continue
+                        if self._skip_all:
+                            self.logger.warn("Skip-all set. Continuing to next.")
+                            continue
+                        if self._advance_all > 0:
+                            self.logger.warn(
+                                "Advance-all set. Setting advance. CsvPath and its Matcher will handle the advancing."
+                            )
+                            self.current_matcher.advance = self._advance_all
                         if self.current_matcher.stopped:  # pylint: disable=R1724
                             continue
+
                         #
                         # allowing the match to happen regardless of keep
                         # because we may want side-effects or to have different
@@ -385,7 +467,7 @@ class CsvPaths(CsvPathsPublic):
                         # union
                         #
                         self.logger.debug(
-                            "considering line with csvpath: %s",
+                            "considering line with csvpath identified as: %s",
                             self.current_matcher.identity,
                         )
                         matched = False
@@ -429,6 +511,7 @@ class CsvPaths(CsvPathsPublic):
                     break
                 # note to self: we have the lines in p[1]. we could, optionally, iteratively
                 # move them to the results here. probably a future requirement.
+        self.clear_run_coordination()
 
     def _load_csvpath_objects(
         self, *, paths: List[str], named_file: str, collect_when_not_matched=False

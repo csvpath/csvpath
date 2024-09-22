@@ -233,11 +233,11 @@ class TestScanner(unittest.TestCase):
 
     def test_scanner_is_last(self):
         path = CsvPath()
+        scanner = path.parse(f"${PATH}[1-3+6-7][]")
         path.line_monitor._physical_end_line_number = 14
         print(
             f"test_scanner_is_last: path.line_monitor.physical_end_line_number: {path.line_monitor.physical_end_line_number}"
         )
-        scanner = path.parse(f"${PATH}[1-3+6-7][]")
         print(f"{scanner}")
         assert scanner.is_last(8, from_line=2, to_line=8, all_lines=False, these=[])
         assert not scanner.is_last(

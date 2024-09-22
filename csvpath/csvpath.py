@@ -16,6 +16,7 @@ from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
 from .util.error import Error, ErrorCollector
 from .util.printer import StdOutPrinter
+from .util.line_counter import LineCounter
 from .util.exceptions import VariableException, InputException, ParsingException
 from .util.exceptions import (
     FileException,
@@ -104,7 +105,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         #
         #
-        self.line_monitor = LineMonitor()
+        self._line_monitor = None
         #
         # the scanning part of the csvpath. e.g. $test.csv[*]
         #
@@ -135,7 +136,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #     are any of these things not true?
         #
         self._when_not_matched = False
-        self.headers = None
+        self._headers = None
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -247,6 +248,26 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
+
+    @property
+    def headers(self) -> List[str]:
+        if self._headers is None:
+            self.get_total_lines_and_headers()
+        return self._headers
+
+    @headers.setter
+    def headers(self, headers: List[str]) -> None:
+        self._headers = headers
+
+    @property
+    def line_monitor(self) -> LineMonitor:
+        if self._line_monitor is None:
+            self.get_total_lines_and_headers()
+        return self._line_monitor
+
+    @line_monitor.setter
+    def line_monitor(self, lm) -> None:
+        self._line_monitor = lm
 
     @property
     def AND(self) -> bool:
@@ -531,6 +552,14 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         """
 
     @property
+    def advance(self) -> bool:  # pragma: no cover
+        return self._advance
+
+    @advance.setter
+    def advance(self, lines: int) -> None:
+        self._advance = lines
+
+    @property
     def is_valid(self) -> bool:  # pragma: no cover
         return self._is_valid
 
@@ -808,50 +837,18 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         return self.line_monitor.physical_end_line_number
 
     def get_total_lines_and_headers(self) -> int:  # pylint: disable=C0116
-        #
-        # total lines is a count not a pointer. counts are 1-based
-        # pointers are array indexes, so they are 0-based.
-        #
-        if (
-            self.line_monitor.physical_end_line_number is None
-            or self.line_monitor.physical_end_line_number == -1
-        ):
-            start = time.time()
-            self.line_monitor.reset()
-            with open(self.scanner.filename, "r", encoding="utf-8") as file:
-                reader = csv.reader(
-                    file, delimiter=self.delimiter, quotechar=self.quotechar
-                )
-                for line in reader:
-                    self.track_line(line)
-                    # self.line_monitor.next_line(last_line=None, data=line)
-                    if len(line) == 0 and self.skip_blank_lines:
-                        continue
-                    if (not self.headers or len(self.headers) == 0) and len(line) > 0:
-                        self.headers = line[:]
-            if not self.headers:
-                self.headers = []
-            self._clean_headers()
-            end = time.time()
-            self.logger.info(
-                "Counting lines and getting headers took %s", round(end - start, 2)
+        if self.csvpaths:
+            self.line_monitor = self.csvpaths.files_manager.get_new_line_monitor(
+                self.scanner.filename
             )
-            self.line_monitor.set_end_lines_and_reset()
-
-    def _clean_headers(self) -> None:
-        if self.headers is None:
-            self.logger.warning("Cannot clean headers because headers are None")
-            return
-        hs = self.headers[:]
-        self.headers = []
-        for header in hs:
-            header = header.strip()
-            header = header.replace(";", "")
-            header = header.replace(",", "")
-            header = header.replace("|", "")
-            header = header.replace("\t", "")
-            header = header.replace("`", "")
-            self.headers.append(header)
+            self.headers = self.csvpaths.files_manager.get_original_headers(
+                self.scanner.filename
+            )
+        else:
+            lc = LineCounter(self)
+            lm, headers = lc.get_lines_and_headers(self.scanner.filename)
+            self.line_monitor = lm
+            self.headers = headers
 
     @property
     def current_scan_count(self) -> int:  # pylint: disable=C0116

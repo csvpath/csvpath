@@ -75,3 +75,19 @@ class TestFunctionsFail(unittest.TestCase):
         assert path.is_valid is True
         assert path.variables["valid"] is True
         assert path.variables["failed"] is False
+
+    def test_function_fail_all1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_fail_all1")
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                ~ no change in function in fail_all ~
+                fail()
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_fail_all1: lines: {lines}")
+        assert len(lines) == 0
+        assert path.is_valid is False

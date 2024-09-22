@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Self
 
 from .last_line_stats import LastLineStats
 
@@ -30,14 +30,23 @@ class LineMonitor:
         self._physical_end_line_number: int = None
         self._physical_line_count: int = None
         self._physical_line_number: int = None
-
         self._data_end_line_count: int = None
         self._data_end_line_number: int = None
         self._data_line_count: int = None
         self._data_line_number: int = None
-
         self._last_line_stats = None
-        # self.last_line = None
+
+    def copy(self) -> Self:
+        lm = LineMonitor()
+        lm._physical_end_line_count = self.physical_end_line_count
+        lm._physical_end_line_number = self.physical_end_line_number
+        lm._physical_line_count = self.physical_line_count
+        lm._physical_line_number = self.physical_line_number
+        lm._data_end_line_count = self.data_end_line_count
+        lm._data_end_line_number = self.data_end_line_number
+        lm._data_line_count = self.data_line_count
+        lm._data_line_number = self.data_line_number
+        return lm
 
     def __str__(self) -> str:
         return f"""

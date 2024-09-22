@@ -41,3 +41,27 @@ class TestFunctionsAdvance(unittest.TestCase):
         path.parse(f""" ${PATH}[1*] [ advance("please") ]""")
         with pytest.raises(ChildrenException):
             path.collect()
+
+    def test_function_advance_all1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_advance_all1")
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                push.onmatch("cnt", count_lines())
+                print("count_lines is: $.csvpath.count_lines ")
+                count.nocontrib() == 3 -> advance_all(2)
+            ]"""
+        )
+        lines = path.collect()
+        print(f"test_function_advance1: lines: {lines}")
+        print(f"test_function_advance1: path vars: {path.variables}")
+        assert len(lines) == 6
+        assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
+
+    def test_function_advance_all2(self):
+        path = CsvPath()
+        path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
+        with pytest.raises(ChildrenException):
+            path.collect()

@@ -1,0 +1,4 @@
+[
+                ~ no change in function in fail_all ~
+                fail()
+            ]
