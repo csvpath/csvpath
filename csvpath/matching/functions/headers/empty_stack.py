@@ -36,14 +36,12 @@ class EmptyStack(ValueProducer):
 
     def _do_some(self, skip=None):
         siblings = self.children[0].commas_to_list()
-        print(f"emmpty_stack: do_some: sibs: {siblings}")
         self.value = []
         for s in siblings:
             v = s.to_value(skip=skip)
             b = ExpressionUtility.is_empty(v)
             if b:
                 self.value.append(s.name)
-                print(f"sib: {s}: {v} = {b}")
 
     def _do_one(self, child, skip=None):
         v = child.to_value(skip=skip)

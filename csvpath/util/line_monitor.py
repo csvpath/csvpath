@@ -1,5 +1,5 @@
 from typing import List, Any, Self
-
+import json
 from .last_line_stats import LastLineStats
 
 
@@ -47,6 +47,31 @@ class LineMonitor:
         lm._data_line_count = self.data_line_count
         lm._data_line_number = self.data_line_number
         return lm
+
+    def dump(self) -> str:
+        j = {
+            "physical_end_line_count": self.physical_end_line_count,
+            "physical_end_line_number": self.physical_end_line_number,
+            "physical_line_count": self.physical_line_count,
+            "physical_line_number": self.physical_line_number,
+            "data_end_line_count": self.data_end_line_count,
+            "data_end_line_number": self.data_end_line_number,
+            "data_line_count": self.data_line_count,
+            "data_line_number": self.data_line_number,
+        }
+        jstr = json.dumps(j)
+        return jstr
+
+    def load(self, jstr) -> None:
+        j = json.loads(jstr)
+        self._physical_end_line_count = j["physical_end_line_count"]
+        self._physical_end_line_number = j["physical_end_line_number"]
+        self._physical_line_count = j["physical_line_count"]
+        self._physical_line_number = j["physical_line_number"]
+        self._data_end_line_count = j["data_end_line_count"]
+        self._data_end_line_number = j["data_end_line_number"]
+        self._data_line_count = j["data_line_count"]
+        self._data_line_number = j["data_line_number"]
 
     def __str__(self) -> str:
         return f"""

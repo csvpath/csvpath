@@ -259,15 +259,6 @@ class Qualified:
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
-            #
-            # this fix for 1 test (test_function_last1) is blowing 11 other tests!
-            #
-            # me = ExpressionUtility.get_my_expression(self)
-            # print(f"my expression: me: {me}")
-            # if e[0] == me: # added experiment
-            # print(f"found my expression!")
-            #    continue
-            # print(f"not my expression: {e[0]}")
             m = e[1] is self.default_match() or e[0].matches(
                 skip=[self]
             )  # pylint: disable=E1101

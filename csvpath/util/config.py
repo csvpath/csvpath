@@ -44,12 +44,12 @@ class Sections(Enum):
     LOGGING = "logging"
 
 
-class CsvPathConfig:
+class Config:
     """by default finds config files at ./config/config.ini.
     To set a different location:
      - set a CSVPATH_CONFIG_FILE env var
-     - create a CsvPathConfig instance set its CONFIG member and call reload
-     - or set CsvPathConfig.CONFIG and reload to reset all instances w/o own specific settings
+     - create a Config instance set its CONFIG member and call reload
+     - or set Config.CONFIG and reload to reset all instances w/o own specific settings
     """
 
     CONFIG: str = "config/config.ini"
@@ -59,9 +59,9 @@ class CsvPathConfig:
         self._holder = holder
         self._config = RawConfigParser()
         self.log_file_handler = None
-        self._configpath = environ.get(CsvPathConfig.CSVPATH_CONFIG_FILE_ENV)
+        self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
         if self._configpath is None:
-            self._configpath = CsvPathConfig.CONFIG
+            self._configpath = Config.CONFIG
         self._load_config()
 
     def reload(self):
@@ -76,7 +76,7 @@ class CsvPathConfig:
     def config_path(self) -> str:
         return self._configpath
 
-    def _get(self, section: str, name: str):
+    def _get(self, section: str, name: str, quiet: bool = True):
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
@@ -89,14 +89,15 @@ class CsvPathConfig:
                 ret = s
             return ret
         except KeyError:
-            raise ConfigurationException(
-                f"Check config at {self.config_path} for [{section}][{name}]"
-            )
+            if not quiet:
+                raise ConfigurationException(
+                    f"Check config at {self.config_path} for [{section}][{name}]"
+                )
 
     def _create_default_config(self) -> None:
         if not path.exists("config"):
             os.makedirs("config")
-            with open(CsvPathConfig.CONFIG, "w") as file:
+            with open(Config.CONFIG, "w") as file:
                 c = """
 [csvpath_files]
 extensions = txt, csvpath, csvpaths
@@ -115,7 +116,7 @@ log_file_size = 52428800
 path =
                 """
                 file.write(c)
-            print(f"Creating a default config file at {CsvPathConfig.CONFIG}.")
+            print(f"Creating a default config file at {Config.CONFIG}.")
             print("If you want your config to be somewhere else remember to")
             print("update the path in the default config.ini")
 
@@ -134,9 +135,18 @@ path =
             return dirpath
         return None
 
+    def _assure_cache_path(self) -> None:
+        dirpath = self.cache_dir_path
+        if dirpath is None:
+            dirpath == "cache"
+            self._config.add_section("cache")
+            self._config.set("cache", "path", dirpath)
+        if dirpath and not path.exists(dirpath):
+            os.makedirs(dirpath)
+
     def _assure_config_file_path(self) -> None:
         if not self._configpath or not os.path.isfile(self._configpath):
-            self._configpath = CsvPathConfig.CONFIG
+            self._configpath = Config.CONFIG
             self._create_default_config()
 
     def _load_config(self, norecurse=False):
@@ -245,8 +255,22 @@ path =
             )
         if self.log_file_size is None or not isinstance(self.log_file_size, int):
             raise ConfigurationException("Log files size is wrong")
+        #
+        # make sure a cache dir exists. the default should be chosen in the
+        # default config, but regardless, we create the dir.
+        #
+        self._assure_cache_path()
 
     # ======================================
+
+    @property
+    def cache_dir_path(self) -> str:
+        path = self._get("cache", "path", quiet=True)
+        #
+        # for now we can let this fail silently. if there is no
+        # cache dir we just don't cache.
+        #
+        return path
 
     @property
     def csvpath_file_extensions(self) -> list[str]:

@@ -1,12 +1,15 @@
 # pylint: disable=C0114
 import os
 import json
+import csv
+import hashlib
 from json import JSONDecodeError
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from abc import ABC, abstractmethod
 from ..util.line_counter import LineCounter
 from ..util.line_monitor import LineMonitor
 from ..util.error import ErrorHandler
+from ..util.cache import Cache
 
 
 class CsvPathsFileManager(ABC):
@@ -56,6 +59,7 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
         self.named_files: Dict[str, str] = named_files
         self.csvpaths = csvpaths
         self.pathed_lines_and_headers = {}
+        self.cache = Cache(self.csvpaths)
 
     def get_new_line_monitor(self, filename: str) -> LineMonitor:
         if filename not in self.pathed_lines_and_headers:
@@ -70,9 +74,36 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
         return self.pathed_lines_and_headers[filename][1][:]
 
     def _find_lines_and_headers(self, filename: str) -> None:
-        lc = LineCounter(self.csvpaths)
-        lm, headers = lc.get_lines_and_headers(filename)
+        lm, headers = self._cached_lines_and_headers(filename)
+        if lm is None or headers is None:
+            lc = LineCounter(self.csvpaths)
+            lm, headers = lc.get_lines_and_headers(filename)
+            self._cache_lines_and_headers(filename, lm, headers)
         self.pathed_lines_and_headers[filename] = (lm, headers)
+
+    # ========================================
+    # cache related
+    #
+
+    def _cached_lines_and_headers(self, filename: str) -> Tuple[LineMonitor, List[str]]:
+        lm = LineMonitor()
+        json = self.cache.cached_text(filename, "json")
+        if json is not None and not json.strip() == "":
+            lm.load(json)
+        else:
+            return (None, None)
+        headers = self.cache.cached_text(filename, "csv")
+        return (lm, headers)
+
+    def _cache_lines_and_headers(
+        self, filename, lm: LineMonitor, headers: List[str]
+    ) -> None:
+        jstr = lm.dump()
+        self.cache.cache_text(filename, "json", jstr)
+        self.cache.cache_text(filename, "csv", ",".join(headers))
+
+    #
+    # ========================================
 
     def set_named_files(self, nf: Dict[str, str]) -> None:
         self.named_files = nf

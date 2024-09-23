@@ -8,7 +8,7 @@ import hashlib
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
-from csvpath.util.config import CsvPathConfig
+from csvpath.util.config import Config
 from csvpath.util.line_monitor import LineMonitor
 from csvpath.util.log_utility import LogUtility
 from .matching.matcher import Matcher
@@ -316,9 +316,9 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         return ""
 
     @property
-    def config(self) -> CsvPathConfig:  # pylint: disable=C0116
+    def config(self) -> Config:  # pylint: disable=C0116
         if not self._config:
-            self._config = CsvPathConfig(self)
+            self._config = Config(self)
         return self._config
 
     def has_errors(self) -> bool:  # pylint: disable=C0116

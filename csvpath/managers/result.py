@@ -159,7 +159,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return i
 
     def __str__(self) -> str:
-        return f"""CsvPathResult
+        return f"""Result
                    file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
                    name of paths:{self.paths_name};
                    name of file:{self.file_name};

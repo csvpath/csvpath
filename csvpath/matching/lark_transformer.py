@@ -31,7 +31,6 @@ class LarkTransformer(Transformer):  # pylint: disable=C0115
     # assignment
     # COMMENT
     def expression(self, acted_on, when=None, action=None):  # pylint: disable=C0116
-        # print(f"expression: acted_on: {acted_on}, when: {when}, action: {action}")
         if acted_on is None and when is None and action is None:
             # this is a comment
             return None

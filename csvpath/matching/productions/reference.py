@@ -75,9 +75,6 @@ class Reference(Matchable):
                 """
             # else:
             self.match = self.value is not None
-            print(
-                f"\nReference.matches: self.match: {self.match}, self.value: {self.value}\n"
-            )
         return self.match  # pragma: no cover
 
     def to_value(self, *, skip=None) -> Any:

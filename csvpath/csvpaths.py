@@ -6,7 +6,7 @@ from typing import List, Any, Tuple
 import csv
 import traceback
 from .util.error import ErrorHandler, ErrorCollector, Error
-from .util.config import CsvPathConfig
+from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.line_monitor import LineMonitor
 from .util.metadata_parser import MetadataParser
@@ -132,7 +132,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
         self.current_matcher: CsvPath = None
-        self._config = CsvPathConfig(self)
+        self._config = Config(self)
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
         self._errors = []
@@ -183,9 +183,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         return len(self._errors) > 0
 
     @property
-    def config(self) -> CsvPathConfig:  # pylint: disable=C0116
+    def config(self) -> Config:  # pylint: disable=C0116
         if not self._config:
-            self._config = CsvPathConfig()  # pragma: no cover
+            self._config = Config()  # pragma: no cover
         return self._config
 
     def clean(self, *, paths) -> None:
@@ -531,14 +531,12 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                 # we yield even if we stopped in this iteration.
                 # caller needs to see what we stopped on.
                 #
-                # !!! we only yield if keep is True
+                # ! we only yield if keep is True
                 #
                 if keep:
                     yield line
                 if sum(stopped_count) == len(csvpath_objects):
                     break
-                # note to self: we have the lines in p[1]. we could, optionally, iteratively
-                # move them to the results here. probably a future requirement.
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
@@ -566,7 +564,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         for csvpath in csvpath_objects:
             try:
                 #
-                # lines object is a shared reference between path and results.
                 # Result will set itself into its CsvPath as error collector
                 # printer, etc.
                 #
@@ -576,12 +573,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                     paths_name=pathsname,
                     lines=csvpath[1],
                 )
-                #
-                # experiment. replace the [] with the result so
-                # result can directly collect any lines. we had
-                # a shared reference, which should have worked fine
-                # :/
-                #
                 csvpath[1] = result
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
@@ -589,5 +580,5 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
                 #
-                # keep for modelines avoidance
+                # keep this comment for modelines avoidance
                 #

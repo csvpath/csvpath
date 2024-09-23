@@ -3,7 +3,7 @@ from typing import Any, List
 from datetime import datetime
 from enum import Enum
 import traceback
-from csvpath.util.config import OnError, CsvPathConfig
+from csvpath.util.config import OnError
 from .exceptions import InputException
 from .log_utility import LogException
 

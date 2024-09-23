@@ -66,5 +66,4 @@ class Increment(ValueProducer):
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
-        print(f"Increment.matches: self.match: {self.match}")
         return self.match

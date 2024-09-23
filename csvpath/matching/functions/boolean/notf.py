@@ -16,4 +16,3 @@ class Not(MatchDecider):
         m = self.children[0].matches(skip=skip)
         m = not m
         self.match = m
-        # print(f"Not._decide_mat: self.match: {self.match} -> {self}")
