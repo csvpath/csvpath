@@ -25,7 +25,7 @@ To set up a canonicalization match component takes a bit more effort, but not to
 
 ```python
     paths = CsvPaths()
-    paths.files_manager.add_named_file(
+    paths.file_manager.add_named_file(
         name="lookups", path="tests/test_resources/named_files/lookup_names.csv"
     )
     paths.paths_manager.add_named_paths_from_file(

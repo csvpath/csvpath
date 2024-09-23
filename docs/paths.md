@@ -60,7 +60,7 @@ A named path can reference a named file. To extend our example with named files:
     }
 
     paths = CsvPaths()
-    paths.files_manager.set_named_files(nf)
+    paths.file_manager.set_named_files(nf)
     paths.paths_manager.set_named_paths(np)
 
     path = paths.csvpath()
@@ -105,7 +105,7 @@ We can apply them breadth-first using this code:
 
 ```python
     cs = CsvPaths()
-    cs.files_manager.set_named_files(FILES)
+    cs.file_manager.set_named_files(FILES)
     cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
     for line in cs.next_by_line(filename="food", pathsname="many"):
         valid = cs.results_manager.is_valid("many")

@@ -40,7 +40,7 @@ This reference points to the `total` variable resulting from the most recent Csv
 
 ```python
         cs = CsvPaths()
-        cs.files_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="orders", pathsname="shipping-validations")
         #

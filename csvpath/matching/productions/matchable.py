@@ -38,6 +38,7 @@ class Matchable(Qualified):
         return name
 
     def _noop_match(self) -> bool:
+        """deprecated. use self.default_match()"""
         return self.match if self.match is not None else True
 
     def _noop_value(self) -> bool:
@@ -120,6 +121,15 @@ class Matchable(Qualified):
         if hasattr(self.children[0], "right"):
             return self.children[0].right
         # with the current parse tree this shouldn't happen
+        return None
+
+    def _siblings(self) -> list:
+        if len(self.children) and hasattr(self.children[0], "op"):
+            return self.children[0].commas_to_list()
+        else:
+            self.matcher.csvpath.error(
+                "Cannot get siblings. children[0] is not an Equality"
+            )
         return None
 
     def default_match(self) -> bool:

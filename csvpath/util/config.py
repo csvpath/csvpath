@@ -76,7 +76,7 @@ class Config:
     def config_path(self) -> str:
         return self._configpath
 
-    def _get(self, section: str, name: str, quiet: bool = True):
+    def _get(self, section: str, name: str):
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
@@ -89,10 +89,9 @@ class Config:
                 ret = s
             return ret
         except KeyError:
-            if not quiet:
-                raise ConfigurationException(
-                    f"Check config at {self.config_path} for [{section}][{name}]"
-                )
+            raise ConfigurationException(
+                f"Check config at {self.config_path} for [{section}][{name}]"
+            )
 
     def _create_default_config(self) -> None:
         if not path.exists("config"):
@@ -137,12 +136,12 @@ path =
 
     def _assure_cache_path(self) -> None:
         dirpath = self.cache_dir_path
-        if dirpath is None:
-            dirpath == "cache"
-            self._config.add_section("cache")
-            self._config.set("cache", "path", dirpath)
         if dirpath and not path.exists(dirpath):
             os.makedirs(dirpath)
+        elif not dirpath:
+            raise ConfigurationException(
+                "No cache path available. Check config.ini [cache][path]."
+            )
 
     def _assure_config_file_path(self) -> None:
         if not self._configpath or not os.path.isfile(self._configpath):
@@ -265,11 +264,13 @@ path =
 
     @property
     def cache_dir_path(self) -> str:
-        path = self._get("cache", "path", quiet=True)
-        #
-        # for now we can let this fail silently. if there is no
-        # cache dir we just don't cache.
-        #
+        try:
+            path = self._get("cache", "path")
+        except Exception:
+            print("No cache path in config.ini at [cache][path]. Using 'cache'.")
+            path = "config"
+            self._config.add_section("cache")
+            self._config.set("cache", "path", path)
         return path
 
     @property

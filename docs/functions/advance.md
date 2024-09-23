@@ -20,7 +20,7 @@ One way to run it looks like this, using dict objects to identify the csvpaths a
 
 ```python
     paths = CsvPaths()
-    paths.files_manager.set_named_files(nf)
+    paths.file_manager.set_named_files(nf)
     paths.paths_manager.set_named_paths(np)
     lines = paths.collect_paths(pathsname="sample", filename="survey")
 ```

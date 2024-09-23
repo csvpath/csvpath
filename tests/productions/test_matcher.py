@@ -33,6 +33,16 @@ class TestMatcher(unittest.TestCase):
 
     # ============= SCAN AND MATCH ================
 
+    def test_matcher_siblings(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[2-4][add(1,2,3,4,5)]")
+        path.fast_forward()
+        assert path.matcher
+        print(f"test_matcher_siblings: matcher: {path.matcher}")
+        sibs = path.matcher.expressions[0][0].children[0]._siblings()
+        assert sibs
+        assert len(sibs) == 5
+
     def test_match_header_includes(self):
         path = CsvPath()
         path.parse(f'${PATH}[2-4][#0=="Frog"]')

@@ -17,7 +17,7 @@ Let's set up the Python to run the simplest import test:
 
 ```python
     cs = CsvPaths()
-    cs.files_manager.add_named_files_from_dir("./csvs")
+    cs.file_manager.add_named_files_from_dir("./csvs")
     cs.paths_manager.add_named_paths_from_dir("./csvpaths")
     cs.fast_forward_by_line(filename="food", pathsname="import")
     vars = cs.results_manager.get_variables("import")
