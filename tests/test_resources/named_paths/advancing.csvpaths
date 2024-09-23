@@ -1,0 +1,26 @@
+
+~ name: one
+
+  description:
+    - the first path "one" advances 3
+    - the second path "two" should also advance 3 but
+      not 2+3 = 5, 1+3 = 4
+~
+
+$[*][
+    line_number.nocontrib() == 3 ->
+        print("advancing on: $.csvpath.line_number ",
+            advance_all(3))
+    push("one", line_number())
+]
+
+---- CSVPATH ----
+
+~ id: two ~
+
+$[*][
+    line_number.nocontrib() == 2 -> advance(2)
+    push("two", line_number())
+]
+
+

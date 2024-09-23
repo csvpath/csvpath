@@ -1,4 +1,5 @@
 import unittest
+import os
 from csvpath import CsvPaths
 from csvpath.managers.csvpaths_manager import PathsManager
 
@@ -56,7 +57,10 @@ class TestPathsManager(unittest.TestCase):
         pm = paths.paths_manager
         pm.add_named_paths_from_dir(directory=DIR)
         assert pm.named_paths
-        assert len(pm.named_paths) == 14
+        files = os.listdir(DIR)
+        print(f"test_named_paths_dir: {pm.named_paths}")
+        files = [f for f in files if f.find("csvpath") > -1]
+        assert len(pm.named_paths) == len(files)
 
         paths2 = CsvPaths()
         pm2 = paths2.paths_manager

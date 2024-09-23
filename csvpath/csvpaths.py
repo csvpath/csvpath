@@ -107,11 +107,11 @@ class CsvPathsCoordinator(ABC):
 
     @abstractmethod
     def skip_all(self) -> None:  # pragma: no cover
-        """Fails every CsvPath instance in a run"""
+        """skips the line for every CsvPath instance in a run"""
 
     @abstractmethod
     def advance_all(self, lines: int) -> None:  # pragma: no cover
-        """Fails every CsvPath instance in a run"""
+        """advances every CsvPath instance in a run"""
 
 
 class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
@@ -305,15 +305,21 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         for path in paths:
             if self._skip_all:
                 skip_err = "Found the skip-all signal set. skip_all() is"
-                skip_err = (
-                    f"{skip_err} only for breadth-first runs using the '_by_line'"
-                )
-                skip_err = f"{skip_err} methods. It has the same effect as skip() in a"
+                skip_err = f"{skip_err} only for breadth-first runs using the"
+                skip_err = f"{skip_err} '_by_line' methods. It has the same"
+                skip_err = f"{skip_err} effect as skip() in a"
                 skip_err = f"{skip_err} serial run like this one."
                 self.logger.error(skip_err)
             if self._stop_all:
                 self.logger.warning("Stop-all set. Shutting down run.")
                 break
+            if self._advance_all > 0:
+                advance_err = "Found the advance-all signal set. advance_all() is"
+                advance_err = f"{advance_err} only for breadth-first runs using the"
+                advance_err = f"{advance_err} '_by_line' methods. It has the same"
+                advance_err = f"{advance_err} effect as advance() in a"
+                advance_err = f"{advance_err} serial run like this one."
+                self.logger.error(advance_err)
             csvpath = self.csvpath()
             result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             if self._fail_all:
@@ -397,7 +403,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         if_all_agree=False,
         collect_when_not_matched=False,
     ) -> List[Any]:
-        # re: R0912 -- absolutely does have too many branches. will refactor later.
+        # re: R0912 -- absolutely. plan to refactor.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         fn = self.file_manager.get_named_file(filename)
@@ -462,14 +468,17 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                             self.current_matcher.track_line(line)
                             continue
                         if self._advance_all > 0:
-                            self.logger.warning(
+                            self.logger.info(
                                 "Advance-all set. Setting advance. CsvPath and its Matcher will handle the advancing."
                             )
                             #
                             # CsvPath will handle advancing so we don't need to do
-                            # anything, including track_line(line)
+                            # anything, including track_line(line). we just need to
+                            # see if we're setting advance or increasing it.
                             #
-                            self.current_matcher.advance = self._advance_all
+                            a = self.current_matcher.advance_count
+                            if self._advance_all > a:
+                                self.current_matcher.advance_count = self._advance_all
                             #
                             # all following CsvPaths must have their
                             # advance incremented -- with the advance not being simply

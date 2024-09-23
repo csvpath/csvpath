@@ -15,7 +15,7 @@ class Advance(SideEffect):
         v = child.to_value(skip=skip)
         try:
             v = int(v)
-            self.matcher.csvpath.advance(v)
+            self.matcher.csvpath.advance_count = v
         except (TypeError, ValueError) as e:
             raise ChildrenException(
                 f"Advance must contain an int, not {type(v)}"

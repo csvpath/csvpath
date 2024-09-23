@@ -55,11 +55,7 @@ class CsvPathPublic(ABC):
 
     @abstractmethod
     def advance(self, ff: int = -1) -> None:  # pragma: no cover
-        """Advances the iteration by ff rows. The scanned rows will be
-        considered for match and variables and side effects will happen,
-        but no rows will be returned or stored. -1 means to the end of
-        the file.
-        """
+        """Advances the iteration by ff rows. -1 means to the end of the file."""
 
     @abstractmethod
     def fast_forward(self) -> None:  # pragma: no cover
@@ -175,6 +171,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         self.stopped = False
         self._advance = 0
+
         #
         # set by fail()
         #
@@ -248,6 +245,14 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
+
+    @property
+    def advance_count(self) -> int:  # pragma: no cover
+        return self._advance
+
+    @advance_count.setter
+    def advance_count(self, lines: int) -> None:
+        self._advance = lines
 
     @property
     def headers(self) -> List[str]:
@@ -374,8 +379,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
     @property
     def collect_when_not_matched(self) -> bool:
         """when this property is True CsvPath returns the lines that do not
-        match the matcher's match components
-        """
+        match the matchers match components"""
         return self._when_not_matched
 
     @collect_when_not_matched.setter
@@ -550,14 +554,6 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
             variables: {len(self.variables)}
             metadata: {len(self.metadata)}
         """
-
-    @property
-    def advance(self) -> bool:  # pragma: no cover
-        return self._advance
-
-    @advance.setter
-    def advance(self, lines: int) -> None:
-        self._advance = lines
 
     @property
     def is_valid(self) -> bool:  # pragma: no cover
@@ -745,11 +741,11 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
             self.scan_count = self.scan_count + 1
             matches = None
             self._current_match_count = self.match_count
-            if self._advance > 0:
-                self._advance -= 1
+            if self.advance_count > 0:
+                self.advance_count -= 1
                 matches = False
                 self.logger.debug(
-                    "Advancing one line with {self._advance} more skips to go"
+                    "Advancing one line with {self.advance_count} more skips to go"
                 )
             else:
                 self.logger.debug("Starting matching")
@@ -809,9 +805,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         return ls
 
     def advance(self, ff: int = -1) -> None:
-        """Advances the iteration by ff rows. The rows will be seen and
-        variables and side effects will happen.
-        """
+        """Advances the iteration by ff rows. The rows will be seen but not matched."""
         if ff is None:
             raise InputException("Input to advance must not be None")
         if self.line_monitor.physical_end_line_number is None:
@@ -819,14 +813,18 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                 "The last line number must be known (physical_end_line_number)"
             )
         if ff == -1:
-            self._advance = (
+            a = self.advance_count
+            a = (
                 self.line_monitor.physical_end_line_number
                 - self.line_monitor.physical_line_number
-                - self._advance
+                - a
             )
+            self.advance_count = a
         else:
-            self._advance += ff
-        self._advance = min(self._advance, self.line_monitor.physical_end_line_number)
+            self.advance_count += ff
+        self.advance_count = min(
+            self.advance_count, self.line_monitor.physical_end_line_number
+        )
 
     def get_total_lines(self) -> int:  # pylint: disable=C0116
         if (

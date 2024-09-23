@@ -167,9 +167,9 @@ class TestCsvPath(unittest.TestCase):
         path.parse(f"${PATH}[*][@me = count()]")
         print("")
 
-        assert path._advance == 0
+        assert path.advance_count == 0
         path.advance(1)
-        assert path._advance == 1
+        assert path.advance_count == 1
         for _ in path.next():
             print(f"test_csvpath_ff: _: {_}")
             assert _[0] == "David"
@@ -190,13 +190,13 @@ class TestCsvPath(unittest.TestCase):
 
         for _ in path.next():
             path.advance(14)
-            assert path._advance == 8
+            assert path.advance_count == 8
 
         path = CsvPath()
         path.parse(f"${PATH}[*][@me = count()]")
         i = 0
         for _ in path.next():
             path.advance(-1)
-            assert path._advance == 8
+            assert path.advance_count == 8
             i += 1
         assert i == 1
