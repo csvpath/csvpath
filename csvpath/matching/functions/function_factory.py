@@ -14,6 +14,7 @@ from .strings.concat import Concat
 from .strings.num import Num
 from .strings.metaphone import Metaphone
 from .counting.count import Count
+from .counting.counter import Counter
 from .counting.has_matches import HasMatches
 from .counting.count_lines import CountLines, LineNumber
 from .counting.count_scans import CountScans
@@ -370,6 +371,8 @@ class FunctionFactory:
             f = EmptyStack(matcher, name, child)
         elif name == "num":
             f = Num(matcher, name, child)
+        elif name == "counter":
+            f = Counter(matcher, name, child)
 
         else:
             if (

@@ -1,0 +1,5 @@
+[
+               counter.one(5)
+               mod(@one, 10) == 0 -> counter.two(2)
+               gt(@two, 4) -> counter.three()
+            ]

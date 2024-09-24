@@ -10,20 +10,8 @@ class HasMatches(ValueProducer):
         self.validate_zero_args()
         super().check_valid()  # pylint: disable=W0246
 
-    def to_value(self, *, skip=None) -> Any:
-        if skip and self in skip:  # pragma: no cover
-            return self._noop_value()
-        if self.value is None:
-            self.value = (
-                #
-                # do we need to make this _AND aware?
-                # I don't think so but watch.
-                #
-                self.matcher.csvpath.current_match_count
-                + 1
-            ) > 0
-        return self.value
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:
-        self.to_value(skip=skip)
-        return self._noop_match()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.matcher.csvpath.current_match_count + 1 > 0
