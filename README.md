@@ -18,7 +18,7 @@ Though much simpler, it is inspired by:
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 
-Read more about CsvPath and see realistic CSV validation examples at <a href='https://www.csvpath.org'>csvpath.org</a>.
+Read more about CsvPath and see realistic CSV validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=green&color=green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath)
 
@@ -412,7 +412,7 @@ There are more examples scattered throughout the documentation. Good places to l
 - The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
 - The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> _(not realistic, but a good source of ideas)_
 - A few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
-- The Getting Started examples on <a href="csvpath.org">http://csvpath.org</a>
+- The Getting Started examples on <a href="https://www.csvpath.org">https://www.csvpath.org</a>
 
 <a name="grammar"></a>
 ## Grammar
@@ -422,7 +422,7 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more
 
 # More Info
 
-Visit <a href="csvpath.org">http://csvpath.org</a>
+Visit <a href="https://www.csvpath.org">https://www.csvpath.org</a>
 
 # Sponsors
 
