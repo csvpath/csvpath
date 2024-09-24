@@ -23,9 +23,6 @@ class Metaphone(ValueProducer):
         vleft = left.to_value(skip=skip)
         vleft = f"{vleft}"
         meta = doublemetaphone(vleft)
-        print(
-            f"metaphone: 26: meta: {meta}: {type(meta)}, vleft: {vleft}, self.value: {self.value}"
-        )
         if right is None:
             self.value = meta[0]
         else:
