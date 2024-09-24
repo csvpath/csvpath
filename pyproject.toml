@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.471"
+version = "0.0.472"
 description = "A declarative language for data extraction and validation of CSV files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
@@ -31,8 +31,8 @@ pandas = "^2.2.2"
 jinja2 = "^3.1.4"
 inflect = "^7.3.1"
 lark = "^1.2.2"
-jellyfish = "^1.1.0"
 tabulate = "^0.9.0"
+metaphone = "^0.6"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.0"

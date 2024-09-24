@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Reference
-import jellyfish
+from metaphone import doublemetaphone
 
 
 class Metaphone(ValueProducer):
@@ -22,12 +22,29 @@ class Metaphone(ValueProducer):
         right = self._child_two()
         vleft = left.to_value(skip=skip)
         vleft = f"{vleft}"
-        meta = jellyfish.metaphone(vleft)
+        meta = doublemetaphone(vleft)
+        print(
+            f"metaphone: 26: meta: {meta}: {type(meta)}, vleft: {vleft}, self.value: {self.value}"
+        )
         if right is None:
-            self.value = meta
+            self.value = meta[0]
         else:
             mappings = right.to_value()
-            self.value = mappings.get(meta)
+            self.value = mappings.get(meta[0])
+            if self.value is None:
+                self.value = mappings.get(meta[1])
+            if self.value is None:
+                # last chance. consider stripping out these characters
+                # up-front for all strings.
+                vleft = vleft.replace(".", "")
+                vleft = vleft.replace(",", "")
+                vleft = vleft.replace("/", "")
+                vleft = vleft.replace("!", "")
+                vleft = vleft.replace("@", "")
+                vleft = vleft.replace("-", "")
+                vleft = vleft.replace("?", "")
+                meta = doublemetaphone(vleft)
+                self.value = mappings.get(meta[0])
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)  # pragma: no cover

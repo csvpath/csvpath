@@ -25,7 +25,7 @@ class TestFunctionsMetaphone(unittest.TestCase):
         )
         path.fast_forward()
         print(f"test_function_metaphone1: {path.variables}")
-        assert path.variables["z"] is False
+        assert path.variables["z"] is True
         assert path.variables["s"] is True
 
     def test_function_metaphone2(self):
@@ -76,8 +76,7 @@ class TestFunctionsMetaphone(unittest.TestCase):
         )
         path.fast_forward()
         print(f"test_function_metaphone2: {path.variables}")
-        # zach and zack are not alike, even though they probably should be
-        assert path.variables["z"] is False
+        assert path.variables["z"] is True
         assert path.variables["s"] is True
         assert path.variables["i"] is True
         assert path.variables["a"] is True
