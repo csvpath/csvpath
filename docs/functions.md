@@ -84,6 +84,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count.md'>count(value)</a> </td><td> Count the matches of values.  </td></tr>
 <tr><td> count_lines()      </td><td> count the lines of data to this point in the file. </td></tr>
 <tr><td> count_scans()      </td><td> count lines we checked for match   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/counter.md'>counter()</a>  </td><td> a streamlined way to increment a counter variable   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>   </td><td> Returns the number of duplicate lines.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_matches.md'>has_matches(header, ...)</a>   </td><td> Matches when any other match component matched anywhere in the file.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> Gives the physical line number.    </td></tr>
