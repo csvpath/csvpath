@@ -369,7 +369,7 @@ Prints `this is the last line` just before the scan ends.
     [ exists(#0) -> @firstname = #0 ]
 ```
 
-Says to set the `firstname` variable to the value of the first column when the first column has a value.
+Says to set the `firstname` variable to the value of the first column when the first column has a value. (Note that this could be achieved other simpler ways, including using the `notnone` qualifier on the variable.)
 
 <a name="qualifiers"></a>
 ## Qualifiers
