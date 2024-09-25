@@ -41,7 +41,20 @@ Some functions will optionally make use of an arbitrary name qualifier to better
 
 ## Custom Functions
 
-Creating your own function is easy. Once you create a function, you register it with the `FunctionFactory` class. You must register your functions each time you run CsvPath. Use your function in csvpaths by simply referring to it by name like any other function.
+Creating your own function is easy. Once you create a function, you register it with the `FunctionFactory` class. You can register your functions either programmatically or by creating an import file listing your functions. Your import file must be referenced in your `config.ini` file at `[functions][imports]` like this:
+
+    [functions]
+    imports = my_project_assets/my_functions.imports
+
+Each custom function has its own line in your imports file. The format is the same as you use for importing classes into Python files -- under the hood the mechanism is similar. E.g.
+
+```python
+    from my_function.for_stuff.me import Me as function_me
+```
+
+In this example your class is `Me` and the name of the function you use in your csvpath is `function_me()`
+
+Use your functions in csvpaths by simply referring to them by name like you would any built-in function.
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/implementing_functions.md'>Read more about implementing your own functions here.</a>
 

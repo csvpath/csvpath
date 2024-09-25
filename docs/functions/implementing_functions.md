@@ -80,16 +80,25 @@ When your function needs its arguments you can call:
 - self._value_two(skip=skip)
 - self._siblings()
 
-When you need to get a value or a match from a child object you use `to_value()` or `matches()`. Remember to pass the skip list as a named argument "skip".
+When you need to get a value or a match from a child object you use `to_value()` or `matches()`. Remember to pass the skip list as the named argument `skip`.
 
 ## Registering
 
-To register your function for use, add it to the FunctionFactory like this:
+To register your function for use, add it to the `FunctionFactory` like this:
 
 ```python
     from csvpath.matching.functions.function_factory import FunctionFactory
     FunctionFactory.add_function(name='iamafunction', function=my_function_instance)
 ```
+
+Alternatively, add a file path to your `config.ini` file under the key `[functions][imports]` that points to a list of functions to register. The key is like:
+
+    [functions]
+    imports = my_imports/functions.txt
+
+In the file list every function on its own line using a format like that of Python imports:
+
+    from a.b.c.my_function import MyFunction as iamafunction
 
 To use your function do something like:
 
