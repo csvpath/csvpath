@@ -42,6 +42,7 @@ class Sections(Enum):
     CSV_FILES = "csv_files"
     ERRORS = "errors"
     LOGGING = "logging"
+    FUNCTIONS = "functions"
 
 
 class Config:
@@ -172,6 +173,17 @@ path =
         self.log_file_size = self._get(
             Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value
         )
+        #
+        # path to external functions list. external functions are very optional.
+        # not blowing up when absent seems reasonable.
+        #
+        try:
+            self.function_imports = self._get(Sections.FUNCTIONS.value, "imports")
+        except Exception:
+            pass
+        #
+        # reload if another config path is set
+        #
         path = self._get("config", "path")
         if path:
             path = path.strip().lower()
@@ -263,15 +275,30 @@ path =
     # ======================================
 
     @property
+    def configpath(self) -> str:
+        return self._configpath
+
+    @configpath.setter
+    def configpath(self, path: str) -> None:
+        self._configpath = path
+
+    @property
     def cache_dir_path(self) -> str:
         try:
             path = self._get("cache", "path")
         except Exception:
-            print("No cache path in config.ini at [cache][path]. Using 'cache'.")
             path = "config"
             self._config.add_section("cache")
             self._config.set("cache", "path", path)
         return path
+
+    @property
+    def function_imports(self) -> str:
+        return self._function_imports
+
+    @function_imports.setter
+    def function_imports(self, path: str) -> None:
+        self._function_imports = path
 
     @property
     def csvpath_file_extensions(self) -> list[str]:

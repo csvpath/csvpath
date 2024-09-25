@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.matching.productions.expression import Matchable
 from .function import Function
+from .function_finder import FunctionFinder
 from .dates.now import Now
 from .dates.datef import Date
 from .strings.lower import Lower
@@ -56,7 +57,8 @@ from .stats.percent import Percent
 from .stats.minf import Min, Max, Average
 from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
-from .stats.correlate import Correlate
+
+# from .stats.correlate import Correlate
 from .print.printf import Print
 from .print.table import HeaderTable, RowTable, VarTable, RunTable
 from .print.print_line import PrintLine
@@ -260,8 +262,8 @@ class FunctionFactory:
             f = Strip(matcher, name, child)
         elif name == "jinja":
             f = Jinjaf(matcher, name, child)
-        elif name == "correlate":
-            f = Correlate(matcher, name, child)
+        #        elif name == "correlate":
+        #            f = Correlate(matcher, name, child)
         elif name in ["count_headers", "count_headers_in_line"]:
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
@@ -292,9 +294,6 @@ class FunctionFactory:
             f = Stack(matcher, name, child)
         elif name in ["stdev", "pstdev"]:
             f = Stdev(matcher, name, child)
-        #
-        # dup_lines can also decide matches
-        #
         elif name == "has_dups":
             f = HasDups(matcher, name, child)
         elif name == "count_dups":
@@ -373,15 +372,13 @@ class FunctionFactory:
             f = Num(matcher, name, child)
         elif name == "counter":
             f = Counter(matcher, name, child)
-
         else:
-            if (
-                f is None
-                and find_external_functions
-                and name in FunctionFactory.NOT_MY_FUNCTION
-            ):
-                f = cls.NOT_MY_FUNCTION[name]
-                f = f(matcher, name, child)
+            if f is None and find_external_functions:
+                if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
+                    FunctionFinder().load(matcher, cls)
+                if name in FunctionFactory.NOT_MY_FUNCTION:
+                    f = cls.NOT_MY_FUNCTION[name]
+                    f = f(matcher, name, child)
             if not find_external_functions:
                 return None
             if f is None:
