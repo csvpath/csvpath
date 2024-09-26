@@ -21,7 +21,7 @@ class FunctionFinder:
             return
         if not os.path.exists(path):
             matcher.csvpath.logger.error(
-                "No [functions][imports] path from config.ini does not exist"
+                f"[functions][imports] path in {config.configpath} does not exist"
             )
             return
         with open(path, "r") as file:

@@ -6,6 +6,32 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Equality
 
 
+class Log(SideEffect):
+    """logs a msg at a log level, defaulting to info"""
+
+    def check_valid(self) -> None:
+        self.validate_one_or_two_args()
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
+
+    def _decide_match(self, skip=None) -> None:
+        msg = self._value_one(skip=skip)
+        level = self._value_two(skip=skip)
+        if level in [None, "info"]:
+            self.matcher.csvpath.logger.info(msg)
+        elif level == "debug":
+            self.matcher.csvpath.logger.debug(msg)
+        elif level in ["warn", "warning"]:
+            self.matcher.csvpath.logger.warning(msg)
+        elif level == "error":
+            self.matcher.csvpath.logger.error(msg)
+        else:
+            self.matcher.csvpath.logger.info(msg)
+        self.match = self.default_match()
+
+
 class Debug(SideEffect):
     """sets the logging level"""
 

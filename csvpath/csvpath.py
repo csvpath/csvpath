@@ -232,11 +232,12 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         #
         # the config.ini file loaded as a ConfigParser instance
         #
-        # we're moving this to a property can set up there. we
         # definitely do not want this coming from CsvPaths because
         # we want to be able to override config.ini specifically for
-        # this instance, if needed.
-        self._config = None
+        # this instance, if needed; however, we do want to be able
+        # to pass in a config object that has been configured in some
+        # way.
+        self._config = config
         #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
@@ -318,7 +319,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
     @property
     def config(self) -> Config:  # pylint: disable=C0116
         if not self._config:
-            self._config = Config(self)
+            self._config = Config()
         return self._config
 
     def has_errors(self) -> bool:  # pylint: disable=C0116

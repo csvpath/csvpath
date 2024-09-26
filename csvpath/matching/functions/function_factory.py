@@ -80,7 +80,7 @@ from .misc.random import Random
 from .misc.nonef import Nonef
 from .misc.intf import Int
 from .misc.importf import Import
-from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack
+from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
 
@@ -350,6 +350,8 @@ class FunctionFactory:
             f = Put(matcher, name, child)
         elif name == "debug":
             f = Debug(matcher, name, child)
+        elif name == "log":
+            f = Log(matcher, name, child)
         elif name == "brief_stack_trace":
             f = BriefStackTrace(matcher, name, child)
         elif name == "vote_stack":

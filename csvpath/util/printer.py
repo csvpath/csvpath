@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import sys
+from .config_exception import ConfigurationException
 
 
 class Printer(ABC):
@@ -75,3 +76,28 @@ class TestPrinter(Printer):
 
     def print_to(self, name: str, string: str) -> None:
         self.lines.append(string)
+
+
+class LogPrinter(StdOutPrinter):
+    """logs to info by default"""
+
+    def __init__(self, logger):
+        self._logger = logger
+        if logger is None:
+            raise ConfigurationException("Logger cannot be None")
+        super().__init__()
+
+    def print_to(self, name: str, msg: str) -> None:
+        self._count += 1
+        if name in ["info", None]:
+            self._logger.info(msg)
+        elif name == "debug":
+            self._logger.debug(msg)
+        elif name in ["warn", "warning"]:
+            self._logger.warning(msg)
+        elif name == "error":
+            self._logger.error(msg)
+        else:
+            self._logger.info(msg)
+
+        self._last_line = msg

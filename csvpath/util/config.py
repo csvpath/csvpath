@@ -43,6 +43,7 @@ class Sections(Enum):
     ERRORS = "errors"
     LOGGING = "logging"
     FUNCTIONS = "functions"
+    CACHE = "cache"
 
 
 class Config:
@@ -51,22 +52,45 @@ class Config:
      - set a CSVPATH_CONFIG_FILE env var
      - create a Config instance set its CONFIG member and call reload
      - or set Config.CONFIG and reload to reset all instances w/o own specific settings
+    Also, you can pass Config(load=False) to give you the opportunity to set some/all
+    properties programmatically.
     """
 
     CONFIG: str = "config/config.ini"
     CSVPATH_CONFIG_FILE_ENV: str = "CSVPATH_CONFIG_PATH"
 
-    def __init__(self, holder):
-        self._holder = holder
+    def __init__(self, *, load=True):
+        self.load = load
+        self._cache_dir_path = None
+        self._function_imports = None
+        self._csvpath_file_extensions = None
+        self._csv_file_extensions = None
+        self._csvpath_errors_policy = None
+        self._csvpaths_errors_policy = None
+        self._csvpath_log_level = None
+        self._csvpaths_log_level = None
+        self._log_file = None
+        self._log_files_to_keep = None
+        self._log_file_size = None
         self._config = RawConfigParser()
         self.log_file_handler = None
         self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
         if self._configpath is None:
             self._configpath = Config.CONFIG
-        self._load_config()
+        if self.load:
+            self._load_config()
+
+    @property
+    def load(self) -> bool:
+        return self._load
+
+    @load.setter
+    def load(self, lo: bool) -> None:
+        self._load = lo
 
     def reload(self):
         self._config = RawConfigParser()
+        self._load = True
         self._load_config()
 
     def set_config_path_and_reload(self, path: str) -> None:
@@ -90,15 +114,28 @@ class Config:
                 ret = s
             return ret
         except KeyError:
-            raise ConfigurationException(
-                f"Check config at {self.config_path} for [{section}][{name}]"
+            print(
+                f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
             )
 
+    def save_config(self) -> None:
+        with open(self.configpath, "w") as f:
+            self._config.write(f)
+
     def _create_default_config(self) -> None:
-        if not path.exists("config"):
-            os.makedirs("config")
-            with open(Config.CONFIG, "w") as file:
-                c = """
+        directory = ""
+        name = ""
+        if self._configpath is None or self._configpath.strip() == "":
+            raise ConfigurationException("Config path cannot be None")
+        if self._configpath.find(os.sep) > 0:
+            s = self._configpath.rfind(os.sep)
+            directory = self._configpath[0:s]
+            name = self._configpath[s + 1 :]
+        if directory != "":
+            if not path.exists(directory):
+                os.makedirs(directory)
+        with open(self._configpath, "w") as file:
+            c = """
 [csvpath_files]
 extensions = txt, csvpath, csvpaths
 [csv_files]
@@ -114,20 +151,25 @@ log_files_to_keep = 100
 log_file_size = 52428800
 [config]
 path =
-                """
-                file.write(c)
-            print(f"Creating a default config file at {Config.CONFIG}.")
+[functions]
+imports =
+[cache]
+path =
+            """
+            file.write(c)
+            print(f"Created a default config file at {directory} with name {name}.")
             print("If you want your config to be somewhere else remember to")
             print("update the path in the default config.ini")
 
     def _assure_logs_path(self) -> None:
-        filepath = self.log_file
-        if not filepath:
-            filepath = "logs/csvpath.log"
-            self.log_file = filepath
-        dirpath = self._get_dir_path(filepath)
-        if dirpath and not path.exists(dirpath):
-            os.makedirs(dirpath)
+        if self.load:
+            filepath = self.log_file
+            if not filepath or filepath.strip() == "":
+                filepath = "logs/csvpath.log"
+                self.log_file = filepath
+            dirpath = self._get_dir_path(filepath)
+            if dirpath and not path.exists(dirpath):
+                os.makedirs(dirpath)
 
     def _get_dir_path(self, filepath):
         if filepath.find(os.sep) > -1:
@@ -136,20 +178,25 @@ path =
         return None
 
     def _assure_cache_path(self) -> None:
-        dirpath = self.cache_dir_path
-        if dirpath and not path.exists(dirpath):
-            os.makedirs(dirpath)
-        elif not dirpath:
-            raise ConfigurationException(
-                "No cache path available. Check config.ini [cache][path]."
-            )
+        if self.load:
+            if self.cache_dir_path is None or self.cache_dir_path.strip() == "":
+                self.cache_dir_path = "cache"
+            if not path.exists(self.cache_dir_path):
+                os.makedirs(self.cache_dir_path)
 
     def _assure_config_file_path(self) -> None:
-        if not self._configpath or not os.path.isfile(self._configpath):
-            self._configpath = Config.CONFIG
-            self._create_default_config()
+        if self.load:
+            if not self._configpath or self._configpath.strip() == "":
+                self._configpath = Config.CONFIG
+            if not os.path.isfile(self._configpath):
+                self._create_default_config()
 
     def _load_config(self, norecurse=False):
+        if self._load is False:
+            print(
+                "WARNING: _load_config called on a config instance that is set to not load"
+            )
+            return
         self._assure_config_file_path()
         #
         #
@@ -173,13 +220,20 @@ path =
         self.log_file_size = self._get(
             Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value
         )
-        #
         # path to external functions list. external functions are very optional.
         # not blowing up when absent seems reasonable.
-        #
         try:
             self.function_imports = self._get(Sections.FUNCTIONS.value, "imports")
         except Exception:
+            print(
+                "WARNING: config cannot load [functions][imports] from {self.configpath}"
+            )
+            pass
+        # likewise caching.
+        try:
+            self.cache_dir_path = self._get(Sections.CACHE.value, "path")
+        except Exception:
+            print("WARNING: config cannot load [cache][path] from {self.configpath}")
             pass
         #
         # reload if another config path is set
@@ -284,13 +338,11 @@ path =
 
     @property
     def cache_dir_path(self) -> str:
-        try:
-            path = self._get("cache", "path")
-        except Exception:
-            path = "config"
-            self._config.add_section("cache")
-            self._config.set("cache", "path", path)
-        return path
+        return self._cache_dir_path
+
+    @cache_dir_path.setter
+    def cache_dir_path(self, p) -> None:
+        self._cache_dir_path = p
 
     @property
     def function_imports(self) -> str:

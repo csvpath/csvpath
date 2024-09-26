@@ -2,10 +2,33 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPath
+from csvpath.util.config import Config
 from csvpath.util.config_exception import ConfigurationException
 
 
 class TestConfig(unittest.TestCase):
+    def test_config_no_load(self):
+        testini = "tests/test_resources/deleteme/config.ini"
+        config = Config(load=False)
+        assert config.csvpaths_log_level is None
+        config.csvpaths_log_level = "debug"
+        assert config.csvpaths_log_level == "debug"
+        if os.path.exists(testini):
+            os.remove(testini)
+        config.configpath = testini
+        config._create_default_config
+        config.reload()
+        assert config.csvpaths_log_level == "info"
+        assert os.path.exists(testini)
+
+    def test_config_default_file_by_path(self):
+        testini = "tests/test_resources/deleteme/config.ini"
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
+        if os.path.exists(testini):
+            os.remove(testini)
+        Config()
+        assert os.path.exists(testini)
+
     def test_config_assure_log_dir(self):
         path = CsvPath()
         config = path.config

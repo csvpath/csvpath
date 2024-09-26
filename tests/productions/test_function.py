@@ -23,7 +23,10 @@ class TestFunction(unittest.TestCase):
         with pytest.raises(InvalidNameException):
             FunctionFactory.add_function(name="count", function=count)
 
+        c = CsvPath()
+        c.parse("$tests/test_resources/test.csv[*][yes()]")
+        c.fast_forward()
         FunctionFactory.add_function("iamaname", count)
-        f = FunctionFactory.get_function(matcher=None, name="iamaname")
+        f = FunctionFactory.get_function(matcher=c.matcher, name="iamaname")
         assert f is not None
         assert isinstance(f, Function)

@@ -122,7 +122,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
     # pylint: disable=too-many-instance-attributes
 
     def __init__(
-        self, *, delimiter=",", quotechar='"', skip_blank_lines=True, print_default=True
+        self,
+        *,
+        delimiter=",",
+        quotechar='"',
+        skip_blank_lines=True,
+        print_default=True,
+        config: Config = None,
     ):
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
@@ -132,7 +138,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
         self.current_matcher: CsvPath = None
-        self._config = Config(self)
+        self._config = Config() if config is None else config
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
         self._errors = []
@@ -155,6 +161,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
             delimiter=self.delimiter,
             quotechar=self.quotechar,
             skip_blank_lines=self.skip_blank_lines,
+            #
+            # in the usual case we don't want csvpaths and its csvpath children
+            # to share the same config. sharing doesn't offer much. the flexibility
+            # of having separate configs is valuable.
+            #
             config=None,
             print_default=self.print_default,
         )
