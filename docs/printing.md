@@ -1,6 +1,6 @@
 # Printing
 
-Validation is more about communication than you might think. We don't typically just want a yes/no result from a validation run. We want to know exactly what the problems are, why and where. The more human-friendly a validation tool is the more useful it is. For that reason, the `print()` function, and friends, is very important.
+Validation is more about communication than you might think. We don't typically just want a yes/no result from a validation run. We want to know exactly what the problems are, why, and where. The more human-friendly a validation tool is the more useful it is. For that reason, the `print()` function, along with its friends, is very important.
 
 - Print, Jinja, and tables
 - References
@@ -10,12 +10,12 @@ Validation is more about communication than you might think. We don't typically 
 
 ## Print
 
-`print()` is the main way of doing printing in CsvPaths. It is fast, flexible, and both human and machine friendly, in that results are easily available to both. Most of this page is about `print()`.
+`print()` is the main way of printing in CsvPaths. It is fast, flexible, and both human and machine friendly, in that results are easily available to both. Most of this page is about `print()`.
 
 ## Jinja
 CsvPath provides Jinja as a way to create fancier output for special purposes. Using Jinja is slower and very much out of band. `jinja()` has a few limitations:
 - It requires CsvPaths because it populates the Jinja context with results from the ResultsManager
-- Currently, `jinja()` only provides results values from the first csvpath in a named-results set. It will collect values from multiple named-paths, but just the first paths in the set.
+- Currently, `jinja()` only provides results values from the first csvpath in a named-results set. It will collect values from multiple named-paths, but just from the first path in each.
 - Jinja is also, as currently used, not a great fit with highly dynamic systems because it needs a file system path for its template and its output. If CsvPath is being spun up in an unpredictable way on transitory infrastructure, `jinja()` may be challenging or require integration effort.
 
 These limitations are easily addressed; however, we are awaiting more real-world feedback to see where to take `jinja()`.
@@ -27,7 +27,7 @@ The Jinja context includes a small number of options from the <a href='https://p
 
 ## The tables functions
 
-The tables capabilities include:
+The tables functions include:
 - `header_table()` lists all headers with their indexes
 - `row_table()` presents all or a from-to set of header values by header index
 - `var_table()` gives prints all, some or one variable
@@ -40,7 +40,7 @@ These functions use the excellent <a href='https://pypi.org/project/tabulate/'>t
 Print references are similar to match component references and the reference structure of a csvpath as a whole. To recap:
 
 - Csvpaths follow the reference form by starting with $ and a data identifier, in this case a file path or named-file name
-- Match component references have the form `$` data identifier `.` reference data type (headers or variables) `.` data item identifier
+- Match component references have the form: `$` _data identifier_ `.` _reference data type_ (headers or variables) `.` _data item identifier_
 - Print references are the same as match component references except:
     - that they allow for `$.` to take the place of the data identifier, meaning the current csvpath the `print()` is embedded in, and
     - they offer four reference data types, not just two
@@ -53,7 +53,7 @@ The biggest difference between regular references and print references is the re
 
 Other differences include:
 - Print references require an escape for any period directly following a reference. The escape is to double dot: `..`
-- Print references to stack variables can take a number to indicate the index in the stack or ".length" to get the size of the stack
+- Print references to stack variables can take a number to indicate the index in the stack or `.length` to get the size of the stack
 - Print references give access to individual header values within the currently running csvpath. Match component references allow look-ups into past runs, including the results of specific paths within a named-paths set.
 
 ## Printers
