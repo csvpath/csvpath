@@ -5,6 +5,8 @@ Validation is more about communication than you might think. We don't typically 
 - Print, Jinja, and tables
 - References
 - Escaping
+- Quoted headers
+- Qualifiers
 - Printers
 - Results and printouts
 
@@ -55,6 +57,16 @@ Other differences include:
 - Print references require an escape for any period directly following a reference. The escape is to double dot: `..`
 - Print references to stack variables can take a number to indicate the index in the stack or `.length` to get the size of the stack
 - Print references give access to individual header values within the currently running csvpath. Match component references allow look-ups into past runs, including the results of specific paths within a named-paths set.
+- `print()` allows for quoted header, same as match component header; however, in `print()` you must use single-quotes, not double-quotes
+
+## Qualifiers
+
+The `print()` function can take three qualifiers:
+- `onmatch`
+- `once`
+- `onchange`
+
+`onmatch` you know from other functions, it matches when all the rest of the match components match. `once` does just what it says, it allows `print()` to happen just one time. `onchange` also does what it says. It calculates the print output and checks to see if it printed that on the previous line. If it did, it does not print the same again; otherwise, it prints. Bear in mind that a single character, including trailing whitespace, could be the difference between two otherwise seemingly same lines. Also remember that `print()` forgets what it printed before the most recent line. If you had an alternating value, `onchange` would not save you from printing at every line.
 
 ## Printers
 
