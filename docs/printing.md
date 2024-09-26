@@ -21,7 +21,7 @@ CsvPath provides Jinja as a way to create fancier output for special purposes. U
 These limitations are easily addressed; however, we are awaiting more real-world feedback to see where to take `jinja()`.
 
 The Jinja context includes a small number of options from the <a href='https://pypi.org/project/inflect/'>inflect</a> project. You can use the following methods from that library:
-- use inflect's `plural(word)` as `plural(word)`
+- Use inflect's `plural(word)` as `plural(word)`
 - `capitalize()` as `cap(word)`
 - `a(word)` as `article(word)`
 
@@ -42,8 +42,8 @@ Print references are similar to match component references and the reference str
 - Csvpaths follow the reference form by starting with $ and a data identifier, in this case a file path or named-file name
 - Match component references have the form: `$` _data identifier_ `.` _reference data type_ (headers or variables) `.` _data item identifier_
 - Print references are the same as match component references except:
-    - that they allow for `$.` to take the place of the data identifier, meaning the current csvpath the `print()` is embedded in, and
-    - they offer four reference data types, not just two
+    - They allow for `$.` to take the place of the data identifier, meaning the current csvpath the `print()` is embedded in, and
+    - They offer four reference data types, not just two
 
 The biggest difference between regular references and print references is the reference data types. Print has four:
 - `csvpath` - the dynamic runtime metadata
