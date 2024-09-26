@@ -121,7 +121,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         # the middle of iterating a file using next(). probably not a
         # good idea, tho.
         #
-        self._AND = True
+        self._AND = True  # pylint: disable=C0103
         #
         # when True the lines that do not match are returned from next()
         # and collect(). this effectively switches CsvPath from being an
@@ -276,19 +276,19 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         self._line_monitor = lm
 
     @property
-    def AND(self) -> bool:
+    def AND(self) -> bool:  # pylint: disable=C0103
         return self._AND
 
     @AND.setter
-    def AND(self, a: bool) -> bool:
+    def AND(self, a: bool) -> bool:  # pylint: disable=C0103
         self._AND = a
 
     @property
-    def OR(self) -> bool:
+    def OR(self) -> bool:  # pylint: disable=C0103
         return not self._AND
 
     @OR.setter
-    def OR(self, a: bool) -> bool:
+    def OR(self, a: bool) -> bool:  # pylint: disable=C0103
         self._AND = not a
 
     @property
@@ -345,18 +345,18 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
     def error_collector(self, error_collector) -> None:
         self._error_collector = error_collector
 
-    def collect_error(self, e: Error) -> None:  # pylint: disable=C0116
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         #
         # errors must be built and handled in ErrorHandler.
         # here we're just collecting them if collect is
         # selected by our configuration
         #
         if self._error_collector is not None:
-            self._error_collector.collect_error(e)
+            self._error_collector.collect_error(error)
         else:
             if self._errors is None:
                 self._errors = []
-            self._errors.append(e)
+            self._errors.append(error)
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         if printer not in self.printers:
@@ -371,6 +371,9 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
 
     @property
     def is_frozen(self) -> bool:
+        """True if the instance is matching on its last row only to
+        allow last()s to run; in which case, no variable updates
+        are allowed, along with other limitations."""
         return self._freeze_path
 
     @is_frozen.setter
@@ -653,7 +656,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
                     msg = "Line cannot be None"
                     self.logger.error(msg)
                     raise MatchException(msg)
-                elif len(line) == 0:
+                if len(line) == 0:
                     msg = "Line cannot be len() == 0"
                     self.logger.error(msg)
                     raise MatchException(msg)
@@ -788,6 +791,8 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         return False
 
     def raise_match_count_if(self):
+        """if the match count has already been raised earlier in the matching
+        process than the caller we don't raise it; otherwise, we raise."""
         if self._current_match_count == self.match_count:
             self.match_count += 1
         else:
@@ -880,7 +885,7 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
-            self.matcher._AND = self._AND
+            self.matcher.AND = self._AND
         else:
             self.logger.debug("Resetting and reloading matcher")
             self.matcher.reset()

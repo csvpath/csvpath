@@ -2,13 +2,12 @@
     of the CsvPath library. it makes it easier to scale your CSV quality control. """
 
 from abc import ABC, abstractmethod
-from typing import List, Any, Tuple
+from typing import List, Any
 import csv
 import traceback
 from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import Config
 from .util.log_utility import LogUtility
-from .util.line_monitor import LineMonitor
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException
 from .managers.csvpaths_manager import PathsManager
@@ -114,7 +113,7 @@ class CsvPathsCoordinator(ABC):
         """advances every CsvPath instance in a run"""
 
 
-class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
+class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     """Manages the application of csvpaths to files. Csvpaths must be grouped and named.
     Files must be named. Results are held by the results_manager.
     """
@@ -149,6 +148,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         self._advance_all = 0
 
     def clear_run_coordination(self) -> None:
+        """run coordination is the set of signals that csvpaths send to affect
+        one another through the CsvPaths instance"""
         self._stop_all = False
         self._fail_all = False
         self._skip_all = False
@@ -204,11 +205,16 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
 
-    def collect_paths(self, *, pathsname, filename) -> None:
+    def _validate_paths_and_file(self, *, pathsname, filename) -> None:
         if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
-            raise InputException("Pathsname must be a named set of paths")
+            keys = list(self.paths_manager.named_paths.keys())
+            raise InputException(f"Pathsname must be a named set of paths in {keys}")
         if filename not in self.file_manager.named_files:  # pragma: no cover
-            raise InputException("Filename must be a named file")
+            keys = self.file_manager.named_files.keys()
+            raise InputException(f"Filename must be a named file in {keys}")
+
+    def collect_paths(self, *, pathsname, filename) -> None:
+        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and % results", filename, pathsname)
@@ -257,12 +263,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         csvpath.parse(apath)
 
     def fast_forward_paths(self, *, pathsname, filename):
-        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
-            raise InputException(
-                f"Paths not found. {pathsname} must be a named set of paths"
-            )
-        if filename not in self.file_manager.named_files:  # pragma: no cover
-            raise InputException("Filename must be a named file")
+        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
@@ -302,12 +303,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
         """appends the Result for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
-        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
-            raise InputException(
-                f"Pathsname '{pathsname}' must be a named set of paths"
-            )
-        if filename not in self.file_manager.named_files:  # pragma: no cover
-            raise InputException(f"Filename '{filename}' must be a named file")
+        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
@@ -416,12 +412,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
     ) -> List[Any]:
         # re: R0912 -- absolutely. plan to refactor.
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         self.clean(paths=pathsname)
         fn = self.file_manager.get_named_file(filename)
-        if fn is None:  # pragma: no cover
-            raise InputException(f"Filename '{filename}' must be a named file")
-        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
-            raise InputException(f"Pathsname '{pathsname}' must name a set of csvpaths")
         paths = self.paths_manager.get_named_paths(pathsname)
         if (
             paths is None or not isinstance(paths, list) or len(paths) == 0
@@ -479,9 +472,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator):
                             self.current_matcher.track_line(line)
                             continue
                         if self._advance_all > 0:
-                            self.logger.info(
-                                "Advance-all set. Setting advance. CsvPath and its Matcher will handle the advancing."
-                            )
+                            logtxt = "Advance-all set. Setting advance. "
+                            logtxt = f"{logtxt}CsvPath and its Matcher will handle the advancing."
+                            self.logger.info(logtxt)
                             #
                             # CsvPath will handle advancing so we don't need to do
                             # anything, including track_line(line). we just need to

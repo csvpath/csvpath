@@ -44,9 +44,8 @@ class Function(Validation):
             return self._noop_value()
         if self.value is None:
             if self.do_onmatch():
-                # if not self.onmatch or self.line_matches():
                 self.matcher.csvpath.logger.debug(
-                    "%s, a %s, calling produce value", self, self.FOCUS
+                    "%s, a %s, calling produce value", self, self.__class__.FOCUS
                 )
                 self._produce_value(skip=skip)
             else:

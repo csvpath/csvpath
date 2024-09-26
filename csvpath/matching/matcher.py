@@ -30,7 +30,7 @@ class Matcher:  # pylint: disable=R0902
         self.if_all_match = []
         self.skip = False
         self.cachers = []
-        self._AND = True
+        self._AND = True  # pylint: disable=C0103
         if data is not None:
             self.parser = LarkParser()
             tree = self.parser.parse(data)
@@ -51,6 +51,14 @@ class Matcher:  # pylint: disable=R0902
         return f"""{type(self)}:
             expressions: {self.expressions}
             line: {self.line}"""
+
+    @property
+    def AND(self) -> bool:
+        return self._AND
+
+    @AND.setter
+    def AND(self, a: bool) -> None:
+        self._AND = a
 
     @property
     def line(self) -> List[List[Any]]:  # pylint: disable=C0116
