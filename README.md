@@ -146,12 +146,11 @@ This is a very basic programmatic use of CsvPath.
 ```python
     path = CsvPath()
     path.parse("""
-                    $test.csv[5-25]
-                    [
-                        #0=="Frog"
-                        @lastname.onmatch="Bats"
-                        count()==2
-                    ]
+            $test.csv[5-25][
+                #0=="Frog"
+                @lastname.onmatch="Bats"
+                count()==2
+            ]
     """)
 
     for i, line in enumerate( path.next() ):
@@ -167,12 +166,11 @@ The csvpath says:
 Another path that does the same thing a bit more simply might look like:
 
 ```bash
-    $test[5-25]
-        [
-            #0=="Frog"
-            @lastname.onmatch="Bats"
-            count()==2 -> print( "$.csvpath.match_count: $.csvpath.line")
-        ]
+    $test[5-25][
+        #0 == "Frog"
+        @lastname.onmatch = "Bats"
+        count()==2 -> print( "$.csvpath.match_count: $.csvpath.line")
+    ]
 ```
 
 In this case, we're using the "when" operator, `->`, to determine when to print.
@@ -183,11 +181,13 @@ There are a small number of configuration options. Read <a href='https://github.
 
 ## The print function
 
-Before we get into the details of the scanning and matching parts of paths, including all the functions, let's look at print. The `print` function has several important uses, including:
+Before we get into the details of scanning and matching, let's look at what CsvPath can print. The `print` function has several important uses, including:
 
-- Debugging csvpaths
 - Validating CSV files
+- Debugging csvpaths
 - Creating new CSV files based on an existing file
+
+You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/printing.md'>read more about the mechanics of printing here</a>.
 
 <a name="validating"></a>
 ### Validating CSV
