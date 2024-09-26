@@ -47,7 +47,7 @@ Print references are similar to match component references and the reference str
 
 The biggest difference between regular references and print references is the reference data types. Print has four:
 - `csvpath` - the dynamic runtime metadata
-- `metadata` - the static metadata from comments
+- `metadata` - the static metadata parsed from comments
 - `headers`
 - `variables`
 
