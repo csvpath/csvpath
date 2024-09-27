@@ -232,6 +232,7 @@ For example, this comment says that the csvpath has the name `Order Validation`:
 
 The name `Order Validation` is available in CsvPath's `metadata` property along with the developer's name. You can use any metadata keys you like. All the metadata is available during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
 
+Note that the `CsvPath.identity` property takes the name of the ID or name given as metadata fields in comments. ID is preferred over name. The forms recognized are `ID`, `Id`, and `id`, with the same capitalization supported for name. `CsvPath.identity` is used to identify csvpaths within named-path csvpath sets. It is completely optional, but at times useful.
 
 <a name="scanning"></a>
 # Scanning
