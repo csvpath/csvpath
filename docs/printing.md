@@ -76,7 +76,9 @@ The `print()` function can take three qualifiers:
 - `once`
 - `onchange`
 
-`onmatch` you know from other functions, it matches when all the rest of the match components match. `once` does just what it says, it allows `print()` to happen just one time. `onchange` also does what it says. It calculates the print output and checks to see if it printed that on the previous line. If it did, it does not print the same again; otherwise, it prints. Bear in mind that a single character, including trailing whitespace, could be the difference between two otherwise seemingly same lines. Also remember that `print()` forgets what it printed before the most recent line. If you had an alternating value, `onchange` would not save you from printing at every line.
+`onmatch` you know from other functions, it matches when all the rest of the match components match. `once` does just what it says, it allows `print()` to happen just one time.
+
+`onchange` also does what it says. It calculates the print output and checks to see if it printed that on the previous line. If it did, it does not print the same again; otherwise, it prints. Bear in mind that a single character, including trailing whitespace, could be the difference between two otherwise seemingly same lines. Also remember that `print()` forgets what it printed before the most recent line. If you had an alternating value, `onchange` would not save you from printing at every line.
 
 <a name="printers"></a>
 ## Printers
