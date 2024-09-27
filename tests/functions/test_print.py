@@ -15,6 +15,26 @@ MISMATCH = "tests/test_resources/header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
+    def test_print_header_ref(self):
+        print("")
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.paths_manager.add_named_paths_from_dir(
+            directory="tests/test_resources/named_paths"
+        )
+        paths.collect_paths(filename="food", pathsname="food")
+
+        results = paths.results_manager.get_named_results("food")
+        for r in results:
+            print(f"r: {r}")
+            print(f"r.headers: {r.csvpath.headers}")
+        parser = PrintParser()
+        data: dict = parser._get_headers(None, results)
+        print(f"dict: {data}")
+        assert len(data) == 2
+        assert "candy check" in data
+        assert len(data["candy check"]) == 5
+
     def test_print_once1(self):
         print("")
         path = CsvPath()
