@@ -189,9 +189,11 @@ class PrintParser:
         data = {}
         for result in results:
             csvpath = result.csvpath
+            identity = csvpath.identity
+            data[identity] = {}
             hs = csvpath.headers
             for i, h in enumerate(hs):
-                data = {h, i}
+                data[identity][h] = i
         return data
 
     def _get_metadata(self, ref, results):
