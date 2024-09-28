@@ -76,7 +76,7 @@ class Import(SideEffect):
                 ExpressionEncoder().valued_list_to_json(self.matcher.expressions)
             )
             self._imported = True
-            self.match = self._apply_default_match()
+            self.match = self.default_match()
             self.value = self._apply_default_value()
 
     def _set_matcher(self, e) -> None:

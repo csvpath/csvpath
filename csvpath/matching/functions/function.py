@@ -77,7 +77,8 @@ class Function(Validation):
                     "Function.matches _decide_match returned %s", self.match
                 )
             else:
-                self._apply_default_match()
+                self.match = self.default_match()
+                # self._apply_default_match()
                 self.matcher.csvpath.logger.debug(
                     f"@{self}: appling default match, {self.match}, because !do_onmatch"
                 )
@@ -101,12 +102,14 @@ class Function(Validation):
             "%s applying default value: %s", self, self.value
         )
 
+    """
     def _apply_default_match(self) -> None:
-        """provides the default when to_match is not producing a value.
+        ""provides the default when to_match is not producing a value.
         subclasses may override this method if they need a different
         default.
-        """
+        ""
         self.match = self.default_match()
         self.matcher.csvpath.logger.debug(
             "%s applying default match: %s", self, self.match
         )
+    """
