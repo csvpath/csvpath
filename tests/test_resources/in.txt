@@ -3,12 +3,12 @@ this is a jinja template
 
 line: {{local.csvpath.line}}
 name: {{local.csvpath.file_name}}
-scan count: {{local.csvpath.count_scans}}
-headers: {{local.csvpath.headers}}
+scan count: {{local.csvpath.count_scans["jinja"]}}
+headers: {{local.csvpath.headers["jinja"]}}
 
 
 ~
-jinja: {{ local.variables.name }}, {{ local.headers.firstname }}
+jinja: {{ local.variables["name"] }}, {{ local.headers.firstname }}
 ~
 $[*][ $test.variables.orders.cities ]
 

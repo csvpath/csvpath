@@ -11,7 +11,7 @@ class LogUtility:
     LOGGERS = {}
 
     @classmethod
-    def log_brief_trace(cls, logger=None) -> str:
+    def log_brief_trace(cls, *, logger=None, printer=None) -> str:
         trace = "".join(traceback.format_stack())
         i = 13
         lines = trace.split("\n")
@@ -22,10 +22,12 @@ class LogUtility:
             aline = aline.strip()
             if aline[0:4] != "File":
                 continue
-            if not logger:
-                print(f"{aline}")
-            else:
+            if logger:
                 logger.debug(f"{aline}")
+            elif printer:
+                printer.print(f"{aline}")
+            else:
+                print(f"{aline}")
             ret = f"{ret}{aline}\n"
         return ret
 

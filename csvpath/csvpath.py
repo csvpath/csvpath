@@ -25,6 +25,7 @@ from .util.exceptions import (
     CsvPathsException,
 )
 from .matching.util.exceptions import MatchException
+from csvpath.util.printer import Printer
 
 
 class CsvPathPublic(ABC):
@@ -70,7 +71,7 @@ class CsvPathPublic(ABC):
         matching rows"""
 
 
-class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
+class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     """CsvPath represents a csvpath string that contains a reference to
     a file, scanning instructions, and rules for matching lines.
     """
@@ -369,6 +370,22 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         for p in self.printers:
             p.print(string)
 
+    def print_to(self, name: str, string: str) -> None:
+        for p in self.printers:
+            p.print_to(string)
+
+    @property
+    def last_line(self):
+        if not self.printers or len(self.printers) == 0:
+            return None
+        return self.printers[0].last_line
+
+    @property
+    def lines_printed(self) -> int:
+        if not self.printers or len(self.printers) == 0:
+            return -1
+        self.printers[0].lines_printed
+
     @property
     def is_frozen(self) -> bool:
         """True if the instance is matching on its last row only to
@@ -440,7 +457,8 @@ class CsvPath(CsvPathPublic, ErrorCollector):  # pylint: disable=R0902, R0904
         if self.scanner.filename is None:
             raise FileException("Cannot proceed without a filename")
         self.get_total_lines_and_headers()
-        return self.scanner
+        # return self.scanner
+        return self
 
     def parse_named_path(self, name, disposably=False):
         """disposably is True when a Matcher is needed for some purpose other than

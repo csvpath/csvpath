@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.log_utility import LogUtility
 from csvpath.util.printer import TestPrinter
@@ -7,6 +8,7 @@ from csvpath.matching.util.lark_print_parser import (
     LarkPrintParser,
     LarkPrintTransformer,
 )
+from csvpath.matching.util.print_parser import PrintParserException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -15,6 +17,75 @@ MISMATCH = "tests/test_resources/header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
+    def test_print_get_runtime_data_from_results(self):
+        print("")
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.paths_manager.add_named_paths_from_dir(
+            directory="tests/test_resources/named_paths"
+        )
+        paths.collect_paths(filename="food", pathsname="food")
+        results = paths.results_manager.get_named_results("food")
+        parser = PrintParser()
+        d = results[1].csvpath.delimiter
+        q = results[1].csvpath.quotechar
+        assert len(results) == 2
+        with pytest.raises(PrintParserException):
+            results[1].csvpath.delimiter = "#"
+            parser._get_runtime_data_from_results(None, results)
+        with pytest.raises(PrintParserException):
+            results[1].csvpath.quotechar = "#"
+            parser._get_runtime_data_from_results(None, results)
+        results[1].csvpath.delimiter = d
+        results[1].csvpath.quotechar = q
+        data = parser._get_runtime_data_from_results(None, results)
+        assert isinstance(data["file_name"], str)
+        data2 = parser._get_runtime_data_from_results(None, [results[0]])
+        assert data["lines_time"] > data2["lines_time"]
+        print(f'cnt lines: {data["count_lines"]}')
+        assert "candy check" in data["count_lines"]
+        assert data["count_lines"]["candy check"] != data["count_lines"]["first type"]
+        print(f'line no: {data["line_number"]}')
+        assert "candy check" in data["line_number"]
+        assert data["line_number"]["candy check"] != data["line_number"]["first type"]
+        print(f'cnt matches: {data["count_matches"]}')
+        assert "candy check" in data["count_matches"]
+        assert (
+            data["count_matches"]["candy check"] != data["count_matches"]["first type"]
+        )
+        print(f'cnt scans: {data["count_scans"]}')
+        assert "candy check" in data["count_scans"]
+        assert data["count_scans"]["candy check"] != data["count_scans"]["first type"]
+        print(f'scan part: {data["scan_part"]}')
+        assert "candy check" in data["scan_part"]
+        assert data["scan_part"]["candy check"] != data["scan_part"]["first type"]
+        print(f'match part: {data["match_part"]}')
+        assert "candy check" in data["match_part"]
+        assert data["match_part"]["candy check"] != data["match_part"]["first type"]
+        print(f'last line time: {data["last_line_time"]}')
+        assert "candy check" in data["last_line_time"]
+        assert (
+            data["last_line_time"]["candy check"]
+            != data["last_line_time"]["first type"]
+        )
+        print(f'total lines: {data["total_lines"]}')
+        assert isinstance(data["total_lines"], int)
+        assert data["total_lines"] == 11
+        print(f'headers: {data["headers"]}')
+        assert "candy check" in data["headers"]
+        assert isinstance(data["headers"]["candy check"], list)
+        assert len(data["headers"]["candy check"]) == 5
+        print(f'valid: {data["valid"]}')
+        assert "candy check" in data["valid"]
+        assert isinstance(data["valid"]["candy check"], bool)
+        assert data["valid"]["candy check"] is False
+        assert data["valid"]["candy check"] != data["valid"]["first type"]
+        print(f'stopped: {data["stopped"]}')
+        assert "candy check" in data["stopped"]
+        assert isinstance(data["stopped"]["candy check"], bool)
+        assert data["stopped"]["candy check"] is True
+        assert data["stopped"]["candy check"] == data["stopped"]["first type"]
+
     def test_print_header_ref(self):
         print("")
         paths = CsvPaths()

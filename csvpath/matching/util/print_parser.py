@@ -52,7 +52,7 @@ class PrintParser:
             data = self.csvpath.metadata
         elif atype == "csvpath":
             data = {}
-            self._get_runtime_data_from_local(self.csvpath, data)
+            self._get_runtime_data_from_local(self.csvpath, data, local=True)
         ref["data"] = data
         self.csvpath.logger.debug(f"PrintParser._handle_local: local vars are: {data}")
         return self._transform_reference(ref)
@@ -61,7 +61,7 @@ class PrintParser:
         name = ref["root"]
         name = name[1:]
         name = name.rstrip(".")
-        if name == "":
+        if name == "":  # pragma: no cover
             self.csvpath.logger.error("Name cannot be empty")
             raise Exception("Name cannot be ''")
         results = self._get_results(ref, name)
@@ -123,9 +123,6 @@ class PrintParser:
                 datum = c.matcher.line[i]
             except Exception:
                 self.csvpath.logger.warning(f"No matcher.line[{i}] available")
-        else:
-            self.csvpath.logger.warning("No matcher to provide header values")
-            datum = name
 
         if tracking is not None and tracking != "":
             #
@@ -215,69 +212,83 @@ class PrintParser:
             self._get_runtime_data_from_local(csvpath, data)
         return data
 
-    def _get_runtime_data_from_local(self, csvpath, runtime: Dict[str, Any]) -> None:
-
+    def _get_runtime_data_from_local(
+        self, csvpath, runtime: Dict[str, Any], local=False
+    ) -> None:
+        identity = csvpath.identity
+        #
+        # Common to all csvpaths in results
+        #
         if "delimiter" in runtime:
             if runtime["delimiter"] != csvpath.delimiter:
                 raise PrintParserException(
-                    "Unalike delimiter for same run: {runtime['name']}"
+                    f"Unalike delimiter: {identity}: {csvpath.delimiter}"
                 )
         else:
             runtime["delimiter"] = csvpath.delimiter
-
         if "quotechar" in runtime:
-            if runtime["quotechar"] != csvpath.delimiter:
+            if runtime["quotechar"] != csvpath.quotechar:
                 raise PrintParserException(
-                    "Unalike quotechar for same run: {runtime['name']}"
+                    f"Unalike quotechar: {identity}: {csvpath.quotechar}"
                 )
         else:
             runtime["quotechar"] = csvpath.quotechar
-
-        if "count_matches" in runtime:
-            runtime["count_matches"] += csvpath.match_count
-        else:
-            runtime["count_matches"] = csvpath.match_count
-
-        #
-        # count_lines is a count, so 1-based. line_number
-        # is a pointer, so 0-based
-        #
-        if "count_lines" in runtime:
-            runtime["count_lines"] += csvpath.line_monitor.physical_count
-        else:
-            runtime["count_lines"] = csvpath.line_monitor.physical_line_count
-        runtime["line_number"] = csvpath.line_monitor.physical_line_number
-
-        if "count_scans" in runtime:
-            runtime["count_scans"] += csvpath.scan_count
-        else:
-            runtime["count_scans"] = csvpath.scan_count
-
         runtime["file_name"] = csvpath.scanner.filename
-        runtime["scan_part"] = csvpath.scan
-        runtime["match_part"] = csvpath.match
-        runtime["last_line_time"] = csvpath.last_row_time
+        self._set(runtime, identity, "lines_time", csvpath.rows_time, local, True)
+        self._set(
+            runtime,
+            identity,
+            "total_lines",
+            csvpath.line_monitor.data_end_line_count,
+            True,
+            True,
+        )
+        #
+        # end of common-to-all
+        #
+        self._set(
+            runtime,
+            identity,
+            "count_lines",
+            csvpath.line_monitor.physical_line_count,
+            local,
+            False,
+        )
+        self._set(
+            runtime,
+            identity,
+            "line_number",
+            csvpath.line_monitor.physical_line_number,
+            local,
+            False,
+        )
+        self._set(runtime, identity, "count_matches", csvpath.match_count, local, False)
+        self._set(runtime, identity, "count_scans", csvpath.scan_count, local, False)
+        self._set(runtime, identity, "scan_part", csvpath.scan, local, False)
+        self._set(runtime, identity, "match_part", csvpath.match, local, False)
+        self._set(
+            runtime, identity, "last_line_time", csvpath.last_row_time, local, False
+        )
+        #
+        # headers can change. we lose the changes but can at least capture the potentially
+        # different end states
+        #
+        self._set(runtime, identity, "headers", csvpath.headers, local, False)
+        self._set(runtime, identity, "valid", csvpath.is_valid, local, False)
+        self._set(runtime, identity, "stopped", csvpath.stopped, local, False)
 
-        if "rows_time" in runtime:
-            runtime["lines_time"] += csvpath.rows_time
+    def _set(
+        self, runtime, identity: str, name: str, value, local: bool, addative: False
+    ) -> None:
+        if local:
+            runtime[name] = value
         else:
-            runtime["lines_time"] = csvpath.rows_time
-
-        # runtime["rows_time"] = csvpath.rows_time
-        runtime["total_lines"] = csvpath.line_monitor.data_end_line_count
-        #
-        # headers can change so we need a way to easily show what we're
-        # dealing with at a point in time
-        #
-        runtime["headers"] = str(csvpath.headers)
-        #
-        # if the author named the csvpath use that to identify if it is valid.
-        #
-        _id = "csvpath" if "name" not in csvpath.metadata else csvpath.metadata["name"]
-        if _id.strip() == "":
-            _id = "csvpath"
-        runtime["identity"] = csvpath.identity
-        if "valid" not in runtime:
-            runtime["valid"] = {}
-        runtime["valid"][csvpath.identity] = csvpath.is_valid
-        runtime["stopped"] = csvpath.stopped
+            if addative:
+                if name in runtime:
+                    runtime[name] += value
+                else:
+                    runtime[name] = value
+            else:
+                if name not in runtime:
+                    runtime[name] = {}
+                runtime[name][identity] = value

@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 import datetime
+import logging
 from ..function_focus import SideEffect
 from csvpath.util.log_utility import LogUtility
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -49,7 +50,9 @@ class Debug(SideEffect):
             level = f"{level}".strip()
         else:
             level = "debug"
-        LogUtility.logger(self.matcher.csvpath, level)
+        logger = LogUtility.logger(self.matcher.csvpath, level)
+        assert logger.level == logging.ERROR
+        self.matcher.csvpath.logger = logger
 
 
 class BriefStackTrace(SideEffect):
@@ -68,11 +71,11 @@ class BriefStackTrace(SideEffect):
             if out not in ["log", "print"]:
                 out = "log"
         else:
-            out = "log"
+            out = "print"
         if out == "log":
-            LogUtility.log_brief_trace(self.matcher.csvpath.logger)
+            LogUtility.log_brief_trace(logger=self.matcher.csvpath.logger)
         else:
-            LogUtility.log_brief_trace()
+            LogUtility.log_brief_trace(printer=self.matcher.csvpath)
 
 
 class VoteStack(SideEffect):

@@ -71,7 +71,7 @@ class TestJinja(unittest.TestCase):
         path = paths.csvpath()
         Save._save(path, "test_function_jinja")
         path.parse(
-            f""" ${PATH}[*][ yes()
+            f""" ~name:jinja~ ${PATH}[*][ yes()
                              @name = "turtle"
                              last.nocontrib() -> jinja("{inf}", "{out}")
             ]

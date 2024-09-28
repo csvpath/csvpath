@@ -1,7 +1,0 @@
-
-this is a jinja template
-
-line: ['Frog', 'Bat', 'growl']
-name: tests/test_resources/test.csv
-scan count: 9
-headers: ['firstname', 'lastname', 'say']
