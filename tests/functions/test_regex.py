@@ -93,7 +93,7 @@ class TestFunctionsRegex(unittest.TestCase):
     def test_function_bad_regex1(self):
         path = CsvPath()
         with pytest.raises(Exception):
-            path.parse(f"""${PATH}[0-7][regex(#say, /`\&`\_\L\J/)]""")  # noqa: W605
+            path.parse(f"""${PATH}[0-7][regex(#say, /`\\&`\\_\\L\\J/)]""")  # noqa: W605
             lines = path.collect()
             assert len(lines) == 0
 

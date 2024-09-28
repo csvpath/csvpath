@@ -245,7 +245,11 @@ class Qualified:
         circumstance obtained, it could just be that this
         qualified doesn't have the qualification."""
         # re: E1101: inheritance structure. good point, but not the time to fix it.
-        ret = not self.onmatch or self.line_matches()  # pylint: disable=E1101
+        ret = False
+        if not self.onmatch:
+            ret = True
+        elif self.line_matches():  # pylint: disable=E1101
+            ret = True
         self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
             f"Qualified.do_onmatch: {ret} for {self.name}"
         )
@@ -319,7 +323,11 @@ class Qualified:
         self._set(Qualities.ONCE.value, o)
 
     def do_once(self):  # pylint: disable=C0116
-        ret = not self.once or self._has_not_yet()
+        ret = False
+        if not self.once:
+            ret = True
+        elif self._has_not_yet():
+            ret = True
         self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
             f"Qualified.do_ononce: {ret} for {self.name}"
         )

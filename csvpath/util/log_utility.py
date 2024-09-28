@@ -57,7 +57,7 @@ class LogUtility:
             )
         if level == "error":
             level = logging.ERROR  # pragma: no cover
-        elif level == "warn":
+        elif level in ["warn", "warning"]:
             level = logging.WARNING  # pragma: no cover
         elif level == "debug":
             level = logging.DEBUG

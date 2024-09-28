@@ -256,7 +256,6 @@ class TestScanner(unittest.TestCase):
         assert scanner.is_last(
             14, from_line=None, to_line=None, all_lines=True, these=[]
         )
-
         assert scanner.is_last(
             14, from_line=None, to_line=None, all_lines=False, these=[14]
         )
@@ -269,7 +268,5 @@ class TestScanner(unittest.TestCase):
         assert not scanner.is_last(
             15, from_line=None, to_line=None, all_lines=False, these=[14, 12]
         )
-
         assert scanner.is_last(100, from_line=4, to_line=100, all_lines=False, these=[])
-
         assert scanner.is_last(100, from_line=100, to_line=4, all_lines=False, these=[])

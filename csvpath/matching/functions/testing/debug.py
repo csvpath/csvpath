@@ -108,17 +108,17 @@ class DoWhenStack(SideEffect):
         self.validate_zero_args()
         super().check_valid()
 
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.default_match()
+
     def _produce_value(self, skip=None) -> None:
         votes = []
-        dowhens = self._find_do_whens()
+        dowhens = self._find_do_when_children()
         for c in dowhens:
             votes.append(c.DO_WHEN)
         self.value = votes
 
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.default_match()
-
-    def _find_do_whens(self) -> None:
+    def _find_do_when_children(self):
         self.matcher.csvpath.logger.debug("Looking for do-whens")
         dowhens = []
         cs = []
@@ -129,4 +129,6 @@ class DoWhenStack(SideEffect):
             if isinstance(c, Equality) and c.op == "->":
                 dowhens.append(c)
             cs += c.children
+        dowhens.reverse()
+        self.matcher.csvpath.logger.debug(f"Found {len(dowhens)} do-whens")
         return dowhens
