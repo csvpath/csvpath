@@ -13,12 +13,16 @@ class TestFunctionsFail(unittest.TestCase):
             f"""
             ${PATH}[1]
             [
+                ~
+                fail() does not mean a line fails/doesn't fail/matches/doesn't match.
+                it just indicates that a file is invalid. we may want to collect the
+                line that caused the invalidation -- or not.
+                ~
                 fail()
             ]"""
         )
         lines = path.collect()
-        print(f"\test_function_fail1: lines: {lines}")
-        assert len(lines) == 0
+        assert len(lines) == 1
         assert path.is_valid is False
 
     def test_function_fail12(self):
@@ -32,7 +36,6 @@ class TestFunctionsFail(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\test_function_fail2: lines: {lines}")
         assert len(lines) == 1
         assert path.is_valid is True
 
@@ -49,9 +52,8 @@ class TestFunctionsFail(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_fail3: lines: {lines}")
         print(f"test_function_fail3: variables: {path.variables}")
-        assert len(lines) == 0
+        assert len(lines) == 1
         assert path.is_valid is False
         assert path.variables["valid"] is False
         assert path.variables["failed"] is True
@@ -69,7 +71,6 @@ class TestFunctionsFail(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_fail4: lines: {lines}")
         print(f"test_function_fail4: variables: {path.variables}")
         assert len(lines) == 1
         assert path.is_valid is True
@@ -83,11 +84,9 @@ class TestFunctionsFail(unittest.TestCase):
             f"""
             ${PATH}[1]
             [
-                ~ no change in function in fail_all ~
                 fail()
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_fail_all1: lines: {lines}")
-        assert len(lines) == 0
+        assert len(lines) == 1
         assert path.is_valid is False

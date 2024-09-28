@@ -20,7 +20,7 @@ class CountDups(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         if self.name == "count_dups":
-            self.match = self._apply_default_match()
+            self.match = self.default_match()
         elif self.name == "has_dups":
             self.match == self.get_value(skip=skip) > 1
 

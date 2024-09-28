@@ -45,4 +45,4 @@ class Metaphone(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)  # pragma: no cover
-        self.match = self._apply_default_match()  # pragma: no cover
+        self.match = self.default_match()  # pragma: no cover

@@ -68,7 +68,7 @@ class Pop(ValueProducer):
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
-            self.match = self._apply_default_match()  # pragma: no cover
+            self.match = self.default_match()  # pragma: no cover
 
 
 class Stack(SideEffect):
@@ -89,7 +89,7 @@ class Stack(SideEffect):
         self.value = stack
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self._apply_default_match()  # pragma: no cover
+        self.match = self.default_match()  # pragma: no cover
 
 
 class Peek(ValueProducer):
@@ -113,7 +113,7 @@ class Peek(ValueProducer):
         if self.asbool:
             self.match = ExpressionUtility.asbool(v)
         else:
-            self.match = self._apply_default_match()  # pragma: no cover
+            self.match = self.default_match()  # pragma: no cover
 
 
 class PeekSize(ValueProducer):
@@ -129,4 +129,4 @@ class PeekSize(ValueProducer):
         self.value = len(stack)
 
     def matches(self, *, skip=None) -> bool:
-        self.matches = self._apply_default_match()  # pragma: no cover
+        self.matches = self.default_match()  # pragma: no cover

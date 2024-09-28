@@ -1,3 +1,8 @@
 [
+                ~
+                fail() does not mean a line fails/doesn't fail/matches/doesn't match.
+                it just indicates that a file is invalid. we may want to collect the
+                line that caused the invalidation -- or not.
+                ~
                 fail()
             ]

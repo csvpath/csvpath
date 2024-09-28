@@ -23,5 +23,5 @@ class Track(SideEffect):
         self.value = True
 
     def _decide_match(self, skip=None) -> None:
-        self._apply_default_match()
+        self.match = self.default_match()
         self.to_value(skip=skip)

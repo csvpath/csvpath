@@ -101,7 +101,7 @@ class Function(Validation):
             "%s applying default value: %s", self, self.value
         )
 
-    def _apply_default_match(self) -> bool:
+    def _apply_default_match(self) -> None:
         """provides the default when to_match is not producing a value.
         subclasses may override this method if they need a different
         default.

@@ -27,7 +27,7 @@ class Fail(MatchDecider):
         # is only responsible for registering the fail, it not a
         # reason for it.
         #
-        self.match = self._apply_default_match()
+        self.match = self.default_match()
 
 
 class FailAll(MatchDecider):
@@ -56,4 +56,4 @@ class FailAll(MatchDecider):
         # is only responsible for registering the fail, it not a
         # reason for it.
         #
-        self.match = self._apply_default_match()
+        self.match = self.default_match()

@@ -27,4 +27,4 @@ class Replace(SideEffect):
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)
-        self._apply_default_match()  # pragma: no cover
+        self.match = self.default_match()
