@@ -1,6 +1,7 @@
 import unittest
 import pytest
 import logging
+from io import StringIO as buffer
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
@@ -11,8 +12,6 @@ PATH = "tests/test_resources/test.csv"
 
 class TestFunctionsDebug(unittest.TestCase):
     def test_function_log1(self):
-        from io import StringIO as buffer
-
         buf = buffer()
         h = logging.StreamHandler(buf)
         path = CsvPath()
@@ -34,8 +33,6 @@ class TestFunctionsDebug(unittest.TestCase):
         assert text.find("rats") > -1
 
     def test_function_log2(self):
-        from io import StringIO as buffer
-
         buf = buffer()
         h = logging.StreamHandler(buf)
         path = CsvPath()
@@ -54,8 +51,6 @@ class TestFunctionsDebug(unittest.TestCase):
         assert text.find("fish") == -1
 
     def test_function_log3(self):
-        from io import StringIO as buffer
-
         buf = buffer()
         h = logging.StreamHandler(buf)
         path = CsvPath()
@@ -74,8 +69,6 @@ class TestFunctionsDebug(unittest.TestCase):
         assert text.find("molluscs") > -1
 
     def test_function_log4(self):
-        from io import StringIO as buffer
-
         buf = buffer()
         h = logging.StreamHandler(buf)
         path = CsvPath()

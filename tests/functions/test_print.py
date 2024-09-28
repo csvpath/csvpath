@@ -1,7 +1,10 @@
 import unittest
 import pytest
+import logging
+from io import StringIO as buffer
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.log_utility import LogUtility
+from csvpath.util.printer import LogPrinter
 from csvpath.util.printer import TestPrinter
 from csvpath.matching.functions.print.printf import Print, PrintParser
 from csvpath.matching.util.lark_print_parser import (
@@ -17,6 +20,30 @@ MISMATCH = "tests/test_resources/header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
+    def test_function_log_printer1(self):
+        buf = buffer()
+        h = logging.StreamHandler(buf)
+        path = CsvPath()
+        logger = LogUtility.logger(path, "info")
+        path.logger = logger
+        path.logger.addHandler(h)
+        printer = LogPrinter(path.logger)
+        printer.print_to(None, "fish!")
+        printer.print_to("info", "cat!")
+        printer.print_to("what?", "bear!")
+        printer.print_to("debug", "deer!")
+        printer.print_to("warn", "mouse!")
+        printer.print_to("error", "ox!")
+        path.logger.removeHandler(h)
+        text = buf.getvalue()
+        buf.close()
+        assert text.find("fish!") > -1
+        assert text.find("cat!") > -1
+        assert text.find("bear!") > -1
+        assert text.find("deer!") == -1
+        assert text.find("ox!") > -1
+        assert text.find("mouse!") > -1
+
     def test_print_get_runtime_data_from_results(self):
         print("")
         paths = CsvPaths()
