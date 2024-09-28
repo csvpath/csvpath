@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import IO
 import sys
 from .config_exception import ConfigurationException
 
@@ -46,12 +47,21 @@ class StdOutPrinter(Printer):
     def print(self, string: str) -> None:
         self.print_to(None, string)
 
-    def print_to(self, name: str, string: str) -> None:
+    def print_to(self, name: str, string: str | IO) -> None:
         self._count += 1
         if name == Printer.ERROR:
             print(string, file=sys.stderr)  # pragma: no cover
         elif name:
-            print(string, file=name)  # pragma: no cover
+            #
+            # if the str/file is writable we let print do its thing. otherwise
+            # we can assume some other printer is doing something with named
+            # printouts. since we're configured we'll just prepend [name] to
+            # indicate the type of string we're printing.
+            #
+            if hasattr(name, "write"):
+                print(string, file=name)
+            else:
+                print(f"[{name}] {string}")
         else:
             print(string)
         self._last_line = string

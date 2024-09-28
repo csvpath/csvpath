@@ -3,10 +3,32 @@
 
 Prints to std.out and/or to a <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/util/printer.py'>Printer object</a>.
 
-`print()` is helpful for debugging and validation. Print can also be a quick way to create an output .csv or in another way capture the data generated during a run.
+`print()` is helpful for debugging and validation. Print can also be a quick way to create an output CSV file or in another way capture the data generated during a run.
 
-Print takes a string argument and, optionally, a function. The function is executed after the printout.
+Print takes two arguments:
+- A string to print
+- Either a:
+    - Function to execute (call matches()) after the printout happens
+    - An Equality to execute after the printout happens
+    - A Term that indicates a print stream/file/label separating one type of printing from another (note that at this time, while a `Printer` may support printing to files or other writables, the `print()` does not have a way to spin up a file to hand to the printer).
 
+You can retrieve individual printout sets from `Result` objects like this:
+
+```python
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.paths_manager.add_named_paths(
+            name="print_test",
+            paths=["""$[3][
+                        print("my msg", "error")
+                        print("my other msg", "foo-bar")
+                   ]"""]
+        )
+        paths.fast_forward_paths(pathsname="print_test", filename="food")
+        results = paths.results_manager.get_named_results("print_test")
+        printout:list = results[0].get_printout_by_name("error")
+        printout:list = results[0].get_printout_by_name("foo-bar")
+```
 
 ## Variables
 

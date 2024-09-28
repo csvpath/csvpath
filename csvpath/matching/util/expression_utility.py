@@ -83,20 +83,21 @@ class ExpressionUtility:
             v = int(v)
             return v
         except ValueError:
-            if v.find(",") == len(v) - 3:
-                a = v[0 : v.find(",")]
-                a += "."
-                a += v[v.find(",") + 1 :]
-                v = a
-            v = v.replace(",", "")
-            v = v.replace(";", "")
-            v = v.replace("$", "")
-            v = v.replace("€", "")
-            v = v.replace("£", "")
-            if f"{v}".find(".") > -1:
-                v = float(v)
-            # if this doesn't work, handle upstack
-            return int(v)
+            pass
+        if v.find(",") == len(v) - 3:
+            a = v[0 : v.find(",")]
+            a += "."
+            a += v[v.find(",") + 1 :]
+            v = a
+        v = v.replace(",", "")
+        v = v.replace(";", "")
+        v = v.replace("$", "")
+        v = v.replace("€", "")
+        v = v.replace("£", "")
+        if f"{v}".find(".") > -1:
+            v = float(v)
+        # if this doesn't work, handle the error upstack
+        return int(v)
 
     @classmethod
     def to_float(cls, v: Any) -> float:

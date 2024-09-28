@@ -35,7 +35,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @property
     def variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
-        return self.csvpath.variables
+        return self.csvpath.variables  # pragma: no cover
 
     @property
     def all_variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
@@ -47,7 +47,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @paths_name.setter
     def paths_name(self, paths_name: str) -> None:
-        self._paths_name = paths_name
+        self._paths_name = paths_name  # pragma: no cover
 
     @property
     def file_name(self) -> str:  # pylint: disable=C0116
@@ -55,7 +55,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @file_name.setter
     def file_name(self, file_name: str) -> None:
-        self._file_name = file_name
+        self._file_name = file_name  # pragma: no cover
 
     # ==========================
     # lines collecting methods
@@ -76,7 +76,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     def __len__(self) -> int:
         if self._lines is None:
-            self._lines = []
+            self._lines = []  # pragma: no cover
         return len(self._lines)
 
     # ==========================
@@ -97,14 +97,14 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @property
     def errors_count(self) -> int:  # pylint: disable=C0116
-        return len(self._errors) if self._errors else 0
+        return len(self._errors)
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         self._errors.append(error)
 
     @property
     def has_errors(self) -> bool:  # pylint: disable=C0116
-        return len(self._errors) > 0
+        return self.errors_count > 0
 
     @property
     def is_valid(self) -> bool:  # pylint: disable=C0116

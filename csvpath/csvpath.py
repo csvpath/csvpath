@@ -372,7 +372,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     def print_to(self, name: str, string: str) -> None:
         for p in self.printers:
-            p.print_to(string)
+            p.print_to(name, string)
 
     @property
     def last_line(self):

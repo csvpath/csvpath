@@ -25,11 +25,11 @@ Checks if the first value, stringified, starts with the second value. The values
 
 ### strip(value)
 
-Same as you would expect.
+Same as you would expect from the Python function.
 
 ### substring(value, int)
 
-Substring starting from left and including the number of characters indicated. The value is stringified, so you can substring essentially anything.
+Substring starting from left and including the number of characters indicated. The value is stringified, so you can substring essentially anything. Unlike Python, for clarity CsvPath does not allow negatives.
 
 ### upper(value)
 

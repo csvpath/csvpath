@@ -4,18 +4,21 @@ from ..function_focus import ValueProducer
 
 
 class Substring(ValueProducer):
-    """returns a substring of a value from 0 to N"""
+    """returns a substring of a value from 0 to N.
+    unlike Python we do not allow negatives."""
 
     def check_valid(self) -> None:
         self.validate_two_args()
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        i = self.children[0].right.to_value(skip=skip)
+        i = self._value_two(skip=skip)
         if not isinstance(i, int):
-            raise ChildrenException("substring()'s 2nd argument must be an int")
+            raise ChildrenException("substring()'s 2nd argument must be a positive int")
         i = int(i)
-        string = self.children[0].left.to_value(skip=skip)
+        if i < 0:
+            raise ChildrenException("substring()'s 2nd argument must be a positive int")
+        string = self._value_one(skip=skip)
         string = f"{string}"
         if i >= len(string):
             self.value = string
@@ -23,5 +26,4 @@ class Substring(ValueProducer):
             self.value = string[0:i]
 
     def _decide_match(self, skip=None) -> None:
-        v = self.to_value(skip=skip)
-        self.match = v is not None
+        self.match = self.default_match()

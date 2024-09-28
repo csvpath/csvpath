@@ -12,7 +12,6 @@ from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
 from .strings.regex import Regex
 from .strings.concat import Concat
-from .strings.num import Num
 from .strings.metaphone import Metaphone
 from .counting.count import Count
 from .counting.counter import Counter
@@ -78,7 +77,7 @@ from .variables.put import Put
 from .variables.track import Track
 from .misc.random import Random
 from .misc.nonef import Nonef
-from .misc.intf import Int
+from .misc.intf import Int, Num, Float
 from .misc.importf import Import
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.failed import Failed
@@ -312,6 +311,8 @@ class FunctionFactory:
             f = Replace(matcher, name, child)
         elif name == "int":
             f = Int(matcher, name, child)
+        elif name == "float":
+            f = Float(matcher, name, child)
         elif name == "and":
             f = And(matcher, name, child)
         elif name == "track":
