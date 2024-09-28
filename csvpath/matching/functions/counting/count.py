@@ -36,7 +36,7 @@ class Count(ValueProducer):
     def matches(self, *, skip=None) -> bool:
         # we get a value because that's how we are sure to count
         self.to_value(skip=skip)
-        return self._noop_match()  # pragma: no cover
+        return self.default_match()  # pragma: no cover
 
     def _get_match_count(self) -> int:
         if not self.matcher or not self.matcher.csvpath:

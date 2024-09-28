@@ -14,4 +14,4 @@ class Nonef(ValueProducer):
         return None
 
     def matches(self, *, skip=None) -> bool:  # pragma: no cover
-        return self._noop_match()
+        return self.default_match()

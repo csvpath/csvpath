@@ -24,7 +24,7 @@ class Import(SideEffect):
 
     def matches(self, *, skip=None) -> bool:
         self._inject()
-        return self._noop_match()  # pragma: no cover
+        return self.default_match()  # pragma: no cover
 
     def _inject(self) -> None:
         if self._imported is False:

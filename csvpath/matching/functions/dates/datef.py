@@ -22,4 +22,5 @@ class Date(ValueProducer):
         self.value = d
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self._noop_match()  # pragma: no cover
+        self.match = self.default_match()  # pragma: no cover
+        # self.match = self._noop_match()  # pragma: no cover

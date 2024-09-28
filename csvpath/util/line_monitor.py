@@ -186,7 +186,7 @@ class LineMonitor:
         self._data_line_count = None
         self._data_line_number = None
 
-    def is_unset(self) -> bool:
+    def is_unset(self) -> bool:  # pragma: no cover
         return not all(
             self._physical_end_line_number,
             self._physical_line_number,

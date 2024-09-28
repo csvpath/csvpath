@@ -93,13 +93,13 @@ class Jinjaf(SideEffect):
         tokens["csvpath"] = cs
 
     def _plural(self, word):
-        return self._engine.plural(word)
+        return self._engine.plural(word)  # pragma: no cover
 
     def _cap(self, word):
-        return word.capitalize()
+        return word.capitalize()  # pragma: no cover
 
     def _article(self, word):
-        return self._engine.a(word)
+        return self._engine.a(word)  # pragma: no cover
 
     def _transform(self, content: str, tokens: Dict[str, str] = None) -> str:
         from jinja2 import Template, TemplateError  # pylint: disable=C0415

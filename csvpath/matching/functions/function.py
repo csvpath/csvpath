@@ -59,7 +59,7 @@ class Function(Validation):
         if not skip:
             skip = []
         if self in skip:  # pragma: no cover
-            return self._noop_match()
+            return self.default_match()
         if self.do_frozen():
             # doing frozen means not doing anything else. this is the
             # inverse of onmatch and other qualifiers. but it makes sense

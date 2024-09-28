@@ -24,4 +24,4 @@ class Now(ValueProducer):
         self.value = xs
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self._noop_match()  # pragma: no cover
+        self.match = self.default_match()  # pragma: no cover

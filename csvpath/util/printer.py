@@ -75,7 +75,7 @@ class TestPrinter(Printer):
 
     @property
     def lines_printed(self) -> int:
-        return len(self.lines)
+        return len(self.lines)  # pragma: no cover
 
     @property
     def last_line(self) -> str:
@@ -94,7 +94,7 @@ class LogPrinter(StdOutPrinter):
     def __init__(self, logger):
         self._logger = logger
         if logger is None:
-            raise ConfigurationException("Logger cannot be None")
+            raise ConfigurationException("Logger cannot be None")  # pragma: no cover
         super().__init__()
 
     def print_to(self, name: str, msg: str) -> None:
