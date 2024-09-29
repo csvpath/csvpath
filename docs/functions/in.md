@@ -1,7 +1,25 @@
 
 # In
 
-Returns True to matches() when a calculated value matches to values in a delimited string. The calculated value is a term, variable, header, or function. The delimited string is values separated by pipes.
+`in()` compares its first argument to all the other arguments, returning a match if arg one is equal to any of the others.
+
+The first argument can be any match component except assignments and when/do statements.
+
+The following arguments can be likewise, with the additional test of ant string Terms being considered as pipe delimited. This means you can test a value against a string of pipe delimited possible matches like this:
+
+```bash
+    in(#firstname, "John|Mary|Jim|Sally")
+```
+
+This match component checks if the value of the `#firstname` header is in the list John, Mary, Jim, or Sally.
+
+You can also test against a mixed set of value like this:
+
+```bash
+    in(#firstname, "John|Mary", #aunt, #uncle, @friends)
+```
+
+In this case the `in()` is checking if the line's `#firstname` value is either in the list [John, Mary] or is the value of the `#aunt` header or is the value of the `#uncle` header or equals the variable `@friends`.
 
 ## Examples
 
