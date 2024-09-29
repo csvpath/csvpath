@@ -7,6 +7,14 @@ Comments are delimited with tilde, the `~` character. They have several closely 
 - Shutting down ("commenting out") functionality that is not wanted at a certain moment, but which the cvspath author doesn't want to delete
 - Switching on settings
 
+All these functions are completely optional.
+
+- [Inner and outer](#inner)
+- [Metadata fields](#metadata)
+- [Settings](#settings)
+- [Identity](#identity)
+
+<a name="inner"></a>
 ## Inner and outer
 
 There are two types of comments:
@@ -17,6 +25,7 @@ Outer comments provide documentation, create metadata, and set settings. They do
 
 Inner comments provide internal documentation and can comment-out match components. Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator.
 
+<a name="metadata"></a>
 ## Metadata fields
 
 Outer comments can create metadata fields that live in a `CsvPath` instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next coloned word is the value of the field.
@@ -50,6 +59,7 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
         print(f"metadata is here: {r.csvpath.metadata} or, alternatively, here: {r.metadata}")
 ```
 
+<a name="settings"></a>
 ## Settings
 
 Metadata fields can be used to control certain run modes:
@@ -67,6 +77,7 @@ Those keys are found and the metadata settings happen after the `parse()` method
 
 Metadata driven settings are effective only for the csvpath they are declared in. When you are using a `CsvPaths` instance to manage a multi-`CsvPath` instance run these metadata fields give you a way to configure different behavior for each `CsvPath` in the run.
 
+<a name="identity"></a>
 ## Identity
 
 Every csvpath may have an optional identity string. The `identity` property is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
