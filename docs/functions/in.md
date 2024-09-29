@@ -5,7 +5,7 @@
 
 The first argument can be any match component except assignments and when/do statements.
 
-The following arguments can be likewise, with the additional test of ant string Terms being considered as pipe delimited. This means you can test a value against a string of pipe delimited possible matches like this:
+The following arguments can be likewise. Additionally, `in()` tests any arguments that are string Terms as pipe delimited lists of values. This means you can test a value against a string of pipe delimited possible matches like this:
 
 ```bash
     in(#firstname, "John|Mary|Jim|Sally")
