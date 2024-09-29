@@ -38,6 +38,18 @@ As you can see, line breaks between fields are not needed. If you want to stop a
 
 In this example the `title` field equals `Declaration`. The word DRAFT is outside the metadata fields. However, the whole original comment is also captured as its own `original_comment` field. This need to capture a field separated from following comment content may also occur if you have comments above and below the csvpath.
 
+You can use metadata field two ways:
+- Programmatically by referencing your `CsvPath` instance's `metadata` property
+- Within your csvpath's `print()` statements using print references in the form `$.metadata.title`
+
+When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances programmatic access to your CsvPath instances' metadata is through the results manager. For example:
+
+```python
+    results = csvpaths.results_manager.get_named_results("food")
+    for r in results:
+        print(f"metadata is here: {r.csvpath.metadata} or, alternatively, here: {r.metadata}")
+```
+
 ## Identity
 
 Every csvpath may have an optional identity string. The identity is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
@@ -68,7 +80,7 @@ If each of these has its own cvspath, the paths would be identified like this:
     path3.identity == "my third experiment"
 ```
 
-The identity field is used rarely, at this time, but could come into play in a reference between csvpaths. See the reference docs for details.
+The identity field is used rarely, at this time, but could come into play in a reference between csvpaths. See the reference docs for details. It can also be used to pull results from the ResultsManager by identity using the `get_specific_named_result` method.
 
 
 
