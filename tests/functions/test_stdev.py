@@ -44,6 +44,7 @@ class TestFunctionsStdev(unittest.TestCase):
 
     def test_function_stdev3(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_stdev3")
         path.parse(
             f"""${COR}[1-10][

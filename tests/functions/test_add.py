@@ -67,6 +67,7 @@ class TestFunctionsAdd(unittest.TestCase):
     def test_function_add_error1(self):
         path = CsvPath()
         Save._save(path, "test_function_add_error1")
+        path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(ChildrenException):
             path.parse(
                 f"""

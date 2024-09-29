@@ -103,6 +103,7 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_bad_names1(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(VisitError):
             path.parse(
                 f"""${PATH}[*][

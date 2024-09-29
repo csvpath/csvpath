@@ -58,9 +58,11 @@ class TestPrint(unittest.TestCase):
         q = results[1].csvpath.quotechar
         assert len(results) == 2
         with pytest.raises(PrintParserException):
+            results[1].csvpath.config.csvpath_errors_policy = ["raise"]
             results[1].csvpath.delimiter = "#"
             parser._get_runtime_data_from_results(None, results)
         with pytest.raises(PrintParserException):
+            results[1].csvpath.config.csvpath_errors_policy = ["raise"]
             results[1].csvpath.quotechar = "#"
             parser._get_runtime_data_from_results(None, results)
         results[1].csvpath.delimiter = d

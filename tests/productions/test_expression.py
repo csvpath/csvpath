@@ -22,6 +22,7 @@ class TestExpressions(unittest.TestCase):
     def test_expression_errors1(self):
         """creates an error that rises to the CsvPath"""
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise", "stop", "fail", "collect"]
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         matcher = Matcher(csvpath=path, data="[yes()]")
         expr = Expression(matcher=matcher, name="dummy")
@@ -42,6 +43,7 @@ class TestExpressions(unittest.TestCase):
         """creates an error that is bubbled up to the CsvPaths's csvpath results"""
         paths = CsvPaths()
         path = paths.csvpath()
+        path.config.csvpath_errors_policy = ["raise", "stop", "fail", "collect"]
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         matcher = Matcher(csvpath=path, data="[yes()]")
         results = Result(csvpath=path, file_name="...", paths_name="......")

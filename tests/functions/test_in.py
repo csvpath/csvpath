@@ -229,6 +229,7 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_new_in6(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(MatchException):
             path.parse(
                 f""" ${FOOD}[1*] [

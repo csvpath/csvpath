@@ -23,6 +23,7 @@ class TestFunctionsSubstring(unittest.TestCase):
 
     def test_function_substring2(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_substring2")
         path.parse(
             f"""
@@ -61,6 +62,7 @@ class TestFunctionsSubstring(unittest.TestCase):
 
     def test_function_substring5(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_substring5")
         path.parse(
             f"""

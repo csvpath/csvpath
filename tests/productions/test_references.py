@@ -40,6 +40,7 @@ class TestReferences(unittest.TestCase):
 
     def test_reference_no_csvpaths(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         path.parse(
             f"""
             ${PATH}[1]

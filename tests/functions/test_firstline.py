@@ -88,6 +88,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
 
     def test_function_firstline5(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_firstline5")
         with pytest.raises(ChildrenException):
             path.parse(

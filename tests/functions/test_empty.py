@@ -115,6 +115,7 @@ class TestFunctionsEmpty(unittest.TestCase):
 
     def test_function_empty6(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         path.skip_blank_lines = False
         Save._save(path, "test_function_empty6")
         with pytest.raises(ChildrenException):

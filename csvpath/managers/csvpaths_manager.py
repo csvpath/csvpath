@@ -74,12 +74,20 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         self.csvpaths = csvpaths
 
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
+        for name in np:
+            if not isinstance(np[name], list):
+                ie = InputException("Named-path names must key a list of csvpath")
+                ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+                return
         self.named_paths = np  # pragma: no cover
+        self.csvpaths.logger.info(
+            "Set named-paths collection to %s groups of csvpaths", len(np)
+        )
 
     def add_named_paths_from_dir(self, *, directory: str, name: str = None) -> None:
         if directory is None:
             ie = InputException("Named paths collection name needed")
-            ErrorHandler(self.csvpaths).handle_error(ie)
+            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
         if os.path.isdir(directory):
             dlist = os.listdir(directory)
             base = directory
@@ -97,8 +105,8 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                     aname = self._name_from_name_part(p)
                 self.add_named_paths_from_file(name=aname, file_path=path)
         else:
-            ie = InputException("dirname must point to a directory")
-            ErrorHandler(self.csvpaths).handle_error(ie)
+            ie = InputException("Dirname must point to a directory")
+            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
 
     def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
@@ -133,7 +141,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                                  If you want to load a file use add_named_paths_from_file or
                                  set_named_paths_from_json."""
             )
-            ErrorHandler(self.csvpaths).handle_error(ie)
+            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
         self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
         if name in self.named_paths:
             for p in paths:
@@ -144,10 +152,12 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                     pass
                 else:
                     self.csvpaths.logger.debug("Adding %s to %s", p, name)
+                    """
                     if isinstance(self.named_paths[name], str):
                         ps = []
                         ps.append(self.named_paths[name])
                         self.named_paths[name] = ps
+                    """
                     self.named_paths[name].append(p)
         else:
             for _ in paths:

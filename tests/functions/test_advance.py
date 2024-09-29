@@ -38,6 +38,7 @@ class TestFunctionsAdvance(unittest.TestCase):
 
     def test_function_advance2(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         path.parse(f""" ${PATH}[1*] [ advance("please") ]""")
         with pytest.raises(ChildrenException):
             path.collect()
@@ -62,6 +63,7 @@ class TestFunctionsAdvance(unittest.TestCase):
 
     def test_function_advance_all2(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
         with pytest.raises(ChildrenException):
             path.collect()

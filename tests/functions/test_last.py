@@ -47,6 +47,7 @@ class TestFunctionsLast(unittest.TestCase):
 
     def test_function_last4(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_last4")
         path.parse(
             f"""${PATH}[*]
@@ -58,7 +59,6 @@ class TestFunctionsLast(unittest.TestCase):
                             ]
                    """
         )
-
         with pytest.raises(TypeError):
             path.collect()
             print(f"test_function_last4: path vars: {path.variables}")

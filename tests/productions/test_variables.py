@@ -29,6 +29,7 @@ class TestVariables(unittest.TestCase):
 
     def test_function_access_variable_tracking_values(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_access_variable_tracking_values")
         path.parse(
             f"""${PATH}[*]
@@ -44,7 +45,6 @@ class TestVariables(unittest.TestCase):
                    """
         )
         # was:  last() -> @lastname.Bat = "fred"
-
         with pytest.raises(TypeError):
             path.collect()
             print(

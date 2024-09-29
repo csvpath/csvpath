@@ -81,6 +81,7 @@ class TestFunctionsBetween(unittest.TestCase):
     def test_function_between_datetimes3(self):
         print()
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_between_datetimes3")
         with pytest.raises(ValueError):
             path.parse(

@@ -57,6 +57,7 @@ class TestConfig(unittest.TestCase):
         assert config is path.config
 
         print("")
+        path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(ConfigurationException):
             config.set_config_path_and_reload("tests/test_resources/bad_config.ini")
 

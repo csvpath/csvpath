@@ -114,7 +114,9 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
                 j = json.load(f)
                 self.named_files = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            ErrorHandler(self.csvpaths).handle_error(ex)
+            print("before")
+            ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
+            print("after")
 
     def add_named_files_from_dir(self, dirname: str):
         dlist = os.listdir(dirname)

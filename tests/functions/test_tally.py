@@ -40,6 +40,7 @@ class TestFunctionsTally(unittest.TestCase):
 
     def test_function_tally4(self):
         path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_tally4")
         path.parse(
             f"""${PATH}[*]

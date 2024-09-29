@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from csvpath import CsvPaths
 
 DIR = "tests/test_resources/named_files"
@@ -21,6 +22,14 @@ class TestFilesManager(unittest.TestCase):
         fm.set_named_files_from_json(JSON)
         assert fm.named_files
         assert len(fm.named_files) == 2
+
+    def test_file_mgr_json2(self):
+        print("")
+        paths = CsvPaths()
+        paths.config.csvpaths_errors_policy = ["raise"]
+        fm = paths.file_manager
+        with pytest.raises(FileNotFoundError):
+            fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):
         print("")

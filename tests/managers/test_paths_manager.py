@@ -8,6 +8,27 @@ JSON = "tests/test_resources/named_paths.json"
 
 
 class TestPathsManager(unittest.TestCase):
+    def test_named_paths_set_named_paths1(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="test", path="tests/test_resources/test.csv"
+        )
+        settings = {}
+        settings["settings"] = [
+            """$[1][ yes() print("Hi $.csvpath.line_number")]""",
+            """$[2][ yes() print("Hi $.csvpath.line_number")]""",
+            """$[3][ yes() print("Hi $.csvpath.line_number")]""",
+            """$[4][ yes() no() print("Hi $.csvpath.line_number")]""",
+        ]
+        paths.paths_manager.set_named_paths(settings)
+        paths.collect_paths(filename="test", pathsname="settings")
+        results = paths.results_manager.get_named_results("settings")
+        assert len(results) == 4
+        assert len(results[0]) == 1
+        assert len(results[1]) == 1
+        assert len(results[2]) == 1
+        assert len(results[3]) == 0
+
     def test_named_paths_json1(self):
         print("")
         paths = CsvPaths()
