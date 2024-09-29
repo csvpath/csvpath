@@ -1,0 +1,73 @@
+
+# Comments
+
+Comments are delimited with tilde, the `~` character. They have several closely related functions in CsvPath:
+- Providing documentation
+- Creating referenceable metadata in well-known and/or ad hoc fields
+- Shutting down ("commenting out") functionality that is not wanted at a certain moment, but which the cvspath author doesn't want to delete
+- Switching on settings
+
+## Inner and outer
+
+There are two types of comments:
+- Outer comments that are before and/or after the cvspath
+- Inner comments that sit between match components
+
+Outer comments set metadata and settings. They do not comment out functionality.
+
+Inner comments provide internal documentation and can comment-out match components. Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator.
+
+## Metadata fields
+
+Outer comments can create metadata fields that live in a CsvPath instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next coloned word is the value of the field.
+
+For example, to set author, description, and date fields you would do something like:
+
+```bash
+    ~ author: Anatila
+      description: This is my example csvpath. date: 1/1/2022
+    ~
+```
+
+As you can see, line breaks between fields are not needed. If you want to stop a metadata field but don't want to put another directly after it, add a stand-alone colon. For example:
+
+```bash
+    ~ When in the course of human events title: Declaration : DRAFT
+    ~
+In this example the `title` field equals `Declaration`. The word DRAFT is outside the metadata fields. However, the whole original comment is also captured as its own `original_comment` field. This need to capture a field separated from following comment content may also occur if you have comments above and below the csvpath.
+
+## Identity
+
+Every csvpath may have an optional identity string. The identity is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
+
+```bash
+    ~ ID: first_experiment ~
+```
+
+```bash
+    ~ Id: second_experiment ~
+```
+
+```bash
+    ~ name: my third experiment ~
+```
+
+If each of these has its own cvspath, the paths would be identified like this:
+
+```python
+    path1.identity == "first_experiment"
+```
+
+```python
+    path2.identity == "second_experiment"
+```
+
+```python
+    path3.identity == "my third experiment"
+```
+
+The identity field is used rarely, at this time, but could come into play in a reference between csvpaths. See the reference docs for details.
+
+
+
+
