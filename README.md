@@ -234,6 +234,8 @@ The name `Order Validation` is available in CsvPath's `metadata` property along 
 
 Note that the `CsvPath.identity` property takes the name of the ID or name given as metadata fields in comments. ID is preferred over name. The forms recognized are `ID`, `Id`, and `id`, with the same capitalization supported for name. `CsvPath.identity` is used to identify csvpaths within named-path csvpath sets. It is completely optional, but at times useful.
 
+You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/comments.md'>read more about comments and metadata here</a>.
+
 <a name="scanning"></a>
 # Scanning
 

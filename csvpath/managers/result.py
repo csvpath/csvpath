@@ -34,6 +34,10 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self.lines = lines
 
     @property
+    def metadata(self) -> Dict[str, Any]:  # pylint: disable=C0116
+        return self.csvpath.metadata  # pragma: no cover
+
+    @property
     def variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.variables  # pragma: no cover
 

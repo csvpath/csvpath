@@ -126,6 +126,9 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         if results and len(results) > 0:
             for r in results:
                 m = r.csvpath.metadata
+                #
+                # TODO: use m.identity
+                #
                 _id = m.get("id")
                 _id = _id or m.get("Id")
                 _id = _id or m.get("ID")
