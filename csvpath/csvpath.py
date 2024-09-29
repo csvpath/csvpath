@@ -457,7 +457,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if self.scanner.filename is None:
             raise FileException("Cannot proceed without a filename")
         self.get_total_lines_and_headers()
-        # return self.scanner
         return self
 
     def parse_named_path(self, name, disposably=False):

@@ -5,6 +5,28 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestComments(unittest.TestCase):
+    def test_comments_below(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ~ this is my path. logic: AND collect: no-matches : ~
+            ${PATH}[1*]
+            [
+                ~ this path is simple and so are its comments ~
+                push.onmatch("cnt", count_lines())
+                count.nocontrib() == 3 -> advance(2)
+            ]
+            ~ what about me? fizzbats! ~
+            """
+        )
+        print(f"path meta: {path.metadata}")
+        assert "collect" in path.metadata
+        assert path.metadata["collect"] == "no-matches"
+        assert "logic" in path.metadata
+        assert path.metadata["logic"] == "AND"
+        assert "original_comment" in path.metadata
+        assert path.metadata["original_comment"].find("fizzbats") > -1
+
     def test_comments1(self):
         path = CsvPath()
         path.parse(

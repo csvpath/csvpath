@@ -343,7 +343,7 @@ class FunctionFactory:
             f = PrintQueue(matcher, name, child)
         elif name in ["min_length", "max_length", "too_long", "too_short"]:
             f = MinMaxLength(matcher, name, child)
-        elif name in ["between", "inside", "beyond", "outside", "from_to"]:
+        elif name in ["between", "inside", "beyond", "outside", "from_to", "range"]:
             f = Between(matcher, name, child)
         elif name == "get":
             f = Get(matcher, name, child)

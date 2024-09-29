@@ -35,7 +35,7 @@ class Between(MatchDecider):
     # =====================
 
     def _between(self) -> bool:
-        if self.name in ["between", "inside", "from_to"]:
+        if self.name in ["between", "inside", "from_to", "range"]:
             return True
         if self.name in ["beyond", "outside"]:
             return False
@@ -84,7 +84,7 @@ class Between(MatchDecider):
     def _compare(self, high, med, low):
         between = self._between()
         if between:
-            if self.name == "from_to":
+            if self.name in ["range", "from_to"]:
                 return high >= med >= low
             else:
                 return high > med > low
