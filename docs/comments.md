@@ -94,7 +94,7 @@ Every csvpath may have an optional identity string. The `identity` property is s
     ~ name: my third experiment ~
 ```
 
-If each of these has its own cvspath, the paths would be identified like this:
+If each of these has its own cvspath, the paths would be programmatically identified in Python like this:
 
 ```python
     path1.identity == "first_experiment"
