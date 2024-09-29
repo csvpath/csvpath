@@ -37,19 +37,19 @@ class CsvPathsFileManager(ABC):
 
     @abstractmethod
     def get_named_file(self, name: str) -> str:  # pylint: disable=C0116
-        pass
+        """gets the file system path for the nickname"""
 
     @abstractmethod
     def remove_named_file(self, name: str) -> None:  # pylint: disable=C0116
-        pass
+        """removes the named-file by its nickname"""
 
     @abstractmethod
     def get_new_line_monitor(self, filename: str) -> LineMonitor:
-        pass
+        """gets a new LineMonitor prepopulated with cached counts"""
 
     @abstractmethod
     def get_original_headers(self, filename: str) -> List[str]:
-        pass
+        """gets the cached headers"""
 
 
 class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
@@ -128,7 +128,7 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
                 self.named_files[name] = path
-            else:
+            else:  # pragma: no cover
                 self.csvpaths.logger.debug(
                     "Skipping %s because extension not in accept list",
                     os.path.join(base, p),

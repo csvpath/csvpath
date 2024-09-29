@@ -21,7 +21,7 @@ class Matcher:  # pylint: disable=R0902
             # this could be a dry-run or unit testing
             pass
         if not data:
-            raise MatchException(f"Inputs needed: data: {data}, headers: {headers}")
+            raise MatchException(f"Input needed: data: {data}")  # pragma: no cover
         self.path = data
         self.csvpath = csvpath
         self._line = line
@@ -54,7 +54,7 @@ class Matcher:  # pylint: disable=R0902
 
     @property
     def AND(self) -> bool:
-        return self._AND
+        return self._AND  # pragma: no cover
 
     @AND.setter
     def AND(self, a: bool) -> None:
@@ -92,17 +92,6 @@ class Matcher:  # pylint: disable=R0902
         if i < 0 or i >= len(self.csvpath.headers):
             return None
         return self.csvpath.headers[i]
-
-    def header_value(self, name: str) -> Any:
-        """returns the value of a header name in the current line for the current
-        headers. remember that a header_reset() can change the indexes mid file."""
-        n = self.header_index(name)
-        ret = None
-        if n is None:
-            pass
-        else:
-            ret = self.line[n]
-        return ret
 
     def _do_lasts(self) -> None:
         for et in self.expressions:
@@ -190,8 +179,10 @@ class Matcher:  # pylint: disable=R0902
             # decisons.
             #
             if et[1] is True:
+                # these are due to the onmatch qualifier doing its own matching cycle
                 ret = True
             elif et[1] is False:
+                # these are due to the onmatch qualifier doing its own matching cycle
                 ret = False
             elif et[0].matches(skip=[]) is False:
                 et[1] = False
@@ -237,8 +228,6 @@ class Matcher:  # pylint: disable=R0902
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         """see CsvPath.get_variable"""
-        if self.csvpath is None:
-            return None
         return self.csvpath.get_variable(
             name, tracking=tracking, set_if_none=set_if_none
         )

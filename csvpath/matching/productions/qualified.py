@@ -266,8 +266,14 @@ class Qualified:
             m = e[1] is self.default_match() or e[0].matches(
                 skip=[self]
             )  # pylint: disable=E1101
+            # updating the [expression, bool] unit so that matcher knows it
+            # doesn't have to evaluate the expression another time
             if not m:
+                e[1] = False
                 return not self.default_match()
+            elif m is True:
+                if not e[0] == ExpressionUtility.get_my_expression(self):
+                    e[1] = True
         #
         # when we know there's a match we need to propagate it asap
         # in case this or a later onmatched match component wants to use the
