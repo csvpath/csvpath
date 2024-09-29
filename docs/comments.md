@@ -108,7 +108,7 @@ If each of these has its own cvspath, the paths would be programmatically identi
     path3.identity == "my third experiment"
 ```
 
-The identity field is used rarely, at this time, but could come into play in a reference between csvpaths. See the reference docs for details. It can also be used to pull results from the ResultsManager by identity using the `get_specific_named_result` method.
+The identity field is used rarely, at this time, but could come into play in a reference between csvpaths. See the reference docs for details. It can also be used to pull results from the ResultsManager by identity using the `get_specific_named_result` method. This is potentially important because the results manager manages sets of csvpaths by name, but the results of each csvpath in the set is distinct to that csvpath run in a single-use `CsvPath` instance.
 
 
 
