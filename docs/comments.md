@@ -34,6 +34,8 @@ As you can see, line breaks between fields are not needed. If you want to stop a
 ```bash
     ~ When in the course of human events title: Declaration : DRAFT
     ~
+```
+
 In this example the `title` field equals `Declaration`. The word DRAFT is outside the metadata fields. However, the whole original comment is also captured as its own `original_comment` field. This need to capture a field separated from following comment content may also occur if you have comments above and below the csvpath.
 
 ## Identity
