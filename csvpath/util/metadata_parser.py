@@ -97,7 +97,7 @@ class MetadataParser:
                     metafield = None
                 metaname = current_word.strip()
                 current_word = ""
-            elif c.isalnum():
+            elif c.isalnum() or c == "-" or c == "_":
                 current_word += c
                 if metaname is not None:
                     if metafield is None:

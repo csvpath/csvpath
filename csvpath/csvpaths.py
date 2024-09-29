@@ -256,6 +256,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # we strip comments from above the path so we need to extract them first
         path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
         self.logger.debug("Csvpath after metadata extract: %s", path)
+        # update the settings using the metadata fields we just collected
+        csvpath.update_settings_from_metadata()
         f = path.find("[")
         self.logger.debug("Csvpath matching part starts at char # %s", f)
         apath = f"${file}{path[f:]}"

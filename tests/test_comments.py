@@ -5,6 +5,32 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestComments(unittest.TestCase):
+    def test_update_settings_from_metadata(self):
+        path = CsvPath()
+        assert path.OR is False
+        assert path.collect_when_not_matched is False
+        assert path.has_default_printer is True
+        path.parse(
+            f"""
+            ~ logic-mode: OR
+              match-mode: no-matches
+              print-mode: default-off
+            ~
+            ${PATH}[1*]
+            [
+                ~ this path is simple and so are its comments ~
+                yes()
+            ]
+            """
+        )
+        print(f"path meta: {path.metadata}")
+        assert "logic-mode" in path.metadata
+        assert "match-mode" in path.metadata
+        assert "print-mode" in path.metadata
+        assert path.OR is True
+        assert path.collect_when_not_matched is True
+        assert path.has_default_printer is False
+
     def test_comments_below(self):
         path = CsvPath()
         path.parse(

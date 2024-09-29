@@ -50,9 +50,24 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
         print(f"metadata is here: {r.csvpath.metadata} or, alternatively, here: {r.metadata}")
 ```
 
+## Settings
+
+Metadata fields can be used to control certain run modes:
+- `logic-mode` -- sets the CsvPath instance to operate in AND or OR mode
+- `match-mode` -- instructs the CsvPath instance to return matches or lines that did not match
+- `print-mode` -- determines if the printouts from `print()` go to the terminal's standard out, or not
+
+The values for each are:
+
+- `logic-mode` == `OR` or `AND` (`AND` is the default)
+- `match-mode` == `no-matches` or `matches` (`matches` is the default)
+- `print-mode` == `default-off` or `default-on` (`default-on` is the default)
+
+If those keys are found, the metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` process the file.
+
 ## Identity
 
-Every csvpath may have an optional identity string. The identity is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
+Every csvpath may have an optional identity string. The `identity` property is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
 
 ```bash
     ~ ID: first_experiment ~

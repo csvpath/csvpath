@@ -366,6 +366,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def set_printers(self, printers: List) -> None:  # pylint: disable=C0116
         self.printers = printers
 
+    @property
+    def has_default_printer(self) -> bool:
+        if not self.printers:
+            self.printers = []
+        for i, p in enumerate(self.printers):
+            if isinstance(p, StdOutPrinter):
+                return True
+        return False
+
     def print(self, string: str) -> None:  # pylint: disable=C0116
         for p in self.printers:
             p.print(string)
@@ -424,6 +433,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # the comments so we won't find them again
         #
         csvpath = MetadataParser(self).extract_metadata(instance=self, csvpath=csvpath)
+        self.update_settings_from_metadata()
         #
         #
         #
@@ -458,6 +468,65 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             raise FileException("Cannot proceed without a filename")
         self.get_total_lines_and_headers()
         return self
+
+    def update_settings_from_metadata(self) -> None:
+        #
+        # settings:
+        #   - logic-mode: AND | OR
+        #   - match-mode: matches | no-matches
+        #   - print-mode: default-off | default-on
+        #
+        self.update_logic_mode_if()
+        self.update_match_mode_if()
+        self.update_print_mode_if()
+
+    def update_logic_mode_if(self) -> None:
+        if self.metadata and "logic-mode" in self.metadata:
+            if f"{self.metadata['logic-mode']}".strip() == "AND":
+                self.AND = True
+            elif f"{self.metadata['logic-mode']}".strip() == "OR":
+                self.AND = False
+            else:
+                self.logger.warning(
+                    "Incorrect metadata field value 'logic-mode': %s",
+                    self.metadata["logic-mode"],
+                )
+
+    def update_match_mode_if(self) -> None:
+        if "match-mode" in self.metadata:
+            if f"{self.metadata['match-mode']}".strip() == "matches":
+                self.collect_when_not_matched = False
+            elif f"{self.metadata['match-mode']}".strip() == "no-matches":
+                self.collect_when_not_matched = True
+            else:
+                self.logger.warning(
+                    "Incorrect metadata field value 'match-mode': %s",
+                    self.metadata["match-mode"],
+                )
+
+    def update_print_mode_if(self) -> None:
+        if "print-mode" in self.metadata:
+            if f"{self.metadata['print-mode']}".strip() == "default-off":
+                remove = -1
+                for i, p in enumerate(self.printers):
+                    if isinstance(p, StdOutPrinter):
+                        remove = i
+                        break
+                if remove >= 0:
+                    del self.printers[remove]
+            elif f"{self.metadata['print-mode']}".strip() == "default-on":
+                done = False
+                for i, p in enumerate(self.printers):
+                    if isinstance(p, StdOutPrinter):
+                        done = True
+                        break
+                if not done:
+                    self.printers.append(StdOutPrinter())
+            else:
+                self.logger.warning(
+                    "Incorrect metadata field value 'print-mode': %s",
+                    self.metadata["print-mode"],
+                )
 
     def parse_named_path(self, name, disposably=False):
         """disposably is True when a Matcher is needed for some purpose other than
