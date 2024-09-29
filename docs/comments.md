@@ -13,13 +13,13 @@ There are two types of comments:
 - Outer comments that are before and/or after the cvspath
 - Inner comments that sit between match components
 
-Outer comments set metadata and settings. They do not comment out functionality.
+Outer comments provide documentation, create metadata, and set settings. They do not comment out functionality.
 
 Inner comments provide internal documentation and can comment-out match components. Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator.
 
 ## Metadata fields
 
-Outer comments can create metadata fields that live in a CsvPath instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next coloned word is the value of the field.
+Outer comments can create metadata fields that live in a `CsvPath` instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next coloned word is the value of the field.
 
 For example, to set author, description, and date fields you would do something like:
 
