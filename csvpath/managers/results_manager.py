@@ -125,19 +125,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         results = self.get_named_results(name)
         if results and len(results) > 0:
             for r in results:
-                m = r.csvpath.metadata
-                #
-                # TODO: use m.identity
-                #
-                _id = m.get("id")
-                _id = _id or m.get("Id")
-                _id = _id or m.get("ID")
-                if _id == name_or_id:
-                    return r
-                _id = m.get("name")
-                _id = _id or m.get("Name")
-                _id = _id or m.get("NAME")
-                if _id == name_or_id:
+                if name_or_id == r.csvpath.identity:
                     return r
         return None  # pragma: no cover
 
