@@ -63,7 +63,9 @@ The values for each are:
 - `match-mode` == `no-matches` or `matches` (`matches` is the default)
 - `print-mode` == `default-off` or `default-on` (`default-on` is the default)
 
-If those keys are found, the metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` process the file.
+Those keys are found and the metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` processes the file.
+
+Metadata driven settings are effective only for the csvpath they are declared in. When you are using a `CsvPaths` instance to manage a multi-`CsvPath` instance run these metadata fields give you a way to configure different behavior for each `CsvPath` in the run.
 
 ## Identity
 
