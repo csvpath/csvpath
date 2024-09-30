@@ -8,7 +8,7 @@ from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.reference import Reference
 from csvpath.matching.productions.equality import Equality
 from ..util.exceptions import ChildrenException
-from csvpath.util.config_exceptions import ConfigurationException
+from csvpath.util.config_exception import ConfigurationException
 
 #   from csvpath.util.log_utility import LogUtility
 #   LogUtility.log_brief_trace()
@@ -17,8 +17,8 @@ from csvpath.util.config_exceptions import ConfigurationException
 class Arg:
     def __init__(self, *, types: list[Type] = None, actuals: list[Type] = None):
         self.is_noneable = False
-        self.types: list[Type] = types
-        self.actuals: list[Type] = actuals
+        self.types: list[Type] = types or [None]
+        self.actuals: list[Type] = actuals or [None]
 
     def __str__(self) -> str:
         return f"Arg (types:{self._types}, actuals:{self._actuals})"
@@ -38,7 +38,8 @@ class Arg:
     @types.setter
     def types(self, ts: list[Type]) -> None:
         # should validate that ts is a list of classes but some research needed
-        if Any in ts:
+        # ts can be None if constructed bare.
+        if ts and Any in ts:
             ts.remove(Any)
             ts.append(Term)
             ts.append(Function)
@@ -46,7 +47,7 @@ class Arg:
             ts.append(Variable)
             ts.append(Reference)
             ts.append(Equality)
-        if None in ts:
+        if ts and None in ts:
             self.is_noneable = True
             ts.remove(None)
         self._types = ts
@@ -61,6 +62,25 @@ class Arg:
         #
         # handle Any and None
         self._actuals = acts
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not type(self) is type(other):
+            return False
+        if other.is_noneable != self.is_noneable:
+            return False
+        if len(self.types) != len(other.types):
+            return False
+        if len(self.actuals) != len(other.actuals):
+            return False
+        for t in self.types:
+            if t not in other.types:
+                return False
+        for a in self.actuals:
+            if a not in other.actuals:
+                return False
+        return True
 
 
 class ArgSet:
@@ -82,24 +102,54 @@ class ArgSet:
     def arg(self, *, types: list[Type] = None, actuals: list[Type] = None) -> Arg:
         arg = Arg(types=types, actuals=actuals)
         self._args.append(arg)
-        if len(self._args) > self._max_length:
-            self._max_length = len(self._args)
+        if len(self._args) > self.max_length and self.max_length != -1:
+            self.max_length = len(self._args)
         return arg
 
+    @property
+    def args(self) -> List[Arg]:
+        return self._args
+
+    @property
+    def args_count(self) -> int:
+        return len(self._args)
+
+    @property
+    def max_length(self) -> int:
+        return self._max_length
+
+    @max_length.setter
+    def max_length(self, ml: int) -> None:
+        self._max_length = ml
+
+    @property
+    def min_length(self) -> int:
+        return self._min_length
+
+    @min_length.setter
+    def min_length(self, ml: int) -> None:
+        self._min_length = ml
+
+    # just for fluency
     def length(self, maxlength=-1) -> Self:
-        self._max_length = maxlength
+        self.max_length = maxlength
         return self
 
     def _set_min_length(self):
-        self._min_length = 0
+        self.min_length = 0
+        foundnone = False
         for a in self._args:
             # print(f"Argset: set min: a: {a}: noneable: {a.is_noneable}")
             # none in types == no Matchable
             # none in actuals == None value returned by Matchable
             if a.is_noneable is True:
-                break
+                foundnone = True
             else:
                 # if None not in a._types:
+                if foundnone:
+                    raise ConfigurationException(
+                        "Cannot have a non-noneable arg after a nullable arg"
+                    )
                 self._min_length += 1
 
     # ----------------------------
@@ -108,10 +158,8 @@ class ArgSet:
 
     def _validate_length(self, siblings: List[Matchable]) -> None:
         self._set_min_length()
-        # print(f"argset.val_len: minlen: {self._min_length}, maxlen: {self._max_length}")
         s = len(siblings)
-        # print(f"argset.val_len: s: {s}")
-        if s < self._min_length or (s > len(self._args) and self._max_length != -1):
+        if s < self._min_length or (s > len(self._args) and self.max_length != -1):
             return False
             """
             msg = "Expected number of arguments is {self._min_length} to"
@@ -123,23 +171,50 @@ class ArgSet:
     def _pad_or_shrink(self, siblings: List[Matchable]) -> None:
         # already validated min_length. we know we have that
         # likewise max
-        if len(self._args) == 0:
-            for s in siblings:
-                a = self.arg()
-                a.types = [Any]  # we have a sib so None doesn't make sense
-                a.actuals = [Any, None]
+        if len(self._args) < len(siblings) and (
+            self.max_length == -1 or self.max_length >= len(siblings)
+        ):
+            lastindex = len(self._args) - 1
+            for i, s in enumerate(siblings):
+                print(f"   ...{i}: {s} @ {len(self._args)}: {self._args}")
+                if i >= len(self._args):
+                    a = self.arg()
+                    last = self._args[lastindex]
+                    print(f" pad or shrk: last: {last}")
+                    a.types = last.types  # we have a sib so None doesn't make sense
+                    a.actuals = last.actuals
+                    if not a.types:
+                        a.types = []
+                    if not a.actuals:
+                        a.actuals = []
+                    if None not in a.types:
+                        a.is_noneable = True
+        elif (
+            len(self._args) > len(siblings)
+            # and we're in-bounds
+            and len(siblings) > self.min_length
+            and len(siblings) <= self.max_length
+        ):
+            args = []
+            for a in range(0, len(siblings)):
+                args.append(a)
+            self._args = args
+            self.max_length = len(self._args)
 
     def validate(self, siblings: List[Matchable]) -> None:
-        # print(f"argset: validating: sibs: {siblings}")
         b = self._validate_length(siblings)
-        # print(f"argset: vlen b: {b}")
+        # print(f"argset: val len b: {b}, sibs: {siblings}")
         if b is False:
             return False
         self._pad_or_shrink(siblings)
         # print(f"argset: args: {self}")
         for i, s in enumerate(siblings):
-            # print(f"argset: s: {s}; types: {self._args[i].types}")
-            if not issubclass(s.__class__, tuple(self._args[i].types)):
+            print(f"argset: s: {s}; types: {self._args[i].types}")
+            t = tuple(self._args[i].types)
+            #
+            # really need issubclass?
+            #   not issubclass(s.__class__, t)
+            if not isinstance(s, t):
                 return False
         return True
 
@@ -168,12 +243,12 @@ class Args:
         return a
 
     def validate(self, siblings: List[Matchable]) -> None:
-        # print(f"args.validate: sibs: {siblings}")
+        print(f"args.validate: sibs: {siblings}")
         if len(self._argsets) == 0 and len(siblings) == 0:
             return
         if len(self._argsets[0]._args) == 0 and len(siblings) == 0:
             return
-        # print(f"args.validate: asets: {self._argsets}")
+        print(f"args.validate: asets: {self._argsets}")
         for aset in self._argsets:
             if aset.validate(siblings):
                 return

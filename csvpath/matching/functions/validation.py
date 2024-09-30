@@ -44,7 +44,6 @@ class Validation(Matchable):
                 raise ChildrenException(  # pragma: no cover
                     f"If {self.name}() has an argument it must be of type: {types}"
                 )
-    """
 
     def validate_zero_or_more_than_one_arg(
         self,
@@ -66,6 +65,7 @@ class Validation(Matchable):
             raise ChildrenException(
                 f"{self.name}() must have 0 or more than 1 argument"
             )
+    """
 
     def validate_zero_or_more_args(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
