@@ -1,12 +1,13 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class CountScans(ValueProducer):
     """the current number of lines scanned"""
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

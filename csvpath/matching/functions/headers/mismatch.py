@@ -1,12 +1,19 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
+from csvpath.matching.productions.term import Term
+from ..args import Args
 
 
 class Mismatch(ValueProducer):
     """tests the current headers against an expectation"""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg()
+        # self.validate_zero_or_one_arg()
+
+        args = Args()
+        args.argset(1).arg(types=[None, Term], actuals=[str])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

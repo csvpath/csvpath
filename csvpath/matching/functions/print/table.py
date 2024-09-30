@@ -3,13 +3,14 @@ import textwrap
 from tabulate import tabulate
 from csvpath.matching.util.print_parser import PrintParser
 from ..function_focus import SideEffect
+from ..args import Args
 
 
 class HeaderTable(SideEffect):
     """prints a header table"""
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -137,7 +138,7 @@ class RunTable(SideEffect):
     """prints a table of runtime data and any metadata available"""
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

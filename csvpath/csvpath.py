@@ -773,6 +773,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # this exception will blow up a standalone CsvPath but should be
         # caught and handled if there is a CsvPaths.
         #
+        # but when would it happen? shouldn't we just let Python's exception
+        # handle it should it really occur?
+        #
         if self.scanner.filename is None:
             raise FileException("There is no filename")
         with open(self.scanner.filename, "r", encoding="utf-8") as file:
@@ -783,6 +786,35 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self.track_line(line=line)
                 yield line
         self.finalize()
+
+    """
+    # potential replacement for method above
+    # this is a proposal for having the results of one csvpath feed into another
+    # in memory. the goal being to both shape the data chain-of-responsibility-style
+    # and also to narrow the data for performance gains.
+    #
+    # we would need:
+    #   - csvpaths.chain_result_data
+    #   - named-path added to csvpath metadata early-on
+    #
+    # caching this here for now. jury is out on if it should be added.
+    #
+    def _next_line_new(self) -> List[Any]:
+        self.logger.info("beginning to scan file: %s", self.scanner.filename)
+        if self.csvpath and self.csvpaths.chain_result_data:
+            rs = csvpath.result_manager.get_named_results(self.metadata["named-paths"])
+            for line in rs[len(rs)-1].lines:
+                yield line
+        elif:
+            with open(self.scanner.filename, "r", encoding="utf-8") as file:
+                reader = csv.reader(
+                    file, delimiter=self.delimiter, quotechar=self.quotechar
+                )
+                for line in reader:
+                    self.track_line(line=line)
+                    yield line
+        self.finalize()
+    """
 
     def finalize(self) -> None:
         """clears caches, etc. this is an internal method, but not _ because

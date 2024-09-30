@@ -1,12 +1,19 @@
 # pylint: disable=C0114
 from ..function_focus import SideEffect
+from csvpath.matching.functions.function import Function
+from ..args import Args
 
 
 class ResetHeaders(SideEffect):
     """resets the headers to be the values in the current row, rather then the 0th row"""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg()
+        # self.validate_zero_or_one_arg()
+
+        args = Args()
+        args.argset(1).arg(types=[None, Function], actuals=[None])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

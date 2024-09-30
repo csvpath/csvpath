@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 from ..function_focus import MatchDecider
+from ..args import Args
 
 
 class Fail(MatchDecider):
@@ -10,7 +11,7 @@ class Fail(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def override_frozen(self) -> bool:
@@ -37,7 +38,7 @@ class FailAll(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def override_frozen(self) -> bool:

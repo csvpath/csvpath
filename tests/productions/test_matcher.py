@@ -39,7 +39,7 @@ class TestMatcher(unittest.TestCase):
         path.fast_forward()
         assert path.matcher
         print(f"test_matcher_siblings: matcher: {path.matcher}")
-        sibs = path.matcher.expressions[0][0].children[0]._siblings()
+        sibs = path.matcher.expressions[0][0].children[0].siblings()
         assert sibs
         assert len(sibs) == 5
 

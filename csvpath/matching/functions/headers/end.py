@@ -1,14 +1,21 @@
 # pylint: disable=C0114
+from typing import Any
 from csvpath.matching.productions import Term
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class End(ValueProducer):
     """returns the value of the last header"""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg([Term])
+        # self.validate_zero_or_one_arg([Term])
+
+        args = Args()
+        args.argset(1).arg(types=[None, Any], actuals=[int])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

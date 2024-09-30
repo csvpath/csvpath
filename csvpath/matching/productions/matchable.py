@@ -2,6 +2,7 @@
 from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
+from ..util.exceptions import ChildrenException
 
 
 class Matchable(Qualified):
@@ -123,14 +124,16 @@ class Matchable(Qualified):
         # with the current parse tree this shouldn't happen
         return None
 
-    def _siblings(self) -> list:
-        if len(self.children) and hasattr(self.children[0], "op"):
+    def siblings(self) -> list:
+        if len(self.children) == 0:
+            return []
+        if len(self.children) == 1 and hasattr(self.children[0], "op"):
             return self.children[0].commas_to_list()
-        else:
-            self.matcher.csvpath.error(
-                "Cannot get siblings. children[0] is not an Equality"
-            )
-        return None
+        if len(self.children) == 1:
+            return [self.children[0]]
+        raise ChildrenException(
+            f"Unexpected number of children, {len(self.children)}, in {self.name}"
+        )
 
     def default_match(self) -> bool:
         return self.matcher._AND

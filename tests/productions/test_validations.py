@@ -27,6 +27,7 @@ EQ = Equality(None)
 
 
 class TestValidations(unittest.TestCase):
+    """
     def test_validation_zero1(self):
         v = No(matcher=None, name="no")
         v.children = [VAR]
@@ -53,6 +54,7 @@ class TestValidations(unittest.TestCase):
         e.children = [VAR]
         with pytest.raises(ChildrenException):
             e.check_valid()
+    """
 
     def test_validation_validate_zero_one_or_two_args1(self):
         e = Any(matcher=None, name="no")

@@ -1,12 +1,21 @@
 # pylint: disable=C0114
 from ..function_focus import MatchDecider
+from ..args import Args
+from csvpath.matching.productions.variable import Variable
+from csvpath.matching.functions.function import Function
+from csvpath.matching.productions.equality import Equality
 
 
 class Last(MatchDecider):
     """matches on the last line that will be scanned. last() will always run."""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg()
+        # self.validate_zero_or_one_arg()
+
+        args = Args()
+        args.argset(1).arg(types=[None, Function, Variable, Equality], actuals=[None])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def override_frozen(self) -> bool:

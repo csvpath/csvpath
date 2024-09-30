@@ -225,6 +225,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         for path in paths:
             csvpath = self.csvpath()
             result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
+            # casting a broad net because if "raise" not in the error policy we
+            # want to never fail during a run
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)

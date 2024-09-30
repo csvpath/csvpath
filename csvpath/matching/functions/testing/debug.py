@@ -1,10 +1,16 @@
 # pylint: disable=C0114
 import datetime
 import logging
+from typing import Any
 from ..function_focus import SideEffect
 from csvpath.util.log_utility import LogUtility
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Equality
+from csvpath.matching.productions.term import Term
+from csvpath.matching.productions.variable import Variable
+from csvpath.matching.functions.function import Function
+from csvpath.matching.productions.header import Header
+from ..args import Args
 
 
 class Log(SideEffect):
@@ -37,7 +43,11 @@ class Debug(SideEffect):
     """sets the logging level"""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg()
+        args = Args()
+        args.argset(1).arg(
+            types=[None, Term, Function, Variable, Header], actuals=[None, str]
+        )
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -57,7 +67,11 @@ class Debug(SideEffect):
 
 class BriefStackTrace(SideEffect):
     def check_valid(self) -> None:
-        self.validate_zero_or_one_arg()
+        args = Args()
+        args.argset(1).arg(
+            types=[None, Term, Function, Variable, Header], actuals=[None, str]
+        )
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -80,7 +94,7 @@ class BriefStackTrace(SideEffect):
 
 class VoteStack(SideEffect):
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -105,7 +119,7 @@ class VoteStack(SideEffect):
 
 class DoWhenStack(SideEffect):
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:

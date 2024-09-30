@@ -2,6 +2,7 @@
 from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..args import Args
 
 
 class Counter(ValueProducer):
@@ -12,7 +13,12 @@ class Counter(ValueProducer):
     """
 
     def check_valid(self) -> None:  # pylint: disable=W0246
-        self.validate_zero_or_one_arg()
+        # self.validate_zero_or_one_arg()
+
+        args = Args()
+        args.argset(1).arg(types=[None, Any], actuals=[int])
+        args.validate(self.siblings())
+
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:

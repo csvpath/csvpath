@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 from ..function_focus import MatchDecider
+from ..args import Args
 
 
 class AfterBlank(MatchDecider):
@@ -7,7 +8,7 @@ class AfterBlank(MatchDecider):
     physical line was blank or had no data values"""
 
     def check_valid(self) -> None:
-        self.validate_zero_args()
+        Args().validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
