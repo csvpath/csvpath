@@ -5,6 +5,7 @@ from csvpath.matching.productions import Equality, Variable, Term, Header, Match
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
 from ..function import Function
+from ..args import Args
 
 
 class MinMax(ValueProducer):
@@ -78,8 +79,12 @@ class Min(MinMax):
     """matches when its value is the smallest"""
 
     def check_valid(self) -> None:
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -98,8 +103,11 @@ class Max(MinMax):
     """matches when its value is the largest"""
 
     def check_valid(self) -> None:
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -118,8 +126,11 @@ class Average(MinMax):
     """returns the running average"""
 
     def check_valid(self) -> None:
-        types = [Variable, Term, Header, Function]
-        self.validate_one_or_two_args(one=types, left=types, right=types)
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def __init__(

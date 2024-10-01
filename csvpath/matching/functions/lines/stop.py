@@ -1,11 +1,18 @@
 # pylint: disable=C0114
 from typing import Any
 from ..function_focus import SideEffect
+from csvpath.matching.productions import Header, Variable, Equality
+from csvpath.matching.functions.function import Function
+from ..args import Args
 
 
 class Stopper(SideEffect):
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args()
+        args = Args()
+        args.argset(1).arg(
+            types=[None, Variable, Header, Function, Equality], actuals=[None]
+        )
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -52,7 +59,11 @@ class StopAll(Stopper):
 
 class Skipper(SideEffect):
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args()
+        args = Args()
+        args.argset().arg(
+            types=[None, Variable, Header, Function, Equality], actuals=[None]
+        )
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -95,7 +106,11 @@ class SkipAll(Skipper):
     """
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args()
+        args = Args()
+        args.argset().arg(
+            types=[None, Variable, Header, Function, Equality], actuals=[None]
+        )
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

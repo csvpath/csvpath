@@ -2,13 +2,20 @@
 
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Variable, Header, Reference
+from ..function import Function
+from ..args import Args
 
 
 class Add(ValueProducer):
     """this class adds numbers"""
 
     def check_valid(self) -> None:
-        self.validate_two_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

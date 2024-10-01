@@ -1,13 +1,19 @@
 # pylint: disable=C0114
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Variable, Header
+from ..function import Function
+from ..args import Args
 
 
 class Sum(ValueProducer):
     """returns the running sum of numbers"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Variable, Function, Term, Header], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

@@ -1,8 +1,10 @@
 # pylint: disable=C0114
 import hashlib
-from csvpath.matching.productions import Header, Equality
+from csvpath.matching.productions import Header, Variable, Equality
+from csvpath.matching.functions.function import Function
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import MatchDecider, ValueProducer
+from ..args import Args
 
 
 #
@@ -15,7 +17,9 @@ class CountDups(ValueProducer):
     """returns a count of duplicates."""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args(types=[Header])
+        args = Args()
+        args.argset().arg(types=[None, Variable, Header, Function], actuals=[None])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
@@ -34,7 +38,10 @@ class HasDups(MatchDecider):
     """returns True if there are duplicates."""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args(types=[Header])
+        # self.validate_zero_or_more_args(types=[Header])
+        args = Args()
+        args.argset().arg(types=[None, Header], actuals=[None])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
@@ -50,7 +57,10 @@ class DupLines(ValueProducer):
     """returns a list of duplicate lines seen so far."""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args(types=[Header])
+        # self.validate_zero_or_more_args(types=[Header])
+        args = Args()
+        args.argset().arg(types=[None, Variable, Header, Function], actuals=[None])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

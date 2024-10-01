@@ -1,10 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
 from ..productions.matchable import Matchable
-from .validation import Validation
 
 
-class Function(Validation):
+class Function(Matchable):
     """base class for all functions"""
 
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
@@ -101,15 +100,3 @@ class Function(Validation):
         self.matcher.csvpath.logger.debug(
             "%s applying default value: %s", self, self.value
         )
-
-    """
-    def _apply_default_match(self) -> None:
-        ""provides the default when to_match is not producing a value.
-        subclasses may override this method if they need a different
-        default.
-        ""
-        self.match = self.default_match()
-        self.matcher.csvpath.logger.debug(
-            "%s applying default match: %s", self, self.match
-        )
-    """

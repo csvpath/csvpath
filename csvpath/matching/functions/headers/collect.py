@@ -1,6 +1,8 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Equality
+from typing import Any
+from csvpath.matching.productions import Equality, Term
 from ..function_focus import SideEffect
+from ..args import Args
 
 
 class Collect(SideEffect):
@@ -8,7 +10,10 @@ class Collect(SideEffect):
     a line matches. by default all headers are collected."""
 
     def check_valid(self) -> None:
-        self.validate_one_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Term], actuals=[Any])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

@@ -1,13 +1,20 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Equality
+from typing import Any
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Equality
+from csvpath.matching.productions import Variable, Header
+from ..function import Function
+from ..args import Args
 
 
 class Tally(ValueProducer):
     """collects the number of times values are seen"""
 
     def check_valid(self) -> None:
-        self.validate_one_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Header, Variable, Function], actuals=[Any])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

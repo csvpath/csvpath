@@ -124,6 +124,20 @@ class Matchable(Qualified):
         # with the current parse tree this shouldn't happen
         return None
 
+    def siblings_or_equality(self) -> list:
+        if (
+            len(self.children) == 1
+            and hasattr(self.children[0], "op")
+            and self.children[0].op == "=="
+        ):
+            # we're asked for equalities, so we give those that are ==,
+            # but not assignments. if we were doing regular siblings we'd
+            # give back the children of the equality, not our equality
+            # child itself.
+            return self.children[:]
+        else:
+            return self.siblings()
+
     def siblings(self) -> list:
         if len(self.children) == 0:
             return []

@@ -1,6 +1,8 @@
 # pylint: disable=C0114
 from ..function_focus import MatchDecider
-from csvpath.matching.productions import Term
+from csvpath.matching.productions import Term, Variable, Header, Reference
+from ..function import Function
+from ..args import Args
 
 
 class In(MatchDecider):
@@ -8,7 +10,11 @@ class In(MatchDecider):
     terms are treated as a delimited string of values"""
 
     def check_valid(self) -> None:
-        self.validate_two_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

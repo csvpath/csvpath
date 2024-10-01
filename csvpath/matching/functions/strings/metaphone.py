@@ -1,6 +1,8 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
-from csvpath.matching.productions import Reference
+from csvpath.matching.productions import Reference, Header, Variable, Term
+from ..function import Function
+from ..args import Args
 from metaphone import doublemetaphone
 
 
@@ -14,7 +16,11 @@ class Metaphone(ValueProducer):
     passing something like: tally(metaphone(#header), #header)"""
 
     def check_valid(self) -> None:
-        self.validate_one_or_two_args(right=[Reference])
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Function, Header, Variable, Reference], actuals=[str])
+        a.arg(types=[None, Reference], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

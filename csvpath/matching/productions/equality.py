@@ -94,6 +94,10 @@ class Equality(Matchable):
             ls.append(_)
         return ls
         """
+        if self.op != ",":
+            raise ChildrenException(
+                f"Cannot get args from equality when operation is {self.op}. Use ','."
+            )
         return self.children[:]
 
     def set_operation(self, op):  # pylint: disable=C0116

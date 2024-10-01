@@ -1,14 +1,21 @@
 # pylint: disable=C0114
 from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.productions import Variable, Header, Term, Reference
+from ..function import Function
 from ..function_focus import SideEffect, ValueProducer
+from ..args import Args
 
 
 class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -52,7 +59,10 @@ class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -75,7 +85,10 @@ class Stack(SideEffect):
     """returns a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -96,7 +109,11 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -120,7 +137,10 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

@@ -1,14 +1,30 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Header, Variable, Term
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
+from ..args import Args
 
 
 class Put(ValueProducer):
     """Sets a variable with or without a tracking value"""
 
     def check_valid(self) -> None:
-        self.validate_two_or_three_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, int, bool, tuple],
+        )
+        a = args.argset(3)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, int, bool, tuple],
+        )
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

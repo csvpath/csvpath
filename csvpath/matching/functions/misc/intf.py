@@ -3,13 +3,17 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Term, Variable, Header
 from ..function import Function
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class Int(ValueProducer):
     """attempts to convert a value to an int"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -24,7 +28,11 @@ class Float(ValueProducer):
     """attempts to convert a value to a float"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        # self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -40,7 +48,11 @@ class Num(ValueProducer):
     ints and bools stay ints"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg(types=[Term, Variable, Header, Function])
+        # self.validate_one_arg(types=[Term, Variable, Header, Function])
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

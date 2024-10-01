@@ -2,6 +2,9 @@
 
 from typing import Any
 from ..function_focus import MatchDecider
+from csvpath.matching.productions import Term, Variable, Header, Reference, Equality
+from ..function import Function
+from ..args import Args
 
 
 class And(MatchDecider):
@@ -10,7 +13,15 @@ class And(MatchDecider):
     need more control."""
 
     def check_valid(self) -> None:  # pragma: no cover
-        self.validate_two_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+        )
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover

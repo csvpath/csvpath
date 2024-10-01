@@ -1,15 +1,22 @@
 # pylint: disable=C0114
 import re
-from csvpath.matching.productions import Term
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
+from csvpath.matching.productions import Term, Variable, Header, Reference
+from ..function import Function
+from ..args import Args
 
 
 class Regex(MatchDecider):
     """does a regex match on a value"""
 
     def check_valid(self) -> None:
-        self.validate_two_or_three_args()
+        args = Args()
+        a = args.argset(3)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
         left = self._function_or_equality.left

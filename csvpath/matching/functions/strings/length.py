@@ -1,16 +1,20 @@
 # pylint: disable=C0114
 from typing import Any
+from ..function_focus import ValueProducer
 from csvpath.matching.util.exceptions import MatchComponentException
 from csvpath.matching.productions import Term, Variable, Header, Reference
-from ..function_focus import ValueProducer
 from ..function import Function
+from ..args import Args
 
 
 class Length(ValueProducer):
     """returns the length of a string"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg(types=[Term, Variable, Header, Function, Reference])
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -26,9 +30,16 @@ class Length(ValueProducer):
 
 class MinMaxLength(ValueProducer):  # pylint: disable=C0115
     def check_valid(self) -> None:
+        """
         self.validate_two_args(
             left=[Term, Variable, Header, Function, Reference], right=[Term]
         )
+        """
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:

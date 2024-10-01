@@ -12,14 +12,11 @@ class Now(ValueProducer):
     """returns the current datetime"""
 
     def check_valid(self) -> None:
-        # self.validate_zero_or_one_arg()
-
         args = Args()
         args.argset(1).arg(
             types=[None, Term, Function, Header, Variable], actuals=[str]
         )
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

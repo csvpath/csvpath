@@ -3,6 +3,7 @@ from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.print_parser import PrintParser
 from ..function_focus import SideEffect
 from ..function import Function
+from ..args import Args
 
 
 class Print(SideEffect):
@@ -12,9 +13,11 @@ class Print(SideEffect):
         - if a function or equality, a matches() to call after the print"""
 
     def check_valid(self) -> None:
-        self.validate_one_or_two_args(
-            one=[Term], left=[Term], right=[Function, Equality, Term]
-        )
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term], actuals=[str])
+        a.arg(types=[None, Function, Equality, Term], actuals=[str])
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

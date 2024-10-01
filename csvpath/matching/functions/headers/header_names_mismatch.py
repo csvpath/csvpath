@@ -1,5 +1,7 @@
 # pylint: disable=C0114
+from csvpath.matching.productions import Term
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class HeaderNamesMismatch(ValueProducer):
@@ -10,6 +12,13 @@ class HeaderNamesMismatch(ValueProducer):
     good information we're creating the function's pretty clearly a val
     producer.
     """
+
+    def check_valid(self) -> None:
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term], actuals=[str])
+        args.validate(self.siblings())
+        super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pylint: disable=R0912
         # re: R0912: not pretty, but tested, can come back

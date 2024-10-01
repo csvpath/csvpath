@@ -4,13 +4,21 @@ from datetime import date
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
+from csvpath.matching.productions import Term, Variable, Header, Reference
+from ..function import Function
+from ..args import Args
 
 
 class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:
-        self.validate_three_args()
+        args = Args()
+        a = args.argset(3)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
