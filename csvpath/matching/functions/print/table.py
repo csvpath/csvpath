@@ -2,6 +2,8 @@
 import textwrap
 from tabulate import tabulate
 from csvpath.matching.util.print_parser import PrintParser
+from csvpath.matching.productions import Term, Header, Variable
+from csvpath.matching.functions.function import Function
 from ..function_focus import SideEffect
 from ..args import Args
 
@@ -71,7 +73,9 @@ class VarTable(SideEffect):
     """prints a variables table"""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args()
+        args = Args()
+        args.argset().arg(types=[None, Variable, Header, Term, Function], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

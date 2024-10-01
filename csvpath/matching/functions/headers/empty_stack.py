@@ -3,13 +3,18 @@ from csvpath.matching.productions import Equality, Header, Variable
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class EmptyStack(ValueProducer):
     """collects empty header names and/or indexes in a stack var."""
 
     def check_valid(self) -> None:
-        self.validate_zero_or_more_args(types=[Header, Variable])
+        # self.validate_zero_or_more_args(types=[Header, Variable])
+
+        args = Args()
+        args.argset().arg(types=[None, Variable, Header], actuals=[None])
+        args.validate(self.siblings())
         super().check_valid()  # pragma: no cover
 
     def _produce_value(self, skip=None) -> None:

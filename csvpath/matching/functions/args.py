@@ -139,13 +139,9 @@ class ArgSet:
         self.min_length = 0
         foundnone = False
         for a in self._args:
-            # print(f"Argset: set min: a: {a}: noneable: {a.is_noneable}")
-            # none in types == no Matchable
-            # none in actuals == None value returned by Matchable
             if a.is_noneable is True:
                 foundnone = True
             else:
-                # if None not in a._types:
                 if foundnone:
                     raise ConfigurationException(
                         "Cannot have a non-noneable arg after a nullable arg"
@@ -176,11 +172,9 @@ class ArgSet:
         ):
             lastindex = len(self._args) - 1
             for i, s in enumerate(siblings):
-                print(f"   ...{i}: {s} @ {len(self._args)}: {self._args}")
                 if i >= len(self._args):
                     a = self.arg()
                     last = self._args[lastindex]
-                    print(f" pad or shrk: last: {last}")
                     a.types = last.types  # we have a sib so None doesn't make sense
                     a.actuals = last.actuals
                     if not a.types:
@@ -203,13 +197,10 @@ class ArgSet:
 
     def validate(self, siblings: List[Matchable]) -> None:
         b = self._validate_length(siblings)
-        # print(f"argset: val len b: {b}, sibs: {siblings}")
         if b is False:
             return False
         self._pad_or_shrink(siblings)
-        # print(f"argset: args: {self}")
         for i, s in enumerate(siblings):
-            print(f"argset: s: {s}; types: {self._args[i].types}")
             t = tuple(self._args[i].types)
             #
             # really need issubclass?
@@ -243,12 +234,10 @@ class Args:
         return a
 
     def validate(self, siblings: List[Matchable]) -> None:
-        print(f"args.validate: sibs: {siblings}")
         if len(self._argsets) == 0 and len(siblings) == 0:
             return
         if len(self._argsets[0]._args) == 0 and len(siblings) == 0:
             return
-        print(f"args.validate: asets: {self._argsets}")
         for aset in self._argsets:
             if aset.validate(siblings):
                 return
