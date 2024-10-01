@@ -1,7 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
 from csvpath.matching.productions import Equality
+from csvpath.matching.productions import Header
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class First(ValueProducer):
@@ -10,7 +12,11 @@ class First(ValueProducer):
     NEVER = -9999999999
 
     def check_valid(self) -> None:
-        self.validate_one_or_more_args()
+        # self.validate_one_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Header], actuals=[Any])
+        args.validate(self.siblings())
         super().check_valid()
 
     def __init__(self, matcher, name: str = None, child: Any = None):

@@ -1,6 +1,9 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import DataException
+from csvpath.matching.productions import Term
+from ..function import Function
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class HeaderName(ValueProducer):
@@ -14,7 +17,12 @@ class HeaderName(ValueProducer):
     """
 
     def check_valid(self) -> None:
-        self.validate_one_or_two_args()
+        # self.validate_one_or_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Function], actuals=[str])
+        a.arg(types=[None, Term], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:

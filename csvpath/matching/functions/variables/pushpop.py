@@ -11,7 +11,12 @@ class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        # self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -107,7 +112,12 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        # self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

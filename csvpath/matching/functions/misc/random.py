@@ -2,13 +2,22 @@
 from random import randrange
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Header, Variable
+from ..function import Function
+from ..args import Args
 
 
 class Random(ValueProducer):
     """returns a random int within a range"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        # self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

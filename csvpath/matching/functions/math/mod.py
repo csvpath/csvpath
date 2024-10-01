@@ -1,12 +1,20 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Header, Variable, Reference
+from ..function import Function
+from ..args import Args
 
 
 class Mod(ValueProducer):
     """takes the modulus of numbers"""
 
     def check_valid(self) -> None:
-        self.validate_two_args()
+        # self.validate_two_args()
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

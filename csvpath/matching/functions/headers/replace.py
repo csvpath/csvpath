@@ -1,14 +1,20 @@
 # pylint: disable=C0114
 import datetime
 from ..function_focus import SideEffect
-from csvpath.matching.productions import Term
+from csvpath.matching.productions import Term, Header, Reference, Variable
+from ..function import Function
+from ..args import Args
 
 
 class Replace(SideEffect):
     """replaces the value of the header with another value"""
 
     def check_valid(self) -> None:
-        self.validate_two_args(left=[Term])
+        # self.validate_two_args(left=[Term])
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Term], actuals=[int, str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

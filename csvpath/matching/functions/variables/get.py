@@ -2,17 +2,25 @@
 from csvpath.matching.productions import Header, Variable, Term
 from ..function_focus import ValueProducer
 from ..function import Function
+from ..args import Args
 
 
 class Get(ValueProducer):
     """returns a variable value, tracking value or stack index"""
 
     def check_valid(self) -> None:
+        """
         self.validate_one_or_two_args(
             one=[Header, Term, Function, Variable],
             left=[Header, Term, Function, Variable],
             right=[Header, Term, Function, Variable],
         )
+        """
+        args = Args()
+        a = args.argset(2)
+        a.arg(types=[Header, Term, Function, Variable], actuals=[str])
+        a.arg(types=[None, Header, Term, Function, Variable], actuals=[str])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

@@ -1,13 +1,19 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Equality, Term
 from ..function_focus import ValueProducer
+from csvpath.matching.productions import Term, Variable, Header, Reference, Equality
+from ..function import Function
+from ..args import Args
 
 
 class Subtract(ValueProducer):
     """subtracts numbers"""
 
     def check_valid(self) -> None:
-        self.validate_one_or_more_args()
+        # self.validate_one_or_more_args()
+        args = Args()
+        a = args.argset()
+        a.arg(types=[Term, Header, Reference, Variable, Function], actuals=[int])
+        args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
