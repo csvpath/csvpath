@@ -5,6 +5,7 @@ from csvpath.matching.util.exceptions import MatchComponentException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from ..function_focus import SideEffect
+from ..args import Args
 
 
 class Import(SideEffect):
@@ -15,7 +16,13 @@ class Import(SideEffect):
         self._imported = False
 
     def check_valid(self) -> None:
-        self.validate_one_arg(types=[Term])
+        # self.validate_one_arg(types=[Term])
+
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term], actuals=[str])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:

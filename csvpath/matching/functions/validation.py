@@ -21,6 +21,7 @@ class Validation(Matchable):
                 return True
         return False  # pragma: no cover
 
+    """
     def validate_zero_one_or_two_args(  # pylint: disable=C0116
         self, *, first_arg=None, second_arg=None, solo_arg=None
     ) -> None:
@@ -44,7 +45,8 @@ class Validation(Matchable):
                 )
             if len(self.children[0].children) > 2:
                 raise ChildrenException(f"{self.name} can have at most 2 args")
-
+    """
+    """
     def validate_one_arg(self, types=None) -> None:  # pylint: disable=C0116
         if types is None:
             types = []
@@ -59,6 +61,7 @@ class Validation(Matchable):
                 raise ChildrenException(
                     f"{self.name}() must have an argument of type: {types}"
                 )
+    """
 
     def validate_one_or_more_args(self) -> None:  # pylint: disable=C0116
         if len(self.children) == 0:

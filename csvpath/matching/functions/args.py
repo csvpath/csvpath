@@ -50,6 +50,7 @@ class Arg:
         if ts and None in ts:
             self.is_noneable = True
             ts.remove(None)
+        print(f"setting types to {ts}")
         self._types = ts
 
     @property
@@ -191,9 +192,10 @@ class ArgSet:
         ):
             args = []
             for a in range(0, len(siblings)):
-                args.append(a)
+                args.append(self._args[a])
             self._args = args
             self.max_length = len(self._args)
+            print(f"self._args after pad/shrink: {self._args}")
 
     def validate(self, siblings: List[Matchable]) -> None:
         b = self._validate_length(siblings)
@@ -201,6 +203,7 @@ class ArgSet:
             return False
         self._pad_or_shrink(siblings)
         for i, s in enumerate(siblings):
+            print(f"args: args: {self._args}")
             t = tuple(self._args[i].types)
             #
             # really need issubclass?

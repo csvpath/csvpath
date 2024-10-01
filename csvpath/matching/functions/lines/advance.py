@@ -1,13 +1,21 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import SideEffect
+from csvpath.matching.productions.term import Term
+from ..args import Args
 
 
 class Advance(SideEffect):
     """this class lets a csvpath skip to a future line"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        # self.validate_one_arg()
+
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term], actuals=[int])
+        args.validate(self.siblings())
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

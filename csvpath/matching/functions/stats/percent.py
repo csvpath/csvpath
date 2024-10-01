@@ -1,6 +1,8 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.productions import Term
 from ..function_focus import ValueProducer
+from ..args import Args
 
 
 class Percent(ValueProducer):
@@ -8,7 +10,11 @@ class Percent(ValueProducer):
     the count of total data lines"""
 
     def check_valid(self) -> None:
-        self.validate_one_arg()
+        # self.validate_one_arg()
+        args = Args()
+        a = args.argset(1)
+        a.arg(types=[Term], actuals=[str])
+        args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
