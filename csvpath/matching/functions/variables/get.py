@@ -9,13 +9,6 @@ class Get(ValueProducer):
     """returns a variable value, tracking value or stack index"""
 
     def check_valid(self) -> None:
-        """
-        self.validate_one_or_two_args(
-            one=[Header, Term, Function, Variable],
-            left=[Header, Term, Function, Variable],
-            right=[Header, Term, Function, Variable],
-        )
-        """
         args = Args()
         a = args.argset(2)
         a.arg(types=[Header, Term, Function, Variable], actuals=[str])

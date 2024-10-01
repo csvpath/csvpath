@@ -17,7 +17,6 @@ class HeaderName(ValueProducer):
     """
 
     def check_valid(self) -> None:
-        # self.validate_one_or_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Function], actuals=[str])

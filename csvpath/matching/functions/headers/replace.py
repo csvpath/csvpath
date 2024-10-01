@@ -10,7 +10,6 @@ class Replace(SideEffect):
     """replaces the value of the header with another value"""
 
     def check_valid(self) -> None:
-        # self.validate_two_args(left=[Term])
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term], actuals=[int, str])

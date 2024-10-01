@@ -79,8 +79,6 @@ class Min(MinMax):
     """matches when its value is the smallest"""
 
     def check_valid(self) -> None:
-        # types = [Variable, Term, Header, Function]
-        # self.validate_one_or_two_args(one=types, left=types, right=types)
         args = Args()
         a = args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[str])
@@ -105,8 +103,6 @@ class Max(MinMax):
     """matches when its value is the largest"""
 
     def check_valid(self) -> None:
-        # types = [Variable, Term, Header, Function]
-        # self.validate_one_or_two_args(one=types, left=types, right=types)
         args = Args()
         a = args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[str])
@@ -130,8 +126,6 @@ class Average(MinMax):
     """returns the running average"""
 
     def check_valid(self) -> None:
-        # types = [Variable, Term, Header, Function]
-        # self.validate_one_or_two_args(one=types, left=types, right=types)
         args = Args()
         a = args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[str])

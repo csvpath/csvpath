@@ -10,8 +10,6 @@ class End(ValueProducer):
     """returns the value of the last header"""
 
     def check_valid(self) -> None:
-        # self.validate_zero_or_one_arg([Term])
-
         args = Args()
         args.argset(1).arg(types=[None, Any], actuals=[int])
         args.validate(self.siblings())

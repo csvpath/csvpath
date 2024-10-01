@@ -8,14 +8,11 @@ class PrintLine(SideEffect):
     """prints the current line using a delimiter"""
 
     def check_valid(self) -> None:
-        # self.validate_zero_one_or_two_args()
-
         args = Args()
         a = args.argset(2)
         a.arg(types=[None, Term], actuals=[None])
         a.arg(types=[None, Term], actuals=[None])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

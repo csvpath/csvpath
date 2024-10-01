@@ -9,13 +9,10 @@ class Advance(SideEffect):
     """this class lets a csvpath skip to a future line"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
-
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term], actuals=[int])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

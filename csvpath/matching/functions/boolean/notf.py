@@ -9,7 +9,6 @@ class Not(MatchDecider):
     """returns the boolean inverse of a value"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Equality], actuals=[bool])

@@ -9,7 +9,6 @@ class Lower(ValueProducer):
     """lowercases a string"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg(types=[Term, Variable, Header, Function])
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

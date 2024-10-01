@@ -17,13 +17,9 @@ class CountDups(ValueProducer):
     """returns a count of duplicates."""
 
     def check_valid(self) -> None:
-        # self.validate_zero_or_more_args(types=[Header])
-
-        # any number of vars, headers, or functions. no eqs, terms, references
         args = Args()
         args.argset().arg(types=[None, Variable, Header, Function], actuals=[None])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:

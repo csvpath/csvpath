@@ -10,7 +10,6 @@ class Collect(SideEffect):
     a line matches. by default all headers are collected."""
 
     def check_valid(self) -> None:
-        # self.validate_one_or_more_args()
         args = Args()
         a = args.argset()
         a.arg(types=[Term], actuals=[Any])

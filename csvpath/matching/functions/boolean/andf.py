@@ -13,7 +13,6 @@ class And(MatchDecider):
     need more control."""
 
     def check_valid(self) -> None:  # pragma: no cover
-        # self.validate_two_or_more_args()
         args = Args()
         a = args.argset()
         a.arg(

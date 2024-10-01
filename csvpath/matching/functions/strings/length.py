@@ -11,7 +11,6 @@ class Length(ValueProducer):
     """returns the length of a string"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg(types=[Term, Variable, Header, Function, Reference])
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

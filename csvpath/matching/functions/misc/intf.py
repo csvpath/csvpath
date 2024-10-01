@@ -10,7 +10,6 @@ class Int(ValueProducer):
     """attempts to convert a value to an int"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term, Variable, Header, Function], actuals=[str])

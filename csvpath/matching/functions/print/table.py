@@ -33,14 +33,11 @@ class RowTable(SideEffect):
     """prints a row table"""
 
     def check_valid(self) -> None:
-        # self.validate_zero_one_or_two_args()
-
         args = Args()
         a = args.argset(2)
         a.arg(types=[None, Term], actuals=[int])
         a.arg(types=[None, Term], actuals=[int])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

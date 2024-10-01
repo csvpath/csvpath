@@ -11,7 +11,6 @@ class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
-        # self.validate_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
@@ -60,7 +59,6 @@ class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
@@ -87,7 +85,6 @@ class Stack(SideEffect):
     """returns a stack variable"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
@@ -112,7 +109,6 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
-        # self.validate_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
@@ -141,7 +137,6 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])

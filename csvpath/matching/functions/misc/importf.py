@@ -16,13 +16,10 @@ class Import(SideEffect):
         self._imported = False
 
     def check_valid(self) -> None:
-        # self.validate_one_arg(types=[Term])
-
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term], actuals=[str])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:

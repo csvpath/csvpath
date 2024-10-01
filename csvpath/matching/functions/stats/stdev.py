@@ -11,7 +11,6 @@ class Stdev(ValueProducer):
     """takes the running sample or population standard deviation for a value"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Function, Term], actuals=[tuple])

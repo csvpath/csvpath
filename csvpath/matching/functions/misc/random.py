@@ -11,13 +11,11 @@ class Random(ValueProducer):
     """returns a random int within a range"""
 
     def check_valid(self) -> None:
-        # self.validate_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function], actuals=[int])
         a.arg(types=[Term, Variable, Header, Function], actuals=[int])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

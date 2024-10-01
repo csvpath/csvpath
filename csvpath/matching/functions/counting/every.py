@@ -16,7 +16,6 @@ class Every(ValueProducer):
     """
 
     def check_valid(self) -> None:
-        # self.validate_two_args(right=[Term, Variable, Function, Header])
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[str])

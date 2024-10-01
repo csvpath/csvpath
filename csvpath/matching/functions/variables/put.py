@@ -9,7 +9,6 @@ class Put(ValueProducer):
     """Sets a variable with or without a tracking value"""
 
     def check_valid(self) -> None:
-        # self.validate_two_or_three_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

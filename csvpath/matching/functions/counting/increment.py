@@ -11,7 +11,6 @@ class Increment(ValueProducer):
     """increments a var every n-times a each different value is seen"""
 
     def check_valid(self) -> None:
-        # self.validate_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[str])

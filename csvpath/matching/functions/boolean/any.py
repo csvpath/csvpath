@@ -19,13 +19,6 @@ class Any(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        """
-        self.validate_zero_one_or_two_args(
-            first_arg=[Variables, Headers],
-            solo_arg=[Term, Headers, Variables],
-            second_arg=[Term],
-        )
-        """
         args = Args()
         a = args.argset(2)
         a.arg(types=[None, Variables, Headers], actuals=[None])
@@ -33,7 +26,6 @@ class Any(MatchDecider):
         a = args.argset(1)
         a.arg(types=[Term, Variables, Headers], actuals=[None])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover

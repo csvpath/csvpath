@@ -13,7 +13,6 @@ class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:
-        # self.validate_three_args()
         args = Args()
         a = args.argset(3)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])

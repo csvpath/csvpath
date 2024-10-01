@@ -9,7 +9,6 @@ class Concat(ValueProducer):
     """concats two strings"""
 
     def check_valid(self) -> None:
-        # self.validate_two_or_more_args()
         args = Args()
         a = args.argset()
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

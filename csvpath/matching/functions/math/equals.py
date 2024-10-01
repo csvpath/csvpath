@@ -12,7 +12,6 @@ class Equals(MatchDecider):
     better another way."""
 
     def check_valid(self) -> None:
-        # self.validate_two_args()
         args = Args()
         a = args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

@@ -12,7 +12,6 @@ class First(ValueProducer):
     NEVER = -9999999999
 
     def check_valid(self) -> None:
-        # self.validate_one_or_more_args()
         args = Args()
         a = args.argset()
         a.arg(types=[Header], actuals=[Any])

@@ -16,13 +16,10 @@ class All(MatchDecider):
     """checks that a number of match components return True"""
 
     def check_valid(self) -> None:  # pragma: no cover
-        # self.validate_zero_or_more_args()
-
         args = Args()
         args.argset(1).arg(types=[None, Variables, Headers], actuals=[None])
         args.argset().arg(types=[None, Function, Variable, Header], actuals=[None, Any])
         args.validate(self.siblings())
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover

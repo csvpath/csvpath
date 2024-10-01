@@ -10,7 +10,6 @@ class Sum(ValueProducer):
     """returns the running sum of numbers"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Function, Term, Header], actuals=[int])

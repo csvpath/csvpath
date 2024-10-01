@@ -9,7 +9,6 @@ class Strip(ValueProducer):
     """removes whitespace from the beginning and end of a string"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Variable, Header, Reference, Function], actuals=[str])

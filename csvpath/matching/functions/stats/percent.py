@@ -10,7 +10,6 @@ class Percent(ValueProducer):
     the count of total data lines"""
 
     def check_valid(self) -> None:
-        # self.validate_one_arg()
         args = Args()
         a = args.argset(1)
         a.arg(types=[Term], actuals=[str])
