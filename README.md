@@ -219,7 +219,12 @@ This csvpath reorders the headers of the test file at `tests/test_resources/test
 # Comments
 CsvPaths have file scanning instructions, match components, and comments. Comments exist at the top level, outside the CsvPath's brackets, as well as in the matching part of the path. Comments within the match part are covered below.
 
-Comments outside the csvpath can contribute to a collection of metadata fields associated with a csvpath. A comment starts and ends with a `~` character. Within the comment, any word that has a colon after it is considered a metadata key. The metadata value is anything following the key up till a new metadata key word is seen or the comment ends.
+As well as documentation, comments outside the csvpath can:
+- Contribute to a collection of metadata fields associated with a csvpath
+- Switch on/off certain validation settings
+- Set the identity of a csvpath within a group of csvpaths
+
+A comment starts and ends with a `~` character. Within the comment, any word that has a colon after it is considered a metadata key. The metadata value is anything following the key up till a new metadata key word is seen or the comment ends.
 
 For example, this comment says that the csvpath has the name `Order Validation`:
 
@@ -231,8 +236,6 @@ For example, this comment says that the csvpath has the name `Order Validation`:
 ```
 
 The name `Order Validation` is available in CsvPath's `metadata` property along with the developer's name. You can use any metadata keys you like. All the metadata is available during and after a run, giving you an easy way to name, describe, attribute, etc. your csvpaths.
-
-Note that the `CsvPath.identity` property takes the name of the ID or name given as metadata fields in comments. ID is preferred over name. The forms recognized are `ID`, `Id`, and `id`, with the same capitalization supported for name. `CsvPath.identity` is used to identify csvpaths within named-path csvpath sets. It is completely optional, but at times useful.
 
 You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/comments.md'>read more about comments and metadata here</a>.
 
