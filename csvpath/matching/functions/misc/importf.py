@@ -16,18 +16,20 @@ class Import(SideEffect):
         self._imported = False
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Term], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
+        #
+        # do not move the inject later in the lifecycle.
+        #
+        self._inject()
 
     def to_value(self, *, skip=None) -> Any:
-        self._inject()
         return self._noop_value()  # pragma: no cover
 
     def matches(self, *, skip=None) -> bool:
-        self._inject()
         return self.default_match()  # pragma: no cover
 
     def _inject(self) -> None:
@@ -75,6 +77,12 @@ class Import(SideEffect):
             for new_e in r:
                 self.matcher.expressions.insert(insert_at, new_e)
                 self._set_matcher(new_e[0])
+                #
+                #
+                #
+                new_e[0].reset()
+                new_e[1] = None
+                #
             self.matcher.csvpath.logger.info("Done importing")
             self.matcher.csvpath.logger.debug(
                 ExpressionEncoder().valued_list_to_json(self.matcher.expressions)

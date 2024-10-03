@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
@@ -16,11 +17,11 @@ class Every(ValueProducer):
     """
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[str])
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[Any])
         a.arg(types=[Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

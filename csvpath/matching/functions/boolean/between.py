@@ -13,22 +13,50 @@ class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(3)
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[datetime, date],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[datetime, date],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[datetime, date],
+        )
+
+        a = self.args.argset(3)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+
+        a = self.args.argset(3)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        siblings = self.children[0].commas_to_list()
+        #
+        # we don't need the value, but we want the args validation
+        #
+        # if self.value is None:
+        #    self.to_value(skip=skip)
+        #
+        #
+        siblings = self.siblings()
         me = siblings[0].to_value(skip=skip)
         a = siblings[1].to_value(skip=skip)
         b = siblings[2].to_value(skip=skip)
+
         if me is None or a is None or b is None:
             self.match = False
         else:

@@ -9,11 +9,11 @@ class StartsWith(ValueProducer):
     """checks if a string begins with another string"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

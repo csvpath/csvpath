@@ -8,9 +8,10 @@ class Mismatch(ValueProducer):
     """tests the current headers against an expectation"""
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(types=[None, Term], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(0)
+        self.args.argset(1).arg(types=[Term], actuals=[str])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -40,4 +41,5 @@ class Mismatch(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip) != 0  # pragma: no cover
-        # this has a test
+        #
+        #

@@ -1,9 +1,21 @@
 import hashlib
 import math
+import datetime
+import dateutil.parser
 from typing import Tuple, Any, List
 
 
+class EmptyString(str):
+    pass
+
+
 class ExpressionUtility:
+
+    EMPTY_STRING = EmptyString()
+    """ an empty string between two delimiters is essentially the same as NULL.
+        in some cases we want an empty string to just be an empty string. see
+        length(). to do that, we put args.EMPTY_STRING into the actuals list. """
+
     @classmethod
     def all(cls, objects: List, classlist: tuple = None) -> bool:
         if objects is None:
@@ -149,6 +161,43 @@ class ExpressionUtility:
                 return s
 
     @classmethod
+    def to_date(cls, v: Any) -> datetime.date:
+        if v is not None:
+            try:
+                adate = dateutil.parser.parse(f"{v}")
+                return adate.date()
+            except Exception:
+                pass
+        return v
+
+    @classmethod
+    def to_datetime(cls, v: Any) -> datetime.date:
+        if v is not None:
+            try:
+                return dateutil.parser.parse(f"{v}")
+            except Exception:
+                pass
+        return v
+
+    @classmethod
+    def to_bool(cls, v: Any) -> bool:
+        if v is True:
+            return True
+        if v is False:
+            return False
+        if v is None:
+            return False
+        if v == 0:
+            return False
+        if v == 1:
+            return True
+        if f"{v}".strip().lower() == "true":
+            return True
+        if f"{v}".strip().lower() == "false":
+            return False
+        return v
+
+    @classmethod
     def asbool(cls, v) -> bool:
         ret = None
         if v in [False, None] or cls.isnan(v):
@@ -169,6 +218,70 @@ class ExpressionUtility:
             except (TypeError, ValueError):
                 ret = True  # we're not None so we exist
         return ret
+
+    @classmethod
+    def is_one_of(cls, a, acts: tuple) -> bool:
+        if acts is None:
+            return False
+        if a is None and None not in acts:
+            return False
+        if a is None and None in acts:
+            return True
+        if len(acts) == 0:
+            return False
+        actst = None
+        if None in acts:
+            actst = acts[:]
+            actst.remove(None)
+        else:
+            actst = acts
+        actst = tuple(actst)
+        if isinstance(a, actst):
+            # empty == NULL in CSV so we disallow an empty string here
+            if (
+                isinstance(a, str)
+                and cls.is_empty(a)
+                and None not in acts
+                and cls.EMPTY_STRING not in acts
+            ):
+                return False
+            else:
+                return True
+        for act in acts:
+            if act == int:
+                try:
+                    cls.to_int(a)
+                    return True
+                except Exception:
+                    continue
+            elif act == float:
+                try:
+                    cls.to_float(a)
+                    return True
+                except Exception:
+                    continue
+            elif act == datetime.date:
+                _ = ExpressionUtility.to_date(a)
+                if isinstance(_, datetime.date):
+                    return True
+            elif act == datetime.datetime:
+                _ = ExpressionUtility.to_date(a)
+                if isinstance(_, datetime.datetime):
+                    return True
+            elif act == list:
+                if isinstance(a, list):
+                    return True
+            elif act == tuple:
+                if isinstance(a, tuple):
+                    return True
+            elif act == dict:
+                if isinstance(a, dict):
+                    return True
+            elif act == bool:
+                _ = ExpressionUtility.to_bool(a)
+                if _ is True:
+                    return True
+        return False
 
     @classmethod
     def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:

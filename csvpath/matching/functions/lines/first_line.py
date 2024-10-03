@@ -11,9 +11,9 @@ class FirstLine(MatchDecider):
     """True when on the first line, scan, or match"""
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
+        self.args.validate(self.siblings())
         if len(self.children) == 1 and isinstance(self.children[0], Equality):
             if not self.children[0].op == "=":
                 raise ChildrenException(

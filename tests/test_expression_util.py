@@ -1,11 +1,48 @@
 import math
 import pytest
 import unittest
+import datetime
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class TestExpressionUtil(unittest.TestCase):
+    def test_expression_utility_is_one_of(self):
+        assert not ExpressionUtility.is_one_of([None], [])
+        assert not ExpressionUtility.is_one_of([], [])
+        assert not ExpressionUtility.is_one_of({}, [])
+        assert not ExpressionUtility.is_one_of(tuple(), [])
+        assert ExpressionUtility.is_one_of(True, [bool])
+        assert not ExpressionUtility.is_one_of([False], [bool])
+        assert not ExpressionUtility.is_one_of([3], [int])
+        assert not ExpressionUtility.is_one_of([3], [bool, int])
+        # we disallow "" because "" is essentially NULL in CSV
+        assert not ExpressionUtility.is_one_of("", [bool, str])
+        # instead we treat "" ~= None in this method
+        assert ExpressionUtility.is_one_of("", [bool, str, None])
+        assert not ExpressionUtility.is_one_of(3, [str])
+        assert ExpressionUtility.is_one_of(3, [str, int])
+        assert ExpressionUtility.is_one_of(True, [str, int])
+        assert ExpressionUtility.is_one_of("3", [str, int])
+        assert ExpressionUtility.is_one_of(3.14, [float])
+        assert ExpressionUtility.is_one_of("3.14", [float])
+        assert ExpressionUtility.is_one_of(3.14, [int, str, bool, float])
+        assert ExpressionUtility.is_one_of(3.14, [int, str])
+        assert ExpressionUtility.is_one_of("pi", [str])
+        assert ExpressionUtility.is_one_of(datetime.datetime.now(), [datetime.date])
+        assert ExpressionUtility.is_one_of(datetime.datetime.now(), [datetime.datetime])
+        assert not ExpressionUtility.is_one_of(
+            datetime.datetime.now(), [str, int, float, bool]
+        )
+        assert ExpressionUtility.is_one_of([[]], [list])
+        assert ExpressionUtility.is_one_of([], [list])
+        assert not ExpressionUtility.is_one_of((), [list])
+        assert not ExpressionUtility.is_one_of((1), [list])
+        assert not ExpressionUtility.is_one_of({}, [list])
+        assert not ExpressionUtility.is_one_of((), [list])
+        assert ExpressionUtility.is_one_of({"a": "b"}, [dict])
+        assert ExpressionUtility.is_one_of((), [tuple, dict, int, str, bool])
+
     def test_exp_util_empty1(self):
         assert ExpressionUtility.is_empty([None])
         assert ExpressionUtility.is_empty([None, None])

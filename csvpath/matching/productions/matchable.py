@@ -141,13 +141,30 @@ class Matchable(Qualified):
     def siblings(self) -> list:
         if len(self.children) == 0:
             return []
-        if len(self.children) == 1 and hasattr(self.children[0], "op"):
+        if (
+            len(self.children) == 1
+            and hasattr(self.children[0], "op")
+            and self.children[0].op == ","
+        ):
             return self.children[0].commas_to_list()
+        #
+        # exp
+        #
+        if len(self.children) == 1 and hasattr(self.children[0], "op"):
+            return self.children[0].children
+        #
+        # end exp
+        #
         if len(self.children) == 1:
             return [self.children[0]]
         raise ChildrenException(
             f"Unexpected number of children, {len(self.children)}, in {self.name}"
         )
+
+    def sibling_values(self, skip=None):
+        sibs = self.siblings()
+        vs = [sib.to_value(skip=skip) for sib in sibs]
+        return vs
 
     def default_match(self) -> bool:
         return self.matcher._AND

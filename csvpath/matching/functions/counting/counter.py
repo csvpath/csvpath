@@ -13,9 +13,9 @@ class Counter(ValueProducer):
     """
 
     def check_valid(self) -> None:  # pylint: disable=W0246
-        args = Args()
-        args.argset(1).arg(types=[None, Any], actuals=[int])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(types=[None, Any], actuals=[int])
+        self.args.validate(self.siblings())
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:
@@ -33,7 +33,8 @@ class Counter(ValueProducer):
                 v = ExpressionUtility.to_int(v)
             counter += v
         self.matcher.set_variable(name, value=counter)
+        self.value = counter
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)
-        return self.default_match()  # pragma: no cover
+        self.match = self.default_match()  # pragma: no cover

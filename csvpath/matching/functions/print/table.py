@@ -12,11 +12,12 @@ class HeaderTable(SideEffect):
     """prints a header table"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         table = []
@@ -33,15 +34,15 @@ class RowTable(SideEffect):
     """prints a row table"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[None, Term], actuals=[int])
         a.arg(types=[None, Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         v1 = self._value_one()
@@ -77,13 +78,15 @@ class VarTable(SideEffect):
     """prints a variables table"""
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset().arg(types=[None, Variable, Header, Term, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset().arg(
+            types=[None, Variable, Header, Term, Function], actuals=[str]
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         v1 = self._value_one()
@@ -146,11 +149,12 @@ class RunTable(SideEffect):
     """prints a table of runtime data and any metadata available"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         self.print_all()

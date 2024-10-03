@@ -74,3 +74,4 @@ class TestFunctionsAdd(unittest.TestCase):
                 ${PATH}[1]
                 [ @l = add( count() ) ]"""
             )
+            path.fast_forward()

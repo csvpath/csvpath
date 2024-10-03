@@ -11,10 +11,10 @@ class Stdev(ValueProducer):
     """takes the running sample or population standard deviation for a value"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
-        a.arg(types=[Variable, Function, Term], actuals=[tuple])
-        args.validate(self.siblings_or_equality())
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(types=[Variable, Function, Term], actuals=[str, tuple, list])
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

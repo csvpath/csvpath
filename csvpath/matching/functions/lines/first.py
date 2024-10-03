@@ -12,10 +12,10 @@ class First(ValueProducer):
     NEVER = -9999999999
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(types=[Header], actuals=[Any])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def __init__(self, matcher, name: str = None, child: Any = None):

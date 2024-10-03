@@ -9,15 +9,15 @@ class Or(MatchDecider):
     """does a logical OR of match components"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(
             types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
         )
         a.arg(
             types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
         )
-        args.validate(self.siblings_or_equality())
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

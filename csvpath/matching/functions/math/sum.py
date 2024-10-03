@@ -10,10 +10,10 @@ class Sum(ValueProducer):
     """returns the running sum of numbers"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Variable, Function, Term, Header], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

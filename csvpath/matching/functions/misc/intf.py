@@ -10,10 +10,13 @@ class Int(ValueProducer):
     """attempts to convert a value to an int"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(
+            types=[Term, Variable, Header, Function],
+            actuals=[None, str, int, float, bool],
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -29,10 +32,13 @@ class Float(ValueProducer):
 
     def check_valid(self) -> None:
         # self.validate_one_arg()
-        args = Args()
-        a = args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(
+            types=[Term, Variable, Header, Function],
+            actuals=[None, str, int, float, bool],
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -49,10 +55,13 @@ class Num(ValueProducer):
 
     def check_valid(self) -> None:
         # self.validate_one_arg(types=[Term, Variable, Header, Function])
-        args = Args()
-        a = args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(
+            types=[Term, Variable, Header, Function],
+            actuals=[None, str, int, float, bool],
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

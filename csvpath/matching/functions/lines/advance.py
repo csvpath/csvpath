@@ -9,26 +9,27 @@ class Advance(SideEffect):
     """this class lets a csvpath skip to a future line"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        child = self.children[0]
-        v = child.to_value(skip=skip)
-        try:
-            v = int(v)
-            self.matcher.csvpath.advance_count = v
-        except (TypeError, ValueError) as e:
-            raise ChildrenException(
-                f"Advance must contain an int, not {type(v)}"
-            ) from e
-        self.value = True
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        #
+        # we want arg actual type checking so we have to call to_value
+        # the action stays here, tho, because we are not providing value
+        # to other match components, we're just a side-effect
+        #
+        self.to_value(skip=skip)
+        child = self.children[0]
+        v = child.to_value(skip=skip)
+        v = int(v)
+        self.matcher.csvpath.advance_count = v
+        self.match = self.default_match()
 
 
 class AdvanceAll(Advance):
@@ -37,8 +38,8 @@ class AdvanceAll(Advance):
     instances
     """
 
-    def _produce_value(self, skip=None) -> None:
-        super()._produce_value(skip=skip)
+    def _decide_match(self, skip=None) -> None:
+        super()._decide_match(skip=skip)
         if self.matcher.csvpath.csvpaths:
             v = self._child_one().to_value(skip=skip)
             v = int(v)

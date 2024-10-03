@@ -11,7 +11,8 @@ class Fail(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def override_frozen(self) -> bool:
@@ -38,7 +39,8 @@ class FailAll(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def override_frozen(self) -> bool:

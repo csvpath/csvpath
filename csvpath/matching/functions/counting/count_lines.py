@@ -7,7 +7,8 @@ class CountLines(ValueProducer):
     """the count (1-based of the number of data lines, blanks excluded"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -18,7 +19,8 @@ class LineNumber(ValueProducer):
     """the physical line number of the current line"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

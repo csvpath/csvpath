@@ -10,11 +10,11 @@ class Date(ValueProducer):
     """parses a date from a string"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -30,4 +30,3 @@ class Date(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()  # pragma: no cover
-        # self.match = self._noop_match()  # pragma: no cover

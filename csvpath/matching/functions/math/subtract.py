@@ -9,10 +9,10 @@ class Subtract(ValueProducer):
     """subtracts numbers"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(types=[Term, Header, Reference, Variable, Function], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

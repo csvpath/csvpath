@@ -13,7 +13,7 @@ class LogUtility:
     @classmethod
     def log_brief_trace(cls, *, logger=None, printer=None) -> str:
         trace = "".join(traceback.format_stack())
-        i = 13
+        i = 15
         lines = trace.split("\n")
         ret = ""
         while i > 0:

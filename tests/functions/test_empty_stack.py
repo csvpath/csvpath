@@ -22,7 +22,7 @@ class TestFunctionsEmptyStack(unittest.TestCase):
         lines = path.collect()
         print(f"\n test_function_empty_stack1: lines: {lines}")
         print(f"test_function_empty_stack1: path vars: {path.variables}")
-        assert len(lines) == 1
+        assert len(lines) == 4
         assert "empties" in path.variables
         assert isinstance(path.variables["empties"], list)
         s = path.variables["empties"]

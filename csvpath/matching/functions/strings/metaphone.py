@@ -16,11 +16,11 @@ class Metaphone(ValueProducer):
     passing something like: tally(metaphone(#header), #header)"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Function, Header, Variable, Reference], actuals=[str])
         a.arg(types=[None, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

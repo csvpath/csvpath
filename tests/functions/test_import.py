@@ -20,6 +20,7 @@ class TestFunctionsImport(unittest.TestCase):
         # import has no name
         with pytest.raises(ChildrenException):
             path.parse(f" ${PATH}[*] [ import() ] ")
+            path.fast_forward()
         # no csvpaths
         with pytest.raises(MatchComponentException):
             path.parse(f""" ${PATH}[*] [ import("test") ] """)

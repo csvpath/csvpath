@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import MatchDecider
 from ..args import Args
 from ..function import Function
@@ -12,11 +13,11 @@ class Equals(MatchDecider):
     better another way."""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

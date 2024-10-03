@@ -10,11 +10,11 @@ class Divide(ValueProducer):
     """divides numbers"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

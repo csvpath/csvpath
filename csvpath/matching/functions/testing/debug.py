@@ -17,15 +17,15 @@ class Log(SideEffect):
     """logs a msg at a log level, defaulting to info"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term], actuals=[str])
         a.arg(types=[None, Term], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         msg = self._value_one(skip=skip)
@@ -47,15 +47,15 @@ class Debug(SideEffect):
     """sets the logging level"""
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(
             types=[None, Term, Function, Variable, Header], actuals=[None, str]
         )
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         level = None
@@ -71,15 +71,15 @@ class Debug(SideEffect):
 
 class BriefStackTrace(SideEffect):
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(
             types=[None, Term, Function, Variable, Header], actuals=[None, str]
         )
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         out = None
@@ -98,7 +98,8 @@ class BriefStackTrace(SideEffect):
 
 class VoteStack(SideEffect):
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -123,7 +124,8 @@ class VoteStack(SideEffect):
 
 class DoWhenStack(SideEffect):
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:

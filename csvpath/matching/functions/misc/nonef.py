@@ -8,11 +8,14 @@ class Nonef(ValueProducer):
     """returns None"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(0)
+        self.args.validate(self.siblings())
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:  # pragma: no cover
-        return None
+    # def to_value(self, *, skip=None) -> Any:  # pragma: no cover
+    def _produce_value(self, skip=None) -> None:
+        self.value = None
 
-    def matches(self, *, skip=None) -> bool:  # pragma: no cover
-        return self.default_match()
+    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+        self.match = False

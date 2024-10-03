@@ -14,12 +14,15 @@ class Headers(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(types=[None, Term, Variable, Function], actuals=[int])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(
+            types=[None, Term, Variable, Function], actuals=[str, int]
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        # self._apply_default_value()
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:

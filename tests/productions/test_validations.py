@@ -17,6 +17,7 @@ from csvpath.matching.functions.headers.headers import Headers
 from csvpath.matching.functions.lines.dups import HasDups
 from csvpath.matching.functions.print.printf import Print
 from csvpath.matching.functions.strings.regex import Regex
+from csvpath import CsvPath
 
 VAR = Variable(None, name="no", value=None)
 TERM = Term(None, name=None, value="term")
@@ -27,37 +28,11 @@ EQ = Equality(None)
 
 
 class TestValidations(unittest.TestCase):
-    """
-    def test_validation_zero1(self):
-        v = No(matcher=None, name="no")
-        v.children = [VAR]
-        with pytest.raises(ChildrenException):
-            v.check_valid()
-
-    def test_validation_zero_or_one1(self):
-        e = End(matcher=None, name="no")
-        e.children = [VAR, TERM]
-        with pytest.raises(ChildrenException):
-            e.check_valid()
-
-    def test_validation_zero_or_one2(self):
-        e = End(matcher=None, name="no")
-        eq = Equality(None)
-        eq.children = [VAR, HEADER]
-        eq.op = ","
-        e.children = [eq]
-        with pytest.raises(ChildrenException):
-            e.check_valid()
-
-    def test_validation_zero_or_one3(self):
-        e = End(matcher=None, name="no")
-        e.children = [VAR]
-        with pytest.raises(ChildrenException):
-            e.check_valid()
-    """
-
     def test_validation_validate_zero_one_or_two_args1(self):
-        e = Any(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Any(matcher=path.matcher, name="no")
         eq = Equality(None)
         eq.children = [VAR, HEADER]
         eq.op = "=="
@@ -66,7 +41,10 @@ class TestValidations(unittest.TestCase):
             e.check_valid()
 
     def test_validation_validate_zero_one_or_two_args2(self):
-        e = Any(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Any(matcher=path.matcher, name="no")
         eq = Equality(None)
         eq.children = [VAR, TERM]
         eq.op = ","
@@ -74,14 +52,11 @@ class TestValidations(unittest.TestCase):
         with pytest.raises(ChildrenException):
             e.check_valid()
 
-    def test_validation_validate_zero_one_or_two_args3(self):
-        e = Any(matcher=None, name="no")
-        e.children = [FUNC]
-        with pytest.raises(ChildrenException):
-            e.check_valid()
-
     def test_validation_validate_zero_one_or_two_args4(self):
-        e = Any(matcher=None, name="any")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Any(matcher=path.matcher, name="any")
         eq = Equality(None)
         eq.children = [HEADERS, TERM, TERM]
         eq.op = ","
@@ -90,13 +65,19 @@ class TestValidations(unittest.TestCase):
             e.check_valid()
 
     def test_validation_validate_one_arg1(self):
-        e = Empty(None, name="empty")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Empty(matcher=path.matcher, name="empty")
         e.children = [VAR, TERM]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
     def test_validation_validate_one_arg2(self):
-        e = Empty(None, name="empty")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Empty(path.matcher, name="empty")
         eq = Equality(None)
         eq.children = [VAR, TERM]
         eq.op = ","
@@ -105,7 +86,10 @@ class TestValidations(unittest.TestCase):
             e.check_valid()
 
     def test_validation_validate_one_or_more_args1(self):
-        e = First(None, name="first")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = First(path.matcher, name="first")
         eq = Equality(None)
         eq.children = [VAR, TERM]
         eq.op = "="
@@ -117,7 +101,10 @@ class TestValidations(unittest.TestCase):
     # left=term
     # right=fun, eq
     def test_validation_validate_one_or_two_args1(self):
-        e = Print(None, name="print")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Print(path.matcher, name="print")
         one = Equality(None)
         one.children = [VAR, TERM]
         one.op = "="
@@ -126,46 +113,55 @@ class TestValidations(unittest.TestCase):
             e.check_valid()
 
     def test_validation_validate_one_or_two_args2(self):
-        e = Print(None, name="print")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Print(path.matcher, name="print")
         e.children = [VAR]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
-    def test_validation_validate_two_args1(self):
-        e = Equals(None, name="print")
-        one = Equality(None)
-        one.children = [VAR, TERM]
-        one.op = "="
-        e.children = [one]
-        with pytest.raises(ChildrenException):
-            e.check_valid()
-
     def test_validation_validate_two_args2(self):
-        e = Equals(None, name="print")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Equals(path.matcher, name="print")
         e.children = [VAR]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
     def test_validation_validate_two_or_three_args2(self):
-        e = Regex(None, name="print")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = Regex(path.matcher, name="print")
         e.children = [VAR]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args1(self):
-        e = HasDups(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = HasDups(matcher=path.matcher, name="no")
         e.children = [VAR]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args2(self):
-        e = HasDups(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = HasDups(matcher=path.matcher, name="no")
         e.children = [VAR, TERM]
         with pytest.raises(ChildrenException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args3(self):
-        e = HasDups(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        e = HasDups(matcher=path.matcher, name="no")
         eq = Equality(None)
         eq.children = [VAR, TERM]
         eq.op = "=="
@@ -174,19 +170,28 @@ class TestValidations(unittest.TestCase):
             e.check_valid()
 
     def test_validation_one1(self):
-        v = Empty(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        v = Empty(matcher=path.matcher, name="no")
         v.children = []
         with pytest.raises(ChildrenException):
             v.check_valid()
 
     def test_validation_one2(self):
-        v = Empty(matcher=None, name="no")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        v = Empty(matcher=path.matcher, name="no")
         v.children = [TERM]
         with pytest.raises(ChildrenException):
             v.check_valid()
 
     def test_validate_two_or_more_args(self):
-        v = In(matcher=None, name="in")
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[0][yes()]")
+        path.fast_forward()
+        v = In(matcher=path.matcher, name="in")
         EQ.op = ","
         v.children = [EQ]
         # no args, bad

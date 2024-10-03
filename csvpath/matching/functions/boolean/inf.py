@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -7,14 +8,14 @@ from ..args import Args
 
 class In(MatchDecider):
     """checks if the component value is in the values of the other N arguments.
-    terms are treated as a delimited string of values"""
+    terms are treated as | delimited strings of values"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset()
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

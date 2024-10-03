@@ -8,12 +8,15 @@ class ResetHeaders(SideEffect):
     """resets the headers to be the values in the current row, rather then the 0th row"""
 
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(types=[None, Function], actuals=[None])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(types=[None, Function], actuals=[None])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         self.matcher.csvpath.headers = self.matcher.line[:]
         self.matcher.header_dict = None
         for key in self.matcher.csvpath.variables.keys():
@@ -38,7 +41,4 @@ class ResetHeaders(SideEffect):
         )
         if len(self.children) == 1:
             self.children[0].matches(skip=skip)
-        self.value = True
-
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        self.match = self.default_match()

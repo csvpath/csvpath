@@ -240,6 +240,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # way.
         self._config = config
         #
+        #
+        #
+        self._log_validation_errors = False
+        self._print_validation_errors = True
+        self._raise_validation_errors = True
+        #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
         # your component instance and the logging level. e.g.:
@@ -359,6 +365,41 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self._errors = []
             self._errors.append(error)
 
+    def report_validation_errors(self, msg: str) -> None:
+        if self.print_validation_errors:
+            self.print(msg)
+        elif self.log_validation_errors:
+            self.logger.warning(msg)
+        #
+        # the args class will do the raise if it is told to by the prop
+        #
+
+    def set_validation_error_handling(self, veh) -> None:
+        if veh.find("print") > -1:
+            self._print_validation_errors = True
+        else:
+            self._print_validation_errors = False
+        if veh.find("log") > -1:
+            self._log_validation_errors = True
+        else:
+            self._log_validation_errors = False
+        if veh.find("raise") > -1:
+            self._raise_validation_errors = True
+        else:
+            self._raise_validation_errors = False
+
+    @property
+    def print_validation_errors(self) -> bool:
+        return self._print_validation_errors
+
+    @property
+    def log_validation_errors(self) -> bool:
+        return self._log_validation_errors
+
+    @property
+    def raise_validation_errors(self) -> bool:
+        return self._raise_validation_errors
+
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         if printer not in self.printers:
             self.printers.append(printer)
@@ -455,10 +496,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # atm, tho, just create a dry-run copy. in some possible
         # unit tests we may not have a parsable match part.
         #
-        matcher = None
-        if mat:
-            matcher = Matcher(csvpath=self, data=mat, line=None, headers=None)
         if disposably:
+            matcher = None
+            if mat:
+                matcher = Matcher(csvpath=self, data=mat, line=None, headers=None)
             #
             # if the matcher was requested for some reason beyond our own needs
             # we just return it and forget it existed.

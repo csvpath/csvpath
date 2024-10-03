@@ -12,10 +12,10 @@ class Exists(MatchDecider):
     """tests if a value exists"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference], actuals=[None, Any])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

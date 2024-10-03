@@ -8,12 +8,12 @@ class No(MatchDecider):
     """returns False"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
-    # def to_value(self, *, skip=None) -> Any:  # pragma: no cover
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:  # pragma: no cover
-        return False
+    def _decide_match(self, skip=None) -> None:
+        self.match = False

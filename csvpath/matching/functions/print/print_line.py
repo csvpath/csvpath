@@ -8,14 +8,18 @@ class PrintLine(SideEffect):
     """prints the current line using a delimiter"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[None, Term], actuals=[None])
-        a.arg(types=[None, Term], actuals=[None])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(0)
+        a = self.args.argset(2)
+        a.arg(types=[Term], actuals=[None, str])
+        a.arg(types=[None, Term], actuals=[None, str])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         v = self._value_one(skip=skip)
         if v is None:
             v = ","
@@ -39,7 +43,4 @@ class PrintLine(SideEffect):
                 d = "" if lineout == "" else delimiter
                 lineout = f"{lineout}{d}{quoted}{v}{quoted}"
         self.matcher.csvpath.print(lineout)
-        self.value = True
-
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        self.match = self.default_match()

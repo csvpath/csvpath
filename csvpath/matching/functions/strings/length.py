@@ -11,10 +11,10 @@ class Length(ValueProducer):
     """returns the length of a string"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -30,16 +30,14 @@ class Length(ValueProducer):
 
 class MinMaxLength(ValueProducer):  # pylint: disable=C0115
     def check_valid(self) -> None:
-        """
-        self.validate_two_args(
-            left=[Term, Variable, Header, Function, Reference], right=[Term]
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
         )
-        """
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:

@@ -9,11 +9,11 @@ class Mod(ValueProducer):
     """takes the modulus of numbers"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int, float])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int, float])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -27,4 +27,5 @@ class Mod(ValueProducer):
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
         self.match = self.default_match()

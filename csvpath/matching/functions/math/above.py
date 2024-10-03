@@ -12,11 +12,22 @@ class AboveBelow(MatchDecider):
     """this class implements greater-than, less-than"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        #
+        # None is an acceptable value >, < None is False
+        # we make that comparison frequently. int > date is
+        # not Ok. we never expect that comparison.
+        #
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, int, date, datetime, str],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, int, date, datetime, str],
+        )
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

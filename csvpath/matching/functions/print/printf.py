@@ -13,28 +13,31 @@ class Print(SideEffect):
         - if a function or equality, a matches() to call after the print"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term], actuals=[str])
-        a.arg(types=[None, Function, Equality, Term], actuals=[str])
-        args.validate(self.siblings_or_equality())
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(types=[Term], actuals=[str, self.args.EMPTY_STRING])
+        a.arg(
+            types=[None, Function, Equality, Term],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        child = None
-        if isinstance(self.children[0], Equality):
-            child = self.children[0].left
-        else:
-            child = self.children[0]
-        string = child.to_value()
-        parser = PrintParser(csvpath=self.matcher.csvpath)
-        self.value = parser.transform(string)
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         right = self._child_two()
         if self.do_onchange():
             if self.do_once():
-                v = self.to_value(skip=skip)
+                child = None
+                if isinstance(self.children[0], Equality):
+                    child = self.children[0].left
+                else:
+                    child = self.children[0]
+                string = child.to_value()
+                parser = PrintParser(csvpath=self.matcher.csvpath)
+                v = parser.transform(string)
                 #
                 # we intentionally add a single char suffix
                 #

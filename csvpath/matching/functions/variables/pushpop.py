@@ -11,14 +11,17 @@ class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         eq = self.children[0]
         k = eq.left.to_value(skip=skip)
         v = eq.right.to_value(skip=skip)
@@ -27,20 +30,15 @@ class Push(SideEffect):
             self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack. The run may be ending."
             )
-        elif self.has_qualifier("distinct") and v in stack:
+        elif (
+            self.has_qualifier("distinct") or self.name == "push_distinct"
+        ) and v in stack:
             pass
         elif self.notnone and ExpressionUtility.is_empty(v):
             pass
         else:
             stack.append(v)
-        self.value = stack
-
-    def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
-        if self.notnone:
-            self.match = not ExpressionUtility.is_empty(self.value)
-        else:
-            self.match = self.default_match()
+        self.match = self.default_match()
 
 
 class PushDistinct(Push):
@@ -59,10 +57,10 @@ class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
-        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
-        args.validate(self.siblings_or_equality())
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[None, Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -85,10 +83,10 @@ class Stack(SideEffect):
     """returns a stack variable"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
-        args.validate(self.siblings_or_equality())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -109,11 +107,11 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -137,10 +135,10 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(1)
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
-        args.validate(self.siblings_or_equality())
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

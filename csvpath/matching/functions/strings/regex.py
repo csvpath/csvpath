@@ -11,12 +11,12 @@ class Regex(MatchDecider):
     """does a regex match on a value"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(3)
+        self.args = Args(matchable=self)
+        a = self.args.argset(3)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
         left = self._function_or_equality.left

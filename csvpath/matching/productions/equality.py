@@ -392,7 +392,6 @@ class Equality(Matchable):
 
             lm = self.left.matches(skip=skip)
             pln = self.matcher.csvpath.line_monitor.physical_line_number
-
             if lm is True:
                 b = True
                 if self.matcher._AND is False and self._left_nocontrib(self.left):
@@ -446,9 +445,12 @@ class Equality(Matchable):
         if skip and self in skip:
             return True
         if not self.left or not self.right:
-            # this should never happen
+            # parser should never let this happen
             return False
         if self.match is None:
+            #
+            # validate "args" here?
+            #
             b = None
             if isinstance(self.left, Variable) and self.op == "=":
                 b = self._do_assignment(skip=skip)

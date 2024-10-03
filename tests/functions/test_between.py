@@ -9,6 +9,20 @@ DATES = "tests/test_resources/dates.csv"
 
 
 class TestFunctionsBetween(unittest.TestCase):
+    def test_function_between_args_validation1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_between_args_validation1")
+        with pytest.raises(ChildrenException):
+            path.parse(
+                f"""
+                ${DATES}[1][
+                    beyond(
+                        none(),
+                        date( "2000-10-01", "%Y-%m-%d" ),
+                        date( "2000-10-03", "%Y-%m-%d" ) )
+                ]"""
+            )
+            path.fast_forward()
 
     #
     # dates
@@ -28,22 +42,6 @@ class TestFunctionsBetween(unittest.TestCase):
         path.fast_forward()
         print(f"\ntest_function_before_dates1: path vars: {path.variables}")
         assert path.variables["date"] is True
-
-    def test_function_between_dates_none(self):
-        path = CsvPath()
-        Save._save(path, "test_function_between_dates_none")
-        path.parse(
-            f"""
-            ~ dates + None ~
-            ${DATES}[1][
-                beyond( none(),
-                         date( "2000-10-01", "%Y-%m-%d" ),
-                         date( "2000-10-03", "%Y-%m-%d" ) )
-                ]"""
-        )
-        lines = path.collect()
-        print(f"\n test_function_between_dates_none: path vars: {path.variables}")
-        assert len(lines) == 0
 
     def test_function_between_datetimes1(self):
         print()
@@ -84,7 +82,7 @@ class TestFunctionsBetween(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_between_datetimes3")
-        with pytest.raises(ValueError):
+        with pytest.raises(ChildrenException):
             path.parse(
                 f"""
                 ~ value error ~
@@ -195,6 +193,7 @@ class TestFunctionsBetween(unittest.TestCase):
                     @2 = between( 2, "0" )
                 ]"""
             )
+            path.fast_forward()
 
     def test_function_between_args2(self):
         path = CsvPath()
@@ -205,6 +204,7 @@ class TestFunctionsBetween(unittest.TestCase):
                     @2 = between( 2 )
                 ]"""
             )
+            path.fast_forward()
 
     def test_function_between_args3(self):
         path = CsvPath()
@@ -215,6 +215,7 @@ class TestFunctionsBetween(unittest.TestCase):
                     @2 = between()
                 ]"""
             )
+            path.fast_forward()
 
     def test_function_between_args4(self):
         path = CsvPath()
@@ -225,3 +226,4 @@ class TestFunctionsBetween(unittest.TestCase):
                     @2 = between(1, 2, 3, 4)
                 ]"""
             )
+            path.fast_forward()

@@ -11,11 +11,11 @@ class Increment(ValueProducer):
     """increments a var every n-times a each different value is seen"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[str])
         a.arg(types=[Term], actuals=[int])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:  # pylint: disable=R0912

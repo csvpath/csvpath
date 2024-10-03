@@ -8,7 +8,8 @@ class HasMatches(ValueProducer):
     """True if there have been matches."""
 
     def check_valid(self) -> None:  # pylint: disable=W0246
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:

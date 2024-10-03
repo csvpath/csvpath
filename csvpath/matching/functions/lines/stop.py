@@ -8,15 +8,13 @@ from ..args import Args
 
 class Stopper(SideEffect):
     def check_valid(self) -> None:
-        args = Args()
-        args.argset(1).arg(
-            types=[None, Variable, Header, Function, Equality], actuals=[None]
-        )
-        args.validate(self.siblings_or_equality())
+        self.args = Args(matchable=self)
+        self.args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self._apply_default_value()
+        self._apply_default_value()
 
     def _stop_me(self, skip=None):
         stopped = False
@@ -43,31 +41,30 @@ class Stop(Stopper):
     """when called halts the scan. the current row will be returned."""
 
     def _decide_match(self, skip=None) -> None:
-        self.match = True
         self._stop_me(skip=skip)
+        self.match = self.default_match()
 
 
 class StopAll(Stopper):
     """when called halts the scan. the current row will be returned."""
 
     def _decide_match(self, skip=None) -> None:
-        self.match = True
         self._stop_me(skip=skip)
         if self.matcher.csvpath.csvpaths:
             self.matcher.csvpath.csvpaths.stop_all()
+        self.match = self.default_match()
 
 
 class Skipper(SideEffect):
     def check_valid(self) -> None:
-        args = Args()
-        args.argset().arg(
-            types=[None, Variable, Header, Function, Equality], actuals=[None]
-        )
-        args.validate(self.siblings_or_equality())
+        self.args = Args(matchable=self)
+        self.args.argset(0)
+        self.args.argset(1).arg(types=[Function, Equality], actuals=[None, Any])
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self._apply_default_value()
+        self._apply_default_value()
 
     def _skip_me(self, skip=None):
         if len(self.children) == 1:
@@ -105,16 +102,8 @@ class SkipAll(Skipper):
     for the serial/paths methods skip_all() works the same as skip().
     """
 
-    def check_valid(self) -> None:
-        args = Args()
-        args.argset().arg(
-            types=[None, Variable, Header, Function, Equality], actuals=[None]
-        )
-        args.validate(self.siblings_or_equality())
-        super().check_valid()
-
     def _produce_value(self, skip=None) -> None:
-        self.value = self._apply_default_value()
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         if self.do_once():

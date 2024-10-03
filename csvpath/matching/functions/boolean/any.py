@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+import typing
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -13,19 +14,23 @@ class Any(MatchDecider):
     - any()
     - any(header())
     - any(variable())
-    - any(term)
-    - any(header(), term)
-    - any(variable(), term)
+    - any(Any)
+    - any(header(), Any)
+    - any(variable(), Any)
     """
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[None, Variables, Headers], actuals=[None])
-        a.arg(types=[None, Term], actuals=[None])
-        a = args.argset(1)
-        a.arg(types=[Term, Variables, Headers], actuals=[None])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        a = self.args.argset(0)
+
+        a = self.args.argset(2)
+        a.arg(types=[Variables, Headers], actuals=[Any])
+        a.arg(types=[typing.Any], actuals=[typing.Any])
+
+        a = self.args.argset(1)
+        a.arg(types=[typing.Any, Variables, Headers], actuals=[typing.Any])
+
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover

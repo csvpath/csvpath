@@ -31,7 +31,8 @@ class TestPop(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                push.notnone("pushed", none() )
+                no()
+                push.notnone("pushed", none())
             ]"""
         )
         lines = path.collect()
@@ -74,7 +75,7 @@ class TestPop(unittest.TestCase):
         lines = path.collect()
         print(f"\n test_function_push4: lines: {lines}")
         print(f"test_function_push4: path vars: {path.variables}")
-        assert len(lines) == 1
+        assert len(lines) == 4
         assert "empties" in path.variables
         assert isinstance(path.variables["empties"], list)
         s = path.variables["empties"]

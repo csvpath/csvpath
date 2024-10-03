@@ -1,18 +1,18 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function import Function
+from ..function_focus import ValueProducer
 from ..args import Args
 
 
-class Yes(Function):
+class Yes(ValueProducer):
     """returns True"""
 
     def check_valid(self) -> None:
         Args().validate(self.siblings())
         super().check_valid()
 
-    def to_value(self, *, skip=None) -> Any:  # pragma: no cover
-        return True
+    def _produce_value(self, skip=None) -> None:
+        self.value = self.matches(skip=skip)
 
-    def matches(self, *, skip=None) -> bool:  # pragma: no cover
-        return True
+    def _decide_match(self, skip=None) -> None:
+        self.match = True

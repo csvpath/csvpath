@@ -10,11 +10,14 @@ class Round(ValueProducer):
     """rounds a number to a certain number of places"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[str])
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(
+            types=[Term, Variable, Header, Function],
+            actuals=[None, bool, str, float, int],
+        )
         a.arg(types=[None, Term], actuals=[str])
-        args.validate(self.siblings_or_equality())
+        self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

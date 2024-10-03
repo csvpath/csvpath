@@ -10,13 +10,16 @@ class Collect(SideEffect):
     a line matches. by default all headers are collected."""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(types=[Term], actuals=[Any])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         collect = []
         if isinstance(self.children[0], Equality):
             siblings = self.children[0].commas_to_list()
@@ -31,7 +34,4 @@ class Collect(SideEffect):
             else:
                 cs.append(int(s))
         self.matcher.csvpath.limit_collection_to = cs
-        self.value = True
-
-    def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip)
+        self.match = self.default_match()

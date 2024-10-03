@@ -137,5 +137,5 @@ class TestFunctionsRegex(unittest.TestCase):
                 line = line.strip()
                 print(f"[{i}] attempting line: {line}")
                 path = CsvPath()
-                path.parse(line)
+                path.parse(line, disposably=True)
         print("test_function_good_regex2 done")

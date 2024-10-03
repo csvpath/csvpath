@@ -15,8 +15,11 @@ class TestFunctionsCounter(unittest.TestCase):
             f"""
             ${PATH}[1*][
                counter.one(5)
+               print("one: $.variables.one")
                mod(@one, 10) == 0 -> counter.two(2)
+               print("two: $.variables.two ")
                gt(@two, 4) -> counter.three()
+               print("three: $.variables.three")
             ]"""
         )
         lines = path.collect()

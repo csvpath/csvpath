@@ -9,22 +9,21 @@ class Put(ValueProducer):
     """Sets a variable with or without a tracking value"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, bool, tuple],
         )
-        a = args.argset(3)
+        a = self.args.argset(3)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, bool, tuple],
         )
-        args.validate(self.siblings())
-
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

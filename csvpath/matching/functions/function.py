@@ -10,6 +10,7 @@ class Function(Matchable):
         super().__init__(matcher, name=name)
         self.matcher = matcher
         self._function_or_equality = child
+        self.args = None
         if child:
             self.add_child(child)
 
@@ -21,6 +22,8 @@ class Function(Matchable):
     def reset(self) -> None:
         self.value = None
         self.match = None
+        if self.args:
+            self.args.matched = None
         super().reset()
 
     def to_value(self, *, skip=None) -> bool:
@@ -42,6 +45,17 @@ class Function(Matchable):
             self.matcher.csvpath.logger.debug("We're frozen in %s", self)
             return self._noop_value()
         if self.value is None:
+            # count() doesn't yet use args. it is grandfathered, for now.
+            if self.args and not self.args.matched:
+                self.matcher.csvpath.logger.debug(
+                    "Validating arg actuals for %s in to_value", self.name
+                )
+                self.args.matches(self.sibling_values(skip=skip))
+            elif self.args:
+                self.matcher.csvpath.logger.debug(
+                    "Validation already done on arg actuals for %s in to_value",
+                    self.name,
+                )
             if self.do_onmatch():
                 self.matcher.csvpath.logger.debug(
                     "%s, a %s, calling produce value", self, self.__class__.FOCUS
@@ -50,7 +64,7 @@ class Function(Matchable):
             else:
                 self._apply_default_value()
                 self.matcher.csvpath.logger.debug(
-                    f"@{self}: appling default value, {self.value}, because !do_onmatch"
+                    "@{self}: appling default value, {self.value}, because !do_onmatch"
                 )
         return self.value
 
@@ -66,8 +80,38 @@ class Function(Matchable):
             # csvpath writer doesn't know anything about this.
             self.matcher.csvpath.logger.debug("We're frozen in %s", self)
             return self._noop_value()
-        if not self.match:
+        if self.match is None:
             if self.do_onmatch():
+                #
+                # out of order (child before parent) seems like it would be a problem
+                # for some functions (e.g. print) that notionally do their thing and
+                # then do a child thing. in reality, i'm not sure this ever matters.
+                # skip, fail, stop, print don't need the ordering. there may be some
+                # i'm forgetting, but if there's a need for strict ordering we should
+                # probably consider a "post" qualifier to be more intentional about it.
+                #
+                # count() doesn't yet use args. it is grandfathered, for now.
+                if self.args and not self.args.matched:
+                    self.matcher.csvpath.logger.debug(
+                        "Validating arg actuals for %s in matches", self.name
+                    )
+                    #
+                    # why does vvvv break counter() and seems other funcs too?
+                    # in the case of gt() we were disallowing None. not validating on matches
+                    # allowed us to never see a None. however, None > x is a valid comparison,
+                    # for us, equaling False. had to adjust the validation. the missing
+                    # matches validation was in equality -- the -> only called matches allowing
+                    # some match components to never be validated.
+                    #
+                    self.args.matches(self.sibling_values(skip=skip))
+                elif self.args:
+                    self.matcher.csvpath.logger.debug(
+                        "Validation already done on arg actuals for %s in matches",
+                        self.name,
+                    )
+                #
+                #
+                #
                 self.matcher.csvpath.logger.debug(
                     "%s, a %s, calling decide match", self, self.FOCUS
                 )
@@ -77,7 +121,6 @@ class Function(Matchable):
                 )
             else:
                 self.match = self.default_match()
-                # self._apply_default_match()
                 self.matcher.csvpath.logger.debug(
                     f"@{self}: appling default match, {self.match}, because !do_onmatch"
                 )

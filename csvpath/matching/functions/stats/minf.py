@@ -79,12 +79,11 @@ class Min(MinMax):
     """matches when its value is the smallest"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[str])
         a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
-        args.validate(self.siblings())
-
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -103,11 +102,11 @@ class Max(MinMax):
     """matches when its value is the largest"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[str])
         a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -126,11 +125,11 @@ class Average(MinMax):
     """returns the running average"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
         a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def __init__(

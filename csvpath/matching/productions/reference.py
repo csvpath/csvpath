@@ -120,50 +120,6 @@ class Reference(Matchable):
         ref = self._get_reference()
         return ref["tracking"]
 
-    """"
-    def _get_results(self):
-        cs = self.matcher.csvpath.csvpaths
-        if cs is None:
-            self.matcher.csvpath.logger.error(
-                "Attemped to make a reference %s without a CsvPaths instance available",
-                self,
-            )
-            raise MatchException(
-                "References cannot be used without a CsvPaths instance"
-            )
-        ref = self._get_reference()
-        #
-        # our name less the '$' is the name of the named-paths's results
-        #
-        # the syntax is $named-path.variables-qualifier.varname.tracking
-        # the syntax is $named-path.headers-qualifier.headername
-        # the syntax is $named-connection.query.queryname.columnname
-        #
-        results_list = cs.results_manager.get_named_results(ref["paths_name"])
-        if results_list and len(results_list) > 0:
-            results = results_list[0]
-            # else:
-            #    for r in results_list:
-            # this is a legacy that should be removed when time.
-            # we should have paths_name on every result, so always
-            # the 1st one. with headers we use the tracking value
-            # to identify a specific csvpath.
-            #        if r.paths_name == ref["paths_name"]:
-            #            results = r
-            #            break
-        elif results_list:
-            # the results exist but are empty. when would this happen?
-            self.matcher.csvpath.logger.error(
-                "Unknown state: results for %s came back empty", self
-            )
-        else:
-            #
-            # this is almost certainly a user misconfiguration
-            #
-            raise MatchException("Results cannot be None for reference %s", self)
-        return results
-    """
-
     def _get_reference(self) -> Dict[str, str]:
         if self.ref is None:
             self.ref = self._get_reference_for_parts(self.name_parts)

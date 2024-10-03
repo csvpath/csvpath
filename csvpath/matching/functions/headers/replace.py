@@ -10,13 +10,17 @@ class Replace(SideEffect):
     """replaces the value of the header with another value"""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term], actuals=[int, str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         h = self._value_one(skip=skip)
         val = self._value_two(skip=skip)
         i = h
@@ -28,8 +32,4 @@ class Replace(SideEffect):
         )
         self.matcher.line[i] = val
 
-        self._apply_default_value()
-
-    def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
         self.match = self.default_match()

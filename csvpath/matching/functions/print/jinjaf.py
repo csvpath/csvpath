@@ -20,42 +20,40 @@ class Jinjaf(SideEffect):
         self._engine = None
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset()
+        self.args = Args(matchable=self)
+        a = self.args.argset()
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self.value = self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
+        self.to_value(skip=skip)
+        #
+        # we're not producing value so the action stays here, but we do want
+        # args actuals type checking so we'll call to_value
+        #
+        self.to_value(skip=skip)
+        # do the print
         siblings = self.children[0].commas_to_list()
-
         template_path = siblings[0].to_value(skip=skip)
-        if template_path is None or f"{template_path}".strip() == "":
-            raise ChildrenException("Jinja function must provide two file paths")
         output_path = siblings[1].to_value(skip=skip)
-        if output_path is None or f"{output_path}".strip() == "":
-            raise ChildrenException("Jinja function must provide two file paths")
-
         paths = []
         for i, s in enumerate(siblings):
             if i == 2:
                 v = s.to_value(skip=skip)
                 paths.append(v)
-
         page = None
         with open(template_path, "r", encoding="utf-8") as file:
             page = file.read()
-
         tokens = self._get_tokens(paths)
         page = self._transform(content=page, tokens=tokens)
         with open(output_path, "w", encoding="utf-8") as file:
             file.write(page)
 
-        self.value = self._apply_default_value()
-
-    def _decide_match(self, skip=None) -> None:
-        self.to_value(skip=skip)
         self.match = self.default_match()
 
     # --------------------

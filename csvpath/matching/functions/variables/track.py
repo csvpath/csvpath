@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -10,14 +11,19 @@ class Track(SideEffect):
     value, from another match component, on a variable."""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        args.validate(self.siblings())
+        # typically arg two is going to be a string, but it can be anything. there
+        # have definitely been cases of int and bool
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
         left = self.children[0].children[0]
         right = self.children[0].children[1]
         varname = self.first_non_term_qualifier(self.name)
@@ -27,8 +33,4 @@ class Track(SideEffect):
             v = f"{v}".strip()
         value = v
         self.matcher.set_variable(varname, tracking=tracking, value=value)
-        self.value = True
-
-    def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()
-        self.to_value(skip=skip)

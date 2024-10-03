@@ -11,9 +11,12 @@ class Substring(ValueProducer):
     unlike Python we do not allow negatives."""
 
     def check_valid(self) -> None:
-        args = Args()
-        a = args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        self.args = Args(matchable=self)
+        a = self.args.argset(2)
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
         super().check_valid()
 

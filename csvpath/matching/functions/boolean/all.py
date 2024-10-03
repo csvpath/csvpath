@@ -16,16 +16,29 @@ class All(MatchDecider):
     """checks that a number of match components return True"""
 
     def check_valid(self) -> None:  # pragma: no cover
-        args = Args()
-        args.argset(1).arg(types=[None, Variables, Headers], actuals=[None])
-        args.argset().arg(types=[None, Function, Variable, Header], actuals=[None, Any])
-        args.validate(self.siblings())
+        print(f"checking valid in All() {id(self)}")
+        self.args = Args(matchable=self)
+        self.args.argset(0)
+        self.args.argset(1).arg(types=[None, Variables, Headers], actuals=[])
+        self.args.argset().arg(types=[None, Function, Variable, Header], actuals=[])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
+        print(f"produce val in All() {id(self)}")
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
+        print(f"decide mat in All() {id(self)}")
+        #
+        # checking actuals match to arguments definition here.
+        # this will go into Matchable.matches()
+        #
+        # sib_vals = self.sibling_values(skip=skip)
+        # self.args.matches(sib_vals)
+        #
+        #
+        #
         self.match = False
         cs = len(self.children)
         if cs == 0:
