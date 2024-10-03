@@ -66,12 +66,14 @@ Metadata fields can be used to control certain run modes:
 - `logic-mode` -- sets the CsvPath instance to operate in AND or OR mode
 - `match-mode` -- instructs the CsvPath instance to return matches or lines that did not match
 - `print-mode` -- determines if the printouts from `print()` go to the terminal's standard out, or not
+- `arg-validation-mode` -- sets the function argument validation reporting channel(s)
 
 The values for each are:
 
 - `logic-mode` == `OR` or `AND` (`AND` is the default)
 - `match-mode` == `no-matches` or `matches` (`matches` is the default)
 - `print-mode` == `default-off` or `default-on` (`default-on` is the default)
+- `arg-validation-mode` == `print` and/or `raise` and/or `log` (`print` and `raise` are default)
 
 Those keys are found and the metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` processes the file.
 
