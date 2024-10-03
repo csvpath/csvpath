@@ -14,6 +14,13 @@ class Stopper(SideEffect):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        #
+        # the default value is None. not sure that's ideal here. print will call
+        # matches when it finds a stop (or anything) but validation calls
+        # to_value. that means we might think in terms of bool, but we have to
+        # define including None. open question. :/
+        #
+        # self.value = self.matches(skip=skip)
         self._apply_default_value()
 
     def _stop_me(self, skip=None):

@@ -1,6 +1,6 @@
 ---- CSVPATH ----
 
-~ Check for SKUs and UPCs ~
+~ Check for SKUs and UPCs ID: sku/upc ~
 
 $[*][
     import("top_matter_import")

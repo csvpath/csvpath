@@ -240,7 +240,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # way.
         self._config = config
         #
-        #
+        # these settings determine how we report function args validation
+        # errors. e.g. if print(True) the validation check fails because
+        # print() expects a string.
         #
         self._log_validation_errors = False
         self._print_validation_errors = True
@@ -375,15 +377,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
 
     def set_validation_error_handling(self, veh) -> None:
-        if veh.find("print") > -1:
+        if veh and veh.find("print") > -1:
             self._print_validation_errors = True
         else:
             self._print_validation_errors = False
-        if veh.find("log") > -1:
+        if veh and veh.find("log") > -1:
             self._log_validation_errors = True
         else:
             self._log_validation_errors = False
-        if veh.find("raise") > -1:
+        if veh and veh.find("raise") > -1:
             self._raise_validation_errors = True
         else:
             self._raise_validation_errors = False
@@ -516,10 +518,27 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - logic-mode: AND | OR
         #   - match-mode: matches | no-matches
         #   - print-mode: default-off | default-on
+        #   - function-validation-mode: print | log | raise | quiet
         #
         self.update_logic_mode_if()
         self.update_match_mode_if()
         self.update_print_mode_if()
+        self.update_function_mode_if()
+
+    def update_function_mode_if(self) -> None:
+        if self.metadata and "function-validation-mode" in self.metadata:
+            # sets arg validation reporting. one or more or none of:
+            #  - print
+            #  - log
+            #  - raise
+            #
+            validation_mode = f"{self.metadata['logic-mode']}".strip()
+            if validation_mode:
+                self.set_validation_error_handling(validation_mode)
+                self.logger.info(
+                    "Setting 'function-mode': %s",
+                    self.metadata["function-mode"],
+                )
 
     def update_logic_mode_if(self) -> None:
         if self.metadata and "logic-mode" in self.metadata:

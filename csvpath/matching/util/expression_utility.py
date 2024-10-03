@@ -229,12 +229,16 @@ class ExpressionUtility:
             return True
         if len(acts) == 0:
             return False
-        actst = None
-        if None in acts:
-            actst = acts[:]
+        actst = acts[:]
+        if None in actst:
             actst.remove(None)
-        else:
-            actst = acts
+        #
+        # in some cases we use "" as a signal that we don't
+        # want to treat "" as None. that can result in it showing
+        # up here.
+        #
+        if cls.EMPTY_STRING in actst:
+            actst.remove(cls.EMPTY_STRING)
         actst = tuple(actst)
         if isinstance(a, actst):
             # empty == NULL in CSV so we disallow an empty string here

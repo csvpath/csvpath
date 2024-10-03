@@ -16,10 +16,10 @@ class And(MatchDecider):
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[Any]
         )
         a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[Any]
         )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()

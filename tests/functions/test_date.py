@@ -1,12 +1,38 @@
 import unittest
+import pytest
 from csvpath.csvpath import CsvPath
 from datetime import date, datetime
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 DATES = "tests/test_resources/dates.csv"
+TEST = "tests/test_resources/test.csv"
 
 
 class TestFunctionsDate(unittest.TestCase):
+    def test_function_date0(self):
+        path = CsvPath()
+        Save._save(path, "test_function_date0")
+        path.parse(
+            f"""
+            ${TEST}[4] [
+                push( "dates", date( #firstname ) )
+            ]"""
+        )
+        with pytest.raises(ChildrenException):
+            path.fast_forward()
+
+    def test_function_date01(self):
+        path = CsvPath()
+        Save._save(path, "test_function_date01")
+        path.parse(
+            f"""
+            ${TEST}[4] [
+                push( "dates", date( "2024-01-01" ) )
+            ]"""
+        )
+        path.fast_forward()
+
     def test_function_date1(self):
         path = CsvPath()
         Save._save(path, "test_function_date1")

@@ -1,6 +1,6 @@
 ---- CSVPATH ----
 
-~ Check the prices ~
+~ Check the prices ID: prices ~
 
 $[*][
     import("top_matter_import")

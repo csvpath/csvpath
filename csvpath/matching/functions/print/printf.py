@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.print_parser import PrintParser
 from ..function_focus import SideEffect
@@ -18,7 +19,7 @@ class Print(SideEffect):
         a.arg(types=[Term], actuals=[str, self.args.EMPTY_STRING])
         a.arg(
             types=[None, Function, Equality, Term],
-            actuals=[str, self.args.EMPTY_STRING],
+            actuals=[Any],
         )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()

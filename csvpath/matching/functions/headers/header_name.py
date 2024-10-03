@@ -20,7 +20,7 @@ class HeaderName(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Function, Variable], actuals=[str, int])
-        a.arg(types=[None, Term], actuals=[str])
+        a.arg(types=[None, Term], actuals=[str, int])
         self.args.validate(self.siblings())
         super().check_valid()
 

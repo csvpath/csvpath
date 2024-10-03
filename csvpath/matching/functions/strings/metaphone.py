@@ -19,7 +19,7 @@ class Metaphone(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Function, Header, Variable, Reference], actuals=[str])
-        a.arg(types=[None, Reference], actuals=[str])
+        a.arg(types=[None, Reference], actuals=[dict])
         self.args.validate(self.siblings())
         super().check_valid()
 

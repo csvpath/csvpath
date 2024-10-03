@@ -1,6 +1,6 @@
 ---- CSVPATH ----
 
-~ Check the categories ~
+~ Check the categories ID: categories ~
 
 $[*][
     import("top_matter_import")

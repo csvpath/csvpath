@@ -16,7 +16,7 @@ class Round(ValueProducer):
             types=[Term, Variable, Header, Function],
             actuals=[None, bool, str, float, int],
         )
-        a.arg(types=[None, Term], actuals=[str])
+        a.arg(types=[None, Term], actuals=[int])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

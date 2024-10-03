@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 import datetime
+from typing import Any
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Header, Reference, Variable
 from ..function import Function
@@ -13,7 +14,7 @@ class Replace(SideEffect):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term], actuals=[int, str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
         self.args.validate(self.siblings())
         super().check_valid()
 

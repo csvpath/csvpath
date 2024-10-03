@@ -1,6 +1,6 @@
 ---- CSVPATH ----
 
-~ collect metadata fields from comments ~
+~ collect metadata fields from comments ID:top-matter ~
 $[*][
     starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
     starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
@@ -11,7 +11,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ print the line number when we reset headers ~
+~ print the line number when we reset headers ID:line-num-change ~
 $[*][
     import("top_matter_import")
 
@@ -21,7 +21,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ Check the file length ~
+~ Check the file length ID:file-length ~
 $[*][
     import("top_matter_import")
 
@@ -31,7 +31,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ Check the categories ~
+~ Check the categories ID:categories ~
 $[*][
     import("top_matter_import")
 
@@ -41,7 +41,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ Check the prices ~
+~ Check the prices ID:prices~
 $[*][
     import("top_matter_import")
 
@@ -50,7 +50,7 @@ $[*][
 ]
 ---- CSVPATH ----
 
-~ Check for SKUs and UPCs ~
+~ Check for SKUs and UPCs ID:sku/upc ~
 $[*][
     import("top_matter_import")
 

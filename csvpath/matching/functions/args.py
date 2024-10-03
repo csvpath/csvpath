@@ -217,7 +217,8 @@ class ArgSet:
         a = None
         i = 0
         self._parent._csvpath.logger.debug(
-            "Beginning matches on arg actuals to expected actuals"
+            "Beginning matches on arg actuals to expected actuals for argset %s",
+            self.argset_number,
         )
         self._parent._csvpath.logger.debug("Actuals: %s", str(actuals))
         for i, a in enumerate(actuals):
@@ -231,7 +232,7 @@ class ArgSet:
                 # fail to match.
                 #
                 mismatches.append(
-                    f"No match for argset {self._parent.argsets.index(self)}. More actuals than args."
+                    f"No match with argset {self.argset_number}. More actuals than args."
                 )
                 break
             arg = self._args[i]
@@ -244,29 +245,39 @@ class ArgSet:
             if not arg or not arg.actuals or len(arg.actuals) == 0:
                 if self._parent and self._parent._csvpath:
                     self._parent._csvpath.logger.debug(
-                        "No expectations to validate actual values against"
+                        "No expectations to validate actual values against in argset {self.argset_number}"
                     )
                 found = True
                 break
             if Any in arg.actuals:
                 self._parent._csvpath.logger.debug("Found Any so we're done")
                 found = True
-                break
+                continue
             _ = ExpressionUtility.is_one_of(a, arg.actuals)
-            print(f"{a} is_one_of {arg.actuals} returns {_}")
             self._parent._csvpath.logger.debug(
                 "'%s' is_one_of %s returns %s", a, str(arg.actuals), _
             )
             if _ is True:
                 found = True
-                break
+                continue
             found = False
             break
         if not found:
-            mismatches.append(f"{type(a)}({a}) not allowed in arg {i}")
-        else:
+            mismatches.append(
+                f"{type(a)}({a}) not allowed in arg {i} of argset {self.argset_number}"
+            )
+        if len(actuals) < self.min_length:
+            mismatches.append(
+                f"Values received {actuals} are too few for argset {self.argset_number}"
+            )
+            found = False
+        if found:
             mismatches = []
         return mismatches
+
+    @property
+    def argset_number(self) -> int:
+        return self._parent.argsets.index(self)
 
 
 class Args:
@@ -343,7 +354,10 @@ class Args:
                 c = f"all {mismatch_count}"
             pm = f"Mismatches with args expectations in {self.matchable.name} for {c} arg sets: {mismatches}"
             if self._csvpath:
-                pm = f"{pm} at line {self._csvpath.line_monitor.physical_line_number}"
+                cid = self._csvpath.identity
+                if not cid or cid.strip() == "":
+                    cid = "<<no ID or name>>"
+                pm = f"[In csvpath {cid}] {pm} at line {self._csvpath.line_monitor.physical_line_number}"
                 self._csvpath.report_validation_errors(pm)
             if self._csvpath is None or self._csvpath.raise_validation_errors:
                 msg = f"Wrong values of args: {actuals}. {pm}."

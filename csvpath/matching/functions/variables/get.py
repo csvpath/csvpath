@@ -12,7 +12,7 @@ class Get(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Header, Term, Function, Variable], actuals=[str])
-        a.arg(types=[None, Header, Term, Function, Variable], actuals=[str])
+        a.arg(types=[None, Header, Term, Function, Variable], actuals=[str, int])
         self.args.validate(self.siblings())
         super().check_valid()
 

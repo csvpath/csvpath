@@ -15,7 +15,7 @@ class Regex(MatchDecider):
         a = self.args.argset(3)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 

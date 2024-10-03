@@ -11,8 +11,14 @@ class Concat(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
