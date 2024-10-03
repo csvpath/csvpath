@@ -318,7 +318,11 @@ class Args:
     def validate(self, siblings: List[Matchable]) -> None:
         if len(self._argsets) == 0 and len(siblings) == 0:
             return
-        if len(self._argsets[0]._args) == 0 and len(siblings) == 0:
+        if (
+            len(self._argsets) > 0
+            and len(self._argsets[0]._args) == 0
+            and len(siblings) == 0
+        ):
             return
         #
         # we want to check all the argsets even if we find a match
@@ -352,14 +356,15 @@ class Args:
                 c = "both"
             else:
                 c = f"all {mismatch_count}"
-            pm = f"Mismatches with args expectations in {self.matchable.name} for {c} arg sets: {mismatches}"
+            pm = f"mismatches with args expectations in {self.matchable.name} for {c} arg sets: {mismatches}"
+            cid = ""
             if self._csvpath:
                 cid = self._csvpath.identity
-                if not cid or cid.strip() == "":
-                    cid = "<<no ID or name>>"
-                pm = f"[In csvpath {cid}] {pm} at line {self._csvpath.line_monitor.physical_line_number}"
-                self._csvpath.report_validation_errors(pm)
+            if not self._csvpath or not cid or cid.strip() == "":
+                cid = "<<no ID or name>>"
+            pm = f"[In csvpath {cid}] Wrong values of args: {pm} at line {self._csvpath.line_monitor.physical_line_number}"
+            self._csvpath.report_validation_errors(pm)
+
             if self._csvpath is None or self._csvpath.raise_validation_errors:
-                msg = f"Wrong values of args: {actuals}. {pm}."
-                raise ChildrenException(msg)
+                raise ChildrenException(pm)
         self.matched = True

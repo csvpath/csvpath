@@ -1,6 +1,9 @@
 import unittest
+import pytest
 from csvpath import CsvPath
 from csvpath import CsvPaths
+from csvpath.util.printer import LogPrinter
+from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = "tests/test_resources/test.csv"
 
@@ -11,11 +14,13 @@ class TestComments(unittest.TestCase):
         assert path.OR is False
         assert path.collect_when_not_matched is False
         assert path.has_default_printer is True
+        assert path.print_validation_errors is True
         path.parse(
             f"""
             ~ logic-mode: OR
               match-mode: no-matches
               print-mode: default-off
+              arg-validation-mode: log
             ~
             ${PATH}[1*]
             [
@@ -28,9 +33,60 @@ class TestComments(unittest.TestCase):
         assert "logic-mode" in path.metadata
         assert "match-mode" in path.metadata
         assert "print-mode" in path.metadata
+        assert "arg-validation-mode" in path.metadata
         assert path.OR is True
         assert path.collect_when_not_matched is True
         assert path.has_default_printer is False
+        assert path.print_validation_errors is False
+
+    def test_update_settings_from_metadata2(self):
+        path = CsvPath()
+        path.add_printer(LogPrinter(path.logger))
+        assert path.print_validation_errors is True
+        path.parse(
+            f"""
+            ~
+            arg-validation-mode: print
+            ~
+            ${PATH}[1*][
+                ~ this path is simple and so are its comments ~
+                concat("a", "b", stack("s"))
+            ]
+            """
+        )
+        print(f"path meta: {path.metadata}")
+        assert "arg-validation-mode" in path.metadata
+        assert path.log_validation_errors is False
+        assert path.print_validation_errors is True
+        assert path.raise_validation_errors is False
+        path.fast_forward()
+        for p in path.printers:
+            assert p.last_line and p.last_line.find("Wrong values of args") > -1
+
+    def test_update_settings_from_metadata3(self):
+        path = CsvPath()
+        assert path.raise_validation_errors is True
+        path.parse(
+            f"""
+            ~
+            arg-validation-mode: raise print
+            ~
+            ${PATH}[1*][
+                ~ this path is simple and so are its comments ~
+                concat("a", "b", stack("s"))
+            ]
+            """
+        )
+        print(f"path meta: {path.metadata}")
+        assert "arg-validation-mode" in path.metadata
+        assert path.log_validation_errors is False
+        assert path.print_validation_errors is True
+        assert path.raise_validation_errors is True
+        with pytest.raises(ChildrenException):
+            path.fast_forward()
+        for p in path.printers:
+            assert p.last_line and p.last_line.find("Wrong values of args") > -1
+        assert path.has_errors() is True
 
     def test_comment_settings_affecting_multiple_paths(self):
         paths = CsvPaths()

@@ -518,26 +518,26 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - logic-mode: AND | OR
         #   - match-mode: matches | no-matches
         #   - print-mode: default-off | default-on
-        #   - function-validation-mode: print | log | raise | quiet
+        #   - arg-validation-mode: print | log | raise | quiet
         #
         self.update_logic_mode_if()
         self.update_match_mode_if()
         self.update_print_mode_if()
-        self.update_function_mode_if()
+        self.update_arg_validation_mode_if()
 
-    def update_function_mode_if(self) -> None:
-        if self.metadata and "function-validation-mode" in self.metadata:
+    def update_arg_validation_mode_if(self) -> None:
+        if self.metadata and "arg-validation-mode" in self.metadata:
             # sets arg validation reporting. one or more or none of:
             #  - print
             #  - log
             #  - raise
             #
-            validation_mode = f"{self.metadata['logic-mode']}".strip()
+            validation_mode = f"{self.metadata['arg-validation-mode']}".strip()
             if validation_mode:
                 self.set_validation_error_handling(validation_mode)
                 self.logger.info(
-                    "Setting 'function-mode': %s",
-                    self.metadata["function-mode"],
+                    "Setting 'arg-validation-mode': %s",
+                    self.metadata["arg-validation-mode"],
                 )
 
     def update_logic_mode_if(self) -> None:
