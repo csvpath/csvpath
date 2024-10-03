@@ -11,8 +11,8 @@ class Multiply(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
         self.args.validate(self.siblings())
         super().check_valid()
 

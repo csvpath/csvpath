@@ -12,10 +12,7 @@ class Int(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(
-            types=[Term, Variable, Header, Function],
-            actuals=[None, str, int, float, bool],
-        )
+        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -34,10 +31,7 @@ class Float(ValueProducer):
         # self.validate_one_arg()
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(
-            types=[Term, Variable, Header, Function],
-            actuals=[None, str, int, float, bool],
-        )
+        a.arg(types=[Term, Variable, Header, Function], actuals=[float])
         self.args.validate(self.siblings())
         super().check_valid()
 

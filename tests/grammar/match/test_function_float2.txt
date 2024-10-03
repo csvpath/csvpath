@@ -1,0 +1,7 @@
+[
+                @st = float(" 3 ")
+                @no = float(" 3.5 ")
+                @bo = float("$5.39")
+                @ca = float("$5000,39")
+                @so = float(yes())
+            ]

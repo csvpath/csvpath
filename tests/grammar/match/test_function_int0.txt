@@ -1,0 +1,7 @@
+[
+                @st = int(" 3 ")
+                @no = int(float(3))
+                @bo = int(no())
+                @b2 = int( "3.2" )
+                @b3 = int( -3.3 )
+            ]
