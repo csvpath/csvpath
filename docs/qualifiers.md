@@ -17,7 +17,7 @@ When multiple qualifiers are used, order is not important.
 
 Qualifiers can have a large impact in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
-Qualifiers are relatively new and are being added opportunistically. Not all functions support all the qualifiers that might seem to be applicable. See the individual function docs for which qualifiers are available on each function.
+Qualifiers are relatively new and are being added opportunistically. Not all functions support all the qualifiers that might seem applicable. See the individual function docs for which qualifiers are available on each function.
 
 
 ## Well-known Qualifiers
@@ -67,11 +67,11 @@ Adding `latch` to a variable makes the variable only set one time. The variable 
 | Yes      | No      | No        |
 
 ### notnone
-`notnone` is set on a variable in an assignment to indicate that the assignment should only happen if the value being assigned is not None.
+`notnone` is set on a variable in an assignment to indicate that the assignment should only happen if the value being assigned is not None. On a function, `notnone` disallows None-valued arguments. All functions can take `notnone`.
 
 |Functions | Headers | Variables |
 |----------|---------|-----------|
-| No       | No      | Yes       |
+| Yes      | No      | Yes       |
 
 ### once
 Add `once` to a function to indicate that it should fire at most one time. `once` is the function equivalent of variables' `latch`.
@@ -89,7 +89,7 @@ Add `onchange` to a variable to indicate that a row should only match when the v
 | No       | No      | Yes       |
 
 ### onmatch
-`onmatch` indicates that action on the variable or function only happens when the whole path matches a row.
+`onmatch` indicates that action on the variable or function only happens when the whole path matches a row. All functions can take `onmatch`.
 
 |Functions | Headers | Variables |
 |----------|---------|-----------|

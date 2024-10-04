@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -151,3 +153,27 @@ class TestFunctionsInt(unittest.TestCase):
         print(f"test_function_float_mul1: path.vars: {path.variables}")
         assert isinstance(path.variables["s2"], float)
         assert path.variables["s2"] == -3.8
+
+    def test_function_float_notnone1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_float_notnone1")
+        path.parse(
+            f""" ${PATH}[*] [
+                @f = float(none())
+            ]
+            """
+        )
+        with pytest.raises(ChildrenException):
+            path.fast_forward()
+
+    def test_function_float_notnone2(self):
+        path = CsvPath()
+        Save._save(path, "test_function_float_notnone2")
+        path.parse(
+            f""" ${PATH}[*] [
+                brief_stack_trace.notnone( none())
+            ]
+            """
+        )
+        with pytest.raises(ChildrenException):
+            path.fast_forward()

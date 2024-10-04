@@ -341,13 +341,28 @@ class Args:
     def matches(self, actuals: List[Any]) -> None:
         if len(self._argsets) == 0 and len(actuals) == 0:
             return
-        mismatches = []
         mismatch_count = 0
-        for aseti, aset in enumerate(self._argsets):
-            ms = aset.matches(actuals)
-            if len(ms) > 0:
-                mismatch_count += 1
-                mismatches += ms
+        mismatches = []
+        if self.matchable.notnone and None in actuals:
+            mismatch_count = len(self._argsets)
+            mismatches = [
+                f"Cannot have None arguments in {self.matchable.name} because it has the notnone qualifier"
+            ]
+        else:
+            for aseti, aset in enumerate(self._argsets):
+                ms = aset.matches(actuals)
+                if len(ms) > 0:
+                    mismatch_count += 1
+                    mismatches += ms
+        self.handle_errors_if(mismatch_count, mismatches)
+        #
+        # self.matched = True means that we have run arg validation matching
+        # on this match component. it does not mean that the match component
+        # had no errors or "matched" either the line or the args.
+        #
+        self.matched = True
+
+    def handle_errors_if(self, mismatch_count, mismatches):
         if mismatch_count == len(self._argsets):
             c = ""
             if mismatch_count == 1:
@@ -362,9 +377,8 @@ class Args:
                 cid = self._csvpath.identity
             if not self._csvpath or not cid or cid.strip() == "":
                 cid = "<<no ID or name>>"
-            pm = f"[In csvpath {cid}] Wrong values of args: {pm} at line {self._csvpath.line_monitor.physical_line_number}"
+                pln = self._csvpath.line_monitor.physical_line_number
+            pm = f"[In csvpath {cid}] Wrong values of args: {pm} at line {pln}"
             self._csvpath.report_validation_errors(pm)
-
             if self._csvpath is None or self._csvpath.raise_validation_errors:
                 raise ChildrenException(pm)
-        self.matched = True

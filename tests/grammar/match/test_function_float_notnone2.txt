@@ -1,0 +1,3 @@
+[
+                brief_stack_trace.notnone( none())
+            ]

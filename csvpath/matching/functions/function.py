@@ -96,12 +96,12 @@ class Function(Matchable):
                         "Validating arg actuals for %s in matches", self.name
                     )
                     #
-                    # why does vvvv break counter() and seems other funcs too?
-                    # in the case of gt() we were disallowing None. not validating on matches
-                    # allowed us to never see a None. however, None > x is a valid comparison,
-                    # for us, equaling False. had to adjust the validation. the missing
-                    # matches validation was in equality -- the -> only called matches allowing
-                    # some match components to never be validated.
+                    # why did vvvv break counter() and other funcs?
+                    # in the case of gt() we were disallowing None. not validating on
+                    # matches allowed us to never see a None. however, None > x is                                  # a valid comparison, for us, equaling False. had to adjust the
+                    # validation. the missing matches validation was in equality --
+                    # the -> only called matches allowing some match components to
+                    # never be validated.
                     #
                     self.args.matches(self.sibling_values(skip=skip))
                 elif self.args:
