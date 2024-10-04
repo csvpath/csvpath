@@ -132,6 +132,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> Returns the difference in number of value vs. number of headers.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the header values to collect when a row matches. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>replace(value, value)</a> </td><td> Replaces a header value with another value.   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>append(value, value)</a> </td><td> Appends a new header value at the end of every line.   </td>
 </table>
 
 ## Lines

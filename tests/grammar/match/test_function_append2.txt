@@ -1,0 +1,3 @@
+[
+                line_number.nocontrib() == 0 -> append("rnd_id")
+            ]
