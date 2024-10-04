@@ -9,7 +9,9 @@ These two functions give you access to random numbers.
 
 If you call `shuffle()` twice in one csvpath you get two random numbers from the range and the range is exhausted in half the time. After the range is exhausted the return is None.
 
-`shuffle()` can take a name qualifier so that you can use multiple shuffles in one csvpath. It has a no-arguments form that uses the range 0 to last data-line number.
+`shuffle()` can take a name qualifier so that you can use multiple shuffles in one csvpath. When you use a name qualifier your shuffle does its random number bookkeeping using a variable with that name.
+
+`shuffle()` has a no-arguments form that uses the range 0 to last data-line number.
 
 ## Examples
 
