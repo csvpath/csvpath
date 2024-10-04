@@ -47,4 +47,5 @@ The Python would be something like:
     path.fast_forward()
 ```
 
+If you used CsvPaths you would need two more lines of Python, but you could do something more programmatic with the results. You would pull the results from the `ResultsManager` and work with the printout lines or the captured data lines.
 
