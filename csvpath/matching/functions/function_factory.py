@@ -75,7 +75,7 @@ from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
-from .misc.random import Random
+from .misc.random import Random, Shuffle
 from .misc.nonef import Nonef
 from .misc.intf import Int, Num, Float
 from .misc.importf import Import
@@ -211,6 +211,8 @@ class FunctionFactory:
             f = Average(matcher, name, child, "median")
         elif name == "random":
             f = Random(matcher, name, child)
+        elif name == "shuffle":
+            f = Shuffle(matcher, name, child)
         elif name == "end":
             f = End(matcher, name, child)
         elif name == "length":

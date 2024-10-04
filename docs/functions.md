@@ -171,7 +171,8 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function   <a name="misc">  </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> Injects another csvpath into the current csvpath. </td></tr>
-<tr><td> random(starting, ending)      </td><td> Generates a random int from starting to ending.            </td>
+<tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random. d'>random(starting, ending)</a></td><td> Generates a random int from starting to ending.</td>
+<tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random. d'>shuffle(starting, ending)</a></td><td> Generates a random int from starting to ending with no replacement.</td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> Returns a number as an int. </td></tr>
 </table>
