@@ -25,8 +25,8 @@ Here we truncate any value in the 4th header values and add an ellipse.
 
     $test[*]
     [
-        line_number.nocontrib() == 0 -> append("rnd_id", "rnd_id")
-        above.nocontrib( line_number(), 0 ) -> append("rnd_id", shuffle())
+        firstline.nocontrib() -> append("rnd_id", "rnd_id")
+        not.nocontrib( firstline() ) -> append("rnd_id", shuffle())
         print_line()
     ]
 ```
