@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -35,12 +37,8 @@ class TestPop(unittest.TestCase):
                 push.notnone("pushed", none())
             ]"""
         )
-        lines = path.collect()
-        print(f"test_function_push2: lines: {lines}")
-        print(f"test_function_push2: path vars: {path.variables}")
-        assert len(lines) == 0
-        assert "pushed" in path.variables
-        assert len(path.variables["pushed"]) == 0
+        with pytest.raises(ChildrenException):
+            path.fast_forward()
 
     def test_function_push3(self):
         path = CsvPath()

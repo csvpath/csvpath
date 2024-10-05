@@ -343,7 +343,7 @@ class Args:
             return
         mismatch_count = 0
         mismatches = []
-        if self.matchable.notnone and None in actuals:
+        if self.matchable.notnone and self._has_none(actuals):
             mismatch_count = len(self._argsets)
             mismatches = [
                 f"Cannot have None arguments in {self.matchable.name} because it has the notnone qualifier"
@@ -361,6 +361,12 @@ class Args:
         # had no errors or "matched" either the line or the args.
         #
         self.matched = True
+
+    def _has_none(self, actuals: List[Any]):
+        for _ in actuals:
+            if ExpressionUtility.is_none(_):
+                return True
+        return False
 
     def handle_errors_if(self, mismatch_count, mismatches):
         if mismatch_count == len(self._argsets):
