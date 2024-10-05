@@ -21,3 +21,10 @@ The printout will be like:
 ```json
     { "computerstores":102044, "foodstores":12289409 }
 ```
+
+To see or test the value of the computerstore buys you would do something like:
+
+```bash
+    above( @purchases.computerstores, 10000 ) -> print("computerstores bought more than 10,000")
+```
+
