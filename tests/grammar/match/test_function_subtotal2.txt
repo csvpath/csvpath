@@ -1,0 +1,4 @@
+[
+                subtotal.areas(#count1, #area)
+                last() -> print("$.variables.areas")
+            ]

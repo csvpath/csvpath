@@ -39,6 +39,7 @@ from .math.subtract import Subtract
 from .math.multiply import Multiply
 from .math.divide import Divide
 from .math.sum import Sum
+from .math.subtotal import Subtotal
 from .math.equals import Equals
 from .math.round import Round
 from .math.mod import Mod
@@ -324,6 +325,8 @@ class FunctionFactory:
             f = Track(matcher, name, child)
         elif name == "sum":
             f = Sum(matcher, name, child)
+        elif name == "subtotal":
+            f = Subtotal(matcher, name, child)
         elif name == "reset_headers":
             f = ResetHeaders(matcher, name, child)
         elif name == "starts_with":

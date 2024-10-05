@@ -1,0 +1,13 @@
+area, count1, count2, count3
+earth, 1, 1,4
+space, 2,0,3
+ocean,3,5,2
+earth, 0,1,0
+earth, 0,1,3
+ocean, 0,1,6
+space, 0,9,6
+earth, 5, 5,8
+space,5,1,0
+space,9,8,9
+ocean,7,6,4
+
