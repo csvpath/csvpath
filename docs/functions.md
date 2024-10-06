@@ -74,19 +74,19 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function <a name="boolean">  </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>after(value, value)</a> </td><td> Finds things after a date, number, string. Aliases: gt(), above().    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> An existence test for all selected values or all headers, or all variables. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>and(value, value,...)</a> </td><td> Returns true when all match.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> An existence test across a range of places. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/above.md'>before(value, value)</a></td><td> Finds things before a date, number, string.  Aliases: lt(), below().     </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/between.md'>between(value, value, value)</a> </td><td> Returns true when a value is found between to others. Aliases: outside().     </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>all(value, value, ...)</a>  </td><td> An existence test for all selected values or all headers, or all variables. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> An existence test for all selected values, all headers, or all variables. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/any.md'>any(value, value, ...)</a>  </td><td> An existence test across a range of places. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> Always false. Alias: false() </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>  </td><td> Negates a value.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>and(value, value,...)</a> </td><td> Returns true when all match.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>or(value, value,...)</a>  </td><td> Returns true when any match. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> Always returns true. Alias: true()   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>empty(value)</a>    </td><td> Tests if the value is empty. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty.md'>exists(value)</a> </td><td> Tests if the value exists.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/in.md'>in(value, list)</a>  </td><td> Match against a pipe-delimited list, values, or references. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/all.md'>missing(value, value, ...)</a>  </td><td> An existence test for all selected values, all headers, or all variables. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>no()</a>  </td><td> Always false. Alias: false() </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/not.md'>not(value)</a>  </td><td> Negates a value.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/andor.md'>or(value, value,...)</a>  </td><td> Returns true when any match. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>yes()</a> </td><td> Always returns true. Alias: true()   </td></tr>
 </table>
 
 
@@ -99,10 +99,10 @@ There are lots more simple examples on the individual function pages.
 <tr><td> count_scans()      </td><td> count lines we checked for match   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/counter.md'>counter()</a>  </td><td> a streamlined way to increment a counter variable   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_dups.md'>count_dups(header, ...)</a>   </td><td> Returns the number of duplicate lines.   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_matches.md'>has_matches(header, ...)</a>   </td><td> Matches when any other match component matched anywhere in the file.   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> Gives the physical line number.    </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/increment.md'>increment(value, n)</a> </td><td> Increments a variable by n each time seen.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/every.md'>every(value, number)</a> </td><td> Matches every Nth time a value is seen.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/has_matches.md'>has_matches(header, ...)</a>   </td><td> Matches when any other match component matched anywhere in the file.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/increment.md'>increment(value, n)</a> </td><td> Increments a variable by n each time seen.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line_number.md'>line_number()</a>  </td><td> Gives the physical line number.    </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/tally.md'>tally(value, value, ...)</a></td><td> Counts times values are seen, including as a set.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/total_lines.md'>total_lines()</a></td><td> Returns the number of rows in the file being scanned.   </td></tr>
 </table>
@@ -110,9 +110,9 @@ There are lots more simple examples on the individual function pages.
 ## Dates
 <table>
 <tr><th>Function            <a name="dates"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/now.md'>now(format)</a></td><td> Returns a datetime, optionally formatted, for the current moment.       </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/now.md'>now(format)</a></td><td> Returns a datetime, optionally formatted, for the current moment.       </td></tr>
 </table>
 
 
@@ -120,19 +120,19 @@ There are lots more simple examples on the individual function pages.
 ## Headers
 <table>
 <tr><th>Function   <a name="headers"> </th><th> What it does                                              </th></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>append(value, value)</a> </td><td> Appends a new header value at the end of every line.   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the header values to collect when a row matches. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers()</a> </td><td> Returns the number of headers expected.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers_in_line()</a> </td><td> Returns the number found in the line.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/empty_stack.md'>empty_stack(value, ...)</a>  </td><td> Returns a stack of the names of empty header values. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/end.md'>end(int)</a>  </td><td> Returns the value of the line's last header value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_name(value, value)</a> </td><td> Returns the header name for an index.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_name.md'>header_index(value, value)</a> </td><td> Returns the header index for a name.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>headers(value)</a>  </td><td> Indicates to another function that it should look in the headers.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/header_names_mismatch.md'>header_names_mismatch(value)</a>  </td><td> Checks the header names against a delimited list of expected headers.   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers()</a> </td><td> Returns the number of headers expected.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/count_headers.md'>count_headers_in_line()</a> </td><td> Returns the number found in the line.      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> Sets the headers to the values of the current line.      </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/mismatch.md'>mismatch()</a>  </td><td> Returns the difference in number of value vs. number of headers.      </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/collect.md'>collect(value, ...)</a></td><td> Identifies the header values to collect when a row matches. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>replace(value, value)</a> </td><td> Replaces a header value with another value.   </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/replace.md'>append(value, value)</a> </td><td> Appends a new header value at the end of every line.   </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/reset_headers.md'>reset_headers()</a>  </td><td> Sets the headers to the values of the current line.      </td></tr>
 </table>
 
 ## Lines
@@ -158,37 +158,37 @@ There are lots more simple examples on the individual function pages.
 ## Math
 <table>
 <tr><th>Function    <a name="math"></a>     </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>        </td><td> Adds numbers.    </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>     </td><td> Divides numbers.    </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>   </td><td> Multiplies numbers.   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>subtract(value, value, ...)</a>    </td><td> Subtracts numbers or makes a number negative. Aliases: minus(). </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>mod(value, value)</a>    </td><td> Returns the modulus of two numbers. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/sum.md'>sum(value)</a> </td><td> Returns a running sum of the value. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtotal.md'>subtotal(value)</a> </td><td> Returns a running subtotal of a value subtotaled by another value. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a> </td><td> Rounds a number. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>       </td><td> Adds numbers.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>    </td><td> Divides numbers.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>mod(value, value)</a>            </td><td> Returns the modulus of two numbers. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>  </td><td> Multiplies numbers.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a>                 </td><td> Rounds a number. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtotal.md'>subtotal(value)</a>              </td><td> Returns a running subtotal of a value subtotaled by another value. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>subtract(value, value, ...)</a>  </td><td> Subtracts numbers or makes a number negative. Aliases: minus(). </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/sum.md'>sum(value)</a>                        </td><td> Returns a running sum of the value. </td></tr>
 </table>
 
 
 ## Misc
 <table>
 <tr><th>Function   <a name="misc">  </th><th> What it does                                              </th></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>float(value)</a>    </td><td> Returns a number as a float. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> Injects another csvpath into the current csvpath. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> Returns a number as an int. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
 <tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random.md'>random(starting, ending)</a></td><td> Generates a random int from starting to ending.</td>
 <tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random.md'>shuffle(starting, ending)</a></td><td> Generates a random int from starting to ending with no replacement.</td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> Returns a number as an int. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>float(value)</a>    </td><td> Returns a number as a float. </td></tr>
 </table>
 
 
 ## Print
 <table>
 <tr><th>Function            <a name="print"> </th><th> What it does                                              </th></tr>
+<tr><td> header_table(value, value) </td><td> Prints a formatted table of the headers with header numbers.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> Applies a Jinja2 template.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print.md'>print(str, value)</a></td><td> Prints the interpolated string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_line(value,value)</a></td><td> Prints the current line unchanged.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print_line.md'>print_queue(value,value)</a></td><td> Returns the number of strings printed.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/jinja.md'>jinja(value, value)</a>  </td><td> Applies a Jinja2 template.   </td></tr>
-<tr><td> header_table(value, value) </td><td> Prints a formatted table of the headers with header numbers.  </td></tr>
 <tr><td> row_table(value, value) </td><td> Prints a formatted table of a row.  </td></tr>
 <tr><td> var_table(value, value) </td><td> Prints a formatted table of the variables.  </td></tr>
 </table>
