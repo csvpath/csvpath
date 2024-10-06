@@ -201,8 +201,8 @@ There are lots more simple examples on the individual function pages.
 <tr><th>Function  <a name="stats">   </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/average.md'>average(number, type)</a> </td><td> Returns the average up to current "line", "scan", "match". </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/correlate.md'>correlate(value, value)</a> </td><td> Gives the running correlation between two values. </td></tr>
-<tr><td> median(value, type)           </td><td> Returns the median value up to current "line", "scan", "match".  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>max(value, type)</a> </td><td> Returns the largest value seen up to current "line", "scan", "match".  </td></tr>
+<tr><td> median(value, type)           </td><td> Returns the median value up to current "line", "scan", "match".  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/max.md'>min(value, type)</a></td><td> Returns the smallest value seen up to current "line", "scan", "match". </td></tr>
 <tr><td> percent(type)                 </td><td> Returns the percent of total lines for "scan", "match", "line".   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/percent_unique.md'>percent_unique(header)</a> </td><td> Returns the percent of unique values found in the header values.  </td></tr>
@@ -215,27 +215,27 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function   <a name="strings">  </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>concat(value, value, ...)</a> </td><td> Joins any number of values.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>exact(regex-string, value)</a> </td><td> Exact match on a regular expression. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>length(value)</a>             </td><td> Returns the length of the value.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>lower(value)</a>              </td><td> Makes a value lowercase. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>max_length(value)</a>  </td><td> Returns the length of the value.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/metaphone.md'>metaphone(value, value)</a>  </td><td> Returns the metaphone transformation of a string or does a reference look up. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>min_length(value)</a>  </td><td> Returns the length of the value.</td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>max_length(value)</a>  </td><td> Returns the length of the value.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>regex(regex-string, value)</a> </td><td> Matches on a regular expression. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>starts_with(value, value)</a>   </td><td> Checks if the first value starts with the second. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>strip(value)</a>              </td><td> Trims off whitespace.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>substring(value, int)</a>     </td><td> Returns the first n chars from the value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>upper(value)</a>              </td><td> Makes a value uppercase.   </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>regex(regex-string, value)</a> </td><td> Matches on a regular expression. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>exact(regex-string, value)</a> </td><td> Exact match on a regular expression. </td></tr>
 </table>
 
 
 ## Testing
 <table>
 <tr><th>Function            <a name="testing"> </th><th> What it does                                              </th></tr>
-<tr><td> brief_stack_trace()  </td><td> Logs a slimmed-down stack trace.    </td></tr>
-<tr><td> debug()  </td><td> Changes the log level.       </td></tr>
-<tr><td> vote_stack()  </td><td> Returns a stack with True or False for each match component's match decision. </td></tr>
-<tr><td> do_when_stack()  </td><td> Returns a stack with True or False for each do/when to show which activated their right-hand side. </td></tr>
+<tr><td> brief_stack_trace()    </td><td> Logs a slimmed-down stack trace.    </td></tr>
+<tr><td> debug()                </td><td> Changes the log level.       </td></tr>
+<tr><td> do_when_stack()        </td><td> Returns a stack with True or False for each do/when to show which activated their right-hand side. </td></tr>
+<tr><td> vote_stack()           </td><td> Returns a stack with True or False for each match component's match decision. </td></tr>
 </table>
 
 ## Validity
@@ -251,14 +251,14 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function            <a name="variables"> </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>get(value, value)</a></td><td> Gets a variable value. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>put(value, value)</a></td><td> Sets a variable value. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>push(name, value)</a> </td><td> Pushes a value on a stack.    </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>pop(name)</a> </td><td> Pops a value off a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>peek(name, int)</a> </td><td> Accesses a value at an index in a stack.    </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>peek_size(name)</a> </td><td> Returns the size of a stack.    </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>pop(name)</a> </td><td> Pops a value off a stack.    </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>push(name, value)</a> </td><td> Pushes a value on a stack.    </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/get.md'>put(value, value)</a></td><td> Sets a variable value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/pop.md'>stack(name)</a> </td><td> Returns a stack variable of pushed values.   </td>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>variables()</a>    </td><td> Indicates to another function that it should look in the variables.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/track.md'>track(value, value)</a> </td><td> Tracks a value by name.  </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/variables_and_headers.md'>variables()</a>    </td><td> Indicates to another function that it should look in the variables.  </td></tr>
 </table>
 
 
