@@ -433,9 +433,11 @@ Visit <a href="https://www.csvpath.org">https://www.csvpath.org</a>
 # Sponsors
 
 <a href='https://www.atestaanalytics.com/' >
-<img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-on-black-trimmed-padded.png" alt="Atesta Analytics"/></a>
+  <img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-on-black-trimmed-padded.png" alt="Atesta Analytics"/>
+</a>
 <a href='https://www.datakitchen.io/'>
-<img src="https://datakitchen.io/wp-content/uploads/2020/10/logo.svg" width="93" height="43" alt="DataKitchen" id="logo" data-height-percentage="45">
+  <img src="https://datakitchen.io/wp-content/uploads/2020/10/logo.svg"
+style='width:160px; position:relative;bottom:-5px;left:15px' alt="DataKitchen" id="logo" data-height-percentage="45">
 </a>
 
 
