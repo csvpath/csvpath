@@ -147,9 +147,9 @@ This is a very basic programmatic use of CsvPath.
     path = CsvPath()
     path.parse("""
             $test.csv[5-25][
-                #0=="Frog"
-                @lastname.onmatch="Bats"
-                count()==2
+                #firstname == "Frog"
+                @lastname.onmatch = "Bat"
+                count() == 2
             ]
     """)
 
@@ -161,14 +161,14 @@ This is a very basic programmatic use of CsvPath.
 The csvpath says:
 - Open test.csv
 - Scan lines 5 through 25
-- Match the second time we see a line where the first header equals `Frog` and set the variable called  `lastname` to "Bats"
+- Match the second time we see a line where the first header equals `Frog` and set the variable called  `lastname` to "Bat"
 
 Another path that does the same thing a bit more simply might look like:
 
 ```bash
     $test[5-25][
-        #0 == "Frog"
-        @lastname.onmatch = "Bats"
+        #firstname == "Frog"
+        @lastname.onmatch = "Bat"
         count()==2 -> print( "$.csvpath.match_count: $.csvpath.line")
     ]
 ```
@@ -433,8 +433,9 @@ Visit <a href="https://www.csvpath.org">https://www.csvpath.org</a>
 # Sponsors
 
 <a href='https://www.atestaanalytics.com/' ><img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-on-black-trimmed-padded.png" alt="Atesta Analytics"/></a>
-
-
+<a href='https://www.datakitchen.io/'>
+<img data-od-xpath="/*[1][self::HTML]/*[2][self::BODY]/*[2][self::DIV]/*[1][self::DIV]/*[2][self::HEADER]/*[1][self::DIV]/*[1][self::DIV]/*[2][self::A]/*[1][self::IMG]" src="/wp-content/uploads/2020/10/logo.svg" width="93" height="43" alt="DataKitchen" id="logo" data-height-percentage="45">
+</a>
 
 
 

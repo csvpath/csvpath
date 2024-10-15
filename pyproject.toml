@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.476"
+version = "0.0.477"
 description = "A declarative language for data extraction and validation of CSV files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
@@ -24,7 +24,7 @@ include = ["config", "logs", "docs"]
 "Csvpath.org" = "https://www.csvpath.org"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.9"
 ply = "^3.11"
 python-dateutil = "^2.9.0.post0"
 jinja2 = "^3.1.4"
