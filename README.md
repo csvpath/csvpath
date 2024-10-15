@@ -409,7 +409,7 @@ There are more examples scattered throughout the documentation. Good places to l
 - The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
 - The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> and <a href='https://github.com/dk107dk/csvpath/tree/main/tests/grammar/match'>their match parts</a> are not realistic, but a good source of ideas.
 
-To create example CsvPaths from your own data try <a href='https://autogen.csvpath.org'>CsvPath AutoGen</a>. The huge caveat is that AutoGen uses AI so your results will not be perfect. You will need to adjust, polish, and test them.
+To create example CsvPaths from your own data, try <a href='https://autogen.csvpath.org'>CsvPath AutoGen</a>. The huge caveat is that AutoGen uses AI so your results will not be perfect. You will need to adjust, polish, and test them.
 
 <a name="grammar"></a>
 ## Grammar
