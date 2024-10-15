@@ -402,23 +402,14 @@ Because of this nuanced approach to errors, the library will tend to raise data 
 <a name="examples"></a>
 ## More Examples
 
-```bash
-    [ exists(#common_name) #0=="field" @tail.onmatch=end() not(in(@tail, 'short|medium')) ]
-```
-
-In the path above, the rules applied are:
-- The exists test of `#common_name` checks if the column with the header "common_name" has a value. Headers are named for whatever values are found in the 0th row. They indicate a column in the row being checked for match.
-- `#2` means the 3rd column, counting from 0
-- Functions and column references are ANDed together
-- `@tail` creates a variable named "tail" and sets it to the value of the last column if all else matches
-- Functions can contain functions, equality tests, and/or terms.
-
 There are more examples scattered throughout the documentation. Good places to look include:
 
+- Here are a few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
+- Try the Getting Started examples on <a href="https://www.csvpath.org">https://www.csvpath.org</a>
 - The individual <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>function descriptions</a>
-- The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> _(not realistic, but a good source of ideas)_
-- A few <a href='https://github.com/dk107dk/csvpath/blob/main/docs/examples.md'>more real-looking examples</a>
-- The Getting Started examples on <a href="https://www.csvpath.org">https://www.csvpath.org</a>
+- The <a href='https://github.com/dk107dk/csvpath/tree/main/tests'>unit tests</a> and <a href='https://github.com/dk107dk/csvpath/tree/main/tests/grammar/match'>their match parts</a> are not realistic, but a good source of ideas.
+
+To create example CsvPaths from your own data try <a href='https://autogen.csvpath.org'>CsvPath AutoGen</a>. The huge caveat is that AutoGen uses AI so your results will not be perfect. You will need to adjust, polish, and test them.
 
 <a name="grammar"></a>
 ## Grammar
