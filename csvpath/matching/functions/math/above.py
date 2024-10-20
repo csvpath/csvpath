@@ -53,30 +53,46 @@ class AboveBelow(MatchDecider):
             self.match = False  # pragma: no cover
 
     def _above(self) -> bool:
-        if self.name in ["gt", "above", "after"]:
+        if self.name in ["gt", "above", "after", "gte"]:
             return True
-        if self.name in ["lt", "below", "before"]:
+        if self.name in ["lt", "below", "before", "lte"]:
             return False
 
     def _try_numbers(self, a, b) -> bool:
-        if self._above():
+        if self._above() and self.name != "gte":
             return float(a) > float(b)
-        return float(a) < float(b)
+        elif self._above():
+            return float(a) >= float(b)
+        if not self._above() and self.name != "lte":
+            float(a) < float(b)
+        return float(a) <= float(b)
 
     def _try_dates(self, a, b) -> bool:
         if ExpressionUtility.all([a, b], [datetime]):
-            if self._above():
-                return a.timestamp() > b.timestamp()  # pragma: no cover
-            return a.timestamp() < b.timestamp()  # pragma: no cover
+            if self._above() and self.name != "gte":
+                return a.timestamp() > b.timestamp()
+            elif self._above():
+                return a.timestamp() >= b.timestamp()
+            if not self._above() and self.name != "lte":
+                a.timestamp() < b.timestamp()
+            return a.timestamp() <= b.timestamp()
         if ExpressionUtility.all([a, b], [date]):
-            if self._above():
+            if self._above() and self.name != "gte":
                 return a > b
-            return a < b
+            elif self._above():
+                return a >= b
+            if not self._above() and self.name != "lte":
+                a < b
+            return a <= b
         return None
 
     def _try_strings(self, a, b) -> bool:
         a = f"{a}".strip()
         b = f"{b}".strip()
-        if self._above():
+        if self._above() and self.name != "gte":
             return a > b
-        return a < b
+        elif self._above():
+            return a >= b
+        if not self._above() and self.name != "lte":
+            a < b
+        return a <= b

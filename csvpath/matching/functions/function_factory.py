@@ -166,7 +166,7 @@ class FunctionFactory:
             f = Regex(matcher, name, child)
         elif name == "not":
             f = Not(matcher, name, child)
-        elif name == "now":
+        elif name in ["now", "thisyear", "thismonth", "today"]:
             f = Now(matcher, name, child)
         elif name == "in":
             f = In(matcher, name, child)
@@ -178,9 +178,9 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
-        elif name in ["below", "lt", "before"]:
+        elif name in ["below", "lt", "before", "lte"]:
             f = AboveBelow(matcher, name, child)
-        elif name in ["above", "gt", "after"]:
+        elif name in ["above", "gt", "after", "gte"]:
             f = AboveBelow(matcher, name, child)
         elif name == "first":
             f = First(matcher, name, child)

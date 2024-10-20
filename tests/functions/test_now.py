@@ -16,28 +16,31 @@ class TestFunctionsNow(unittest.TestCase):
         print(f"test_function_now: lines: {len(lines)}")
         assert len(lines) == 9
 
-    """
-    # non-deterministic test, but an interesting example to keep for now
-    def test_average_what_the(self):
+    def test_function_now2(self):
         path = CsvPath()
+        Save._save(path, "test_function_now")
         path.parse(
-            f""
-            ${NUMBERS}[1*]
-            [
-                @ave = average.test.onmatch(#count3, "line")
-                @r = random(0,1)
-                @c = count()
-                @c2 = count_scans()
-                @c3 = count_lines()
-                @r == 1
-                yes()
-                print(count_lines()==1, "match, scan, line, random, average")
-                print(yes(), "$.variables.c, $.variables.c2, $.variables.c3, $.variables.r, $.variables.ave")
-            ]""
+            f"""${PATH}[*][
+                   firstline.nocontrib() -> @n = now()
+                   lt( @n , now() )
+        ]"""
         )
-        print("")
         lines = path.collect()
-        print(f"test_average_what_the: path vars: {path.variables}")
-        #assert path.variables["the_average"] == 2
-        #assert len(lines) == 0
+        print(f"test_function_now2: lines: {len(lines)}")
+        assert len(lines) == 9
+
+    def test_function_now3(self):
+        path = CsvPath()
+        Save._save(path, "test_function_now")
+        path.parse(
+            f"""
+                ${PATH}[*][
+                        now("%d") == today()
+                        now("%m") == thismonth()
+                        now("%Y") == thisyear()
+                ]
         """
+        )
+        lines = path.collect()
+        print(f"test_function_now3: lines: {len(lines)}")
+        assert len(lines) == 9

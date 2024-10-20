@@ -22,6 +22,9 @@ class Multiply(ValueProducer):
         ret = 0
         for i, sib in enumerate(siblings):
             v = sib.to_value(skip=skip)
+            if v is None:
+                ret = 0
+                break
             if i == 0:
                 ret = v
             else:

@@ -43,6 +43,11 @@ class Expression(Matchable):
                 ErrorHandler(
                     csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
                 ).handle_error(e)
+                #
+                # if we don't raise the exception we decline the match and
+                # continue
+                #
+                self.match = False
         return self.match
 
     def reset(self) -> None:

@@ -17,26 +17,35 @@ class Between(MatchDecider):
         a = self.args.argset(3)
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[datetime, date],
+            actuals=[None, datetime, date],
         )
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[datetime, date],
+            actuals=[None, datetime, date],
         )
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[datetime, date],
+            actuals=[None, datetime, date],
         )
 
         a = self.args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, float, int],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, float, int],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, float, int],
+        )
 
         a = self.args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
 
         self.args.validate(self.siblings())
         super().check_valid()
@@ -57,7 +66,7 @@ class Between(MatchDecider):
         a = siblings[1].to_value(skip=skip)
         b = siblings[2].to_value(skip=skip)
 
-        if me is None or a is None or b is None:
+        if None in [me, a, b]:
             self.match = False
         else:
             self.match = self._try_numbers(me, a, b)

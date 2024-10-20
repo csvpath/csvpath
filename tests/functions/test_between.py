@@ -12,17 +12,19 @@ class TestFunctionsBetween(unittest.TestCase):
     def test_function_between_args_validation1(self):
         path = CsvPath()
         Save._save(path, "test_function_between_args_validation1")
-        with pytest.raises(ChildrenException):
-            path.parse(
-                f"""
-                ${DATES}[1][
-                    beyond(
-                        none(),
-                        date( "2000-10-01", "%Y-%m-%d" ),
-                        date( "2000-10-03", "%Y-%m-%d" ) )
-                ]"""
-            )
-            path.fast_forward()
+        # this was a test to see that the function blew up. but
+        # the function now just returns False to finding a None
+        # in any of 3 arguments. is none between a and b? no.
+        path.parse(
+            f"""
+            ${DATES}[1][
+                beyond(
+                    none(),
+                    date( "2000-10-01", "%Y-%m-%d" ),
+                    date( "2000-10-03", "%Y-%m-%d" ) )
+            ]"""
+        )
+        path.fast_forward()
 
     #
     # dates

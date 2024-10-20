@@ -44,7 +44,7 @@ class TestFunctionsInt(unittest.TestCase):
         )
         path.collect()
         assert path.variables["st"] == 0
-        assert path.variables["no"] == 0
+        assert path.variables["no"] is None
         assert path.variables["bo"] == 0
 
     def test_function_int2(self):
@@ -159,12 +159,22 @@ class TestFunctionsInt(unittest.TestCase):
         Save._save(path, "test_function_float_notnone1")
         path.parse(
             f""" ${PATH}[*] [
-                @f = float(none())
-            ]
+                push("nofloat", float(none()))
+                            ]
             """
         )
-        with pytest.raises(ChildrenException):
-            path.fast_forward()
+        path.fast_forward()
+        assert path.variables["nofloat"] == [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ]
 
     def test_function_float_notnone2(self):
         path = CsvPath()
