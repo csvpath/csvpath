@@ -223,8 +223,16 @@ class Matcher:  # pylint: disable=R0902
         return not failed
 
     def check_valid(self) -> None:  # pylint: disable=C0116
+        if self.csvpath:
+            self.csvpath.logger.debug(
+                "Matcher starting pre-iteration match components structure validation"
+            )
         for _ in self.expressions:
             _[0].check_valid()
+        if self.csvpath:
+            self.csvpath.logger.debug(
+                "Pre-iteration match components structure validation done"
+            )
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         """see CsvPath.get_variable"""

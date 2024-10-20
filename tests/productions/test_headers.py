@@ -1,9 +1,10 @@
 import unittest
 import pytest
 from lark.exceptions import VisitError, UnexpectedCharacters
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.productions import Header
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -59,6 +60,17 @@ class TestHeaders(unittest.TestCase):
         """
 
         assert len(lines) == 3
+
+    def test_header_names11(self):
+        path = CsvPath()
+        Save._save(path, "test_header_names11")
+        path.parse(f"""${PATH}[*][ #"a.b" ]""")
+        # the parser removes the '#' before instantiating the header
+        h = Header(None, value="fruitbat", name='"a.b"')
+        assert h.name == "a.b"
+        h = Header(None, value="fruitbat", name='"a.b".c')
+        assert h.name == "a.b"
+        assert h.first_non_term_qualifier() == "c"
 
     def test_header_names1(self):
         path = CsvPath()

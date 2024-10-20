@@ -17,8 +17,8 @@ class Header(Matchable):
         # header names can be quoted like "Last Year Number"
         if isinstance(name, str):
             name = name.strip()
-            if name[0] == '"' and name[len(name) - 1] == '"':
-                name = name[1 : len(name) - 1]
+            # if name[0] == '"' and name[len(name) - 1] == '"':
+            #    name = name[1 : len(name) - 1]
         super().__init__(matcher, value=Header.NEVER, name=name)
 
     def reset(self) -> None:

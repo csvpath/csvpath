@@ -288,14 +288,53 @@ class ExpressionUtility:
         return False
 
     @classmethod
+    def _parse_quoted(cls, name: str):
+        c = None
+        names = []
+        aname = ""
+        QUOTED = 1
+        UNQUOTED = 0
+        state = UNQUOTED
+        for i, c in enumerate(name):
+            if c == '"':
+                if state == UNQUOTED:  # entering
+                    state = QUOTED
+                    if aname != "":
+                        names.append(aname)
+                else:  # exiting
+                    state = UNQUOTED
+                    if aname != "":
+                        names.append(aname)
+                aname = ""
+            elif c == ".":
+                if state == QUOTED:
+                    aname = aname + c
+                else:
+                    if aname != "":
+                        names.append(aname)
+                    aname = ""
+            else:
+                aname = aname + c
+        if aname is not None and aname.strip() != "":
+            names.append(aname)
+        return names[0], names[1:] if len(names) > 0 else []
+
+    @classmethod
     def get_name_and_qualifiers(cls, name: str) -> Tuple[str, list]:
-        aname = name
-        dot = f"{name}".find(".")
-        quals = []
-        if dot > -1:
-            aname = name[0:dot]
-            somequals = name[dot + 1 :]
-            cls._next_qual(quals, somequals)
+        aname = None
+        quals = None
+        if name.find('"') > -1:
+            aname, quals = cls._parse_quoted(name)
+        else:
+            aname = name
+            dot = f"{name}".find(".")
+            quals = []
+            if dot > -1:
+                aname = name[0:dot]
+                somequals = name[dot + 1 :]
+                cls._next_qual(quals, somequals)
+        if aname is None or aname.strip() == "":
+            raise ValueError("Name variable 'aname' cannot be None or empty")
         return aname, quals
 
     @classmethod
