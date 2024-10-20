@@ -62,7 +62,7 @@ Use your functions in csvpaths by simply referring to them by name like you woul
 
 - `not(count()==2)`
 - `add( 5, 3, 1 )`
-- `concat( end(), regex(#0, /[0-5]+abc/))`
+- `concat( end(), regex(/[0-5]+abc/, #0))`
 
 There are lots more simple examples on the individual function pages.
 

@@ -24,8 +24,8 @@ regex( /[A-Z][a-z]*( jr\.?)?/, #firstname, 1 )`
 
 ```bash
     $[*][
-        regex(#say, /s(niff)le/)
-        @group1.onmatch = regex(#say, /s(niff)le/, 1)
+        regex(/s(niff)le/, #say)
+        @group1.onmatch = regex(/s(niff)le/, #say, 1)
     ]
 ```
 

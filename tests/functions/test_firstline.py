@@ -16,7 +16,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
             f"""
             ${PATH}[0-7]
             [
-                regex(#say, /sniffle/)
+                regex(/sniffle/, #say)
                 firstline.nocontrib() -> @line = count_lines()
                 firstmatch.nocontrib() -> @match = count_lines()
                 firstscan.nocontrib() -> @scan = count_lines()
@@ -38,7 +38,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
             f"""
             ${PATH}[3-7]
             [
-                regex(#say, /sniffle/)
+                regex(/sniffle/, #say)
                 firstline.nocontrib() -> @line = count_lines()
                 firstmatch.nocontrib() -> @match = count_lines()
                 firstscan.nocontrib() -> @scan = count_lines()

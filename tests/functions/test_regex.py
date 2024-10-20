@@ -14,9 +14,9 @@ class TestFunctionsRegex(unittest.TestCase):
             rf"""
             ${PATH}[0-3]
             [
-                push( "e", exact( #2, /blurgh\.\.\./ ) )
-                push( "ne", exact( #2, /blurgh/ ) )
-                push( "r", regex( #2, /blurgh/ ) )
+                push( "e", exact( /blurgh\.\.\./, #2  ) )
+                push( "ne", exact( /blurgh/, #2 ) )
+                push( "r", regex( /blurgh/, #2  ) )
             ]"""
         )
         lines = path.collect()
@@ -34,7 +34,7 @@ class TestFunctionsRegex(unittest.TestCase):
             rf"""
             ${PATH}[1]
             [
-                regex( #0, /.{0, 2}/ )
+                regex( /.{0, 2}/, #0 )
             ]"""
         )
         #                 regex(#0, /\$?(\d*|\.{0,2})/ )
@@ -48,7 +48,7 @@ class TestFunctionsRegex(unittest.TestCase):
             f"""
             ${PATH}[0-7]
             [
-                regex(#say, /sniffle/)
+                regex(/sniffle/, #say)
             ]"""
         )
         lines = path.collect()
@@ -63,8 +63,8 @@ class TestFunctionsRegex(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                regex(#say, /s(niff)le/)
-                @group1.onmatch = regex(#say, /s(niff)le/, 1)
+                regex(/s(niff)le/, #say)
+                @group1.onmatch = regex(/s(niff)le/, #say, 1)
             ]"""
         )
         lines = path.collect()
@@ -82,8 +82,8 @@ class TestFunctionsRegex(unittest.TestCase):
             f"""
             ${PATH}[*]
             [
-                regex(#say, /s(niff)le/)
-                @group1.onmatch = regex(#say, /s(niff)le/, 11)
+                regex(/s(niff)le/, #say)
+                @group1.onmatch = regex(/s(niff)le/, #say, 11)
             ]"""
         )
         with pytest.raises(IndexError):
@@ -95,7 +95,7 @@ class TestFunctionsRegex(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(Exception):
-            path.parse(f"""${PATH}[0-7][regex(#say, /`\\&`\\_\\L\\J/)]""")  # noqa: W605
+            path.parse(f"""${PATH}[0-7][regex(/`\\&`\\_\\L\\J/, #say)]""")  # noqa: W605
             lines = path.collect()
             assert len(lines) == 0
 
@@ -105,8 +105,8 @@ class TestFunctionsRegex(unittest.TestCase):
         path.parse(
             f"""
             ${PATH}[*][
-                    regex(#say, /^sniffl[Ee]/)
-                    @sniffle = regex(#say, /^sniffl[Ee]/)
+                    regex(/^sniffl[Ee]/, #say)
+                    @sniffle = regex(/^sniffl[Ee]/, #say)
                ]
             """
         )

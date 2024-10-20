@@ -18,30 +18,18 @@ class Regex(MatchDecider):
         a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
-
         left = self._function_or_equality.left
-        right = self._function_or_equality.right
         if isinstance(left, Term):
             restr = left.to_value()
-        else:
-            restr = right.to_value()
-        re.compile(restr)
+            re.compile(restr)
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         siblings = child.commas_to_list()
-        left = siblings[0]
-        right = siblings[1]
+        regex = siblings[0]
+        value = siblings[1]
         group = 0 if len(siblings) == 2 else siblings[2].to_value(skip=skip)
         group = int(group)
-        regex = None
-        value = None
-        if isinstance(left, Term):
-            regex = left
-            value = right
-        else:
-            regex = right
-            value = left
         thevalue = value.to_value(skip=skip)
         theregex = regex.to_value(skip=skip)
         if theregex[0] == "/":

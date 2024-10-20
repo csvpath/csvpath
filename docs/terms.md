@@ -23,6 +23,6 @@ The regex functionality term supports within csvpaths is limited. Regexes only a
 - `3.5`
 - `.5`
 - `3`
-- `regex( /a [r|R]egex\??/ )`
+- `regex( /a [r|R]egex\??/, #aheader )`
 
 
