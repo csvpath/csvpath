@@ -10,7 +10,6 @@ from csvpath.matching.productions.equality import Equality
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..util.exceptions import ChildrenException
 from csvpath.util.config_exception import ConfigurationException
-from csvpath.util.printer import Printer
 
 #   from csvpath.util.log_utility import LogUtility
 #   LogUtility.log_brief_trace()
@@ -199,7 +198,6 @@ class ArgSet:
         b = self._validate_length(siblings)
         if b is False:
             return False
-
         self._pad_or_shrink(siblings)
         for i, s in enumerate(siblings):
             t = tuple(self._args[i].types)
@@ -344,6 +342,7 @@ class Args:
             if aset.validate(siblings):
                 good = True
         if not good:
+
             msg = f"{self._csvpath_id()} Incorrectly written at {self.matchable.my_chain}. Wrong type or number of args."
             raise ChildrenException(msg)
         self.validated = True
@@ -390,7 +389,6 @@ class Args:
         return cid
 
     def handle_errors_if(self, mismatch_count, mismatches):
-        print("")
         if mismatch_count == len(self._argsets):
             pm = f"mismatch in {self.matchable.my_chain}: {mismatches}"
             # when would we not have a csvpath?

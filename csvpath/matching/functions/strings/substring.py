@@ -18,6 +18,7 @@ class Substring(ValueProducer):
             actuals=[str, self.args.EMPTY_STRING],
         )
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

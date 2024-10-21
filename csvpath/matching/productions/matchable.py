@@ -125,6 +125,20 @@ class Matchable(Qualified):
         # with the current parse tree this shouldn't happen
         return None
 
+    def _value_three(self, skip=None):
+        c = self._child_three()
+        if c is None:
+            return None
+        return c.to_value(skip=skip)
+
+    def _child_three(self):
+        if len(self.children) == 0:
+            # validation should have already caught this, if it is a problem
+            return None
+        if len(self.children) >= 3:
+            return self.children[0].children[2]
+        return None
+
     def siblings_or_equality(self) -> list:
         if (
             len(self.children) == 1

@@ -15,13 +15,13 @@ class Now(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         self.args.argset(0)
-        self.args.argset(1).arg(
-            types=[None, Term, Function, Header, Variable], actuals=[str]
-        )
-        self.args.validate(self.siblings())
         if self.name in ["thisyear", "thismonth", "today"]:
-            if len(self.children) > 0:
-                raise ChildrenException(f"Function {self.name} cannot have arguments")
+            self.args.validate(self.siblings())
+        else:
+            self.args.argset(1).arg(
+                types=[None, Term, Function, Header, Variable], actuals=[str]
+            )
+            self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

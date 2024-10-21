@@ -7,6 +7,7 @@ from .dates.datef import Date
 from .strings.lower import Lower
 from .strings.upper import Upper
 from .strings.substring import Substring
+from .strings.string import String
 from .strings.starts_with import StartsWith
 from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
@@ -221,6 +222,8 @@ class FunctionFactory:
             f = Length(matcher, name, child)
         elif name == "add":
             f = Add(matcher, name, child)
+        elif name in ["string", "minus"]:
+            f = String(matcher, name, child)
         elif name in ["subtract", "minus"]:
             f = Subtract(matcher, name, child)
         elif name == "multiply":
