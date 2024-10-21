@@ -223,6 +223,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>min_length(value)</a>  </td><td> Returns the length of the value.</td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>regex(regex-string, value)</a> </td><td> Matches on a regular expression. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>starts_with(value, value)</a>   </td><td> Checks if the first value starts with the second. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a>              </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>strip(value)</a>              </td><td> Trims off whitespace.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>substring(value, int)</a>     </td><td> Returns the first n chars from the value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>upper(value)</a>              </td><td> Makes a value uppercase.   </td></tr>

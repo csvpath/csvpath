@@ -34,8 +34,9 @@ The error settings are for when CsvPath or CsvPaths instances encounter problems
 - `raise` - Raise the exception in as noisy a way as possible
 - `quiet` - Do nothing that affects the system out; this protects command line redirection of `print()` output. Logging is also minimized such that errors that would release a lot of metadata are slimmed down.
 - `collect` - Collect the errors in the error results for the CsvPath. This option is available with and without a CsvPaths instance.
+- `print` - Prints the errors using the Printer interface to whatever printers are available. By default this goes to standard out.
 
-Multiple of these settings can be configured together. Quiet and raise do not coexist well. Raise will win because seeing problems lets you fix them.
+Multiple of these settings can be configured together.`quiet` and `raise` do not coexist well; likewise `quiet` and `print`. `raise` will win over `quiet` because seeing problems lets you fix them. `print` is most useful in getting simple inline error messages when `raise` is off.
 
 ## Logging
 
