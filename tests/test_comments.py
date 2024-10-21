@@ -61,7 +61,7 @@ class TestComments(unittest.TestCase):
         assert path.raise_validation_errors is False
         path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find("Wrong values of args") > -1
+            assert p.last_line and p.last_line.find("Wrong value(s) at") > -1
 
     def test_update_settings_from_metadata3(self):
         path = CsvPath()
@@ -85,7 +85,7 @@ class TestComments(unittest.TestCase):
         with pytest.raises(ChildrenException):
             path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find("Wrong values of args") > -1
+            assert p.last_line and p.last_line.find("Wrong value(s) at") > -1
         assert path.has_errors() is True
 
     def test_comment_settings_affecting_multiple_paths(self):

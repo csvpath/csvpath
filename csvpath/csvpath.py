@@ -242,7 +242,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         # these settings determine how we report function args validation
         # errors. e.g. if print(True) the validation check fails because
-        # print() expects a string.
+        # print() expects a string. the more recent trend is to get all
+        # the errors and print statements in the same place controlled by
+        # the same properties. for now this stays because there is a minor
+        # benefit to being able to suppress runtime arg validation and only
+        # use match component rules and exceptions to generate validation
+        # info. but long term this capability may go away.
         #
         self._log_validation_errors = False
         self._print_validation_errors = True

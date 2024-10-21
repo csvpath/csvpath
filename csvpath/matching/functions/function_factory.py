@@ -222,7 +222,7 @@ class FunctionFactory:
             f = Length(matcher, name, child)
         elif name == "add":
             f = Add(matcher, name, child)
-        elif name in ["string", "minus"]:
+        elif name == "string":
             f = String(matcher, name, child)
         elif name in ["subtract", "minus"]:
             f = Subtract(matcher, name, child)

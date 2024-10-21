@@ -342,8 +342,8 @@ class Args:
             if aset.validate(siblings):
                 good = True
         if not good:
-
-            msg = f"{self._csvpath_id()} Incorrectly written at {self.matchable.my_chain}. Wrong type or number of args."
+            _ = " at {self.matchable.my_chain}" if self.matchable else ""
+            msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args."
             raise ChildrenException(msg)
         self.validated = True
 
@@ -400,3 +400,9 @@ class Args:
             # self._csvpath.report_validation_errors(pm)
             if self._csvpath is None or self._csvpath.raise_validation_errors:
                 raise ChildrenException(pm)
+            # we print in-run validation errors as part of the raise handle,
+            # so this is a bit extra. We can suppress the exceptions completely
+            # but still print args validation errors. not sure that is anything
+            # more than a deep corner case. defering removing it.
+            if self._csvpath and self._csvpath.print_validation_errors:
+                self._csvpath.report_validation_errors(pm)
