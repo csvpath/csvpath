@@ -41,6 +41,18 @@ class TestFunctionsRegex(unittest.TestCase):
         # path.collect()
         print(f"test_function_regex_quick_parse: path vars: {path.variables}")
 
+    def test_function_regex_right(self):
+        path = CsvPath()
+        Save._save(path, "test_function_regex_right")
+        path.parse(
+            f""" ${PATH}[0*] [
+                regex(#say, /sniffle/)
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\ntest_function_regex_right: lines: {lines}")
+        assert len(lines) == 1
+
     def test_function_regex1(self):
         path = CsvPath()
         Save._save(path, "test_function_regex1")
@@ -53,7 +65,6 @@ class TestFunctionsRegex(unittest.TestCase):
         )
         lines = path.collect()
         print(f"\ntest_function_regex1: lines: {lines}")
-        print(f"test_function_regex1: path vars: {path.variables}")
         assert len(lines) == 1
 
     def test_function_regex2(self):

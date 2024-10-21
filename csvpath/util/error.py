@@ -126,9 +126,9 @@ class ErrorHandler:
             raise InputException("Error handler cannot handle a None error")
         if OnError.QUIET.value in policy:
             self.logger.error(f"Quiet error: {error.exception}")
-            self.logger.error(f"Quiet class: {error.exception_class}")
-            self.logger.error(f"Quiet file: {error.filename}")
-            self.logger.error(f"Quiet line_count: {error.line_count}")
+            self.logger.error(f"Quiet error class: {error.exception_class}")
+            self.logger.error(f"Quiet error file: {error.filename}")
+            self.logger.error(f"Quiet error line_count: {error.line_count}")
         else:
             self.logger.error(f"{error}")
         if OnError.STOP.value in policy:
@@ -139,6 +139,10 @@ class ErrorHandler:
         if OnError.FAIL.value in policy:
             if self._csvpath:
                 self._csvpath.is_valid = False
+        if OnError.PRINT.value in policy:
+            msg = f"{error.error}"
+            if self._csvpath:
+                self._csvpath.print(msg)
         if OnError.RAISE.value in policy:
             raise error.error
 

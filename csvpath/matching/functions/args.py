@@ -263,13 +263,23 @@ class ArgSet:
             found = False
             break
         if not found:
+            self._parent._csvpath.logger.debug(
+                "%s(%s) not allowed in arg %s of argset %s",
+                type(a),
+                a,
+                i,
+                self.argset_number,
+            )
             mismatches.append(
-                f"{type(a)}({a}) not allowed in arg {i} of argset {self.argset_number}"
+                f"{type(a)}({a}) not allowed in arg {i + 1} of {len(actuals)}"
             )
         if len(actuals) < self.min_length:
-            mismatches.append(
-                f"Values received {actuals} are too few for argset {self.argset_number}"
+            self._parent._csvpath.logger.debug(
+                "Values received %s are too few for argset %s",
+                actuals,
+                self.argset_number,
             )
+            mismatches.append(f"Too few values received: {actuals}")
             found = False
         if found:
             mismatches = []
@@ -334,7 +344,7 @@ class Args:
             if aset.validate(siblings):
                 good = True
         if not good:
-            msg = "Wrong type or number of args."
+            msg = f"{self._csvpath_id()} Incorrectly written at {self.matchable.my_chain}. Wrong type or number of args."
             raise ChildrenException(msg)
         self.validated = True
 
@@ -346,7 +356,7 @@ class Args:
         if self.matchable.notnone and self._has_none(actuals):
             mismatch_count = len(self._argsets)
             mismatches = [
-                f"Cannot have None arguments in {self.matchable.name} because it has the notnone qualifier"
+                f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
             ]
         else:
             for aseti, aset in enumerate(self._argsets):
@@ -368,23 +378,27 @@ class Args:
                 return True
         return False
 
-    def handle_errors_if(self, mismatch_count, mismatches):
-        if mismatch_count == len(self._argsets):
-            c = ""
-            if mismatch_count == 1:
-                c = "all"
-            elif mismatch_count == 2:
-                c = "both"
-            else:
-                c = f"all {mismatch_count}"
-            pm = f"mismatches with args expectations in {self.matchable.name} for {c} arg sets: {mismatches}"
-            cid = ""
-            if self._csvpath:
-                cid = self._csvpath.identity
-            if not self._csvpath or not cid or cid.strip() == "":
+    def _csvpath_id(self) -> str:
+        cid = ""
+        if self._csvpath is None:
+            return cid
+        if self._csvpath.csvpaths:
+            cid = self._csvpath.identity
+            if not cid or cid.strip() == "":
                 cid = "<<no ID or name>>"
-                pln = self._csvpath.line_monitor.physical_line_number
-            pm = f"[In csvpath {cid}] Wrong values of args: {pm} at line {pln}"
-            self._csvpath.report_validation_errors(pm)
+            cid = f"[Csvpath {cid}]"
+        return cid
+
+    def handle_errors_if(self, mismatch_count, mismatches):
+        print("")
+        if mismatch_count == len(self._argsets):
+            pm = f"mismatch in {self.matchable.my_chain}: {mismatches}"
+            # when would we not have a csvpath?
+            pln = (
+                self._csvpath.line_monitor.physical_line_number if self._csvpath else 0
+            )
+            csvpathid = self._csvpath_id()
+            pm = f"{csvpathid} Wrong value(s) at line {pln}: {pm}"
+            # self._csvpath.report_validation_errors(pm)
             if self._csvpath is None or self._csvpath.raise_validation_errors:
                 raise ChildrenException(pm)

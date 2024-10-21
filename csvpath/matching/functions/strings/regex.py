@@ -19,23 +19,40 @@ class Regex(MatchDecider):
         self.args.validate(self.siblings())
         super().check_valid()
         left = self._function_or_equality.left
-        if isinstance(left, Term):
-            restr = left.to_value()
-            re.compile(restr)
+        self.is_regex_if(left)
+        right = self._function_or_equality.right
+        self.is_regex_if(right)
+
+    def is_regex_if(self, t):
+        if isinstance(t, Term):
+            v = t.to_value()
+            if v and len(v) > 0 and v[0] == "/":
+                re.compile(v)
+
+    def _the_regex(self, siblings, skip=None):
+        # group
+        group = 0 if len(siblings) == 2 else siblings[2].to_value(skip=skip)
+        group = int(group)
+        c1 = siblings[0]
+        c2 = siblings[1]
+        v1 = c1.to_value(skip=skip)
+        v2 = c2.to_value(skip=skip)
+        if v1[0] == "/":
+            theregex = v1.lstrip("/")
+            theregex = theregex.rstrip("/")
+            thevalue = v2
+            return theregex, thevalue, group
+        else:
+            theregex = v2.lstrip("/")
+            theregex = theregex.rstrip("/")
+            thevalue = v1
+            return theregex, thevalue, group
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         siblings = child.commas_to_list()
-        regex = siblings[0]
-        value = siblings[1]
-        group = 0 if len(siblings) == 2 else siblings[2].to_value(skip=skip)
-        group = int(group)
-        thevalue = value.to_value(skip=skip)
-        theregex = regex.to_value(skip=skip)
-        if theregex[0] == "/":
-            theregex = theregex[1:]
-        if theregex[len(theregex) - 1] == "/":
-            theregex = theregex[0 : len(theregex) - 1]
+        print(f"1: {siblings[0]}, 2: {siblings[1]}")
+        theregex, thevalue, group = self._the_regex(siblings, skip=skip)
         if thevalue is None:
             # this could happen if the line is blank
             pass

@@ -40,6 +40,13 @@ class Expression(Matchable):
                 e.trace = traceback.format_exc()
                 e.source = self
                 e.json = self.matcher.to_json(self)
+                #
+                # for output ErrorHandler has:
+                #   - the print() on the CsvPath
+                #   - the error_collector
+                #   - the logger on the CsvPath or CsvPaths
+                #   - exceptions dumped on system.err
+                #
                 ErrorHandler(
                     csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
                 ).handle_error(e)

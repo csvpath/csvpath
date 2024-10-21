@@ -364,6 +364,39 @@ class ExpressionUtility:
         return hashlib.sha256(id.encode("utf-8")).hexdigest()
 
     @classmethod
+    def my_chain(cls, thing):
+        ancs = []
+        p = thing.parent
+        while p is not None:
+            ancs.append(p)
+            p = p.parent
+        chain = cls.name_or_class(thing)
+        for o in ancs:
+            n = cls.name_or_class(o)
+            if n != "":
+                chain = f"{n}.{chain}"
+        return chain
+
+    @classmethod
+    def name_or_class(cls, thing, show_eq_and_exp=False):
+        if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
+            return ""
+        if not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:
+            return ""
+        if not hasattr(thing, "name"):
+            return cls.simple_class_name(thing)
+        if f"{type(thing)}".find("Term") != -1:
+            return thing.to_value()
+        if thing.name is None:
+            return cls.simple_class_name(thing)
+        return thing.name
+
+    @classmethod
+    def simple_class_name(cls, thing):
+        ts = f"{type(thing)}"
+        return ts[ts.rfind(".") + 1 : ts.rfind("'")]
+
+    @classmethod
     def get_my_expression(cls, thing):
         p = thing.parent
         ret = p

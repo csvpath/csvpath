@@ -12,7 +12,7 @@ class Int(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[None, int, str, float])
+        a.arg(types=[Term, Variable, Header, Function], actuals=[None, int, float])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -33,7 +33,7 @@ class Float(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[None, float, int, str])
+        a.arg(types=[Term, Variable, Header, Function], actuals=[None, float, int])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -57,7 +57,7 @@ class Num(ValueProducer):
         a = self.args.argset(1)
         a.arg(
             types=[Term, Variable, Header, Function],
-            actuals=[None, str, int, float, bool],
+            actuals=[None, int, float, bool],
         )
         self.args.validate(self.siblings())
         super().check_valid()

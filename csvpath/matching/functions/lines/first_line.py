@@ -22,7 +22,7 @@ class FirstLine(MatchDecider):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.match(skip=skip)
+        self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
         t = self.name

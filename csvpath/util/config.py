@@ -22,6 +22,7 @@ class OnError(Enum):
     COLLECT = "collect"
     STOP = "stop"
     FAIL = "fail"
+    PRINT = "print"
 
 
 class LogLevels(Enum):
@@ -141,7 +142,7 @@ extensions = txt, csvpath, csvpaths
 [csv_files]
 extensions = txt, csv, tsv, dat, tab, psv, ssv
 [errors]
-csvpath = raise, collect, stop, fail
+csvpath = raise, collect, stop, fail, print
 csvpaths = raise, collect
 [logging]
 csvpath = info

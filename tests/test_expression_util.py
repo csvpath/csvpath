@@ -4,6 +4,7 @@ import unittest
 import datetime
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from tests.save import Save
 
 
 class TestExpressionUtil(unittest.TestCase):
@@ -203,3 +204,20 @@ class TestExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.ascompariable(1) == 1
         assert ExpressionUtility.ascompariable(2.0) == 2.0
         assert ExpressionUtility.ascompariable("-1") == -1
+
+    def test_exp_util_chain(self):
+        path = CsvPath()
+        Save._save(path, "test_validity1")
+        path.parse(
+            f"""${"tests/test_resources/test.csv"}[*][
+                any( length( concat("a", "b")))
+            ]"""
+        )
+        path.fast_forward()
+        m = path.matcher
+        es = m.expressions[0]
+        c = es[0].children[0].children[0].children[0].children[0].children[0]
+        chain = ExpressionUtility.my_chain(c)
+        print(f"chain: {chain}")
+        assert chain == "any.length.concat.a"
+        # chain is eqiv to: "Expression.any.length.concat.Equality.a"

@@ -33,10 +33,11 @@ class Matchable(Qualified):
         don't want that info after a run completes"""
 
     def _simple_class_name(self) -> str:
-        cn = str(self.__class__)
-        name = cn[(cn.rfind(".") + 1) :]
-        name = name[0 : name.rfind("'>")]
-        return name
+        return ExpressionUtility.simple_class_name(self)
+
+    @property
+    def my_chain(self) -> str:
+        return ExpressionUtility.my_chain(self)
 
     def _noop_match(self) -> bool:
         """deprecated. use self.default_match()"""
