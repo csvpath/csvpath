@@ -67,7 +67,11 @@ Adding `latch` to a variable makes the variable only set one time. The variable 
 | Yes      | No      | No        |
 
 ### notnone
-`notnone` is set on a variable in an assignment to indicate that the assignment should only happen if the value being assigned is not None. On a function, `notnone` disallows None-valued arguments. This use is particularly important for declaring header values to be of a certain type and not `None`, e.g. `float.notnone(#temperature)`. All functions can take `notnone`.
+`notnone` is set on a variable in an assignment to indicate that the assignment should only happen if the value being assigned is not None.
+
+On a function, `notnone` disallows None-valued arguments. This use is particularly important for declaring header values to be of a certain type _and_ not `None`, e.g. `float.notnone(#temperature)`. All functions declare their arguments internally as part of their implementation. Many are permissive, allowing `None` even where they limit the permitted type of argument. However, when you are declaring that a header must have a value that matches a certain pattern your need is different from when you are merely checking if a value exists. In the former case you need a firm determination that `None` is allowed, is not allowed, or is explicitly not important. In the latter case you are just checking if a value exists or not.
+
+All functions can take `notnone`.
 
 |Functions | Headers | Variables |
 |----------|---------|-----------|
