@@ -2,8 +2,8 @@ import unittest
 import pytest
 from lark.exceptions import VisitError
 from csvpath.csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -45,7 +45,7 @@ class TestVariables(unittest.TestCase):
                    """
         )
         # was:  last() -> @lastname.Bat = "fred"
-        with pytest.raises(TypeError):
+        with pytest.raises(MatchException):
             path.collect()
             print(
                 f"test_function_access_variable_tracking_values: path vars: {path.variables}"

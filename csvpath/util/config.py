@@ -135,7 +135,7 @@ class Config:
         if directory != "":
             if not path.exists(directory):
                 os.makedirs(directory)
-        with open(self._configpath, "w") as file:
+        with open(self._configpath, "w", encoding="utf-8") as file:
             c = """
 [csvpath_files]
 extensions = txt, csvpath, csvpaths

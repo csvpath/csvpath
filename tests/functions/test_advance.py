@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -40,7 +40,7 @@ class TestFunctionsAdvance(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         path.parse(f""" ${PATH}[1*] [ advance("please") ]""")
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_function_advance_all1(self):
@@ -65,5 +65,5 @@ class TestFunctionsAdvance(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()

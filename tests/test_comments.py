@@ -3,7 +3,7 @@ import pytest
 from csvpath import CsvPath
 from csvpath import CsvPaths
 from csvpath.util.printer import LogPrinter
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 
 PATH = "tests/test_resources/test.csv"
 
@@ -82,7 +82,7 @@ class TestComments(unittest.TestCase):
         assert path.log_validation_errors is False
         assert path.print_validation_errors is True
         assert path.raise_validation_errors is True
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
         for p in path.printers:
             assert p.last_line and p.last_line.find("Wrong value(s) at") > -1

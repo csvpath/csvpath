@@ -2,7 +2,7 @@ class MatchException(Exception):
     """most general exception when matching"""
 
 
-class MatchComponentException(Exception):
+class MatchComponentException(MatchException):
     """most general exception for the matching part of a csvpath"""
 
 
@@ -10,7 +10,7 @@ class ChildrenException(MatchComponentException):
     """raised when the structure of a match part is incorrect"""
 
 
-class DataException(Exception):
+class DataException(MatchException):
     """raised when a datium is unexpected or incorrect"""
 
     pass

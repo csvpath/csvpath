@@ -2,7 +2,7 @@ import unittest
 import pytest
 from datetime import date, datetime
 from csvpath.csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 DATES = "tests/test_resources/dates.csv"
@@ -84,7 +84,7 @@ class TestFunctionsBetween(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_between_datetimes3")
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ~ value error ~
@@ -188,7 +188,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_args1(self):
         path = CsvPath()
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${DATES}[1][
@@ -199,7 +199,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_args2(self):
         path = CsvPath()
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${DATES}[1][
@@ -210,7 +210,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_args3(self):
         path = CsvPath()
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${DATES}[1][
@@ -221,7 +221,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_args4(self):
         path = CsvPath()
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${DATES}[1][

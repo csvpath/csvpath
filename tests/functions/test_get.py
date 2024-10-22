@@ -1,6 +1,5 @@
 import unittest
 import pytest
-from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.csvpath import CsvPath
 from tests.save import Save
 

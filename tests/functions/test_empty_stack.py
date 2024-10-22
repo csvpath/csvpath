@@ -1,7 +1,6 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 EMPTY = "tests/test_resources/empty3.csv"

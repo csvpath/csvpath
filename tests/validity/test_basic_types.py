@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -16,7 +16,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 int.notnone(none())
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_int2(self):
@@ -29,7 +29,7 @@ class TestValidBasicTypes(unittest.TestCase):
                     any( length( concat("a", int(random(0)))))
                 ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_int3(self):
@@ -40,7 +40,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 int.notnone("a")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_date1(self):
@@ -51,7 +51,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 date()
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_date2(self):
@@ -62,7 +62,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 date.notnone(none())
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_date3(self):
@@ -96,7 +96,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 date("the 3rd of feb")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             lines = path.collect()
             assert len(lines) == 0
 
@@ -108,7 +108,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 date("the 3rd of feb", "%Y")
             ]"""
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(MatchException):
             lines = path.collect()
             assert len(lines) == 0
 
@@ -131,7 +131,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 today("%Y")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
             # assert len(lines) == 0
 
@@ -154,7 +154,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 now("2024-01-01","%Y")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none1(self):
@@ -165,7 +165,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 none("2024-01-01")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none2(self):
@@ -187,7 +187,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 none(-1)
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none4(self):
@@ -198,7 +198,7 @@ class TestValidBasicTypes(unittest.TestCase):
                 none(5, 9)
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none5(self):
@@ -286,5 +286,5 @@ class TestValidBasicTypes(unittest.TestCase):
                 string("I am a string", 0, 25, 9)
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()

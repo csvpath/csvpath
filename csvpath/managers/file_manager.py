@@ -110,7 +110,7 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
 
     def set_named_files_from_json(self, filename: str) -> None:
         try:
-            with open(filename, encoding="utf-8") as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 j = json.load(f)
                 self.named_files = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:

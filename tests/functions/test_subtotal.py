@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/numbers2.csv"
@@ -40,7 +40,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
                 last() -> print("$.variables.areas")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_subtotal3(self):
@@ -55,7 +55,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
                 last() -> print("$.variables.areas")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_subtotal4(self):
@@ -70,5 +70,5 @@ class TestFunctionsSubtotal(unittest.TestCase):
                 last() -> print("$.variables.areas")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()

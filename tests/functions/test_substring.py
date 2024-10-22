@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath.csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -31,7 +31,7 @@ class TestFunctionsSubstring(unittest.TestCase):
                 @s = substring("testtest", "no way!")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_substring3(self):
@@ -70,7 +70,7 @@ class TestFunctionsSubstring(unittest.TestCase):
                 @s = substring("abcd", -2)
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_startswith(self):

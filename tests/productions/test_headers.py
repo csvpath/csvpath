@@ -2,7 +2,6 @@ import unittest
 import pytest
 from lark.exceptions import VisitError, UnexpectedCharacters
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Header
 from tests.save import Save

@@ -3,7 +3,7 @@ import pytest
 from typing import Any
 import datetime
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.functions.args import Args, Arg, ArgSet
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.variable import Variable
@@ -245,7 +245,7 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[Variable, Term], actuals=[Variable])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             args.validate(sibs)
         a = args.argset()
         a.arg(types=[Function, Term], actuals=[None, str, int])

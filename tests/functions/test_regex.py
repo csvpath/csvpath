@@ -1,6 +1,7 @@
 import unittest
 import pytest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -97,7 +98,7 @@ class TestFunctionsRegex(unittest.TestCase):
                 @group1.onmatch = regex(/s(niff)le/, #say, 11)
             ]"""
         )
-        with pytest.raises(IndexError):
+        with pytest.raises(MatchException):
             lines = path.collect()
             print(f"\test_function_regex3: lines: {lines}")
             print(f"test_function_regex3: path vars: {path.variables}")

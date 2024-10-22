@@ -1,6 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPaths
+from csvpath.matching.util.exceptions import MatchException
 
 DIR = "tests/test_resources/named_files"
 JSON = "tests/test_resources/named_files.json"
@@ -28,7 +29,7 @@ class TestFilesManager(unittest.TestCase):
         paths = CsvPaths()
         paths.config.csvpaths_errors_policy = ["raise"]
         fm = paths.file_manager
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(MatchException):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):

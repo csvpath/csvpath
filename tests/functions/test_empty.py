@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -118,7 +118,7 @@ class TestFunctionsEmpty(unittest.TestCase):
         path.config.csvpath_errors_policy = ["raise"]
         path.skip_blank_lines = False
         Save._save(path, "test_function_empty6")
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${EMPTY}[1*]

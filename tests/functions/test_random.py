@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath import CsvPath
 from tests.save import Save
 
@@ -104,7 +104,7 @@ class TestFunctionsRandom(unittest.TestCase):
                 push("ordering", @order)
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_shuffle3(self):

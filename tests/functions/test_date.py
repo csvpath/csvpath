@@ -2,7 +2,7 @@ import unittest
 import pytest
 from csvpath.csvpath import CsvPath
 from datetime import date, datetime
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 DATES = "tests/test_resources/dates.csv"
@@ -19,7 +19,7 @@ class TestFunctionsDate(unittest.TestCase):
                 push( "dates", date( #firstname ) )
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_date01(self):

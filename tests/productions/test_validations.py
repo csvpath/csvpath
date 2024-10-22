@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions.variable import Variable
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.header import Header
@@ -37,7 +37,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [VAR, HEADER]
         eq.op = "=="
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_zero_one_or_two_args2(self):
@@ -49,7 +49,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [VAR, TERM]
         eq.op = ","
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_zero_one_or_two_args4(self):
@@ -61,7 +61,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [HEADERS, TERM, TERM]
         eq.op = ","
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_one_arg1(self):
@@ -70,7 +70,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = Empty(matcher=path.matcher, name="empty")
         e.children = [VAR, TERM]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_one_arg2(self):
@@ -82,7 +82,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [VAR, TERM]
         eq.op = ","
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_one_or_more_args1(self):
@@ -94,7 +94,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [VAR, TERM]
         eq.op = "="
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     # one=term
@@ -109,7 +109,7 @@ class TestValidations(unittest.TestCase):
         one.children = [VAR, TERM]
         one.op = "="
         e.children = [one]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_one_or_two_args2(self):
@@ -118,7 +118,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = Print(path.matcher, name="print")
         e.children = [VAR]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_two_args2(self):
@@ -127,7 +127,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = Equals(path.matcher, name="print")
         e.children = [VAR]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_two_or_three_args2(self):
@@ -136,7 +136,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = Regex(path.matcher, name="print")
         e.children = [VAR]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args1(self):
@@ -145,7 +145,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = HasDups(matcher=path.matcher, name="no")
         e.children = [VAR]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args2(self):
@@ -154,7 +154,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         e = HasDups(matcher=path.matcher, name="no")
         e.children = [VAR, TERM]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_validate_zero_or_more_args3(self):
@@ -166,7 +166,7 @@ class TestValidations(unittest.TestCase):
         eq.children = [VAR, TERM]
         eq.op = "=="
         e.children = [eq]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             e.check_valid()
 
     def test_validation_one1(self):
@@ -175,7 +175,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         v = Empty(matcher=path.matcher, name="no")
         v.children = []
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
 
     def test_validation_one2(self):
@@ -184,7 +184,7 @@ class TestValidations(unittest.TestCase):
         path.fast_forward()
         v = Empty(matcher=path.matcher, name="no")
         v.children = [TERM]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
 
     def test_validate_two_or_more_args(self):
@@ -195,20 +195,20 @@ class TestValidations(unittest.TestCase):
         EQ.op = ","
         v.children = [EQ]
         # no args, bad
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
             # left only, bad
             EQ.left = VAR
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
             # left term, bad
             EQ.left = TERM
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
             # left var, right equality, bad
             EQ.right = VAR
             EQ.right = TERM
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             v.check_valid()
             # left equality, right header, bad
             EQ.right = TERM

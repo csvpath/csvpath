@@ -6,6 +6,7 @@ import traceback
 from csvpath.util.config import OnError
 from .exceptions import InputException
 from .log_utility import LogException
+from ..matching.util.exceptions import MatchException
 
 
 class ErrorHandlingException(Exception):
@@ -144,7 +145,9 @@ class ErrorHandler:
             if self._csvpath:
                 self._csvpath.print(msg)
         if OnError.RAISE.value in policy:
-            raise error.error
+            raise MatchException(
+                f"Exception triggered by error policy {policy}"
+            ) from error.error
 
     def build(self, ex: Exception) -> Error:
         error = Error()

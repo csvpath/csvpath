@@ -30,7 +30,7 @@ class TestExpressions(unittest.TestCase):
         print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
-        with pytest.raises(DataException):
+        with pytest.raises(MatchException):
             expr.matches(skip=[])
         assert "stop" in path.config.csvpath_errors_policy
         assert "fail" in path.config.csvpath_errors_policy
@@ -52,7 +52,7 @@ class TestExpressions(unittest.TestCase):
         print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
-        with pytest.raises(DataException):
+        with pytest.raises(MatchException):
             expr.matches(skip=[])
         assert "stop" in path.config.csvpath_errors_policy
         assert "fail" in path.config.csvpath_errors_policy

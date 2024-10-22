@@ -45,5 +45,5 @@ class Cache:
     def cache_text(self, filename, strtype: str, data: str) -> None:
         cn = self._cache_name(filename)
         cachepath = os.path.join(self._cachedir(), f"{cn}.{strtype}")
-        with open(cachepath, "w") as file:
+        with open(cachepath, "w", encoding="utf-8") as file:
             file.write(str(data))

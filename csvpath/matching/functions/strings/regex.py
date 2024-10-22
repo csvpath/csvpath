@@ -3,6 +3,7 @@ import re
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term, Variable, Header, Reference
+from csvpath.matching.util.exceptions import ChildrenException
 from ..function import Function
 from ..args import Args
 
@@ -13,8 +14,14 @@ class Regex(MatchDecider):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
         a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
@@ -37,21 +44,23 @@ class Regex(MatchDecider):
         c2 = siblings[1]
         v1 = c1.to_value(skip=skip)
         v2 = c2.to_value(skip=skip)
-        if v1[0] == "/":
+
+        if v1.startswith("/"):
             theregex = v1.lstrip("/")
             theregex = theregex.rstrip("/")
             thevalue = v2
             return theregex, thevalue, group
-        else:
+        elif v2.startswith("/"):
             theregex = v2.lstrip("/")
             theregex = theregex.rstrip("/")
             thevalue = v1
             return theregex, thevalue, group
+        else:
+            raise ChildrenException("No regular expression available")
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         siblings = child.commas_to_list()
-        print(f"1: {siblings[0]}, 2: {siblings[1]}")
         theregex, thevalue, group = self._the_regex(siblings, skip=skip)
         if thevalue is None:
             # this could happen if the line is blank

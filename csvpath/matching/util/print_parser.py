@@ -262,6 +262,7 @@ class PrintParser:
             local,
             False,
         )
+        self._set(runtime, identity, "identity", identity, local, False)
         self._set(runtime, identity, "count_matches", csvpath.match_count, local, False)
         self._set(runtime, identity, "count_scans", csvpath.scan_count, local, False)
         self._set(runtime, identity, "scan_part", csvpath.scan, local, False)

@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 COR = "tests/test_resources/correlation.csv"
@@ -53,7 +53,7 @@ class TestFunctionsStdev(unittest.TestCase):
                 ]
              """
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_function_stdev4(self):

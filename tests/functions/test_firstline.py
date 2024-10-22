@@ -2,7 +2,7 @@ import unittest
 import pytest
 from csvpath.csvpath import CsvPath
 from tests.save import Save
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -90,7 +90,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         Save._save(path, "test_function_firstline5")
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${PATH}[*]

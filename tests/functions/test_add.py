@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -68,7 +68,7 @@ class TestFunctionsAdd(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_function_add_error1")
         path.config.csvpath_errors_policy = ["raise"]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(
                 f"""
                 ${PATH}[1]

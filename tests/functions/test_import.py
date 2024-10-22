@@ -4,7 +4,7 @@ from csvpath.matching.productions import Term, Equality, Header
 
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.error import OnError
-from csvpath.matching.util.exceptions import MatchComponentException, ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.exceptions import CsvPathsException
 from tests.save import Save
 
@@ -18,11 +18,11 @@ class TestFunctionsImport(unittest.TestCase):
 
         path.config.csvpath_errors_policy = [OnError.RAISE.value]
         # import has no name
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.parse(f" ${PATH}[*] [ import() ] ")
             path.fast_forward()
         # no csvpaths
-        with pytest.raises(MatchComponentException):
+        with pytest.raises(MatchException):
             path.parse(f""" ${PATH}[*] [ import("test") ] """)
             path.fast_forward()
 

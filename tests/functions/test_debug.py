@@ -3,7 +3,6 @@ import pytest
 import logging
 from io import StringIO as buffer
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 from csvpath.util.log_utility import LogUtility
 

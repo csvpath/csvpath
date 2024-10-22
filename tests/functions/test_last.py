@@ -2,6 +2,7 @@ import unittest
 import pytest
 from csvpath.csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -59,7 +60,7 @@ class TestFunctionsLast(unittest.TestCase):
                             ]
                    """
         )
-        with pytest.raises(TypeError):
+        with pytest.raises(MatchException):
             path.collect()
             print(f"test_function_last4: path vars: {path.variables}")
             assert path.variables["tally_lastname"]["Bat"] == "fred"

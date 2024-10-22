@@ -3,7 +3,7 @@ import pytest
 from lark.exceptions import VisitError
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.productions import Reference
-from csvpath.matching.util.exceptions import MatchException, ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 NAMED_FILES_DIR = "tests/test_resources/named_files"
@@ -31,7 +31,7 @@ class TestReferences(unittest.TestCase):
     def test_reference_for_wrong_parts(self):
         reference = Reference(matcher=None, name="zipcodes.variables.zipcodes.Boston")
         nameparts = ["zipcodes", "metadata", "zipcodes", "Boston"]
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             ref = reference._get_reference_for_parts(nameparts)
             assert ref["paths_name"] == "zipcodes"
             assert ref["var_or_header"] == "variables"

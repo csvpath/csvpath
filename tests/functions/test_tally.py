@@ -1,6 +1,7 @@
 import unittest
 import pytest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -53,7 +54,7 @@ class TestFunctionsTally(unittest.TestCase):
                    """
         )
         path.logger.warning("We are going to intentionally raise an exception")
-        with pytest.raises(TypeError):
+        with pytest.raises(MatchException):
             path.collect()
             print(f"test_function_tally4: path vars: {path.variables}")
             assert path.variables["lastname"]["Bat"] == "fred"

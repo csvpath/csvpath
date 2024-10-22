@@ -1,7 +1,7 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -73,7 +73,7 @@ class TestFunctionsReplace(unittest.TestCase):
                 line_number.nocontrib() == 0 -> append(3, "rnd_id")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_append3(self):
@@ -84,5 +84,5 @@ class TestFunctionsReplace(unittest.TestCase):
                 line_number.nocontrib() == 0 -> append("rnd_id")
             ]"""
         )
-        with pytest.raises(ChildrenException):
+        with pytest.raises(MatchException):
             path.fast_forward()
