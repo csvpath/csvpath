@@ -28,8 +28,9 @@ class In(MatchDecider):
         for s in siblings[1:]:
             v = s.to_value(skip=skip)
             if isinstance(s, Term):
-                vs = f"{v}".split("|")
-                inf += vs
+                v = f"{v}".strip()
+                nvs = [_.strip() for _ in v.split("|")]
+                inf += nvs
             else:
                 # tuple would mean vars were frozen. this would not be
                 # surprising from a reference
@@ -41,4 +42,5 @@ class In(MatchDecider):
                         inf.append(k)
                 else:
                     inf.append(v)
-        self.match = t in inf
+        ret = t in inf
+        self.match = ret

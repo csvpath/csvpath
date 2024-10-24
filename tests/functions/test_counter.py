@@ -22,8 +22,8 @@ class TestFunctionsCounter(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_advance1: lines: {lines}")
-        print(f"test_function_advance1: path vars: {path.variables}")
+        print(f"test_function_counter: lines: {lines}")
+        print(f"test_function_counter: path vars: {path.variables}")
         assert path.variables["one"] == 40
         assert path.variables["two"] == 8
         assert path.variables["three"] == 3

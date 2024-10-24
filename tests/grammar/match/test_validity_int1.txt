@@ -1,3 +1,5 @@
 [
-                int.notnone(none())
+                line(
+                    blank()
+                )
             ]

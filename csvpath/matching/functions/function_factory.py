@@ -35,6 +35,7 @@ from .headers.empty_stack import EmptyStack
 from .headers.mismatch import Mismatch
 from .headers.end import End
 from .math.above import AboveBelow
+from .math.intf import Int, Num, Float
 from .math.add import Add
 from .math.subtract import Subtract
 from .math.multiply import Multiply
@@ -46,6 +47,7 @@ from .math.round import Round
 from .math.mod import Mod
 from .boolean.notf import Not
 from .boolean.inf import In
+from .boolean.boolean import Boolean
 from .boolean.orf import Or
 from .boolean.empty import Empty
 from .boolean.no import No
@@ -79,10 +81,10 @@ from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
 from .misc.random import Random, Shuffle
-from .misc.nonef import Nonef
-from .misc.intf import Int, Num, Float
+from .misc.nonef import Nonef, Blank
 from .misc.importf import Import
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
+from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
 
@@ -224,6 +226,8 @@ class FunctionFactory:
             f = Add(matcher, name, child)
         elif name == "string":
             f = String(matcher, name, child)
+        elif name == "boolean":
+            f = Boolean(matcher, name, child)
         elif name in ["subtract", "minus"]:
             f = Subtract(matcher, name, child)
         elif name == "multiply":
@@ -256,6 +260,10 @@ class FunctionFactory:
             f = Any(matcher, name, child)
         elif name == "none":
             f = Nonef(matcher, name, child)
+        elif name in ["blank", "unspecific"]:
+            f = Blank(matcher, name, child)
+        elif name == "line":
+            f = Line(matcher, name, child)
         elif name == "last":
             f = Last(matcher, name, child)
         elif name == "exists":

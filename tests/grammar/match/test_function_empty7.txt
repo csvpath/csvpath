@@ -1,0 +1,4 @@
+[
+                ~ headers("test") returns False so empty() cannot return True ~
+                empty(headers("test"))
+            ]

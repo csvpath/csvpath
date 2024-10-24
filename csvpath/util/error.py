@@ -7,15 +7,65 @@ from csvpath.util.config import OnError
 from .exceptions import InputException
 from .log_utility import LogException
 from ..matching.util.exceptions import MatchException
+from ..matching.util.exceptions import ChildrenValidationException
 
 
 class ErrorHandlingException(Exception):
     pass
 
 
+class ErrorCommsManager:
+    """this class determines how errors should be handled. basically there
+    are two types of errors:
+    1. built-in validation errors that come from the Args class in two
+       passes: pre-run match component tree checking and line by line
+       expected values validation
+    2. rules errors where match components raise due to circumstances
+       having to do with the rules they were set up to implement. e.g.
+       an end() that is given a -1 will pass it's Args validation
+       because Args only looks at the type of a value, not the value
+       itself, but end() takes a positive int so it raises an exception
+    the error policy in config/config.ini (or whereever your config is)
+    is the baseline. however, every csvpath can override the config
+    for some of the error handling using a comment with the metadata
+    field args-validation-mode. (soon to be validation-mode). config
+    has two setting values not tracked in metadata: quiet and log.
+    """
+
+    def __init__(self, csvpath=None, csvpaths=None) -> None:
+        self._csvpath = csvpath
+        self._policy = None
+        if csvpath:
+            self._policy = csvpath.config.csvpath_errors_policy
+        elif csvpaths:
+            self._policy = csvpaths.config.csvpath_errors_policy
+        else:
+            raise ErrorHandlingException("Must have a CsvPath or CsvPaths instance")
+
+    def do_i_raise(self) -> bool:
+        if self._csvpath and self._csvpath.raise_validation_errors is not None:
+            return self._csvpath._raise_validation_errors
+        return OnError.RAISE.value in self._policy
+
+    def do_i_print(self) -> bool:
+        if self._csvpath and self._csvpath.print_validation_errors is not None:
+            return self._csvpath._print_validation_errors
+        return OnError.PRINT.value in self._policy
+
+    def do_i_stop(self) -> bool:
+        if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
+            return self._csvpath._stop_on_validation_errors
+        return OnError.STOP.value in self._policy
+
+    def do_i_fail(self) -> bool:
+        if self._csvpath and self._csvpath.fail_on_validation_errors is not None:
+            return self._csvpath._fail_on_validation_errors
+        return OnError.FAIL.value in self._policy
+
+
 class Error:
-    """ErrorHandler will build errors from exceptions. creating errors is
-    not something CsvPath users should need to do
+    """ErrorHandler builds errors from exceptions. CsvPath users shouldn't
+    need to construct errors themselves.
     """
 
     def __init__(self):
@@ -93,6 +143,7 @@ class ErrorHandler:
                 raise ErrorHandlingException(
                     "A CsvPathErrorCollector collector must be available"
                 )
+        self._ecm = ErrorCommsManager(csvpath=csvpath, csvpaths=csvpaths)
         self._logger = None
 
     @property
@@ -132,21 +183,58 @@ class ErrorHandler:
             self.logger.error(f"Quiet error line_count: {error.line_count}")
         else:
             self.logger.error(f"{error}")
-        if OnError.STOP.value in policy:
+        if self._ecm.do_i_stop():
             if self._csvpath:
                 self._csvpath.stopped = True
         if OnError.COLLECT.value in policy:
             self._error_collector.collect_error(error)
-        if OnError.FAIL.value in policy:
+        if self._ecm.do_i_fail():
             if self._csvpath:
                 self._csvpath.is_valid = False
-        if OnError.PRINT.value in policy:
-            msg = f"{error.error}"
+        if self._ecm.do_i_print():
+            #
+            # we give the comments settings a vote. comments settings
+            # give people a way to set the noise level on a csvpath by
+            # csvpath basis when working within a CsvPaths instance.
+            # if we didn't provide this the error policy would be one
+            # size fits all. given how important validation output is
+            # we want to be a bit more flexible.
+            #
+            """
             if self._csvpath:
-                self._csvpath.print(msg)
-        if OnError.RAISE.value in policy:
+                isin = isinstance(error.error, ChildrenValidationException)
+                if (
+                    isin
+                    and self._csvpath.print_validation_errors
+                ) or not isin:
+                    msg = f"{error.error}"
+            """
+            if self._csvpath:
+                self._csvpath.print(f"{error.error}")
+            else:
+                self._csvpaths.logger.warning(
+                    "attempted to print an error to system out, but CsvPaths do not print errors. This was the error: %s",
+                    error.error,
+                )
+        if self._ecm.do_i_raise():
+            """
+            if isinstance(error.error, ChildrenValidationException):
+                #
+                # we give the comments settings a vote. comments settings
+                # give people a way to set the noise level on a csvpath by
+                # csvpath basis when working within a CsvPaths instance.
+                # if we didn't provide this the error policy would be one
+                # size fits all. given how important validation output is
+                # we want to be a bit more flexible.
+                #
+                if self._csvpath and self._csvpath.raise_validation_errors is False:
+                    return
+                else:
+                    raise error.error
+            else:
+            """
             raise MatchException(
-                f"Exception triggered by error policy {policy}"
+                f"Exception raised by error policy {policy}"
             ) from error.error
 
     def build(self, ex: Exception) -> Error:

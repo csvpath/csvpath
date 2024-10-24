@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header, Variable, Equality
 from ..function import Function
@@ -26,12 +26,12 @@ class Increment(ValueProducer):
             return self._noop_value()
         tv = self.children[0].right.to_value()
         if not isinstance(tv, int):
-            raise ChildrenException(
+            raise DataException(
                 "increment value must be a positive int"
             )  # pragma: no cover
         tv = int(tv)
         if tv <= 0:
-            raise ChildrenException(
+            raise DataException(
                 "increment value must be a positive int"
             )  # pragma: no cover
         if not self.value:

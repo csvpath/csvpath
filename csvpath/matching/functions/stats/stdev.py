@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from statistics import stdev, pstdev
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import DataException
 from csvpath.matching.productions import Variable, Term
 from ..function import Function
 from ..function_focus import ValueProducer
@@ -29,7 +29,10 @@ class Stdev(ValueProducer):
         elif isinstance(v, (str, tuple)):
             stack = self.matcher.get_variable(v, set_if_none=[])
         else:
-            raise ChildrenException(
+            # this could be a data or structure / children exception. since
+            # we except non-Terms that produce the name it is better as a
+            # Args-type / data exception.
+            raise DataException(
                 "Stdev must have 1 child naming a stack variable or returning a stack"
             )
         if len(stack) == 0:

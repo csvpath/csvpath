@@ -19,8 +19,8 @@ class TestComments(unittest.TestCase):
             f"""
             ~ logic-mode: OR
               match-mode: no-matches
-              print-mode: default-off
-              arg-validation-mode: log
+              print-mode: no-default
+              validation-mode: raise no-print
             ~
             ${PATH}[1*]
             [
@@ -33,7 +33,7 @@ class TestComments(unittest.TestCase):
         assert "logic-mode" in path.metadata
         assert "match-mode" in path.metadata
         assert "print-mode" in path.metadata
-        assert "arg-validation-mode" in path.metadata
+        assert "validation-mode" in path.metadata
         assert path.OR is True
         assert path.collect_when_not_matched is True
         assert path.has_default_printer is False
@@ -46,7 +46,7 @@ class TestComments(unittest.TestCase):
         path.parse(
             f"""
             ~
-            arg-validation-mode: print
+            validation-mode: print no-raise
             ~
             ${PATH}[1*][
                 ~ this path is simple and so are its comments ~
@@ -55,21 +55,24 @@ class TestComments(unittest.TestCase):
             """
         )
         print(f"path meta: {path.metadata}")
-        assert "arg-validation-mode" in path.metadata
-        assert path.log_validation_errors is False
+        assert "validation-mode" in path.metadata
+        assert path.log_validation_errors is True
         assert path.print_validation_errors is True
         assert path.raise_validation_errors is False
         path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find("Wrong value(s) at") > -1
+            print(f"last linnnner: {p.last_line}")
+            assert (
+                p.last_line and p.last_line.find("Wrong value in match component") > -1
+            )
 
     def test_update_settings_from_metadata3(self):
         path = CsvPath()
-        assert path.raise_validation_errors is True
+        assert path.raise_validation_errors is None
         path.parse(
             f"""
             ~
-            arg-validation-mode: raise print
+            validation-mode: raise print
             ~
             ${PATH}[1*][
                 ~ this path is simple and so are its comments ~
@@ -78,14 +81,16 @@ class TestComments(unittest.TestCase):
             """
         )
         print(f"path meta: {path.metadata}")
-        assert "arg-validation-mode" in path.metadata
-        assert path.log_validation_errors is False
+        assert "validation-mode" in path.metadata
+        assert path.log_validation_errors is True
         assert path.print_validation_errors is True
         assert path.raise_validation_errors is True
         with pytest.raises(MatchException):
             path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find("Wrong value(s) at") > -1
+            assert (
+                p.last_line and p.last_line.find("Wrong value in match component") > -1
+            )
         assert path.has_errors() is True
 
     def test_comment_settings_affecting_multiple_paths(self):
@@ -101,10 +106,10 @@ class TestComments(unittest.TestCase):
         )
         settings = {}
         settings["settings"] = [
-            """~ logic-mode:AND match-mode:no-matches print-mode:default-on ~ $[1][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:OR match-mode:matches print-mode:default-on  ~ $[2][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:AND match-mode:matches print-mode:default-off  ~ $[3][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:OR match-mode:no-matches print-mode:default-off ~ $[4][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:AND match-mode:no-matches print-mode:default ~ $[1][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:OR match-mode:matches print-mode:default  ~ $[2][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:AND match-mode:matches print-mode:no-default  ~ $[3][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:OR match-mode:no-matches print-mode:no-default ~ $[4][ yes() no() print("Hi $.csvpath.line_number")]""",
         ]
         paths.paths_manager.set_named_paths(settings)
         paths.collect_paths(filename="test", pathsname="settings")

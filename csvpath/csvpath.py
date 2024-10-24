@@ -172,7 +172,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.stopped = False
         self._advance = 0
-
         #
         # set by fail()
         #
@@ -249,9 +248,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # use match component rules and exceptions to generate validation
         # info. but long term this capability may go away.
         #
-        self._log_validation_errors = False
+        self._log_validation_errors = True
         self._print_validation_errors = True
-        self._raise_validation_errors = True
+        self._raise_validation_errors = None
+        self._match_validation_errors = None
+        self._stop_on_validation_errors = None
+        self._fail_on_validation_errors = None
         #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
@@ -372,28 +374,70 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self._errors = []
             self._errors.append(error)
 
-    def report_validation_errors(self, msg: str) -> None:
-        if self.print_validation_errors:
-            self.print(msg)
-        elif self.log_validation_errors:
-            self.logger.warning(msg)
-        #
-        # the args class will do the raise if it is told to by the prop
-        #
-
+    #
+    # validation error handling overrides the error policy in config. this
+    # is because the validation handling is:
+    #   - different. it is built-in. it deals with programmatic decisions
+    #     about how functions work and is the basis for structural (schema)
+    #     validation.
+    #   - set on a per csvpath basis in comments
+    #
+    # by default, validation errors do not impact matching. they are print
+    # and raise only. however, you can set them to raise or match/not-match
+    # and/or suppress printing.
+    #
     def set_validation_error_handling(self, veh) -> None:
-        if veh and veh.find("print") > -1:
+        # print prints to the Printer(s), not std.out. atm, no
+        # customization of messages is possible, so there is likely
+        # to be stylistic mismatch with other output.
+        if veh and veh.find("no-print") > -1:
+            self._print_validation_errors = False
+        elif veh and veh.find("print") > -1:
             self._print_validation_errors = True
         else:
-            self._print_validation_errors = False
-        if veh and veh.find("log") > -1:
-            self._log_validation_errors = True
-        else:
-            self._log_validation_errors = False
-        if veh and veh.find("raise") > -1:
+            self._print_validation_errors = None
+        #
+        if veh and veh.find("no-raise") > -1:
+            self._raise_validation_errors = False
+        elif veh and veh.find("raise") > -1:
             self._raise_validation_errors = True
         else:
-            self._raise_validation_errors = False
+            self._raise_validation_errors = None
+        #
+        # match, no-match, and None do:
+        #   match: return True on error
+        #   no-match: return False on error
+        #   None: default behavior: default_match() or result of matches()
+        if veh and veh.find("no-match") > -1:
+            self._match_validation_errors = False
+        elif veh and veh.find("match") > -1:
+            self._match_validation_errors = True
+        else:
+            self._match_validation_errors = None
+        #
+        # also stop and fail to match the config
+        #
+        if veh and veh.find("no-stop") > -1:
+            self._stop_on_validation_errors = False
+        elif veh and veh.find("stop") > -1:
+            self._stop_on_validation_errors = True
+        else:
+            self._stop_on_validation_errors = None
+        #
+        if veh and veh.find("no-fail") > -1:
+            self._fail_on_validation_errors = False
+        elif veh and veh.find("fail") > -1:
+            self._fail_on_validation_errors = True
+        else:
+            self._fail_on_validation_errors = None
+
+    @property
+    def stop_on_validation_errors(self) -> bool:
+        return self._stop_on_validation_errors
+
+    @property
+    def fail_on_validation_errors(self) -> bool:
+        return self._fail_on_validation_errors
 
     @property
     def print_validation_errors(self) -> bool:
@@ -406,6 +450,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     @property
     def raise_validation_errors(self) -> bool:
         return self._raise_validation_errors
+
+    @property
+    def match_validation_errors(self) -> bool:
+        return self._match_validation_errors
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         if printer not in self.printers:
@@ -522,8 +570,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # settings:
         #   - logic-mode: AND | OR
         #   - match-mode: matches | no-matches
-        #   - print-mode: default-off | default-on
-        #   - arg-validation-mode: print | log | raise | quiet
+        #   - print-mode: default | no-default
+        #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
         #
         self.update_logic_mode_if()
         self.update_match_mode_if()
@@ -531,18 +579,18 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_arg_validation_mode_if()
 
     def update_arg_validation_mode_if(self) -> None:
-        if self.metadata and "arg-validation-mode" in self.metadata:
+        if self.metadata and "validation-mode" in self.metadata:
             # sets arg validation reporting. one or more or none of:
             #  - print
             #  - log
             #  - raise
             #
-            validation_mode = f"{self.metadata['arg-validation-mode']}".strip()
+            validation_mode = f"{self.metadata['validation-mode']}".strip()
             if validation_mode:
                 self.set_validation_error_handling(validation_mode)
                 self.logger.info(
-                    "Setting 'arg-validation-mode': %s",
-                    self.metadata["arg-validation-mode"],
+                    "Setting 'validation-mode': %s",
+                    self.metadata["validation-mode"],
                 )
 
     def update_logic_mode_if(self) -> None:
@@ -571,7 +619,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     def update_print_mode_if(self) -> None:
         if "print-mode" in self.metadata:
-            if f"{self.metadata['print-mode']}".strip() == "default-off":
+            if f"{self.metadata['print-mode']}".strip() == "no-default":
                 remove = -1
                 for i, p in enumerate(self.printers):
                     if isinstance(p, StdOutPrinter):
@@ -579,7 +627,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                         break
                 if remove >= 0:
                     del self.printers[remove]
-            elif f"{self.metadata['print-mode']}".strip() == "default-on":
+            elif f"{self.metadata['print-mode']}".strip() == "default":
                 done = False
                 for i, p in enumerate(self.printers):
                     if isinstance(p, StdOutPrinter):

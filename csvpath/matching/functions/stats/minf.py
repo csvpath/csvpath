@@ -81,7 +81,7 @@ class Min(MinMax):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
         a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
@@ -104,7 +104,7 @@ class Max(MinMax):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[str])
+        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
         a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()

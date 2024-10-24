@@ -8,7 +8,8 @@ class Yes(ValueProducer):
     """returns True"""
 
     def check_valid(self) -> None:
-        Args().validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

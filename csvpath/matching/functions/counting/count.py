@@ -1,6 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
 from ..function_focus import ValueProducer
+from ..function import Function
+from ..args import Args
+from csvpath.matching.productions import Equality, Variable, Header, Term
 
 
 class Count(ValueProducer):
@@ -9,6 +12,16 @@ class Count(ValueProducer):
 
     def check_valid(self) -> None:  # pylint: disable=W0246
         # note to self: no specific validity checks from way back
+        # these args may need work
+        self.args = Args(matchable=self)
+        a = self.args.argset(0)
+        a = self.args.argset()
+        a.arg(
+            types=[None, Variable, Function, Header, Term, Equality],
+            actuals=[None, Any],
+        )
+        self.args.validate(self.siblings())
+        #
         super().check_valid()  # pylint: disable=W0246
         # re: W0246: Matchable handles this class's children
 

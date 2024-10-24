@@ -1,0 +1,9 @@
+[
+
+                line(
+                    string(#firstname),
+                    string(#lastname),
+                    int(#say)
+                )
+
+            ]

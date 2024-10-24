@@ -1,4 +1,5 @@
 [
-                @trimmable = "  test  "
+                @t = "  test  "
+                @trimmable = @t
                 @trimmed = strip(@trimmable)
             ]

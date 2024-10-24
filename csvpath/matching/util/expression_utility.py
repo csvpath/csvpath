@@ -17,6 +17,18 @@ class ExpressionUtility:
         length(). to do that, we put args.EMPTY_STRING into the actuals list. """
 
     @classmethod
+    def _numeric_string(self, i) -> str:
+        s = f"{i}"
+        s = s[len(s) - 1]
+        si = int(s)
+        if si < 1 or si > 3:
+            return f"{i}th"
+        elif si == 2:
+            return f"{i}nd"
+        else:
+            return f"{i}rd"
+
+    @classmethod
     def all(cls, objects: List, classlist: tuple = None) -> bool:
         if objects is None:
             return False
@@ -187,9 +199,9 @@ class ExpressionUtility:
             return False
         if v is None:
             return False
-        if v == 0:
+        if v == 0 or v == "0":
             return False
-        if v == 1:
+        if v == 1 or v == "1":
             return True
         if f"{v}".strip().lower() == "true":
             return True
@@ -282,8 +294,9 @@ class ExpressionUtility:
                 if isinstance(a, dict):
                     return True
             elif act == bool:
+                # to_bool returns a if a is not booleanizable
                 _ = ExpressionUtility.to_bool(a)
-                if _ is True:
+                if _ in [True, False]:
                     return True
         return False
 
@@ -405,6 +418,13 @@ class ExpressionUtility:
             if p:
                 ret = p
         return ret
+
+    @classmethod
+    def get_my_expressions_index(cls, thing) -> int:
+        e = cls.get_my_expression(thing)
+        for i, es in enumerate(thing.matcher.expressions):
+            if es[0] == e:
+                return i
 
     @classmethod
     def any_of_my_descendants(cls, expression, skips) -> bool:

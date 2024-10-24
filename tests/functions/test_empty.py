@@ -118,12 +118,28 @@ class TestFunctionsEmpty(unittest.TestCase):
         path.config.csvpath_errors_policy = ["raise"]
         path.skip_blank_lines = False
         Save._save(path, "test_function_empty6")
+        path.parse(
+            f"""
+            ${EMPTY}[1*][
+                empty(#firstname, headers())
+            ]"""
+        )
         with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${EMPTY}[1*]
-                [
-                    empty(#firstname, headers())
-                ]"""
-            )
             path.collect()
+
+    def test_function_empty7(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_function_empty7")
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                ~ headers("test") returns False so empty() cannot return True ~
+                empty(headers("test"))
+            ]"""
+        )
+        lines = path.collect()
+        print(f"\n test_function_empty5: lines: {lines}")
+        print(f"test_function_empty5: path vars: {path.variables}")
+        assert len(lines) == 0

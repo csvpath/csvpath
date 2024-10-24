@@ -1,4 +1,6 @@
 # pylint: disable=C0114
+import traceback
+import signal
 from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
@@ -9,6 +11,11 @@ class Matchable(Qualified):
     """intermediate ancestor of match productions providing
     utility functions and the core to_value and matches
     methods"""
+
+    FAILED_VALUE = -99999999
+    """ used to signal to Function that a value failed validation. the
+        signal allows Function to continue to validate children without
+        failing to raise an exception once that happens."""
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(name=name)
@@ -22,6 +29,10 @@ class Matchable(Qualified):
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}"""
 
+    @property
+    def my_expression(self) -> Self:
+        return ExpressionUtility.get_my_expression(self)
+
     def check_valid(self) -> None:
         """structural check; doesn't test the values. nothing should
         test or use the values until this test is completed."""
@@ -32,8 +43,16 @@ class Matchable(Qualified):
         """most matchables won't cache anything, but references will. we
         don't want that info after a run completes"""
 
+    def handle_error(self, e: Exception) -> None:
+        # my exp may be none in testing. no other known reasons.
+        if self.my_expression:
+            self.my_expression.handle_error(e)
+
     def _simple_class_name(self) -> str:
         return ExpressionUtility.simple_class_name(self)
+
+    def to_json(self) -> str:
+        return self.matcher.to_json(self)
 
     @property
     def my_chain(self) -> str:
@@ -178,7 +197,17 @@ class Matchable(Qualified):
 
     def sibling_values(self, skip=None):
         sibs = self.siblings()
-        vs = [sib.to_value(skip=skip) for sib in sibs]
+        vs = []
+        for sib in sibs:
+            try:
+                v = sib.to_value(skip=skip)
+                vs.append(v)
+            except Exception as e:
+                e.trace = traceback.format_exc()
+                e.source = self
+                e.json = self.to_json()
+                self.my_expression.handle_error(e)
+                vs.append(Matchable.FAILED_VALUE)
         return vs
 
     def default_match(self) -> bool:

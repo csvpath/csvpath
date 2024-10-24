@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from typing import Any
 from csvpath.matching.productions import Term
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from ..args import Args
 
@@ -27,7 +27,8 @@ class End(ValueProducer):
                 if isinstance(v, int) or v.isdigit():
                     i = i - int(v)
                 else:
-                    raise ChildrenException("end()'s term must be a positive int")
+                    # this is an Args-style / data exception
+                    raise DataException("end()'s term must be a positive int")
             if 0 <= i < len(self.matcher.line):
                 self.value = self.matcher.line[i]
 

@@ -218,7 +218,7 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[None, Function, Term], actuals=[None, str, int])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        v = a.validate(sibs)
+        v = a.validate_structure(sibs)
         assert v is True
 
     def test_new_args_argset_valid2(self):
@@ -227,7 +227,7 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[None, Function, Term], actuals=[None, str, int])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        v = a.validate(sibs)
+        v = a.validate_structure(sibs)
         assert v is True
 
     def test_new_args_argset_valid3(self):
@@ -236,7 +236,7 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[Variable], actuals=[Variable])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        v = a.validate(sibs)
+        v = a.validate_structure(sibs)
         assert v is False
 
     def test_new_args_args1(self):

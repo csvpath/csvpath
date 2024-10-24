@@ -272,7 +272,7 @@ class Qualified:
                 e[1] = False
                 return not self.default_match()
             elif m is True:
-                if not e[0] == ExpressionUtility.get_my_expression(self):
+                if not e[0] == self.my_expression:
                     e[1] = True
         #
         # when we know there's a match we need to propagate it asap

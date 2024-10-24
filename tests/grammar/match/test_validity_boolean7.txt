@@ -1,0 +1,8 @@
+[
+                ~ yes, it's a bool ~
+                @b = boolean("false")
+                ~ yes, it exists ~
+                @b
+                ~ no, it is not True ~
+                @b.asbool
+            ]

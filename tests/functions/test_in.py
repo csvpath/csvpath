@@ -265,3 +265,16 @@ class TestFunctionsIn(unittest.TestCase):
         print(f"test_function_new_in5: lines: {lines}")
         assert len(lines) == 10
         assert path.variables["food_found"] is True
+
+    def test_function_in_bad1(self):
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
+        path._raise_validation_errors = True
+        path.parse(
+            f""" ${FOOD}[1*] [
+                @food_found = in(#food)
+            ]
+            """
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()

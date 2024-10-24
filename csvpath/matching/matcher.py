@@ -136,6 +136,7 @@ class Matcher:  # pylint: disable=R0902
                 "Is last line and blank. Doing lasts and then returning True"
             )
             self._do_lasts()
+            self.clear_errors()
             return True
         ret = True
         failed = False if self._AND else True
@@ -161,6 +162,7 @@ class Matcher:  # pylint: disable=R0902
                 #
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Stopped at line %s", pln)
+                self.clear_errors()
                 return False
             if self.skip is True:
                 #
@@ -172,6 +174,7 @@ class Matcher:  # pylint: disable=R0902
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
+                self.clear_errors()
                 return False
             #
             # from here down we care what the expression tells us.
@@ -220,7 +223,12 @@ class Matcher:  # pylint: disable=R0902
             pln,
             not failed,
         )
+        self.clear_errors()
         return not failed
+
+    def clear_errors(self) -> None:
+        for es in self.expressions:
+            es[0].handle_errors_if()
 
     def check_valid(self) -> None:  # pylint: disable=C0116
         if self.csvpath:
@@ -229,6 +237,7 @@ class Matcher:  # pylint: disable=R0902
             )
         for _ in self.expressions:
             _[0].check_valid()
+        self.clear_errors()
         if self.csvpath:
             self.csvpath.logger.debug(
                 "Pre-iteration match components structure validation done"

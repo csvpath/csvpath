@@ -21,7 +21,10 @@ class Int(ValueProducer):
         if i is None:
             self.value = None
         else:
-            self.value = ExpressionUtility.to_int(i)
+            try:
+                self.value = ExpressionUtility.to_int(i)
+            except ValueError as e:
+                self.my_expression.handle_error(e)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()  # pragma: no cover
@@ -42,7 +45,10 @@ class Float(ValueProducer):
         if i is None:
             self.value = None
         else:
-            self.value = ExpressionUtility.to_float(i)
+            try:
+                self.value = ExpressionUtility.to_float(i)
+            except ValueError as e:
+                self.my_expression.handle_error(e)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()  # pragma: no cover
@@ -64,12 +70,15 @@ class Num(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         value = self._value_one(skip=skip)
-        if isinstance(value, int):
-            self.value = int(value)
-        elif isinstance(value, float):
-            self.value = value
-        else:
-            self.value = ExpressionUtility.to_float(value)
+        try:
+            if isinstance(value, int):
+                self.value = int(value)
+            elif isinstance(value, float):
+                self.value = value
+            else:
+                self.value = ExpressionUtility.to_float(value)
+        except ValueError as e:
+            self.my_expression.handle_error(e)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()

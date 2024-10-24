@@ -16,9 +16,13 @@ class FirstLine(MatchDecider):
         self.args.validate(self.siblings())
         if len(self.children) == 1 and isinstance(self.children[0], Equality):
             if not self.children[0].op == "=":
+                # correct as structure / children exception
                 raise ChildrenException(
                     "Child can only be either a function or a variable assignment"
                 )
+        if self.name not in ["firstmatch", "firstscan", "firstline"]:
+            # correct as structure / children exception
+            raise ChildrenException(f"Unknown function name: {self.name}")
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -39,8 +43,6 @@ class FirstLine(MatchDecider):
             self.match = (
                 self.matcher.csvpath.line_monitor.data_line_number == 0
             )  # 0-based, updated after matcher is called.
-        else:
-            raise ChildrenException(f"Unknown type of line: {t}")
         if self.match:
             if len(self.children) == 1:
                 child = self.children[0]

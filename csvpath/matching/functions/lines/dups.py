@@ -19,7 +19,7 @@ class CountDups(ValueProducer):
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
-        self.args.argset().arg(types=[None, Header], actuals=[Any])
+        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -40,9 +40,9 @@ class HasDups(MatchDecider):
 
     def check_valid(self) -> None:
         # self.validate_zero_or_more_args(types=[Header])
-        args = Args()
-        args.argset().arg(types=[None, Header], actuals=[Any])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
@@ -59,9 +59,9 @@ class DupLines(ValueProducer):
 
     def check_valid(self) -> None:
         # self.validate_zero_or_more_args(types=[Header])
-        args = Args()
-        args.argset().arg(types=[None, Header], actuals=[None])
-        args.validate(self.siblings())
+        self.args = Args(matchable=self)
+        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
+        self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

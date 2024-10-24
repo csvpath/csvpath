@@ -29,12 +29,15 @@ class HeaderName(ValueProducer):
         ret = None
         if v is None:
             ret = False
+        # should we have bool in the argset actuals?
         elif isinstance(v, bool):
             ret = v
         elif type(v) in [int, str]:
             ret = True
         else:
-            raise DataException("Unexpected value returned: {v}.")
+            # correct exception. for e.g. we don't allow floats, but
+            # floats can be cast to int, so we could have an incorrect val.
+            raise DataException("Unexpected value returned: {v}")
         self.match = ret
 
     def _produce_value(self, skip=None) -> None:

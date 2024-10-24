@@ -50,6 +50,8 @@ class Header(Matchable):
                 self.value = ExpressionUtility.asbool(ret)
             else:
                 self.value = ret
+        if isinstance(self.value, str):
+            self.value = self.value.strip()
         return self.value
 
     def matches(self, *, skip=None) -> bool:

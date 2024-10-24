@@ -33,6 +33,8 @@ class Import(SideEffect):
         return self.default_match()  # pragma: no cover
 
     def _inject(self) -> None:
+        # all exceptions are correct structure exceptions.
+        # MatchComponent better than Children in this case.
         if self._imported is False:
             if self.matcher.csvpath.csvpaths is None:
                 raise MatchComponentException("No CsvPaths instance available")

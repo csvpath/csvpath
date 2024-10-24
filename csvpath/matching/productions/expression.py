@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 import traceback
 import warnings
 from csvpath.util.error import ErrorHandler
@@ -15,6 +16,18 @@ class Expression(Matchable):
     handling. the expression is responsible for catching and
     handling any error in its descendants.
     """
+
+    def __init__(self, matcher, *, value: Any = None, name: str = None):
+        super().__init__(matcher, name=name, value=value)
+        self.errors = []
+
+    def handle_errors_if(self) -> None:
+        es = self.errors
+        self.errors = []
+        for e in es:
+            ErrorHandler(
+                csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
+            ).handle_error(e)
 
     def __str__(self) -> str:
         s = ""
@@ -47,26 +60,36 @@ class Expression(Matchable):
                 #   - the logger on the CsvPath or CsvPaths
                 #   - exceptions dumped on system.err
                 #
+                """
                 ErrorHandler(
                     csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
                 ).handle_error(e)
+                """
+                self.errors.append(e)
                 #
                 # if we don't raise the exception we decline the match and
                 # continue
                 #
                 self.match = False
+        if len(self.errors) > 0:
+            self.match = False
         return self.match
 
     def reset(self) -> None:
         self.value = None
         self.match = None
+        self.errors = []
         super().reset()
+
+    def handle_error(self, error) -> None:
+        self.errors.append(error)
 
     def check_valid(self) -> None:
         warnings.filterwarnings("error")
         try:
             super().check_valid()
         except Exception as e:  # pylint: disable=W0718
+
             # re: W0718: there may be a better way. this case is
             # less clear-cut than the above. still, we probably want
             # to err on the side of over-protecting in case dataops/
@@ -75,9 +98,12 @@ class Expression(Matchable):
             e.source = self
             e.message = f"Failed csvpath validity check with: {e}"
             e.json = self.matcher.to_json(self)
+            """
             ErrorHandler(
                 csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
             ).handle_error(e)
+            """
+            self.handle_error(e)
             #
             # We always stop if the csvpath itself is found to be invalid
             # before the run starts. The error policy doesn't override that.

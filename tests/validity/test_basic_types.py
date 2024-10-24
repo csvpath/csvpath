@@ -43,6 +43,29 @@ class TestValidBasicTypes(unittest.TestCase):
         with pytest.raises(MatchException):
             path.fast_forward()
 
+    def test_validity_int3b(self):
+        #
+        # this test will break until we get the validation rules controlled by
+        # the comments settings correctly. it is currently dominated by the
+        # config settings, so it will pass if raise is off, but we assume that
+        # raise is on for testing.
+        #
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_validity_int3")
+        path.parse(
+            f"""~
+                id:validity_int3
+                validation-mode: print no-raise
+            ~
+            ${PATH}[*][
+                int.notnone("a")
+                int.notnone("b")
+                and( int("c"), int("d") )
+            ]"""
+        )
+        path.fast_forward()
+
     def test_validity_date1(self):
         path = CsvPath()
         Save._save(path, "test_validity_date1")
@@ -212,9 +235,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
 
-    def test_function_string1(self):
+    def test_validity_string1(self):
         path = CsvPath()
-        Save._save(path, "test_function_string1")
+        Save._save(path, "test_validity_string1")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string")
@@ -223,9 +246,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_function_string2(self):
+    def test_validity_string2(self):
         path = CsvPath()
-        Save._save(path, "test_function_string2")
+        Save._save(path, "test_validity_string2")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 25, 0)
@@ -234,9 +257,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_function_string3(self):
+    def test_validity_string3(self):
         path = CsvPath()
-        Save._save(path, "test_function_string2")
+        Save._save(path, "test_validity_string2")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 0, 25)
@@ -245,9 +268,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_function_string4(self):
+    def test_validity_string4(self):
         path = CsvPath()
-        Save._save(path, "test_function_string4")
+        Save._save(path, "test_validity_string4")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 0)
@@ -256,9 +279,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_function_string5(self):
+    def test_validity_string5(self):
         path = CsvPath()
-        Save._save(path, "test_function_string5")
+        Save._save(path, "test_validity_string5")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 25)
@@ -267,9 +290,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_function_string6(self):
+    def test_validity_string6(self):
         path = CsvPath()
-        Save._save(path, "test_function_string6")
+        Save._save(path, "test_validity_string6")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 5)
@@ -278,9 +301,9 @@ class TestValidBasicTypes(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_function_string7(self):
+    def test_validity_string7(self):
         path = CsvPath()
-        Save._save(path, "test_function_string7")
+        Save._save(path, "test_validity_string7")
         path.parse(
             f""" ${PATH}[*][
                 string("I am a string", 0, 25, 9)
@@ -288,3 +311,108 @@ class TestValidBasicTypes(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.collect()
+
+    def test_validity_boolean1(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean1")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean(yes())
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+
+    def test_validity_boolean2(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean2")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean(none())
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+
+    def test_validity_boolean3(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean3")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean("1")
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+
+    def test_validity_boolean4(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean4")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean(-1)
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_boolean45(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean45")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean(5)
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_boolean5(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean5")
+        path.parse(
+            f""" ${PATH}[*][
+                boolean("fish")
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_boolean6(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean6")
+        path.parse(
+            f""" ${PATH}[*][
+                @b = boolean("true")
+                @b
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+
+    def test_validity_boolean7(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean7")
+        path.parse(
+            f""" ${PATH}[*][
+                ~ yes, it's a bool ~
+                @b = boolean("false")
+                ~ yes, it exists ~
+                @b
+                ~ no, it is not True ~
+                @b.asbool
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
+
+    def test_validity_boolean8(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_boolean8")
+        path.parse(
+            f""" ${PATH}[*][
+                @b.asbool = boolean(false())
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0

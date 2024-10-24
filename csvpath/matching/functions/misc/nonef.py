@@ -27,3 +27,21 @@ class Nonef(ValueProducer):
             self.match = True
         else:
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
+
+
+class Blank(ValueProducer):
+    """returns True to match, returns its child's value or None. represents any value"""
+
+    def check_valid(self) -> None:
+        self.args = Args(matchable=self)
+        self.args.argset(0)
+        a = self.args.argset(1)
+        a.arg(types=[Header], actuals=[None, Any])
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        self.value = self._value_one(skip=skip)
+
+    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+        self.match = self.default_match()

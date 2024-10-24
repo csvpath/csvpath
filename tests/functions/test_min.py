@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -17,10 +19,8 @@ class TestFunctionsMin(unittest.TestCase):
                 no()
             ]"""
         )
-        lines = path.collect()
-        print(f"test_function_min1: path vars: {path.variables}")
-        assert path.variables["the_min"] == "ants"
-        assert len(lines) == 0
+        with pytest.raises(MatchException):
+            path.fast_forward()
 
     def test_function_min2(self):
         path = CsvPath()
@@ -33,10 +33,8 @@ class TestFunctionsMin(unittest.TestCase):
                 no()
             ]"""
         )
-        lines = path.collect()
-        print(f"test_function_min2: path vars: {path.variables}")
-        assert path.variables["the_min"] == "bird"
-        assert len(lines) == 0
+        with pytest.raises(MatchException):
+            path.fast_forward()
 
     def test_function_min3(self):
         path = CsvPath()
@@ -49,7 +47,5 @@ class TestFunctionsMin(unittest.TestCase):
                 no()
             ]"""
         )
-        lines = path.collect()
-        print(f"test_function_min3: path vars: {path.variables}")
-        assert path.variables["the_min"] is None
-        assert len(lines) == 0
+        with pytest.raises(MatchException):
+            path.fast_forward()

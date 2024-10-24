@@ -11,12 +11,12 @@ class String(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
-            types=[Term, Variable, Function],
+            types=[Term, Variable, Function, Header, Reference],
             actuals=[None, str, self.args.EMPTY_STRING],
         )
         a = self.args.argset(3)
         a.arg(
-            types=[Term, Variable, Function],
+            types=[Term, Variable, Function, Header, Reference],
             actuals=[None, str, self.args.EMPTY_STRING],
         )
         a.arg(types=[Term, Variable, Header, Function], actuals=[int])

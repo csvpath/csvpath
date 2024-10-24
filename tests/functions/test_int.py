@@ -13,7 +13,7 @@ class TestFunctionsInt(unittest.TestCase):
         Save._save(path, "test_function_int0")
         path.parse(
             f"""
-            ~ arg-validation-mode: print ~
+            ~ validation-mode: print ~
             ${PATH}[*] [
                 @st = int(" 3 ")
                 @no = int(float(3))
@@ -180,10 +180,12 @@ class TestFunctionsInt(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_function_float_notnone2")
         path.parse(
-            f""" ${PATH}[*] [
-                brief_stack_trace.notnone( none())
+            f"""
+             ~ validation-mode: no-match no-raise ~
+            ${PATH}[*] [
+                float.notnone(none())
             ]
             """
         )
-        with pytest.raises(MatchException):
-            path.fast_forward()
+        lines = path.collect()
+        assert len(lines) == 0

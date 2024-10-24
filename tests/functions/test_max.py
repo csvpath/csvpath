@@ -1,5 +1,7 @@
 import unittest
-from csvpath.csvpath import CsvPath
+import pytest
+from csvpath import CsvPath
+from csvpath.matching.util.exceptions import MatchException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
@@ -12,16 +14,13 @@ class TestFunctionsMax(unittest.TestCase):
         Save._save(path, "test_function_max1")
         path.parse(
             f"""
-            ${PATH}[*]
-            [
+            ${PATH}[*] [
                 @the_max = max(#firstname)
                 no()
             ]"""
         )
-        lines = path.collect()
-        print(f"test_function_max: path vars: {path.variables}")
-        assert path.variables["the_max"] == "slug"
-        assert len(lines) == 0
+        with pytest.raises(MatchException):
+            path.fast_forward()
 
     def test_function_max2(self):
         print("")
@@ -29,15 +28,10 @@ class TestFunctionsMax(unittest.TestCase):
         Save._save(path, "test_function_max2")
         path.parse(
             f"""
-            ${PATH}[*]
-            [
+            ${PATH}[*] [
                 @the_max = max(#1)
                 no()
             ]"""
         )
-        lines = path.collect()
-        print(
-            f"test_function_max2: should not ignore header row. path vars: {path.variables}"
-        )
-        assert path.variables["the_max"] == "lastname"
-        assert len(lines) == 0
+        with pytest.raises(MatchException):
+            path.fast_forward()

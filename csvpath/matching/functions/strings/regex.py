@@ -56,6 +56,7 @@ class Regex(MatchDecider):
             thevalue = v1
             return theregex, thevalue, group
         else:
+            # correct structure / children exception
             raise ChildrenException("No regular expression available")
 
     def _produce_value(self, skip=None) -> None:

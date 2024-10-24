@@ -66,16 +66,21 @@ Metadata fields can be used to control certain run modes:
 - `logic-mode` -- sets the CsvPath instance to operate in AND or OR mode
 - `match-mode` -- instructs the CsvPath instance to return matches or lines that did not match
 - `print-mode` -- determines if the printouts from `print()` go to the terminal's standard out, or not
-- `arg-validation-mode` -- sets the function argument validation reporting channel(s)
+- `validation-mode` -- sets the validation reporting actions and channels
 
 The values for each are:
 
 - `logic-mode` == `OR` or `AND` (`AND` is the default)
 - `match-mode` == `no-matches` or `matches` (`matches` is the default)
-- `print-mode` == `default-off` or `default-on` (`default-on` is the default)
-- `arg-validation-mode` == `print` and/or `raise` and/or `log` (`print` and `raise` are default)
+- `print-mode` == `no-default` or `default` (`default` is the default)
+- `validation-mode` ==
+    - `print` or `no-print` (`print` is on by default) and/or
+    - `raise` or `no-raise` and/or
+    - `log` (`log` can only be turned off programmatically)
+    - `stop` or `no-stop`
+    - `fail` or `no-fail`
 
-Those keys are found and the metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` processes the file.
+The metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` processes the file. If neither the positive (e.g. `print`) or the negative (e.g. `no-print`) is found the fallback is the setting in config.ini.
 
 Metadata driven settings are effective only for the csvpath they are declared in. When you are using a `CsvPaths` instance to manage a multi-`CsvPath` instance run these metadata fields give you a way to configure different behavior for each `CsvPath` in the run.
 

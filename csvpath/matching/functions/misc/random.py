@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from random import randrange
 from random import sample
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header, Variable
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -24,7 +24,8 @@ class Random(ValueProducer):
         lower = self.children[0].left.to_value(skip=skip)
         upper = self.children[0].right.to_value(skip=skip)
         if upper <= lower:
-            raise ChildrenException("Upper must be an int > than the first arg")
+            # correct Args-type / data exception
+            raise DataException("Upper must be an int > than the first arg")
         lower = int(lower)
         upper = int(upper)
         # we are inclusive, but randrange is not
@@ -57,7 +58,8 @@ class Shuffle(ValueProducer):
             if upper is None:
                 upper = self.matcher.csvpath.line_monitor.data_end_line_number
             elif upper <= lower:
-                raise ChildrenException("Upper must be an int > than the first arg")
+                # correct Args-type / data exception
+                raise DataException("Upper must be an int > than the first arg")
             lower = ExpressionUtility.to_int(lower)
             upper = ExpressionUtility.to_int(upper)
             order = sample(range(lower, upper), upper - lower)

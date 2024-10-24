@@ -14,7 +14,8 @@ class TestFunctionsStrip(unittest.TestCase):
             f"""
             ${PATH}[1]
             [
-                @trimmable = "  test  "
+                @t = "  test  "
+                @trimmable = @t
                 @trimmed = strip(@trimmable)
             ]"""
         )

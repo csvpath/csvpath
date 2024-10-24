@@ -50,8 +50,6 @@ class All(MatchDecider):
                 self.all_exist()
             elif isinstance(child, Variables):
                 self.all_variables()
-            else:
-                raise ChildrenException("Child cannot be {child}")
 
     def all_variables(self) -> None:  # pylint: disable=C0116
         # default is True in case no vars

@@ -19,4 +19,12 @@ class Term(Matchable):
         # re: W0246: Matchable handles this class's children
 
     def to_value(self, *, skip=None) -> Any:
+        """
+        stripping out whitespace makes sense for headers. not for terms. if we have a
+        term we created it ourselves intentionally with the whitespace. still need a
+        configuration for headers tho. this comment can be removed when things settle
+        down.
+        if isinstance(self.value, str):
+            self.value = self.value.strip()
+        """
         return self.value

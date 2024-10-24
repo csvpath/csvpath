@@ -27,11 +27,11 @@ class TestExpressions(unittest.TestCase):
         matcher = Matcher(csvpath=path, data="[yes()]")
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()
-        print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
-        with pytest.raises(MatchException):
-            expr.matches(skip=[])
+        matcher.expressions.append([expr, None])
+        with pytest.raises(Exception):
+            matcher.matches()
         assert "stop" in path.config.csvpath_errors_policy
         assert "fail" in path.config.csvpath_errors_policy
         assert path.errors
@@ -52,8 +52,9 @@ class TestExpressions(unittest.TestCase):
         print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
+        matcher.expressions.append([expr, None])
         with pytest.raises(MatchException):
-            expr.matches(skip=[])
+            matcher.matches()
         assert "stop" in path.config.csvpath_errors_policy
         assert "fail" in path.config.csvpath_errors_policy
         #

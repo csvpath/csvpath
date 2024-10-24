@@ -8,7 +8,7 @@ from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.reference import Reference
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..util.exceptions import ChildrenException
+from ..util.exceptions import ChildrenException, ChildrenValidationException
 from csvpath.util.config_exception import ConfigurationException
 
 #   from csvpath.util.log_utility import LogUtility
@@ -194,7 +194,7 @@ class ArgSet:
             self._args = args
             self.max_length = len(self._args)
 
-    def validate(self, siblings: List[Matchable]) -> None:
+    def validate_structure(self, siblings: List[Matchable]) -> None:
         b = self._validate_length(siblings)
         if b is False:
             return False
@@ -235,11 +235,44 @@ class ArgSet:
                 break
             arg = self._args[i]
             #
+            # in principle we would want to avoid any case where we don't have an arg
+            # or the arg's actuals are none
+            # -- and ---
+            # if the arg exists but has [] elements treat it as a requirement that no
+            # optional values should be passed in on that arg in that particular use
+            # case.
+            #
+            # however, that approach a) breaks stuff i'd like to not break atm, and b)
+            # the only use case today (in empty()) is obviated by a second arg set
+            # that would in essence override the [] actuals in the first argset. so
+            # we have no case. given that, letting this idea go until it resurfaces
+            # in a more practical way.
+            #
+            # exp!
+            self._parent._csvpath.logger.debug("Checking arg[%i]: %s", i, arg)
+            """
+            if ( not arg or arg.actuals is None ):
+                if self._parent and self._parent._csvpath:
+                    self._parent._csvpath.logger.debug(
+                        "No expectations to validate actual values against in argset {self.argset_number}"
+                    )
+                found = True
+                break
+            if len(arg.actuals) == 0 and len(actuals) > 0:
+                if self._parent and self._parent._csvpath:
+                    self._parent._csvpath.logger.debug(
+                        "No optional args should be presented in {self.argset_number}"
+                    )
+                found = False
+                break
+            """
+            # end exp
+            #
+            # start orig w/orig comment:
             # we can't validate arg if we have no actuals expectations.
             # this is a way to disable line-by-line validation -- just
             # remove the expectations from the args
             #
-            self._parent._csvpath.logger.debug("Checking arg[%i]: %s", i, arg)
             if not arg or not arg.actuals or len(arg.actuals) == 0:
                 if self._parent and self._parent._csvpath:
                     self._parent._csvpath.logger.debug(
@@ -247,6 +280,9 @@ class ArgSet:
                     )
                 found = True
                 break
+            #
+            # end orig
+            #
             if Any in arg.actuals:
                 self._parent._csvpath.logger.debug("Found Any so we're done")
                 found = True
@@ -309,6 +345,21 @@ class Args:
         # child.to_value(skips=skips) to result in an int, did it?
         #
         self.matched = False
+        self._args_match = True
+
+    def reset(self) -> None:
+        self._args_match = True
+        self.matched = False
+
+    @property
+    def args_match(self) -> bool | None:
+        """Only used in the runtime actuals matching. speaks
+        to if the line should be considered matched or not.
+        None is default
+        True means matching succeeded
+        False means matching failed
+        """
+        return self._args_match
 
     def argset(self, maxlength: int = -1) -> ArgSet:
         a = ArgSet(maxlength, parent=self)
@@ -339,10 +390,10 @@ class Args:
         #
         good = False
         for aset in self._argsets:
-            if aset.validate(siblings):
+            if aset.validate_structure(siblings):
                 good = True
         if not good:
-            _ = " at {self.matchable.my_chain}" if self.matchable else ""
+            _ = f" at {self.matchable.my_chain}" if self.matchable else ""
             msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args."
             raise ChildrenException(msg)
         self.validated = True
@@ -390,19 +441,13 @@ class Args:
 
     def handle_errors_if(self, mismatch_count, mismatches):
         if mismatch_count == len(self._argsets):
+            self._args_match = False
             pm = f"mismatch in {self.matchable.my_chain}: {mismatches}"
             # when would we not have a csvpath?
             pln = (
                 self._csvpath.line_monitor.physical_line_number if self._csvpath else 0
             )
-            csvpathid = self._csvpath_id()
-            pm = f"{csvpathid} Wrong value(s) at line {pln}: {pm}"
-            # self._csvpath.report_validation_errors(pm)
-            if self._csvpath is None or self._csvpath.raise_validation_errors:
-                raise ChildrenException(pm)
-            # we print in-run validation errors as part of the raise handle,
-            # so this is a bit extra. We can suppress the exceptions completely
-            # but still print args validation errors. not sure that is anything
-            # more than a deep corner case. defering removing it.
-            if self._csvpath and self._csvpath.print_validation_errors:
-                self._csvpath.report_validation_errors(pm)
+            csvpathid = f"{self._csvpath_id()} " if self._csvpath_id() else ""
+            ei = ExpressionUtility.get_my_expressions_index(self._matchable)
+            pm = f"{csvpathid}Wrong value in match component {ei} at line {pln}: {pm}"
+            raise ChildrenValidationException(pm)

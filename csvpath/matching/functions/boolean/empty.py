@@ -1,9 +1,12 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Header, Variable, Equality, Term
 from csvpath.matching.util.exceptions import ChildrenException
 from ..headers.headers import Headers
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.functions.args import Args
+from csvpath.matching.functions.function import Function
 
 
 class Empty(MatchDecider):
@@ -12,22 +15,26 @@ class Empty(MatchDecider):
     if you pass it headers() it checks for all headers being empty."""
 
     def check_valid(self) -> None:
-        if len(self.children) == 0:
-            raise ChildrenException("empty() must have at least 1 argument")
-        elif isinstance(self.children[0], Headers):
-            if len(self.children) != 1:  # pragma: no cover
-                raise ChildrenException(
-                    "If empty() has a headers() argument it can only have 1 argument"
-                )
-        children = self.children
-        if isinstance(self.children[0], Equality):
-            children = self.children[0].commas_to_list()
-        self._validate(children)
+        self.args = Args(matchable=self)
+        #
+        # we'd like to disallow headers from taking a value in this case, but we
+        # cannot because headers is a function and will be covered by the second
+        # argset, so we handle that in a helper validation function.
+        #
+        a = self.args.argset(1)
+        a.arg(types=[Headers])
+        a = self.args.argset()
+        a.arg(types=[Variable, Function, Header], actuals=[None, Any])
+        self.args.validate(self.siblings())
+        #
+        self._validate()
         super().check_valid()  # pragma: no cover
 
-    def _validate(self, children):
-        for s in children:
-            if isinstance(s, Headers) and len(children) > 1:
+    def _validate(self):
+        sibs = self.siblings()
+        for s in sibs:
+            # both definitely structure / children exceptions
+            if isinstance(s, Headers) and len(sibs) > 1:
                 raise ChildrenException(
                     "If empty() has a headers() argument it can only have 1 argument"
                 )

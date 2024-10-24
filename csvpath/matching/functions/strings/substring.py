@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -24,10 +24,12 @@ class Substring(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         i = self._value_two(skip=skip)
         if not isinstance(i, int):
-            raise ChildrenException("substring()'s 2nd argument must be a positive int")
+            # correct as an Args-type / data exception
+            raise DataException("substring()'s 2nd argument must be a positive int")
         i = int(i)
         if i < 0:
-            raise ChildrenException("substring()'s 2nd argument must be a positive int")
+            # correct as an Args-type / data exception
+            raise DataException("substring()'s 2nd argument must be a positive int")
         string = self._value_one(skip=skip)
         string = f"{string}"
         if i >= len(string):
