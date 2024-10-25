@@ -89,7 +89,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
     def __init__(self, *, csvpaths=None):
         self.named_results = {}
         self._csvpaths = None
-        self._variables = None
 
         # use property
         self.csvpaths = csvpaths
@@ -137,13 +136,11 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         return True
 
     def get_variables(self, name: str) -> bool:
-        if self._variables is None:
-            results = self.get_named_results(name)
-            vs = {}
-            for r in results:
-                vs = {**r.csvpath.variables, **vs}
-            self._variables = vs
-        return self._variables
+        results = self.get_named_results(name)
+        vs = {}
+        for r in results:
+            vs = {**r.csvpath.variables, **vs}
+        self._variables = vs
 
     def has_lines(self, name: str) -> bool:
         results = self.get_named_results(name)

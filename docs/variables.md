@@ -3,6 +3,17 @@
 
 Variables are identified by an `@` followed by a name. A variable is set or tested depending on the usage. When used as the left hand side of an `=` its value is set.  When it is used on either side of an `==` it is an equality test.
 
+## Overview
+
+- [Tracking Values](#tracking)
+- [Qualifiers](#qualifiers)
+- [Assignment](#assignment)
+- [Naming](#naming)
+- [Printing](#printing)
+- [Sharing Variables Between CsvPath Instances](#sharing)
+- [Examples](#examples)
+
+<a name="tracking"></a>
 ## Tracking Values
 
 Variables may have "tracking values". A tracking value is a key into a dict stored as the variable. Tracked values are often used by functions for internal bookkeeping. A csvpath can get or set a tracking value by using a qualifier on the variable name. E.g.
@@ -15,6 +26,7 @@ The tracking value qualifier must not match any of the predefined qualifiers, li
 
 Note that a variable's name and tracking value are strings. If you request a variable with a boolean tracking value that looks like `@empty.True`, the value will nevertheless be found. This often happens when using `count()` or another bool producing function.
 
+<a name="qualifiers"></a>
 ## Qualifiers
 
 Qualifiers are words appended to variable names after a dot. They modify -- or qualify -- how the variable works. The functionality of qualifiers on variables is essentially the same as for the other match components. You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>read about qualifiers here</a>.
@@ -32,8 +44,17 @@ A variable value can be treated as a boolean (Python bool) by using the `asbool`
 
 Note, too, that a variable with `asbool` that is assigned a value will return matching, or not, based on interpreting the assigned value as a bool. Without the `asbool` qualifier the assignment operation always allows the row to match, regardless of the value assigned.
 
+### Latch
+
+`latch` offers the ability to set a variable one time and have it not change thereafter. When a variable has `latch` it sets once and returns the default match result; i.e. it matches and contributes to the line matching. After that, `latch` disallows changes to the variable and attempts to set the variable return no-match, making a `latch` able to prevent matching. If preventing matching is not the desired outcome—i.e. you want to prevent change but not affect matching—you can use the `nocontrib` qualifier in addition to `latch`.
+
+### Increase and Decrease
+
+`increase` and `decrease` prevent variables from being set to values that are less than or greater than, respectively, the variable's current value. For example, a variable with the `increase` qualifier that has the value `10` cannot be set to `9` but can be set to `11`. `increase` and `decrease` affect a line matching or not matching. If a variable change is prevented because it goes in the opposite way permitted by the qualifier it prevents the line matching. As always, this effect can be removed by adding the `nocontrib` qualifier in addition to `increase` or `decrease`.
+
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about these qualifiers and more here.</a>
 
+<a name="assignment"></a>
 ## Assignment
 
 Variables are assigned on the left-hand side of an `=` expression. For example:
@@ -66,6 +87,7 @@ will always set it.
 
 Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
+<a name="naming"></a>
 ## Naming
 
 Variable names are relatively restrictive. The CsvPath grammar currently defines variable names to match:
@@ -76,6 +98,7 @@ Variable names are relatively restrictive. The CsvPath grammar currently defines
 
 A.k.a., one or more letters, numbers, underscores, and dots. Additionally, a variable name cannot begin with a period.
 
+<a name="printing"></a>
 ## Printing
 
 The `print()` function uses references to give you access to variables. You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/references.md'>read about references here</a>. A reference points to metadata within a csvpath or that is held by another csvpath. They look like:
@@ -97,8 +120,48 @@ The variable references you use in `print()` can also point to indexes into stac
     $.variables.my_stack.2
 ```
 
+<a name="sharing"></a>
+## Sharing Variables Between CsvPath Instances
+
+Using a CsvPaths instance you can setup and coordinate the action of multiple CsvPath instances. While there is no shared variable space across the CsvPath instances being managed by a CsvPaths instance, the set of CsvPath instances can access each other's variables using references. This means that each CsvPath instance has read-only access to the state of the other CsvPath instances, allowing signaling and coordination between them. The federated variables are namespaced by the name of the set of CsvPath instances, their named-paths name.
+
+For example, consider a named-paths called `sharing_example` that has this form:
+
+```bash
+    ~ id: day-one ~
+    $[*][ @first_day = "Monday" ]
+
+    ---- CSVPATH ----
+    ~ id: day-two ~
+    $[*][ @second_day = "Tuesday" ]
+```
+
+We can add a third csvpath that references the first two like this:
+
+```bash
+    ~ id: day-one ~
+    $[*][ @first_day = "Monday" ]
+
+    ---- CSVPATH ----
+    ~ id: day-two ~
+    $[*][ @second_day = "Tuesday" ]
+    ---- CSVPATH ----
+    ~ id: schedule ~
+    $[*][
+        print("
+            Schedule
+            ---------
+            $sharing_example.variables.first_day: Introductions and opening remarks
+            $sharing_example.variables.second_day: Presentations and workgroup sessions
+        "
+    ]
+```
+
+It is, of course, also possible to create references to other named-paths variables from other groups of csvpaths run by different CsvPath instances managed by a different CsvPaths instance.
+
 Since stack indexes are 0-based, this reference would resolve to the third item on the stack.
 
+<a name="examples"></a>
 # Examples
 - `@weather="cloudy"`
 - `count(@weather=="sunny")`

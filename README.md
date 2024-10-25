@@ -47,8 +47,8 @@ Read more about CsvPath and see realistic CSV validation examples at <a href='ht
 - [More Examples](#examples)
 - [Grammar](#grammar)
 
-# Motivation
 <a name="motivation"></a>
+# Motivation
 
 CSV files are everywhere!
 
