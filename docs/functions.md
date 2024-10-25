@@ -245,6 +245,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/fail.md'>fail()</a>  </td><td> Indicate that the CSV is invalid.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/fail.md'>failed()</a></td><td> Check if the CSV is invalid.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/fail.md'>fail_and_stop()</a></td><td> Stop the scan and declare the file invalid at the same time.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/line.md'>line(function, function, ...)</a></td><td> Declares a typed ordered structure for lines using core data type functions like string(), int(), etc.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/fail.md'>valid()</a></td><td> Check if the CSV is valid or invalid.  </td></tr>
 </table>
 

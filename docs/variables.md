@@ -46,7 +46,7 @@ Note, too, that a variable with `asbool` that is assigned a value will return ma
 
 ### Latch
 
-`latch` offers the ability to set a variable one time and have it not change thereafter. When a variable has `latch` it sets once and returns the default match result; i.e. it matches and contributes to the line matching. After that, `latch` disallows changes to the variable and attempts to set the variable return no-match, making a `latch` able to prevent matching. If preventing matching is not the desired outcome—i.e. you want to prevent change but not affect matching—you can use the `nocontrib` qualifier in addition to `latch`.
+`latch` offers the ability to set a variable one time and have it not change thereafter. When a variable has `latch` it sets once and returns the default match result. After that, `latch` disallows changes to the variable but still returns the default match value, thereby not blocking the line from matching.
 
 ### Increase and Decrease
 
