@@ -67,7 +67,7 @@ At present, a variable assignment of an equality test is not possible using `==`
 use
     @test = equals(@cat, @hat)
 
-A variable can be assigned early in the match part of a path and used later in that same path. The assignment and use will both be in the context of the same row in the file. For e.g.
+A variable can be assigned early in the match part of a path and used later in that same path on the same line. Both the assignment and use are in the context of the same line in the CSV file so each change in the variable changes the value for subsequent uses. For e.g.
 
     [@a=#b #c==@a]
 
@@ -75,7 +75,7 @@ Can also be written as:
 
     [#c==#b]
 
-Variables are always set unless they are flagged with the `.onmatch` qualifier. That means:
+Variables are always set unless they are flagged with the `.onmatch` or another qualifier described above. That means:
 
     $file.csv[*][ @imcounting.onmatch = count_lines() no()]
 
@@ -111,21 +111,27 @@ There are two types of references:
 - "Remote" - remote reference are pointer to the results and metadata of other csvpaths
 
 A local reference does not need a name after the `$`. Remote references require a named-result name that the CsvPaths instance can use to provide access to the data. Remote references look like:
+
 ```bash
     $mynamed_paths.variables.my_other_var.my_other_tracking_value
 ```
 
 The variable references you use in `print()` can also point to indexes into stack variables. Stack variables are the list-type variables created with the `push()` function. References to stack variable indexes in print strings look like:
+
 ```bash
     $.variables.my_stack.2
 ```
 
+Since stack indexes are 0-based, this reference would resolve to the third item on the stack.
+
 <a name="sharing"></a>
 ## Sharing Variables Between CsvPath Instances
 
-Using a CsvPaths instance you can setup and coordinate the action of multiple CsvPath instances. While there is no shared variable space across the CsvPath instances being managed by a CsvPaths instance, the set of CsvPath instances can access each other's variables using references. This means that each CsvPath instance has read-only access to the state of the other CsvPath instances, allowing signaling and coordination between them. The federated variables are namespaced by the name of the set of CsvPath instances, their named-paths name.
+Using a CsvPaths instance you can setup and coordinate the action of multiple CsvPath instances. While there is no shared variable space across the CsvPath instances being managed by a CsvPaths instance, the set of CsvPath instances can access each other's variables using references.
 
-For example, consider a named-paths called `sharing_example` that has this form:
+Each CsvPath instance in the set of instances has read-only access to the state of the other CsvPath instances. This access allows signaling and coordination between them. The federated variables are namespaced by the name of the set of CsvPath instances, their named-paths (and/or identical named-results) name. Since the namespace is federated under one named-paths name, changes made by a csvpath are local to its CsvPath instance but effectively overwrite any same-name variable that is run before. From a reference's point of view, two variables with the same name, each in its own csvpath run by a separate CsvPath instance, are the same variable.
+
+For example, consider a named-paths set of csvpaths called `sharing_example` that has this form:
 
 ```bash
     ~ id: day-one ~
@@ -145,6 +151,7 @@ We can add a third csvpath that references the first two like this:
     ---- CSVPATH ----
     ~ id: day-two ~
     $[*][ @second_day = "Tuesday" ]
+
     ---- CSVPATH ----
     ~ id: schedule ~
     $[*][
@@ -158,8 +165,6 @@ We can add a third csvpath that references the first two like this:
 ```
 
 It is, of course, also possible to create references to other named-paths variables from other groups of csvpaths run by different CsvPath instances managed by a different CsvPaths instance.
-
-Since stack indexes are 0-based, this reference would resolve to the third item on the stack.
 
 <a name="examples"></a>
 # Examples
