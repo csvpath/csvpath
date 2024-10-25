@@ -16,6 +16,11 @@ class Counter(ValueProducer):
         self.args = Args(matchable=self)
         self.args.argset(1).arg(types=[None, Any], actuals=[int])
         self.args.validate(self.siblings())
+        name = self.first_non_term_qualifier(self.get_id())
+        # initializing the counter to 0. if we don't do this and the counter is
+        # never hit (e.g. it is behind a ->) a print returns the counter's name
+        # which is confusing.
+        self.matcher.get_variable(name, set_if_none=0)
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:

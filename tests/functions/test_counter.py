@@ -19,6 +19,7 @@ class TestFunctionsCounter(unittest.TestCase):
                print("two: $.variables.two ")
                gt(@two, 4) -> counter.three()
                print("three: $.variables.three")
+               no() -> counter.four()
             ]"""
         )
         lines = path.collect()
@@ -27,3 +28,4 @@ class TestFunctionsCounter(unittest.TestCase):
         assert path.variables["one"] == 40
         assert path.variables["two"] == 8
         assert path.variables["three"] == 3
+        assert path.variables["four"] == 0

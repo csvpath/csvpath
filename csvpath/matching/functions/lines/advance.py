@@ -1,7 +1,8 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import SideEffect
-from csvpath.matching.productions.term import Term
+from csvpath.matching.productions import Term, Variable
+from csvpath.matching.functions.function import Function
 from ..args import Args
 
 
@@ -11,7 +12,7 @@ class Advance(SideEffect):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term], actuals=[int])
+        a.arg(types=[Term, Variable, Function], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 

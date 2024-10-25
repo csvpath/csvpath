@@ -1,0 +1,28 @@
+---- CSVPATH ----
+
+~ id: General data integrity checks
+     validation-mode: no-raise, print ~
+$[1*][
+
+~ VERY BAD LATENCY ABOVE HERE! ~
+
+    ~ Check for unique license numbers ~
+~
+    @license_numbers.onmatch = #"License Number"
+    in(#"License Number", @license_numbers) -> print("")
+~
+@x = "y"
+~
+    print("Error: Duplicate License Number $.headers.'License Number' on line $.csvpath.line_number", fail())
+~
+]
+
+
+
+
+
+
+
+
+
+

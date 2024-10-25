@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term, Variable, Header, Reference, Equality
 from ..function import Function
@@ -12,10 +13,12 @@ class Or(MatchDecider):
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+            types=[Term, Variable, Header, Function, Reference, Equality],
+            actuals=[None, Any],
         )
         a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[int]
+            types=[Term, Variable, Header, Function, Reference, Equality],
+            actuals=[None, Any],
         )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()

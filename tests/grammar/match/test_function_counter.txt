@@ -5,4 +5,5 @@
                print("two: $.variables.two ")
                gt(@two, 4) -> counter.three()
                print("three: $.variables.three")
+               no() -> counter.four()
             ]

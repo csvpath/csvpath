@@ -13,7 +13,10 @@ class Length(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, str, self.args.EMPTY_STRING],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
