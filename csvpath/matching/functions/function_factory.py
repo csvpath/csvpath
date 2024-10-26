@@ -3,11 +3,9 @@ from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .function_finder import FunctionFinder
 from .dates.now import Now
-from .dates.datef import Date
 from .strings.lower import Lower
 from .strings.upper import Upper
 from .strings.substring import Substring
-from .strings.string import String
 from .strings.starts_with import StartsWith
 from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
@@ -35,7 +33,6 @@ from .headers.empty_stack import EmptyStack
 from .headers.mismatch import Mismatch
 from .headers.end import End
 from .math.above import AboveBelow
-from .math.intf import Int, Num, Float
 from .math.add import Add
 from .math.subtract import Subtract
 from .math.multiply import Multiply
@@ -47,7 +44,6 @@ from .math.round import Round
 from .math.mod import Mod
 from .boolean.notf import Not
 from .boolean.inf import In
-from .boolean.boolean import Boolean
 from .boolean.orf import Or
 from .boolean.empty import Empty
 from .boolean.no import No
@@ -81,12 +77,16 @@ from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
 from .misc.random import Random, Shuffle
-from .misc.nonef import Nonef, Blank
 from .misc.importf import Import
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
+from .types.nonef import Nonef, Blank
+from .types.boolean import Boolean
+from .types.intf import Int, Num, Float
+from .types.string import String
+from .types.datef import Date
 
 
 class UnknownFunctionException(Exception):

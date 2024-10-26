@@ -140,7 +140,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         vs = {}
         for r in results:
             vs = {**r.csvpath.variables, **vs}
-        self._variables = vs
+        return vs
 
     def has_lines(self, name: str) -> bool:
         results = self.get_named_results(name)

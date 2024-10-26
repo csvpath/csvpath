@@ -154,8 +154,36 @@ class Matchable(Qualified):
         if len(self.children) == 0:
             # validation should have already caught this, if it is a problem
             return None
-        if len(self.children) >= 3:
+        if len(self.children[0].children) > 2:
             return self.children[0].children[2]
+        return None
+
+    def _value_four(self, skip=None):
+        c = self._child_four()
+        if c is None:
+            return None
+        return c.to_value(skip=skip)
+
+    def _child_four(self):
+        if len(self.children) == 0:
+            # validation should have already caught this, if it is a problem
+            return None
+        if len(self.children[0].children) > 3:
+            return self.children[0].children[3]
+        return None
+
+    def _value_five(self, skip=None):
+        c = self._child_five()
+        if c is None:
+            return None
+        return c.to_value(skip=skip)
+
+    def _child_five(self):
+        if len(self.children) == 0:
+            # validation should have already caught this, if it is a problem
+            return None
+        if len(self.children[0].children) > 4:
+            return self.children[0].children[4]
         return None
 
     def siblings_or_equality(self) -> list:

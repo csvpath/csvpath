@@ -90,6 +90,42 @@ class TestFunctionsInt(unittest.TestCase):
         assert path.variables["ca"] == 1
         assert path.variables["so"] == 8
 
+    def test_function_num2(self):
+        path = CsvPath()
+        Save._save(path, "test_function_num2")
+        path.parse(
+            f""" ${PATH}[1] [
+                num(3.52, 1, 1, 2)
+                num(3.5, 1, 0, 1)
+                num(18.58, 2, -1, 2)
+                num(18.58, 20, 2, -1)
+                num(18.58, -1, -1, 2)
+                num(18.58, -1, 0, -1)
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+
+    def test_function_num3(self):
+        path = CsvPath()
+        Save._save(path, "test_function_num3")
+        path.parse(
+            f""" ${PATH}[1] [
+                and(
+                   not( num(3.52, 1, 1, 1)),
+                   not( num(3.5, 2, 2, 1)),
+                   not( num(18.58, 5, 3, 2)),
+                   not( num(18.58, 2, 1, 0, 0)),
+                   not( num(1.5, 0, -1, 2, 0)),
+                   not( num(18.58, 3, 1, 0))
+                )
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+
     def test_function_float1(self):
         path = CsvPath()
         Save._save(path, "test_function_float1")

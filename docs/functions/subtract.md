@@ -1,5 +1,5 @@
 
-# Add, Subtract, Multiply, Divide, Mod, Int, Round
+# Add, Subtract, Multiply, Divide, Mod, Round
 
 These arithmetic functions work mostly the way you would expect.
 
@@ -26,15 +26,6 @@ Divides any number of numbers. `divide()` will return `nan` when divide by `0` i
 ## mod()
 
 Returns the modulus of two numbers. `mod()` upcasts to `float` and rounds to the hundredths.
-
-## int()
-
-Converts its argument to an int, if possible. If the convert to int fails it will attempt to:
-- Swap a `None` for `0`
-- Identify the empty string and treat as `0`
-- Swap `False` for `0`
-
-If those attempts don't work it raises `ChildrenException`.
 
 ## round()
 

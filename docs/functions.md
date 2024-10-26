@@ -14,6 +14,7 @@ Most of the work of matching is done in match component functions. There are ove
 - [Stats](#stats)
 - [Strings](#strings)
 - [Testing](#testing)
+- [Types](#types)
 - [Validity](#validity)
 - [Variables](#variables)
 
@@ -110,8 +111,6 @@ There are lots more simple examples on the individual function pages.
 ## Dates
 <table>
 <tr><th>Function            <a name="dates"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/now.md'>now(format)</a></td><td> Returns a datetime, optionally formatted, for the current moment.       </td></tr>
 </table>
 
@@ -172,10 +171,7 @@ There are lots more simple examples on the individual function pages.
 ## Misc
 <table>
 <tr><th>Function   <a name="misc">  </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>float(value)</a>    </td><td> Returns a number as a float. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> Injects another csvpath into the current csvpath. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>int(value)</a>    </td><td> Returns a number as an int. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
 <tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random.md'>random(starting, ending)</a></td><td> Generates a random int from starting to ending.</td>
 <tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random.md'>shuffle(starting, ending)</a></td><td> Generates a random int from starting to ending with no replacement.</td>
 </table>
@@ -223,7 +219,6 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>min_length(value)</a>  </td><td> Returns the length of the value.</td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>regex(regex-string, value)</a> </td><td> Matches on a regular expression. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>starts_with(value, value)</a>   </td><td> Checks if the first value starts with the second. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a>              </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>strip(value)</a>              </td><td> Trims off whitespace.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>substring(value, int)</a>     </td><td> Returns the first n chars from the value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>upper(value)</a>              </td><td> Makes a value uppercase.   </td></tr>
@@ -238,6 +233,22 @@ There are lots more simple examples on the individual function pages.
 <tr><td> do_when_stack()        </td><td> Returns a stack with True or False for each do/when to show which activated their right-hand side. </td></tr>
 <tr><td> vote_stack()           </td><td> Returns a stack with True or False for each match component's match decision. </td></tr>
 </table>
+
+
+## Types
+<table>
+<tr><th>Function            <a name="types"> </th><th> What it does                                              </th></tr>
+<tr><td>boolean(value)</td><td> A boolean value  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>float(value)</a>    </td><td> A number as a float. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>int(value)</a>    </td><td> A number as an int. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>num(value, int, int, int, int)</a>    </td><td> A number defined as min/max before and after the decimal. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a> </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
+</table>
+
+
 
 ## Validity
 <table>

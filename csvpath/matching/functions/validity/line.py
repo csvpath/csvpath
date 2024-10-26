@@ -7,11 +7,11 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.header import Header
-from csvpath.matching.functions.strings.string import String
-from csvpath.matching.functions.misc.nonef import Nonef, Blank
-from csvpath.matching.functions.dates.datef import Date
-from csvpath.matching.functions.math.intf import Num, Float, Int
-from csvpath.matching.functions.boolean.boolean import Boolean
+from csvpath.matching.functions.types.string import String
+from csvpath.matching.functions.types.nonef import Nonef, Blank
+from csvpath.matching.functions.types.datef import Date
+from csvpath.matching.functions.types.intf import Num, Float, Int
+from csvpath.matching.functions.types.boolean import Boolean
 from ..args import Args
 
 
@@ -69,8 +69,12 @@ class Line(MatchDecider):
                         f"Line {pln}: the {ExpressionUtility._numeric_string(i)} item, {s.name}, does not match"
                     )
             else:
-                if isinstance(s, (Blank, Nonef)):
+                if isinstance(s, (Blank)):
                     continue
+                if isinstance(s, (Nonef)):
+                    if ExpressionUtility.is_none(self.matcher.line[i]):
+                        continue
+                    errors.append(f"Line {pln}: position {i} is not empty")
                 if s.children[0].name != self.matcher.csvpath.headers[i]:
                     errors.append(
                         f"Line {pln}: the {ExpressionUtility._numeric_string(i)} item, {s.children[0].name}, does not name a current header"
