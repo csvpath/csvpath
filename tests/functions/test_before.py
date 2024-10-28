@@ -57,7 +57,14 @@ class TestFunctionsBefore(unittest.TestCase):
             f"""
             ~ date > date == True ~
             ${DATES}[1][
-                @date = after( date( "2010-10-20", "%Y-%m-%d" ), date("2002-10-20", "%Y-%m-%d" ) ) ]"""
+                @date_one = date("2010-10-20", "%Y-%m-%d" )
+                @date_two = date("2002-10-20", "%Y-%m-%d" )
+                print("one: $.variables.date_one")
+                print("two: $.variables.date_two")
+                @date = after(
+                            @date_one,
+                            @date_two
+                ) ]"""
         )
         path.fast_forward()
         print(f"\ntest_function_after_dates2: path vars: {path.variables}")

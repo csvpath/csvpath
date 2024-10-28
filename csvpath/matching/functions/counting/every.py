@@ -3,7 +3,7 @@ from typing import Any
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
-from csvpath.matching.productions import Term, Header, Variable, Equality
+from csvpath.matching.productions import Term, Matchable
 from ..function import Function
 from ..args import Args
 
@@ -19,7 +19,7 @@ class Every(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[Any])
+        a.arg(types=[Matchable], actuals=[None, Any])
         a.arg(types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()

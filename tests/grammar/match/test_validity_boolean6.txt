@@ -1,4 +1,4 @@
 [
-                @b = boolean("true")
+                @b = boolean(yes())
                 @b
             ]

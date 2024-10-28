@@ -64,14 +64,14 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
 
 Metadata fields can be used to control certain run modes:
 - `logic-mode` -- sets the CsvPath instance to operate in AND or OR mode
-- `match-mode` -- instructs the CsvPath instance to return matches or lines that did not match
+- `return-mode` -- instructs the CsvPath instance to return matches or lines that did not match
 - `print-mode` -- determines if the printouts from `print()` go to the terminal's standard out, or not
 - `validation-mode` -- sets the validation reporting actions and channels
 
 The values for each are:
 
 - `logic-mode` == `OR` or `AND` (`AND` is the default)
-- `match-mode` == `no-matches` or `matches` (`matches` is the default)
+- `return-mode` == `no-matches` or `matches` (`matches` is the default)
 - `print-mode` == `no-default` or `default` (`default` is the default)
 - `validation-mode` ==
     - `print` or `no-print` (`print` is on by default) and/or

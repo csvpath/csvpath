@@ -36,7 +36,7 @@ class LineCounter:
                         headers = line[:]
             if not headers:
                 headers = []
-            headers = self._clean_headers(headers)
+            headers = LineCounter.clean_headers(headers)
             end = time.time()
             self.csvpaths.logger.info(
                 "Counting lines and getting headers took %s", round(end - start, 2)
@@ -44,7 +44,8 @@ class LineCounter:
             lm.set_end_lines_and_reset()
         return (lm, headers)
 
-    def _clean_headers(self, headers: List[str]) -> List[str]:
+    @classmethod
+    def clean_headers(self, headers: List[str]) -> List[str]:
         hs = []
         for header in headers:
             header = header.strip()

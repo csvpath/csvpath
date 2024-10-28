@@ -1,0 +1,18 @@
+[
+                and( firstscan(), after_blank() ) -> reset_headers(skip())
+                ~ DOB needs format string ~
+                line(
+                    string.notnone("firstname", 20, 1),
+                    string        ("middlename", 20),
+                    string.notnone("lastname", 30, 2),
+                    integer       ("age"),
+                    date          ("date_of_birth"),
+                    decimal       ("height"),
+                    string        ("country"),
+                    string        ("email", 30)
+                )
+                ~
+                or( exists(#age), exists(#date_of_birth) )
+                #email -> regex(#email, "@")
+                ~
+            ]

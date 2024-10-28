@@ -24,7 +24,7 @@ The order of the type functions determines what order of headers is valid. You c
 
 ```bash
     ~ name: structural validation example with two rules
-      match-mode: no-matches
+      return-mode: no-matches
       logic-mode: AND
       validation-mode: print, fail, no-raise
     ~
@@ -47,7 +47,7 @@ This csvpath defines a line as having seven headers that have string, int, and d
 - A line must have either an age or a date of birth
 - An email must have an `@` sign.
 
-Because `match-mode` is set to `no-matches`, if a line doesn't match this description it will be returned as we iterate through the CSV file.
+Because `return-mode` is set to `no-matches`, if a line doesn't match this description it will be returned as we iterate through the CSV file.
 
 ```bash
     ~ name: line definition with gaps ~

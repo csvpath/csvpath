@@ -24,11 +24,7 @@ class End(ValueProducer):
         else:
             if len(self.children) > 0:
                 v = self.children[0].to_value()
-                if isinstance(v, int) or v.isdigit():
-                    i = i - int(v)
-                else:
-                    # this is an Args-style / data exception
-                    raise DataException("end()'s term must be a positive int")
+                i = i - abs(int(v))
             if 0 <= i < len(self.matcher.line):
                 self.value = self.matcher.line[i]
 

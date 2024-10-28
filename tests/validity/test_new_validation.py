@@ -218,17 +218,18 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[None, Function, Term], actuals=[None, str, int])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
+        # None is the new correct. incorrect is a str error msg.
         v = a.validate_structure(sibs)
-        assert v is True
+        assert v is None
 
     def test_new_args_argset_valid2(self):
         # 2 args defined, w/2 max vis-a-vis 3 sibs == False
-        a = ArgSet()
+        a = ArgSet(2)
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[None, Function, Term], actuals=[None, str, int])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        v = a.validate_structure(sibs)
-        assert v is True
+        msg = a.validate_structure(sibs)
+        assert msg is not None
 
     def test_new_args_argset_valid3(self):
         # 2 args defined, w/o max vis-a-vis 3 sibs with 1 non-match == False
@@ -236,8 +237,8 @@ class TestNewValidation(unittest.TestCase):
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[Variable], actuals=[Variable])
         sibs = [No(None, "no"), No(None, "no"), No(None, "no")]
-        v = a.validate_structure(sibs)
-        assert v is False
+        msg = a.validate_structure(sibs)
+        assert msg is not None
 
     def test_new_args_args1(self):
         args = Args()

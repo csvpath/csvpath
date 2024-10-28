@@ -2,18 +2,18 @@
 from typing import Any
 from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
-from csvpath.matching.productions import Term, Header, Variable, Equality
+from csvpath.matching.productions import Term, Matchable
 from ..function import Function
 from ..args import Args
 
 
 class Increment(ValueProducer):
-    """increments a var every n-times a each different value is seen"""
+    """increments a var every n-times each different value is seen"""
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Equality], actuals=[str])
+        a.arg(types=[Matchable], actuals=[Any])
         a.arg(types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()

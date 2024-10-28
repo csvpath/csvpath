@@ -18,14 +18,8 @@ class Tally(ValueProducer):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        child = self.children[0]
-        siblings = None
-        if isinstance(child, Equality):
-            siblings = child.commas_to_list()
-        else:
-            siblings = [child]
+        siblings = self.siblings()
         tally = ""
-
         for _ in siblings:
             tally += f"{_.to_value(skip=skip)}|"
             value = f"{_.to_value(skip=skip)}"

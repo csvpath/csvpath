@@ -1,13 +1,99 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
+from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
+from csvpath.matching.util.exceptions import ChildrenException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
+NUMBERS = "tests/test_resources/numbers3.csv"
 
 
 class TestValidBasicTypes(unittest.TestCase):
+    def test_function_decimal1(self):
+        path = CsvPath()
+        Save._save(path, "test_function_decimal1")
+        path.parse(
+            f""" ${NUMBERS}[*] [
+                @st = decimal("abc")
+            ]
+            """
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_function_decimal2(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_function_decimal2")
+        path.parse(
+            f""" ${NUMBERS}[1] [
+                ~ too high 3.52 ~
+                push("a", decimal("numbers31", 1, 1) )
+                ~ too high 3.52 ~
+                push("a", decimal(0, 1, 0) )
+                ~ fits 3.52 ~
+                push("a", decimal("numbers31", 20) )
+                ~ fits 3.52 ~
+                push("a", decimal(0, 20, 2) )
+                ~ too low 3.52 ~
+                push("a", decimal("numbers31", none(), 18.60) )
+                ~ too high 3.52 ~
+                push("a", decimal(0, -1, -50) )
+                ~ too high 3.52 ~
+                push("a", decimal("numbers31", -20) )
+                ~ fits: 3.52 ~
+                push("a", decimal(0, none(), -10) )
+            ]
+            """
+        )
+        path.collect()
+        print(f"test_func_dec2: {path.variables}")
+        expected = [False, False, True, True, False, False, False, True]
+        print(f"expected:              {expected}")
+        assert "a" in path.variables
+        a = path.variables["a"]
+        assert a == expected
+
+    def test_function_decimal3(self):
+        path = CsvPath()
+        Save._save(path, "test_function_decimal3")
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: no-raise, no-stop ~
+                ${NUMBERS}[1*] [
+                    or(
+                        decimal.strict(1),
+                        decimal.strict(2)
+                    )
+                ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 2
+
+    def test_function_decimal4(self):
+        print("")
+        testini = "tests/test_resources/deleteme/config.ini"
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
+        path = CsvPath()
+        print(f"test func dec4: cfg: {path.config.configpath}")
+        Save._save(path, "test_function_decimal4")
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: no-raise, no-stop ~
+                ${NUMBERS}[1*] [
+                        integer(1)
+                        integer(2)
+                ]"""
+        )
+        # path._raise_validation_errors=False
+        lines = path.collect()
+        assert len(lines) == 5
+
     def test_validity_int1(self):
         path = CsvPath()
         Save._save(path, "test_validity_int1")
@@ -327,29 +413,35 @@ class TestValidBasicTypes(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_validity_boolean2")
         path.parse(
-            f""" ${PATH}[*][
+            f""" ~ None is acceptable if not notnone but it is not
+                   a boolean value so we get nothing here ~
+            ${PATH}[*][
                 boolean(none())
             ]"""
         )
         lines = path.collect()
-        assert len(lines) == 9
+        assert len(lines) == 0
 
     def test_validity_boolean3(self):
         path = CsvPath()
         Save._save(path, "test_validity_boolean3")
         path.parse(
-            f""" ${PATH}[*][
+            f""" ~ 1 is the 2nd column. it doesn't have booleans.
+                   validation-mode: no-raise, no-stop
+                 ~
+            ${PATH}[*][
                 boolean("1")
             ]"""
         )
         lines = path.collect()
-        assert len(lines) == 9
+        assert len(lines) == 0
 
     def test_validity_boolean4(self):
         path = CsvPath()
         Save._save(path, "test_validity_boolean4")
         path.parse(
-            f""" ${PATH}[*][
+            f""" ~ -1 is not a boolean and is not convertable to a boolean ~
+            ${PATH}[*][
                 boolean(-1)
             ]"""
         )
@@ -382,8 +474,12 @@ class TestValidBasicTypes(unittest.TestCase):
         path = CsvPath()
         Save._save(path, "test_validity_boolean6")
         path.parse(
-            f""" ${PATH}[*][
-                @b = boolean("true")
+            f""" ~ note that @b standing alone is an existance test.
+                   that means it's not yes()'s boolean or the boolean()'s
+                   validation that yes() is a boolean. it is the
+                   existance of a value @b. ~
+            ${PATH}[*][
+                @b = boolean(yes())
                 @b
             ]"""
         )
@@ -396,7 +492,7 @@ class TestValidBasicTypes(unittest.TestCase):
         path.parse(
             f""" ${PATH}[*][
                 ~ yes, it's a bool ~
-                @b = boolean("false")
+                @b = boolean(no())
                 ~ yes, it exists ~
                 @b
                 ~ no, it is not True ~

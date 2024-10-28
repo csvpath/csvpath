@@ -3,7 +3,7 @@ from typing import Any
 from ..function_focus import ValueProducer
 from ..function import Function
 from ..args import Args
-from csvpath.matching.productions import Equality, Variable, Header, Term
+from csvpath.matching.productions import Matchable
 
 
 class Count(ValueProducer):
@@ -16,10 +16,7 @@ class Count(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(0)
         a = self.args.argset()
-        a.arg(
-            types=[None, Variable, Function, Header, Term, Equality],
-            actuals=[None, Any],
-        )
+        a.arg(types=[None, Matchable], actuals=[None, Any])
         self.args.validate(self.siblings())
         #
         super().check_valid()  # pylint: disable=W0246

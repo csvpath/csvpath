@@ -37,6 +37,7 @@ from .math.add import Add
 from .math.subtract import Subtract
 from .math.multiply import Multiply
 from .math.divide import Divide
+from .math.intf import Int, Float  # , Num
 from .math.sum import Sum
 from .math.subtotal import Subtotal
 from .math.equals import Equals
@@ -57,8 +58,6 @@ from .stats.percent import Percent
 from .stats.minf import Min, Max, Average
 from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
-
-# from .stats.correlate import Correlate
 from .print.printf import Print
 from .print.table import HeaderTable, RowTable, VarTable, RunTable
 from .print.print_line import PrintLine
@@ -83,10 +82,10 @@ from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
 from .types.nonef import Nonef, Blank
+from .types.decimal import Decimal
 from .types.boolean import Boolean
-from .types.intf import Int, Num, Float
-from .types.string import String
 from .types.datef import Date
+from .types.string import String
 
 
 class UnknownFunctionException(Exception):
@@ -218,6 +217,8 @@ class FunctionFactory:
             f = Random(matcher, name, child)
         elif name == "shuffle":
             f = Shuffle(matcher, name, child)
+        elif name in ["decimal", "integer"]:
+            f = Decimal(matcher, name, child)
         elif name == "end":
             f = End(matcher, name, child)
         elif name == "length":
@@ -260,7 +261,7 @@ class FunctionFactory:
             f = Any(matcher, name, child)
         elif name == "none":
             f = Nonef(matcher, name, child)
-        elif name in ["blank", "unspecific"]:
+        elif name in ["blank", "nonspecific"]:
             f = Blank(matcher, name, child)
         elif name == "line":
             f = Line(matcher, name, child)
@@ -390,8 +391,8 @@ class FunctionFactory:
             f = RunTable(matcher, name, child)
         elif name == "empty_stack":
             f = EmptyStack(matcher, name, child)
-        elif name == "num":
-            f = Num(matcher, name, child)
+        # elif name == "num":
+        # f = Num(matcher, name, child)
         elif name == "counter":
             f = Counter(matcher, name, child)
         else:

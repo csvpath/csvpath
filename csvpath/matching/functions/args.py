@@ -16,9 +16,12 @@ from csvpath.util.config_exception import ConfigurationException
 
 
 class Arg:
-    def __init__(self, *, types: list[Type] = None, actuals: list[Type] = None):
+    def __init__(
+        self, *, name: str = None, types: list[Type] = None, actuals: list[Type] = None
+    ):
         self.is_noneable = False
         self._types = None
+        self._name = name
         self._x_actuals = None
         self.types: list[Type] = types or [None]
         self.actuals: list[Type] = actuals or []
@@ -100,8 +103,10 @@ class ArgSet:
     # setup time
     # ----------------------------
 
-    def arg(self, *, types: list[Type] = None, actuals: list[Type] = None) -> Arg:
-        arg = Arg(types=types, actuals=actuals)
+    def arg(
+        self, *, name: str = None, types: list[Type] = None, actuals: list[Type] = None
+    ) -> Arg:
+        arg = Arg(name=name, types=types, actuals=actuals)
         self._args.append(arg)
         if len(self._args) > self.max_length and self.max_length != -1:
             self.max_length = len(self._args)
@@ -194,16 +199,17 @@ class ArgSet:
             self._args = args
             self.max_length = len(self._args)
 
-    def validate_structure(self, siblings: List[Matchable]) -> None:
+    def validate_structure(self, siblings: List[Matchable]) -> None | str:
         b = self._validate_length(siblings)
         if b is False:
-            return False
+            return "incorrect number of args"
         self._pad_or_shrink(siblings)
         for i, s in enumerate(siblings):
             t = tuple(self._args[i].types)
             if not isinstance(s, t):
-                return False
-        return True
+                ii = i + 1
+                return f"type mismatch at arg {ii}"
+        return None
 
     # ----------------------------
     # match actuals line-by-line
@@ -390,11 +396,12 @@ class Args:
         #
         good = False
         for aset in self._argsets:
-            if aset.validate_structure(siblings):
+            _m = aset.validate_structure(siblings)
+            if _m is None:
                 good = True
         if not good:
             _ = f" at {self.matchable.my_chain}" if self.matchable else ""
-            msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args."
+            msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args: {_m}."
             raise ChildrenException(msg)
         self.validated = True
 

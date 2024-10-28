@@ -18,7 +18,7 @@ class TestComments(unittest.TestCase):
         path.parse(
             f"""
             ~ logic-mode: OR
-              match-mode: no-matches
+              return-mode: no-matches
               print-mode: no-default
               validation-mode: raise no-print
             ~
@@ -31,7 +31,7 @@ class TestComments(unittest.TestCase):
         )
         print(f"path meta: {path.metadata}")
         assert "logic-mode" in path.metadata
-        assert "match-mode" in path.metadata
+        assert "return-mode" in path.metadata
         assert "print-mode" in path.metadata
         assert "validation-mode" in path.metadata
         assert path.OR is True
@@ -106,10 +106,10 @@ class TestComments(unittest.TestCase):
         )
         settings = {}
         settings["settings"] = [
-            """~ logic-mode:AND match-mode:no-matches print-mode:default ~ $[1][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:OR match-mode:matches print-mode:default  ~ $[2][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:AND match-mode:matches print-mode:no-default  ~ $[3][ yes() no() print("Hi $.csvpath.line_number")]""",
-            """~ logic-mode:OR match-mode:no-matches print-mode:no-default ~ $[4][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:AND return-mode:no-matches print-mode:default ~ $[1][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:OR return-mode:matches print-mode:default  ~ $[2][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:AND return-mode:matches print-mode:no-default  ~ $[3][ yes() no() print("Hi $.csvpath.line_number")]""",
+            """~ logic-mode:OR return-mode:no-matches print-mode:no-default ~ $[4][ yes() no() print("Hi $.csvpath.line_number")]""",
         ]
         paths.paths_manager.set_named_paths(settings)
         paths.collect_paths(filename="test", pathsname="settings")

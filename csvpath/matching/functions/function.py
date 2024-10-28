@@ -138,7 +138,7 @@ class Function(Matchable):
                         if Matchable.FAILED_VALUE in sibs:
                             pln = self.matcher.csvpath.line_monitor.physical_line_number
                             raise ChildrenException(
-                                f"Cannot continue with {self.my_chain} on line {pln} due to an invalid child"
+                                f"Line {pln}: Cannot continue with {self.my_chain} due to an invalid child"
                             )
                         #
                         # ready to run the match!
@@ -162,12 +162,14 @@ class Function(Matchable):
                     ):
                         self.matcher.csvpath.stop()
                     if (
-                        self.args.args_match is False
+                        self.args
+                        and self.args.args_match is False
                         and self.matcher.csvpath.fail_on_validation_errors
                     ):
                         self.matcher.csvpath.is_valid = False
                     if (
-                        self.args.args_match is False
+                        self.args
+                        and self.args.args_match is False
                         and self.matcher.csvpath._match_validation_errors is not None
                     ):
                         self.match = self.matcher.csvpath._match_validation_errors

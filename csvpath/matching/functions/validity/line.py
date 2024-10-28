@@ -6,12 +6,15 @@ from csvpath.matching.util.exceptions import ChildrenException, MatchException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 from csvpath.matching.functions.function import Function
-from csvpath.matching.productions.header import Header
-from csvpath.matching.functions.types.string import String
-from csvpath.matching.functions.types.nonef import Nonef, Blank
-from csvpath.matching.functions.types.datef import Date
-from csvpath.matching.functions.types.intf import Num, Float, Int
-from csvpath.matching.functions.types.boolean import Boolean
+from csvpath.matching.productions.term import Term
+from csvpath.matching.functions.types import (
+    String,
+    Nonef,
+    Blank,
+    Date,
+    Decimal,
+    Boolean,
+)
 from ..args import Args
 
 
@@ -21,27 +24,35 @@ class Line(MatchDecider):
     def check_valid(self) -> None:  # pragma: no cover
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[None, Function, Header], actuals=[Any])
+        a.arg(
+            name="Header value types",
+            types=[None, String, Boolean, Decimal, Date, Nonef, Blank],
+            actuals=[None, Any],
+        )
         sibs = self.siblings()
         self.args.validate(sibs)
         for s in sibs:
-            if isinstance(s, Header):
+            # check that no types are hiding non-headers
+            if len(s.children) == 0:
                 continue
-            elif not isinstance(
-                s, (String, Boolean, Int, Float, Num, Date, Nonef, Blank)
-            ):
+            elif not isinstance(s.children[0], (Term, Equality)):
                 # correct structure exception
-                raise ChildrenException(f"Unexpected {s}")
+                raise ChildrenException(
+                    f"Unexpected {s}. line() expects only names of headers."
+                )
+            elif isinstance(s.children[0], Term):
+                continue
+            elif isinstance(s.children[0], Equality):
+                ags = s.children[0].siblings()
+                for a in ags:
+                    if not isinstance(a, Term):
+                        raise ChildrenException(
+                            f"Unexpected {s}. line() expects only names of headers."
+                        )
             else:
-                # check that no types are hiding non-headers
-                if len(s.children) == 0:
-                    continue
-                elif not isinstance(s.children[0], Header):
-                    # correct structure exception
-                    raise ChildrenException(
-                        f"Unexpected {s}. line() expects only header definitions."
-                    )
-
+                raise ChildrenException(
+                    f"Unexpected {s}. line() expects only names of headers."
+                )
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
@@ -54,39 +65,45 @@ class Line(MatchDecider):
         hs = len(self.matcher.csvpath.headers)
         pln = self.matcher.csvpath.line_monitor.physical_line_number
         if not li == hs:
-            me = MatchException(
-                f"Line {pln}: wrong number of headers. Expected {li} but found {hs}"
+            errors.append(
+                f"Line {pln}: wrong number of headers. Expected {li}, not {hs}"
             )
-            self.my_expression.handle_error(me)
         for i, s in enumerate(sibs):
-            if isinstance(s, Header):
-                if s.name != self.matcher.csvpath.headers[i]:
+            if isinstance(s, Equality):
+                s = s._child_one()
+            if isinstance(s, (String, Decimal, Date, Boolean)):
+                t = s._value_one(skip=skip)
+                if t != self.matcher.csvpath.headers[i]:
+                    ii = i + 1
                     errors.append(
-                        f"Line {pln}: the {ExpressionUtility._numeric_string(i)} item, {s.name}, does not name a current header"
-                    )
-                elif not s.matches(skip=skip):
-                    errors.append(
-                        f"Line {pln}: the {ExpressionUtility._numeric_string(i)} item, {s.name}, does not match"
+                        f"Line {pln}: the {ExpressionUtility._numeric_string(ii)} item, {t}, does not name a current header"
                     )
             else:
                 if isinstance(s, (Blank)):
-                    continue
+                    t = s._value_one(skip=skip)
+                    if t is not None and t != self.matcher.csvpath.headers[i]:
+                        ii = i + 1
+                        errors.append(
+                            f"Line {pln}: the {ExpressionUtility._numeric_string(ii)} item, {t}, does not name a current header"
+                        )
+                    else:
+                        continue
                 if isinstance(s, (Nonef)):
                     if ExpressionUtility.is_none(self.matcher.line[i]):
                         continue
                     errors.append(f"Line {pln}: position {i} is not empty")
-                if s.children[0].name != self.matcher.csvpath.headers[i]:
+                else:
                     errors.append(
-                        f"Line {pln}: the {ExpressionUtility._numeric_string(i)} item, {s.children[0].name}, does not name a current header"
+                        f"Line {pln}: unexpected data type at position {i}: {s}"
                     )
-                elif not s.matches(skip=skip):
-                    # we shouldn't need this because we're restricting the functs and their
-                    # children to things that will trigger arg validation
-                    # errors.append(f"Line {pln}: the {self._numeric_string(i)} item, {s.children[0].name}, does not match")
-                    pass
         if len(errors) > 0:
             for e in errors:
                 self.matcher.csvpath.print(e)
-            me = MatchException(f"Line {pln} does not match")
+            me = MatchException(
+                f"Line {pln}: structure of {self.my_chain} does not match"
+            )
+            # should we be hand delivering or raising. this way we don't get the full stack.
             self.my_expression.handle_error(me)
-        self.match = self.default_match()
+            self.match = False
+        else:
+            self.match = self.default_match()

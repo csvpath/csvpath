@@ -33,7 +33,7 @@ class Empty(MatchDecider):
     def _validate(self):
         sibs = self.siblings()
         for s in sibs:
-            # both definitely structure / children exceptions
+            # both structure / children exceptions
             if isinstance(s, Headers) and len(sibs) > 1:
                 raise ChildrenException(
                     "If empty() has a headers() argument it can only have 1 argument"
@@ -73,12 +73,7 @@ class Empty(MatchDecider):
         self.match = ret
 
     def _do_many(self, skip=None):
-        siblings = None
-        if isinstance(self.children[0], Equality):
-            siblings = self.children[0].commas_to_list()
-        else:
-            siblings = self.children[0]
-
+        siblings = self.siblings()
         for s in siblings:
             self._do_one(s)
             if self.match is False:
@@ -87,22 +82,3 @@ class Empty(MatchDecider):
     def _do_one(self, child, skip=None):
         v = child.to_value(skip=skip)
         self.match = ExpressionUtility.is_empty(v)
-
-    """
-    def _is_empty(self, v):
-        ret = True
-        if v is None:
-            ret = True
-        elif f"{v}".strip() == "":
-            ret = True
-        elif isinstance(v, list) or isinstance(v, tuple):
-            for item in v:
-                ret = self._is_empty(item)
-                if not ret:
-                    break
-        elif isinstance(v, dict):
-            ret = len(v) > 0
-        else:
-            ret = False
-        return ret
-    """

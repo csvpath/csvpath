@@ -12,7 +12,7 @@ class Collect(SideEffect):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term], actuals=[Any])
+        a.arg(types=[Term], actuals=[int, str])
         self.args.validate(self.siblings())
         super().check_valid()
 

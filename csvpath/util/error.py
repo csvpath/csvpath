@@ -183,32 +183,23 @@ class ErrorHandler:
             self.logger.error(f"Quiet error line_count: {error.line_count}")
         else:
             self.logger.error(f"{error}")
-        if self._ecm.do_i_stop():
+        if self._ecm.do_i_stop() is True:
             if self._csvpath:
                 self._csvpath.stopped = True
         if OnError.COLLECT.value in policy:
             self._error_collector.collect_error(error)
-        if self._ecm.do_i_fail():
+        if self._ecm.do_i_fail() is True:
             if self._csvpath:
                 self._csvpath.is_valid = False
-        if self._ecm.do_i_print():
+        if self._ecm.do_i_print() is True:
             #
             # we give the comments settings a vote. comments settings
             # give people a way to set the noise level on a csvpath by
             # csvpath basis when working within a CsvPaths instance.
             # if we didn't provide this the error policy would be one
             # size fits all. given how important validation output is
-            # we want to be a bit more flexible.
+            # we want to be more flexible.
             #
-            """
-            if self._csvpath:
-                isin = isinstance(error.error, ChildrenValidationException)
-                if (
-                    isin
-                    and self._csvpath.print_validation_errors
-                ) or not isin:
-                    msg = f"{error.error}"
-            """
             if self._csvpath:
                 self._csvpath.print(f"{error.error}")
             else:
@@ -216,23 +207,7 @@ class ErrorHandler:
                     "attempted to print an error to system out, but CsvPaths do not print errors. This was the error: %s",
                     error.error,
                 )
-        if self._ecm.do_i_raise():
-            """
-            if isinstance(error.error, ChildrenValidationException):
-                #
-                # we give the comments settings a vote. comments settings
-                # give people a way to set the noise level on a csvpath by
-                # csvpath basis when working within a CsvPaths instance.
-                # if we didn't provide this the error policy would be one
-                # size fits all. given how important validation output is
-                # we want to be a bit more flexible.
-                #
-                if self._csvpath and self._csvpath.raise_validation_errors is False:
-                    return
-                else:
-                    raise error.error
-            else:
-            """
+        if self._ecm.do_i_raise() is True:
             raise MatchException(
                 f"Exception raised by error policy {policy}"
             ) from error.error

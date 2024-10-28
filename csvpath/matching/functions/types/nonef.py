@@ -2,7 +2,7 @@
 from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.productions import Variable, Header, Reference
+from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.functions.function import Function
 from ..args import Args
 
@@ -36,12 +36,14 @@ class Blank(ValueProducer):
         self.args = Args(matchable=self)
         self.args.argset(0)
         a = self.args.argset(1)
-        a.arg(types=[Header], actuals=[None, Any])
+        a.arg(types=[Term], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self._value_one(skip=skip)
+        self.value = self.matches(skip=skip)
 
     def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+        # if we're in line, line will check that our
+        # contained Term, if any, matches.
         self.match = self.default_match()

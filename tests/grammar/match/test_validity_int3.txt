@@ -1,9 +1,5 @@
 [
-
-                line(
-                    string(#firstname),
-                    string(#lastname),
-                    string(#say)
-                )
-
+                int.notnone("a")
+                int.notnone("b")
+                and( int("c"), int("d") )
             ]

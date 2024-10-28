@@ -20,6 +20,8 @@ Each stack includes the header names that fit the description, according to the 
 
 These stacks are calculated one time. The first row scanned wins. However, if you do `reset_headers()` the name mismatch stacks will be deleted and rebuilt. CsvPath finds the stacks by comparing the key endings. It is unlikely, but not impossible, that you could lose an unrelated variable that just happened to end in `_duplicated` when you reset headers. In that unlikely event, you would see a warning in the logs.
 
+`line()` is also worth considering. You can achieve some of the same results with `line()`. `line()` offers more type checking while producing less analytics on any mismatch.
+
 ## Examples
 
 ```bash

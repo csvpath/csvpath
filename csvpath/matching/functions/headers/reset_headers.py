@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from ..function_focus import SideEffect
 from csvpath.matching.functions.function import Function
+from csvpath.util.line_counter import LineCounter
 from ..args import Args
 
 
@@ -9,7 +10,7 @@ class ResetHeaders(SideEffect):
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Function], actuals=[None])
+        self.args.argset(1).arg(types=[None, Function], actuals=[])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -17,7 +18,8 @@ class ResetHeaders(SideEffect):
         self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
-        self.matcher.csvpath.headers = self.matcher.line[:]
+        hs = LineCounter.clean_headers(self.matcher.line[:])
+        self.matcher.csvpath.headers = hs
         self.matcher.header_dict = None
         for key in self.matcher.csvpath.variables.keys():
             #

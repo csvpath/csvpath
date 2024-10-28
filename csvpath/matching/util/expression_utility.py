@@ -21,12 +21,14 @@ class ExpressionUtility:
         s = f"{i}"
         s = s[len(s) - 1]
         si = int(s)
-        if si < 1 or si > 3:
-            return f"{i}th"
-        elif si == 2:
+        if abs(si) == 1:
+            return f"{i}st"
+        elif abs(si) == 2:
             return f"{i}nd"
-        else:
+        elif abs(si) == 3:
             return f"{i}rd"
+        else:
+            return f"{i}th"
 
     @classmethod
     def all(cls, objects: List, classlist: tuple = None) -> bool:
@@ -418,6 +420,20 @@ class ExpressionUtility:
             if p:
                 ret = p
         return ret
+
+    @classmethod
+    def get_ancestor(cls, thing, aclass):
+        """looks for an ancestor of thing that matches a class or classname"""
+        p = thing.parent
+        while p is not None:
+            if isinstance(aclass, str):
+                ps = f"{type(p)}"
+                if ps.find(aclass) > -1:
+                    return p
+            elif isinstance(p, aclass):
+                return p
+            p = p.parent
+        return None
 
     @classmethod
     def get_my_expressions_index(cls, thing) -> int:

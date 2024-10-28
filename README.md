@@ -14,7 +14,6 @@ And do it all in an automation-friendly way.
 Though much simpler, it is inspired by:
 - XPath. CsvPath is to CSV files like XPath is to XML files.
 - Validation of XML using <a href='https://schematron.com/'>Schematron rules</a>
-- The way CSS selectors pick out HTML structures
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 

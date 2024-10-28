@@ -2,7 +2,7 @@
 
 from typing import Any
 from ..function_focus import MatchDecider
-from csvpath.matching.productions import Term, Variable, Header, Reference, Equality
+from csvpath.matching.productions import Matchable
 from ..function import Function
 from ..args import Args
 
@@ -15,12 +15,8 @@ class And(MatchDecider):
     def check_valid(self) -> None:  # pragma: no cover
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[Any]
-        )
-        a.arg(
-            types=[Term, Variable, Header, Function, Reference, Equality], actuals=[Any]
-        )
+        a.arg(types=[Matchable], actuals=[None, Any])
+        a.arg(types=[Matchable], actuals=[None, Any])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

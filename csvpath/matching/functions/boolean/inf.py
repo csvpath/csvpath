@@ -13,8 +13,8 @@ class In(MatchDecider):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
+        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
 

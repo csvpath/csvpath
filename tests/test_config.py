@@ -28,6 +28,7 @@ class TestConfig(unittest.TestCase):
             os.remove(testini)
         Config()
         assert os.path.exists(testini)
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_config_assure_log_dir(self):
         path = CsvPath()

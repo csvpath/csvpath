@@ -24,11 +24,11 @@ class Any(MatchDecider):
         a = self.args.argset(0)
 
         a = self.args.argset(2)
-        a.arg(types=[Variables, Headers], actuals=[Any])
-        a.arg(types=[typing.Any], actuals=[typing.Any])
+        a.arg(types=[Variables, Headers], actuals=[None, typing.Any])
+        a.arg(types=[typing.Any], actuals=[None, typing.Any])
 
         a = self.args.argset(1)
-        a.arg(types=[typing.Any, Variables, Headers], actuals=[typing.Any])
+        a.arg(types=[typing.Any, Variables, Headers], actuals=[None, typing.Any])
 
         self.args.validate(self.siblings())
         super().check_valid()

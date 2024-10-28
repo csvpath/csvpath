@@ -7,6 +7,16 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestCsvPath(unittest.TestCase):
+    def test_matcher_get_header(self):
+        path = CsvPath()
+        path.parse("$tests/test_resources/test.csv[3][ yes() ]")
+        path.fast_forward()
+        v1 = path.matcher.get_header_value(2)
+        v2 = path.matcher.get_header_value("say")
+        print(f"\n test_matcher_get_header: : {v1} == {v2}")
+        assert v1 == v2
+        assert v1 == "ribbit..."
+
     def test_csvpath_stop_when_last(self):
         path = CsvPath()
         path.parse(

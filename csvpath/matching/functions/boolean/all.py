@@ -19,7 +19,9 @@ class All(MatchDecider):
         self.args = Args(matchable=self)
         self.args.argset(0)
         self.args.argset(1).arg(types=[None, Variables, Headers], actuals=[])
-        self.args.argset().arg(types=[None, Function, Variable, Header], actuals=[])
+        self.args.argset().arg(
+            types=[None, Function, Variable, Header], actuals=[None, Any]
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

@@ -4,6 +4,7 @@ import unittest
 import datetime
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.functions.print.printf import Print
 from tests.save import Save
 
 
@@ -79,6 +80,31 @@ class TestExpressionUtil(unittest.TestCase):
         last = path.matcher.expressions[4][0].children[0].left
         e = ExpressionUtility.get_my_expression(last)
         assert e == path.matcher.expressions[4][0]
+
+    def test_expression_utility_get_ancestor1(self):
+        csvpath = """$tests/test_resources/March-2024.csv[*][
+                skip( lt(count_headers_in_line(), 9) )
+                @header_change = mismatch("signed")
+                gt( @header_change, 9) -> reset_headers(print("Resetting headers"))
+                print.onchange.once("", skip())
+                last.onmatch() ->
+                      print("few", fail())
+
+          ]"""
+        path = CsvPath()
+        path.OR = True
+        path.parse(csvpath)
+        path.collect()
+        p = path.matcher.expressions[4][0].children[0].right
+        print(f"get ancestor: p {p}")
+        fail = p.children[0].right
+        print(f"get ancestor: fail {fail}")
+        a = ExpressionUtility.get_ancestor(fail, Print)
+        assert a is not None
+        assert isinstance(a, Print)
+        a = ExpressionUtility.get_ancestor(fail, "Print")
+        assert a is not None
+        assert isinstance(a, Print)
 
     def test_expression_utility_any_of_my_descendants(self):
         csvpath = """$tests/test_resources/March-2024.csv[*][

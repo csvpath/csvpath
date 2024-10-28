@@ -4,6 +4,7 @@ from typing import Any, List
 from .productions import Equality, Matchable
 from .functions.function import Function
 from .util.expression_encoder import ExpressionEncoder
+from .util.expression_utility import ExpressionUtility
 from .util.exceptions import MatchException
 from . import LarkParser, LarkTransformer
 
@@ -92,6 +93,20 @@ class Matcher:  # pylint: disable=R0902
         if i < 0 or i >= len(self.csvpath.headers):
             return None
         return self.csvpath.headers[i]
+
+    def get_header_value(self, name_or_index):
+        nori = None
+        try:
+            nori = ExpressionUtility.to_int(name_or_index)
+        except Exception:
+            nori = self.header_index(name_or_index)
+        v = self.line[nori]
+        #
+        # this strip shouldn't be needed here. check and delete.
+        #
+        if v is not None:
+            v = v.strip()
+        return v
 
     def _do_lasts(self) -> None:
         for et in self.expressions:

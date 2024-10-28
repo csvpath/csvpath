@@ -54,9 +54,10 @@ class Float(ValueProducer):
         self.match = self.default_match()  # pragma: no cover
 
 
+"""
 class Num(ValueProducer):
-    """parses a string or stringified object to a float, if possible,
-    ints and bools stay ints"""
+    ""parses a string or stringified object to a float, if possible,
+    ints and bools stay ints""
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
@@ -86,12 +87,12 @@ class Num(ValueProducer):
             self.my_expression.handle_error(e)
 
     def _decide_match(self, skip=None) -> None:
-        """
+        ""
         (value, max digits before decimal, min digits before decimal, max places, min places)
             max of -1 means we don't care
             min of -1 means 0, or use -1, we don't care
 
-        """
+        ""
         val = self._value_one()
         if not ExpressionUtility.is_one_of(val, (int, float)):
             self.match = False
@@ -137,3 +138,4 @@ class Num(ValueProducer):
             self.match = 0 <= len(d) <= dplaces_max
         elif self.match and dplaces_max == -1 and dplaces_min > -1:
             self.match = len(d) >= dplaces_min
+"""

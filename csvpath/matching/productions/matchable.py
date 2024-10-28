@@ -113,6 +113,17 @@ class Matchable(Qualified):
             self._id = ExpressionUtility.get_id(thing=thing)
         return self._id
 
+    def raise_if(self, e, *, cause=None) -> None:
+        if self.matcher.csvpath.do_i_raise():
+            if cause:
+                raise e from cause
+            raise e
+        else:
+            if self.my_expression is None or self.my_expression == self:
+                self.handle_error(e)
+            else:
+                self.parent.raise_if(e, cause=cause)
+
     # convenience method for one or two arg functions
     def _value_one(self, skip=None):
         c = self._child_one()
@@ -219,8 +230,10 @@ class Matchable(Qualified):
         #
         if len(self.children) == 1:
             return [self.children[0]]
+        if hasattr(self, "op") and self.op == ",":
+            return self.children
         raise ChildrenException(
-            f"Unexpected number of children, {len(self.children)}, in {self.name}"
+            f"Unexpected number of children, {len(self.children)}, in {self}"
         )
 
     def sibling_values(self, skip=None):

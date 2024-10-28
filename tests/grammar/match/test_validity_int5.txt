@@ -1,9 +1,8 @@
 [
                 line(
-                    string(#food),
-                    string(#type),
-                    unspecific(#units),
-                    int(#year),
-                    boolean(#healthy)
+                    float(#firstname),
+                    integer(#lastname),
+                    boolean(#say)
                 )
+
             ]

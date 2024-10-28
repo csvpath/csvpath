@@ -1,0 +1,18 @@
+[
+                ~ too high 3.52 ~
+                push("a", decimal("numbers31", 1, 1) )
+                ~ too high 3.52 ~
+                push("a", decimal(0, 1, 0) )
+                ~ fits 3.52 ~
+                push("a", decimal("numbers31", 20) )
+                ~ fits 3.52 ~
+                push("a", decimal(0, 20, 2) )
+                ~ too low 3.52 ~
+                push("a", decimal("numbers31", none(), 18.60) )
+                ~ too high 3.52 ~
+                push("a", decimal(0, -1, -50) )
+                ~ too high 3.52 ~
+                push("a", decimal("numbers31", -20) )
+                ~ fits: 3.52 ~
+                push("a", decimal(0, none(), -10) )
+            ]

@@ -14,7 +14,7 @@ from csvpath.util.log_utility import LogUtility
 from .matching.matcher import Matcher
 from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
-from .util.error import Error, ErrorCollector
+from .util.error import Error, ErrorCollector, ErrorCommsManager
 from .util.printer import StdOutPrinter
 from .util.line_counter import LineCounter
 from .util.exceptions import VariableException, InputException, ParsingException
@@ -262,6 +262,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
+        self._ecoms = ErrorCommsManager(csvpath=self)
+
+    def do_i_raise(self) -> bool:
+        return self._ecoms.do_i_raise()
 
     @property
     def advance_count(self) -> int:  # pragma: no cover
@@ -569,7 +573,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         # settings:
         #   - logic-mode: AND | OR
-        #   - match-mode: matches | no-matches
+        #   - return-mode: matches | no-matches
         #   - print-mode: default | no-default
         #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
         #
@@ -606,15 +610,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 )
 
     def update_match_mode_if(self) -> None:
-        if "match-mode" in self.metadata:
-            if f"{self.metadata['match-mode']}".strip() == "matches":
+        if "return-mode" in self.metadata:
+            if f"{self.metadata['return-mode']}".strip() == "matches":
                 self.collect_when_not_matched = False
-            elif f"{self.metadata['match-mode']}".strip() == "no-matches":
+            elif f"{self.metadata['return-mode']}".strip() == "no-matches":
                 self.collect_when_not_matched = True
             else:
                 self.logger.warning(
-                    "Incorrect metadata field value 'match-mode': %s",
-                    self.metadata["match-mode"],
+                    "Incorrect metadata field value 'return-mode': %s",
+                    self.metadata["return-mode"],
                 )
 
     def update_print_mode_if(self) -> None:

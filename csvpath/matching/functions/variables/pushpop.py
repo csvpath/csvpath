@@ -59,7 +59,7 @@ class Pop(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[None, Any])
+        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[None, str])
         self.args.validate(self.siblings())
         super().check_valid()
 

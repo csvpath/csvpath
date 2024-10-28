@@ -1,0 +1,6 @@
+[
+                    or(
+                        decimal.strict(1),
+                        decimal.strict(2)
+                    )
+                ]
