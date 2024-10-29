@@ -604,6 +604,16 @@ files = [
 ]
 
 [[package]]
+name = "pylightxl"
+version = "1.61"
+description = "A light weight excel read/writer for python27 and python3 with no dependencies"
+optional = false
+python-versions = ">=2.7"
+files = [
+    {file = "pylightxl-1.61.tar.gz", hash = "sha256:2c59f12d2ae96b6ca7adcd15b053ec01bd881a8fcb592324bd56c0b223400463"},
+]
+
+[[package]]
 name = "pylint"
 version = "3.3.1"
 description = "python code static checker"
@@ -868,4 +878,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "28d766a795e627a39bea863b9374299cd1163aed312db3acb5890af880281021"
+content-hash = "e7428bec1fd344c14563527f1933d0b139bbfbb1b3f2eedaf18ab8919358f101"
