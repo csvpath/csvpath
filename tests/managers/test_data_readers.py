@@ -1,7 +1,7 @@
 import unittest
 import pytest
-from csvpath.managers.file_manager import (
-    FileManager,
+from csvpath.managers.file_manager import FileManager
+from csvpath.util.file_readers import (
     CsvDataFileReader,
     CsvDataReader,
     XlsxDataReader,

@@ -439,6 +439,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # but we'll do it for consistency.
         #
         self.logger.info("Beginning next_by_line with %s paths", len(csvpath_objects))
+        """
         with open(fn, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
@@ -446,105 +447,110 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             #
             # re: R1702 -- totally agreed! deferring.
             #
-            stopped_count: List[int] = []
-            for line in reader:  # pylint: disable=R1702
-                # question to self: should this default be in a central place
-                # so that we can switch to OR, in part by changing the default?
-                keep = if_all_agree
-                self._skip_all = False
-                self._advance_all = 0
-                try:
-                    # p is a (CsvPath, List[List[str]]) where the second item is
-                    # the line-by-line results of the first item's matching
-                    for p in csvpath_objects:
-                        self.current_matcher = p[0]
-                        if self._fail_all:
-                            self.logger.warning(
-                                "Fail-all set. Setting CsvPath is_valid to False."
-                            )
-                            self.current_matcher.is_valid = False
-                        if self._stop_all:
-                            self.logger.warning("Stop-all set. Shutting down run.")
-                            self.current_matcher.stopped = True
-                            continue
-                        if self._skip_all:
-                            self.logger.warning("Skip-all set. Continuing to next.")
-                            #
-                            # all following CsvPaths must have their
-                            # line_monitors incremented
-                            #
-                            self.current_matcher.track_line(line)
-                            continue
-                        if self._advance_all > 0:
-                            logtxt = "Advance-all set. Setting advance. "
-                            logtxt = f"{logtxt}CsvPath and its Matcher will handle the advancing."
-                            self.logger.info(logtxt)
-                            #
-                            # CsvPath will handle advancing so we don't need to do
-                            # anything, including track_line(line). we just need to
-                            # see if we're setting advance or increasing it.
-                            #
-                            a = self.current_matcher.advance_count
-                            if self._advance_all > a:
-                                self.current_matcher.advance_count = self._advance_all
-                            #
-                            # all following CsvPaths must have their
-                            # advance incremented -- with the advance not being simply
-                            # additive, have to be mindful of any existing advance
-                            # count!
-                            #
-                        if self.current_matcher.stopped:  # pylint: disable=R1724
-                            continue
-
-                        #
-                        # allowing the match to happen regardless of keep
-                        # because we may want side-effects or to have different
-                        # results in different named-results, as well as the
-                        # union
-                        #
-                        self.logger.debug(
-                            "considering line with csvpath identified as: %s",
-                            self.current_matcher.identity,
+        """
+        reader = FileManager.get_reader(
+            fn, delimiter=self.delimiter, quotechar=self.quotechar
+        )
+        stopped_count: List[int] = []
+        for line in reader.next():
+            # for line in reader:  # pylint: disable=R1702
+            # question to self: should this default be in a central place
+            # so that we can switch to OR, in part by changing the default?
+            keep = if_all_agree
+            self._skip_all = False
+            self._advance_all = 0
+            try:
+                # p is a (CsvPath, List[List[str]]) where the second item is
+                # the line-by-line results of the first item's matching
+                for p in csvpath_objects:
+                    self.current_matcher = p[0]
+                    if self._fail_all:
+                        self.logger.warning(
+                            "Fail-all set. Setting CsvPath is_valid to False."
                         )
-                        matched = False
+                        self.current_matcher.is_valid = False
+                    if self._stop_all:
+                        self.logger.warning("Stop-all set. Shutting down run.")
+                        self.current_matcher.stopped = True
+                        continue
+                    if self._skip_all:
+                        self.logger.warning("Skip-all set. Continuing to next.")
+                        #
+                        # all following CsvPaths must have their
+                        # line_monitors incremented
+                        #
                         self.current_matcher.track_line(line)
+                        continue
+                    if self._advance_all > 0:
+                        logtxt = "Advance-all set. Setting advance. "
+                        logtxt = f"{logtxt}CsvPath and its Matcher will handle the advancing."
+                        self.logger.info(logtxt)
                         #
-                        # re: W0212: treating _consider_line something like package private
+                        # CsvPath will handle advancing so we don't need to do
+                        # anything, including track_line(line). we just need to
+                        # see if we're setting advance or increasing it.
                         #
-                        matched = (
-                            self.current_matcher._consider_line(  # pylint:disable=W0212
-                                line
-                            )
+                        a = self.current_matcher.advance_count
+                        if self._advance_all > a:
+                            self.current_matcher.advance_count = self._advance_all
+                        #
+                        # all following CsvPaths must have their
+                        # advance incremented -- with the advance not being simply
+                        # additive, have to be mindful of any existing advance
+                        # count!
+                        #
+                    if self.current_matcher.stopped:  # pylint: disable=R1724
+                        continue
+
+                    #
+                    # allowing the match to happen regardless of keep
+                    # because we may want side-effects or to have different
+                    # results in different named-results, as well as the
+                    # union
+                    #
+                    self.logger.debug(
+                        "considering line with csvpath identified as: %s",
+                        self.current_matcher.identity,
+                    )
+                    matched = False
+                    self.current_matcher.track_line(line)
+                    #
+                    # re: W0212: treating _consider_line something like package private
+                    #
+                    matched = (
+                        self.current_matcher._consider_line(  # pylint:disable=W0212
+                            line
                         )
-                        if self.current_matcher.stopped:
-                            stopped_count.append(1)
-                        if if_all_agree:
-                            keep = keep and matched
-                        else:
-                            keep = keep or matched
-                        #
-                        # not doing continue if we have if_all_agree and not keep as we
-                        # used to do allows individual results to have lines that in
-                        # aggregate we do not keep.
-                        #
-                        if matched and collect:
-                            line = self.current_matcher.limit_collection(line)
-                            p[1].append(line)
-                except Exception as ex:  # pylint: disable=W0718
-                    ex.trace = traceback.format_exc()
-                    ex.source = self
-                    ErrorHandler(
-                        csvpaths=self, error_collector=self.current_matcher
-                    ).handle_error(ex)
-                # we yield even if we stopped in this iteration.
-                # caller needs to see what we stopped on.
-                #
-                # ! we only yield if keep is True
-                #
-                if keep:
-                    yield line
-                if sum(stopped_count) == len(csvpath_objects):
-                    break
+                    )
+                    if self.current_matcher.stopped:
+                        stopped_count.append(1)
+                    if if_all_agree:
+                        keep = keep and matched
+                    else:
+                        keep = keep or matched
+                    #
+                    # not doing continue if we have if_all_agree and not keep as we
+                    # used to do allows individual results to have lines that in
+                    # aggregate we do not keep.
+                    #
+                    if matched and collect:
+                        line = self.current_matcher.limit_collection(line)
+                        p[1].append(line)
+            except Exception as ex:  # pylint: disable=W0718
+                ex.trace = traceback.format_exc()
+                ex.source = self
+                ErrorHandler(
+                    csvpaths=self, error_collector=self.current_matcher
+                ).handle_error(ex)
+            # we yield even if we stopped in this iteration.
+            # caller needs to see what we stopped on.
+            #
+            # ! we only yield if keep is True
+            #
+            if keep:
+                yield line
+            if sum(stopped_count) == len(csvpath_objects):
+                break
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
