@@ -26,6 +26,7 @@ from .util.exceptions import (
 )
 from .matching.util.exceptions import MatchException
 from csvpath.util.printer import Printer
+from csvpath.util.file_readers import CsvDataFileReader
 
 
 class CsvPathPublic(ABC):
@@ -895,13 +896,19 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         if self.scanner.filename is None:
             raise FileException("There is no filename")
+        """
         with open(self.scanner.filename, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self.delimiter, quotechar=self.quotechar
             )
             for line in reader:
-                self.track_line(line=line)
-                yield line
+        """
+        reader = CsvDataFileReader(
+            self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
+        )
+        for line in reader.next():
+            self.track_line(line=line)
+            yield line
         self.finalize()
 
     """
