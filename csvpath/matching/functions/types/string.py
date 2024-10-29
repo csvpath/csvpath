@@ -11,16 +11,18 @@ class String(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
+            name="header name",
             types=[Term],
             actuals=[str, int, self.args.EMPTY_STRING],
         )
         a = self.args.argset(3)
         a.arg(
+            name="header name",
             types=[Term],
             actuals=[str, int, self.args.EMPTY_STRING],
         )
-        a.arg(types=[Term], actuals=[int])
-        a.arg(types=[None, Term], actuals=[int])
+        a.arg(name="max value", types=[None, Term], actuals=[int])
+        a.arg(name="min value", types=[None, Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 

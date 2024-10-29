@@ -65,7 +65,7 @@ class Jinjaf(SideEffect):
         for p in paths:
             results = results_manager.get_named_results(p)
             if len(results) == 0:
-                self.matcher.csvpath.logger.warn(
+                self.matcher.csvpath.logger.warning(
                     "No results for named-results name %s", p
                 )
                 continue

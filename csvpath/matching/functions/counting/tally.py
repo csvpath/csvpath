@@ -38,7 +38,7 @@ class Tally(ValueProducer):
         else:
             name = f"""{self.first_non_term_qualifier("tally")}_{name}"""
         if f"{value}".strip() == "":
-            self.matcher.csvpath.logger.warn(
+            self.matcher.csvpath.logger.warning(
                 "Cannot store an empty tracking value in %s. >>%s<<", name, value
             )
             return
