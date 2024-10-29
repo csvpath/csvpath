@@ -2,7 +2,7 @@ import unittest
 from csvpath.csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
-PATH2 = "tests/test_resources/test-2-with_-and&#.csv"
+PATH2 = "tests/test_resources/test-2-with_-and&.csv"
 
 
 class TestScanner(unittest.TestCase):

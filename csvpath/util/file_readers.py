@@ -2,15 +2,22 @@
 import csv
 from abc import ABC, abstractmethod
 import pylightxl as xl
+from .exceptions import InputException
 
 
 class CsvDataFileReader(ABC):
-    def __new__(cls, path: str, *, delimiter=None, quotechar=None):
+    def __new__(cls, path: str, *, sheet=None, delimiter=None, quotechar=None):
         if cls == CsvDataFileReader:
+            sheet = None
+            if path.find("#") > -1:
+                sheet = path[path.find("#") + 1]
+                path = path[0 : path.find("#")]
             if path.endswith("xlsx"):
-                return XlsxDataReader(path)
+                return XlsxDataReader(
+                    path, sheet=sheet, delimiter=delimiter, quotechar=quotechar
+                )
             else:
-                return CsvDataReader(path)
+                return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
             instance = super().__new__(cls)
             return instance
@@ -21,8 +28,14 @@ class CsvDataFileReader(ABC):
 
 
 class CsvDataReader(CsvDataFileReader):
-    def __init__(self, path: str, *, delimiter=None, quotechar=None) -> None:
+    def __init__(
+        self, path: str, *, sheet=None, delimiter=None, quotechar=None
+    ) -> None:
         self._path = path
+        if sheet is not None or path.find("#") > -1:
+            raise InputException(
+                f"Received unexpected # char or sheet argument '{sheet}'. CSV files do not have worksheets."
+            )
         self._delimiter = delimiter if delimiter is not None else ","
         self._quotechar = quotechar if quotechar is not None else '"'
 
@@ -36,9 +49,11 @@ class CsvDataReader(CsvDataFileReader):
 
 
 class XlsxDataReader(CsvDataFileReader):
-    def __init__(self, path: str, *, delimiter=None, quotechar=None) -> None:
+    def __init__(
+        self, path: str, *, sheet=None, delimiter=None, quotechar=None
+    ) -> None:
         self._path = path
-        self._sheet = None
+        self._sheet = sheet
         if path.find("#") > -1:
             self._path = path[0 : path.find("#")]
             self._sheet = path[path.find("#") + 1]
