@@ -106,7 +106,7 @@ class Qualified:
     @qualifiers.setter
     def qualifiers(self, qs: list[str]) -> None:
         if qs is None:
-            self.matcher.csvpath.logger.warn(
+            self.matcher.csvpath.logger.warning(
                 "Qualifiers set with None. Changing to []."
             )
             qs = []
