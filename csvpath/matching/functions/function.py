@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import traceback
 import signal
+import time
 from typing import Any
 from ..productions.matchable import Matchable
 from ..util.exceptions import ChildrenException
@@ -40,6 +41,11 @@ class Function(Matchable):
             skip = []
         if self in skip:  # pragma: no cover
             return self._noop_value()
+        #
+        # experiment -- timing
+        #
+        startval = time.perf_counter_ns()
+        # exp end
         if self.do_frozen():
             # doing frozen means not doing anything else. this is the
             # inverse of onmatch and other qualifiers. but it makes sense
@@ -80,6 +86,15 @@ class Function(Matchable):
         # Term and Header, but maybe not for Function?
         if isinstance(self.value, str):
             self.value = self.value.strip()
+        #
+        # experiment - timing
+        #
+        endval = time.perf_counter_ns()
+        t = (endval - startval) / 1000000
+        self.matcher.csvpath._up_function_time_value(self.__class__, t)
+        #
+        # exp end
+        #
         return self.value
 
     def matches(self, *, skip=None) -> bool:
@@ -88,9 +103,10 @@ class Function(Matchable):
         if self in skip:  # pragma: no cover
             return self.default_match()
         #
-        # experiment: catch all exceptions within here vvvv and have the expression handle
-        # them at the end of the line.
+        # experiment -- timing
         #
+        startmatch = time.perf_counter_ns()
+        # exp end
         try:
             #
             #
@@ -188,6 +204,15 @@ class Function(Matchable):
             e.source = self
             e.json = self.to_json()
             self.my_expression.handle_error(e)
+        #
+        # experiment - timing
+        #
+        endmatch = time.perf_counter_ns()
+        t = (endmatch - startmatch) / 1000000
+        self.matcher.csvpath._up_function_time_match(self.__class__, t)
+        #
+        # exp end
+        #
         return self.match
 
     def _produce_value(self, skip=None) -> None:

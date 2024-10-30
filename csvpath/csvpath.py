@@ -264,6 +264,30 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
         self._ecoms = ErrorCommsManager(csvpath=self)
+        self._function_times_match = {}
+        self._function_times_value = {}
+
+    def _up_function_time_match(self, c, t) -> None:
+        if c not in self.function_times_match:
+            self.function_times_match[c] = 0
+        st = self.function_times_match[c]
+        st += t
+        self.function_times_match[c] = st
+
+    @property
+    def function_times_match(self) -> int:
+        return self._function_times_match
+
+    def _up_function_time_value(self, c, t) -> None:
+        if c not in self.function_times_value:
+            self.function_times_value[c] = 0
+        st = self.function_times_value[c]
+        st += t
+        self.function_times_value[c] = st
+
+    @property
+    def function_times_value(self) -> int:
+        return self._function_times_value
 
     def do_i_raise(self) -> bool:
         return self._ecoms.do_i_raise()
