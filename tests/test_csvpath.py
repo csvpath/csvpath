@@ -18,6 +18,34 @@ class TestCsvPath(unittest.TestCase):
         assert v1 == v2
         assert v1 == "ribbit..."
 
+    def test_matcher_get_header2(self):
+        path = CsvPath()
+        path.parse(
+            """
+                    ~ this test checks that a quoted field behaves correctly.
+                      it is essentially a test of the csv lib, but worth keeping.
+                      atm, CsvPath will not adjust a header that is incorrectly
+                      quoted where the quote char is not directly following the
+                      delimiter. this is a fixable problem, but unless it is seen
+                      in the wild we can hold off. note that whitespace after a
+                      quotechar and before a delimiter does not have the same
+                      effect -- the field just as the whitespace as part of the
+                      value. ~
+                    $tests/test_resources/people2.csv[3][
+                        #date_of_birth == "May 12, 1962"
+                        @dob = #date_of_birth
+                        @hc = count_headers()
+                        @hcl = count_headers_in_line()
+                        @m = mismatch()
+                    ]
+                   """
+        )
+        lines = path.collect()
+        print(f"\n test_matcher_get_header2: : {lines}")
+        print(f"\n test_matcher_get_header2: : {path.variables}")
+        assert len(lines) == 1
+        assert path.variables["dob"] == "May 12, 1962"
+
     def test_csvpath_stop_when_last(self):
         path = CsvPath()
         path.parse(

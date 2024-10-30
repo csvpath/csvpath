@@ -12,7 +12,7 @@ class Sum(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Function, Term, Header], actuals=[int])
+        a.arg(types=[Variable, Function, Term, Header], actuals=[int, float])
         self.args.validate(self.siblings())
         super().check_valid()
 
