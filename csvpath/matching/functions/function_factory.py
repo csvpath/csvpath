@@ -81,7 +81,7 @@ from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
-from .types.nonef import Nonef, Blank
+from .types.nonef import Nonef, Blank, Wildcard
 from .types.decimal import Decimal
 from .types.boolean import Boolean
 from .types.datef import Date
@@ -263,6 +263,8 @@ class FunctionFactory:
             f = Nonef(matcher, name, child)
         elif name in ["blank", "nonspecific"]:
             f = Blank(matcher, name, child)
+        elif name == "wildcard":
+            f = Wildcard(matcher, name, child)
         elif name == "line":
             f = Line(matcher, name, child)
         elif name == "last":

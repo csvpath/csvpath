@@ -248,3 +248,103 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 2
         assert lines[0][0] == "Jimmy"
         assert lines[1][0] == "Terry"
+
+    def test_valid_line_wildcard1(self):
+        print("")
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["print", "collect"]
+        Save._save(path, "test_valid_line_wildcard1")
+        path.parse(
+            f"""~ return-mode: matches
+                  logic-mode: AND
+                  validation-mode: print, no-raise, no-stop ~
+                ${PEOPLE}[1*][
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    string        ("middlename", 20),
+                    string.notnone("lastname", 30, 2),
+                    wildcard()
+                )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"lines: {lines}")
+        assert len(lines) == 5
+
+    def test_valid_line_wildcard2(self):
+        print("")
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["print", "collect"]
+        Save._save(path, "test_valid_line_wildcard2")
+        path.parse(
+            f"""~ return-mode: matches
+                  logic-mode: AND
+                  validation-mode: print, no-raise, no-stop ~
+                ${PEOPLE}[1*][
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    wildcard(),
+                    decimal("height"),
+                    string("country"),
+                    string("email")
+                )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"lines: {lines}")
+        assert len(lines) == 5
+
+    def test_valid_line_wildcard3(self):
+        print("")
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["print", "collect"]
+        Save._save(path, "test_valid_line_wildcard3")
+        path.parse(
+            f"""~ return-mode: matches
+                  logic-mode: AND
+                  validation-mode: print, no-raise, no-stop ~
+                ${PEOPLE}[1*][
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    wildcard("*"),
+                    decimal("height"),
+                    string("country"),
+                    string("email")
+                )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"lines: {lines}")
+        assert len(lines) == 5
+
+    def test_valid_line_wildcard4(self):
+        print("")
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["print", "collect"]
+        Save._save(path, "test_valid_line_wildcard4")
+        #
+        # wildcard(4) means the wildcard itself + 3 more headers.
+        # or think of it as saying: wildcard takes 4 places,
+        # including the one where it is declared.
+        #
+        path.parse(
+            f"""~ return-mode: matches
+                  logic-mode: AND
+                  validation-mode: print, no-raise, no-stop ~
+                ${PEOPLE}[1*][
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    wildcard(4),
+                    decimal("height"),
+                    string("country"),
+                    string("email")
+                )
+            ]"""
+        )
+        lines = path.collect()
+        print(f"lines: {lines}")
+        assert len(lines) == 5

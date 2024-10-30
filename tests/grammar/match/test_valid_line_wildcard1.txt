@@ -1,0 +1,9 @@
+[
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    string        ("middlename", 20),
+                    string.notnone("lastname", 30, 2),
+                    wildcard()
+                )
+            ]

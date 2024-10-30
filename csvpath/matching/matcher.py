@@ -82,8 +82,18 @@ class Matcher:  # pylint: disable=R0902
 
     def header_index(self, name: str) -> int:
         """returns the index of a header name in the current headers. remember that
-        a header_reset() can change the indexes mid file."""
-        return self.csvpath.header_index(name)
+        a header_reset() can change the indexes mid file.
+        1, "1", "nameof1" are all acceptable. If not found, None. No raise.
+        """
+        i = None
+        if isinstance(name, int):
+            return name
+        i = ExpressionUtility.to_int(name, should_i_raise=False)
+        if isinstance(i, int):
+            return i
+        else:
+            x = self.csvpath.header_index(name)
+            return x
 
     def header_name(self, i: int) -> str:
         """returns the name of a header given an index into the current headers.

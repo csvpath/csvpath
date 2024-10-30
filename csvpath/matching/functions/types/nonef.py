@@ -47,3 +47,26 @@ class Blank(ValueProducer):
         # if we're in line, line will check that our
         # contained Term, if any, matches.
         self.match = self.default_match()
+
+
+class Wildcard(ValueProducer):
+    """returns True to match, return value: the arg: 1-9+ or '*', or None.
+    represents any number of headers"""
+
+    def check_valid(self) -> None:
+        self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(types=[None, Term], actuals=[int, str])
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        if len(self.children) == 0:
+            self.value = None
+            return
+        self.value = self.children[0].to_value(skip=skip)
+
+    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+        # if we're in line, line will check that our
+        # contained Term, if any, matches.
+        self.match = self.default_match()

@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from csvpath import CsvPath
 from csvpath.scanning.scanner import Scanner
 from csvpath.util.config import OnError
@@ -146,6 +147,15 @@ class TestCsvPath(unittest.TestCase):
         path = CsvPath()
         path.parse(f"${PATH}[2-4][@me = count()]")
         assert path.header_index("lastname") == 1
+
+    def test_csvpath_header_index1(self):
+        path = CsvPath()
+        path.parse(f"${PATH}[1][yes()]")
+        path.fast_forward()
+        assert path.matcher.header_index("lastname") == 1
+        assert path.matcher.header_index("1") == 1
+        assert path.matcher.header_index(1) == 1
+        assert path.matcher.header_index("foo") is None
 
     def test_csvpath_collect_line_numbers(self):
         path = CsvPath()

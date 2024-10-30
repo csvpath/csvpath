@@ -1,0 +1,10 @@
+[
+                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
+                line(
+                    string.notnone("firstname", 20, 1),
+                    wildcard(4),
+                    decimal("height"),
+                    string("country"),
+                    string("email")
+                )
+            ]

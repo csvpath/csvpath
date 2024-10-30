@@ -3,6 +3,7 @@ import math
 import datetime
 import dateutil.parser
 from typing import Tuple, Any, List
+from .exceptions import MatchException
 
 
 class EmptyString(str):
@@ -93,7 +94,7 @@ class ExpressionUtility:
             return False
 
     @classmethod
-    def to_int(cls, v: Any) -> float:
+    def to_int(cls, v: Any, should_i_raise=True) -> float:
         if v is None:
             return 0
         if v is True:
@@ -120,10 +121,16 @@ class ExpressionUtility:
         v = v.replace("$", "")
         v = v.replace("€", "")
         v = v.replace("£", "")
-        if f"{v}".find(".") > -1:
-            v = float(v)
-        # if this doesn't work, handle the error upstack
-        return int(v)
+        try:
+            if f"{v}".find(".") > -1:
+                v = float(v)
+            # if this doesn't work, handle the error upstack
+            return int(v)
+        except ValueError as e:
+            if should_i_raise is True:
+                raise ValueError("ExpressionUtility cannot convert '{v}' to int") from e
+            else:
+                return v
 
     @classmethod
     def to_float(cls, v: Any) -> float:
