@@ -5,7 +5,7 @@ from .productions import Equality, Matchable
 from .functions.function import Function
 from .util.expression_encoder import ExpressionEncoder
 from .util.expression_utility import ExpressionUtility
-from .util.exceptions import MatchException
+from .util.exceptions import MatchException, ChildrenException
 from . import LarkParser, LarkTransformer
 
 
@@ -99,7 +99,24 @@ class Matcher:  # pylint: disable=R0902
         try:
             nori = ExpressionUtility.to_int(name_or_index)
         except Exception:
+            self.csvpath.logger.debug(
+                "In get_header_value: '%s' not a column number. continuing.",
+                name_or_index,
+            )
             nori = self.header_index(name_or_index)
+        if nori is None:
+            pln = self.csvpath.line_monitor.physical_line_number
+            hs = self.csvpath.headers
+            self.csvpath.logger.error(
+                "Error in get_header_value: %s not found", name_or_index
+            )
+            self.csvpath.logger.error("Current headers at line %s are: %s", pln, hs)
+            raise ChildrenException(
+                "Unknown header name or index at line %s: '%s'. Current headers are: %s",
+                name_or_index,
+                pln,
+                hs,
+            )
         v = self.line[nori]
         #
         # this strip shouldn't be needed here. check and delete.

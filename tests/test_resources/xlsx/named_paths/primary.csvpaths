@@ -1,0 +1,33 @@
+
+---- CSVPATH ----
+
+~ name: primary headers
+  validation-mode: print, raise, stop
+~
+
+$[10*][
+    ~ file always starts at 11 ~
+    firstscan.nocontrib() -> reset_headers(skip())
+    ~ first line after the headers gives the units of measurement. we can skip. ~
+    empty.nocontrib(#0) -> skip()
+
+    line(
+        date.notnone("Month", "%Y/%m/%d"),
+        decimal.notnone("Total Fossil Fuels Production"),
+        decimal.notnone("Nuclear Electric Power Production"),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank(),
+        blank()
+    )
+    @f_minus_n.increase = minus(#1, #2)
+]
+
+
+

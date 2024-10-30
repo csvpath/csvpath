@@ -273,14 +273,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
-            "Beginning fast_forward_paths %s with %s paths against file %s",
+            "Beginning FF %s with %s paths against file %s. No match results will be held.",
             pathsname,
             len(paths),
             filename,
         )
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
-            self.logger.info("Beginning CsvPath instance: %s", csvpath)
+            self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
             result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
             try:
                 self.results_manager.add_named_result(result)

@@ -31,7 +31,7 @@ class Line(MatchDecider):
         )
         sibs = self.siblings()
         self.args.validate(sibs)
-        for s in sibs:
+        for i, s in enumerate(sibs):
             # check that no types are hiding non-headers
             if len(s.children) == 0:
                 continue

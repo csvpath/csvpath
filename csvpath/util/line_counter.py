@@ -23,14 +23,6 @@ class LineCounter:
         start = time.time()
         if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
             lm.reset()
-            """
-            with open(path, "r", encoding="utf-8") as file:
-                reader = csv.reader(
-                    file,
-                    delimiter=self.csvpaths.delimiter,
-                    quotechar=self.csvpaths.quotechar,
-                )
-            """
             reader = CsvDataFileReader(
                 path,
                 delimiter=self.csvpaths.delimiter,

@@ -163,14 +163,22 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return i
 
     def __str__(self) -> str:
+        lastline = 0
+        endline = -1
+        try:
+            # if we haven't started yet -- common situation -- we may blow up.
+            lastline = self.csvpath.line_monitor.physical_line_number
+            endline = self.csvpath.line_monitor.physical_end_line_number
+        except Exception:
+            pass
         return f"""Result
                    file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
                    name of paths:{self.paths_name};
                    name of file:{self.file_name};
                    valid:{self.csvpath.is_valid};
                    stopped:{self.csvpath.stopped};
-                   last line processed:{self.csvpath.line_monitor.physical_line_number};
-                   total file lines:{self.csvpath.line_monitor.physical_end_line_number};
+                   last line processed:{lastline};
+                   total file lines:{endline};
                    matches:{self.csvpath.match_count};
                    lines captured:{len(self.lines) if self.lines else 0};
                    print statements:{self.print_statements_count()};
