@@ -10,11 +10,14 @@ class CsvDataFileReader(ABC):
         if cls == CsvDataFileReader:
             sheet = None
             if path.find("#") > -1:
-                sheet = path[path.find("#") + 1]
+                sheet = path[path.find("#") + 1 :]
                 path = path[0 : path.find("#")]
             if path.endswith("xlsx"):
                 return XlsxDataReader(
-                    path, sheet=sheet, delimiter=delimiter, quotechar=quotechar
+                    path,
+                    sheet=sheet if sheet != path else None,
+                    delimiter=delimiter,
+                    quotechar=quotechar,
                 )
             else:
                 return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
@@ -52,11 +55,11 @@ class XlsxDataReader(CsvDataFileReader):
     def __init__(
         self, path: str, *, sheet=None, delimiter=None, quotechar=None
     ) -> None:
-        self._path = path
         self._sheet = sheet
+        self._path = path
         if path.find("#") > -1:
+            self._sheet = path[path.find("#") + 1 :]
             self._path = path[0 : path.find("#")]
-            self._sheet = path[path.find("#") + 1]
 
     def next(self) -> list[str]:
         db = xl.readxl(fn=self._path)

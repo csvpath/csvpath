@@ -9,6 +9,7 @@ from csvpath.util.file_readers import (
 
 PATH_CSV = "tests/test_resources/test.csv"
 PATH_XLSX = "tests/test_resources/test.xlsx"
+PATH_XLSX2 = "tests/test_resources/test.xlsx#again"
 
 
 class TestDataReaders(unittest.TestCase):
@@ -51,3 +52,17 @@ class TestDataReaders(unittest.TestCase):
         assert xrow is not None
         assert len(xrow) == 3
         assert xrow[0] == "Otter"
+
+    def test_data_readers_3(self):
+        print("")
+        mgr = FileManager()
+        mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
+
+        xreader = mgr.get_named_file_reader("xlsx")
+        print(f"test: xreader: {xreader}")
+        assert isinstance(xreader, XlsxDataReader)
+        i = 0
+        for i, xrow in enumerate(xreader.next()):
+            if i == 17:
+                assert xrow[0] == "100035"
+        assert i == 17
