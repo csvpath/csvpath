@@ -3,6 +3,7 @@ import time
 import os
 from typing import List, Any
 from csvpath.util.line_monitor import LineMonitor
+from .file_readers import CsvDataFileReader
 
 
 class LineCounter:
@@ -22,26 +23,33 @@ class LineCounter:
         start = time.time()
         if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
             lm.reset()
+            """
             with open(path, "r", encoding="utf-8") as file:
                 reader = csv.reader(
                     file,
                     delimiter=self.csvpaths.delimiter,
                     quotechar=self.csvpaths.quotechar,
                 )
-                for line in reader:
-                    lm.next_line(last_line=[], data=line)
-                    if len(line) == 0 and self.csvpaths.skip_blank_lines:
-                        continue
-                    if (not headers or len(headers) == 0) and len(line) > 0:
-                        headers = line[:]
-            if not headers:
-                headers = []
-            headers = LineCounter.clean_headers(headers)
-            end = time.time()
-            self.csvpaths.logger.info(
-                "Counting lines and getting headers took %s", round(end - start, 2)
+            """
+            reader = CsvDataFileReader(
+                path,
+                delimiter=self.csvpaths.delimiter,
+                quotechar=self.csvpaths.quotechar,
             )
-            lm.set_end_lines_and_reset()
+            for line in reader.next():
+                lm.next_line(last_line=[], data=line)
+                if len(line) == 0 and self.csvpaths.skip_blank_lines:
+                    continue
+                if (not headers or len(headers) == 0) and len(line) > 0:
+                    headers = line[:]
+        if not headers:
+            headers = []
+        headers = LineCounter.clean_headers(headers)
+        end = time.time()
+        self.csvpaths.logger.info(
+            "Counting lines and getting headers took %s", round(end - start, 2)
+        )
+        lm.set_end_lines_and_reset()
         return (lm, headers)
 
     @classmethod
