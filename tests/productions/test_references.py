@@ -17,14 +17,14 @@ class TestReferences(unittest.TestCase):
         nameparts = ["zipcodes", "variables", "zipcodes", "Boston"]
         ref = reference._get_reference_for_parts(nameparts)
         assert ref["paths_name"] == "zipcodes"
-        assert ref["var_or_header"] == "variables"
+        assert ref["data_type"] == "variables"
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] == "Boston"
 
         nameparts = ["zipcodes", "headers", "zipcodes"]
         ref = reference._get_reference_for_parts(nameparts)
         assert ref["paths_name"] == "zipcodes"
-        assert ref["var_or_header"] == "headers"
+        assert ref["data_type"] == "headers"
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] is None
 
@@ -34,9 +34,22 @@ class TestReferences(unittest.TestCase):
         with pytest.raises(MatchException):
             ref = reference._get_reference_for_parts(nameparts)
             assert ref["paths_name"] == "zipcodes"
-            assert ref["var_or_header"] == "variables"
+            assert ref["data_type"] == "variables"
             assert ref["name"] == "zipcodes"
             assert ref["tracking"] == "Boston"
+
+    def test_reference_csvpaths_data_type(self):
+        path = CsvPath()
+        path.config.csvpath_errors_policy = ["raise"]
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                @ref = $zips.csvpaths.zipcodes
+            ]"""
+        )
+        path.collect()
+        print(f"vars: {path.variables}")
 
     def test_reference_no_csvpaths(self):
         path = CsvPath()

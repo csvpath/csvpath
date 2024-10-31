@@ -1,0 +1,21 @@
+
+~
+    id: importable
+    run-mode: no-run
+~
+$[*][
+    print("Import! You should only see this msg when the 'importer' path runs.")
+    @hey = "i'm imported"
+    yes()
+]
+
+---- CSVPATH ----
+
+~ id: importer ~
+$[*][
+    print("Did import!")
+    import($paths.csvpaths.importable)
+    yes()
+]
+
+

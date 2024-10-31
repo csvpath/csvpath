@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath.matching.productions import Term
+from csvpath.matching.productions import Term, Reference
 from csvpath.matching.util.exceptions import MatchComponentException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.expression_encoder import ExpressionEncoder
@@ -18,7 +18,7 @@ class Import(SideEffect):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term], actuals=[str])
+        a.arg(types=[Term, Reference], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
         #
@@ -43,13 +43,20 @@ class Import(SideEffect):
             if name is None:
                 raise MatchComponentException("Name of import csvpath cannot be None")
 
+            specific = None
+            if name.find("#") > -1:
+                specific = name[name.find("#") + 1 :]
+                name = name[0 : name.find("#")]
+
             self.matcher.csvpath.logger.info("Starting import from %s", name)
 
             e = ExpressionUtility.get_my_expression(self)
             if e is None:
                 raise MatchComponentException("Cannot find my expression: {self}")
 
-            amatcher = self.matcher.csvpath.parse_named_path(name=name, disposably=True)
+            amatcher = self.matcher.csvpath.parse_named_path(
+                name=name, disposably=True, specific=specific
+            )
             if (
                 amatcher is None
                 or not amatcher.expressions

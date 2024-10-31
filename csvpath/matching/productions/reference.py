@@ -10,6 +10,12 @@ class Reference(Matchable):
     test against a header's values
     """
 
+    VARIABLES = "variables"
+    HEADERS = "headers"
+    CSVPATHS = "csvpaths"
+    CSVPATH = "csvpath"
+    METADATA = "metadata"
+
     def check_valid(self) -> None:  # pylint: disable=W0246
         # re: W0246: Matchable handles this class's children
         super().check_valid()
@@ -88,23 +94,29 @@ class Reference(Matchable):
                 "Beginning a lookup on %s", self
             )  # pragma: no cover
             ref = self._get_reference()
-            if ref["var_or_header"] == "headers":
+            if ref["data_type"] == Reference.HEADERS:
                 if self._cache_vars is not None:
                     self.value = self._cache_headers
                 else:
                     self.value = self._header_value()
                     self._cache_headers = self.value
-            else:
+            elif ref["data_type"] == Reference.VARIABLES:
                 if self._cache_vars is not None:
                     self.value = self._cache_vars
                 else:
                     self.value = self._variable_value()
                     self._cache_vars = self.value
+            elif ref["data_type"] == Reference.CSVPATHS:
+                self.value = f"{ref['paths_name']}#{ref['name']}"
+            else:
+                self.raiseChildrenException(
+                    "Incorrect reference data type: {ref['data_type']}"
+                )
         return self.value
 
     def data_type(self):
         ref = self._get_reference()
-        return ref["var_or_header"]
+        return ref["data_type"]
 
     def is_header(self):
         return self.data_type() == "headers"
@@ -123,6 +135,10 @@ class Reference(Matchable):
         ref = self._get_reference()
         return ref["tracking"]
 
+    @property
+    def reference_names(self) -> Dict[str, str]:
+        self._get_reference()
+
     def _get_reference(self) -> Dict[str, str]:
         if self.ref is None:
             self.ref = self._get_reference_for_parts(self.name_parts)
@@ -130,16 +146,20 @@ class Reference(Matchable):
 
     def _get_reference_for_parts(self, name_parts: List[str]) -> Dict[str, str]:
         ref = {}
-        if name_parts[1] in ["variables", "headers"]:
+        if name_parts[1] in [
+            Reference.VARIABLES,
+            Reference.HEADERS,
+            Reference.CSVPATHS,
+        ]:
             ref["paths_name"] = name_parts[0]
-            ref["var_or_header"] = name_parts[1]
+            ref["data_type"] = name_parts[1]
             ref["name"] = name_parts[2]
             ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
         # the next few lines are harmless but dead. they likely will come back. atm
         # they trigger coverage
         else:
             ref["paths_name"] = name_parts[0]
-            ref["var_or_header"] = name_parts[1]
+            ref["data_type"] = name_parts[1]
             ref["name"] = name_parts[2]
             ref["tracking"] = name_parts[3] if len(name_parts) == 4 else None
         #
@@ -147,11 +167,15 @@ class Reference(Matchable):
         # metadata and csvpaths in plain references yet. we do support
         # them in print references.
         #
-        if ref["var_or_header"] not in ["variables", "headers"]:
+        if ref["data_type"] not in [
+            Reference.VARIABLES,
+            Reference.HEADERS,
+            Reference.CSVPATHS,
+        ]:
             # raise ChildrenException(
-            #    f"""References must be to variables or headers, not {ref["var_or_header"]}"""
+            #    f"""References must be to variables or headers, not {ref["data_type"]}"""
             # )
-            msg = f"""References must be to variables or headers, not {ref["var_or_header"]}"""
+            msg = f"""References must be to variables or headers, not {ref["data_type"]}"""
             self.raiseChildrenException(msg)
         return ref
 

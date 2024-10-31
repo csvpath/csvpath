@@ -37,7 +37,9 @@ class CsvPathPublic(ABC):
         """Reads a csvpath prepares to match against CSV file lines"""
 
     @abstractmethod
-    def parse_named_path(self, name):  # pragma: no cover
+    def parse_named_path(
+        self, name, *, disposably=False, specific=None
+    ):  # pragma: no cover
         """Parses a csvpath found in this CsvPath's CsvPaths parent's
         collection of named csvpaths"""
 
@@ -256,6 +258,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._stop_on_validation_errors = None
         self._fail_on_validation_errors = None
         #
+        # run mode determines if a csvpath gets run or if it is skipped. the
+        # main reasons to set run-mode: no-run vs. run are: you want to import
+        # it into other csvpaths that are in the same named-paths group, or
+        # you want to switch off a csvpath in a named-paths group for testing
+        # a similar reason.
+        #
+        self._run_mode = True
+        #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
         # your component instance and the logging level. e.g.:
@@ -266,6 +276,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._ecoms = ErrorCommsManager(csvpath=self)
         self._function_times_match = {}
         self._function_times_value = {}
+
+    @property
+    def run_mode(self) -> bool:
+        return self._run_mode
+
+    @run_mode.setter
+    def run_mode(self, mode) -> None:
+        self._run_mode = mode
 
     def _up_function_time_match(self, c, t) -> None:
         if c not in self.function_times_match:
@@ -603,6 +621,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
         #
         self.update_logic_mode_if()
+        self.update_run_mode_if()
         self.update_match_mode_if()
         self.update_print_mode_if()
         self.update_arg_validation_mode_if()
@@ -620,6 +639,18 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self.logger.info(
                     "Setting 'validation-mode': %s",
                     self.metadata["validation-mode"],
+                )
+
+    def update_run_mode_if(self) -> None:
+        if self.metadata and "run-mode" in self.metadata:
+            if f"{self.metadata['run-mode']}".strip() == "no-run":
+                self.run_mode = False
+            elif f"{self.metadata['run-mode']}".strip() == "run":
+                self.run_mode = True
+            else:
+                self.logger.warning(
+                    "Incorrect metadata field value 'run-mode': %s",
+                    self.metadata["run-mode"],
                 )
 
     def update_logic_mode_if(self) -> None:
@@ -670,32 +701,50 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                     self.metadata["print-mode"],
                 )
 
-    def parse_named_path(self, name, disposably=False):
-        """disposably is True when a Matcher is needed for some purpose other than
-        the run we were created to do. could be that a match component wanted a
-        parsed csvpath for its own purposes. import() uses this method.
-
-        when True, we create and return the Matcher, but then forget it ever existed.
-
-        also note: the path must have a name or full filename. $[*] is not enough.
-        """
+    def _pick_named_path(self, name, *, specific=None) -> str:
         if not self.csvpaths:
             raise CsvPathsException("No CsvPaths object available")
         np = self.csvpaths.paths_manager.get_named_paths(name)
         if not np:
-            raise CsvPathsException(f"Named paths {name} not found")
+            raise CsvPathsException(f"Named-paths '{name}' not found")
         if len(np) == 0:
-            raise CsvPathsException(f"Named paths {name} has no csvpaths")
-        if len(np) > 1:
+            raise CsvPathsException(f"Named-paths '{name}' has no csvpaths")
+        if len(np) == 1:
+            return np[0]
+        if specific is None:
             self.logger.warning(
-                "parse_named_path %s has %s csvpaths. Parsing just the first one.",
+                "Parse_named_path %s has %s csvpaths. Using just the first one.",
                 name,
                 len(np),
             )
-        path = np[0]
-        path = MetadataParser(self).extract_metadata(instance=self, csvpath=path)
-        path = self._update_file_path(path)
-        dis = self.parse(path, disposably=disposably)
+            return np[0]
+        for p in np:
+            # this ends up being redundant to the caller. we do it 1x so it's not
+            # a big lift and is consistent.
+            c = CsvPath()
+            MetadataParser(c).extract_metadata(instance=c, csvpath=p)
+            if c.identity == specific:
+                return p
+        self.logger.error(
+            "Cannot find csvpath identified as %s in named-paths %s", specific, name
+        )
+        raise ParsingException(f"Cannot find path '{specific}' in named-paths '{name}'")
+
+    def parse_named_path(self, name, *, disposably=False, specific=None):
+        """disposably is True when a Matcher is needed for some purpose other than
+        the run we were created to do. could be that a match component wanted a
+        parsed csvpath for its own purposes. import() uses this method.
+        when True, we create and return the Matcher, but then forget it ever existed.
+        also note: the path must have a name or full filename. $[*] is not enough.
+        """
+        if not self.csvpaths:
+            raise CsvPathsException("No CsvPaths object available")
+
+        path = self._pick_named_path(name, specific=specific)
+        c = CsvPath()
+        path = MetadataParser(c).extract_metadata(instance=c, csvpath=path)
+        path = c._update_file_path(path)
+        dis = c.parse(path, disposably=disposably)
         if disposably is True:
             return dis
         return None
@@ -777,6 +826,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def __str__(self):
         return f"""
             path: {self.scanner.path if self.scanner else None}
+            identity: {self.identity}
             parsers: [scanner=Ply, matcher=Lark, print=Lark]
             from_line: {self.scanner.from_line if self.scanner else None}
             to_line: {self.scanner.to_line if self.scanner else None}
@@ -876,25 +926,30 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         the csvpath. collect() and fast_forward() call next() behind the scenes.
         """
         start = time.time()
-        for line in self._next_line():
-            b = self._consider_line(line)
-            if b:
-                line = self.limit_collection(line)
-                if line is None:
-                    msg = "Line cannot be None"
-                    self.logger.error(msg)
-                    raise MatchException(msg)
-                if len(line) == 0:
-                    msg = "Line cannot be len() == 0"
-                    self.logger.error(msg)
-                    raise MatchException(msg)
-                yield line
-            if self.stopped:
-                self.logger.info(
-                    "CsvPath has been stopped at line %s",
-                    self.line_monitor.physical_line_number,
-                )
-                break
+        if self.run_mode is True:
+            for line in self._next_line():
+                b = self._consider_line(line)
+                if b:
+                    line = self.limit_collection(line)
+                    if line is None:
+                        msg = "Line cannot be None"
+                        self.logger.error(msg)
+                        raise MatchException(msg)
+                    if len(line) == 0:
+                        msg = "Line cannot be len() == 0"
+                        self.logger.error(msg)
+                        raise MatchException(msg)
+                    yield line
+                if self.stopped:
+                    self.logger.info(
+                        "CsvPath has been stopped at line %s",
+                        self.line_monitor.physical_line_number,
+                    )
+                    break
+        else:
+            self.logger.warning(
+                "Csvpath identified as {self.identity} is disabled by run-mode:no-run"
+            )
         self.finalize()
         # moving to finalize
         # self._freeze_path = True
