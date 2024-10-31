@@ -62,16 +62,18 @@ Let's illustrate the all-in-one approach, including run-mode settings.
     ---- CSVPATH ----
     ~
         id: check account numbers
-        description: a valid line starts with a column we don't worry
-                     about then has a 7-15 length whole number account ID.
+        description: a valid line starts with a header we're not checking.
+                     then it has a 7-15 length whole number account ID.
                      the rest of the line doesn't matter for this rule.
     ~
     import( $statements.csvpaths.reset_headers )
-    $[*][ line(
-                blank(),
-                integer("account", 15, 7),
-                wildcard()
-             ) ]
+    $[*][
+        line(
+            blank(),
+            integer.notnone("account", 15, 7),
+            wildcard()
+        )
+    ]
 
     ---- CSVPATH ----
     ~
@@ -86,6 +88,8 @@ Let's illustrate the all-in-one approach, including run-mode settings.
 ```
 
 These csvpaths declare two rules for lists of bank accounts. They are in one `.csvpath` file that is registered with the `CsvPaths`'s `PathManager` under one named-paths name: `statements`. We give each of them an ID for the purposes of identification between them, and also for better documentation and error tracing. And we set the `reset_headers` csvpath to not run on its own by setting the run mode `no-run`.
+
+In this way we can keep the rules as concise as possible and focused on the validity of the data, not the quirks of this use case's CSV format.
 
 
 
