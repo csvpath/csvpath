@@ -400,9 +400,16 @@ class Args:
             if _m is None:
                 good = True
         if not good:
+            # _ = f" at {self.matchable.my_chain}" if self.matchable else ""
+            # msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args: {_m}."
+            # raise ChildrenException(msg)
+            #
             _ = f" at {self.matchable.my_chain}" if self.matchable else ""
-            msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args: {_m}."
-            raise ChildrenException(msg)
+            msg = f"Incorrectly written{_}. Wrong type or number of args: {_m}."
+            if self._matchable is None:
+                # this should only be testing
+                raise ChildrenException(msg)
+            self._matchable.raiseChildrenException(msg)
         self.validated = True
 
     def matches(self, actuals: List[Any]) -> None:
@@ -451,10 +458,14 @@ class Args:
             self._args_match = False
             pm = f"mismatch in {self.matchable.my_chain}: {mismatches}"
             # when would we not have a csvpath?
-            pln = (
-                self._csvpath.line_monitor.physical_line_number if self._csvpath else 0
-            )
-            csvpathid = f"{self._csvpath_id()} " if self._csvpath_id() else ""
+            # pln = (
+            #    self._csvpath.line_monitor.physical_line_number if self._csvpath else 0
+            # )
+            # csvpathid = f"{self._csvpath_id()} " if self._csvpath_id() else ""
+            # ei = ExpressionUtility.get_my_expressions_index(self._matchable)
+            # pm = f"{csvpathid}Wrong value in match component {ei} at line {pln}: {pm}"
+            # raise ChildrenValidationException(pm)
+            #
             ei = ExpressionUtility.get_my_expressions_index(self._matchable)
-            pm = f"{csvpathid}Wrong value in match component {ei} at line {pln}: {pm}"
-            raise ChildrenValidationException(pm)
+            pm = f"Wrong value in match component {ei}: {pm}"
+            self._matchable.raiseChildrenException(pm)

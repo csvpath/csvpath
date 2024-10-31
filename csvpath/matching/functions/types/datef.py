@@ -51,11 +51,11 @@ class Date(ValueProducer):
             # should be a date string and a format
             v = self._from_two()
         else:
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
+            # pln = self.matcher.csvpath.line_monitor.physical_line_number
             self.value = None
             self.parent.raise_if(
                 ChildrenException(
-                    f"Line {pln}: Expected a date or a date as a string, optionally with a format"
+                    "Expected a date or a date as a string, optionally with a format"
                 )
             )
             return
@@ -71,19 +71,15 @@ class Date(ValueProducer):
         elif v is None or v == "":
             if self.notnone:
                 self.value = None
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                self.parent.raise_if(
-                    ChildrenException(f"Line {pln}: Date cannot be empty")
-                )
+                # pln = self.matcher.csvpath.line_monitor.physical_line_number
+                self.parent.raise_if(ChildrenException("Date cannot be empty"))
             return
         #
         # not sure what this value is
         #
         self.value = None
-        pln = self.matcher.csvpath.line_monitor.physical_line_number
-        self.parent.raise_if(
-            ChildrenException(f"Line {pln}: '{v}' is not a date or datetime")
-        )
+        # pln = self.matcher.csvpath.line_monitor.physical_line_number
+        self.parent.raise_if(ChildrenException(f"'{v}' is not a date or datetime"))
 
     def _from_one(self):
         v = self._value_one()
@@ -106,11 +102,9 @@ class Date(ValueProducer):
         except Exception as e:
             if adate == "" and not self.notnone:
                 return None
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
+            # pln = self.matcher.csvpath.line_monitor.physical_line_number
             self.parent.raise_if(
-                ChildrenException(
-                    f"Line {pln}: Cannot parse date '{adate}' using '{aformat}'"
-                ),
+                ChildrenException(f"Cannot parse date '{adate}' using '{aformat}'"),
                 cause=e,
             )
             return None
@@ -120,10 +114,8 @@ class Date(ValueProducer):
         v = f"{v}".strip()
         hv = self.matcher.get_header_value(v)
         if hv is None or f"{hv}".strip() == "" and self.notnone is True:
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
-            self.parent.raise_if(
-                ChildrenException(f"Line {pln}: '{v}' cannot be empty")
-            )
+            # pln = self.matcher.csvpath.line_monitor.physical_line_number
+            self.parent.raise_if(ChildrenException(f": '{v}' cannot be empty"))
             return None
         else:
             fmt = self._value_two(skip=skip)

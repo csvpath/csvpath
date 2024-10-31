@@ -32,6 +32,7 @@ class Matcher:  # pylint: disable=R0902
         self.skip = False
         self.cachers = []
         self._AND = True  # pylint: disable=C0103
+        self._validity_checked = False
         if data is not None:
             self.parser = LarkParser()
             tree = self.parser.parse(data)
@@ -52,6 +53,14 @@ class Matcher:  # pylint: disable=R0902
         return f"""{type(self)}:
             expressions: {self.expressions}
             line: {self.line}"""
+
+    @property
+    def validity_checked(self) -> bool:
+        return self._validity_checked
+
+    @validity_checked.setter
+    def validity_checked(self, chked: bool) -> None:
+        self._validity_checked = chked
 
     @property
     def AND(self) -> bool:
@@ -277,6 +286,7 @@ class Matcher:  # pylint: disable=R0902
             self.csvpath.logger.debug(
                 "Matcher starting pre-iteration match components structure validation"
             )
+        self.validity_checked = False
         for _ in self.expressions:
             _[0].check_valid()
         self.clear_errors()
@@ -284,6 +294,7 @@ class Matcher:  # pylint: disable=R0902
             self.csvpath.logger.debug(
                 "Pre-iteration match components structure validation done"
             )
+        self.validity_checked = True
 
     def get_variable(self, name: str, *, tracking=None, set_if_none=None) -> Any:
         """see CsvPath.get_variable"""

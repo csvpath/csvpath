@@ -38,7 +38,7 @@ class Line(MatchDecider):
                 continue
             elif not isinstance(s.children[0], (Term, Equality)):
                 # correct structure exception
-                raise ChildrenException(
+                self.raiseChildrenException(
                     f"Unexpected {s}. line() expects only names of headers."
                 )
             elif isinstance(s.children[0], Term):
@@ -47,11 +47,11 @@ class Line(MatchDecider):
                 ags = s.children[0].siblings()
                 for a in ags:
                     if not isinstance(a, Term):
-                        raise ChildrenException(
+                        self.raiseChildrenException(
                             f"Unexpected {s}. line() expects only names of headers."
                         )
             else:
-                raise ChildrenException(
+                self.raiseChildrenException(
                     f"Unexpected {s}. line() expects only names of headers."
                 )
         super().check_valid()
@@ -90,7 +90,7 @@ class Line(MatchDecider):
         found = len(sibs) + advanced + advance
         expected = len(self.matcher.csvpath.headers)
         if expected != found:
-            raise ChildrenException(
+            self.raiseChildrenException(
                 f"Line {pln}: Headers are wrong. Expected headers, including wildcards, is {expected}. Found {found}."
             )
         if len(errors) > 0:
@@ -113,8 +113,8 @@ class Line(MatchDecider):
             if advance == 0:
                 advance = len(self.matcher.csvpath.headers) - i
             if advance is None:
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                raise ChildrenException(
+                # pln = self.matcher.csvpath.line_monitor.physical_line_number
+                self.raiseChildrenException(
                     "Line {pln}: Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} is not correct for line"
                 )
         elif isinstance(v, int):
@@ -124,9 +124,9 @@ class Line(MatchDecider):
             if isinstance(v, int):
                 advance = v
             else:
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                raise ChildrenException(
-                    f"Line {pln}: Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} has an unknown value"
+                # pln = self.matcher.csvpath.line_monitor.physical_line_number
+                self.raiseChildrenException(
+                    f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} has an unknown value"
                 )
         # minus 1 for the wildcard itself
         advance -= 1

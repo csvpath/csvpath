@@ -36,16 +36,14 @@ class Decimal(ValueProducer):
                 self.value = None
                 if self.notnone is True:
                     self.match = False
-                    pln = self.matcher.csvpath.line_monitor.physical_line_number
-                    self.parent.raise_if(
-                        ChildrenException(f"Line {pln}: '{val}' cannot be empty")
-                    )
+                    # pln = self.matcher.csvpath.line_monitor.physical_line_number
+                    self.parent.raise_if(ChildrenException(f"'{val}' cannot be empty"))
         except (TypeError, IndexError) as e:
             self.match = False
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
+            # pln = self.matcher.csvpath.line_monitor.physical_line_number
             self.parent.raise_if(
                 ChildrenException(
-                    f"Line {pln}: Argument '{val}' does not identify a valid header value on this line"
+                    f"Argument '{val}' does not identify a valid header value on this line"
                 ),
                 cause=e,
             )
@@ -58,10 +56,10 @@ class Decimal(ValueProducer):
             if self.has_qualifier("strict"):
                 if h.find(".") == -1:
                     self.match = False
-                    pln = self.matcher.csvpath.line_monitor.physical_line_number
+                    # pln = self.matcher.csvpath.line_monitor.physical_line_number
                     self.parent.raise_if(
                         ChildrenException(
-                            f"Line {pln}: Argument '{val}' has 'strict' but value does not have a '.'"
+                            f"Argument '{val}' has 'strict' but value does not have a '.'"
                         )
                     )
                     return

@@ -17,9 +17,12 @@ class Reference(Matchable):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
         if name is None:
-            raise ChildrenException("Name cannot be None")  # pragma: no cover
+            # raise ChildrenException("Name cannot be None")
+            self.raiseChildrenException("Name cannot be None")  # pragma: no cover
+
         if name.strip() == "":
-            raise ChildrenException(
+            # raise ChildrenException("Name cannot be the empty string")
+            self.raiseChildrenException(
                 "Name cannot be the empty string"
             )  # pragma: no cover
         #
@@ -145,16 +148,21 @@ class Reference(Matchable):
         # them in print references.
         #
         if ref["var_or_header"] not in ["variables", "headers"]:
-            raise ChildrenException(
-                f"""References must be to variables or headers, not {ref["var_or_header"]}"""
-            )
+            # raise ChildrenException(
+            #    f"""References must be to variables or headers, not {ref["var_or_header"]}"""
+            # )
+            msg = f"""References must be to variables or headers, not {ref["var_or_header"]}"""
+            self.raiseChildrenException(msg)
         return ref
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
         cs = self.matcher.csvpath.csvpaths  # pragma: no cover
         if cs is None:
-            raise MatchException(
+            # raise MatchException(
+            #    "References cannot be used without a CsvPaths instance"
+            # )
+            self.raiseChildrenException(
                 "References cannot be used without a CsvPaths instance"
             )
         vs = cs.results_manager.get_variables(ref["paths_name"])

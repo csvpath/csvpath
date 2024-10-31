@@ -57,7 +57,7 @@ class Regex(MatchDecider):
             return theregex, thevalue, group
         else:
             # correct structure / children exception
-            raise ChildrenException("No regular expression available")
+            self.raiseChildrenException("No regular expression available")
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]

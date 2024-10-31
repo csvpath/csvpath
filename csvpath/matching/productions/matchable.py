@@ -29,6 +29,22 @@ class Matchable(Qualified):
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}"""
 
+    def raiseChildrenException(self, msg: str) -> None:
+        cid = ""
+        if self.matcher and self.matcher.csvpath:
+            cid = self.matcher.csvpath.identity
+        if cid is None:
+            cid = "<<Unidentified CsvPath>>"
+        pid = f"[{cid}] "
+        pln = ""
+        if self.matcher and self.matcher.csvpath:
+            pln = self.matcher.csvpath.line_monitor.physical_line_number
+        lid = ""
+        if self.matcher and self.matcher.validity_checked is True:
+            lid = f"Line {pln}: "
+        msg = f"{pid}{lid}{msg}"
+        raise ChildrenException(msg)
+
     @property
     def my_expression(self) -> Self:
         return ExpressionUtility.get_my_expression(self)
