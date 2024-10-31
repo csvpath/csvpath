@@ -57,3 +57,33 @@ class TestFunctionsImport(unittest.TestCase):
         assert es[3][0].matcher == path.matcher
         assert es[3][0].children[0].name == "import"
         assert es[3][0].children[0].matcher == path.matcher
+
+    def test_function_import3(self):
+        paths = CsvPaths()
+        paths.config.csvpath_errors_policy = [OnError.RAISE.value]
+
+        paths.file_manager.add_named_file(name="test", path=PATH)
+        paths.paths_manager.add_named_paths_from_file(
+            name="paths",
+            file_path="tests/test_resources/named_paths/import_internal.csvpath",
+        )
+
+        paths.collect_paths(filename="test", pathsname="paths")
+        pvars = paths.results_manager.get_variables("paths")
+        assert "hey" in pvars
+        results = paths.results_manager.get_named_results("paths")
+        assert len(results) == 2
+        if results[0].csvpath.identity == "importer":
+            importer = results[0]
+            importable = results[1]
+        else:
+            importer = results[1]
+            importable = results[0]
+
+        print(f"importable: {importable.csvpath}")
+        assert len(importable) == 0
+        assert importable.csvpath.run_mode is False
+
+        print(f"importer: {importer.csvpath}")
+        assert len(importer) == 9
+        assert importer.csvpath.run_mode is True
