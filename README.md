@@ -106,12 +106,12 @@ Interactive use of csvpaths can be valuable, too, of course. There is a trivial 
 <a name="running"></a>
 ## Running CsvPath
 
-CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/dk107dk/csvpath'>git repo is here</a>.
+CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/csvpath/csvpath'>git repo is here</a>.
 
 Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
 
 ### CsvPath
-(<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
+(<a href='https://github.com/csvpath/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
 The CsvPath class is the basic entry point for running csvpaths.
 |method                      |function                                                        |
 |----------------------------|----------------------------------------------------------------|
