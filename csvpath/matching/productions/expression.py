@@ -39,7 +39,9 @@ class Expression(Matchable):
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
-            return True  # should be default_match
+            ret = True  # should be default_match
+            self.matching().result(ret).because("skip")
+            return ret
         if self.match is None:
             try:
                 ret = True

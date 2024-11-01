@@ -32,11 +32,14 @@ class Variable(Matchable):
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
-            return self._noop_match()
+            ret = self._noop_match()
+            self.matching().result(ret).because("skip")
+            return ret
         if self.match is None:
             if self.asbool:
                 v = self.to_value(skip=skip)
                 self.match = ExpressionUtility.asbool(v)
+                self.matching().result(self.match).because("onbool")
             else:
                 self.match = self.to_value(skip=skip) is not None
                 self.matcher.csvpath.logger.debug(
@@ -44,11 +47,14 @@ class Variable(Matchable):
                     self.name,
                     self.match,
                 )
+                self.matching().result(self.match)
         return self.match
 
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:
-            return self._noop_value()
+            ret = self._noop_value()
+            self.valuing().result(ret).because("skip")
+            return ret
         if not self.value:
             track = self.first_non_term_qualifier(None)
             self.value = self.matcher.get_variable(self.name, tracking=track)
@@ -63,4 +69,5 @@ class Variable(Matchable):
                     retry = self.matcher.get_variable(self.name, tracking=False)
                 if retry is not None:
                     self.value = retry
+        self.valuing().result(self.value)
         return self.value

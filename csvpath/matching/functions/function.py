@@ -40,7 +40,9 @@ class Function(Matchable):
         if not skip:
             skip = []
         if self in skip:  # pragma: no cover
-            return self._noop_value()
+            ret = self._noop_value()
+            self.valuing().result(ret).because("skip")
+            return ret
         #
         # experiment -- timing
         #
@@ -101,7 +103,9 @@ class Function(Matchable):
         if not skip:
             skip = []
         if self in skip:  # pragma: no cover
-            return self.default_match()
+            ret = self.default_match()
+            self.matching().result(ret).because("skip")
+            return ret
         #
         # experiment -- timing
         #
@@ -117,7 +121,9 @@ class Function(Matchable):
                 # and we're not talking about a qualifier, in any case. the
                 # csvpath writer doesn't know anything about this.
                 self.matcher.csvpath.logger.debug("We're frozen in %s", self)
-                return self._noop_value()
+                ret = self._noop_value()
+                self.matching().result(ret).because("frozen")
+                return ret
             if self.match is None:
                 if self.do_onmatch():
                     #
@@ -194,11 +200,13 @@ class Function(Matchable):
                         self.matcher.csvpath.logger.debug(
                             "Function.matches _decide_match returned %s", self.match
                         )
+                        self.matching().result(self.match)
                 else:
                     self.match = self.default_match()
                     self.matcher.csvpath.logger.debug(
                         f"@{self}: appling default match, {self.match}, because !do_onmatch"
                     )
+                    self.matching().result(self.match).because("onmatch")
         except Exception as e:
             e.trace = traceback.format_exc()
             e.source = self

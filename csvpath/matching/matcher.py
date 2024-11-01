@@ -9,6 +9,52 @@ from .util.exceptions import MatchException, ChildrenException
 from . import LarkParser, LarkTransformer
 
 
+class What:
+    def __init__(self, matcher, matchable) -> None:
+        self._who = matchable
+        self._matcher = matcher
+        self._action = None
+        self._left = None
+        self._right = None
+        self._because = None
+        self._result = None
+        if hasattr(matchable, "op"):
+            self._left = matchable.left
+            self._right = matchable.right
+
+    def get_action(self, a):
+        return self._action
+
+    def action(self, a):
+        self._action = a
+        return self
+
+    def get_because(self):
+        return self._because
+
+    def because(self, b):
+        self._because = b
+        return self
+
+    def get_result(self):
+        return self._result
+
+    def result(self, r):
+        self._result = r
+        return self
+
+    def __str__(self) -> str:
+        between = ""
+        if self._left is not None:
+            between = self._left.named_value()
+        if self._right is not None:
+            between = f"between {between} and {self._right.named_value()}"
+        because = ""
+        if self._because is not None:
+            because = f"because {self._because}"
+        return f"{self._who.named_value()} did {self._action} {between} {because} resulting in {self._result}"
+
+
 class Matcher:  # pylint: disable=R0902
     """Matcher implements the match component rules processing that
     is applied to files line-by-line. matchers are created at the
@@ -31,6 +77,7 @@ class Matcher:  # pylint: disable=R0902
         self.if_all_match = []
         self.skip = False
         self.cachers = []
+        self._explain = []
         self._AND = True  # pylint: disable=C0103
         self._validity_checked = False
         if data is not None:
@@ -88,6 +135,29 @@ class Matcher:  # pylint: disable=R0902
         for expression in self.expressions:
             expression[1] = None
             expression[0].reset()
+        self._explain = []
+
+    #
+    # exp!
+    #
+    #
+    @property
+    def explaination(self) -> list[tuple]:
+        return self._explain
+
+    @explaination.setter
+    def explaination(self, es) -> None:
+        self._explain = es
+
+    def _what(self, actor, action) -> What:
+        what = What(self, actor)
+        what.action(action)
+        self._explain.append(what)
+        return what
+
+    #
+    # end exp
+    #
 
     def header_index(self, name: str) -> int:
         """returns the index of a header name in the current headers. remember that
@@ -275,6 +345,17 @@ class Matcher:  # pylint: disable=R0902
             not failed,
         )
         self.clear_errors()
+        #
+        # exp!  do we want to keep this?
+        #
+        if self.csvpath.explain:
+            self.csvpath.logger.info("Dumping explaination:")
+            for e in self.explaination:
+                self.csvpath.logger.info(f"  {e}")
+            self.explaination = []
+        #
+        # end exp
+        #
         return not failed
 
     def clear_errors(self) -> None:

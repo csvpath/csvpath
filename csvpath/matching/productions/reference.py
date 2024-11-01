@@ -71,7 +71,9 @@ class Reference(Matchable):
 
     def matches(self, *, skip=None) -> bool:  # pragma: no cover
         if skip and self in skip:
-            return self._noop_match()  # pragma: no cover
+            ret = self._noop_match()  # pragma: no cover
+            self.matching().result(ret).because("skip")
+            return ret
         if self.match is None:
             if self.value is None:
                 self.to_value(skip=skip)
@@ -84,11 +86,14 @@ class Reference(Matchable):
                 """
             # else:
             self.match = self.value is not None
+            self.matching().result(self.match)
         return self.match  # pragma: no cover
 
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:
-            return self._noop_value()  # pragma: no cover
+            ret = self._noop_value()  # pragma: no cover
+            self.valuing().result(ret).because("skip")
+            return ret
         if self.value is None:
             self.matcher.csvpath.logger.info(
                 "Beginning a lookup on %s", self
@@ -112,6 +117,7 @@ class Reference(Matchable):
                 self.raiseChildrenException(
                     "Incorrect reference data type: {ref['data_type']}"
                 )
+        self.valuing().result(self.value)
         return self.value
 
     def data_type(self):
