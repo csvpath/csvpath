@@ -67,12 +67,16 @@ Metadata fields can be used to control certain run modes:
 - `return-mode` -- instructs the CsvPath instance to return matches or lines that did not match
 - `print-mode` -- determines if the printouts from `print()` go to the terminal's standard out, or not
 - `validation-mode` -- sets the validation reporting actions and channels
+- `run-mode` -- indicates if a csvpath should be run by its CsvPath instance
+- `explain-mode` -- if set, an explanation of the match results is dumped to INFO for each line processed
 
 The values for each are:
 
 - `logic-mode` == `OR` or `AND` (`AND` is the default)
 - `return-mode` == `no-matches` or `matches` (`matches` is the default)
 - `print-mode` == `no-default` or `default` (`default` is the default)
+- `run-mode` == `no-run` or `run` (`run` is the default)
+- `explain-mode` == `no-explain` or `explain` (`no-explain` is the default)
 - `validation-mode` ==
     - `print` or `no-print` (`print` is on by default) and/or
     - `raise` or `no-raise` and/or

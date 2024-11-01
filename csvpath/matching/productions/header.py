@@ -28,7 +28,9 @@ class Header(Matchable):
 
     def to_value(self, *, skip=None) -> Any:
         if skip and self in skip:
-            return self._noop_value()
+            ret = self._noop_value()
+            self.valuing().result(ret).because("skip")
+            return ret
         if self.value == Header.NEVER:
             ret = Header.NEVER
             if isinstance(self.name, int) or self.name.isdecimal():
@@ -56,7 +58,9 @@ class Header(Matchable):
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
-            return self._noop_match()
+            ret = self._noop_match()
+            self.matching().result(ret).because("skip")
+            return ret
         if self.match is None:
             v = self.to_value(skip=skip)
             if self.asbool:

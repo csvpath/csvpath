@@ -29,6 +29,34 @@ class Matchable(Qualified):
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}"""
 
+    def named_value(self) -> str:
+        if self.qualified_name is None:
+            return f"""{self._simple_class_name()}({self.value})"""
+        return f"""{self._simple_class_name()}({self.qualified_name}:{self.value})"""
+
+    #
+    # exp!
+    #
+    # from csvpath.matching.matcher import What
+    def assign(self):
+        return self.matcher._what(self, "assign")
+
+    def when_do(self):
+        return self.matcher._what(self, "when/do")
+
+    def equality(self):
+        return self.matcher._what(self, "equality")
+
+    def matching(self):
+        return self.matcher._what(self, "matching")
+
+    def valuing(self):
+        return self.matcher._what(self, "value")
+
+    #
+    # end exp
+    #
+
     def raiseChildrenException(self, msg: str) -> None:
         cid = ""
         if self.matcher and self.matcher.csvpath:

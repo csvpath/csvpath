@@ -157,6 +157,16 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self._freeze_path = False
         #
+        # explain-mode: explain
+        # turns on capturing match reasoning and dumps the captured decisions to INFO
+        # at the end of a match. the reasoning is already present in the DEBUG but it
+        # is harder to see amid all the noise. we don't want to dump explainations
+        # all the time tho because it is very expensive -- potentially 25% worse
+        # performance. the explainations could be improved. atm this is an experimental
+        # feature.
+        #
+        self._explain = False
+        #
         # counts are 1-based
         #
         self.scan_count = 0
@@ -550,6 +560,18 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._freeze_path = freeze
 
     @property
+    def explain(self) -> bool:
+        """when this property is True CsvPath dumps a match explaination
+        to INFO. this can be expensive. a 25% performance hit wouldn't
+        be unexpected.
+        """
+        return self._explain
+
+    @explain.setter
+    def explain(self, yesno: bool) -> None:
+        self._explain = yesno
+
+    @property
     def collect_when_not_matched(self) -> bool:
         """when this property is True CsvPath returns the lines that do not
         match the matchers match components"""
@@ -624,6 +646,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_run_mode_if()
         self.update_match_mode_if()
         self.update_print_mode_if()
+        self.update_explain_mode_if()
         self.update_arg_validation_mode_if()
 
     def update_arg_validation_mode_if(self) -> None:
@@ -676,6 +699,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                     "Incorrect metadata field value 'return-mode': %s",
                     self.metadata["return-mode"],
                 )
+
+    def update_explain_mode_if(self) -> None:
+        if "explain-mode" in self.metadata:
+            if f"{self.metadata['explain-mode']}".strip() == "no-explain":
+                self._explain = False
+            elif f"{self.metadata['explain-mode']}".strip() == "explain":
+                self._explain = True
+            else:
+                self._explain = False
 
     def update_print_mode_if(self) -> None:
         if "print-mode" in self.metadata:

@@ -138,6 +138,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         Save._save(path, "test_latch")
         path.parse(
             f"""
+            ~ explain-mode: no-explain ~
             ${PATH}[1*]
             [
                 @my_firstname.latch = #firstname

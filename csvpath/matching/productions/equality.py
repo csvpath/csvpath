@@ -274,8 +274,13 @@ class Equality(Matchable):
                     increase=increase,
                     decrease=decrease,
                 )
+                self.assign().result(ret).because("not latch or onchange")
         else:
             ret = not ret
+            #
+            # exp
+            #
+            self.assign().result(ret)
 
         #
         # asbool
@@ -284,12 +289,15 @@ class Equality(Matchable):
             if ret is self.default_match():
                 self.matcher.csvpath.logger.debug("assignment: marker 16, 17")
                 ret = ExpressionUtility.asbool(y)
+                self.assign().result(ret).because("asbool")
         #
         # nocontrib
         #
         if nocontrib:
             self.matcher.csvpath.logger.debug("assignment: marker 18")
             ret = self.default_match()
+            self.assign().result(ret).because("nocontrib")
+
         self.matcher.csvpath.logger.debug(f"done with assignment: ret: {ret}")
         return ret
 
@@ -320,8 +328,12 @@ class Equality(Matchable):
                     increase=increase,
                     decrease=decrease,
                 )
+                self.assign().result(ret).because("not latch")
+            else:
+                self.assign().result(ret).because("latch")
         elif onchange:
             ret = not self.default_match()
+            self.assign().result(ret).because("onchange")
         return ret
 
     def _set_variable_if(
@@ -354,6 +366,7 @@ class Equality(Matchable):
                 value,
                 current_value,
             )
+            self.assign().result(ret).because("increase")
             return not ret
         if decrease and (
             (not current_value and not value)
@@ -365,11 +378,13 @@ class Equality(Matchable):
                 value,
                 current_value,
             )
+            self.assign().result(ret).because("decrease")
             return not ret
         #
         # set the value
         #
         self.matcher.set_variable(name, value=value, tracking=tracking)
+        self.assign().result(ret)
         return ret
 
     # ==============================
@@ -386,7 +401,9 @@ class Equality(Matchable):
             # side.
             #
             if self.sentinel:
-                return self.default_match()
+                ret = self.default_match()
+                self.when_do().result(ret).because("sentinel")
+                return ret
             else:
                 self.sentinel = True
 
@@ -394,8 +411,10 @@ class Equality(Matchable):
             pln = self.matcher.csvpath.line_monitor.physical_line_number
             if lm is True:
                 b = True
+                self.when_do().result(b).because("line matches")
                 if self.matcher._AND is False and self._left_nocontrib(self.left):
                     b = not b
+                    self.when_do().result(b).because("not AND")
                 #
                 # adding complication..., but if left is last() we want to unfreeze
                 # to let it do what it does. e.g. last() -> print("done!")
@@ -421,8 +440,10 @@ class Equality(Matchable):
                 self.DO_WHEN = False
                 if not self.matcher._AND and self._left_nocontrib(self.left):
                     b = False
+                    self.when_do().result(b).because("not AND and nocontrib")
                 else:
                     b = self._left_nocontrib(self.left)
+                    self.when_do().result(b).because("nocontrib")
         else:
             raise ChildrenException("Not a when operation")  # this can't really happen
         return b
@@ -439,14 +460,15 @@ class Equality(Matchable):
         #
         if not b:
             b = left == right
+        self.equality().result(b)
         return b
 
     def matches(self, *, skip=None) -> bool:
         if skip and self in skip:
             return True
-        if not self.left or not self.right:
-            # parser should never let this happen
-            return False
+        # if not self.left or not self.right:
+        # parser should never let this happen
+        #    return False
         if self.match is None:
             #
             # validate "args" here?
@@ -459,6 +481,7 @@ class Equality(Matchable):
             else:
                 b = self._do_equality(skip=skip)
             self.match = b
+            self.matching().result(b)
         return self.match
 
     def to_value(self, *, skip=None) -> Any:
