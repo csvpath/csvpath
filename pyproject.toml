@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.484"
-description = "A declarative language for data extraction and validation of CSV files"
+version = "0.0.485"
+description = "A declarative language for validation of CSV files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
 classifiers = [
@@ -20,7 +20,7 @@ classifiers = [
 include = ["config", "logs", "docs"]
 
 [tool.poetry.urls]
-"Github" = "https://github.com/dk107dk/csvpath"
+"Github" = "https://github.com/csvpath/csvpath.git"
 "Csvpath.org" = "https://www.csvpath.org"
 
 [tool.poetry.dependencies]
