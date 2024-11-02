@@ -6,7 +6,7 @@
                     string("food"),
                     string("type"),
                     nonspecific("units"),
-                    decimal.notnone("year"),
+                    integer.notnone("year"),
                     boolean("healthy")
                 )
                 ~ we grab the food type check and we apply it to matching.

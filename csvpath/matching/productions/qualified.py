@@ -50,6 +50,7 @@ class Qualified:
         Qualities.INCREASE.value,
         Qualities.DECREASE.value,
         Qualities.NOTNONE.value,
+        Qualities.DISTINCT.value,
         Qualities.ONCE.value,
     ]
 
@@ -135,6 +136,16 @@ class Qualified:
                 self.qualifiers.remove(string)
             except ValueError:
                 pass
+
+    @property
+    def distinct(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.DISTINCT.value in self.qualifiers
+        return False
+
+    @distinct.setter
+    def distinct(self, ii: bool) -> None:
+        self._set(Qualities.DISTINCT.value, ii)
 
     @property
     def increase(self) -> bool:  # pylint: disable=C0116

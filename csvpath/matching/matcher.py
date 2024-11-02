@@ -183,7 +183,7 @@ class Matcher:  # pylint: disable=R0902
             return None
         return self.csvpath.headers[i]
 
-    def get_header_value(self, name_or_index):
+    def get_header_value(self, m, name_or_index):
         nori = None
         try:
             nori = ExpressionUtility.to_int(name_or_index)
@@ -194,25 +194,27 @@ class Matcher:  # pylint: disable=R0902
             )
             nori = self.header_index(name_or_index)
         if nori is None:
-            pln = self.csvpath.line_monitor.physical_line_number
             hs = self.csvpath.headers
-            self.csvpath.logger.error(
-                "Error in get_header_value: %s not found", name_or_index
+            msg = m.decorate_error_message(
+                f"No headers match '{name_or_index}'. Current headers are: {hs}"
             )
-            self.csvpath.logger.error("Current headers at line %s are: %s", pln, hs)
-            raise ChildrenException(
-                "Unknown header name or index at line %s: '%s'. Current headers are: %s",
-                name_or_index,
-                pln,
-                hs,
+            self.csvpath.logger.error(msg)
+            m.parent.raise_if(ChildrenException(msg))
+        if nori >= len(self.line):
+            hs = self.csvpath.headers
+            msg = m.decorate_error_message(
+                f"No headers match '{name_or_index}'. Current headers are: {hs}"
             )
-        v = self.line[nori]
-        #
-        # this strip shouldn't be needed here. check and delete.
-        #
-        if v is not None:
-            v = v.strip()
-        return v
+            self.csvpath.logger.error(msg)
+            m.parent.raise_if(ChildrenException(msg))
+            return None
+        else:
+            v = self.line[nori]
+            if ExpressionUtility.is_none(v):
+                v = None
+            if v is not None:
+                v = v.strip()
+            return v
 
     def _do_lasts(self) -> None:
         for et in self.expressions:

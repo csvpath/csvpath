@@ -1,1 +1,1 @@
-$tests/test_resources/food.csv[*]
+$tests/test_resources/food.csv[10]

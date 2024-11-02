@@ -456,16 +456,9 @@ class Args:
     def handle_errors_if(self, mismatch_count, mismatches):
         if mismatch_count == len(self._argsets):
             self._args_match = False
-            pm = f"mismatch in {self.matchable.my_chain}: {mismatches}"
-            # when would we not have a csvpath?
-            # pln = (
-            #    self._csvpath.line_monitor.physical_line_number if self._csvpath else 0
-            # )
-            # csvpathid = f"{self._csvpath_id()} " if self._csvpath_id() else ""
-            # ei = ExpressionUtility.get_my_expressions_index(self._matchable)
-            # pm = f"{csvpathid}Wrong value in match component {ei} at line {pln}: {pm}"
-            # raise ChildrenValidationException(pm)
-            #
+            pm = f"mismatch in {self.matchable.my_chain}"
             ei = ExpressionUtility.get_my_expressions_index(self._matchable)
             pm = f"Wrong value in match component {ei}: {pm}"
+            lpm = f"{pm}: {mismatches}"
+            self._matchable.matcher.csvpath.logger.error(lpm)
             self._matchable.raiseChildrenException(pm)

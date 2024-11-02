@@ -2,8 +2,8 @@
                 line(
                     string("food"),
                     string("type"),
-                    nonspecific("units"),
-                    decimal.notnone("year"),
+                    blank("units"),
+                    decimal.notnone.weak("year"),
                     boolean("healthy")
                 )
             ]

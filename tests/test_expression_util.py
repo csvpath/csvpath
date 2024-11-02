@@ -150,6 +150,18 @@ class TestExpressionUtil(unittest.TestCase):
         with pytest.raises(ValueError):
             assert ExpressionUtility.to_int("five") == 0
 
+    def test_is_number(self):
+        assert ExpressionUtility.is_number(1)
+        assert ExpressionUtility.is_number(1.01)
+        assert not ExpressionUtility.is_number("")
+        assert not ExpressionUtility.is_number(None)
+        assert not ExpressionUtility.is_number(True)
+        assert not ExpressionUtility.is_number(False)
+        assert ExpressionUtility.is_number(-1)
+        assert ExpressionUtility.is_number("1,000")
+        assert ExpressionUtility.is_number("$1,000.00")
+        assert not ExpressionUtility.is_number("no")
+
     def test_exp_util_to_float1(self):
         assert ExpressionUtility.to_float(1) == 1.0
         assert ExpressionUtility.to_float(1.0) == 1.0

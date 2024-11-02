@@ -56,8 +56,7 @@ class Matchable(Qualified):
     #
     # end exp
     #
-
-    def raiseChildrenException(self, msg: str) -> None:
+    def decorate_error_message(self, msg: str) -> str:
         cid = ""
         if self.matcher and self.matcher.csvpath:
             cid = self.matcher.csvpath.identity
@@ -71,6 +70,10 @@ class Matchable(Qualified):
         if self.matcher and self.matcher.validity_checked is True:
             lid = f"Line {pln}: "
         msg = f"{pid}{lid}{msg}"
+        return msg
+
+    def raiseChildrenException(self, msg: str) -> None:
+        msg = self.decorate_error_message(msg)
         raise ChildrenException(msg)
 
     @property

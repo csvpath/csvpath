@@ -1,0 +1,14 @@
+[
+               after_blank.nocontrib() -> reset_headers(skip())
+               line.person(
+                   string.notnone("firstname", 25, 1),
+                   blank("middlename"),
+                   string.notnone("lastname", 35, 2),
+                   wildcard(5)
+               )
+               line.distinct.address(
+                   wildcard(6),
+                   string.notnone("country"),
+                   string.notnone("email")
+               )
+            ]

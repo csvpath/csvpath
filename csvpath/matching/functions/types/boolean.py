@@ -2,7 +2,7 @@
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.productions import Term, Variable, Header
-from ..function import Function
+from ..function import Function, CheckedUnset
 from ..function_focus import ValueProducer
 from ..args import Args
 
@@ -19,26 +19,23 @@ class Boolean(ValueProducer):
         c = self._child_one()
         v = None
         if isinstance(c, Term):
-            v = self.matcher.get_header_value(c.value)
+            v = self.matcher.get_header_value(self, c.value)
         else:
             v = c.to_value(skip=skip)
         if v is None or f"{v}".strip() == "":
-            self.value = None
+            self.value = CheckedUnset()
+            # self.value = None
             if self.notnone is True:
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                self.parent.raise_if(
-                    ChildrenException(f"Line {pln}: Value cannot be empty")
-                )
+                msg = self.decorate_error_message("Value cannot be empty")
+                self.parent.raise_if(ChildrenException(msg))
         else:
             v = ExpressionUtility.to_bool(v)
             if v in [True, False]:
                 self.value = v
             else:
-                self.value = None
-                pln = self.matcher.csvpath.line_monitor.physical_line_number
-                self.parent.raise_if(
-                    ChildrenException(f"Line {pln}: Not a boolean value: '{v}'")
-                )
+                self.value = CheckedUnset()
+                msg = self.decorate_error_message(f"Not a boolean value: '{v}'")
+                self.parent.raise_if(ChildrenException(msg))
 
     def _decide_match(self, skip=None) -> None:
         # we need to make sure a value is produced so that we see

@@ -6,9 +6,10 @@ from ..function import Function
 from .nonef import Nonef
 from ..function_focus import ValueProducer
 from ..args import Args
+from .type import Type
 
 
-class Decimal(ValueProducer):
+class Decimal(ValueProducer, Type):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(5)
@@ -19,52 +20,56 @@ class Decimal(ValueProducer):
         for s in self.siblings():
             if isinstance(s, Function) and not isinstance(s, Nonef):
                 self.match = False
-                self.parent.raise_if(
-                    ChildrenException(f"Incorrect argument: {s} is not allowed")
+                msg = self.decorate_error_message(
+                    f"Incorrect argument: {s} is not allowed"
                 )
+                self.parent.raise_if(ChildrenException(msg))
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        val = self._value_one(skip=skip)
-        h = None
-        try:
-            h = self.matcher.get_header_value(val)
-            if h is None or f"{h}".strip() == "":
-                self.value = None
-                if self.notnone is True:
-                    self.match = False
-                    # pln = self.matcher.csvpath.line_monitor.physical_line_number
-                    self.parent.raise_if(ChildrenException(f"'{val}' cannot be empty"))
-        except (TypeError, IndexError) as e:
-            self.match = False
-            # pln = self.matcher.csvpath.line_monitor.physical_line_number
-            self.parent.raise_if(
-                ChildrenException(
-                    f"Argument '{val}' does not identify a valid header value on this line"
-                ),
-                cause=e,
-            )
-            return
-        #
-        # we know this value can be a float because Args checked it.
-        # but would a user know from looking at it that it was a float?
-        #
+        h = self.resolve_value()
+        if h is None:
+            #
+            # Matcher via Type will take care of mismatches and Nones
+            #
+            if self.notnone is True:
+                self.match = False
+                msg = self.decorate_error_message(
+                    f"'{self._value_one(skip=skip)}' cannot be empty"
+                )
+                self.parent.raise_if(ChildrenException(msg))
+                return
+            else:
+                self.match = True
+                return
         if self.name == "decimal":
+            #
+            # we know this value is a number because Args checked it.
+            # but would a user know from looking at it that it was a float?
+            #
             if self.has_qualifier("strict"):
-                if h.find(".") == -1:
+                if f"{h}".strip().find(".") == -1:
                     self.match = False
-                    # pln = self.matcher.csvpath.line_monitor.physical_line_number
-                    self.parent.raise_if(
-                        ChildrenException(
-                            f"Argument '{val}' has 'strict' but value does not have a '.'"
-                        )
+                    n = self._value_one()
+                    msg = self.decorate_error_message(
+                        f"'{n}' has 'strict' but value does not have a '.'"
                     )
+                    self.parent.raise_if(ChildrenException(msg))
                     return
+                else:
+                    self.match = True
+            elif self.has_qualifier("weak"):
+                self.match = True
+            elif f"{h}".strip().find(".") == -1:
+                self.match = False
+                return
+            else:
+                self.match = True
         else:
-            if h.find(".") > -1:
+            if f"{h}".find(".") > -1:
                 self.match = False
                 return
         #

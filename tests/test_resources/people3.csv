@@ -3,7 +3,7 @@ firstname,  middlename,lastname, age,    date_of_birth,    height,  country, ema
 Jimmy,      C.,        Cat,      23,     2001-01-01,       5.11,    US,      jcat@fish.com
 Anne,       ,          Rat,      38,     ,                 6,       UK,      anne@rodent.io
 Sally,      M,         Gull,     62,     "May 12 1962",    5.1,     ,
-Terry,      E,         Beatle,   12,     2012-02-02,       4.10,    US,
+Terry,      E,         Beatle,   12,     2012-02-02,       4.10,    US,      jcat@fish.com
 Ali,        Ma,        Turtle,   ,       03-03-2013,       5.10,    BR,      amturtle@reptile.org
 
 

@@ -1,0 +1,1 @@
+$tests/test_resources/food.csv[9-10]

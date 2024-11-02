@@ -78,9 +78,11 @@ class DupLines(ValueProducer):
 
 class FingerPrinter:
     @classmethod
-    def _capture_line(cls, mc, name: str, skip=None) -> tuple[str, list[int]]:
+    def _capture_line(
+        cls, mc, name: str, skip=None, sibs=None
+    ) -> tuple[str, list[int]]:
         values = mc.matcher.get_variable(name, set_if_none={})
-        fingerprint = FingerPrinter._fingerprint(mc, skip=skip)
+        fingerprint = FingerPrinter._fingerprint(mc, skip=skip, sibs=sibs)
         if fingerprint not in values:
             values[fingerprint] = []
         pln = mc.matcher.csvpath.line_monitor.physical_line_number
@@ -90,8 +92,10 @@ class FingerPrinter:
         return (fingerprint, values[fingerprint])
 
     @classmethod
-    def _fingerprint(cls, mc, skip=None) -> str:
-        if len(mc.children) == 1:
+    def _fingerprint(cls, mc, skip=None, sibs=None) -> str:
+        if sibs and len(sibs) > 0:
+            fingerprint = FingerPrinter._fingerprint_for_children(sibs, skip=skip)
+        elif len(mc.children) == 1:
             if isinstance(mc.children[0], Equality):
                 siblings = mc.children[0].commas_to_list()
                 fingerprint = FingerPrinter._fingerprint_for_children(
@@ -109,7 +113,7 @@ class FingerPrinter:
     def _fingerprint_for_children(cls, sibs, skip=None) -> str:
         string = ""
         for _ in sibs:
-            string += f"{_.to_value(skip=skip)}"
+            string += f"{_ if not hasattr(_, 'to_value') else _.to_value(skip=skip)}"
         return hashlib.sha256(string.encode("utf-8")).hexdigest()
 
     @classmethod

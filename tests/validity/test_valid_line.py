@@ -7,6 +7,7 @@ from tests.save import Save
 PATH = "tests/test_resources/test.csv"
 FOOD = "tests/test_resources/food.csv"
 PEOPLE = "tests/test_resources/people.csv"
+PEOPLE3 = "tests/test_resources/people3.csv"
 
 
 class TestValidLine(unittest.TestCase):
@@ -128,8 +129,8 @@ class TestValidLine(unittest.TestCase):
                 line(
                     string("food"),
                     string("type"),
-                    nonspecific("units"),
-                    decimal.notnone("year"),
+                    blank("units"),
+                    decimal.notnone.weak("year"),
                     boolean("healthy")
                 )
             ]"""
@@ -156,7 +157,7 @@ class TestValidLine(unittest.TestCase):
                     string("food"),
                     string("type"),
                     nonspecific("units"),
-                    decimal.notnone("year"),
+                    integer.notnone("year"),
                     boolean("healthy")
                 )
                 ~ we grab the food type check and we apply it to matching.
@@ -348,3 +349,60 @@ class TestValidLine(unittest.TestCase):
         lines = path.collect()
         print(f"lines: {lines}")
         assert len(lines) == 5
+
+    def test_valid_line_wildcard5(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_valid_line_wildcard5")
+        #
+        # wildcard(4) means the wildcard itself + 3 more headers.
+        # or think of it as saying: wildcard takes 4 places,
+        # including the one where it is declared.
+        #
+        path.parse(
+            f"""
+            ${PEOPLE}[*][
+               after_blank.nocontrib() -> reset_headers(skip())
+               line.person(
+                   string.notnone("firstname", 25, 1),
+                   blank("middlename"),
+                   string.notnone("lastname", 35, 2),
+                   wildcard(5)
+               )
+               line.distinct.address(
+                   wildcard(6),
+                   string.notnone("country"),
+                   string.notnone("email")
+               )
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 5
+
+    def test_valid_line_wildcard6(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_valid_line_wildcard6")
+        path.parse(
+            f"""
+            ~ id:fails distinct ~
+            ${PEOPLE3}[*][
+               after_blank.nocontrib() -> reset_headers(skip())
+               line.person(
+                   string.notnone("firstname", 25, 1),
+                   blank("middlename"),
+                   string.notnone("lastname", 35, 2),
+                   wildcard(5)
+               )
+               ~ blows up because dup line on 5 email ~
+               line.distinct.address(
+                   wildcard(6),
+                   string.notnone("country"),
+                   string.notnone("email")
+               )
+            ]
+            """
+        )
+        with pytest.raises(MatchException):
+            path.collect()

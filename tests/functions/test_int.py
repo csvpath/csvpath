@@ -164,3 +164,55 @@ class TestFunctionsInt(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 0
+
+    def test_validity_int1(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_int1")
+        path.parse(
+            f"""${PATH}[*][
+                int.notnone(none())
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()
+
+    def test_validity_int2(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_validity_int2")
+        path.parse(
+            f""" ~id:test_validity_none2~
+                ${"tests/test_resources/test.csv"}[*][
+                    any( length( concat("a", int(random(0)))))
+                ]"""
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()
+
+    def test_validity_int3(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_int3")
+        path.parse(
+            f"""~id:validity_int3~ ${PATH}[*][
+                int.notnone("a")
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()
+
+    def test_validity_int3b(self):
+        print("")
+        path = CsvPath()
+        Save._save(path, "test_validity_int3")
+        path.parse(
+            f"""~
+                id:validity_int3
+                validation-mode: print no-raise
+            ~
+            ${PATH}[*][
+                int.notnone("a")
+                int.notnone("b")
+                and( int("c"), int("d") )
+            ]"""
+        )
+        path.fast_forward()

@@ -60,6 +60,25 @@ class ExpressionUtility:
         return True
 
     @classmethod
+    def is_number(cls, v: Any) -> bool:
+        if v is None:
+            return False
+        if v is True or v is False:
+            return False
+        if f"{v}".strip() == "":
+            return False
+        try:
+            cls.to_int(v)
+            return True
+        except Exception:
+            pass
+        try:
+            cls.to_float(v)
+            return True
+        except Exception:
+            return False
+
+    @classmethod
     def is_none(cls, v: Any) -> bool:
         if v is None:
             return True
@@ -273,7 +292,10 @@ class ExpressionUtility:
             else:
                 return True
         for act in acts:
-            if act == int:
+            if act is None:
+                if cls.is_none(a):
+                    return True
+            elif act == int:
                 try:
                     cls.to_int(a)
                     return True

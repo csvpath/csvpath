@@ -112,7 +112,7 @@ class Date(ValueProducer):
     def _from_header(self, skip=None):
         v = self._value_one(skip=skip)
         v = f"{v}".strip()
-        hv = self.matcher.get_header_value(v)
+        hv = self.matcher.get_header_value(self, v)
         if hv is None or f"{hv}".strip() == "" and self.notnone is True:
             # pln = self.matcher.csvpath.line_monitor.physical_line_number
             self.parent.raise_if(ChildrenException(f": '{v}' cannot be empty"))

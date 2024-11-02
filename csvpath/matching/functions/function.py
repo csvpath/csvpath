@@ -7,6 +7,12 @@ from ..productions.matchable import Matchable
 from ..util.exceptions import ChildrenException
 
 
+class CheckedUnset:
+    """pass on self.checked if setting self.value=None would not be clear/effective"""
+
+    pass
+
+
 class Function(Matchable):
     """base class for all functions"""
 
@@ -15,6 +21,7 @@ class Function(Matchable):
         self.matcher = matcher
         self._function_or_equality = child
         self.args = None
+        self.checked = None
         if child:
             self.add_child(child)
 
@@ -28,6 +35,7 @@ class Function(Matchable):
         self.match = None
         if self.args:
             self.args.reset()
+        self.checked = None
         super().reset()
 
     def to_value(self, *, skip=None) -> bool:
@@ -55,7 +63,7 @@ class Function(Matchable):
             # csvpath writer doesn't know anything about this.
             self.matcher.csvpath.logger.debug("We're frozen in %s", self)
             return self._noop_value()
-        if self.value is None:
+        if self.value is None and not isinstance(self.checked, CheckedUnset):
             # count() doesn't yet use args. it is grandfathered, for now.
             if self.args and not self.args.matched:
                 self.matcher.csvpath.logger.debug(
