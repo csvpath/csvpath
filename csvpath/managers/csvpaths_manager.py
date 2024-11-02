@@ -7,6 +7,9 @@ from abc import ABC, abstractmethod
 from ..util.exceptions import InputException
 from ..util.error import ErrorHandler
 
+from csvpath import CsvPath
+from csvpath.util.metadata_parser import MetadataParser
+
 
 class CsvPathsManager(ABC):
     """holds paths (the path itself, not a file name or reference) in a named set.
@@ -169,10 +172,33 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     # files_manager and let csvpaths call the shots.
     #
     def get_named_paths(self, name: str) -> List[str]:
-        if name in self.named_paths:
-            return self.named_paths[name]
-        return None
-        # raise InputException("{name} not found")
+        ret = None
+        p2 = self._paths_name_path(name)
+        if p2[1] is None and p2[0] in self.named_paths:
+            ret = self.named_paths[p2[0]]
+        elif p2[1] is not None:
+            ret = self._find_one(p2)
+        return ret
+
+    def _paths_name_path(self, pathsname) -> tuple[str, str]:
+        specificpath = None
+        i = pathsname.find("#")
+        if i > 0:
+            specificpath = pathsname[i + 1 :]
+            pathsname = pathsname[0:i]
+        return (pathsname, specificpath)
+
+    def _find_one(self, p2: tuple[str]) -> str:
+        if p2[1] is not None:
+            paths = self.get_named_paths(p2[0])
+            for path in paths:
+                c = CsvPath()
+                MetadataParser(c).extract_metadata(instance=c, csvpath=path)
+                if c.identity == p2[1]:
+                    return [path]
+        raise InputException(
+            f"Path identified as '{p2[1]}' must be in the group identitied as '{p2[0]}'"
+        )
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:
@@ -181,7 +207,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             raise InputException("{name} not found")
 
     def has_named_paths(self, name: str) -> bool:
-        return name in self.named_paths
+        return self.get_named_paths(name)
 
     def number_of_named_paths(self) -> bool:
         return len(self.named_paths)  # pragma: no cover

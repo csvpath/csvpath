@@ -9,7 +9,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ id: many two ~
+~ id: many_two ~
 
 $[*][
     print("this is line another validation message for a path")

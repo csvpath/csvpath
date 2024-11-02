@@ -206,7 +206,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.results_manager.clean_named_results(paths)
 
     def _validate_paths_and_file(self, *, pathsname, filename) -> None:
-        if pathsname not in self.paths_manager.named_paths:  # pragma: no cover
+        if not self.paths_manager.has_named_paths(pathsname):  # pragma: no cover
             keys = list(self.paths_manager.named_paths.keys())
             raise InputException(
                 f"Pathsname '{pathsname}' must be a named set of paths in {keys}"

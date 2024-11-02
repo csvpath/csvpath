@@ -37,7 +37,6 @@ class Line(MatchDecider):
             if len(s.children) == 0:
                 continue
             elif not isinstance(s.children[0], (Term, Equality)):
-                # correct structure exception
                 self.raiseChildrenException(
                     f"Unexpected {s}. line() expects only names of headers."
                 )
@@ -99,7 +98,6 @@ class Line(MatchDecider):
             me = MatchException(
                 f"Line {pln}: structure of {self.my_chain} does not match"
             )
-            # should we be hand delivering or raising? this way we don't get the full stack.
             self.my_expression.handle_error(me)
             self.match = False
         else:
@@ -113,7 +111,6 @@ class Line(MatchDecider):
             if advance == 0:
                 advance = len(self.matcher.csvpath.headers) - i
             if advance is None:
-                # pln = self.matcher.csvpath.line_monitor.physical_line_number
                 self.raiseChildrenException(
                     "Line {pln}: Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} is not correct for line"
                 )
@@ -124,7 +121,6 @@ class Line(MatchDecider):
             if isinstance(v, int):
                 advance = v
             else:
-                # pln = self.matcher.csvpath.line_monitor.physical_line_number
                 self.raiseChildrenException(
                     f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} has an unknown value"
                 )
