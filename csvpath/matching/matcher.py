@@ -183,7 +183,7 @@ class Matcher:  # pylint: disable=R0902
             return None
         return self.csvpath.headers[i]
 
-    def get_header_value(self, m, name_or_index):
+    def get_header_value(self, m, name_or_index, quiet=False):
         nori = None
         try:
             nori = ExpressionUtility.to_int(name_or_index)
@@ -194,19 +194,21 @@ class Matcher:  # pylint: disable=R0902
             )
             nori = self.header_index(name_or_index)
         if nori is None:
-            hs = self.csvpath.headers
-            msg = m.decorate_error_message(
-                f"No headers match '{name_or_index}'. Current headers are: {hs}"
-            )
-            self.csvpath.logger.error(msg)
-            m.parent.raise_if(ChildrenException(msg))
-        if nori >= len(self.line):
-            hs = self.csvpath.headers
-            msg = m.decorate_error_message(
-                f"No headers match '{name_or_index}'. Current headers are: {hs}"
-            )
-            self.csvpath.logger.error(msg)
-            m.parent.raise_if(ChildrenException(msg))
+            if quiet is False:
+                hs = self.csvpath.headers
+                msg = m.decorate_error_message(
+                    f"No headers match '{name_or_index}'. Current headers are: {hs}"
+                )
+                self.csvpath.logger.error(msg)
+                m.parent.raise_if(ChildrenException(msg))
+        elif nori >= len(self.line):
+            if quiet is False:
+                hs = self.csvpath.headers
+                msg = m.decorate_error_message(
+                    f"No headers match '{name_or_index}'. Current headers are: {hs}"
+                )
+                self.csvpath.logger.error(msg)
+                m.parent.raise_if(ChildrenException(msg))
             return None
         else:
             v = self.line[nori]

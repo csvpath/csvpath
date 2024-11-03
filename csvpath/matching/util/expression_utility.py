@@ -202,6 +202,10 @@ class ExpressionUtility:
 
     @classmethod
     def to_date(cls, v: Any) -> datetime.date:
+        if isinstance(v, datetime.datetime):
+            return v.date()
+        if isinstance(v, datetime.date):
+            return v
         if v is not None:
             try:
                 adate = dateutil.parser.parse(f"{v}")
@@ -211,13 +215,22 @@ class ExpressionUtility:
         return v
 
     @classmethod
-    def to_datetime(cls, v: Any) -> datetime.date:
+    def to_datetime(cls, v: Any) -> datetime.datetime:
+        if isinstance(v, datetime.datetime):
+            return v
         if v is not None:
             try:
                 return dateutil.parser.parse(f"{v}")
             except Exception:
                 pass
         return v
+
+    @classmethod
+    def is_date_type(cls, v) -> bool:
+        v = cls.to_date(v)
+        if isinstance(v, (datetime.date, datetime.datetime)):
+            return True
+        return False
 
     @classmethod
     def to_bool(cls, v: Any) -> bool:

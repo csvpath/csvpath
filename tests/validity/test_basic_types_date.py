@@ -9,6 +9,8 @@ from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers3.csv"
+DATES = "tests/test_resources/dates.csv"
+DATES2 = "tests/test_resources/dates2.csv"
 
 
 class TestValidBasicTypesDate(unittest.TestCase):
@@ -80,6 +82,45 @@ class TestValidBasicTypesDate(unittest.TestCase):
         with pytest.raises(MatchException):
             lines = path.collect()
             assert len(lines) == 0
+
+    def test_validity_date7(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_date7")
+        path.parse(
+            f"""~id:validity_date7~
+            ${DATES}[1][
+                date("date", "%Y-%m-%d")
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+
+    def test_validity_date8(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_date8")
+        path.parse(
+            f"""~id:validity_date7~
+            ${DATES}[1][
+                date("date")
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+
+    def test_validity_date9(self):
+        path = CsvPath()
+        Save._save(path, "test_validity_date9")
+        path.parse(
+            f"""~
+                    id:validity_date7
+                    validation-mode:no-raise
+                ~
+            ${DATES2}[8][
+                date.notnone("date")
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
 
     def test_validity_now1(self):
         path = CsvPath()
