@@ -10,6 +10,8 @@ alias as='source ./aliases.sh'
 alias pylint='poetry run pylint csvpath '
 alias clean='find . -name "*.pyc" -exec rm -f {} \;'
 alias svk='pytest -s -v -k '
+
+
 echo ''
 echo '==========================='
 echo '   pytest '

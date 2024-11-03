@@ -32,7 +32,7 @@ class ScanningLexer:
         return t
 
     def t_FILENAME(self, t):  # pylint: disable=C0103
-        r"\$[A-Z,a-z,0-9\._/\-\\#& ]*"
+        r"\$[A-Z,a-z,0-9:\._/\-\\#& ]*"
         return t
 
     def t_error(self, t):  # pylint: disable=C0116
