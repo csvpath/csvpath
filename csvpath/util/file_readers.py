@@ -19,6 +19,9 @@ class CsvDataFileReader(ABC):
                     delimiter=delimiter,
                     quotechar=quotechar,
                 )
+            elif path.startswith("s3://"):
+                # e.g. s3://csvpath-example-1/timezones.csv
+                return S3DataReader(path, delimiter=delimiter, quotechar=quotechar)
             else:
                 return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
@@ -44,6 +47,19 @@ class CsvDataReader(CsvDataFileReader):
 
     def next(self) -> list[str]:
         with open(self._path, "r", encoding="utf-8") as file:
+            reader = csv.reader(
+                file, delimiter=self._delimiter, quotechar=self._quotechar
+            )
+            for line in reader:
+                yield line
+
+
+class S3DataReader(CsvDataReader):
+    def next(self) -> list[str]:
+        from smart_open import open
+
+        print(f"self._path: {self._path}")
+        with open(uri=self._path, mode="r") as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
