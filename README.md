@@ -1,10 +1,10 @@
 
 # <img src='https://www.csvpath.org/~gitbook/image?url=https%3A%2F%2F3739708663-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Forganizations%252FMXTJeGvaEsqwNG39F37h%252Fsites%252Fsite_SPBqJ%252Ficon%252FMCSxo7k6rXWnqoPE204u%252Fcsvpath-icon.png%3Falt%3Dmedia%26token%3D28869fdd-d54e-400e-8917-b8097f935f42&width=32&dpr=2&quality=100&sign=71ca9f3e&sv=1'/> About CsvPath
 
-CsvPath defines a declarative syntax for inspecting and validating CSV files.
+CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files.
 
 CsvPath' goal is to make it easy to:
-- Analyze the content and structure of a CSV
+- Analyze the content and structure of a CSV or Excel file
 - Validate that the file matches expectations
 - Report on the content or validity
 - Create new derived CSV files
@@ -12,12 +12,12 @@ CsvPath' goal is to make it easy to:
 And do it all in an automation-friendly way.
 
 Though much simpler, it is inspired by:
-- XPath. CsvPath is to CSV files like XPath is to XML files.
-- Validation of XML using <a href='https://schematron.com/'>Schematron rules</a>
+- XPath. CsvPath is to CSV and Excel files like XPath is to XML files.
+- <a href='https://schematron.com/'>Schematron validation rules</a>
 
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. New functions are easy to create.
 
-Read more about CsvPath and see realistic CSV validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
+Read more about CsvPath and see realistic CSV and Excel validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=green&color=green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath)
 

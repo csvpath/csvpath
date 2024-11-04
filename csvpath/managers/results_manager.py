@@ -15,6 +15,14 @@ class CsvPathsResultsManager(ABC):
     CsvPaths clears the named results from the ResultsManager.
     """
 
+    #
+    # - printout lines
+    # - lines of captured data
+    # - variables
+    # - csvpath.metadata
+    # - csvpath.csvpath data
+    #
+
     @abstractmethod
     def get_variables(self, name: str) -> bool:
         """gets all the variables from all csvpaths in one dict. variables may

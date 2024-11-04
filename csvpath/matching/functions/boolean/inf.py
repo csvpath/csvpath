@@ -31,6 +31,10 @@ class In(MatchDecider):
                 v = f"{v}".strip()
                 nvs = [_.strip() for _ in v.split("|")]
                 inf += nvs
+            # elif isinstance(s, Reference) and s.is_header():
+            #
+            # do lookup here
+            #
             else:
                 # tuple would mean vars were frozen. this would not be
                 # surprising from a reference
