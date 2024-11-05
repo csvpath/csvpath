@@ -23,7 +23,7 @@ class ResultSerializer:
         runtime_data["run_index"] = result.run_index
         self._save(
             metadata=result.csvpath.metadata,
-            errors=result.errors,
+            errors=[e.to_json() for e in result.errors],
             variables=result.variables,
             lines=result.lines,
             printouts=result.get_printouts(),
@@ -62,7 +62,6 @@ class ResultSerializer:
             "metadata": metadata,
             "runtime_data": runtime_data,
         }
-        print(f"\nresult_serializer: meta: {meta}")
         run_dir = self.get_instance_dir(run_dir=run_dir, identity=identity)
         # Save the JSON files
         with open(os.path.join(run_dir, "meta.json"), "w") as f:

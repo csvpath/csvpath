@@ -79,7 +79,23 @@ class Error:
         self.json: str = None
         self.datum: Any = None
         self.filename: str = None
-        self.at: datetime = datetime.now()
+        self.at: datetime.now()
+
+    def to_json(self) -> dict:
+        ret = {
+            "line_count": self.line_count,
+            "match_count": self.match_count,
+            "scan_count": self.scan_count,
+            "error": f"{self.error}",
+            "source": f"{self.source}",
+            "message": self.message,
+            "trace": self.trace,
+            "json": self.json,
+            "datum": self.datum,
+            "filename": self.filename,
+            "at": f"{self.at}",
+        }
+        return ret
 
     def __str__(self) -> str:
         string = f"""Error

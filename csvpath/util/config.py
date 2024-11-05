@@ -120,6 +120,12 @@ class Config:
                 f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
             )
 
+    def add_to_config(self, section, key, value) -> None:
+        if not self._config.has_section(section):
+            self._config.add_section(section)
+        self._config.set(section, key, value)
+        self.save_config()
+
     def save_config(self) -> None:
         with open(self.configpath, "w") as f:
             self._config.write(f)
@@ -352,6 +358,9 @@ archive = archive
     def archive_path(self) -> str:
         if self._archive_path is None:
             self._archive_path = self._get("results", "archive")
+            if self._archive_path is None:
+                self._archive_path = "archive"
+                self.add_to_config("results", "archive", "archive")
         return self._archive_path
 
     @archive_path.setter

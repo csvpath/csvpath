@@ -156,3 +156,21 @@ class TestResultsManager(unittest.TestCase):
             run_index=1,
             run_dir="",
         )
+
+    def test_results_save_error(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.paths_manager.add_named_paths(
+            name="print_test",
+            paths=[
+                """
+                ~ validation-mode: no-raise, print
+                $[3][
+                    add( "test", none() )
+                ]"""
+            ],
+        )
+        paths.fast_forward_paths(pathsname="print_test", filename="food")
+        results = paths.results_manager.get_named_results("print_test")
+        # should not blow up because we stringify error
+        assert results
