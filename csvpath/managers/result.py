@@ -23,6 +23,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         paths_name: str,
         run_index: int,
         run_time: datetime,
+        run_dir: str,
         runtime_data: dict = None,
     ):
         self._lines: List[List[Any]] = None
@@ -39,10 +40,19 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self.lines = lines
         self.run_index = f"{run_index}"
         self._run_time = run_time
+        self._run_dir = run_dir
 
     @property
     def run_time(self) -> datetime:
         return self._run_time
+
+    @property
+    def run_dir(self) -> str:
+        return self._run_dir
+
+    @run_dir.setter
+    def run_dir(self, d: str) -> None:
+        self._run_dir = d
 
     @property
     def identity_or_index(self) -> str:

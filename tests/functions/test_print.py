@@ -142,7 +142,8 @@ class TestPrint(unittest.TestCase):
         printer = TestPrinter()
         path.set_printers([printer])
         path.parse(
-            f"""${MISMATCH}[*] [
+            f"""~ id:print-once ~
+            ${MISMATCH}[*] [
             yes()
                 print.once(
                     "Number of headers changed by $.variables.header_change..")

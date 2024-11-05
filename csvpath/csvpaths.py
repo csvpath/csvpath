@@ -233,6 +233,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Beginning collect_paths %s with %s paths", pathsname, len(paths)
         )
+        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             result = Result(
@@ -241,6 +242,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 paths_name=pathsname,
                 run_index=i,
                 run_time=self.current_run_time,
+                run_dir=crt,
             )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
@@ -297,6 +299,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             len(paths),
             filename,
         )
+        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
@@ -306,6 +309,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 paths_name=pathsname,
                 run_index=i,
                 run_time=self.current_run_time,
+                run_dir=crt,
             )
             try:
                 self.results_manager.add_named_result(result)
@@ -340,6 +344,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
+        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
         for i, path in enumerate(paths):
             if self._skip_all:
                 skip_err = "Found the skip-all signal set. skip_all() is"
@@ -365,6 +370,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 paths_name=pathsname,
                 run_index=i,
                 run_time=self.current_run_time,
+                run_dir=crt,
             )
             if self._fail_all:
                 self.logger.warning(
@@ -616,6 +622,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
+        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
         for i, csvpath in enumerate(csvpath_objects):
             try:
                 #
@@ -629,6 +636,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     lines=csvpath[1],
                     run_index=i,
                     run_time=self.current_run_time,
+                    run_dir=crt,
                 )
                 csvpath[1] = result
                 self.results_manager.add_named_result(result)

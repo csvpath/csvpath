@@ -32,6 +32,7 @@ class ResultSerializer:
             file_name=result.file_name,
             identity=result.identity_or_index,
             run_time=result.run_time,
+            run_dir=result.run_dir,
             run_index=result.run_index,
         )
 
@@ -48,6 +49,7 @@ class ResultSerializer:
         file_name: str,
         identity: str,
         run_time: datetime,
+        run_dir: str,
         run_index: int,
     ) -> None:
         """Save a single Result object to basedir/paths_name/run_time/identity_or_index."""
@@ -61,10 +63,7 @@ class ResultSerializer:
             "runtime_data": runtime_data,
         }
         print(f"\nresult_serializer: meta: {meta}")
-
-        run_dir = self._run_dir(
-            paths_name=paths_name, run_time=run_time, identity=identity
-        )
+        run_dir = self.get_instance_dir(run_dir=run_dir, identity=identity)
         # Save the JSON files
         with open(os.path.join(run_dir, "meta.json"), "w") as f:
             json.dump(meta, f, indent=2)
@@ -87,18 +86,17 @@ class ResultSerializer:
                 for _ in v:
                     f.write(f"{_}\n")
 
-    def _run_dir(self, *, paths_name, run_time, identity):
+    def get_run_dir(self, *, paths_name, run_time):
         run_dir = os.path.join(self.base_dir, paths_name)
         if not isinstance(run_time, str):
             run_time = run_time.strftime("%Y-%m-%d_%I-%M-%S")
         run_dir = os.path.join(run_dir, f"{run_time}")
-        # the path existing is expected to be uncommon in real world usage.
-        # CsvPaths are single user instances atm. a server process would
-        # namespace each CsvPaths instance to prevent conflicts. that
-        # means this kind of second-granularity problem only comes up if a
-        # csvpath wants to write a copy of the same csvpath results twice
-        # in the same second. it happens in unit tests, but in practice
-        # less likely.
+        # the path existing for a different named-paths run in progress
+        # or having completed less than 1000ms ago is expected to be
+        # uncommon in real world usage. CsvPaths are single user instances
+        # atm. a server process would namespace each CsvPaths instance
+        # to prevent conflicts. if there is a conflict the two runs would
+        # overwrite each other. this prevents that.
         if os.path.exists(run_dir):
             i = 0
             adir = f"{run_dir}.{i}"
@@ -106,6 +104,9 @@ class ResultSerializer:
                 i += 1
                 adir = f"{run_dir}.{i}"
             run_dir = adir
+        return run_dir
+
+    def get_instance_dir(self, run_dir, identity) -> str:
         run_dir = os.path.join(run_dir, identity)
         os.makedirs(run_dir, exist_ok=True)
         return run_dir

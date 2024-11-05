@@ -20,6 +20,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
+            run_dir="",
         )
         results = [result]
 
@@ -40,6 +41,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
+            run_dir="",
         )
 
         rm.add_named_result(more_result)
@@ -66,6 +68,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
+            run_dir="",
         )
         results = [result]
         rs = {}
@@ -89,6 +92,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
+            run_dir="",
         )
         rm.add_named_result(more_result)
 
@@ -150,4 +154,5 @@ class TestResultsManager(unittest.TestCase):
             identity=identity,
             run_time=datetime.now(),
             run_index=1,
+            run_dir="",
         )

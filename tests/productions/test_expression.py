@@ -52,6 +52,7 @@ class TestExpressions(unittest.TestCase):
             paths_name="......",
             run_index=1,
             run_time=None,
+            run_dir="",
         )
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()

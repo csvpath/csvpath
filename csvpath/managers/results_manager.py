@@ -208,6 +208,11 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
 
+    def get_run_time_str(self, name, run_time) -> str:
+        rs = ResultSerializer(self._csvpaths.config.archive_path)
+        t = rs.get_run_dir(paths_name=name, run_time=run_time)
+        return t
+
     def remove_named_results(self, name: str) -> None:
         if name in self.named_results:
             del self.named_results[name]

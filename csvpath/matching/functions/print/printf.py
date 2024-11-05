@@ -16,9 +16,17 @@ class Print(SideEffect):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term], actuals=[str, self.args.EMPTY_STRING])
+        a.arg(name="print this", types=[Term], actuals=[str, self.args.EMPTY_STRING])
         a.arg(
-            types=[None, Function, Equality, Term],
+            name="print to specific printer",
+            types=[None, Term],
+            actuals=[str, self.args.EMPTY_STRING],
+        )
+        a = self.args.argset(2)
+        a.arg(name="print this", types=[Term], actuals=[str, self.args.EMPTY_STRING])
+        a.arg(
+            name="run matches",
+            types=[None, Function, Equality],
             actuals=[Any],
         )
         self.args.validate(self.siblings_or_equality())
