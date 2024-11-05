@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 import csv
 import traceback
+from datetime import datetime
 from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import Config
 from .util.log_utility import LogUtility
@@ -146,6 +147,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._fail_all = False
         self._skip_all = False
         self._advance_all = 0
+        self._current_run_time = None
+
+    @property
+    def current_run_time(self) -> datetime:
+        if self._current_run_time is None:
+            self._current_run_time = datetime.now()
+        return self._current_run_time
 
     def clear_run_coordination(self) -> None:
         """run coordination is the set of signals that csvpaths send to affect
@@ -154,6 +162,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._fail_all = False
         self._skip_all = False
         self._advance_all = 0
+        self._current_run_time = None
         self.logger.debug("Cleared run coordination")
 
     def csvpath(self) -> CsvPath:
@@ -224,9 +233,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Beginning collect_paths %s with %s paths", pathsname, len(paths)
         )
-        for path in paths:
+        for i, path in enumerate(paths):
             csvpath = self.csvpath()
-            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
+            result = Result(
+                csvpath=csvpath,
+                file_name=filename,
+                paths_name=pathsname,
+                run_index=i,
+                run_time=self.current_run_time,
+            )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
             try:
@@ -249,7 +264,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
+                self.results_manager.save(result)
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+            self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
@@ -283,7 +300,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
-            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
+            result = Result(
+                csvpath=csvpath,
+                file_name=filename,
+                paths_name=pathsname,
+                run_index=i,
+                run_time=self.current_run_time,
+            )
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file)
@@ -299,7 +322,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
+                self.results_manager.save(result)
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+            self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
@@ -315,7 +340,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
-        for path in paths:
+        for i, path in enumerate(paths):
             if self._skip_all:
                 skip_err = "Found the skip-all signal set. skip_all() is"
                 skip_err = f"{skip_err} only for breadth-first runs using the"
@@ -334,7 +359,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 advance_err = f"{advance_err} serial run like this one."
                 self.logger.error(advance_err)
             csvpath = self.csvpath()
-            result = Result(csvpath=csvpath, file_name=filename, paths_name=pathsname)
+            result = Result(
+                csvpath=csvpath,
+                file_name=filename,
+                paths_name=pathsname,
+                run_index=i,
+                run_time=self.current_run_time,
+            )
             if self._fail_all:
                 self.logger.warning(
                     "Fail-all set. Failing all remaining CsvPath instances in the run."
@@ -351,7 +382,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
+                self.results_manager.save(result)
                 ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+            self.results_manager.save(result)
         self.clear_run_coordination()
 
     # =============== breadth first processing ================
@@ -541,6 +574,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
+                for r in csvpath_objects:
+                    r = r[1]
+                    self.results_manager.save(r)
                 ErrorHandler(
                     csvpaths=self, error_collector=self.current_matcher
                 ).handle_error(ex)
@@ -553,6 +589,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 yield line
             if sum(stopped_count) == len(csvpath_objects):
                 break
+        for r in csvpath_objects:
+            r = r[1]
+            self.results_manager.save(r)
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
@@ -577,7 +616,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
-        for csvpath in csvpath_objects:
+        for i, csvpath in enumerate(csvpath_objects):
             try:
                 #
                 # Result will set itself into its CsvPath as error collector
@@ -588,6 +627,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     file_name=filename,
                     paths_name=pathsname,
                     lines=csvpath[1],
+                    run_index=i,
+                    run_time=self.current_run_time,
                 )
                 csvpath[1] = result
                 self.results_manager.add_named_result(result)

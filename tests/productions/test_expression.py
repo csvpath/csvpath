@@ -46,7 +46,13 @@ class TestExpressions(unittest.TestCase):
         path.config.csvpath_errors_policy = ["raise", "stop", "fail", "collect"]
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         matcher = Matcher(csvpath=path, data="[yes()]")
-        results = Result(csvpath=path, file_name="...", paths_name="......")
+        results = Result(
+            csvpath=path,
+            file_name="...",
+            paths_name="......",
+            run_index=1,
+            run_time=None,
+        )
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()
         print(f"test_expression_errors1: de: {de}")

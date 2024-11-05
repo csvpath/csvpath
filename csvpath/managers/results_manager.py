@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
-from ..util.exceptions import InputException
+from ..util.exceptions import InputException, CsvPathsException
+from .result_serializer import ResultSerializer
 
 
 class CsvPathsResultsManager(ABC):
@@ -199,6 +200,14 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         for r in results:
             self.add_named_result(r)
 
+    def save(self, result: Result) -> None:
+        if self._csvpaths is None:
+            raise CsvPathsException(
+                "Cannot save result because there is no CsvPaths instance"
+            )
+        rs = ResultSerializer(self._csvpaths.config.archive_path)
+        rs.save_result(result)
+
     def remove_named_results(self, name: str) -> None:
         if name in self.named_results:
             del self.named_results[name]
@@ -218,6 +227,9 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
     def clean_named_results(self, name: str) -> None:
         if name in self.named_results:
             self.remove_named_results(name)
+            #
+            # clean from filesystem too?
+            #
 
     def get_named_results(self, name) -> List[List[Any]]:
         if name in self.named_results:

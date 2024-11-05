@@ -11,7 +11,7 @@ from csvpath.matching.util.lark_print_parser import (
     LarkPrintParser,
     LarkPrintTransformer,
 )
-from csvpath.matching.util.print_parser import PrintParserException
+from csvpath.matching.util.exceptions import PrintParserException
 from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"

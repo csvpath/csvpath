@@ -5,6 +5,7 @@ import csv
 import time
 import os
 import hashlib
+from datetime import datetime
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
@@ -286,6 +287,16 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._ecoms = ErrorCommsManager(csvpath=self)
         self._function_times_match = {}
         self._function_times_value = {}
+        self._created_at = datetime.now()
+        self._run_started_at = None
+
+    @property
+    def created_at(self) -> datetime:
+        return self._created_at
+
+    @property
+    def run_started_at(self) -> datetime:
+        return self._run_started_at
 
     @property
     def run_mode(self) -> bool:
@@ -1071,6 +1082,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if self.matcher:
             last_line = self.matcher.line
         self.line_monitor.next_line(last_line=last_line, data=line)
+        if self.line_monitor.physical_line_number == 0:
+            self._run_started_at = datetime.now()
 
     def _consider_line(self, line):  # pylint: disable=R0912, R0911
         # re: R0912: this method has already been refactored but maybe

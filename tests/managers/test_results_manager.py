@@ -1,7 +1,9 @@
 import unittest
+from datetime import datetime
 from csvpath import CsvPaths
 from csvpath.managers.results_manager import ResultsManager
 from csvpath.managers.result import Result
+from csvpath.managers.result_serializer import ResultSerializer
 
 
 class TestResultsManager(unittest.TestCase):
@@ -12,7 +14,12 @@ class TestResultsManager(unittest.TestCase):
         filename = "food"
         path = paths.csvpath()
         result = Result(
-            lines=[], csvpath=path, file_name=filename, paths_name=pathsname
+            lines=[],
+            csvpath=path,
+            file_name=filename,
+            paths_name=pathsname,
+            run_index=1,
+            run_time=None,
         )
         results = [result]
 
@@ -27,7 +34,12 @@ class TestResultsManager(unittest.TestCase):
         assert len(some) == 1
 
         more_result = Result(
-            lines=[], csvpath=path, file_name=filename, paths_name=pathsname
+            lines=[],
+            csvpath=path,
+            file_name=filename,
+            paths_name=pathsname,
+            run_index=1,
+            run_time=None,
         )
 
         rm.add_named_result(more_result)
@@ -48,7 +60,12 @@ class TestResultsManager(unittest.TestCase):
         path = paths.csvpath()
         # create a result as if we'd run paths against file
         result = Result(
-            lines=[], csvpath=path, file_name=filename, paths_name=pathsname
+            lines=[],
+            csvpath=path,
+            file_name=filename,
+            paths_name=pathsname,
+            run_index=1,
+            run_time=None,
         )
         results = [result]
         rs = {}
@@ -66,7 +83,12 @@ class TestResultsManager(unittest.TestCase):
         # create new results for new file
         filename = "drink"
         more_result = Result(
-            lines=[], csvpath=path, file_name=filename, paths_name=pathsname
+            lines=[],
+            csvpath=path,
+            file_name=filename,
+            paths_name=pathsname,
+            run_index=1,
+            run_time=None,
         )
         rm.add_named_result(more_result)
 
@@ -105,3 +127,27 @@ class TestResultsManager(unittest.TestCase):
         ps = results[0].get_printout_by_name("foo-bar")
         assert len(ps) == 1
         assert ps[0].find("my other msg") > -1
+
+    def test_results_save_1(self):
+        rs = ResultSerializer("tests/test_resources/serialized")
+        meta = {"meta": "hi"}
+        run = {}
+        errors = [{}]
+        variables = {"my_var": 23}
+        lines = [["test", "test2", "test3"], ["test4", "test5", "test6"]]
+        printouts = {"default": ["this is an output", "also an output"]}
+        paths_name = "test_namedpaths_name"
+        identity = "test_identity"
+        rs._save(
+            metadata=meta,
+            runtime_data=run,
+            errors=errors,
+            variables=variables,
+            lines=lines,
+            printouts=printouts,
+            paths_name=paths_name,
+            file_name="my.csv",
+            identity=identity,
+            run_time=datetime.now(),
+            run_index=1,
+        )

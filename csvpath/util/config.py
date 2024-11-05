@@ -73,6 +73,7 @@ class Config:
         self._log_file = None
         self._log_files_to_keep = None
         self._log_file_size = None
+        self._archive_path = None
         self._config = RawConfigParser()
         self.log_file_handler = None
         self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
@@ -156,6 +157,8 @@ path =
 imports =
 [cache]
 path =
+[results]
+archive = archive
             """
             file.write(c)
             print(f"Created a default config file at {directory} with name {name}.")
@@ -344,6 +347,16 @@ path =
     @cache_dir_path.setter
     def cache_dir_path(self, p) -> None:
         self._cache_dir_path = p
+
+    @property
+    def archive_path(self) -> str:
+        if self._archive_path is None:
+            self._archive_path = self._get("results", "archive")
+        return self._archive_path
+
+    @archive_path.setter
+    def archive_path(self, p) -> None:
+        self._archive_path = p
 
     @property
     def function_imports(self) -> str:

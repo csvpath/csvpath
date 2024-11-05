@@ -1,9 +1,6 @@
 from typing import Any, List, Dict
 from ..util.lark_print_parser import LarkPrintParser, LarkPrintTransformer
-
-
-class PrintParserException(Exception):
-    pass
+from .runtime_data_collector import RuntimeDataCollector
 
 
 class PrintParser:
@@ -215,6 +212,9 @@ class PrintParser:
     def _get_runtime_data_from_local(
         self, csvpath, runtime: Dict[str, Any], local=False
     ) -> None:
+        RuntimeDataCollector.collect(csvpath, runtime, local)
+
+        """
         identity = csvpath.identity
         #
         # Common to all csvpaths in results
@@ -277,6 +277,7 @@ class PrintParser:
         self._set(runtime, identity, "headers", csvpath.headers, local, False)
         self._set(runtime, identity, "valid", csvpath.is_valid, local, False)
         self._set(runtime, identity, "stopped", csvpath.stopped, local, False)
+        self._set(runtime, identity, "run_started_at", csvpath.run_started_at, local, False)
 
     def _set(
         self, runtime, identity: str, name: str, value, local: bool, addative: False
@@ -293,3 +294,5 @@ class PrintParser:
                 if name not in runtime:
                     runtime[name] = {}
                 runtime[name][identity] = value
+
+        """

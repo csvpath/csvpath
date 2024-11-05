@@ -25,3 +25,7 @@ class DataException(MatchException):
 
     def __str__(self):
         return f"""{self.__class__}"""
+
+
+class PrintParserException(Exception):
+    pass

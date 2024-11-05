@@ -38,7 +38,7 @@ class ErrorCommsManager:
         if csvpath:
             self._policy = csvpath.config.csvpath_errors_policy
         elif csvpaths:
-            self._policy = csvpaths.config.csvpath_errors_policy
+            self._policy = csvpaths.config.csvpaths_errors_policy
         else:
             raise ErrorHandlingException("Must have a CsvPath or CsvPaths instance")
 
