@@ -1,17 +1,46 @@
 # pylint: disable=C0114
 import csv
+import importlib
 from abc import ABC, abstractmethod
 import pylightxl as xl
 from .exceptions import InputException
 
 
-class CsvDataFileReader(ABC):
+class DataFileReader(ABC):
+    DATA = {}
+
+    @classmethod
+    def register_data(cls, *, path, filelike) -> None:
+        DataFileReader.DATA[path] = filelike
+
+    @classmethod
+    def deregister_data(cls, path) -> None:
+        del DataFileReader.DATA[path]
+
+    def __init__(self) -> None:
+        self._path = None
+
+    @property
+    def path(self) -> str:
+        return self._path
+
     def __new__(cls, path: str, *, sheet=None, delimiter=None, quotechar=None):
-        if cls == CsvDataFileReader:
+        if cls == DataFileReader:
             sheet = None
             if path.find("#") > -1:
                 sheet = path[path.find("#") + 1 :]
                 path = path[0 : path.find("#")]
+            #
+            # do we have a file-like thing pre-registered?
+            #
+            thing = DataFileReader.DATA.get(path)
+            if thing is not None and thing.__class__.__name__.endswith("DataFrame"):
+                if thing is None:
+                    raise Exception(f"No dataframe for {path}")
+                module = importlib.import_module("csvpath.util.pandas_data_reader")
+                class_ = getattr(module, "PandasDataReader")
+                instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                return instance
             if path.endswith("xlsx"):
                 return XlsxDataReader(
                     path,
@@ -19,11 +48,14 @@ class CsvDataFileReader(ABC):
                     delimiter=delimiter,
                     quotechar=quotechar,
                 )
-            elif path.startswith("s3://"):
+            if path.startswith("s3://"):
                 # e.g. s3://csvpath-example-1/timezones.csv
-                return S3DataReader(path, delimiter=delimiter, quotechar=quotechar)
-            else:
-                return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
+                module = importlib.import_module("csvpath.util.s3_data_reader")
+                class_ = getattr(module, "S3DataReader")
+                instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                return instance
+                # return S3DataReader(path, delimiter=delimiter, quotechar=quotechar)
+            return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
             instance = super().__new__(cls)
             return instance
@@ -33,7 +65,7 @@ class CsvDataFileReader(ABC):
         pass
 
 
-class CsvDataReader(CsvDataFileReader):
+class CsvDataReader(DataFileReader):
     def __init__(
         self, path: str, *, sheet=None, delimiter=None, quotechar=None
     ) -> None:
@@ -54,6 +86,7 @@ class CsvDataReader(CsvDataFileReader):
                 yield line
 
 
+"""
 class S3DataReader(CsvDataReader):
     def next(self) -> list[str]:
         from smart_open import open
@@ -65,9 +98,10 @@ class S3DataReader(CsvDataReader):
             )
             for line in reader:
                 yield line
+"""
 
 
-class XlsxDataReader(CsvDataFileReader):
+class XlsxDataReader(DataFileReader):
     def __init__(
         self, path: str, *, sheet=None, delimiter=None, quotechar=None
     ) -> None:

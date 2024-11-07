@@ -27,7 +27,7 @@ from .util.exceptions import (
 )
 from .matching.util.exceptions import MatchException
 from csvpath.util.printer import Printer
-from csvpath.util.file_readers import CsvDataFileReader
+from csvpath.util.file_readers import DataFileReader
 
 
 class CsvPathPublic(ABC):
@@ -35,7 +35,10 @@ class CsvPathPublic(ABC):
 
     @abstractmethod
     def parse(self, csvpath):  # pragma: no cover
-        """Reads a csvpath prepares to match against CSV file lines"""
+        """Reads a csvpath prepares to match against CSV file lines. This
+        method is an alternative to simply passing the csvpath string to the
+        collect, next, or fast_forward methods. You don't do both.
+        """
 
     @abstractmethod
     def parse_named_path(
@@ -55,24 +58,31 @@ class CsvPathPublic(ABC):
         using the stop() function"""
 
     @abstractmethod
-    def collect(self, nexts: int = -1) -> List[List[Any]]:  # pragma: no cover
-        """Returns the lines of a CSV file that match the csvpath"""
+    def collect(
+        self, csvpath: str = None, *, nexts: int = -1
+    ) -> List[List[Any]]:  # pragma: no cover
+        """Returns the lines of a CSV file that match the csvpath. Pass
+        nexts to limit a run to collecting only N lines; the default
+        is -1 for collecting all. If you do not pass the csvpath
+        string here you must first use the parse method."""
 
     @abstractmethod
     def advance(self, ff: int = -1) -> None:  # pragma: no cover
         """Advances the iteration by ff rows. -1 means to the end of the file."""
 
     @abstractmethod
-    def fast_forward(self) -> None:  # pragma: no cover
+    def fast_forward(self, csvpath: str = None) -> None:  # pragma: no cover
         """Scans to the end of the CSV file. All scanned rows will be
         considered for match and variables and side effects will happen,
         but no rows will be returned or stored. -1 means to the end of
-        the file."""
+        the file. If you do not pass the csvpath string here you must first
+        use the parse method."""
 
     @abstractmethod
-    def next(self):  # pragma: no cover
+    def next(self, csvpath: str = None):  # pragma: no cover
         """A generator function that steps through the CSV file returning
-        matching rows"""
+        matching rows. If you do not pass the csvpath string here you must
+        first use the parse method."""
 
 
 class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902, R0904
@@ -938,9 +948,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     # collect(), fast_forward(), and next() are the central methods of CsvPath.
     #
     #
-    def collect(self, nexts: int = -1) -> List[List[Any]]:
+    def collect(self, csvpath: str = None, *, nexts: int = -1) -> List[List[Any]]:
         """Runs the csvpath forward and returns the matching lines seen as
         a list of lists"""
+        if self.scanner is None and csvpath is not None:
+            self.parse(csvpath)
         if nexts < -1:
             raise ProcessingException(
                 "Input must be >= -1. -1 means collect to the end of the file."
@@ -957,17 +969,21 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 break
         return lines
 
-    def fast_forward(self) -> None:
+    def fast_forward(self, csvpath=None) -> None:
         """Runs the path for all rows of the file. Variables are collected
         and side effects like print happen. No lines are collected.
         """
+        if self.scanner is None and csvpath is not None:
+            self.parse(csvpath)
         for _ in self.next():
             pass
 
-    def next(self):
+    def next(self, csvpath=None):
         """Iterates over the lines in the CSV file returning those that match
         the csvpath. collect() and fast_forward() call next() behind the scenes.
         """
+        if self.scanner is None and csvpath is not None:
+            self.parse(csvpath)
         start = time.time()
         if self.run_mode is True:
             for line in self._next_line():
@@ -1018,14 +1034,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         if self.scanner.filename is None:
             raise FileException("There is no filename")
-        """
-        with open(self.scanner.filename, "r", encoding="utf-8") as file:
-            reader = csv.reader(
-                file, delimiter=self.delimiter, quotechar=self.quotechar
-            )
-            for line in reader:
-        """
-        reader = CsvDataFileReader(
+        reader = DataFileReader(
             self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
         )
         for line in reader.next():

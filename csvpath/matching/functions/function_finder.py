@@ -43,6 +43,10 @@ class FunctionFinder:
             # instantiate the classes
             # function_name module classname
             cs = s.split(" ")
+            #
+            # lines in config are like:
+            #   from module import class as function-name
+            #
             if len(cs) == 6 and cs[0] == "from" and cs[2] == "import" and cs[4] == "as":
                 module = importlib.import_module(cs[1])
                 class_ = getattr(module, cs[3])

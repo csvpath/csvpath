@@ -1,7 +1,7 @@
 
 # <img src='https://www.csvpath.org/~gitbook/image?url=https%3A%2F%2F3739708663-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Forganizations%252FMXTJeGvaEsqwNG39F37h%252Fsites%252Fsite_SPBqJ%252Ficon%252FMCSxo7k6rXWnqoPE204u%252Fcsvpath-icon.png%3Falt%3Dmedia%26token%3D28869fdd-d54e-400e-8917-b8097f935f42&width=32&dpr=2&quality=100&sign=71ca9f3e&sv=1'/> About CsvPath
 
-CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files.
+CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files and other tabular data.
 
 CsvPath' goal is to make it easy to:
 - Analyze the content and structure of a CSV or Excel file
@@ -56,9 +56,36 @@ CSV files are everywhere!
 
 A surprisingly large number of companies depend on CSV processing for significant amounts of revenue. Research organizations are awash in CSV. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use day to day uses CSV for sharing. CSV is the lowest of common dominators. Many CSVs are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
 
-CsvPath is first and foremost a validation language. It is intended to describe CSV files in simple declarative rules that indicate if a file is as expected. CsvPath can also extract data, create reports, and in other ways have useful side effects.
+CsvPath is first and foremost a validation language. It describes tabular data in simple declarative rules that define what valid means for that data. CsvPath can also extract data, create reports, and do other useful things.
 
 CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library, not a system, so it relies on being easy to integrate with other DataOps tools.
+
+
+# Install
+<a name="install"></a>
+
+<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. Install with
+```
+    pip install csvpath
+```
+
+CsvPath has two optional dependencies:
+
+- <a target='_blank' href='https://pypi.org/project/pandas/'>Pandas</a>
+- <a target='_blank' href='https://pypi.org/project/smart-open/'>Smart-open</a>
+
+Pandas data frames can be used as a data source, much like Excel or CSV files. Install CsvPath with the Pandas option:
+```
+    pip install csvpath[pandas]
+```
+
+Smart-open is an option for loading data files directly from S3. Install the Smart Open extra with:
+```
+    pip install csvpath[smart-open]
+```
+
+Both of these optional dependencies can make it harder to use CsvPath in certain specific use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capabilities, they are easy to install, but if you don't CsvPath is lighter weight without.
+
 
 # Description
 <a name="description"></a>

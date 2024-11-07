@@ -11,25 +11,23 @@ class TestCsvPath(unittest.TestCase):
     def test_csvpath_logical_or1(self):
         path = CsvPath()
         path.AND = False
-        path.parse(
-            f"""${PATH}[*][
-            #firstname == "Ants"
-            #firstname == "Slug"
+        c = f"""
+            ${PATH}[*][
+               #firstname == "Ants"
+               #firstname == "Slug"
         ]"""
-        )
-        lines = path.collect()
+        lines = path.collect(c)
         assert len(lines) == 2
 
     def test_csvpath_logical_or2(self):
         path = CsvPath()
         path.AND = False
-        path.parse(
+        lines = path.collect(
             f"""${PATH}[*][
             mod(count_lines(), 2) == 0
             mod(count_lines(), 3) == 0
         ]"""
         )
-        lines = path.collect()
         assert len(lines) == 6
 
     def test_csvpath_logical_or3(self):

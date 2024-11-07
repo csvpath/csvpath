@@ -3,7 +3,7 @@ import time
 import os
 from typing import List, Any
 from csvpath.util.line_monitor import LineMonitor
-from .file_readers import CsvDataFileReader
+from .file_readers import DataFileReader
 
 
 class LineCounter:
@@ -23,7 +23,7 @@ class LineCounter:
         start = time.time()
         if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
             lm.reset()
-            reader = CsvDataFileReader(
+            reader = DataFileReader(
                 path,
                 delimiter=self.csvpaths.delimiter,
                 quotechar=self.csvpaths.quotechar,

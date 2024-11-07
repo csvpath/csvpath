@@ -10,7 +10,7 @@ from ..util.line_counter import LineCounter
 from ..util.line_monitor import LineMonitor
 from ..util.error import ErrorHandler
 from ..util.cache import Cache
-from ..util.file_readers import CsvDataFileReader
+from ..util.file_readers import DataFileReader
 
 
 class CsvPathsFileManager(ABC):
@@ -143,13 +143,13 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
             return None
         return self.named_files[name]
 
-    def get_named_file_reader(self, name: str) -> CsvDataFileReader:
+    def get_named_file_reader(self, name: str) -> DataFileReader:
         path = self.get_named_file(name)
         return FileManager.get_reader(path)
 
     @classmethod
-    def get_reader(cls, path: str, delimiter=None, quotechar=None) -> CsvDataFileReader:
-        return CsvDataFileReader(path, delimiter=delimiter, quotechar=quotechar)
+    def get_reader(cls, path: str, delimiter=None, quotechar=None) -> DataFileReader:
+        return DataFileReader(path, delimiter=delimiter, quotechar=quotechar)
 
     def remove_named_file(self, name: str) -> None:
         if name in self.named_files:
