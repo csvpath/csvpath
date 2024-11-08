@@ -27,6 +27,7 @@ If you need help, use the <a href='https://www.csvpath.org/getting-started/get-h
 # Contents
 
 - [Motivation](#motivation)
+- [Install](#install)
 - [High-level Description](#description)
 - [Running CsvPath](#running)
    - [Validation](#validating)
@@ -61,8 +62,8 @@ CsvPath is first and foremost a validation language. It describes tabular data i
 CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library, not a system, so it relies on being easy to integrate with other DataOps tools.
 
 
-# Install
 <a name="install"></a>
+# Install
 
 <a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. Install with
 ```
@@ -143,26 +144,25 @@ Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few
 ### CsvPath
 (<a href='https://github.com/csvpath/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
 The CsvPath class is the basic entry point for running csvpaths.
-|method                      |function                                                        |
-|----------------------------|----------------------------------------------------------------|
-| parse(csvpath)             | applies a csvpath                                              |
-| next()                     | iterates over matched rows returning each matched row as a list|
-| fast_forward()             | iterates over the file collecting variables and side effects   |
-| advance(n)                 | skips forward n rows from within a `for row in path.next()` loop|
-| collect(n)                 | processes n rows and collects the lines that matched as lists  |
+|method                      |function                                                         |
+|----------------------------|-----------------------------------------------------------------|
+| next()                     | iterates over matched rows returning each matched row as a list |
+| fast_forward()             | iterates over the file collecting variables and side effects    |
+| advance()                  | skips forward n rows from within a `for row in path.next()` loop|
+| collect()                  | processes n rows and collects the lines that matched as lists   |
 
 ### CsvPaths
 (<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpaths.py'>code</a>)
 The CsvPaths class helps you manage validations of multiple files and/or multiple csvpaths. It coordinates the work of multiple CsvPath instances.
-|method                |function                                                         |
-|----------------------|-----------------------------------------------------------------|
-| csvpath()            | gets a CsvPath object that knows all the file names available   |
-| collect_paths()      | Same as CsvPath.collect() but for all paths sequentially        |
-| fast_forward_paths() | Same as CsvPath.fast_forward() but for all paths sequentially   |
-| next_paths()         | Same as CsvPath.next() but for all paths sequentially           |
-| collect_by_line()    | Same as CsvPath.collect() but for all paths breadth first       |
-| fast_forward_by_line()| Same as CsvPath.fast_forward() but for all paths breadth first |
-| next_by_line()       | Same as CsvPath.next() but for all paths breadth first          |
+|method                  |function                                                         |
+|------------------------|-----------------------------------------------------------------|
+| csvpath()              | gets a CsvPath object that knows all the file names available   |
+| collect_paths()        | Same as CsvPath.collect() but for all paths sequentially        |
+| fast_forward_paths()   | Same as CsvPath.fast_forward() but for all paths sequentially   |
+| next_paths()           | Same as CsvPath.next() but for all paths sequentially           |
+| collect_by_line()      | Same as CsvPath.collect() but for all paths breadth first       |
+| fast_forward_by_line() | Same as CsvPath.fast_forward() but for all paths breadth first  |
+| next_by_line()         | Same as CsvPath.next() but for all paths breadth first          |
 
 To be clear, the purpose of `CsvPaths` is to apply multiple csvpaths per CSV file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
 
@@ -298,9 +298,9 @@ The match part is also bracketed. Matches have space separated components or "va
 ## Term
 A string, number, or regular expression value.
 
-|Returns | Matches | Examples      |
-|--------|---------|---------------|
-|A value | Always true | `"a value"` |
+|Returns | Matches     | Examples        |
+|--------|-------------|-----------------|
+|A value | Always true | `"a value"`     |
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/terms.md'>Read about terms here</a>.
 
@@ -308,9 +308,9 @@ A string, number, or regular expression value.
 ## Function
 A composable unit of functionality called once for every row scanned.
 
-|Returns | Matches | Examples      |
-|--------|---------|---------------|
-|Calculated | Calculated | `count()` |
+|Returns    | Matches    | Examples      |
+|-----------|------------|---------------|
+|Calculated | Calculated | `count()`     |
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>Read about functions here</a>.
 

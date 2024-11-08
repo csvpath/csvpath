@@ -4,7 +4,7 @@
      validation-mode: no-raise, print ~
 $[1*][
 
-~ VERY BAD LATENCY ABOVE HERE! ~
+~ LATENCY ABOVE HERE ~
 
     ~ Check for unique license numbers ~
 ~

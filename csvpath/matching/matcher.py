@@ -335,6 +335,7 @@ class Matcher:  # pylint: disable=R0902
             else:
                 if ret is True:
                     failed = False
+
         #
         # here we could be set to do an OR, not an AND.
         # we would do that only in the case that the answer was False. if so, we

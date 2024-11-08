@@ -41,6 +41,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self.run_index = f"{run_index}"
         self._run_time = run_time
         self._run_dir = run_dir
+        self._unmatched = None
 
     @property
     def run_time(self) -> datetime:
@@ -110,6 +111,14 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         if self._lines is None:
             self._lines = []  # pragma: no cover
         return len(self._lines)
+
+    @property
+    def unmatched(self) -> list[list[Any]]:
+        return self._unmatched
+
+    @unmatched.setter
+    def unmatched(self, lines: list[list[Any]]) -> None:
+        self._unmatched = lines
 
     # ==========================
 
@@ -215,6 +224,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
             endline = self.csvpath.line_monitor.physical_end_line_number
         except Exception:
             pass
+        endline = endline + 1
         return f"""Result
                    file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
                    name of paths:{self.paths_name};
@@ -224,6 +234,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
                    last line processed:{lastline};
                    total file lines:{endline};
                    matches:{self.csvpath.match_count};
-                   lines captured:{len(self.lines) if self.lines else 0};
+                   lines matched:{len(self.lines) if self.lines else 0};
+                   lines unmatched:{len(self.unmatched) if self.unmatched else 0};
                    print statements:{self.print_statements_count()};
                    errors:{len(self.errors)}"""

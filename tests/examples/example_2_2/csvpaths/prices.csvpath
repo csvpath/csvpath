@@ -1,6 +1,10 @@
 ---- CSVPATH ----
 
-~ Check the prices ID: prices ~
+~
+    Check the prices
+    id: prices
+    unmatched-mode: keep
+~
 
 $[*][
     import("top_matter_import")
@@ -9,3 +13,5 @@ $[*][
         print("Line $.csvpath.count_lines: bad price $.headers.'a price' ", fail())
 
 ]
+
+

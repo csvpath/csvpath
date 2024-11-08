@@ -34,6 +34,7 @@ class ResultSerializer:
             run_time=result.run_time,
             run_dir=result.run_dir,
             run_index=result.run_index,
+            unmatched=result.unmatched,
         )
 
     def _save(
@@ -51,6 +52,7 @@ class ResultSerializer:
         run_time: datetime,
         run_dir: str,
         run_index: int,
+        unmatched: list[Listdata],
     ) -> None:
         """Save a single Result object to basedir/paths_name/run_time/identity_or_index."""
         meta = {
@@ -77,6 +79,10 @@ class ResultSerializer:
         with open(os.path.join(run_dir, "data.csv"), "w") as f:
             writer = csv.writer(f)
             writer.writerows(lines)
+        if unmatched is not None and len(unmatched) > 0:
+            with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
+                writer = csv.writer(f)
+                writer.writerows(unmatched)
 
         # Save the printout lines
         with open(os.path.join(run_dir, "printouts.txt"), "w") as f:

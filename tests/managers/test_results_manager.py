@@ -155,6 +155,7 @@ class TestResultsManager(unittest.TestCase):
             run_time=datetime.now(),
             run_index=1,
             run_dir="",
+            unmatched=[],
         )
 
     def test_results_save_error(self):

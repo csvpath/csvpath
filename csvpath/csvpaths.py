@@ -263,11 +263,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                         csvpath.match,
                     )
                 result.lines = lines
+                result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 self.results_manager.save(result)
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    csvpaths=self, csvpath=csvpath, error_collector=result
+                ).handle_error(ex)
             self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
@@ -327,7 +330,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 self.results_manager.save(result)
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    csvpaths=self, csvpath=csvpath, error_collector=result
+                ).handle_error(ex)
             self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
@@ -384,12 +389,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     line.append(result)
                     if collect:
                         result.append(line)
+                        result.unmatched = csvpath.unmatched
                     yield line
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 self.results_manager.save(result)
-                ErrorHandler(csvpaths=self, error_collector=result).handle_error(ex)
+                ErrorHandler(
+                    csvpaths=self, csvpath=csvpath, error_collector=result
+                ).handle_error(ex)
             self.results_manager.save(result)
         self.clear_run_coordination()
 
@@ -480,15 +488,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # but we'll do it for consistency.
         #
         self.logger.info("Beginning next_by_line with %s paths", len(csvpath_objects))
-        """
-        with open(fn, "r", encoding="utf-8") as file:
-            reader = csv.reader(
-                file, delimiter=self.delimiter, quotechar=self.quotechar
-            )  # pylint: disable=R1702
-            #
-            # re: R1702 -- totally agreed! deferring.
-            #
-        """
         reader = FileManager.get_reader(
             fn, delimiter=self.delimiter, quotechar=self.quotechar
         )
@@ -584,7 +583,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     r = r[1]
                     self.results_manager.save(r)
                 ErrorHandler(
-                    csvpaths=self, error_collector=self.current_matcher
+                    csvpaths=self,
+                    csvpath=self.current_matcher,
+                    error_collector=self.current_matcher,
                 ).handle_error(ex)
             # we yield even if we stopped in this iteration.
             # caller needs to see what we stopped on.
@@ -596,8 +597,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             if sum(stopped_count) == len(csvpath_objects):
                 break
         for r in csvpath_objects:
-            r = r[1]
-            self.results_manager.save(r)
+            result = r[1]
+            result.unmatched = r[0].unmatched
+            self.results_manager.save(result)
         self.clear_run_coordination()
 
     def _load_csvpath_objects(

@@ -300,6 +300,43 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._created_at = datetime.now()
         self._run_started_at = None
 
+        self._collecting = False
+        self._unmatched = None
+        self._unmatched_available = False
+
+    @property
+    def unmatched(self) -> list[list[Any]]:
+        return self._unmatched
+
+    @unmatched.setter
+    def unmatched(self, lines: list[list[Any]]) -> None:
+        self._unmatched = lines
+
+    @property
+    def collecting(self) -> bool:
+        return self._collecting
+
+    @collecting.setter
+    def collecting(self, c: bool) -> None:
+        self._collecting = c
+
+    def set_unmatched_availability(self) -> None:
+        um = self.metadata.get("unmatched-mode")
+        if um is not None and um.find("no-keep") > -1:
+            self.unmatched_available = False
+        elif um is not None and um.find("keep") > -1:
+            self.unmatched_available = True
+        else:
+            self.unmatched_available = False
+
+    @property
+    def unmatched_available(self) -> bool:
+        return self._unmatched_available
+
+    @unmatched_available.setter
+    def unmatched_available(self, ua: bool) -> None:
+        self._unmatched_available = ua
+
     @property
     def created_at(self) -> datetime:
         return self._created_at
@@ -662,6 +699,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - return-mode: matches | no-matches
         #   - print-mode: default | no-default
         #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
+        #   - run-mode: no-run | run
+        #   - unmatched-mode: no-keep | keep
         #
         self.update_logic_mode_if()
         self.update_run_mode_if()
@@ -669,6 +708,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_print_mode_if()
         self.update_explain_mode_if()
         self.update_arg_validation_mode_if()
+        self.update_unmatched_mode_if()
+
+    def update_unmatched_mode_if(self) -> None:
+        self.set_unmatched_availability()
 
     def update_arg_validation_mode_if(self) -> None:
         if self.metadata and "validation-mode" in self.metadata:
@@ -957,6 +1000,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             raise ProcessingException(
                 "Input must be >= -1. -1 means collect to the end of the file."
             )
+        self.collecting = True
         lines = []
         for _ in self.next():
             _ = _[:]
@@ -988,6 +1032,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if self.run_mode is True:
             for line in self._next_line():
                 b = self._consider_line(line)
+                # print(f"cvsvpath: line came back b: {b}")
                 if b:
                     line = self.limit_collection(line)
                     if line is None:
@@ -999,6 +1044,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                         self.logger.error(msg)
                         raise MatchException(msg)
                     yield line
+                elif self.collecting and self.unmatched_available:
+                    if self.unmatched is None:
+                        self.unmatched = []
+                    line = self.limit_collection(line)
+                    # we aren't None and 0 checking as above. needed?
+                    self.unmatched.append(line)
                 if self.stopped:
                     self.logger.info(
                         "CsvPath has been stopped at line %s",
@@ -1130,6 +1181,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self.logger.debug("Starting matching")
                 startmatch = time.perf_counter_ns()
                 matches = self.matches(line)
+                # print(f"csvpathjh: matches: {matches}")
                 endmatch = time.perf_counter_ns()
                 t = (endmatch - startmatch) / 1000000
                 self.last_row_time = t
@@ -1182,7 +1234,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             return line
         ls = []
         for k in self.limit_collection_to:
-            ls.append(line[k])
+            if k is None or k >= len(line):
+                raise InputException(
+                    f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k}"
+                )
+            else:
+                ls.append(line[k])
         return ls
 
     def advance(self, ff: int = -1) -> None:

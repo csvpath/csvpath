@@ -22,6 +22,7 @@ class CsvPathsResultsManager(ABC):
     # - variables
     # - csvpath.metadata
     # - csvpath.csvpath data
+    # - unmatched lines
     #
 
     @abstractmethod

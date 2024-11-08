@@ -5,8 +5,8 @@
 
 $[*][
     @header_change = mismatch("signed")
-    gt( @header_change, 9) -> reset_headers(skip())
-    lt(count_headers(), 9) -> skip()
+    gt.nocontrib(@header_change, 9) -> reset_headers(skip())
+    lt.nocontrib(count_headers(), 9) -> skip()
 ]
 
 
