@@ -15,3 +15,7 @@ class S3DataReader(CsvDataReader):
             )
             for line in reader:
                 yield line
+
+    def file_metadata(self) -> dict[str, str | int | float]:
+        # TODO: what can/should we provide here?
+        return {}

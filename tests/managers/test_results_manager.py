@@ -133,7 +133,10 @@ class TestResultsManager(unittest.TestCase):
         assert ps[0].find("my other msg") > -1
 
     def test_results_save_1(self):
-        rs = ResultSerializer("tests/test_resources/serialized")
+        # archive dir in cwd. we'll put it in directly below because
+        # results seralizer only uses it to feed back to a method that
+        # calls save() where we're passing it in.
+        rs = ResultSerializer("archive")
         meta = {"meta": "hi"}
         run = {}
         errors = [{}]
@@ -154,7 +157,7 @@ class TestResultsManager(unittest.TestCase):
             identity=identity,
             run_time=datetime.now(),
             run_index=1,
-            run_dir="",
+            run_dir="archive",
             unmatched=[],
         )
 

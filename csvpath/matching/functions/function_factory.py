@@ -77,6 +77,7 @@ from .variables.put import Put
 from .variables.track import Track
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
+from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
@@ -393,8 +394,12 @@ class FunctionFactory:
             f = RunTable(matcher, name, child)
         elif name == "empty_stack":
             f = EmptyStack(matcher, name, child)
-        # elif name == "num":
-        # f = Num(matcher, name, child)
+        elif name == "line_fingerprint":
+            f = LineFingerprint(matcher, name, child)
+        elif name == "file_fingerprint":
+            f = FileFingerprint(matcher, name, child)
+        elif name == "store_line_fingerprint":
+            f = StoreFingerprint(matcher, name, child)
         elif name == "counter":
             f = Counter(matcher, name, child)
         else:

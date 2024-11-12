@@ -1,0 +1,4 @@
+[
+                line_fingerprint()
+                last() -> store_line_fingerprint()
+            ]
