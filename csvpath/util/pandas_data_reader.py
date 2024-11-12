@@ -38,3 +38,8 @@ class PandasDataReader(DataFileReader):
         for row in data.itertuples(index=False):
             line = list(row)
             yield line
+
+    def file_metadata(self) -> dict[str, str | int | float]:
+        # TODO: path is likely to be a named-path pointer, not a physical
+        # location. what can/should we provide here?
+        return {}

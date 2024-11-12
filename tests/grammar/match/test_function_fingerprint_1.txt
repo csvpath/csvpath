@@ -1,0 +1,4 @@
+[
+                last() -> file_fingerprint()
+                last() -> file_fingerprint.hash()
+            ]

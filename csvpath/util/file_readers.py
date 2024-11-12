@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import csv
 import importlib
+import os
 from abc import ABC, abstractmethod
 import pylightxl as xl
 from .exceptions import InputException
@@ -64,6 +65,10 @@ class DataFileReader(ABC):
     def next(self) -> list[str]:
         pass
 
+    @abstractmethod
+    def file_metadata(self) -> dict[str, str | int | float]:
+        pass
+
 
 class CsvDataReader(DataFileReader):
     def __init__(
@@ -85,20 +90,25 @@ class CsvDataReader(DataFileReader):
             for line in reader:
                 yield line
 
-
-"""
-class S3DataReader(CsvDataReader):
-    def next(self) -> list[str]:
-        from smart_open import open
-
-        print(f"self._path: {self._path}")
-        with open(uri=self._path, mode="r") as file:
-            reader = csv.reader(
-                file, delimiter=self._delimiter, quotechar=self._quotechar
-            )
-            for line in reader:
-                yield line
-"""
+    def file_metadata(self) -> dict[str, str | int | float]:
+        s = os.stat(self.path)
+        meta = {
+            "mode",
+            s.st_mode,
+            "device",
+            s.st_dev,
+            "bytes",
+            s.st_size,
+            "created",
+            s.st_ctime,
+            "last_read",
+            s.st_atime,
+            "last_mod",
+            s.st_mtime,
+            "flags",
+            s.st._flags,
+        }
+        return meta
 
 
 class XlsxDataReader(DataFileReader):
@@ -118,3 +128,23 @@ class XlsxDataReader(DataFileReader):
 
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]
+
+    def file_metadata(self) -> dict[str, str | int | float]:
+        s = os.stat(self.path)
+        meta = {
+            "mode",
+            s.st_mode,
+            "device",
+            s.st_dev,
+            "bytes",
+            s.st_size,
+            "created",
+            s.st_ctime,
+            "last_read",
+            s.st_atime,
+            "last_mod",
+            s.st_mtime,
+            "flags",
+            s.st._flags,
+        }
+        return meta
