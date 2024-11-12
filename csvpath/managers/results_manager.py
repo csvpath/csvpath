@@ -266,7 +266,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         filename = os.path.join(filename, path)
         if not os.path.exists(filename):
             raise InputException(
-                "Reference does not point to a csvpath in a named-paths group run"
+                f"Reference to {filename} does not point to a csvpath in a named-paths group run"
             )
         filename = os.path.join(filename, "data.csv")
         if not os.path.exists(filename):
@@ -311,13 +311,27 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         ms = "%Y-%m-%d_%H-%M-%S.%f"
         s = "%Y-%m-%d_%H-%M-%S"
         names = [n for n in names if n.startswith(instance)]
+        if len(names) == 0:
+            return None
         import datetime
 
         names = sorted(
             names,
             key=lambda x: datetime.datetime.strptime(x, ms if x.find(".") > -1 else s),
         )
-        return names[len(names) - 1] if last else names[0]
+        if last is True:
+            i = len(names)
+            # we drop 2 because -1 for the 0-base and -1 for our current run.
+            i -= 2
+            if i < 0:
+                self.csvpaths.logger.error(
+                    f"Previous run is at count {i} but there is no such run. Returning None."
+                )
+                return None
+            ret = names[i]
+        else:
+            ret = names[0]
+        return ret
 
     def get_run_time_str(self, name, run_time) -> str:
         rs = ResultSerializer(self._csvpaths.config.archive_path)

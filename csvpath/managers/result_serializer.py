@@ -3,8 +3,6 @@ import json
 import csv
 from typing import NewType, List, Dict, Optional, Union
 from datetime import datetime
-
-from .result import Result
 from ..matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath import CsvPath
 
@@ -136,8 +134,9 @@ class ResultSerializer:
         os.makedirs(run_dir, exist_ok=True)
         return run_dir
 
+    """
     def load_result(self, paths_name: str, run_time: str, identity: str):
-        """Load a single Result object from the base directory."""
+        ""Load a single Result object from the base directory.""
         run_dir = self._run_dir(
             paths_name=paths_name, run_time=run_time, identity=identity
         )
@@ -186,3 +185,4 @@ class ResultSerializer:
             return result
         except (FileNotFoundError, ValueError, IOError):
             return None
+    """
