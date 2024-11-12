@@ -1,9 +1,11 @@
 # pylint: disable=C0114
+import os
 from datetime import datetime
 from typing import Dict, List, Any
 from ..util.error import Error, ErrorCollector
 from ..util.printer import Printer
 from .. import CsvPath
+from .result_serializer import ResultSerializer
 
 
 class Result(ErrorCollector, Printer):  # pylint: disable=R0902
@@ -42,6 +44,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._run_time = run_time
         self._run_dir = run_dir
         self._unmatched = None
+        self._data_file_path = None
 
     @property
     def run_time(self) -> datetime:
@@ -54,6 +57,20 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     @run_dir.setter
     def run_dir(self, d: str) -> None:
         self._run_dir = d
+
+    @property
+    def data_file_path(self) -> str:
+        return os.path.join(self.instance_dir, "data.csv")
+
+    @property
+    def instance_dir(self) -> str:
+        #
+        # would we ever need self.csvpath before it is set? seems unlikely.
+        #
+        i_dir = ResultSerializer(self.csvpath.config.archive_path).get_instance_dir(
+            run_dir=self.run_dir, identity=self.identity_or_index
+        )
+        return i_dir
 
     @property
     def identity_or_index(self) -> str:
@@ -229,6 +246,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
                    file:{self.csvpath.scanner.filename if self.csvpath.scanner else None};
                    name of paths:{self.paths_name};
                    name of file:{self.file_name};
+                   run results dir:{self.run_dir};
                    valid:{self.csvpath.is_valid};
                    stopped:{self.csvpath.stopped};
                    last line processed:{lastline};

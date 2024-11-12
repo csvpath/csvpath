@@ -4,11 +4,17 @@ import os
 import json
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
+from csvpath import CsvPath
 from ..util.exceptions import InputException
 from ..util.error import ErrorHandler
+from ..util.metadata_parser import MetadataParser
+from ..util.reference_parser import ReferenceParser
 
-from csvpath import CsvPath
-from csvpath.util.metadata_parser import MetadataParser
+from typing import NewType
+
+NamedPathsName = NewType("NamedPathsName", str)
+Csvpath = NewType("Csvpath", str)
+Identity = NewType("Identity", str)
 
 
 class CsvPathsManager(ABC):
@@ -168,19 +174,49 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             self.named_paths[name] = paths
 
     #
-    # changed to not raise IE when not found in order to match
-    # files_manager and let csvpaths call the shots.
+    # ========================
     #
-    def get_named_paths(self, name: str) -> List[str]:
+    # adding ref handling for the form: $many.csvpaths.food
+    # which is equiv to: many#food
+    #
+    def get_named_paths(self, name: str) -> List[Csvpath]:
         ret = None
-        p2 = self._paths_name_path(name)
-        if p2[1] is None and p2[0] in self.named_paths:
-            ret = self.named_paths[p2[0]]
-        elif p2[1] is not None:
-            ret = self._find_one(p2)
+        npn = None
+        identity = None
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            if ref.datatype != ReferenceParser.CSVPATHS:
+                raise InputException(
+                    f"Reference datatype must be {ReferenceParser.CSVPATHS}"
+                )
+            npn = ref.root_major
+            identity = ref.name_one
+        else:
+            npn, identity = self._paths_name_path(name)
+        #
+        # we need to be able to grab paths up to and starting from like this:
+        #   $many.csvpaths.food:to
+        #   $many.csvpaths.food:from
+        #
+        if identity is None and npn in self.named_paths:
+            ret = self.named_paths[npn]
+        elif identity is not None and identity.find(":") == -1:
+            ret = [self._find_one(npn, identity)]
+        elif identity is not None:
+            i = identity.find(":")
+            directive = identity[i:]
+            identity = identity[0:i]
+            if directive == ":to":
+                ret = self._get_to(npn, identity)
+            elif directive == ":from":
+                ret = self._get_from(npn, identity)
+            else:
+                raise InputException(
+                    f"Reference directive must be :to or :from, not {directive}"
+                )
         return ret
 
-    def _paths_name_path(self, pathsname) -> tuple[str, str]:
+    def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
         specificpath = None
         i = pathsname.find("#")
         if i > 0:
@@ -188,17 +224,50 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             pathsname = pathsname[0:i]
         return (pathsname, specificpath)
 
-    def _find_one(self, p2: tuple[str]) -> str:
-        if p2[1] is not None:
-            paths = self.get_named_paths(p2[0])
+    def _get_to(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
+        ps = []
+        paths = self._get_identified_paths_in(npn)
+        for path in paths:
+            ps.append(path[1])
+            if path[0] == identity:
+                break
+        return ps
+
+    def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
+        ps = []
+        paths = self._get_identified_paths_in(npn)
+        for path in paths:
+            if path[0] != identity and len(ps) == 0:
+                continue
+            ps.append(path[1])
+        return ps
+
+    def _get_identified_paths_in(
+        self, nps: NamedPathsName
+    ) -> list[tuple[Identity, Csvpath]]:
+        paths = self.get_named_paths(nps)
+        idps = []
+        for path in paths:
+            c = CsvPath()
+            MetadataParser(c).extract_metadata(instance=c, csvpath=path)
+            idps.append((c.identity, path))
+        return idps
+
+    def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
+        if npn is not None:
+            paths = self._get_identified_paths_in(npn)
             for path in paths:
-                c = CsvPath()
-                MetadataParser(c).extract_metadata(instance=c, csvpath=path)
-                if c.identity == p2[1]:
-                    return [path]
+                if path[0] == identity:
+                    return path[1]
         raise InputException(
-            f"Path identified as '{p2[1]}' must be in the group identitied as '{p2[0]}'"
+            f"Path identified as '{identity}' must be in the group identitied as '{npn}'"
         )
+
+    #
+    #
+    # ========================
+    #
+    #
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:

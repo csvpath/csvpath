@@ -3,7 +3,6 @@ import json
 import csv
 from typing import NewType, List, Dict, Optional, Union
 from datetime import datetime
-from .result import Result
 from ..matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath import CsvPath
 
@@ -15,9 +14,10 @@ Metadata = NewType("Metadata", Dict[str, Simpledata])
 
 class ResultSerializer:
     def __init__(self, base_dir: str):
+        # archive dir from config.ini
         self.base_dir = base_dir
 
-    def save_result(self, result: Result) -> None:
+    def save_result(self, result) -> None:
         runtime_data = {}
         RuntimeDataCollector.collect(result.csvpath, runtime_data, local=True)
         runtime_data["run_index"] = result.run_index
@@ -91,8 +91,26 @@ class ResultSerializer:
                 for _ in v:
                     f.write(f"{_}\n")
 
+    def _deref_paths_name(self, paths_name) -> str:
+        #
+        # if we have a reference we need to de-ref so that our path has only
+        # the named-paths name at the top, not the $, datatype, etc.
+        #
+        paths_name = paths_name.lstrip("$")
+        i = paths_name.find(".")
+        if i > -1:
+            paths_name = paths_name[0:i]
+        i = paths_name.find("#")
+        if i > -1:
+            paths_name = paths_name[0:i]
+        return paths_name
+
     def get_run_dir(self, *, paths_name, run_time):
+        paths_name = self._deref_paths_name(paths_name)
         run_dir = os.path.join(self.base_dir, paths_name)
+        if not os.path.exists(run_dir):
+            os.makedirs(run_dir, exist_ok=True)
+
         if not isinstance(run_time, str):
             run_time = run_time.strftime("%Y-%m-%d_%I-%M-%S")
         run_dir = os.path.join(run_dir, f"{run_time}")
@@ -116,10 +134,9 @@ class ResultSerializer:
         os.makedirs(run_dir, exist_ok=True)
         return run_dir
 
-    def load_result(
-        self, paths_name: str, run_time: str, identity: str
-    ) -> Optional[Result]:
-        """Load a single Result object from the base directory."""
+    """
+    def load_result(self, paths_name: str, run_time: str, identity: str):
+        ""Load a single Result object from the base directory.""
         run_dir = self._run_dir(
             paths_name=paths_name, run_time=run_time, identity=identity
         )
@@ -127,7 +144,7 @@ class ResultSerializer:
             return None
         return self._load_result(run_dir)
 
-    def _load_result(self, run_dir: str) -> Optional[Result]:
+    def _load_result(self, run_dir: str):
         if not os.path.exists(run_dir):
             return None
         try:
@@ -168,3 +185,4 @@ class ResultSerializer:
             return result
         except (FileNotFoundError, ValueError, IOError):
             return None
+    """

@@ -205,3 +205,52 @@ class TestNewCsvPaths(unittest.TestCase):
         assert lines[3] == ["Ants", "Bat", "skriffle..."]
         assert lines[4] == ["Slug", "Bat", "oozeeee..."]
         assert lines[5] == ["Frog", "Bat", "growl"]
+
+    def test_csvpaths_source_mode(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="sourcemode", path="tests/test_resources/named_files/test.csv"
+        )
+        paths.paths_manager.add_named_paths_from_file(
+            name="sourcemode",
+            file_path="tests/test_resources/named_paths/source_mode.csvpaths",
+        )
+
+        paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
+        results = paths.results_manager.get_named_results("sourcemode")
+        for i, r in enumerate(results):
+            if i > 0:
+                assert r.csvpath.data_from_preceding is True
+        print(f"\n test_csvpaths_source_mode: {r}")
+
+    def test_csvpaths_replay(self):
+        paths = CsvPaths()
+        #
+        # do a run
+        #
+        paths.file_manager.add_named_file(
+            name="sourcemode", path="tests/test_resources/named_files/test.csv"
+        )
+        paths.paths_manager.add_named_paths_from_file(
+            name="sourcemode",
+            file_path="tests/test_resources/named_paths/source_mode.csvpaths",
+        )
+        paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
+        #
+        # replay:
+        #   - filename is the last run's source1 csvpath data.csv output
+        #   - path is source2:from, meaning csvpath source2 and all following paths
+        #
+        # the result will be another run entry in the sourcemode directory.
+        # the filename and named-paths name will be visible in the metadata, along
+        # with the resolved physical file path
+        #
+        paths.collect_paths(
+            filename="$sourcemode.results.202:last.source1",
+            pathsname="$sourcemode.csvpaths.source2:from",
+        )
+        results = paths.results_manager.get_named_results("sourcemode")
+        for i, r in enumerate(results):
+            if i > 0:
+                assert r.csvpath.data_from_preceding is True
+        print(f"\n test_csvpaths_source_mode: {r}")
