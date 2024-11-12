@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from __future__ import annotations
 import os
+import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
@@ -276,6 +277,11 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         return filename
 
     def _find_instance(self, filename, instance) -> str:
+        """remember that you cannot replay a replay using :last. the reason is that both
+        runs will be looking for the same assets but the last replay run will not have
+        the asset needed. in principle, we could fix this, but in practice, any magic
+        we do to make it always work is going to make the lineage more mysterious.
+        """
         c = instance.find(":")
         if c == -1:
             filename = os.path.join(filename, instance)
@@ -289,8 +295,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             ret = self._find_last(filename, instance)
         elif var == ":first":
             ret = self._find_first(filename, instance)
-        # elif var == ":first":
-        #    ret = self._find_nth(filename, instance)
         else:
             raise InputException(f"Unknown reference var-sub token {var}")
         return ret
@@ -312,20 +316,29 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         s = "%Y-%m-%d_%H-%M-%S"
         names = [n for n in names if n.startswith(instance)]
         if len(names) == 0:
+            print(
+                f"find_in_dir_names: names is {names}, instance: {instance}, last: {last}"
+            )
             return None
-        import datetime
-
         names = sorted(
             names,
             key=lambda x: datetime.datetime.strptime(x, ms if x.find(".") > -1 else s),
         )
         if last is True:
             i = len(names)
-            # we drop 2 because -1 for the 0-base and -1 for our current run.
-            i -= 2
+            #
+            # we drop 1 because -1 for the 0-base. note that we may find a replay
+            # run that doesn't have the asset we're looking for. that's not great
+            # but it is fine -- the rule is, no replays of replays using :last.
+            # it is on the user to set up their replay approprately.
+            #
+            i -= 1
             if i < 0:
                 self.csvpaths.logger.error(
                     f"Previous run is at count {i} but there is no such run. Returning None."
+                )
+                self.csvpaths.logger.info(
+                    "Found previous runs: %s matching instance: %s", names, instance
                 )
                 return None
             ret = names[i]
