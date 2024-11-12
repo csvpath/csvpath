@@ -303,6 +303,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._collecting = False
         self._unmatched = None
         self._unmatched_available = False
+        self._data_from_preceding = False
+
+    @property
+    def data_from_preceding(self) -> bool:
+        return self._data_from_preceding
+
+    @data_from_preceding.setter
+    def data_from_preceding(self, dfp: bool) -> None:
+        self._data_from_preceding = dfp
 
     @property
     def unmatched(self) -> list[list[Any]]:
@@ -701,6 +710,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
         #   - run-mode: no-run | run
         #   - unmatched-mode: no-keep | keep
+        #   - source-mode: preceding | origin
         #
         self.update_logic_mode_if()
         self.update_run_mode_if()
@@ -709,6 +719,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_explain_mode_if()
         self.update_arg_validation_mode_if()
         self.update_unmatched_mode_if()
+        self.update_data_from_preceding_if()
+
+    def update_data_from_preceding_if(self) -> None:
+        if self.metadata and "source-mode" in self.metadata:
+            dfp = self.metadata["source-mode"]
+            self.data_from_preceding = dfp == "preceding"
+        else:
+            self.data_from_preceding = False
 
     def update_unmatched_mode_if(self) -> None:
         self.set_unmatched_availability()
@@ -1032,7 +1050,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if self.run_mode is True:
             for line in self._next_line():
                 b = self._consider_line(line)
-                # print(f"cvsvpath: line came back b: {b}")
                 if b:
                     line = self.limit_collection(line)
                     if line is None:
@@ -1181,7 +1198,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self.logger.debug("Starting matching")
                 startmatch = time.perf_counter_ns()
                 matches = self.matches(line)
-                # print(f"csvpathjh: matches: {matches}")
                 endmatch = time.perf_counter_ns()
                 t = (endmatch - startmatch) / 1000000
                 self.last_row_time = t

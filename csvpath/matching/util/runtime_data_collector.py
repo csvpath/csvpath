@@ -24,8 +24,20 @@ class RuntimeDataCollector:
                 )
         else:
             runtime["quotechar"] = csvpath.quotechar
+        #
+        # exp
+        #
+        # runtime["file_name"] = csvpath.scanner.filename if csvpath.scanner else "unavailable"
+        #
+        # orig
+        #
         runtime["file_name"] = csvpath.scanner.filename
-        cls._set(runtime, identity, "lines_time", csvpath.rows_time, local, True)
+        #
+        # end exp
+        #
+        cls._set(
+            runtime, identity, "lines_time", round(csvpath.rows_time, 3), local, True
+        )
         cls._set(
             runtime,
             identity,
@@ -59,7 +71,12 @@ class RuntimeDataCollector:
         cls._set(runtime, identity, "scan_part", csvpath.scan, local, False)
         cls._set(runtime, identity, "match_part", csvpath.match, local, False)
         cls._set(
-            runtime, identity, "last_line_time", csvpath.last_row_time, local, False
+            runtime,
+            identity,
+            "last_line_time",
+            round(csvpath.last_row_time, 3),
+            local,
+            False,
         )
         #
         # headers can change. atm, we lose the changes but can at least capture the

@@ -2,8 +2,8 @@ import unittest
 from csvpath import CsvPaths
 
 
-class TestFunctionsSingleInGroup(unittest.TestCase):
-    def test_function_single_in_group(self):
+class TestSingleFromGroup(unittest.TestCase):
+    def test_single_from_group(self):
         paths = CsvPaths()
         paths.file_manager.add_named_file(
             name="food", path="tests/test_resources/named_files/food.csv"

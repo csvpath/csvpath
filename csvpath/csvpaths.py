@@ -214,7 +214,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
 
+    #
+    # this method may not be much additional value at this point
+    # removed from collect_paths. still used in the other methods, but
+    # it is validating on top of bounds checking in the managers,
+    # and has the potential to add drift because references.
+    #
     def _validate_paths_and_file(self, *, pathsname, filename) -> None:
+        """
         if not self.paths_manager.has_named_paths(pathsname):  # pragma: no cover
             keys = list(self.paths_manager.named_paths.keys())
             raise InputException(
@@ -223,9 +230,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         if filename not in self.file_manager.named_files:  # pragma: no cover
             keys = self.file_manager.named_files.keys()
             raise InputException(f"Filename must be a named file in {keys}")
+        """
 
     def collect_paths(self, *, pathsname, filename) -> None:
-        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Cleaning out any %s and % results", filename, pathsname)
@@ -248,7 +255,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             # want to never fail during a run
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file)
+                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
                 lines = csvpath.collect()
                 if lines is None:
                     self.logger.error(  # pragma: no cover
@@ -277,13 +284,37 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
 
-    def _load_csvpath(self, csvpath: CsvPath, path: str, file: str) -> None:
+    def _load_csvpath(
+        self, csvpath: CsvPath, path: str, file: str, pathsname: str = None
+    ) -> None:
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
         # we strip comments from above the path so we need to extract them first
         path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
         self.logger.debug("Csvpath after metadata extract: %s", path)
         # update the settings using the metadata fields we just collected
         csvpath.update_settings_from_metadata()
+        if csvpath.data_from_preceding is True:
+            #
+            # we are in source-mode: preceding
+            # that means we ignore the original data file path and
+            # instead use the data.csv from the preceding csvpath. that is,
+            # assuming there is a preceding csvpath and it created and
+            # saved data.
+            #
+            # find the preceding csvpath in the named-paths
+            result = self.results_manager.get_last_named_result(
+                name=pathsname, before=csvpath.identity
+            )
+            if result is not None:
+                # get its data.csv path for this present run
+                # swap in that path for the regular origin path
+                file = result.data_file_path
+                csvpath.metadata["source-mode-source"] = file
+                self.logger.info(
+                    "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
+                    csvpath.identity,
+                    file,
+                )
         f = path.find("[")
         self.logger.debug("Csvpath matching part starts at char # %s", f)
         apath = f"${file}{path[f:]}"
@@ -294,7 +325,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
-        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.logger.info(
+            "Cleaning out any filename: %s and/or any pathsname: %s results",
+            filename,
+            pathsname,
+        )
         self.clean(paths=pathsname)
         self.logger.info(
             "Beginning FF %s with %s paths against file %s. No match results will be held.",
@@ -316,7 +351,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             )
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file)
+                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
                 self.logger.info(
                     "Parsed csvpath %s pointed at %s and starting to fast-forward",
                     i,
@@ -384,7 +419,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 csvpath.is_valid = False
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file)
+                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
                 for line in csvpath.next():
                     line.append(result)
                     if collect:
@@ -611,6 +646,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             csvpath.collect_when_not_matched = collect_when_not_matched
             try:
                 self._load_csvpath(csvpath, path=path, file=named_file)
+                if csvpath.data_from_preceding is True:
+                    self.logger.warning(
+                        "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
+                    )
                 csvpath_objects.append([csvpath, []])
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()

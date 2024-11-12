@@ -33,5 +33,6 @@ class Collect(SideEffect):
                 cs.append(self.matcher.header_index(s))
             else:
                 cs.append(int(s))
+        # print(f"collect.dec_mat: cs: {cs}")
         self.matcher.csvpath.limit_collection_to = cs
         self.match = self.default_match()

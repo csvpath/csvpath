@@ -1,10 +1,12 @@
 # pylint: disable=C0114
 from __future__ import annotations
+import os
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
 from ..util.exceptions import InputException, CsvPathsException
 from .result_serializer import ResultSerializer
+from ..util.reference_parser import ReferenceParser
 
 
 class CsvPathsResultsManager(ABC):
@@ -76,12 +78,16 @@ class CsvPathsResultsManager(ABC):
     @abstractmethod
     def get_specific_named_result(self, name: str, name_or_id: str) -> Result:
         """Finds a result with a metadata field named id or name that has a
-        value matching name_or_id. id is wins over name. first results with either
+        value matching name_or_id. id wins over name. first results with either
         wins. the name or id comes from a comment's metadata field that would look
         like ~ id: my_path ~ or ~ name: my_path ~
         The allowable forms of id or name are all lower, all upper or initial case.
         i.e.: id, ID, Id and name, NAME, Name.
         """
+
+    @abstractmethod
+    def get_last_named_result(self, name: str) -> Result:
+        """returns the last result"""
 
     @abstractmethod
     def remove_named_results(self, name: str) -> None:
@@ -137,6 +143,26 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
                 if name_or_id == r.csvpath.identity:
                     return r
         return None  # pragma: no cover
+
+    def get_last_named_result(self, *, name: str, before: str = None) -> Result:
+        results = self.get_named_results(name)
+        if results and len(results) > 0:
+            if before is None:
+                return results[len(results) - 1]
+            else:
+                for i, r in enumerate(results):
+                    if r.csvpath and r.csvpath.identity == before:
+                        if i == 0:
+                            self.csvpaths.logger.debug(
+                                "Last named result before %s is not possible because it is at index %s. results: %s. returning None.",
+                                before,
+                                i,
+                                results,
+                            )
+                            return None
+                        else:
+                            return results[i - 1]
+        return None
 
     def is_valid(self, name: str) -> bool:
         results = self.get_named_results(name)
@@ -208,6 +234,90 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             )
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
+
+    # in this form: $group.results.2024-01-01_10-15-20.mypath
+    def data_file_for_reference(self, refstr) -> str:
+        ref = ReferenceParser(refstr)
+        if ref.datatype != ReferenceParser.RESULTS:
+            raise InputException(
+                f"Reference datatype must be {ReferenceParser.RESULTS}"
+            )
+        namedpaths = ref.root_major
+        instance = ref.name_one
+        path = ref.name_three
+        base = self._csvpaths.config.archive_path
+        filename = os.path.join(base, namedpaths)
+        if not os.path.exists(filename):
+            raise InputException(
+                "Reference does not point to a previously run named-paths group"
+            )
+        #
+        # instance can have var-subs like:
+        #   2024-01-01_10-15-:last
+        #   2024-01-01_10-:first
+        #   2024-01-01_10-:0
+        #
+        instance = self._find_instance(filename, instance)
+        filename = os.path.join(filename, instance)
+        if not os.path.exists(filename):
+            raise InputException(
+                f"Reference {refstr} does not point to a valid named-paths run file at {filename}"
+            )
+        filename = os.path.join(filename, path)
+        if not os.path.exists(filename):
+            raise InputException(
+                "Reference does not point to a csvpath in a named-paths group run"
+            )
+        filename = os.path.join(filename, "data.csv")
+        if not os.path.exists(filename):
+            raise InputException(
+                "Reference does not point to a data file resulting from a named-paths group run"
+            )
+        return filename
+
+    def _find_instance(self, filename, instance) -> str:
+        c = instance.find(":")
+        if c == -1:
+            filename = os.path.join(filename, instance)
+            return filename
+        if not os.path.exists(filename):
+            raise InputException(f"The base dir {filename} must exist")
+        var = instance[c:]
+        instance = instance[0:c]
+        ret = None
+        if var == ":last":
+            ret = self._find_last(filename, instance)
+        elif var == ":first":
+            ret = self._find_first(filename, instance)
+        # elif var == ":first":
+        #    ret = self._find_nth(filename, instance)
+        else:
+            raise InputException(f"Unknown reference var-sub token {var}")
+        return ret
+
+    def _find_last(self, filename, instance) -> str:
+        last = True
+        return self._find(filename, instance, last)
+
+    def _find_first(self, filename, instance) -> str:
+        first = False
+        return self._find(filename, instance, first)
+
+    def _find(self, filename, instance, last: bool = True) -> str:
+        names = os.listdir(filename)
+        return self._find_in_dir_names(instance, names, last)
+
+    def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
+        ms = "%Y-%m-%d_%H-%M-%S.%f"
+        s = "%Y-%m-%d_%H-%M-%S"
+        names = [n for n in names if n.startswith(instance)]
+        import datetime
+
+        names = sorted(
+            names,
+            key=lambda x: datetime.datetime.strptime(x, ms if x.find(".") > -1 else s),
+        )
+        return names[len(names) - 1] if last else names[0]
 
     def get_run_time_str(self, name, run_time) -> str:
         rs = ResultSerializer(self._csvpaths.config.archive_path)

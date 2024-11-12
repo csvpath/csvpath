@@ -11,6 +11,8 @@ from ..util.line_monitor import LineMonitor
 from ..util.error import ErrorHandler
 from ..util.cache import Cache
 from ..util.file_readers import DataFileReader
+from ..util.reference_parser import ReferenceParser
+from ..util.exceptions import InputException
 
 
 class CsvPathsFileManager(ABC):
@@ -115,9 +117,7 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
                 j = json.load(f)
                 self.named_files = j
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            print("before")
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
-            print("after")
 
     def add_named_files_from_dir(self, dirname: str):
         dlist = os.listdir(dirname)
@@ -138,10 +138,26 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
     def add_named_file(self, *, name: str, path: str) -> None:
         self.named_files[name] = path
 
+    #
+    # can take a reference. the ref would only be expected to point
+    # to the results of a csvpath in a named-paths group. it would be
+    # in this form: $group.results.2024-01-01_10-15-20.mypath
+    # where this gets interesting is the datestamp identifing the
+    # run. we need to allow for var sub and/or other shortcuts
+    #
     def get_named_file(self, name: str) -> str:
-        if name not in self.named_files:
-            return None
-        return self.named_files[name]
+        ret = None
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            if ref.datatype != ReferenceParser.RESULTS:
+                raise InputException(
+                    f"Reference datatype must be {ReferenceParser.RESULTS}"
+                )
+            reman = self.csvpaths.results_manager
+            ret = reman.data_file_for_reference(name)
+        elif name in self.named_files:
+            ret = self.named_files[name]
+        return ret
 
     def get_named_file_reader(self, name: str) -> DataFileReader:
         path = self.get_named_file(name)

@@ -69,6 +69,44 @@ class TestPathsManager(unittest.TestCase):
         assert len(pm.named_paths) == 1
         assert "many" not in pm.named_paths
 
+    def test_named_paths_from_and_to_1(self):
+        print("")
+        paths = CsvPaths()
+        pm = paths.paths_manager
+        np = [
+            "~id:wonderful~ $[*][#1 yes()]",
+            "~Id:amazing~ $[*][#2 yes()]",
+            "~name:fun~ $[*][#3 yes()]",
+            "~Name:interesting~ $[*][#4 yes()]",
+        ]
+        pm.add_named_paths("many", np)
+
+        paths = pm.get_named_paths("$many.csvpaths.amazing")
+        assert len(paths) == 1
+        assert paths[0].find("#2") > -1
+
+        paths = pm.get_named_paths("$many.csvpaths.amazing:to")
+        assert len(paths) == 2
+        assert paths[0].find("#1") > -1
+        assert paths[1].find("#2") > -1
+
+        paths = pm.get_named_paths("$many.csvpaths.fun:to")
+        assert len(paths) == 3
+        assert paths[0].find("#1") > -1
+        assert paths[1].find("#2") > -1
+        assert paths[2].find("#3") > -1
+
+        paths = pm.get_named_paths("$many.csvpaths.amazing:from")
+        assert len(paths) == 3
+        assert paths[0].find("#2") > -1
+        assert paths[1].find("#3") > -1
+        assert paths[2].find("#4") > -1
+
+        paths = pm.get_named_paths("$many.csvpaths.fun:from")
+        assert len(paths) == 2
+        assert paths[0].find("#3") > -1
+        assert paths[1].find("#4") > -1
+
     # need:
     # . all in directory under one name
     # . add duplicates to name

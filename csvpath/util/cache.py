@@ -38,7 +38,7 @@ class Cache:
                         res += line
         except Exception:
             self.csvpaths.logger.warning(
-                "Could not read {cachepath} for {filename}. This may be fine, if the cache is empty. Otherwise, check your config.ini for the cache path."
+                f"Could not read {cachepath} for {filename}. This may be fine, if the cache is empty. Otherwise, check your config.ini for the cache path."
             )
         return res
 
