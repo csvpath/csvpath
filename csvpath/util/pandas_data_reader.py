@@ -39,6 +39,9 @@ class PandasDataReader(DataFileReader):
             line = list(row)
             yield line
 
+    def next_raw(self) -> list[str]:
+        raise Exception("next_raw is not supported for Pandas")
+
     def file_metadata(self) -> dict[str, str | int | float]:
         # TODO: path is likely to be a named-path pointer, not a physical
         # location. what can/should we provide here?

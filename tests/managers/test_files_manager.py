@@ -1,5 +1,7 @@
 import unittest
 import pytest
+import shutil
+import os
 from csvpath import CsvPaths
 from csvpath.matching.util.exceptions import MatchException
 
@@ -8,21 +10,114 @@ JSON = "tests/test_resources/named_files.json"
 
 
 class TestFilesManager(unittest.TestCase):
+    def test_named_files_home(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        d = reg.named_files_dir
+        assert d is not None
+        assert d == "inputs/named_files"
+
+    def test_simple_name(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        assert reg._simple_name("inputs/named_files") == "named_files"
+
+    def test_named_file_home(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        d = reg.named_file_home("aname")
+        assert d is not None
+        assert d == "inputs/named_files/aname"
+
+    def test_copy_in(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        tf = "tests/test_resources/test.csv"
+        home = reg.assure_file_home("mytest", tf)
+        d = reg._copy_in(tf, home)
+        assert d is not None
+        assert d == "inputs/named_files/mytest/test.csv/test.csv"
+        shutil.rmtree("inputs/named_files/mytest")
+
+    def test_reg_fingerprint(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        tf = "tests/test_resources/test.csv"
+        home = reg.assure_file_home("mytest", tf)
+        d = reg._copy_in(tf, home)
+        assert os.path.exists(d)
+        rpath = reg._fingerprint(home)
+        assert d != rpath
+        assert not os.path.exists(d)
+        print(f"\nd: {d}")
+        print(f"r: {rpath}")
+        shutil.rmtree("inputs/named_files/mytest")
+
+    def test_manifest_path(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        d = reg.named_file_home("aname")
+        assert d is not None
+        assert d == "inputs/named_files/aname"
+        mpath = reg.manifest_path("aname")
+        assert mpath == os.path.join(d, "manifest.json")
+        reg.update_manifest(
+            manifestpath=mpath,
+            regpath="regpath",
+            sourcepath="origpath",
+            fingerprint="fingerprint",
+        )
+        m = reg.get_manifest(mpath)
+        assert "file" in m[0]
+        assert m[0]["file"] == "regpath"
+        assert "from" in m[0]
+        assert m[0]["from"] == "origpath"
+        assert "time" in m[0]
+        print(f"mpath: {mpath}")
+        print(f"m: {m}")
+
+        r = reg.registered_file("aname")
+        assert r == "regpath"
+
+        shutil.rmtree("inputs/named_files/aname")
+
+    def test_rereg(self):
+        paths = CsvPaths()
+        m = paths.file_manager
+        reg = m.registrar
+        try:
+            shutil.rmtree("inputs/named_files/testx")
+        except Exception:
+            pass
+        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
+        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
+        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
+        mpath = reg.manifest_path("testx")
+        m = reg.get_manifest(mpath)
+        print(f"\nm: {m}")
+        assert len(m) == 3
+
     def test_file_mgr_dir1(self):
         print("")
         paths = CsvPaths()
         fm = paths.file_manager
+        fm.remove_all_named_files()
         fm.add_named_files_from_dir(DIR)
-        assert fm.named_files
-        assert len(fm.named_files) == 6
+        assert fm.named_files_count == 6
 
     def test_file_mgr_json1(self):
         print("")
         paths = CsvPaths()
         fm = paths.file_manager
+        fm.remove_all_named_files()
         fm.set_named_files_from_json(JSON)
-        assert fm.named_files
-        assert len(fm.named_files) == 2
+        assert fm.named_files_count == 2
 
     def test_file_mgr_json2(self):
         print("")
@@ -36,23 +131,41 @@ class TestFilesManager(unittest.TestCase):
         print("")
         paths = CsvPaths()
         fm = paths.file_manager
-        nf = {"wonderful": "a path", "amazing": "another path"}
+        nf = {
+            "wonderful": "tests/test_resources/food.csv",
+            "amazing": "tests/test_resources/lookup_names.csv",
+        }
         fm.set_named_files(nf)
-        assert fm.named_files
-        assert len(fm.named_files) == 2
+        assert fm.named_files_count >= 2
+        assert fm.name_exists("wonderful")
+        assert fm.name_exists("amazing")
+        shutil.rmtree("inputs/named_files/wonderful")
+        shutil.rmtree("inputs/named_files/amazing")
 
     def test_file_mgr_dict2(self):
         print("")
         paths = CsvPaths()
         fm = paths.file_manager
-        nf = {"wonderful": "a path", "amazing": "another path"}
+        try:
+            fm.remove_named_file("wonderful")
+            fm.remove_named_file("outstanding")
+        except FileNotFoundError:
+            pass
+        nf = {
+            "wonderful": "tests/test_resources/food.csv",
+            "amazing": "tests/test_resources/lookup_names.csv",
+        }
         fm.set_named_files(nf)
-        assert fm.named_files
-        assert len(fm.named_files) == 2
-        fm.add_named_file(name="outstanding", path="a third path")
-        assert len(fm.named_files) == 3
+        c = fm.named_files_count
+        fm.add_named_file(name="outstanding", path="tests/test_resources/test.csv")
+        c2 = fm.named_files_count
+
+        print(f"c2: {c2}")
+        print(f"c: {c}")
+        assert c2 == (c + 1)
         afile = fm.get_named_file("wonderful")
-        assert afile == "a path"
+        assert afile is not None
         fm.remove_named_file("wonderful")
-        assert len(fm.named_files) == 2
-        assert "wonderful" not in fm.named_files
+        assert fm.named_files_count == c
+        shutil.rmtree("inputs/named_files/outstanding")
+        shutil.rmtree("inputs/named_files/amazing")

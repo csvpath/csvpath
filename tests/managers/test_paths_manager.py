@@ -47,7 +47,7 @@ class TestPathsManager(unittest.TestCase):
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
-        pm.add_named_paths("many", np)
+        pm.add_named_paths(name="many", paths=np)
         assert pm.named_paths
         assert len(pm.named_paths) == 1
         assert "many" in pm.named_paths
@@ -58,10 +58,10 @@ class TestPathsManager(unittest.TestCase):
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
-        pm.add_named_paths("many", np)
+        pm.add_named_paths(name="many", paths=np)
         assert pm.named_paths
         assert len(pm.named_paths) == 1
-        pm.add_named_paths("numbers", ["a third path"])
+        pm.add_named_paths(name="numbers", paths=["a third path"])
         assert len(pm.named_paths) == 2
         apaths = pm.get_named_paths("many")
         assert len(apaths) == 2
@@ -79,7 +79,7 @@ class TestPathsManager(unittest.TestCase):
             "~name:fun~ $[*][#3 yes()]",
             "~Name:interesting~ $[*][#4 yes()]",
         ]
-        pm.add_named_paths("many", np)
+        pm.add_named_paths(name="many", paths=np)
 
         paths = pm.get_named_paths("$many.csvpaths.amazing")
         assert len(paths) == 1

@@ -31,7 +31,8 @@ class RuntimeDataCollector:
         #
         # orig
         #
-        runtime["file_name"] = csvpath.scanner.filename
+        if csvpath.scanner and csvpath.scanner.filename is not None:
+            runtime["file_name"] = csvpath.scanner.filename
         #
         # end exp
         #

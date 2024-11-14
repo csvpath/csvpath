@@ -3,6 +3,7 @@ import os
 import json
 import csv
 import hashlib
+import shutil
 from abc import ABC, abstractmethod
 from json import JSONDecodeError
 from typing import Dict, List, Tuple
@@ -13,6 +14,7 @@ from ..util.cache import Cache
 from ..util.file_readers import DataFileReader
 from ..util.reference_parser import ReferenceParser
 from ..util.exceptions import InputException
+from .file_registrar import FileRegistrar
 
 
 class CsvPathsFileManager(ABC):
@@ -59,10 +61,15 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
     def __init__(self, *, named_files: Dict[str, str] = None, csvpaths=None):
         if named_files is None:
             named_files = {}
-        self.named_files: Dict[str, str] = named_files
+        # self.named_files: Dict[str, str] = named_files
         self.csvpaths = csvpaths
         self.pathed_lines_and_headers = {}
         self.cache = Cache(self.csvpaths)
+        self._registrar = FileRegistrar(self.csvpaths.config)
+
+    @property
+    def registrar(self) -> FileRegistrar:
+        return self._registrar
 
     def get_new_line_monitor(self, filename: str) -> LineMonitor:
         if filename not in self.pathed_lines_and_headers:
@@ -108,14 +115,37 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
     #
     # ========================================
 
+    @property
+    def named_files_count(self) -> int:
+        return len(self.named_file_names)
+
+    @property
+    def named_file_names(self) -> list:
+        b = self.registrar.named_files_dir
+        ns = [n for n in os.listdir(b) if not os.path.isfile(os.path.join(b, n))]
+        return ns
+
+    def name_exists(self, name) -> bool:
+        return self.registrar.name_exists(name)
+
+    def remove_named_file(self, name: str) -> None:
+        p = os.path.join(self.registrar.named_files_dir, name)
+        shutil.rmtree(p)
+
+    def remove_all_named_files(self) -> None:
+        names = self.named_file_names
+        for name in names:
+            self.remove_named_file(name)
+
     def set_named_files(self, nf: Dict[str, str]) -> None:
-        self.named_files = nf
+        for k, v in nf.items():
+            self.add_named_file(name=k, path=v)
 
     def set_named_files_from_json(self, filename: str) -> None:
         try:
             with open(filename, "r", encoding="utf-8") as f:
                 j = json.load(f)
-                self.named_files = j
+                self.set_named_files(j)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
 
@@ -128,15 +158,16 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
             if ext in self.csvpaths.config.csv_file_extensions:
                 name = self._name_from_name_part(p)
                 path = os.path.join(base, p)
-                self.named_files[name] = path
-            else:  # pragma: no cover
+                self.add_named_file(name=name, path=path)
+            else:
                 self.csvpaths.logger.debug(
                     "Skipping %s because extension not in accept list",
                     os.path.join(base, p),
                 )
 
     def add_named_file(self, *, name: str, path: str) -> None:
-        self.named_files[name] = path
+        reg = FileRegistrar(self.csvpaths.config)
+        reg.register_named_file(name=name, path=path)
 
     #
     # can take a reference. the ref would only be expected to point
@@ -155,21 +186,23 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
                 )
             reman = self.csvpaths.results_manager
             ret = reman.data_file_for_reference(name)
-        elif name in self.named_files:
-            ret = self.named_files[name]
+        else:
+            reg = self.registrar
+            ret = reg.registered_file(name)
         return ret
 
     def get_named_file_reader(self, name: str) -> DataFileReader:
         path = self.get_named_file(name)
-        return FileManager.get_reader(path)
+        t = self.registrar.type_of_file(name)
+        return FileManager.get_reader(path, filetype=t)
 
     @classmethod
-    def get_reader(cls, path: str, delimiter=None, quotechar=None) -> DataFileReader:
-        return DataFileReader(path, delimiter=delimiter, quotechar=quotechar)
-
-    def remove_named_file(self, name: str) -> None:
-        if name in self.named_files:
-            del self.named_files[name]
+    def get_reader(
+        cls, path: str, *, filetype: str = None, delimiter=None, quotechar=None
+    ) -> DataFileReader:
+        return DataFileReader(
+            path, filetype=filetype, delimiter=delimiter, quotechar=quotechar
+        )
 
     def _name_from_name_part(self, name):
         i = name.rfind(".")

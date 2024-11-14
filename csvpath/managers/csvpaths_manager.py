@@ -44,10 +44,22 @@ class CsvPathsManager(ABC):
         """overwrites"""
 
     @abstractmethod
-    def add_named_paths(self, name: str, paths: List[str]) -> None:
+    def add_named_paths(
+        self,
+        *,
+        name: str,
+        paths: List[str] = None,
+        from_file: str = None,
+        from_dir: str = None,
+        from_json: str = None,
+    ) -> None:
         """aggregates the path list under the name. if there is no
         existing list of paths, the name will be added. otherwise,
         the lists will be joined. duplicates are not added.
+        - name + paths adds all the paths in the list under the name
+        - name + from_file adds all the paths in the file under the name
+        - name + from_dir adds all paths in all files in the dir under the name or the file name
+        - name + from_json adds the paths contained in the files named in the json dictionary
         """
 
     @abstractmethod
@@ -127,7 +139,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 if apath.strip() != ""
             ]
             self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
-            self.add_named_paths(name, _)
+            self.add_named_paths(name=name, paths=_)
 
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -143,7 +155,22 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             self.csvpaths.logger.error(f"Error: cannot load {file_path}: {ex}")
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
 
-    def add_named_paths(self, name: str, paths: List[str]) -> None:
+    def add_named_paths(
+        self,
+        *,
+        name: str,
+        paths: List[str] = None,
+        from_file: str = None,
+        from_dir: str = None,
+        from_json: str = None,
+    ) -> None:
+        if from_file is not None:
+            return self.add_named_paths_from_file(name=name, file_path=from_file)
+        elif from_dir is not None:
+            return self.add_named_paths_from_dir(name=name, directory=from_dir)
+        elif from_json is not None:
+            return self.add_named_paths_from_json(file_path=from_json)
+
         if not isinstance(paths, list):
             ie = InputException(
                 """Paths must be a list of csvpaths.

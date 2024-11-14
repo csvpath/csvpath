@@ -23,8 +23,10 @@ class TestS3(unittest.TestCase):
         cs.file_manager.set_named_files(FILES)
         path = '$[*][ print("$.headers.0 full name: $.headers.2")]'
         d = {"tz": [f"{path}"]}
+        #
+        # collect_paths is creating a wrong inputs dir directory
+        #
         cs.paths_manager.set_named_paths(d)
-
         cs.collect_paths(filename="timezones", pathsname="tz")
         pathresults = cs.results_manager.get_named_results("tz")
 

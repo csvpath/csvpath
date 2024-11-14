@@ -25,7 +25,15 @@ class DataFileReader(ABC):
     def path(self) -> str:
         return self._path
 
-    def __new__(cls, path: str, *, sheet=None, delimiter=None, quotechar=None):
+    def __new__(
+        cls,
+        path: str,
+        *,
+        filetype: str = None,
+        sheet=None,
+        delimiter=None,
+        quotechar=None,
+    ):
         if cls == DataFileReader:
             sheet = None
             if path.find("#") > -1:
@@ -42,7 +50,7 @@ class DataFileReader(ABC):
                 class_ = getattr(module, "PandasDataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
-            if path.endswith("xlsx"):
+            if (filetype is not None and filetype == "xlsx") or path.endswith("xlsx"):
                 return XlsxDataReader(
                     path,
                     sheet=sheet if sheet != path else None,
@@ -55,7 +63,6 @@ class DataFileReader(ABC):
                 class_ = getattr(module, "S3DataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
-                # return S3DataReader(path, delimiter=delimiter, quotechar=quotechar)
             return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
             instance = super().__new__(cls)
@@ -72,7 +79,13 @@ class DataFileReader(ABC):
 
 class CsvDataReader(DataFileReader):
     def __init__(
-        self, path: str, *, sheet=None, delimiter=None, quotechar=None
+        self,
+        path: str,
+        *,
+        filetype: str = None,
+        sheet=None,
+        delimiter=None,
+        quotechar=None,
     ) -> None:
         self._path = path
         if sheet is not None or path.find("#") > -1:
@@ -88,6 +101,12 @@ class CsvDataReader(DataFileReader):
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
             for line in reader:
+                yield line
+
+    def next_raw(self) -> list[str]:
+        print(f"self._path: {self._path}")
+        with open(uri=self._path, mode="r") as file:
+            for line in file:
                 yield line
 
     def file_metadata(self) -> dict[str, str | int | float]:
@@ -113,7 +132,13 @@ class CsvDataReader(DataFileReader):
 
 class XlsxDataReader(DataFileReader):
     def __init__(
-        self, path: str, *, sheet=None, delimiter=None, quotechar=None
+        self,
+        path: str,
+        *,
+        filetype: str = None,
+        sheet=None,
+        delimiter=None,
+        quotechar=None,
     ) -> None:
         self._sheet = sheet
         self._path = path
@@ -128,6 +153,11 @@ class XlsxDataReader(DataFileReader):
 
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]
+
+    def next_raw(self) -> list[str]:
+        with open(uri=self._path, mode="r") as file:
+            for line in file:
+                yield line
 
     def file_metadata(self) -> dict[str, str | int | float]:
         s = os.stat(self.path)

@@ -17,9 +17,9 @@ print("this is $.csvpath.identity at line $.csvpath.line_number working on data 
 ~
 $[*][
     gt(#count, 4)
-    append("working", random(0,5), yes() )
+    append("thinking", random(0,5), yes() )
     print("this is $.csvpath.identity working on data from $.csvpath.file_name with headers: $.csvpath.headers")
-    collect("firstname", "lastname", "working", "count")
+    collect("firstname", "lastname", "thinking", "count")
 ]
 
 ---- CSVPATH ----
@@ -29,7 +29,8 @@ $[*][
 ~
 $[*][
     print("this is $.csvpath.identity working on data from $.csvpath.file_name")
-    print("$.headers.firstname, $.headers.lastname, $.headers.working")
+    print("$.headers.firstname, $.headers.lastname, $.headers.thinking")
+    collect("firstname", "lastname", "thinking")
 ]
 
 

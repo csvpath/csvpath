@@ -130,6 +130,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         print_default=True,
         config: Config = None,
     ):
+        self._config = Config() if config is None else config
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
         self.results_manager = ResultsManager(csvpaths=self)
@@ -138,7 +139,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.quotechar = quotechar
         self.skip_blank_lines = skip_blank_lines
         self.current_matcher: CsvPath = None
-        self._config = Config() if config is None else config
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPaths")
         self._errors = []
@@ -293,6 +293,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.debug("Csvpath after metadata extract: %s", path)
         # update the settings using the metadata fields we just collected
         csvpath.update_settings_from_metadata()
+        #
+        # this next line is triggering a write to the inputs dir
+        #
         if csvpath.data_from_preceding is True:
             #
             # we are in source-mode: preceding

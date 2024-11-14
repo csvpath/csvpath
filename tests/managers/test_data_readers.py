@@ -5,6 +5,7 @@ from csvpath.util.file_readers import (
     CsvDataReader,
     XlsxDataReader,
 )
+from csvpath import CsvPaths
 
 PATH_CSV = "tests/test_resources/test.csv"
 PATH_XLSX = "tests/test_resources/test.xlsx"
@@ -14,7 +15,8 @@ PATH_XLSX2 = "tests/test_resources/test.xlsx#again"
 class TestDataReaders(unittest.TestCase):
     def test_data_readers_1(self):
         print("")
-        mgr = FileManager()
+        paths = CsvPaths()
+        mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
 
@@ -28,7 +30,8 @@ class TestDataReaders(unittest.TestCase):
 
     def test_data_readers_2(self):
         print("")
-        mgr = FileManager()
+        paths = CsvPaths()
+        mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
 
@@ -54,7 +57,8 @@ class TestDataReaders(unittest.TestCase):
 
     def test_data_readers_3(self):
         print("")
-        mgr = FileManager()
+        paths = CsvPaths()
+        mgr = paths.file_manager
         mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
 
         xreader = mgr.get_named_file_reader("xlsx")

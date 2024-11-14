@@ -74,6 +74,8 @@ class Config:
         self._log_files_to_keep = None
         self._log_file_size = None
         self._archive_path = None
+        self._inputs_files_path = None
+        self._inputs_csvpaths_path = None
         self._config = RawConfigParser()
         self.log_file_handler = None
         self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
@@ -165,6 +167,9 @@ imports =
 path =
 [results]
 archive = archive
+[inputs]
+files = inputs/named_files
+csvpaths = inputs/named_paths
             """
             file.write(c)
             print(f"Created a default config file at {directory} with name {name}.")
@@ -186,6 +191,30 @@ archive = archive
             dirpath = filepath[0 : filepath.rfind(os.sep)]
             return dirpath
         return None
+
+    def _assure_archive_path(self) -> None:
+        if self.load:
+            if self.archive_path is None or self.archive_path.strip() == "":
+                self.archive_path = "archive"
+            if not path.exists(self.archive_path):
+                os.makedirs(self.archive_path)
+
+    def _assure_inputs_files_path(self) -> None:
+        if self.load:
+            if self.inputs_files_path is None or self.inputs_files_path.strip() == "":
+                self.inputs_files_path = "inputs/named_files"
+            if not path.exists(self.inputs_files_path):
+                os.makedirs(self.inputs_files_path)
+
+    def _assure_inputs_csvpaths_path(self) -> None:
+        if self.load:
+            if (
+                self.inputs_csvpaths_path is None
+                or self.inputs_csvpaths_path.strip() == ""
+            ):
+                self.inputs_csvpaths_path = "inputs/named_paths"
+            if not path.exists(self.inputs_csvpaths_path):
+                os.makedirs(self.inputs_csvpaths_path)
 
     def _assure_cache_path(self) -> None:
         if self.load:
@@ -335,6 +364,11 @@ archive = archive
         # default config, but regardless, we create the dir.
         #
         self._assure_cache_path()
+        #
+        # make sure a inputs dirs exist.
+        #
+        self._assure_inputs_files_path()
+        self._assure_inputs_csvpaths_path()
 
     # ======================================
 
@@ -366,6 +400,32 @@ archive = archive
     @archive_path.setter
     def archive_path(self, p) -> None:
         self._archive_path = p
+
+    @property
+    def inputs_files_path(self) -> str:
+        if self._inputs_files_path is None:
+            self._inputs_files_path = self._get("inputs", "files")
+            if self._inputs_files_path is None:
+                self._inputs_files_path = "inputs"
+                self.add_to_config("inputs", "files", "inputs/named_files")
+        return self._inputs_files_path
+
+    @inputs_files_path.setter
+    def inputs_files_path(self, p) -> None:
+        self._inputs_files_path = p
+
+    @property
+    def inputs_csvpaths_path(self) -> str:
+        if self._inputs_csvpaths_path is None:
+            self._inputs_csvpaths_path = self._get("inputs", "csvpaths")
+            if self._inputs_csvpaths_path is None:
+                self._inputs_csvpaths_path = "inputs"
+                self.add_to_config("inputs", "csvpaths", "inputs/named_paths")
+        return self._inputs_csvpaths_path
+
+    @inputs_csvpaths_path.setter
+    def inputs_csvpaths_path(self, p) -> None:
+        self._inputs_csvpaths_path = p
 
     @property
     def function_imports(self) -> str:
