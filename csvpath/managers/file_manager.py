@@ -166,6 +166,10 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
                 )
 
     def add_named_file(self, *, name: str, path: str) -> None:
+        #
+        # why are we using a new registrar rather than the one held by
+        # this instance? holdover?
+        #
         reg = FileRegistrar(self.csvpaths.config)
         reg.register_named_file(name=name, path=path)
 
