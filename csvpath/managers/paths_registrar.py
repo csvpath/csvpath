@@ -72,6 +72,11 @@ class PathsRegistrar:
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
 
+    def update_manifest_if(self, *, name, pathspath: str = "Unknown") -> None:
+        self.update_manifest(
+            name=name, manifestpath=self.assure_manifest(name), pathspath=pathspath
+        )
+
     def update_manifest(self, *, name, manifestpath: str, pathspath: str) -> None:
         jdata = self.get_manifest(manifestpath)
         f = self._fingerprint(name)

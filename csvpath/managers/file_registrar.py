@@ -157,7 +157,6 @@ class FileRegistrar:
         #
         # append the metadata
         #
-        print(f"registarar: rpath: {rpath}, path:{path}, mpath: {mpath}")
         self.update_manifest(
             manifestpath=mpath, regpath=rpath, sourcepath=path, fingerprint=h, mark=mark
         )

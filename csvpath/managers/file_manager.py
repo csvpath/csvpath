@@ -56,6 +56,16 @@ class CsvPathsFileManager(ABC):
     def get_original_headers(self, filename: str) -> List[str]:
         """gets the cached headers"""
 
+    @property
+    @abstractmethod
+    def named_files_count(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def named_file_names(self) -> list:
+        pass
+
 
 class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
     def __init__(self, *, named_files: Dict[str, str] = None, csvpaths=None):

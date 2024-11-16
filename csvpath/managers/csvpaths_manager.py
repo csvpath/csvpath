@@ -85,6 +85,11 @@ class CsvPathsManager(ABC):
     def number_of_named_paths(self) -> bool:  # pylint: disable=C0116
         pass  # pragma: no cover
 
+    @property
+    @abstractmethod
+    def named_paths_names(self) -> list[str]:
+        pass
+
 
 class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     MARKER: str = "---- CSVPATH ----"
@@ -234,7 +239,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             identity = ref.name_one
         else:
             npn, identity = self._paths_name_path(name)
-        self.load_named_paths_name_if(name)
+        self.load_named_paths_name_if(npn)
         #
         # we need to be able to grab paths up to and starting from like this:
         #   $many.csvpaths.food:to
@@ -270,13 +275,15 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             #
             path = self.registrar.named_paths_home(name)
             s = ""
-            if os.path.exists(path):
-                with open(
-                    os.path.join(path, "group.csvpaths"), "r", encoding="utf-8"
-                ) as file:
+            grp = os.path.join(path, "group.csvpaths")
+            if os.path.exists(grp):
+                with open(grp, "r", encoding="utf-8") as file:
                     s = file.read()
             cs = s.split("---- CSVPATH ----")
             cs = [s for s in cs if s.strip() != ""]
+            # if someone put a new group.csvpaths file by hand we want to
+            # capture its fingerprint for future reference.
+            self.registrar.update_manifest_if(name=name)
             self.named_paths[name] = cs
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
@@ -331,6 +338,12 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     # ========================
     #
     #
+
+    @property
+    def named_paths_names(self) -> list[str]:
+        path = self.registrar.named_paths_dir
+        names = [n for n in os.listdir(path) if not n.startswith(".")]
+        return names
 
     def remove_named_paths(self, name: str) -> None:
         if name in self.named_paths:
