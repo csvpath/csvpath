@@ -23,6 +23,10 @@ include = ["config", "logs", "docs"]
 "Github" = "https://github.com/csvpath/csvpath.git"
 "Csvpath.org" = "https://www.csvpath.org"
 
+[tool.poetry.scripts]
+cli = "csvpath.cli.cli:run"
+
+
 [tool.poetry.dependencies]
 python = "^3.9"
 ply = "^3.11"

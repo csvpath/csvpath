@@ -33,41 +33,40 @@ class TestPathsManager(unittest.TestCase):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
+        pm.remove_all_named_paths()
         pm.add_named_paths_from_json(file_path=JSON)
-        assert pm.named_paths
-        assert len(pm.named_paths) == 3
-        assert "many" in pm.named_paths
-        assert "numbers" in pm.named_paths
-        assert "needs split" in pm.named_paths
-        assert len(pm.named_paths["numbers"]) == 3
-        assert len(pm.named_paths["needs split"]) == 1
+        assert pm.has_named_paths("many")
+        assert pm.has_named_paths("numbers")
+        assert pm.has_named_paths("needs split")
+        assert pm.number_of_named_paths("numbers") == 3
+        assert pm.number_of_named_paths("needs split") == 1
 
     def test_named_paths_dict1(self):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
+        pm.remove_named_paths("many")
+        i = pm.total_named_paths()
         pm.add_named_paths(name="many", paths=np)
-        assert pm.named_paths
-        assert len(pm.named_paths) == 1
-        assert "many" in pm.named_paths
-        assert len(pm.named_paths["many"]) == 2
+        assert pm.total_named_paths() == i + 1
+        assert pm.has_named_paths("many")
+        assert pm.number_of_named_paths("many") == 2
 
     def test_named_paths_dict2(self):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
-        pm.add_named_paths(name="many", paths=np)
-        assert pm.named_paths
-        assert len(pm.named_paths) == 1
-        pm.add_named_paths(name="numbers", paths=["a third path"])
-        assert len(pm.named_paths) == 2
-        apaths = pm.get_named_paths("many")
-        assert len(apaths) == 2
+        pm.remove_named_paths("numbers")
         pm.remove_named_paths("many")
-        assert len(pm.named_paths) == 1
-        assert "many" not in pm.named_paths
+        i = pm.total_named_paths()
+        pm.add_named_paths(name="many", paths=np)
+        assert pm.total_named_paths() == i + 1
+        pm.add_named_paths(name="numbers", paths=["a third path"])
+        assert pm.total_named_paths() == i + 2
+        pm.remove_named_paths("many")
+        assert pm.total_named_paths() == i + 1
 
     def test_named_paths_from_and_to_1(self):
         print("")
@@ -114,17 +113,14 @@ class TestPathsManager(unittest.TestCase):
         print("")
         paths = CsvPaths()
         pm = paths.paths_manager
+        pm.remove_all_named_paths()
+        assert pm.total_named_paths() == 0
         pm.add_named_paths_from_dir(directory=DIR)
-        assert pm.named_paths
         files = os.listdir(DIR)
-        print(f"test_named_paths_dir: {pm.named_paths}")
         files = [f for f in files if f.find("csvpath") > -1]
-        assert len(pm.named_paths) == len(files)
-
+        assert pm.total_named_paths() == len(files)
         paths2 = CsvPaths()
         pm2 = paths2.paths_manager
+        pm2.remove_all_named_paths()
         pm2.add_named_paths_from_dir(directory=DIR, name="many")
-        assert paths2.paths_manager.named_paths
-        for k, v in paths2.paths_manager.named_paths.items():
-            print(f"test_named_paths_dir: k: {k} = {len(v)}")
-        assert len(pm2.named_paths) == 1
+        assert pm2.total_named_paths() == 1
