@@ -355,7 +355,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         return self.get_named_paths(name)
 
     def number_of_named_paths(self) -> bool:
-        return len(self.named_paths)  # pragma: no cover
+        return len(self.named_paths_names)  # pragma: no cover
 
     def _name_from_name_part(self, name):
         i = name.rfind(".")
