@@ -220,13 +220,19 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:
         self.named_results = {}
-        # for key, value in results.items():
         for value in results.values():
             self.add_named_results(value)
 
     def add_named_results(self, results: List[Result]) -> None:
         for r in results:
             self.add_named_result(r)
+
+    def list_named_results(self) -> list[str]:
+        path = self._csvpaths.config.archive_path
+        names = os.listdir(path)
+        names = [n for n in names if not n.startswith(".")]
+        names.sort()
+        return names
 
     def save(self, result: Result) -> None:
         if self._csvpaths is None:

@@ -1,13 +1,10 @@
 from csvpath import CsvPath, CsvPaths
 import sys
 import os
-import time
 from bullet import Bullet
 
 
 class DrillDown:
-    STOP_HERE = "...stop here..."
-
     def __init__(self, cli):
         self._cli = cli
 
@@ -20,18 +17,20 @@ class DrillDown:
         # get name
         #
         self._cli.clear()
-        name = self._cli._input("Named-paths name? ")
+        name = self._cli._input("Named-file name? ")
         #
         # get path
         #
         t = self._get_add_type()
         p = self._get_path(t, self._cli._csvpaths.config.csv_file_extensions)
+        if p is False:
+            return
         #
         # do the add
         #
         self._cli.clear()
-        sys.stdout.write(f"Adding: \033[36m {p}\033[0m\n")
-        time.sleep(1.2)
+        self._cli._action(f"Adding: {p}\n")
+        self._cli.pause()
         if t == "file":
             self._cli._csvpaths.file_manager.add_named_file(name=name, path=p)
         elif t == "dir":
@@ -57,12 +56,14 @@ class DrillDown:
         t = self._get_add_type()
         exts = self._cli._csvpaths.config.csvpath_file_extensions
         p = self._get_path(t, exts)
+        if p is False:
+            return
         #
         # do the add
         #
         self._cli.clear()
-        sys.stdout.write(f"Adding: \033[36m {p}\033[0m\n")
-        time.sleep(1.2)
+        self._cli._action(f"Adding: {p}\n")
+        self._cli.pause()
         if t == "file":
             self._cli._csvpaths.paths_manager.add_named_paths(name=name, from_file=p)
         elif t == "dir":
@@ -84,7 +85,7 @@ class DrillDown:
             extensions.append("")
         while p is not None and p != "" and not os.path.isfile(p):
             self._cli.clear()
-            sys.stdout.write(f"\033[36m{p}\033[0m\n")
+            self._cli._action(f"{p}\n")
             p = self._drill_down(
                 path=p,
                 json=True if t == "json" else False,
@@ -93,6 +94,9 @@ class DrillDown:
             )
             if isinstance(p, tuple) and p[1] is True:
                 p = p[0]
+                break
+            if isinstance(p, tuple) and p[1] is False:
+                p = False
                 break
         return p
 
@@ -109,15 +113,16 @@ class DrillDown:
         if dir_only:
             names = self._filter_dirs_only(path, names)
             names.sort()
-            names.append("...stop here...")
         else:
             names = self._filter_extensions(path, names, extensions)
             names.sort()
         names = self._decorate(path, names)
         cli = Bullet(bullet=" > ", choices=names)
         t = cli.launch()
-        if t == DrillDown.STOP_HERE:
+        if t == self._cli.STOP_HERE:
             return (path, True)
+        if t == self._cli.CANCEL:
+            return (path, False)
         if t.startswith("📂 ") or t.startswith("📄 "):
             t = t[2:]
         return os.path.join(path, t)
@@ -125,13 +130,15 @@ class DrillDown:
     def _decorate(self, path, names) -> list[str]:
         ns = []
         for n in names:
-            if n == DrillDown.STOP_HERE:
+            if n == self._cli.STOP_HERE:
                 pass
             elif os.path.isfile(os.path.join(path, n)):
                 n = f"📄 {n}"
             else:
                 n = f"📂 {n}"
             ns.append(n)
+        ns.append(self._cli.STOP_HERE)
+        ns.append(self._cli.CANCEL)
         return ns
 
     def _filter_hidden(self, names) -> list[str]:
