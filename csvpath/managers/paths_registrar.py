@@ -1,7 +1,6 @@
 import os
 import json
 import hashlib
-import shutil
 from datetime import datetime
 from ..util.exceptions import InputException
 
@@ -34,9 +33,13 @@ class PathsRegistrar:
         return home
 
     def _copy_in(self, name, csvpathstr) -> None:
-        temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
+        temp = self._group_file_path(name)
         with open(temp, "w", encoding="utf-8") as file:
             file.write(csvpathstr)
+        return temp
+
+    def _group_file_path(self, name: str) -> str:
+        temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
         return temp
 
     def str_from_list(self, paths: list[str]) -> str:
@@ -53,8 +56,17 @@ class PathsRegistrar:
         with open(os.path.join(home, "definition.json"), "w", encoding="utf-8") as file:
             file.write(j)
 
+    def _remove_group_file(self, name: str) -> None:
+        t = self._group_file_path(name)
+        if os.path.exists(t):
+            os.remove(t)
+
     def register_named_paths(self, *, name: str, paths: list[str]) -> None:
         self.assure_named_paths_home(name)
+        # when we pass a list it is complete and over-writes. we shouldn't
+        # necesarily need to delete the group file, but being explicit
+        # doesn't hurt.
+        self._remove_group_file(name)
         s = self.str_from_list(paths)
         t = self._copy_in(name, s)
         mpath = self.assure_manifest(name)

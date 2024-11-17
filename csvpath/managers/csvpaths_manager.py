@@ -2,6 +2,7 @@
 from typing import Dict, List
 import os
 import json
+import shutil
 from typing import NewType
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
@@ -82,8 +83,12 @@ class CsvPathsManager(ABC):
         pass  # pragma: no cover
 
     @abstractmethod
-    def number_of_named_paths(self) -> bool:  # pylint: disable=C0116
-        pass  # pragma: no cover
+    def total_named_paths(self) -> int:
+        pass
+
+    @abstractmethod
+    def number_of_named_paths(self, name: str) -> int:
+        pass
 
     @property
     @abstractmethod
@@ -95,9 +100,6 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     MARKER: str = "---- CSVPATH ----"
 
     def __init__(self, *, csvpaths, named_paths=None):
-        if named_paths is None:
-            named_paths = {}
-        self.named_paths = named_paths
         self.csvpaths = csvpaths
         self._registrar = PathsRegistrar(self.csvpaths.config)
 
@@ -108,10 +110,11 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
     def set_named_paths(self, np: Dict[str, List[str]]) -> None:
         for name in np:
             if not isinstance(np[name], list):
-                ie = InputException("Named-path names must key a list of csvpath")
+                ie = InputException(
+                    f"Named-paths name {name} must key a list of csvpath"
+                )
                 ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
                 return
-        self.named_paths = np
         for k, v in np.items():
             self.add_named_paths(name=k, paths=v)
         self.csvpaths.logger.info(
@@ -144,6 +147,10 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def add_named_paths_from_file(self, *, name: str, file_path: str) -> None:
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
+        _ = self._get_csvpaths_from_file(file_path)
+        self.add_named_paths(name=name, paths=_)
+
+    def _get_csvpaths_from_file(self, file_path: str) -> list[str]:
         with open(file_path, "r", encoding="utf-8") as f:
             cp = f.read()
             _ = [
@@ -152,7 +159,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 if apath.strip() != ""
             ]
             self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
-            self.add_named_paths(name=name, paths=_)
+            return _
 
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -163,8 +170,12 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 for k in j:
                     self.registrar.store_json_paths_file(k, file_path)
                     v = j[k]
+                    paths = []
                     for f in v:
-                        self.add_named_paths_from_file(name=k, file_path=f)
+                        _ = self._get_csvpaths_from_file(f)
+                        paths += _
+                    self.add_named_paths(name=k, paths=paths)
+
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.logger.error(f"Error: cannot load {file_path}: {ex}")
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
@@ -193,34 +204,10 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             )
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
         self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
-        #
-        # assure the name-paths name folder
-        # create an-all-in-one file
-        # assure a manifest
-        # write the fingerprint and timestamp in manifest
-        # return path to all-in-one file
-        #
-        if name in self.named_paths:
-            for p in paths:
-                if p in self.named_paths[name]:
-                    self.csvpaths.logger.debug(
-                        "csvpaths %s already exists in named-paths group %s", p, name
-                    )
-                    pass
-                else:
-                    self.csvpaths.logger.debug("Adding %s to %s", p, name)
-                    self.named_paths[name].append(p)
-                    self.registrar.register_named_paths(
-                        name=name, paths=self.named_paths[name]
-                    )
-        else:
-            for _ in paths:
-                self.csvpaths.logger.debug("Adding %s to %s", _, name)
-            self.registrar.register_named_paths(name=name, paths=paths)
-            self.named_paths[name] = paths
+        for _ in paths:
+            self.csvpaths.logger.debug("Adding %s to %s", _, name)
+        self.registrar.register_named_paths(name=name, paths=paths)
 
-    #
-    # ========================
     #
     # adding ref handling for the form: $many.csvpaths.food
     # which is equiv to: many#food
@@ -239,16 +226,15 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             identity = ref.name_one
         else:
             npn, identity = self._paths_name_path(name)
-        self.load_named_paths_name_if(npn)
+        if identity is None and self.has_named_paths(npn):
+            ret = self._get_named_paths(npn)
+        elif identity is not None and identity.find(":") == -1:
+            ret = [self._find_one(npn, identity)]
         #
         # we need to be able to grab paths up to and starting from like this:
         #   $many.csvpaths.food:to
         #   $many.csvpaths.food:from
         #
-        if identity is None and npn in self.named_paths:
-            ret = self.named_paths[npn]
-        elif identity is not None and identity.find(":") == -1:
-            ret = [self._find_one(npn, identity)]
         elif identity is not None:
             i = identity.find(":")
             directive = identity[i:]
@@ -261,30 +247,23 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 raise InputException(
                     f"Reference directive must be :to or :from, not {directive}"
                 )
-        #
-        # if not in self.named_paths we would return None here
-        # need to instead look to the named_paths dir to see what
-        # has been registered
-        #
         return ret
 
-    def load_named_paths_name_if(self, name: str) -> None:
-        if name not in self.named_paths:
-            #
-            # see if we have it in the central dir
-            #
-            path = self.registrar.named_paths_home(name)
-            s = ""
-            grp = os.path.join(path, "group.csvpaths")
-            if os.path.exists(grp):
-                with open(grp, "r", encoding="utf-8") as file:
-                    s = file.read()
-            cs = s.split("---- CSVPATH ----")
-            cs = [s for s in cs if s.strip() != ""]
-            # if someone put a new group.csvpaths file by hand we want to
-            # capture its fingerprint for future reference.
-            self.registrar.update_manifest_if(name=name)
-            self.named_paths[name] = cs
+    def _get_named_paths(self, name: str) -> None:
+        if not self.has_named_paths(name):
+            return None
+        s = ""
+        path = self.registrar.named_paths_home(name)
+        grp = os.path.join(path, "group.csvpaths")
+        if os.path.exists(grp):
+            with open(grp, "r", encoding="utf-8") as file:
+                s = file.read()
+        cs = s.split("---- CSVPATH ----")
+        cs = [s for s in cs if s.strip() != ""]
+        # if someone put a new group.csvpaths file by hand we want to
+        # capture its fingerprint for future reference.
+        self.registrar.update_manifest_if(name=name)
+        return cs
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
         specificpath = None
@@ -333,12 +312,6 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             f"Path identified as '{identity}' must be in the group identitied as '{npn}'"
         )
 
-    #
-    #
-    # ========================
-    #
-    #
-
     @property
     def named_paths_names(self) -> list[str]:
         path = self.registrar.named_paths_dir
@@ -346,15 +319,24 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         return names
 
     def remove_named_paths(self, name: str) -> None:
-        if name in self.named_paths:
-            del self.named_paths[name]
-        else:
-            raise InputException("{name} not found")
+        if not self.has_named_paths(name):
+            raise InputException(f"Named-paths name {name} not found")
+        home = self.registrar.named_paths_home(name)
+        shutil.rmtree(home)
+
+    def remove_all_named_paths(self) -> None:
+        names = self.named_paths_names
+        for name in names:
+            self.remove_named_paths(name)
 
     def has_named_paths(self, name: str) -> bool:
-        return self.get_named_paths(name)
+        path = os.path.join(self.registrar.named_paths_dir, name)
+        return os.path.exists(path)
 
-    def number_of_named_paths(self) -> bool:
+    def number_of_named_paths(self, name: str) -> int:
+        return len(self._get_named_paths(name))
+
+    def total_named_paths(self) -> bool:
         return len(self.named_paths_names)  # pragma: no cover
 
     def _name_from_name_part(self, name):
