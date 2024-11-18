@@ -162,13 +162,15 @@ The CsvPaths class helps you manage validations of multiple files and/or multipl
 | fast_forward_by_line() | Same as CsvPath.fast_forward() but for all paths breadth first  |
 | next_by_line()         | Same as CsvPath.next() but for all paths breadth first          |
 
-To be clear, the purpose of `CsvPaths` is to apply multiple csvpaths per CSV file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach is a must.
+To be clear, the purpose of `CsvPaths` is to apply multiple csvpaths per CSV file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row. As you can imagine, for very large files this approach can be a big win.
 
 There are several ways to set up CSV file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about managing CSV files</a>.
 
 You also have important options for managing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named csvpaths here</a>.
 
-This is a very basic programmatic use of CsvPath.
+The simplest way to get started is using the CLI. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read about getting started with the CLI here</a>.
+
+When you're ready to think about automation, you'll want to start with a simple driver. This is a very basic programmatic use of CsvPath.
 
 ```python
     path = CsvPath()
