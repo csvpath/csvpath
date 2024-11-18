@@ -1,7 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPaths
-from csvpath.managers.csvpaths_manager import PathsManager
+from csvpath.managers.paths_manager import PathsManager
 
 DIR = "tests/test_resources/named_paths"
 JSON = "tests/test_resources/named_paths.json"

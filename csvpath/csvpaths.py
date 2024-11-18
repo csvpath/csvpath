@@ -11,7 +11,7 @@ from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException
-from .managers.csvpaths_manager import PathsManager
+from .managers.paths_manager import PathsManager
 from .managers.file_manager import FileManager
 from .managers.results_manager import ResultsManager
 from .managers.result import Result
