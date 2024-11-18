@@ -318,9 +318,11 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         names = [n for n in os.listdir(path) if not n.startswith(".")]
         return names
 
-    def remove_named_paths(self, name: str) -> None:
-        if not self.has_named_paths(name):
+    def remove_named_paths(self, name: str, strict: bool = False) -> None:
+        if not self.has_named_paths(name) and strict is True:
             raise InputException(f"Named-paths name {name} not found")
+        if not self.has_named_paths(name):
+            return
         home = self.registrar.named_paths_home(name)
         shutil.rmtree(home)
 
