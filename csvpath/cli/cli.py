@@ -1,8 +1,9 @@
-from csvpath import CsvPath, CsvPaths
 import sys
 import os
 import time
+import traceback
 from bullet import Bullet
+from csvpath import CsvPath, CsvPaths
 from .drill_down import DrillDown
 
 
@@ -92,8 +93,8 @@ class Cli:
                 self._results()
         except KeyboardInterrupt:
             return "quit"
-        except Exception as e:
-            print(f"Error: {e}")
+        except Exception:
+            print(traceback.format_exc())
             self._return_to_cont()
 
     def _files(self) -> None:
@@ -135,16 +136,18 @@ class Cli:
         try:
             names = self._csvpaths.results_manager.list_named_results()
             print(f"{len(names)} named-results names:")
-            for n in names:
-                self._response(f"   {n}")
-            t = self._input("Open which? ")
+            names.append(self.CANCEL)
+            cli = Bullet(bullet=" > ", choices=names)
+            t = cli.launch()
+            if t == self.CANCEL:
+                return
             t = f"{self._csvpaths.config.archive_path}{os.sep}{t}"
             self._action(f"Opening results at {t}...")
             self.short_pause()
             c = f"open {t}"
             os.system(c)
-        except Exception as e:
-            print(e)
+        except Exception:
+            print(traceback.format_exc())
 
     def list_named_paths(self):
         self.clear()
@@ -177,15 +180,19 @@ class Cli:
         paths = cli.launch()
         self.clear()
         print("What method? ")
-        cli = Bullet(bullet=" > ", choices=["collect", "fast forward"])
+        cli = Bullet(bullet=" > ", choices=["collect", "fast-forward"])
         method = cli.launch()
         self.clear()
         self._action(f"Running {paths} against {file} using {method}\n")
         self.pause()
-        if method == "collect":
-            self._csvpaths.collect_paths(filename=file, pathsname=paths)
-        else:
-            self._csvpaths.fast_forward_paths(filename=file, pathsname=paths)
+        try:
+            if method == "collect":
+                self._csvpaths.collect_paths(filename=file, pathsname=paths)
+            else:
+                self._csvpaths.fast_forward_paths(filename=file, pathsname=paths)
+        except Exception:
+            print(traceback.format_exc())
+        self._return_to_cont()
 
 
 def run():

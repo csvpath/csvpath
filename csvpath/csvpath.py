@@ -896,10 +896,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             raise InputException("Not a csvpath string")
         scan = ""
         matches = ""
-
+        data = data.strip()
         i = data.find("]")
         if i < 0:
             raise InputException(f"Cannot find the scan part of this csvpath: {data}")
+        elif i == len(data) - 1:
+            raise InputException(
+                f"The scan part of this csvpath cannot be last: {data}"
+            )
 
         scan = data[0 : i + 1]
         scan = scan.strip()
@@ -908,12 +912,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         ndata = ndata.strip()
 
         if ndata == "":
-            raise InputException("There must be a match part of this csvpath: {data}")
+            raise InputException(f"There must be a match part of this csvpath: {data}")
 
         if ndata[0] != "[":
-            raise InputException("Cannot find the match part of this csvpath: {data}")
+            raise InputException(f"Cannot find the match part of this csvpath: {data}")
         if ndata[len(ndata) - 1] != "]":
-            raise InputException("The match part of this csvpath is incorrect: {data}")
+            raise InputException(f"The match part of this csvpath is incorrect: {data}")
         matches = ndata
         #
         # if we're given directory(s) to save to, save the parts
@@ -1289,6 +1293,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self.line_monitor.physical_end_line_number
 
     def get_total_lines_and_headers(self) -> int:  # pylint: disable=C0116
+        if not self.scanner or not self.scanner.filename:
+            self.logger.error(
+                f"Csvpath identified as {self.identity} has no filename. Since that can happen during error handling an exception won't be raised."
+            )
+            return -1
         if self.csvpaths:
             self.line_monitor = self.csvpaths.file_manager.get_new_line_monitor(
                 self.scanner.filename

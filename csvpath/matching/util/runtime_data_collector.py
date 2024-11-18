@@ -39,33 +39,36 @@ class RuntimeDataCollector:
         cls._set(
             runtime, identity, "lines_time", round(csvpath.rows_time, 3), local, True
         )
-        cls._set(
-            runtime,
-            identity,
-            "total_lines",
-            csvpath.line_monitor.data_end_line_count,
-            True,
-            True,
-        )
+        if csvpath.line_monitor:
+            cls._set(
+                runtime,
+                identity,
+                "total_lines",
+                csvpath.line_monitor.data_end_line_count,
+                True,
+                True,
+            )
         #
         # end of common-to-all
         #
-        cls._set(
-            runtime,
-            identity,
-            "count_lines",
-            csvpath.line_monitor.physical_line_count,
-            local,
-            False,
-        )
-        cls._set(
-            runtime,
-            identity,
-            "line_number",
-            csvpath.line_monitor.physical_line_number,
-            local,
-            False,
-        )
+        if csvpath.line_monitor:
+            cls._set(
+                runtime,
+                identity,
+                "count_lines",
+                csvpath.line_monitor.physical_line_count,
+                local,
+                False,
+            )
+        if csvpath.line_monitor:
+            cls._set(
+                runtime,
+                identity,
+                "line_number",
+                csvpath.line_monitor.physical_line_number,
+                local,
+                False,
+            )
         cls._set(runtime, identity, "identity", identity, local, False)
         cls._set(runtime, identity, "count_matches", csvpath.match_count, local, False)
         cls._set(runtime, identity, "count_scans", csvpath.scan_count, local, False)

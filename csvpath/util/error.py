@@ -234,9 +234,12 @@ class ErrorHandler:
         error.exception_class = ex.__class__.__name__
         error.at = datetime.now()
         if self._csvpath:
-            error.line_count = (
-                self._csvpath.line_monitor.physical_line_number if self._csvpath else -1
-            )
+            if self._csvpath.line_monitor:
+                error.line_count = (
+                    self._csvpath.line_monitor.physical_line_number
+                    if self._csvpath
+                    else -1
+                )
             error.match_count = self._csvpath.match_count if self._csvpath else -1
             error.scan_count = self._csvpath.scan_count if self._csvpath else -1
             error.filename = (

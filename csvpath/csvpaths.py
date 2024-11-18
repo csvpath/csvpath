@@ -235,7 +235,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     def collect_paths(self, *, pathsname, filename) -> None:
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
-        self.logger.info("Cleaning out any %s and % results", filename, pathsname)
+        self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
             "Beginning collect_paths %s with %s paths", pathsname, len(paths)
@@ -274,10 +274,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                self.results_manager.save(result)
-                ErrorHandler(
-                    csvpaths=self, csvpath=csvpath, error_collector=result
-                ).handle_error(ex)
+                try:
+                    ErrorHandler(
+                        csvpaths=self, csvpath=csvpath, error_collector=result
+                    ).handle_error(ex)
+                except Exception as e:
+                    self.results_manager.save(result)
+                    raise e
             self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
@@ -328,11 +331,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
-        self.logger.info(
-            "Cleaning out any filename: %s and/or any pathsname: %s results",
-            filename,
-            pathsname,
-        )
+        self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
             "Beginning FF %s with %s paths against file %s. No match results will be held.",
@@ -367,10 +366,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                self.results_manager.save(result)
-                ErrorHandler(
-                    csvpaths=self, csvpath=csvpath, error_collector=result
-                ).handle_error(ex)
+                try:
+                    ErrorHandler(
+                        csvpaths=self, csvpath=csvpath, error_collector=result
+                    ).handle_error(ex)
+                except Exception as e:
+                    self.results_manager.save(result)
+                    raise e
             self.results_manager.save(result)
         self.clear_run_coordination()
         self.logger.info(
@@ -384,7 +386,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
-        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
         crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
@@ -432,10 +434,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                self.results_manager.save(result)
-                ErrorHandler(
-                    csvpaths=self, csvpath=csvpath, error_collector=result
-                ).handle_error(ex)
+                try:
+                    ErrorHandler(
+                        csvpaths=self, csvpath=csvpath, error_collector=result
+                    ).handle_error(ex)
+                except Exception as e:
+                    self.results_manager.save(result)
+                    raise e
             self.results_manager.save(result)
         self.clear_run_coordination()
 
@@ -502,7 +507,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         collect_when_not_matched=False,
     ) -> List[Any]:
         # re: R0912 -- absolutely. plan to refactor.
-        self.logger.info("Cleaning out any %s and %s results", filename, pathsname)
+        self.logger.info("Prepping %s and %s", filename, pathsname)
         self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         self.clean(paths=pathsname)
         fn = self.file_manager.get_named_file(filename)
@@ -617,14 +622,27 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                for r in csvpath_objects:
-                    r = r[1]
-                    self.results_manager.save(r)
-                ErrorHandler(
-                    csvpaths=self,
-                    csvpath=self.current_matcher,
-                    error_collector=self.current_matcher,
-                ).handle_error(ex)
+                #
+                # was like this, but doing save here fails to
+                # save the present exception. doing save below
+                # in 2nd handler should give better visibility
+                #
+                # for r in csvpath_objects:
+                #    r = r[1]
+                #    self.results_manager.save(r)
+                try:
+                    ErrorHandler(
+                        csvpaths=self,
+                        csvpath=self.current_matcher,
+                        error_collector=self.current_matcher,
+                    ).handle_error(ex)
+                except Exception as e:
+                    for r in csvpath_objects:
+                        result = r[1]
+                        result.unmatched = r[0].unmatched
+                        self.results_manager.save(result)
+                    raise e
+
             # we yield even if we stopped in this iteration.
             # caller needs to see what we stopped on.
             #

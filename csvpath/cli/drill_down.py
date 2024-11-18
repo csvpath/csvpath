@@ -116,7 +116,7 @@ class DrillDown:
         else:
             names = self._filter_extensions(path, names, extensions)
             names.sort()
-        names = self._decorate(path, names)
+        names = self._decorate(path, names, select_dir=dir_only)
         cli = Bullet(bullet=" > ", choices=names)
         t = cli.launch()
         if t == self._cli.STOP_HERE:
@@ -127,7 +127,7 @@ class DrillDown:
             t = t[2:]
         return os.path.join(path, t)
 
-    def _decorate(self, path, names) -> list[str]:
+    def _decorate(self, path, names, select_dir=False) -> list[str]:
         ns = []
         for n in names:
             if n == self._cli.STOP_HERE:
@@ -137,7 +137,8 @@ class DrillDown:
             else:
                 n = f"📂 {n}"
             ns.append(n)
-        ns.append(self._cli.STOP_HERE)
+        if select_dir is True:
+            ns.append(self._cli.STOP_HERE)
         ns.append(self._cli.CANCEL)
         return ns
 
