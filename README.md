@@ -126,13 +126,11 @@ A csvpath doesn't have to point to a specific file. As shown above, it can point
 
 This version of the example has its file chosen at runtime.
 
-See [more examples here](#examples).
+See [more examples in this documentation](#examples). There are also <a href='https://www.csvpath.org'>lots more examples on csvpath.org</a>.
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths.
 
-CsvPath was conceived as a data testing and extraction tool. Running it in production typically involves testing the paths in advance and automating the runs.
-
-Interactive use of csvpaths can be valuable, too, of course. There is a trivial REPL (read–eval–print loop) script at the project's root (<a href='repl.py'>repl.py</a>) that you can use to explore and test csvpaths.
+CsvPath was conceived as a data testing and extraction tool. Running it in production typically involves testing the paths in advance and automating the runs. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> that you can use to create and test csvpaths. You can <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>read more about the CLI here</a>.
 
 <a name="running"></a>
 ## Running CsvPath
