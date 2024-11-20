@@ -1015,7 +1015,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     #
     def collect(self, csvpath: str = None, *, nexts: int = -1) -> List[List[Any]]:
         """Runs the csvpath forward and returns the matching lines seen as
-        a list of lists"""
+        a list of lists. this method does not holds lines locally, not as
+        accessible attributes. lines are not kept after the run completes
+        and the collected lines are returned.
+        """
         if self.scanner is None and csvpath is not None:
             self.parse(csvpath)
         if nexts < -1:

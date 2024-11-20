@@ -41,6 +41,7 @@ pylightxl = "^1.61"
 smart-open = {extras = ["s3"], version = "^7.0.5", optional = true}
 pandas = { version = "^2.2.3", optional = true }
 bullet = "^2.2.0"
+pytest = "^8.3.3"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

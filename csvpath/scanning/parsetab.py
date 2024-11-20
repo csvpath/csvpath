@@ -5,7 +5,7 @@ _tabversion = "3.10"
 
 _lr_method = "LALR"
 
-_lr_signature = "pathALL_LINES ANY FILENAME LEFT_BRACKET MINUS NAME NUMBER PLUS RIGHT_BRACKETpath : FILENAME LEFT_BRACKET expression RIGHT_BRACKETexpression : expression PLUS term\n        | expression MINUS term\n        | termterm : NUMBER\n        | NUMBER ALL_LINES\n        | ALL_LINES"
+_lr_signature = "pathALL_LINES ANY FILENAME LEFT_BRACKET MINUS NAME NUMBER PLUS RIGHT_BRACKETpath : FILENAME LEFT_BRACKET expression RIGHT_BRACKETexpression : expression PLUS term\n| expression MINUS term\n| termterm : NUMBER\n| NUMBER ALL_LINES\n| ALL_LINES"
 
 _lr_action_items = {
     "FILENAME": (
@@ -176,7 +176,7 @@ _lr_productions = [
         4,
         "p_path",
         "scanner.py",
-        94,
+        163,
     ),
     (
         "expression -> expression PLUS term",
@@ -184,7 +184,7 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        105,
+        173,
     ),
     (
         "expression -> expression MINUS term",
@@ -192,10 +192,10 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        106,
+        174,
     ),
-    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 107),
-    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 118),
-    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 119),
-    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 120),
+    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 175),
+    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 186),
+    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 187),
+    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 188),
 ]
