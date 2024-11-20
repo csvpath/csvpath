@@ -1013,11 +1013,16 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     # collect(), fast_forward(), and next() are the central methods of CsvPath.
     #
     #
-    def collect(self, csvpath: str = None, *, nexts: int = -1) -> List[List[Any]]:
+    def collect(
+        self, csvpath: str = None, *, nexts: int = -1, lines=None
+    ) -> List[List[Any]]:
         """Runs the csvpath forward and returns the matching lines seen as
         a list of lists. this method does not holds lines locally, not as
         accessible attributes. lines are not kept after the run completes
         and the collected lines are returned.
+
+        the optional lines argument may be an instance of any class that has an append(obj)
+        method. if lines is None, a list is returned.
         """
         if self.scanner is None and csvpath is not None:
             self.parse(csvpath)
@@ -1026,7 +1031,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 "Input must be >= -1. -1 means collect to the end of the file."
             )
         self.collecting = True
-        lines = []
+        if lines is None:
+            lines = []
         for _ in self.next():
             _ = _[:]
             lines.append(_)
