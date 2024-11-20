@@ -1,7 +1,0 @@
-[
-                @st = num(" 3 ")
-                @no = num(" 3.5 ")
-                @bo = num(8.58)
-                @ca = num(yes())
-                @so = num(8)
-            ]

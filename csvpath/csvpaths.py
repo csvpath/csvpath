@@ -214,24 +214,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
 
-    #
-    # this method may not be much additional value at this point
-    # removed from collect_paths. still used in the other methods, but
-    # it is validating on top of bounds checking in the managers,
-    # and has the potential to add drift because references.
-    #
-    def _validate_paths_and_file(self, *, pathsname, filename) -> None:
-        """
-        if not self.paths_manager.has_named_paths(pathsname):  # pragma: no cover
-            keys = list(self.paths_manager.named_paths.keys())
-            raise InputException(
-                f"Pathsname '{pathsname}' must be a named set of paths in {keys}"
-            )
-        if filename not in self.file_manager.named_files:  # pragma: no cover
-            keys = self.file_manager.named_files.keys()
-            raise InputException(f"Filename must be a named file in {keys}")
-        """
-
     def collect_paths(self, *, pathsname, filename) -> None:
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
@@ -256,20 +238,28 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             try:
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
-                lines = csvpath.collect()
+                lines = result.lines
+                csvpath.collect(lines=lines)
+                # lines = csvpath.collect()
                 if lines is None:
                     self.logger.error(  # pragma: no cover
                         "Unexpected None for lines after collect_paths: file: %s, match: %s",
                         file,
                         csvpath.match,
                     )
+                """
+                #
+                # this seems to have not been very useful and with LineSpooler it seems
+                # to not be helpful at all.
+                #
                 if len(lines) == 0:
                     self.logger.warning(  # pragma: no cover
                         "No lines collected in collect_paths: file: %s match: %s",
                         file,
                         csvpath.match,
                     )
-                result.lines = lines
+                """
+                # result.lines = lines
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
@@ -328,7 +318,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         csvpath.parse(apath)
 
     def fast_forward_paths(self, *, pathsname, filename):
-        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Prepping %s and %s", filename, pathsname)
@@ -383,7 +372,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         """appends the Result for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
-        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Prepping %s and %s", filename, pathsname)
@@ -508,7 +496,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     ) -> List[Any]:
         # re: R0912 -- absolutely. plan to refactor.
         self.logger.info("Prepping %s and %s", filename, pathsname)
-        self._validate_paths_and_file(pathsname=pathsname, filename=filename)
         self.clean(paths=pathsname)
         fn = self.file_manager.get_named_file(filename)
         paths = self.paths_manager.get_named_paths(pathsname)

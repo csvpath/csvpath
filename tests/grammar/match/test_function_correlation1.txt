@@ -1,6 +1,0 @@
-[
-                    push("a", #0)
-                    push("b", #1)
-                    last.nocontrib() -> @c = correlate.corr(stack("a"), stack("b"))
-                    last.nocontrib() -> print("correlation $.variables.c")
-                ]

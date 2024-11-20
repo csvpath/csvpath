@@ -5,6 +5,7 @@ import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
+from .line_spooler import LineSpooler
 from ..util.exceptions import InputException, CsvPathsException
 from .result_serializer import ResultSerializer
 from ..util.reference_parser import ReferenceParser
@@ -239,6 +240,13 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             raise CsvPathsException(
                 "Cannot save result because there is no CsvPaths instance"
             )
+        if result.lines and isinstance(result.lines, LineSpooler):
+            # we are done spooling. need to close whatever may be open.
+            result.lines.close()
+            # cannot make lines None w/o recreating lines. now we're setting
+            # closed to true to indicate that we've written.
+            # we don't need the serializer trying to save spooled lines
+            # result.lines = None
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
 
@@ -322,9 +330,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         s = "%Y-%m-%d_%H-%M-%S"
         names = [n for n in names if n.startswith(instance)]
         if len(names) == 0:
-            print(
-                f"find_in_dir_names: names is {names}, instance: {instance}, last: {last}"
-            )
             return None
         names = sorted(
             names,

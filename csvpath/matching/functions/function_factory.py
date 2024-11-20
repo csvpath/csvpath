@@ -13,6 +13,7 @@ from .strings.regex import Regex
 from .strings.concat import Concat
 from .strings.metaphone import Metaphone
 from .counting.count import Count
+from .counting.count_bytes import CountBytes
 from .counting.counter import Counter
 from .counting.has_matches import HasMatches
 from .counting.count_lines import CountLines, LineNumber
@@ -400,6 +401,8 @@ class FunctionFactory:
             f = FileFingerprint(matcher, name, child)
         elif name == "store_line_fingerprint":
             f = StoreFingerprint(matcher, name, child)
+        elif name == "count_bytes":
+            f = CountBytes(matcher, name, child)
         elif name == "counter":
             f = Counter(matcher, name, child)
         else:

@@ -1,0 +1,20 @@
+
+---- CSVPATH ----
+
+~
+  name: bytes count
+  validation-mode: print, raise, stop
+~
+$[1*][
+    @bytes = count_bytes()
+    ~ this mod may be too high for the rate of flush to disk. works
+      today for this machine, but not sure it always will ~
+    mod(line_number(), 30) == 0 -> print("bytes written so far: $.variables.bytes")
+    and.nocontrib(
+        @bytes == 0,
+        gt(line_number(), 1000))
+    -> fail_and_stop()
+]
+
+
+
