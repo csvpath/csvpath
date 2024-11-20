@@ -1,9 +1,0 @@
-[
-                line(
-                    string(#food),
-                    string(#type),
-                    unspecific(#units),
-                    float.notnone(#year),
-                    boolean(#healthy)
-                )
-            ]

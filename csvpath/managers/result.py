@@ -1,11 +1,14 @@
 # pylint: disable=C0114
 import os
+from pathlib import Path
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, Any
 from ..util.error import Error, ErrorCollector
 from ..util.printer import Printer
 from .. import CsvPath
 from .result_serializer import ResultSerializer
+from .line_spooler import LineSpooler, CsvLineSpooler
 
 
 class Result(ErrorCollector, Printer):  # pylint: disable=R0902
@@ -39,7 +42,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._last_line = None
         # use the properties so error_collector, etc. is set correctly
         self.csvpath = csvpath
-        self.lines = lines
+        # self.lines = lines
         self.run_index = f"{run_index}"
         self._run_time = run_time
         self._run_dir = run_dir
@@ -70,6 +73,10 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         i_dir = ResultSerializer(self.csvpath.config.archive_path).get_instance_dir(
             run_dir=self.run_dir, identity=self.identity_or_index
         )
+        """
+        if not os.path.exists(i_dir):
+            Path(i_dir).mkdir(parents=True, exist_ok=True)
+        """
         return i_dir
 
     @property
@@ -113,10 +120,22 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @property
     def lines(self) -> List[List[Any]]:  # pylint: disable=C0116
+        if self._lines is None:
+            #
+            # we can assume the caller wants a container for lines. in that case,
+            # we want them to have a container that serializes lines as they come in
+            # rather than waiting for them all to arrive before writing to disk.
+            #
+            # for today we'll just default to CsvLineSpooler, but assume we'll work
+            # in other options later.
+            #
+            self._lines = CsvLineSpooler(self)
         return self._lines
 
     @lines.setter
     def lines(self, ls: List[List[Any]]) -> None:
+        if self._lines and isinstance(self._lines, LineSpooler):
+            self._lines.close()
         self._lines = ls
 
     def append(self, line: List[Any]) -> None:
@@ -252,7 +271,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
                    last line processed:{lastline};
                    total file lines:{endline};
                    matches:{self.csvpath.match_count};
-                   lines matched:{len(self.lines) if self.lines else 0};
+                   lines matched:{len(self._lines) if self._lines and not isinstance(self._lines, LineSpooler) else -1};
                    lines unmatched:{len(self.unmatched) if self.unmatched else 0};
                    print statements:{self.print_statements_count()};
                    errors:{len(self.errors)}"""

@@ -226,7 +226,6 @@ class Reference(Matchable):
             if rm.get_number_of_results(name) == 1:
                 rs = rm.get_named_results(name)
                 return rs[0]
-                # ret = self._get_value_from_results(ref, rs[0])
             elif ref["tracking"]:
                 #
                 # find the specific path if we have a tracking value.
@@ -242,7 +241,6 @@ class Reference(Matchable):
                         ref["tracking"],
                         self,
                     )
-                # ret = self._get_value_from_results(ref, r)
                 return r
             else:
                 #
@@ -268,7 +266,7 @@ class Reference(Matchable):
                 f"Index of header {ref['name']} is negative. Check the headers for your reference."
             )
         ls = []
-        for line in result.lines:
+        for line in result.lines.next():
             if len(line) > i and line[i] is not None:
                 ls.append(f"{line[i]}".strip())
         return ls

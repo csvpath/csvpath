@@ -5,6 +5,7 @@ from typing import NewType, List, Dict, Optional, Union
 from datetime import datetime
 from ..matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath import CsvPath
+from .line_spooler import LineSpooler
 
 Simpledata = NewType("Simpledata", Union[None | str | int | float | bool])
 Listdata = NewType("Listdata", list[None | str | int | float | bool])
@@ -16,8 +17,10 @@ class ResultSerializer:
     def __init__(self, base_dir: str):
         # archive dir from config.ini
         self.base_dir = base_dir
+        self.result = None
 
     def save_result(self, result) -> None:
+        self.result = result
         runtime_data = {}
         RuntimeDataCollector.collect(result.csvpath, runtime_data, local=True)
         runtime_data["run_index"] = result.run_index
@@ -36,6 +39,7 @@ class ResultSerializer:
             run_index=result.run_index,
             unmatched=result.unmatched,
         )
+        self.result = None
 
     def _save(
         self,
@@ -72,13 +76,21 @@ class ResultSerializer:
             json.dump(errors, f, indent=2)
         with open(os.path.join(run_dir, "vars.json"), "w") as f:
             json.dump(variables, f, indent=2)
-
-        # Save lines returned as a CSV file
-        if lines is None:
-            lines = []
-        with open(os.path.join(run_dir, "data.csv"), "w") as f:
-            writer = csv.writer(f)
-            writer.writerows(lines)
+        # Save lines returned as a CSV file. note that they may have already
+        # spooled and the spooler been discarded.
+        if lines is not None:
+            if isinstance(lines, LineSpooler) and lines.closed is True:
+                self.result.csvpath.logger.debug(
+                    "line spooler has already written its data"
+                )
+            elif isinstance(lines, LineSpooler):
+                self.result.csvpath.logger.debug(
+                    "not writing data in/from line spooler even though lines.closed is not True"
+                )
+            else:
+                with open(os.path.join(run_dir, "data.csv"), "w") as f:
+                    writer = csv.writer(f)
+                    writer.writerows(lines)
         if unmatched is not None and len(unmatched) > 0:
             with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
                 writer = csv.writer(f)

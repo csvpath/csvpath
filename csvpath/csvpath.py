@@ -28,6 +28,7 @@ from .util.exceptions import (
 from .matching.util.exceptions import MatchException
 from csvpath.util.printer import Printer
 from csvpath.util.file_readers import DataFileReader
+from csvpath.managers.line_spooler import LineSpooler, ListLineSpooler
 
 
 class CsvPathPublic(ABC):
@@ -196,6 +197,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.stopped = False
         self._advance = 0
+        #
+        # the lines var will hold a reference to a LineSpooler instance during a
+        # run, if lines are being collected by the collect() method. if the user
+        # is using this CsvPath instance directly the LineSpooler is only there
+        # as a proxy to the list of lines being collected -- we don't spool to
+        # disk, at least atm.
+        #
+        self.lines = None
         #
         # set by fail()
         #
@@ -1015,7 +1024,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     #
     def collect(
         self, csvpath: str = None, *, nexts: int = -1, lines=None
-    ) -> List[List[Any]]:
+    ) -> List[List[Any]] | LineSpooler:
         """Runs the csvpath forward and returns the matching lines seen as
         a list of lists. this method does not holds lines locally, not as
         accessible attributes. lines are not kept after the run completes
@@ -1031,17 +1040,38 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 "Input must be >= -1. -1 means collect to the end of the file."
             )
         self.collecting = True
+        #
+        # we're going to use the passed in lines object. if it exists
+        # it is a LineSpooler (we presume). we'll associate it with the
+        # csvpath temporarily so anyone interested can get it. if it
+        # doesn't exist we create a list for the lines var. we create a
+        # list LinesSpooler to handle any inquiries during the run we
+        # do all our line collecting busness with the local lines var
+        # which has an append method regardless of if it is list or
+        # LineSpooler. when we're done we break the link with the csvpath
+        # and return the local variable. if it is a list it is going to
+        # a csvpath user. if it is a LineSpooler it is going to a
+        # CsvPaths instance.
+        #
+        self.lines = lines
         if lines is None:
             lines = []
+            self.lines = ListLineSpooler(lines=lines)
         for _ in self.next():
             _ = _[:]
-            lines.append(_)
+            self.lines.append(_)
             if nexts == -1:
                 continue
             if nexts > 1:
                 nexts -= 1
             else:
                 break
+        # we don't want to hold on to lines more than needed.
+        # we do want to return them if we're not spooling. the
+        # way we do that is to keep the local var available with the
+        # list and/or the spooler. the caller needs to be aware of
+        # both possibilities, but both offer __len__ and append.
+        self.lines = None
         return lines
 
     def fast_forward(self, csvpath=None) -> None:
