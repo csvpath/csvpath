@@ -9,6 +9,7 @@ from ..util.printer import Printer
 from .. import CsvPath
 from .result_serializer import ResultSerializer
 from .line_spooler import LineSpooler, CsvLineSpooler
+from ..util.exceptions import CsvPathsException
 
 
 class Result(ErrorCollector, Printer):  # pylint: disable=R0902
@@ -48,6 +49,21 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._run_dir = run_dir
         self._unmatched = None
         self._data_file_path = None
+        if (
+            csvpath.metadata is None
+            or csvpath.identity is None
+            or csvpath.identity == ""
+        ):
+            if csvpath.metadata is None:
+                raise CsvPathsException(
+                    "Metadata cannot be None. Check order of operations."
+                )
+            #
+            # "NAME" is the least favored identifier. if we parse metadata after setting this
+            # identity and the csvpath uses any of the other five identifiers it will take
+            # precedence over this index. if the csvpath uses NAME it will overwrite.
+            #
+            csvpath.metadata["NAME"] = self.run_index
 
     @property
     def run_time(self) -> datetime:
@@ -139,14 +155,19 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._lines = ls
 
     def append(self, line: List[Any]) -> None:
-        if self._lines is None:
-            self._lines = []
-        self._lines.append(line)
+        self.lines.append(line)
+        # orig
+        # if self._lines is None:
+        #    self._lines = []
+        # self._lines.append(line)
 
     def __len__(self) -> int:
-        if self._lines is None:
-            self._lines = []  # pragma: no cover
-        return len(self._lines)
+        if isinstance(self.lines, list):
+            return len(self._lines)
+        i = 0
+        for _ in self.lines.next():
+            i += 1
+        return i
 
     @property
     def unmatched(self) -> list[list[Any]]:

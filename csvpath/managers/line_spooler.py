@@ -69,6 +69,14 @@ class CsvLineSpooler(LineSpooler):
             self.writer = csv.writer(self.sink)
 
     def next(self):
+        if self.path is None:
+            self._instance_data_file_path()
+        if os.path.exists(self.path) is False:
+            self.result.csvpath.logger.debug(
+                "There is no data.csv at %s. This may or may not be a problem.",
+                self.path,
+            )
+            return
         for line in DataFileReader(
             self.path,
             filetype="csv",

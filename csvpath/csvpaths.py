@@ -10,7 +10,8 @@ from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
-from .util.exceptions import InputException
+from .util.exceptions import InputException, CsvPathsException
+from .util.csvpaths_registrar import CsvPathsRegistrar, CsvPathsFilesystemRegistrar
 from .managers.paths_manager import PathsManager
 from .managers.file_manager import FileManager
 from .managers.results_manager import ResultsManager
@@ -148,6 +149,20 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._skip_all = False
         self._advance_all = 0
         self._current_run_time = None
+        self._csvpaths_registrars = []
+        self._csvpaths_registrars.append(CsvPathsFilesystemRegistrar(self))
+        self._run_time_str = None
+
+    def run_time_str(self, pathsname=None) -> str:
+        if self._run_time_str is None and pathsname is None:
+            raise CsvPathsException(
+                "Cannot have None in both run_time_str and pathsname"
+            )
+        if self._run_time_str is None:
+            self._run_time_str = self.results_manager.get_run_time_str(
+                pathsname, self.current_run_time
+            )
+        return self._run_time_str
 
     @property
     def current_run_time(self) -> datetime:
@@ -194,6 +209,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._advance_all = lines
 
     @property
+    def csvpaths_registrars(self) -> list[CsvPathsRegistrar]:
+        if self._csvpaths_registrars is None:
+            self._csvpaths_registrars = []
+        return self._csvpaths_registrars
+
+    def add_csvpaths_registrar(self, creg) -> None:
+        self.csvpaths_registrars.append(creg)
+
+    @property
     def errors(self) -> List[Error]:  # pylint: disable=C0116
         return self._errors
 
@@ -222,7 +246,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Beginning collect_paths %s with %s paths", pathsname, len(paths)
         )
-        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
+        crt = self.run_time_str(pathsname)
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             result = Result(
@@ -237,7 +261,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             # want to never fail during a run
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
+                self._load_csvpath(
+                    csvpath=csvpath,
+                    path=path,
+                    file=file,
+                    pathsname=pathsname,
+                    filename=filename,
+                )
                 lines = result.lines
                 self.logger.debug("Collecting lines using a %s", type(lines))
                 csvpath.collect(lines=lines)
@@ -268,12 +298,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         )
 
     def _load_csvpath(
-        self, csvpath: CsvPath, path: str, file: str, pathsname: str = None
+        self, *, csvpath: CsvPath, path: str, file: str, pathsname: str = None, filename
     ) -> None:
+        # file is the physical file (+/- if preceding mode) filename is the named-file name
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
         # we strip comments from above the path so we need to extract them first
         path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
-        self.logger.debug("Csvpath after metadata extract: %s", path)
+        identity = csvpath.identity
+        self.logger.debug("Csvpath %s after metadata extract: %s", identity, path)
         # update the settings using the metadata fields we just collected
         csvpath.update_settings_from_metadata()
         #
@@ -306,6 +338,20 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         apath = f"${file}{path[f:]}"
         self.logger.info("Parsing csvpath %s", apath)
         csvpath.parse(apath)
+        #
+        # ready to run. time to register the run.
+        #
+        crt = self.run_time_str(pathsname)
+        fingerprint = self.file_manager.get_fingerprint_for_name(filename)
+        for _ in self.csvpaths_registrars:
+            _.update_manifest(
+                csvpath=csvpath,
+                filepath=file,
+                instancepath=crt,
+                fingerprint=fingerprint,
+                identity=identity,
+            )
+        self.logger.debug("Done loading csvpath")
 
     def fast_forward_paths(self, *, pathsname, filename):
         paths = self.paths_manager.get_named_paths(pathsname)
@@ -318,7 +364,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             len(paths),
             filename,
         )
-        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
+        crt = self.run_time_str(pathsname)
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
@@ -332,7 +378,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             )
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
+                self._load_csvpath(
+                    csvpath=csvpath,
+                    path=path,
+                    file=file,
+                    pathsname=pathsname,
+                    filename=filename,
+                )
                 self.logger.info(
                     "Parsed csvpath %s pointed at %s and starting to fast-forward",
                     i,
@@ -367,7 +419,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
-        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
+        crt = self.run_time_str(pathsname)
         for i, path in enumerate(paths):
             if self._skip_all:
                 skip_err = "Found the skip-all signal set. skip_all() is"
@@ -402,7 +454,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 csvpath.is_valid = False
             try:
                 self.results_manager.add_named_result(result)
-                self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
+                self._load_csvpath(
+                    csvpath=csvpath,
+                    path=path,
+                    file=file,
+                    pathsname=pathsname,
+                    filename=filename,
+                )
                 for line in csvpath.next():
                     line.append(result)
                     if collect:
@@ -495,10 +553,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
+
         csvpath_objects = self._load_csvpath_objects(
             paths=paths,
             named_file=fn,
             collect_when_not_matched=collect_when_not_matched,
+            filename=filename,
+            pathsname=pathsname,
         )
         self._prep_csvpath_results(
             csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname
@@ -636,14 +697,26 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
-        self, *, paths: List[str], named_file: str, collect_when_not_matched=False
+        self,
+        *,
+        paths: List[str],
+        named_file: str,
+        collect_when_not_matched=False,
+        filename,
+        pathsname,
     ):
         csvpath_objects = []
         for path in paths:
             csvpath = self.csvpath()
             csvpath.collect_when_not_matched = collect_when_not_matched
             try:
-                self._load_csvpath(csvpath, path=path, file=named_file)
+                self._load_csvpath(
+                    csvpath=csvpath,
+                    path=path,
+                    file=named_file,
+                    filename=filename,
+                    pathsname=pathsname,
+                )
                 if csvpath.data_from_preceding is True:
                     self.logger.warning(
                         "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
@@ -661,7 +734,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
-        crt = self.results_manager.get_run_time_str(pathsname, self.current_run_time)
+        crt = self.run_time_str(pathsname)
         for i, csvpath in enumerate(csvpath_objects):
             try:
                 #

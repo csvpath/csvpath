@@ -13,7 +13,7 @@ from ..util.error import ErrorHandler
 from ..util.cache import Cache
 from ..util.file_readers import DataFileReader
 from ..util.reference_parser import ReferenceParser
-from ..util.exceptions import InputException
+from ..util.exceptions import InputException, FileException
 from .file_registrar import FileRegistrar
 
 
@@ -217,6 +217,18 @@ class FileManager(CsvPathsFileManager):  # pylint: disable=C0115
         return DataFileReader(
             path, filetype=filetype, delimiter=delimiter, quotechar=quotechar
         )
+
+    def get_fingerprint_for_name(self, name) -> str:
+        if name.startswith("$"):
+            # atm, we don't give fingerprints for references doing rewind/replay
+            return ""
+        mpath = self.registrar.manifest_path(name)
+        man = self.registrar.get_manifest(mpath)
+        if man is None or len(man) == 0:
+            raise FileException(
+                f"No fingerprint available for named-file name: {name} at manifest path: {mpath}: manifest: {man}"
+            )
+        return man[len(man) - 1]["fingerprint"]
 
     def _name_from_name_part(self, name):
         i = name.rfind(".")

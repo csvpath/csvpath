@@ -122,7 +122,6 @@ class ResultSerializer:
         run_dir = os.path.join(self.base_dir, paths_name)
         if not os.path.exists(run_dir):
             os.makedirs(run_dir, exist_ok=True)
-
         if not isinstance(run_time, str):
             run_time = run_time.strftime("%Y-%m-%d_%I-%M-%S")
         run_dir = os.path.join(run_dir, f"{run_time}")

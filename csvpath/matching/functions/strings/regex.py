@@ -79,10 +79,10 @@ class Regex(MatchDecider):
                 self.value = v
             elif self.name == "exact":
                 self.value = v == thevalue
-            s = f"Regex.to_value: mode: {self.name}, capture group at {group}: {v},"
-            s = f"{s} with regex: {theregex}, original value: {thevalue},"
-            s = f"{s} returning: {self.value}"
-            self.matcher.csvpath.logger.info(s)
+            s = "Regex.to_value: mode: %s, capture group at %s: %s, with regex: %s, original value: %s, returning: %s"
+            self.matcher.csvpath.logger.debug(
+                s, self.name, group, v, theregex, thevalue, self.value
+            )
 
     def _decide_match(self, skip=None) -> None:
         if self.name == "regex":
