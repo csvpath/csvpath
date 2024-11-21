@@ -449,6 +449,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         is preferred over name. E.g.:
         ~ name: my path description: an example ~
         """
+        # this ordering is relied on in Result and possibly elsewhere
         if not self.metadata:
             return ""
         if "id" in self.metadata:

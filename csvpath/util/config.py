@@ -170,6 +170,7 @@ archive = archive
 [inputs]
 files = inputs/named_files
 csvpaths = inputs/named_paths
+on_unmatched_file_fingerprints = halt
             """
             file.write(c)
             print(f"Created a default config file at {directory} with name {name}.")
@@ -387,6 +388,14 @@ csvpaths = inputs/named_paths
     @cache_dir_path.setter
     def cache_dir_path(self, p) -> None:
         self._cache_dir_path = p
+
+    def halt_on_unmatched_file_fingerprints(self) -> bool:
+        houf = self._get("inputs", "on_unmatched_file_fingerprints")
+        if houf == "halt":
+            return True
+        elif houf == "continue":
+            return False
+        return None
 
     @property
     def archive_path(self) -> str:
