@@ -82,8 +82,8 @@ class TestFunctionsImport(unittest.TestCase):
 
         print(f"importable: {importable.csvpath}")
         assert len(importable) == 0
-        assert importable.csvpath.run_mode is False
+        assert importable.csvpath.will_run is False
 
         print(f"importer: {importer.csvpath}")
         assert len(importer) == 9
-        assert importer.csvpath.run_mode is True
+        assert importer.csvpath.will_run is True

@@ -239,27 +239,17 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 self.results_manager.add_named_result(result)
                 self._load_csvpath(csvpath, path=path, file=file, pathsname=pathsname)
                 lines = result.lines
+                self.logger.debug("Collecting lines using a %s", type(lines))
                 csvpath.collect(lines=lines)
-                # lines = csvpath.collect()
                 if lines is None:
                     self.logger.error(  # pragma: no cover
                         "Unexpected None for lines after collect_paths: file: %s, match: %s",
                         file,
                         csvpath.match,
                     )
-                """
                 #
-                # this seems to have not been very useful and with LineSpooler it seems
-                # to not be helpful at all.
+                # this is obviously not a good idea for very large files!
                 #
-                if len(lines) == 0:
-                    self.logger.warning(  # pragma: no cover
-                        "No lines collected in collect_paths: file: %s match: %s",
-                        file,
-                        csvpath.match,
-                    )
-                """
-                # result.lines = lines
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()

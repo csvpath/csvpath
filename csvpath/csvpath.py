@@ -364,11 +364,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self._run_started_at
 
     @property
-    def run_mode(self) -> bool:
+    def will_run(self) -> bool:
         return self._run_mode
 
-    @run_mode.setter
-    def run_mode(self, mode) -> None:
+    @will_run.setter
+    def will_run(self, mode) -> None:
         self._run_mode = mode
 
     def _up_function_time_match(self, c, t) -> None:
@@ -730,6 +730,42 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_unmatched_mode_if()
         self.update_data_from_preceding_if()
 
+    # =====================
+
+    @property
+    def source_mode(self) -> str:
+        return self.metadata.get("source-mode")
+
+    @property
+    def validation_mode(self) -> str:
+        return self.metadata.get("validation-mode")
+
+    @property
+    def run_mode(self) -> str:
+        return self.metadata.get("run-mode")
+
+    @property
+    def logic_mode(self) -> str:
+        return "AND" if self.AND else "OR"
+
+    @property
+    def return_mode(self) -> str:
+        return self.metadata.get("return-mode")
+
+    @property
+    def explain_mode(self) -> str:
+        return self.metadata.get("explain-mode")
+
+    @property
+    def print_mode(self) -> str:
+        return self.metadata.get("print-mode")
+
+    @property
+    def unmatched_mode(self) -> str:
+        return self.metadata.get("unmatched-mode")
+
+    # =====================
+
     def update_data_from_preceding_if(self) -> None:
         if self.metadata and "source-mode" in self.metadata:
             dfp = self.metadata["source-mode"]
@@ -758,9 +794,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def update_run_mode_if(self) -> None:
         if self.metadata and "run-mode" in self.metadata:
             if f"{self.metadata['run-mode']}".strip() == "no-run":
-                self.run_mode = False
+                self.will_run = False
             elif f"{self.metadata['run-mode']}".strip() == "run":
-                self.run_mode = True
+                self.will_run = True
             else:
                 self.logger.warning(
                     "Incorrect metadata field value 'run-mode': %s",
@@ -1090,7 +1126,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if self.scanner is None and csvpath is not None:
             self.parse(csvpath)
         start = time.time()
-        if self.run_mode is True:
+        if self.will_run is True:
             for line in self._next_line():
                 b = self._consider_line(line)
                 if b:

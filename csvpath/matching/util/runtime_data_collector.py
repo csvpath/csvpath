@@ -95,8 +95,56 @@ class RuntimeDataCollector:
         cls._set(
             runtime,
             identity,
+            "unmatched-mode",
+            csvpath.unmatched_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "validation-mode",
+            csvpath.validation_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "source-mode",
+            csvpath.source_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "print-mode",
+            csvpath.print_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "run-mode",
+            csvpath.run_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
             "logic-mode",
-            "AND" if csvpath.AND else "OR",
+            csvpath.logic_mode,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "explain-mode",
+            csvpath.explain_mode,
             local,
             False,
         )
@@ -104,7 +152,7 @@ class RuntimeDataCollector:
             runtime,
             identity,
             "return-mode",
-            "no-matches" if csvpath.collect_when_not_matched else "matches",
+            csvpath.return_mode,
             local,
             False,
         )
