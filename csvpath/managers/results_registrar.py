@@ -1,34 +1,61 @@
 import os
 import json
-import hashlib
 from datetime import datetime
+from .result import Result
+from .result_serializer import ResultSerializer
+from .result_registrar import ResultRegistrar
 
 
 class ResultsRegistrar:
-    def __init__(self, *, result, result_serializer):
-        self.result = result
-        self.result_serializer = result_serializer
+    def __init__(
+        self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result]
+    ) -> None:
+        self.csvpaths = csvpaths
+        self.pathsname = pathsname
+        self.run_dir = run_dir
+        self.results = results
 
     def write_manifest(self) -> None:
         m = {}
-        #  - file fingerprints
-        #  - validity
-        #  - timestamp
-        #  - run-completeness
-        #  - files-expectedness
-        ffs = self.file_fingerprints
-        valid = self.result.csvpath.is_valid
         time = f"{datetime.now()}"
-        completed = self.completed
-        expected = self.all_expected_files
-        m["file_fingerprints"] = ffs
-        m["valid"] = valid
+        completed = self.all_completed()
+        valid = self.all_valid()
+        errors = self.error_count()
+        files = self.all_expected_files()
+        m["all_completed"] = completed
+        m["all_valid"] = valid
         m["time"] = time
-        m["completed"] = completed
-        m["files_expected"] = expected
+        m["error_count"] = errors
+        m["all_expected_files"] = files
         mp = self.manifest_path
         with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file, indent=2)
+
+    def all_valid(self) -> bool:
+        for r in self.results:
+            if not r.csvpath.is_valid:
+                return False
+        return True
+
+    def all_completed(self) -> bool:
+        for r in self.results:
+            if not r.csvpath.completed:
+                return False
+        return True
+
+    def error_count(self) -> bool:
+        ec = 0
+        for r in self.results:
+            ec += r.errors_count
+        return ec
+
+    def all_expected_files(self) -> bool:
+        rs = ResultSerializer(self.csvpaths.config.archive_path)
+        for r in self.results:
+            rr = ResultRegistrar(result=r, result_serializer=rs)
+            if not rr.all_expected_files:
+                return False
+        return True
 
     @property
     def manifest(self) -> dict[str, str | bool]:
@@ -39,95 +66,4 @@ class ResultsRegistrar:
 
     @property
     def manifest_path(self) -> str:
-        return os.path.join(self.results_path, "manifest.json")
-
-    @property
-    def results_path(self) -> str:
-        rdir = self.result_serializer.get_instance_dir(
-            run_dir=self.result.run_dir, identity=self.result.identity_or_index
-        )
-        return rdir
-
-    @property
-    def completed(self) -> bool:
-        if self.result.csvpath.scanner.is_last(
-            self.result.csvpath.line_monitor.physical_line_number
-        ):
-            return True
-        return False
-
-    @property
-    def all_expected_files(self) -> bool:
-        #
-        # we can not have data.csv, unmatched.csv, and printouts.txt without it
-        # necessarily being a failure mode. but we can require them as a matter
-        # of content validation.
-        #
-        if (
-            self.result.csvpath.all_expected_files is None
-            or len(self.result.csvpath.all_expected_files) == 0
-        ):
-            if not self.has_file("meta.json"):
-                return False
-            if not self.has_file("errors.json"):
-                return False
-            if not self.has_file("vars.json"):
-                return False
-            return True
-        for t in self.result.csvpath.all_expected_files:
-            t = t.strip()
-            if t.startswith("no-data"):
-                if self.has_file("data.csv"):
-                    return False
-            if t.startswith("data") or t.startswith("all"):
-                if not self.has_file("data.csv"):
-                    return False
-            if t.startswith("no-unmatched"):
-                if self.has_file("unmatched.csv"):
-                    return False
-            if t.startswith("unmatched") or t.startswith("all"):
-                if not self.has_file("unmatched.csv"):
-                    return False
-            if t.startswith("no-printouts"):
-                if self.has_file("printouts.txt"):
-                    return False
-            if t.startswith("printouts") or t.startswith("all"):
-                if not self.has_file("printouts.txt"):
-                    return False
-            if not self.has_file("meta.json"):
-                return False
-            if not self.has_file("errors.json"):
-                return False
-            if not self.has_file("vars.json"):
-                return False
-        return True
-
-    def has_file(self, t: str) -> bool:
-        r = self.results_path
-        return os.path.exists(os.path.join(r, t))
-
-    @property
-    def file_fingerprints(self) -> dict[str]:
-        r = self.results_path
-        fps = {}
-        for t in [
-            "data.csv",
-            "meta.json",
-            "unmatched.csv",
-            "printouts.txt",
-            "errors.json",
-            "vars.json",
-        ]:
-            f = self._fingerprint(os.path.join(r, t))
-            if f is None:
-                continue
-            fps[t] = f
-        return fps
-
-    def _fingerprint(self, path) -> str:
-        if os.path.exists(path):
-            with open(path, "rb") as f:
-                h = hashlib.file_digest(f, hashlib.sha256)
-                h = h.hexdigest()
-            return h
-        return None
+        return os.path.join(self.run_dir, "manifest.json")

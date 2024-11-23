@@ -5,7 +5,7 @@ import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
-from .results_registrar import ResultsRegistrar
+from .result_registrar import ResultRegistrar
 from .line_spooler import LineSpooler
 from ..util.exceptions import InputException, CsvPathsException
 from .result_serializer import ResultSerializer
@@ -154,7 +154,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         if r is None:
             return None
         rs = ResultSerializer(self._csvpaths.config.archive_path)
-        rr = ResultsRegistrar(result=r, result_serializer=rs)
+        rr = ResultRegistrar(result=r, result_serializer=rs)
         return rr.manifest
 
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
@@ -268,7 +268,7 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         #  - run-completeness
         #  - files-expectedness
         #
-        ResultsRegistrar(result=result, result_serializer=rs).write_manifest()
+        ResultRegistrar(result=result, result_serializer=rs).write_manifest()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr) -> str:

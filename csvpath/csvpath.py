@@ -1041,6 +1041,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._is_valid = tf
 
     @property
+    def completed(self) -> bool:
+        if not self.scanner or not self.line_monitor:
+            return False
+        if self.scanner.is_last(self.line_monitor.physical_line_number):
+            return True
+        return False
+
+    @property
     def from_line(self):  # pragma: no cover pylint: disable=C0116
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")

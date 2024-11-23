@@ -15,6 +15,7 @@ from .util.csvpaths_registrar import CsvPathsRegistrar, CsvPathsFilesystemRegist
 from .managers.paths_manager import PathsManager
 from .managers.file_manager import FileManager
 from .managers.results_manager import ResultsManager
+from .managers.results_registrar import ResultsRegistrar
 from .managers.result import Result
 from . import CsvPath
 
@@ -251,6 +252,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             "Beginning collect_paths %s with %s paths", pathsname, len(paths)
         )
         crt = self.run_time_str(pathsname)
+        results = []
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             result = Result(
@@ -296,10 +298,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
+            results.append(result)
+        rr = ResultsRegistrar(
+            csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
+        )
+        rr.write_manifest()
         #
         # update/write run manifests here
         #  - validity (are all paths valid)
-        #  - paths-completeness (did they all run)
+        #  - paths-completeness (did they all run and complete)
         #  - method (collect, fast_forward, next)
         #  - timestamp
         #
@@ -376,6 +383,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             filename,
         )
         crt = self.run_time_str(pathsname)
+        results = []
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
@@ -416,6 +424,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
+            results.append(result)
+        rr = ResultsRegistrar(
+            csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
+        )
+        rr.write_manifest()
         self.clear_run_coordination()
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
@@ -431,6 +444,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
         crt = self.run_time_str(pathsname)
+        results = []
         for i, path in enumerate(paths):
             if self._skip_all:
                 skip_err = "Found the skip-all signal set. skip_all() is"
@@ -489,6 +503,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
+            results.append(result)
+        rr = ResultsRegistrar(
+            csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
+        )
+        rr.write_manifest()
         self.clear_run_coordination()
 
     # =============== breadth first processing ================
@@ -701,10 +720,19 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 yield line
             if sum(stopped_count) == len(csvpath_objects):
                 break
+        results = []
         for r in csvpath_objects:
             result = r[1]
+            results.append(result)
             result.unmatched = r[0].unmatched
             self.results_manager.save(result)
+        rr = ResultsRegistrar(
+            csvpaths=self,
+            run_dir=results[0].run_dir,
+            pathsname=pathsname,
+            results=results,
+        )
+        rr.write_manifest()
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
