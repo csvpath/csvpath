@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from __future__ import annotations
 import os
+from pathlib import Path
 import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
@@ -246,11 +247,58 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         names.sort()
         return names
 
+    #
+    #
+    #
+    #
+    #
+    def do_transfers_if(self, result) -> None:
+        transfers = result.csvpath.transfers
+        if transfers is None:
+            return
+        for t in transfers:
+            filefrom = "data.csv" if t[0].startswith("data") else "unmatched.csv"
+            fileto = t[1]
+            pathfrom = self._path_to_result(result, filefrom)
+            pathto = self._path_to_transfer_to(result, fileto)
+            with open(pathfrom, "r", encoding="utf-8") as pf:
+                with open(pathto, "w", encoding="utf-8") as pt:
+                    pt.write(pf.read())
+            tm = {}
+            tm["from"] = pathfrom
+            tm["to"] = pathto
+
+    def _path_to_transfer_to(self, result, t) -> str:
+        p = result.csvpath.config.transfer_root
+        if t not in result.csvpath.variables:
+            raise InputException(f"Variable {t} not found in variables")
+        f = result.csvpath.variables[t]
+        if f.find("..") != -1:
+            raise InputException("Transfer path cannot include '..': {f}")
+        rp = os.path.join(p, f)
+        rd = rp[0 : rp.rfind(os.sep)]
+        if not os.path.exists(rd):
+            Path(rd).mkdir(parents=True, exist_ok=True)
+        return rp
+
+    def _path_to_result(self, result, t) -> str:
+        d = result.instance_dir
+        o = os.path.join(d, t)
+        r = o[0 : o.rfind(os.sep)]
+        if not os.path.exists(r):
+            os.mkdirs(r)
+            Path(r).mkdir(parents=True, exist_ok=True)
+        return o
+
+    #
+    #
+    #
+    #
+    #
+
     def save(self, result: Result) -> None:
         if self._csvpaths is None:
-            raise CsvPathsException(
-                "Cannot save result because there is no CsvPaths instance"
-            )
+            raise CsvPathsException("Cannot save because there is no CsvPaths instance")
         if result.lines and isinstance(result.lines, LineSpooler):
             # we are done spooling. need to close whatever may be open.
             result.lines.close()
@@ -258,6 +306,12 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             # closed to true to indicate that we've written.
             # we don't need the serializer trying to save spooled lines
             # result.lines = None
+        #
+        # if we are doing a transfer(s) do it here so we can put metadata in about
+        # the copy before the metadata is serialized into the results.
+        #
+        self.do_transfers_if(result)
+        #
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
         #

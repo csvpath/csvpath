@@ -64,3 +64,17 @@ class TestJsonNamedPaths(unittest.TestCase):
         )
         assert "completed" in m
         assert m["completed"] is False
+
+    def test_transfer_mode(self):
+        paths = CsvPaths()
+        try:
+            os.remove("transfers/transfer.txt")
+        except FileNotFoundError:
+            pass
+
+        paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
+        paths.paths_manager.add_named_paths_from_json(
+            "tests/examples/example_2_2/transfer.json"
+        )
+        paths.collect_paths(filename="March-2024", pathsname="transfer")
+        assert os.path.exists("transfers/transfer.txt")

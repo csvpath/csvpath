@@ -1,12 +1,9 @@
 {
-    "expected_files": [
+    "transfer": [
         "tests/examples/example_2_2/csvpaths/metadata.csvpath",
         "tests/examples/example_2_2/csvpaths/file_length.csvpath",
-        "tests/examples/example_2_2/csvpaths/reset.csvpath",
-        "tests/examples/example_2_2/csvpaths/categories_b.csvpath",
         "tests/examples/example_2_2/csvpaths/prices_b.csvpath",
-        "tests/examples/example_2_2/csvpaths/output.csvpath",
-        "tests/examples/example_2_2/csvpaths/sku_upc_b.csvpath"
+        "tests/examples/example_2_2/csvpaths/output.csvpath"
     ],
     "top_matter_import": [
         "tests/examples/example_2_2/csvpaths/top_matter_import.csvpath"

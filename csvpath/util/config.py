@@ -74,6 +74,7 @@ class Config:
         self._log_files_to_keep = None
         self._log_file_size = None
         self._archive_path = None
+        self._transfer_root = None
         self._inputs_files_path = None
         self._inputs_csvpaths_path = None
         self._config = RawConfigParser()
@@ -167,6 +168,7 @@ imports =
 path =
 [results]
 archive = archive
+transfers = transfers
 [inputs]
 files = inputs/named_files
 csvpaths = inputs/named_paths
@@ -199,6 +201,13 @@ on_unmatched_file_fingerprints = halt
                 self.archive_path = "archive"
             if not path.exists(self.archive_path):
                 os.makedirs(self.archive_path)
+
+    def _assure_transfer_root(self) -> None:
+        if self.load:
+            if self.transfer_root is None or self.transfer_root.strip() == "":
+                self.transfer_root = "transfers"
+            if not path.exists(self.transfer_root):
+                os.makedirs(self.transfer_root)
 
     def _assure_inputs_files_path(self) -> None:
         if self.load:
@@ -396,6 +405,19 @@ on_unmatched_file_fingerprints = halt
         elif houf == "continue":
             return False
         return None
+
+    @property
+    def transfer_root(self) -> str:
+        if self._transfer_root is None:
+            self._transfer_root = self._get("results", "transfers")
+            if self._transfer_root is None:
+                self._transfer_root = "transfers"
+                self.add_to_config("results", "transfers", "transfers")
+        return self._transfer_root
+
+    @transfer_root.setter
+    def transfer_root(self, p) -> None:
+        self._transfer_root = p
 
     @property
     def archive_path(self) -> str:

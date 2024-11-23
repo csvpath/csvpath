@@ -233,6 +233,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._errors: List[Error] = None
         self._error_collector = None
         #
+        # transfers from transfer-mode: ((data | unmatched):var-name)(,*)
+        # this setting tells CsvPaths to copy resulting data.csv and/or
+        # unmatched.csv to one or more target locations below the config.ini's
+        # transfer directory. the name "data" or "unmatched" is paired with
+        # a var name that indicates the path to write the indicated file.
+        #
+        self._transfers = None
+        #
         # saves the scan and match parts of paths for reference. mainly helpful
         # for testing the CsvPath library itself; not used end users. the run
         # name becomes the file name of the saved path parts.
@@ -732,8 +740,13 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_unmatched_mode_if()
         self.update_data_from_preceding_if()
         self.update_expected_files_if()
+        self.update_transfer_mode_if()
 
     # =====================
+
+    @property
+    def transfer_mode(self) -> str:
+        return self.metadata.get("transfer-mode")
 
     @property
     def source_mode(self) -> str:
@@ -772,6 +785,24 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self.metadata.get("unmatched-mode")
 
     # =====================
+
+    @property
+    def transfers(self) -> list[tuple[str, str]]:
+        return self._transfers
+
+    def update_transfer_mode_if(self) -> None:
+        m = self.transfer_mode
+        if m is not None:
+            self._transfers = []
+            for t in m.split(","):
+                i = t.find(">")
+                if i == -1:
+                    raise InputException(
+                        "Transfer mode directive must be in the form file > location"
+                    )
+                file = t[0:i].strip()
+                location = t[i + 1 :].strip()
+                self._transfers.append((file, location))
 
     def update_expected_files_if(self) -> None:
         fm = self.files_mode
