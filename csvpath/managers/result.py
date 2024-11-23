@@ -204,8 +204,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         self._errors.append(error)
 
-    @property
-    def has_errors(self) -> bool:  # pylint: disable=C0116
+    def has_errors(self) -> bool:
         return self.errors_count > 0
 
     @property

@@ -5,6 +5,7 @@ import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 from .result import Result
+from .results_registrar import ResultsRegistrar
 from .line_spooler import LineSpooler
 from ..util.exceptions import InputException, CsvPathsException
 from .result_serializer import ResultSerializer
@@ -146,6 +147,16 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
                     return r
         return None  # pragma: no cover
 
+    def get_specific_named_result_manifest(
+        self, name: str, name_or_id: str
+    ) -> dict[str, str | bool]:
+        r = self.get_specific_named_result(name, name_or_id)
+        if r is None:
+            return None
+        rs = ResultSerializer(self._csvpaths.config.archive_path)
+        rr = ResultsRegistrar(result=r, result_serializer=rs)
+        return rr.manifest
+
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
         if results and len(results) > 0:
@@ -249,6 +260,15 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             # result.lines = None
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
+        #
+        # register results into a manifest.json
+        #  - file fingerprints
+        #  - validity
+        #  - timestamp
+        #  - run-completeness
+        #  - files-expectedness
+        #
+        ResultsRegistrar(result=result, result_serializer=rs).write_manifest()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr) -> str:
@@ -363,6 +383,9 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         return t
 
     def remove_named_results(self, name: str) -> None:
+        #
+        # does not get rid of results on disk
+        #
         if name in self.named_results:
             del self.named_results[name]
             self._variables = None

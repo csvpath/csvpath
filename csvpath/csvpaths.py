@@ -240,7 +240,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
 
     def collect_paths(self, *, pathsname, filename) -> None:
         paths = self.paths_manager.get_named_paths(pathsname)
+        if paths is None:
+            raise InputException(f"No named-paths found for {pathsname}")
         file = self.file_manager.get_named_file(filename)
+        if file is None:
+            raise InputException(f"No named-file found for {filename}")
         self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info(
@@ -292,6 +296,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
+        #
+        # update/write run manifests here
+        #  - validity (are all paths valid)
+        #  - paths-completeness (did they all run)
+        #  - method (collect, fast_forward, next)
+        #  - timestamp
+        #
         self.clear_run_coordination()
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)

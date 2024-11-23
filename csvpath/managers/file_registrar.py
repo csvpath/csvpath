@@ -119,7 +119,7 @@ class FileRegistrar:
         jdata = self.get_manifest(manifestpath)
         jdata.append(mdata)
         with open(manifestpath, "w", encoding="utf-8") as file:
-            json.dump(jdata, file)
+            json.dump(jdata, file, indent=2)
 
     def register_named_file(self, *, name: str, path: str) -> None:
         # does the source file exist?

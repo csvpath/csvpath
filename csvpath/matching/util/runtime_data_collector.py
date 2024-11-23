@@ -158,6 +158,14 @@ class RuntimeDataCollector:
         )
         started = f"{csvpath.run_started_at}"
         cls._set(runtime, identity, "run_started_at", started, local, False)
+        cls._set(
+            runtime,
+            identity,
+            "lines_collected",
+            len(csvpath.lines) if csvpath.lines else -1,
+            local,
+            False,
+        )
 
     @classmethod
     def _set(

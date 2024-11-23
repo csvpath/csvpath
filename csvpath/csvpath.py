@@ -308,7 +308,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._function_times_value = {}
         self._created_at = datetime.now()
         self._run_started_at = None
-
+        self._all_expected_files = []
         self._collecting = False
         self._unmatched = None
         self._unmatched_available = False
@@ -472,7 +472,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self._config = Config()
         return self._config
 
-    def has_errors(self) -> bool:  # pylint: disable=C0116
+    def has_errors(self) -> bool:
         if self.errors and len(self.errors) > 0:
             return True
         if self.error_collector:
@@ -721,6 +721,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - run-mode: no-run | run
         #   - unmatched-mode: no-keep | keep
         #   - source-mode: preceding | origin
+        #   - files-mode: all | no-data | no-unmatched | no-printouts | data | unmatched | errors | meta | vars | printouts
         #
         self.update_logic_mode_if()
         self.update_run_mode_if()
@@ -730,12 +731,17 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_arg_validation_mode_if()
         self.update_unmatched_mode_if()
         self.update_data_from_preceding_if()
+        self.update_expected_files_if()
 
     # =====================
 
     @property
     def source_mode(self) -> str:
         return self.metadata.get("source-mode")
+
+    @property
+    def files_mode(self) -> str:
+        return self.metadata.get("files-mode")
 
     @property
     def validation_mode(self) -> str:
@@ -766,6 +772,23 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self.metadata.get("unmatched-mode")
 
     # =====================
+
+    def update_expected_files_if(self) -> None:
+        fm = self.files_mode
+        if fm is None:
+            return []
+        fs = [s for s in fm.split(",")]
+        _ = []
+        for s in fs:
+            s = s.strip()
+            if s not in ["data", "unmatched", "vars", "errors", "meta", "printouts"]:
+                self.logger.warning(
+                    "Unknown file-mode token %s. Mode tokens may be separated by , and will be trimmed.",
+                    s,
+                )
+                continue
+            _.append(s)
+        self.all_expected_files = _
 
     def update_data_from_preceding_if(self) -> None:
         if self.metadata and "source-mode" in self.metadata:
@@ -860,6 +883,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                     "Incorrect metadata field value 'print-mode': %s",
                     self.metadata["print-mode"],
                 )
+
+    @property
+    def all_expected_files(self) -> list[str]:
+        return self._all_expected_files
+
+    @all_expected_files.setter
+    def all_expected_files(self, efs: list[str]) -> None:
+        self._all_expected_files = efs
 
     def _pick_named_path(self, name, *, specific=None) -> str:
         if not self.csvpaths:
@@ -1103,12 +1134,18 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 nexts -= 1
             else:
                 break
-        # we don't want to hold on to lines more than needed.
-        # we do want to return them if we're not spooling. the
+        # we don't want to hold on to data more than needed. but
+        # we do want to return data if we're not spooling. the
         # way we do that is to keep the local var available with the
         # list and/or the spooler. the caller needs to be aware of
         # both possibilities, but both offer __len__ and append.
-        self.lines = None
+        #
+        # we keep the self.lines if it is not a list because that
+        # makes it available to the runtime data collector so we can
+        # see the line count in the metadata, saving opening a
+        # potentially large data.csv to find out how many lines.
+        if isinstance(self.lines, list):
+            self.lines = None
         return lines
 
     def fast_forward(self, csvpath=None) -> None:

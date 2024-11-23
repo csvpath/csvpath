@@ -81,5 +81,5 @@ class TestExpressions(unittest.TestCase):
         assert not path.is_valid
         assert path.stopped is True
         print(f"results: {results}, {results.errors}")
-        assert results.has_errors is True
+        assert results.has_errors() is True
         assert len(results.errors) == 1

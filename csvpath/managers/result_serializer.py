@@ -88,20 +88,39 @@ class ResultSerializer:
                     "not writing data in/from line spooler even though lines.closed is not True"
                 )
             else:
-                with open(os.path.join(run_dir, "data.csv"), "w") as f:
-                    writer = csv.writer(f)
-                    writer.writerows(lines)
+                #
+                # this may not be right, but I think we can/maybe should not write data unless
+                # we have some. that would match the possible spooler behavior. it would also
+                # match fast_forward, which might be confusing, but if we capture the what method
+                # a run used that's not a worry. and if we don't, not having a data file is a
+                # poor indicator of the method anyway.
+                #
+                if lines is not None and len(lines) > 0:
+                    with open(os.path.join(run_dir, "data.csv"), "w") as f:
+                        writer = csv.writer(f)
+                        writer.writerows(lines)
         if unmatched is not None and len(unmatched) > 0:
             with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
                 writer = csv.writer(f)
                 writer.writerows(unmatched)
 
         # Save the printout lines
-        with open(os.path.join(run_dir, "printouts.txt"), "w") as f:
-            for k, v in printouts.items():
-                f.write(f"---- PRINTOUT: {k}\n")
-                for _ in v:
-                    f.write(f"{_}\n")
+        if self._has_printouts(printouts):
+            with open(os.path.join(run_dir, "printouts.txt"), "w") as f:
+                for k, v in printouts.items():
+                    f.write(f"---- PRINTOUT: {k}\n")
+                    for _ in v:
+                        f.write(f"{_}\n")
+
+    def _has_printouts(self, pos) -> bool:
+        if pos is None:
+            return False
+        if len(pos) == 0:
+            return False
+        for k, v in pos.items():
+            if v is not None and len(v) > 0:
+                return True
+        return False
 
     def _deref_paths_name(self, paths_name) -> str:
         #

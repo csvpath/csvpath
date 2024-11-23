@@ -99,7 +99,7 @@ class PathsRegistrar:
             mdata["time"] = f"{datetime.now()}"
             jdata.append(mdata)
             with open(manifestpath, "w", encoding="utf-8") as file:
-                json.dump(jdata, file)
+                json.dump(jdata, file, indent=2)
 
     def assure_manifest(self, name: str) -> None:
         nhome = self.named_paths_home(name)

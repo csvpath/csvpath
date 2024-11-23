@@ -1,0 +1,19 @@
+---- CSVPATH ----
+
+~
+    Check the prices
+    id: prices_b
+    unmatched-mode: keep
+    files-mode:data, unmatched
+    validation-mode: no-raise, no-stop
+~
+
+$[*][
+    import("top_matter_import")
+
+    not( exact( end(), /\$?(\d*\.\d{0,2})/ ) ) ->
+        print("Line $.csvpath.count_lines: bad price $.headers.'a price' ", fail())
+
+]
+
+

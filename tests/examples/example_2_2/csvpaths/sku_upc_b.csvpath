@@ -1,0 +1,16 @@
+---- CSVPATH ----
+
+~ Check for SKUs and UPCs ID: upc-sku
+  id:sku_upc_b
+  validation-mode:no-raise, fail, stop, print
+~
+
+$[*][
+    import("top_matter_import")
+
+    ~ this fails keeping us from completing because we stop on error ~
+    line_number() == 11 -> add("five", none())
+
+    not( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
+    not( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
+]

@@ -30,7 +30,7 @@ class CsvPathsFilesystemRegistrar(CsvPathsRegistrar):
             os.makedirs(self.archive, exist_ok=True)
         if not os.path.exists(self.manifest_path):
             with open(self.manifest_path, "w", encoding="utf-8") as file:
-                json.dump([], file)
+                json.dump([], file, indent=2)
         with open(self.manifest_path, "r", encoding="utf-8") as file:
             return json.load(file)
 
@@ -78,7 +78,7 @@ class CsvPathsFilesystemRegistrar(CsvPathsRegistrar):
         jdata = self.manifest
         jdata.append(mdata)
         with open(self.manifest_path, "w", encoding="utf-8") as file:
-            json.dump(jdata, file)
+            json.dump(jdata, file, indent=2)
         houf = self.csvpaths.config.halt_on_unmatched_file_fingerprints()
         if fingerprint != ffingerprint and csvpath.source_mode != "preceding":
             self.csvpaths.logger.warning(
