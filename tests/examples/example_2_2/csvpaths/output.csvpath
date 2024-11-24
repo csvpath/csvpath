@@ -3,8 +3,6 @@
     transfer-mode: data > out
     source-mode: preceding
 ~
-
 $[*][
-    @out = concat("categories_", now("%Y-%m-%d"), ".csv")
     @out = "transfer.txt"
 ]
