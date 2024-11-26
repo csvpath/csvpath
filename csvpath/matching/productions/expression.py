@@ -72,9 +72,14 @@ class Expression(Matchable):
                 # if we don't raise the exception we decline the match and
                 # continue
                 #
-                self.match = False
+                # is this False needed?
+                # self.match = False
         if len(self.errors) > 0:
-            self.match = False
+            #
+            # if we are matching on errors we want to not just fail lines
+            #
+            if not self.matcher.csvpath.match_validation_errors:
+                self.match = False
         return self.match
 
     def reset(self) -> None:

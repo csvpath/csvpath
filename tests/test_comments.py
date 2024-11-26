@@ -11,6 +11,7 @@ PATH = "tests/test_resources/test.csv"
 class TestComments(unittest.TestCase):
     def test_update_settings_from_metadata(self):
         path = CsvPath()
+        print("")
         assert path.OR is False
         assert path.collect_when_not_matched is False
         assert path.has_default_printer is True
@@ -32,6 +33,7 @@ class TestComments(unittest.TestCase):
         print(f"path meta: {path.metadata}")
         assert "logic-mode" in path.metadata
         assert "return-mode" in path.metadata
+        print(f"returnmode: {path.metadata['return-mode']}")
         assert "print-mode" in path.metadata
         assert "validation-mode" in path.metadata
         assert path.OR is True
@@ -92,6 +94,40 @@ class TestComments(unittest.TestCase):
                 p.last_line and p.last_line.find("Wrong value in match component") > -1
             )
         assert path.has_errors() is True
+
+    def test_update_settings_from_metadata_match_error(self):
+        path = CsvPath()
+        assert path.raise_validation_errors is None
+        path.parse(
+            f"""
+            ~ validation-mode: print, match, no-raise, no-stop ~
+            ${PATH}[1*][
+                mod.nocontrib(line_number(), 2) == 1 -> @a = 5
+                mod.nocontrib(line_number(), 2) == 0 -> @a = "five"
+                ~ every other line we blow up, but because we're matching
+                  validation errors we collect all the lines ~
+                add( @a, 1 )
+            ]
+            """
+        )
+        lines = path.collect()
+        assert path.has_errors() is True
+        assert len(lines) == 8
+
+        path = CsvPath()
+        assert path.raise_validation_errors is None
+        path.parse(
+            f"""
+            ~ validation-mode: print, no-raise, no-stop ~
+            ${PATH}[1*][
+                mod.nocontrib(line_number(), 2) == 1 -> @a = 5
+                mod.nocontrib(line_number(), 2) == 0 -> @a = "five"
+                add( @a, 1 )
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 4
 
     def test_comment_settings_affecting_multiple_paths(self):
         paths = CsvPaths()

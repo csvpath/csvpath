@@ -128,6 +128,7 @@ class Config:
             self._config.add_section(section)
         self._config.set(section, key, value)
         self.save_config()
+        self._load_config()
 
     def save_config(self) -> None:
         with open(self.configpath, "w") as f:
@@ -152,7 +153,7 @@ extensions = txt, csvpath, csvpaths
 [csv_files]
 extensions = txt, csv, tsv, dat, tab, psv, ssv
 [errors]
-csvpath = raise, collect, stop, fail, print
+csvpath = collect, fail, print
 csvpaths = raise, collect
 [logging]
 csvpath = info

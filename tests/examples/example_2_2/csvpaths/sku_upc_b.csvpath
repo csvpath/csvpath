@@ -2,7 +2,7 @@
 
 ~ Check for SKUs and UPCs ID: upc-sku
   id:sku_upc_b
-  validation-mode:no-raise, fail, stop, print
+  validation-mode: no-raise, fail, stop, print
 ~
 
 $[*][

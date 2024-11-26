@@ -44,7 +44,6 @@ class TestJsonNamedPaths(unittest.TestCase):
         )
         assert r.is_valid
         assert m["files_expected"] is False
-
         m = paths.results_manager.get_specific_named_result_manifest(
             "expected_files", "prices_b"
         )

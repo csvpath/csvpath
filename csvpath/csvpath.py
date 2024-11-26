@@ -29,6 +29,7 @@ from .matching.util.exceptions import MatchException
 from csvpath.util.printer import Printer
 from csvpath.util.file_readers import DataFileReader
 from csvpath.managers.line_spooler import LineSpooler, ListLineSpooler
+from csvpath.modes.mode_controller import ModeController
 
 
 class CsvPathPublic(ABC):
@@ -110,12 +111,17 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # a parent CsvPaths may manage a CsvPath instance. if so, it will enable
         # the use of named files and named paths, print capture, error handling,
         # results collection, reference handling, etc. if a CsvPaths is not present
-        # the CsvPath instance is responsible for all its own upkeep and does not have
-        # some of those capabilities.
+        # the CsvPath instance is responsible for all its own upkeep and does not
+        # have some of those capabilities.
         #
         self.csvpaths = csvpaths
         #
+        # modes are set in external comments
         #
+        self.modes = ModeController(self)
+        #
+        # captures the number of lines up front and tracks line stats as the
+        # run progresses
         #
         self._line_monitor = None
         #
@@ -127,27 +133,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.match = None
         #
-        # when AND is True we do a logical AND of the match components
-        # to see if there is a match. this is the default. when AND is
-        # False (or set OR to True) the match components are ORed to
-        # determine if a line matches. in the former case all the match
-        # components must agree for a line to match. in the latter case,
-        # if any one match component votes True the line is matched.
-        # technically you can switch from AND to OR, or vice versa, in
-        # the middle of iterating a file using next(). probably not a
-        # good idea, tho.
-        #
-        self._AND = True  # pylint: disable=C0103
-        #
         # when True the lines that do not match are returned from next()
         # and collect(). this effectively switches CsvPath from being an
-        # AND machine to being a NOT AND machine. we do not actually
         # create an OR expression in this case. in the default, we say:
         #     are all of these things true?
         # but when collect_when_not_matched is True we ask:
         #     are any of these things not true?
         #
-        self._when_not_matched = False
+        # self._when_not_matched = False
         self._headers = None
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
@@ -168,16 +161,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # inconsistent state.
         #
         self._freeze_path = False
-        #
-        # explain-mode: explain
-        # turns on capturing match reasoning and dumps the captured decisions to INFO
-        # at the end of a match. the reasoning is already present in the DEBUG but it
-        # is harder to see amid all the noise. we don't want to dump explainations
-        # all the time tho because it is very expensive -- potentially 25% worse
-        # performance. the explainations could be improved. atm this is an experimental
-        # feature.
-        #
-        self._explain = False
         #
         # counts are 1-based
         #
@@ -233,14 +216,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self._errors: List[Error] = None
         self._error_collector = None
         #
-        # transfers from transfer-mode: ((data | unmatched):var-name)(,*)
-        # this setting tells CsvPaths to copy resulting data.csv and/or
-        # unmatched.csv to one or more target locations below the config.ini's
-        # transfer directory. the name "data" or "unmatched" is paired with
-        # a var name that indicates the path to write the indicated file.
-        #
-        self._transfers = None
-        #
         # saves the scan and match parts of paths for reference. mainly helpful
         # for testing the CsvPath library itself; not used end users. the run
         # name becomes the file name of the saved path parts.
@@ -280,30 +255,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # way.
         self._config = config
         #
-        # these settings determine how we report function args validation
-        # errors. e.g. if print(True) the validation check fails because
-        # print() expects a string. the more recent trend is to get all
-        # the errors and print statements in the same place controlled by
-        # the same properties. for now this stays because there is a minor
-        # benefit to being able to suppress runtime arg validation and only
-        # use match component rules and exceptions to generate validation
-        # info. but long term this capability may go away.
-        #
-        self._log_validation_errors = True
-        self._print_validation_errors = True
-        self._raise_validation_errors = None
-        self._match_validation_errors = None
-        self._stop_on_validation_errors = None
-        self._fail_on_validation_errors = None
-        #
-        # run mode determines if a csvpath gets run or if it is skipped. the
-        # main reasons to set run-mode: no-run vs. run are: you want to import
-        # it into other csvpaths that are in the same named-paths group, or
-        # you want to switch off a csvpath in a named-paths group for testing
-        # a similar reason.
-        #
-        self._run_mode = True
-        #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
         # your component instance and the logging level. e.g.:
@@ -312,23 +263,31 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
         self._ecoms = ErrorCommsManager(csvpath=self)
+        #
+        # _function_times_match collects the time a function spends doing its matches()
+        #
         self._function_times_match = {}
+        #
+        # _function_times_value collects the time a function spends doing its to_value()
+        #
         self._function_times_value = {}
         self._created_at = datetime.now()
         self._run_started_at = None
-        self._all_expected_files = []
         self._collecting = False
+        #
+        # holds the unmatched lines when lines are being collected and
+        # _unmatched_available is True. it is analogous to the lines returned
+        # by collect(), but is the lines not returned by collect().
+        #
         self._unmatched = None
-        self._unmatched_available = False
-        self._data_from_preceding = False
 
     @property
     def data_from_preceding(self) -> bool:
-        return self._data_from_preceding
+        return self.modes.source_mode.value
 
     @data_from_preceding.setter
     def data_from_preceding(self, dfp: bool) -> None:
-        self._data_from_preceding = dfp
+        self.modes.source_mode.value = dfp
 
     @property
     def unmatched(self) -> list[list[Any]]:
@@ -346,22 +305,13 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def collecting(self, c: bool) -> None:
         self._collecting = c
 
-    def set_unmatched_availability(self) -> None:
-        um = self.metadata.get("unmatched-mode")
-        if um is not None and um.find("no-keep") > -1:
-            self.unmatched_available = False
-        elif um is not None and um.find("keep") > -1:
-            self.unmatched_available = True
-        else:
-            self.unmatched_available = False
-
     @property
     def unmatched_available(self) -> bool:
-        return self._unmatched_available
+        return self.modes.unmatched_mode.value
 
     @unmatched_available.setter
     def unmatched_available(self, ua: bool) -> None:
-        self._unmatched_available = ua
+        self.modes.unmatched_mode.value = ua
 
     @property
     def created_at(self) -> datetime:
@@ -373,12 +323,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def will_run(self) -> bool:
-        return self._run_mode
+        return self.modes.run_mode.value
 
     @will_run.setter
     def will_run(self, mode) -> None:
-        self._run_mode = mode
+        self.self.modes.run_mode.value = mode
 
+    #
+    # increases the total accumulated time spent doing c.matches() by t
+    #
     def _up_function_time_match(self, c, t) -> None:
         if c not in self.function_times_match:
             self.function_times_match[c] = 0
@@ -390,6 +343,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def function_times_match(self) -> int:
         return self._function_times_match
 
+    #
+    # increases the total accumulated time spent doing c.to_value() by t
+    #
     def _up_function_time_value(self, c, t) -> None:
         if c not in self.function_times_value:
             self.function_times_value[c] = 0
@@ -434,19 +390,19 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def AND(self) -> bool:  # pylint: disable=C0103
-        return self._AND
+        return self.modes.logic_mode.value
 
     @AND.setter
     def AND(self, a: bool) -> bool:  # pylint: disable=C0103
-        self._AND = a
+        self.modes.logic_mode.value = a
 
     @property
     def OR(self) -> bool:  # pylint: disable=C0103
-        return not self._AND
+        return not self.modes.logic_mode.value
 
     @OR.setter
     def OR(self, a: bool) -> bool:  # pylint: disable=C0103
-        self._AND = not a
+        self.modes.logic_mode.value = not a
 
     @property
     def identity(self) -> str:
@@ -516,86 +472,29 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 self._errors = []
             self._errors.append(error)
 
-    #
-    # validation error handling overrides the error policy in config. this
-    # is because the validation handling is:
-    #   - different. it is built-in. it deals with programmatic decisions
-    #     about how functions work and is the basis for structural (schema)
-    #     validation.
-    #   - set on a per csvpath basis in comments
-    #
-    # by default, validation errors do not impact matching. they are print
-    # and raise only. however, you can set them to raise or match/not-match
-    # and/or suppress printing.
-    #
-    def set_validation_error_handling(self, veh) -> None:
-        # print prints to the Printer(s), not std.out. atm, no
-        # customization of messages is possible, so there is likely
-        # to be stylistic mismatch with other output.
-        if veh and veh.find("no-print") > -1:
-            self._print_validation_errors = False
-        elif veh and veh.find("print") > -1:
-            self._print_validation_errors = True
-        else:
-            self._print_validation_errors = None
-        #
-        if veh and veh.find("no-raise") > -1:
-            self._raise_validation_errors = False
-        elif veh and veh.find("raise") > -1:
-            self._raise_validation_errors = True
-        else:
-            self._raise_validation_errors = None
-        #
-        # match, no-match, and None do:
-        #   match: return True on error
-        #   no-match: return False on error
-        #   None: default behavior: default_match() or result of matches()
-        if veh and veh.find("no-match") > -1:
-            self._match_validation_errors = False
-        elif veh and veh.find("match") > -1:
-            self._match_validation_errors = True
-        else:
-            self._match_validation_errors = None
-        #
-        # also stop and fail to match the config
-        #
-        if veh and veh.find("no-stop") > -1:
-            self._stop_on_validation_errors = False
-        elif veh and veh.find("stop") > -1:
-            self._stop_on_validation_errors = True
-        else:
-            self._stop_on_validation_errors = None
-        #
-        if veh and veh.find("no-fail") > -1:
-            self._fail_on_validation_errors = False
-        elif veh and veh.find("fail") > -1:
-            self._fail_on_validation_errors = True
-        else:
-            self._fail_on_validation_errors = None
-
     @property
     def stop_on_validation_errors(self) -> bool:
-        return self._stop_on_validation_errors
+        return self.modes.validation_mode.stop_on_validation_errors
 
     @property
     def fail_on_validation_errors(self) -> bool:
-        return self._fail_on_validation_errors
+        return self.modes.validation_mode.fail_on_validation_errors
 
     @property
     def print_validation_errors(self) -> bool:
-        return self._print_validation_errors
+        return self.modes.validation_mode.print_validation_errors
 
     @property
     def log_validation_errors(self) -> bool:
-        return self._log_validation_errors
+        return self.modes.validation_mode.log_validation_errors
 
     @property
     def raise_validation_errors(self) -> bool:
-        return self._raise_validation_errors
+        return self.modes.validation_mode.raise_validation_errors
 
     @property
     def match_validation_errors(self) -> bool:
-        return self._match_validation_errors
+        return self.modes.validation_mode.match_validation_errors
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         if printer not in self.printers:
@@ -650,24 +549,24 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         to INFO. this can be expensive. a 25% performance hit wouldn't
         be unexpected.
         """
-        return self._explain
+        return self.modes.explain_mode.value
 
     @explain.setter
     def explain(self, yesno: bool) -> None:
-        self._explain = yesno
+        self.modes.explain_mode.value = yesno
 
     @property
     def collect_when_not_matched(self) -> bool:
         """when this property is True CsvPath returns the lines that do not
         match the matchers match components"""
-        return self._when_not_matched
+        return self.modes.return_mode.collect_when_not_matched
 
     @collect_when_not_matched.setter
     def collect_when_not_matched(self, yesno: bool) -> None:
-        """when collect_when_not_matched is True we return the lines that failed
+        """when c ollect_when_not_matched is True we return the lines that failed
         to match, rather than the default behavior of returning the matches.
         """
-        self._when_not_matched = yesno
+        self.modes.return_mode.collect_when_not_matched = yesno
 
     def parse(self, csvpath, disposably=False):
         """displosably is True when a Matcher is needed for some purpose other than
@@ -731,16 +630,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - source-mode: preceding | origin
         #   - files-mode: all | no-data | no-unmatched | no-printouts | data | unmatched | errors | meta | vars | printouts
         #
-        self.update_logic_mode_if()
-        self.update_run_mode_if()
-        self.update_match_mode_if()
-        self.update_print_mode_if()
-        self.update_explain_mode_if()
-        self.update_arg_validation_mode_if()
-        self.update_unmatched_mode_if()
-        self.update_data_from_preceding_if()
-        self.update_expected_files_if()
-        self.update_transfer_mode_if()
+        self.modes.update()
+        # self.update_arg_validation_mode_if()
 
     # =====================
 
@@ -766,11 +657,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def logic_mode(self) -> str:
-        return "AND" if self.AND else "OR"
+        return self.metadata.get("logic-mode")
 
     @property
     def return_mode(self) -> str:
-        return self.metadata.get("return-mode")
+        return self.modes.get("return-mode")
 
     @property
     def explain_mode(self) -> str:
@@ -788,49 +679,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def transfers(self) -> list[tuple[str, str]]:
-        return self._transfers
+        return self.modes.transfer_mode.transfers
 
-    def update_transfer_mode_if(self) -> None:
-        m = self.transfer_mode
-        if m is not None:
-            self._transfers = []
-            for t in m.split(","):
-                i = t.find(">")
-                if i == -1:
-                    raise InputException(
-                        "Transfer mode directive must be in the form file > location"
-                    )
-                file = t[0:i].strip()
-                location = t[i + 1 :].strip()
-                self._transfers.append((file, location))
-
-    def update_expected_files_if(self) -> None:
-        fm = self.files_mode
-        if fm is None:
-            return []
-        fs = [s for s in fm.split(",")]
-        _ = []
-        for s in fs:
-            s = s.strip()
-            if s not in ["data", "unmatched", "vars", "errors", "meta", "printouts"]:
-                self.logger.warning(
-                    "Unknown file-mode token %s. Mode tokens may be separated by , and will be trimmed.",
-                    s,
-                )
-                continue
-            _.append(s)
-        self.all_expected_files = _
-
-    def update_data_from_preceding_if(self) -> None:
-        if self.metadata and "source-mode" in self.metadata:
-            dfp = self.metadata["source-mode"]
-            self.data_from_preceding = dfp == "preceding"
-        else:
-            self.data_from_preceding = False
-
-    def update_unmatched_mode_if(self) -> None:
-        self.set_unmatched_availability()
-
+    """
     def update_arg_validation_mode_if(self) -> None:
         if self.metadata and "validation-mode" in self.metadata:
             # sets arg validation reporting. one or more or none of:
@@ -845,83 +696,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                     "Setting 'validation-mode': %s",
                     self.metadata["validation-mode"],
                 )
-
-    def update_run_mode_if(self) -> None:
-        if self.metadata and "run-mode" in self.metadata:
-            if f"{self.metadata['run-mode']}".strip() == "no-run":
-                self.will_run = False
-            elif f"{self.metadata['run-mode']}".strip() == "run":
-                self.will_run = True
-            else:
-                self.logger.warning(
-                    "Incorrect metadata field value 'run-mode': %s",
-                    self.metadata["run-mode"],
-                )
-
-    def update_logic_mode_if(self) -> None:
-        if self.metadata and "logic-mode" in self.metadata:
-            if f"{self.metadata['logic-mode']}".strip() == "AND":
-                self.AND = True
-            elif f"{self.metadata['logic-mode']}".strip() == "OR":
-                self.AND = False
-            else:
-                self.logger.warning(
-                    "Incorrect metadata field value 'logic-mode': %s",
-                    self.metadata["logic-mode"],
-                )
-
-    def update_match_mode_if(self) -> None:
-        if "return-mode" in self.metadata:
-            if f"{self.metadata['return-mode']}".strip() == "matches":
-                self.collect_when_not_matched = False
-            elif f"{self.metadata['return-mode']}".strip() == "no-matches":
-                self.collect_when_not_matched = True
-            else:
-                self.logger.warning(
-                    "Incorrect metadata field value 'return-mode': %s",
-                    self.metadata["return-mode"],
-                )
-
-    def update_explain_mode_if(self) -> None:
-        if "explain-mode" in self.metadata:
-            if f"{self.metadata['explain-mode']}".strip() == "no-explain":
-                self._explain = False
-            elif f"{self.metadata['explain-mode']}".strip() == "explain":
-                self._explain = True
-            else:
-                self._explain = False
-
-    def update_print_mode_if(self) -> None:
-        if "print-mode" in self.metadata:
-            if f"{self.metadata['print-mode']}".strip() == "no-default":
-                remove = -1
-                for i, p in enumerate(self.printers):
-                    if isinstance(p, StdOutPrinter):
-                        remove = i
-                        break
-                if remove >= 0:
-                    del self.printers[remove]
-            elif f"{self.metadata['print-mode']}".strip() == "default":
-                done = False
-                for i, p in enumerate(self.printers):
-                    if isinstance(p, StdOutPrinter):
-                        done = True
-                        break
-                if not done:
-                    self.printers.append(StdOutPrinter())
-            else:
-                self.logger.warning(
-                    "Incorrect metadata field value 'print-mode': %s",
-                    self.metadata["print-mode"],
-                )
+    """
 
     @property
     def all_expected_files(self) -> list[str]:
-        return self._all_expected_files
+        return self.modes.files_mode.all_expected_files
 
     @all_expected_files.setter
     def all_expected_files(self, efs: list[str]) -> None:
-        self._all_expected_files = efs
+        self.modes.files_mode.all_expected_files = efs
 
     def _pick_named_path(self, name, *, specific=None) -> str:
         if not self.csvpaths:
@@ -1494,7 +1277,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
-            self.matcher.AND = self._AND
+            self.matcher.AND = self.AND
         else:
             self.logger.debug("Resetting and reloading matcher")
             self.matcher.reset()

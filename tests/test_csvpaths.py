@@ -57,7 +57,6 @@ class TestNewCsvPaths(unittest.TestCase):
         cnt = 0
         for line in cs.next_by_line(filename="food", pathsname="many"):
             cnt += 1
-            print(f"vars 0: {cs.current_matcher.variables}")
         assert cnt == 11
         valid = cs.results_manager.is_valid("many")
         assert valid
