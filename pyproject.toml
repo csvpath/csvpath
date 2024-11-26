@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.495"
+version = "0.0.496"
 description = "A declarative language for validating CSV, Excel, and other tabular data files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
