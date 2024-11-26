@@ -3,9 +3,9 @@ import json
 import csv
 from typing import NewType, List, Dict, Optional, Union
 from datetime import datetime
-from ..matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath import CsvPath
-from .line_spooler import LineSpooler
+from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
+from ..line_spooler import LineSpooler
 
 Simpledata = NewType("Simpledata", Union[None | str | int | float | bool])
 Listdata = NewType("Listdata", list[None | str | int | float | bool])

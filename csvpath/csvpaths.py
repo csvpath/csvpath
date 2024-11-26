@@ -11,12 +11,12 @@ from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException, CsvPathsException
-from .util.csvpaths_registrar import CsvPathsRegistrar, CsvPathsFilesystemRegistrar
-from .managers.paths_manager import PathsManager
-from .managers.file_manager import FileManager
-from .managers.results_manager import ResultsManager
-from .managers.results_registrar import ResultsRegistrar
-from .managers.result import Result
+from .managers.paths.paths_manager import PathsManager
+from .managers.files.file_manager import FileManager
+from .managers.results.results_manager import ResultsManager
+from .managers.results.result import Result
+from .managers.results.results_registrar import ResultsRegistrar
+from .managers.run.run_registrar import RunRegistrar
 from . import CsvPath
 
 
@@ -151,7 +151,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._advance_all = 0
         self._current_run_time = None
         self._csvpaths_registrars = []
-        self._csvpaths_registrars.append(CsvPathsFilesystemRegistrar(self))
+        self._csvpaths_registrars.append(RunRegistrar(self))
         self._run_time_str = None
 
     def run_time_str(self, pathsname=None) -> str:
@@ -210,7 +210,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._advance_all = lines
 
     @property
-    def csvpaths_registrars(self) -> list[CsvPathsRegistrar]:
+    def csvpaths_registrars(self) -> list[RunRegistrar]:
         if self._csvpaths_registrars is None:
             self._csvpaths_registrars = []
         return self._csvpaths_registrars

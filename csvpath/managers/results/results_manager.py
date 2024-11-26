@@ -5,12 +5,12 @@ from pathlib import Path
 import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
-from .result import Result
+from ..line_spooler import LineSpooler
+from csvpath.util.exceptions import InputException, CsvPathsException
+from csvpath.util.reference_parser import ReferenceParser
 from .result_registrar import ResultRegistrar
-from .line_spooler import LineSpooler
-from ..util.exceptions import InputException, CsvPathsException
 from .result_serializer import ResultSerializer
-from ..util.reference_parser import ReferenceParser
+from .result import Result
 
 
 class CsvPathsResultsManager(ABC):

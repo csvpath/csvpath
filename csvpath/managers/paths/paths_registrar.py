@@ -2,7 +2,7 @@ import os
 import json
 import hashlib
 from datetime import datetime
-from ..util.exceptions import InputException
+from csvpath.util.exceptions import InputException
 
 
 class PathsRegistrar:

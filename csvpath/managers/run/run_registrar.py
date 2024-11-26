@@ -4,18 +4,10 @@ import json
 import hashlib
 from datetime import datetime
 from abc import ABC, abstractmethod
-from ..util.exceptions import FileException
+from csvpath.util.exceptions import FileException
 
 
-class CsvPathsRegistrar(ABC):
-    @abstractmethod
-    def update_manifest(
-        self, *, filepath: str, instancepath: str, fingerprint: str
-    ) -> None:
-        pass
-
-
-class CsvPathsFilesystemRegistrar(CsvPathsRegistrar):
+class RunRegistrar:
     def __init__(self, csvpaths):
         self.csvpaths = csvpaths
         self.archive = self.csvpaths.config.archive_path

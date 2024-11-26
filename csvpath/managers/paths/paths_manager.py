@@ -7,10 +7,10 @@ from typing import NewType
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
 from csvpath import CsvPath
-from ..util.exceptions import InputException
-from ..util.error import ErrorHandler
-from ..util.metadata_parser import MetadataParser
-from ..util.reference_parser import ReferenceParser
+from csvpath.util.exceptions import InputException
+from csvpath.util.error import ErrorHandler
+from csvpath.util.metadata_parser import MetadataParser
+from csvpath.util.reference_parser import ReferenceParser
 from .paths_registrar import PathsRegistrar
 
 # types added just for clarity

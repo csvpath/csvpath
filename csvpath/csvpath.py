@@ -1234,10 +1234,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             )
             return -1
         if self.csvpaths:
-            self.line_monitor = self.csvpaths.file_manager.get_new_line_monitor(
+            self.line_monitor = self.csvpaths.file_manager.cacher.get_new_line_monitor(
                 self.scanner.filename
             )
-            self.headers = self.csvpaths.file_manager.get_original_headers(
+            self.headers = self.csvpaths.file_manager.cacher.get_original_headers(
                 self.scanner.filename
             )
         else:

@@ -15,43 +15,43 @@ NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
 class TestCache(unittest.TestCase):
     def test_cache_files(self):
         cs = CsvPaths()
-        cachedir = cs.file_manager.cache._cachedir()
+        cachedir = cs.file_manager.cacher.cache._cachedir()
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="food", pathsname="advancing")
-        assert len(cs.file_manager.pathed_lines_and_headers) == 1
+        assert len(cs.file_manager.cacher.pathed_lines_and_headers) == 1
         assert cachedir
         assert os.path.exists(cachedir)
         assert len(os.listdir(cachedir)) == 2
 
     def test_cache_dir(self):
         csvpaths = CsvPaths()
-        cachedir = csvpaths.file_manager.cache._cachedir()
+        cachedir = csvpaths.file_manager.cacher.cache._cachedir()
         assert cachedir
         assert os.path.exists(cachedir)
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         csvpaths = CsvPaths()
-        cachedir = csvpaths.file_manager.cache._cachedir()
+        cachedir = csvpaths.file_manager.cacher.cache._cachedir()
         assert os.path.exists(cachedir)
 
     def test_cache_csv(self):
         csvpaths = CsvPaths()
-        cache = csvpaths.file_manager.cache
+        cache = csvpaths.file_manager.cacher.cache
         filename = "/a/file/name"
         headers = ["a", "header", "row"]
         cache.cache_text(filename, "csv", ",".join(headers))
         csvpaths = CsvPaths()
-        cache = csvpaths.file_manager.cache
+        cache = csvpaths.file_manager.cacher.cache
         cheaders = cache.cached_text(filename, "csv")
         assert cheaders == headers
         assert len(cheaders) == len(headers)
 
     def test_cache_line_mon1(self):
         csvpaths = CsvPaths()
-        cache = csvpaths.file_manager.cache
+        cache = csvpaths.file_manager.cacher.cache
         filename = PATH
         lm = LineMonitor()
         lm._physical_end_line_count = 10
@@ -72,7 +72,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_line_mon2(self):
         csvpaths = CsvPaths()
-        cache = csvpaths.file_manager.cache
+        cache = csvpaths.file_manager.cacher.cache
         filename = PATH
         lm = LineMonitor()
         lm._physical_end_line_count = 10
@@ -83,7 +83,7 @@ class TestCache(unittest.TestCase):
         cache.cache_text(filename, "json", jstr)
         # new csvpaths, new cache object
         csvpaths = CsvPaths()
-        cache = csvpaths.file_manager.cache
+        cache = csvpaths.file_manager.cacher.cache
         jstr2 = cache.cached_text(filename, "json")
         assert jstr == jstr2
         lm2 = LineMonitor()

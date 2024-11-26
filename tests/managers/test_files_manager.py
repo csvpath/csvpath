@@ -13,32 +13,23 @@ class TestFilesManager(unittest.TestCase):
     def test_named_files_home(self):
         paths = CsvPaths()
         m = paths.file_manager
-        reg = m.registrar
-        d = reg.named_files_dir
+        d = m.named_files_dir
         assert d is not None
         assert d == "inputs/named_files"
-
-    def test_simple_name(self):
-        paths = CsvPaths()
-        m = paths.file_manager
-        reg = m.registrar
-        assert reg._simple_name("inputs/named_files") == "named_files"
 
     def test_named_file_home(self):
         paths = CsvPaths()
         m = paths.file_manager
-        reg = m.registrar
-        d = reg.named_file_home("aname")
+        d = m.named_file_home("aname")
         assert d is not None
         assert d == "inputs/named_files/aname"
 
     def test_copy_in(self):
         paths = CsvPaths()
         m = paths.file_manager
-        reg = m.registrar
         tf = "tests/test_resources/test.csv"
-        home = reg.assure_file_home("mytest", tf)
-        d = reg._copy_in(tf, home)
+        home = m.assure_file_home("mytest", tf)
+        d = m._copy_in(tf, home)
         assert d is not None
         assert d == "inputs/named_files/mytest/test.csv/test.csv"
         shutil.rmtree("inputs/named_files/mytest")
@@ -46,12 +37,11 @@ class TestFilesManager(unittest.TestCase):
     def test_reg_fingerprint(self):
         paths = CsvPaths()
         m = paths.file_manager
-        reg = m.registrar
         tf = "tests/test_resources/test.csv"
-        home = reg.assure_file_home("mytest", tf)
-        d = reg._copy_in(tf, home)
+        home = m.assure_file_home("mytest", tf)
+        d = m._copy_in(tf, home)
         assert os.path.exists(d)
-        rpath = reg._fingerprint(home)
+        rpath = m._fingerprint(home)
         assert d != rpath
         assert not os.path.exists(d)
         print(f"\nd: {d}")
@@ -61,11 +51,12 @@ class TestFilesManager(unittest.TestCase):
     def test_manifest_path(self):
         paths = CsvPaths()
         m = paths.file_manager
+        m.add_named_file(name="aname", path="tests/test_resources/test.csv")
         reg = m.registrar
-        d = reg.named_file_home("aname")
+        d = m.named_file_home("aname")
         assert d is not None
         assert d == "inputs/named_files/aname"
-        mpath = reg.manifest_path("aname")
+        mpath = reg.manifest_path(d)
         assert mpath == os.path.join(d, "manifest.json")
         reg.update_manifest(
             manifestpath=mpath,
@@ -74,17 +65,13 @@ class TestFilesManager(unittest.TestCase):
             fingerprint="fingerprint",
         )
         m = reg.get_manifest(mpath)
-        assert "file" in m[0]
-        assert m[0]["file"] == "regpath"
-        assert "from" in m[0]
-        assert m[0]["from"] == "origpath"
-        assert "time" in m[0]
-        print(f"mpath: {mpath}")
-        print(f"m: {m}")
-
-        r = reg.registered_file("aname")
+        assert "file" in m[len(m) - 1]
+        assert m[len(m) - 1]["file"] == "regpath"
+        assert "from" in m[len(m) - 1]
+        assert m[len(m) - 1]["from"] == "origpath"
+        assert "time" in m[len(m) - 1]
+        r = reg.registered_file(d)
         assert r == "regpath"
-
         shutil.rmtree("inputs/named_files/aname")
 
     def test_rereg(self):
@@ -98,7 +85,7 @@ class TestFilesManager(unittest.TestCase):
         m.add_named_file(name="testx", path="tests/test_resources/test.csv")
         m.add_named_file(name="testx", path="tests/test_resources/test.csv")
         m.add_named_file(name="testx", path="tests/test_resources/test.csv")
-        mpath = reg.manifest_path("testx")
+        mpath = reg.manifest_path(m.named_file_home("testx"))
         m = reg.get_manifest(mpath)
         print(f"\nm: {m}")
         assert len(m) == 3

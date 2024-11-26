@@ -1,9 +1,9 @@
 import unittest
 from datetime import datetime
 from csvpath import CsvPaths
-from csvpath.managers.results_manager import ResultsManager
-from csvpath.managers.result import Result
-from csvpath.managers.result_serializer import ResultSerializer
+from csvpath.managers.results.results_manager import ResultsManager
+from csvpath.managers.results.result import Result
+from csvpath.managers.results.result_serializer import ResultSerializer
 
 
 class TestResultsManager(unittest.TestCase):

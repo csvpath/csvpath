@@ -4,12 +4,12 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, Any
-from ..util.error import Error, ErrorCollector
-from ..util.printer import Printer
-from .. import CsvPath
+from csvpath.util.error import Error, ErrorCollector
+from csvpath.util.printer import Printer
+from csvpath.util.exceptions import CsvPathsException
+from csvpath import CsvPath
+from ..line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
-from .line_spooler import LineSpooler, CsvLineSpooler
-from ..util.exceptions import CsvPathsException
 
 
 class Result(ErrorCollector, Printer):  # pylint: disable=R0902
