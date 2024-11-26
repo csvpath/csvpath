@@ -583,7 +583,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
-
         csvpath_objects = self._load_csvpath_objects(
             paths=paths,
             named_file=fn,

@@ -200,9 +200,9 @@ class Function(Matchable):
                     if (
                         self.args
                         and self.args.args_match is False
-                        and self.matcher.csvpath._match_validation_errors is not None
+                        and self.matcher.csvpath.match_validation_errors is not None
                     ):
-                        self.match = self.matcher.csvpath._match_validation_errors
+                        self.match = self.matcher.csvpath.match_validation_errors
                     else:
                         self._decide_match(skip=skip)
                         self.matcher.csvpath.logger.debug(

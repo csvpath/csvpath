@@ -44,22 +44,22 @@ class ErrorCommsManager:
 
     def do_i_raise(self) -> bool:
         if self._csvpath and self._csvpath.raise_validation_errors is not None:
-            return self._csvpath._raise_validation_errors
+            return self._csvpath.raise_validation_errors
         return OnError.RAISE.value in self._policy
 
     def do_i_print(self) -> bool:
         if self._csvpath and self._csvpath.print_validation_errors is not None:
-            return self._csvpath._print_validation_errors
+            return self._csvpath.print_validation_errors
         return OnError.PRINT.value in self._policy
 
     def do_i_stop(self) -> bool:
         if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
-            return self._csvpath._stop_on_validation_errors
+            return self._csvpath.stop_on_validation_errors
         return OnError.STOP.value in self._policy
 
     def do_i_fail(self) -> bool:
         if self._csvpath and self._csvpath.fail_on_validation_errors is not None:
-            return self._csvpath._fail_on_validation_errors
+            return self._csvpath.fail_on_validation_errors
         return OnError.FAIL.value in self._policy
 
 

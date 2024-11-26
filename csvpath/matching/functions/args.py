@@ -10,6 +10,7 @@ from csvpath.matching.productions.equality import Equality
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..util.exceptions import ChildrenException, ChildrenValidationException
 from csvpath.util.config_exception import ConfigurationException
+from csvpath.util.error import ErrorCommsManager
 
 #   from csvpath.util.log_utility import LogUtility
 #   LogUtility.log_brief_trace()
@@ -461,4 +462,15 @@ class Args:
             pm = f"Wrong value in match component {ei}: {pm}"
             lpm = f"{pm}: {mismatches}"
             self._matchable.matcher.csvpath.logger.error(lpm)
-            self._matchable.raiseChildrenException(pm)
+            if (
+                not ErrorCommsManager(
+                    csvpath=self._matchable.matcher.csvpath
+                ).do_i_raise()
+                and self._matchable.matcher.csvpath.match_validation_errors
+            ):
+                # we match on errors so we have to handle and keep going as best we can.
+                pm = self._matchable.decorate_error_message(pm)
+                e = ChildrenException(pm)
+                self._matchable.handle_error(e)
+            else:
+                self._matchable.raiseChildrenException(pm)
