@@ -13,6 +13,7 @@ class FileRegistrar:
 
     def __init__(self, config):
         self.config = config
+        self.listeners = [self]
 
     def get_fingerprint(self, home) -> str:
         mpath = self.manifest_path(home)
@@ -24,66 +25,61 @@ class FileRegistrar:
         return man[len(man) - 1]["fingerprint"]
 
     def manifest_path(self, home) -> str:
-        print(f"mp 1: home: {home}")
         if not os.path.exists(home):
             raise InputException(f"Named file home does not exist: {home}")
         mf = os.path.join(home, "manifest.json")
-        print(f"mp 2: mf: {mf}")
         if not os.path.exists(mf):
             with open(mf, "w", encoding="utf-8") as file:
                 file.write("[]")
-        print(f"mp 3: returning: {mf}")
         return mf
 
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def update_manifest(
-        self,
-        *,
-        manifestpath: str,
-        regpath: str,
-        sourcepath: str,
-        fingerprint: str,
-        mark: str = None,
-    ) -> None:
-        t = self.type_from_sourcepath(sourcepath)
-        mdata = {}
-        mdata["type"] = t
-        mdata["file"] = regpath
-        mdata["fingerprint"] = fingerprint
-        mdata["time"] = f"{datetime.now()}"
-        mdata["from"] = sourcepath
+    def metadata_update(self, mdata) -> None:
+        # name = mdata.named_file_name
+        path = mdata.origin_path
+        # home = mdata.name_home
+        # file_home = mdata.file_home
+        rpath = mdata.archive_path
+        h = mdata.fingerprint
+        t = mdata.type
+        mark = mdata.mark
+        manifest_path = mdata.manifest_path
+        mani = {}
+        mani["type"] = t
+        mani["file"] = rpath
+        mani["fingerprint"] = h
+        mani["time"] = f"{mdata.time}"
+        mani["from"] = path
         if mark is not None:
-            mdata["mark"] = mark
-        jdata = self.get_manifest(manifestpath)
-        jdata.append(mdata)
-        with open(manifestpath, "w", encoding="utf-8") as file:
+            mani["mark"] = mark
+        jdata = self.get_manifest(manifest_path)
+        jdata.append(mani)
+        with open(manifest_path, "w", encoding="utf-8") as file:
             json.dump(jdata, file, indent=2)
 
-    def register_named_file(
-        self,
-        *,
-        name: str,
-        path: str,
-        home: str,
-        file_home: str,
-        rpath: str,
-        h: str,
-    ) -> str:
+    def register_named_file(self, mdata):
+        # name = mdata.named_file_name
+        path = mdata.origin_path
+        home = mdata.name_home
+        # file_home = mdata.file_home
+        # rpath = mdata.archive_path
+        # h = mdata.fingerprint
         #
         # rpath is the fingerprinted file path
         # h is the hash fingerprint itself
         #
-        #
-        # check does the source file exist?
         i = path.find("#")
         mark = None
         if i > -1:
             mark = path[i + 1 :]
             path = path[0:i]
-
+        if mark != mdata.mark:
+            raise InputException(
+                f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
+            )
         if not path.startswith("s3:") and not os.path.exists(path):
             #
             # try for a data reader in case we're smart-opening
@@ -98,38 +94,37 @@ class FileRegistrar:
         # the initial file drop off to them, and responding to external
         # requests.
         #
-        print(
-            f"rnf 1: name: {name}, path: {path}, home: {home}, file_home: {file_home}"
-        )
-        # rpath, h = self._fingerprint(file_home)
-        #
         # create inputs/named_files/name/manifest.json
         # add line in manifest with date->fingerprint->source-location->reg-file-location
         # return path to current / most recent registered file
         #
         mpath = self.manifest_path(home=home)
-        print(f"rnf 2: home: {home}, mpath: {mpath}, name: {name}")
-        #
-        # append the metadata
-        #
-        self.update_manifest(
-            manifestpath=mpath, regpath=rpath, sourcepath=path, fingerprint=h, mark=mark
-        )
-        #
-        # return the registered path
-        #
-        return rpath
+        mdata.manifest_path = mpath
+        mdata.type = self._type_from_sourcepath(path)
+        """
+        if self.listeners[0] is not self:
+            raise CsvPathsException("FileRegistrar must be the first metadata listener")
+        for p in self.listeners:
+            p.metadata_update(mdata)
+        """
+        self.distribute_update(mdata)
+        return mdata
+
+    def distribute_update(self, mdata) -> None:
+        if self.listeners[0] is not self:
+            raise InputException("FileRegistrar must be the first metadata listener")
+        for p in self.listeners:
+            p.metadata_update(mdata)
 
     def type_of_file(self, home: str) -> str:
         p = self.manifest_path(home)
         m = self.get_manifest(p)
         return m[len(m) - 1]["type"]
 
-    def type_from_sourcepath(self, sourcepath: str) -> str:
+    def _type_from_sourcepath(self, sourcepath: str) -> str:
         i = sourcepath.rfind(".")
         t = "Unknown type"
         if i > -1:
-            # raise InputException(f"Cannot guess file type without extension: {sourcepath}")
             t = sourcepath[i + 1 :]
         i = t.find("#")
         if i > -1:
@@ -137,9 +132,7 @@ class FileRegistrar:
         return t
 
     def registered_file(self, home: str) -> str:
-        print(f"frrf 1: home: {home}")
         mpath = self.manifest_path(home)
-        print(f"frrf 2: mpath: {mpath}")
         with open(mpath, "r", encoding="utf-8") as file:
             mdata = json.load(file)
             if mdata is None or len(mdata) == 0:

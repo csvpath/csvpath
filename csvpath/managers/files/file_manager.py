@@ -11,6 +11,7 @@ from csvpath.util.reference_parser import ReferenceParser
 from csvpath.util.exceptions import InputException, FileException
 from .file_registrar import FileRegistrar
 from .file_cacher import FileCacher
+from .file_metadata import FileMetadata
 
 
 class FileManager:
@@ -29,7 +30,6 @@ class FileManager:
     # this is like the dir at: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: str) -> str:
-        print(f"nfh 1: name: {name}")
         home = os.path.join(self.named_files_dir, name)
         return home
 
@@ -43,16 +43,11 @@ class FileManager:
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
 
-        print(f"afh 1: name: {name}, path: {path}")
         fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
-        print(f"afh 2: fname: {fname}")
         home = self.named_file_home(name)
-        print(f"afh 3: home: {home}")
         home = os.path.join(home, fname)
-        print(f"afh 4: home: {home}")
         if not os.path.exists(home):
             os.makedirs(home)
-        print(f"afh 5: return: {home}")
         return home
 
     @property
@@ -91,17 +86,14 @@ class FileManager:
             ErrorHandler(csvpaths=self._csvpaths).handle_error(ex)
 
     def add_named_files_from_dir(self, dirname: str):
-        print(f"anffd 1: dirname: {dirname}")
         dlist = os.listdir(dirname)
         base = dirname
         for p in dlist:
             _ = p.lower()
             ext = p[p.rfind(".") + 1 :].strip().lower()
-            print(f"anffd 2: _: {_}, ext: {ext}")
             if ext in self._csvpaths.config.csv_file_extensions:
                 name = p if p.rfind(".") == -1 else p[0 : p.rfind(".")]
                 path = os.path.join(base, p)
-                print(f"anffd 3: p: {p}, name: {name}, path: {path}")
                 self.add_named_file(name=name, path=path)
             else:
                 self._csvpaths.logger.debug(
@@ -116,29 +108,37 @@ class FileManager:
         #
         # create folder tree in inputs/named_files/name/filename
         #
-        print(f"anf 1: name: {name}, path: {path}")
         home = self.assure_file_home(name, path)
         file_home = home
         mark = None
         if home.find("#") > -1:
             home = home[0 : home.find("#")]
-            print(f"anf 1.1: home: {home}")
         if path.find("#") > -1:
             mark = path[path.find("#") + 1 :]
             path = path[0 : path.find("#")]
-            print(f"anf 1.2: path: {path}, mark: {mark}")
         #
         # copy file to its home location
         #
-        print(f"anf 2: name: {name}, home: {home}, path: {path}")
         self._copy_in(path, home)
         name_home = self.named_file_home(name)
-        print(f"anf 4: name_home: {name_home}")
         rpath, h = self._fingerprint(home)
+
+        mdata = FileMetadata()
+        mdata.named_file_name = name
+        #
+        # we need the declared path, incl. any extra path info, in order
+        # to know if we are being pointed at a sub-portion of the data, e.g.
+        # an excel worksheet.
+        #
         path = f"{path}#{mark}" if mark else path
-        self.registrar.register_named_file(
-            name=name, path=path, home=name_home, file_home=file_home, rpath=rpath, h=h
-        )
+        mdata.origin_path = path
+        mdata.archive_path = rpath
+        mdata.fingerprint = h
+        mdata.file_home = file_home
+        mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
+        mdata.name_home = name_home
+        mdata.mark = mark
+        self.registrar.register_named_file(mdata)
 
     def _copy_in(self, path, home) -> None:
         # fname = self._simple_name(path)
@@ -208,7 +208,6 @@ class FileManager:
         )
 
     def _fingerprint(self, path) -> str:
-        print(f"_f 1: path: {path}")
         fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
         t = None
         i = fname.find(".")
@@ -221,7 +220,6 @@ class FileManager:
         # creating the initial file name, where the file starts
         #
         fpath = os.path.join(path, fname)
-        print(f"_f 2: fpath: {fpath}")
         with open(fpath, "rb") as f:
             h = hashlib.file_digest(f, hashlib.sha256)
             h = h.hexdigest()
@@ -229,7 +227,6 @@ class FileManager:
         # creating the new path using the hash as filename
         #
         hpath = os.path.join(path, h)
-        print(f"_f 2: hpath: {hpath}")
         if t is not None:
             hpath = f"{hpath}.{t}"
         #
@@ -244,5 +241,4 @@ class FileManager:
         # if a first add, rename the file to the hash + ext
         #
         os.rename(fpath, hpath)
-        print(f"_f 3: hpath: {hpath}, h: {h}")
         return hpath, h
