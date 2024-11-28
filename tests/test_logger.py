@@ -25,5 +25,4 @@ class TestLogger(unittest.TestCase):
     def test_logger_brief_stack_trace(self):
         path = CsvPath()
         string = LogUtility.log_brief_trace(logger=path.logger)
-        print(f"test_logger_wrong_component: error trace: {string}")
         assert string.find("/util/log_utility.py") > -1

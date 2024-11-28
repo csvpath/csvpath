@@ -18,8 +18,6 @@ class TestMetadataParser(unittest.TestCase):
                 ]
         """
         csvpath2 = MetadataParser(path).extract_metadata(instance=path, csvpath=csvpath)
-        print(f"test_metadata_parser1: csvpath2: {csvpath2}")
-        print(f"test_metadata_parser1: instance.metadata: {path.metadata}")
         assert csvpath2.find("~ Check the file length ~") == -1
         assert path.metadata is not None
         assert "original_comment" in path.metadata
@@ -37,8 +35,6 @@ class TestMetadataParser(unittest.TestCase):
                 $[*][ import("top_matter_import") ]
         """
         csvpath2 = MetadataParser(path).extract_metadata(instance=path, csvpath=csvpath)
-        print(f"test_metadata_parser1: csvpath2: {csvpath2}")
-        print(f"test_metadata_parser1: instance.metadata: {path.metadata}")
         assert csvpath2.find("~ Check the file length ~") == -1
         assert path.metadata is not None
         assert "name" in path.metadata

@@ -1,7 +1,0 @@
-[
-                @oc.onchange = in(#firstname, #say, #firstname, #lastname)
-                @cnt = count()
-                print.onmatch(
-                    "printing: oc: $.variables.oc, $.variables.cnt,
-                    count: $.csvpath.count_matches @ $.csvpath.line_number")
-            ]

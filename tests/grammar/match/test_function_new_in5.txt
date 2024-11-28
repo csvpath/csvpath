@@ -1,3 +1,0 @@
-[
-                @food_found = in(#food, $food_lookup.headers.food)
-            ]

@@ -1,1 +1,0 @@
-[ @l = multiply( count(), add(50,50,50,50) ) ]

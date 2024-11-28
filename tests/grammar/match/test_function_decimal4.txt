@@ -1,4 +1,0 @@
-[
-                        decimal.weak(1)
-                        decimal.weak.notnone(2)
-                ]

@@ -1,5 +1,0 @@
-[
-                @st = int(" ")
-                @no = int(none())
-                @bo = int(no())
-            ]

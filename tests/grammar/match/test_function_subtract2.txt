@@ -1,1 +1,0 @@
-[ @l = subtract( 10, count(), length("this") ) ]

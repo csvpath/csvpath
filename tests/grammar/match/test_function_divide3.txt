@@ -1,1 +1,0 @@
-[ @l = divide( 100, count(), add(2,3) ) ]

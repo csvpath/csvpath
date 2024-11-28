@@ -1,5 +1,0 @@
-[
-                #no-spaces
-                #"I have spaces"
-                #nothing
-            ]

@@ -1,5 +1,0 @@
-[
-                        now("%d") == today()
-                        now("%m") == thismonth()
-                        now("%Y") == thisyear()
-                ]

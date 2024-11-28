@@ -22,12 +22,15 @@ class FileManager:
         self.registrar = FileRegistrar(csvpaths.config)
         self.cacher = FileCacher(csvpaths)
 
+    #
+    # named file dir is like: inputs/named_files
+    #
     @property
     def named_files_dir(self) -> str:
         return self._csvpaths.config.inputs_files_path
 
     #
-    # this is like the dir at: inputs/named_files/March-2024/March-2024.csv
+    # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: str) -> str:
         home = os.path.join(self.named_files_dir, name)
@@ -39,10 +42,16 @@ class FileManager:
             os.makedirs(home)
         return home
 
+    #
+    # file homes are paths to files like:
+    #   inputs/named_files/March-2024/March-2024.csv/March-2024.csv
+    # which become paths to hash-named file versions like:
+    #   inputs/named_files/March-2024/March-2024.csv/12467d811d1589ede586e3a42c41046641bedc1c73941f4c21e2fd2966f188b4.csv
+    # once the files have been fingerprinted
+    #
     def assure_file_home(self, name: str, path: str) -> str:
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
-
         fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
         home = self.named_file_home(name)
         home = os.path.join(home, fname)
@@ -138,7 +147,7 @@ class FileManager:
         mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
-        self.registrar.register_named_file(mdata)
+        self.registrar.register(mdata)
 
     def _copy_in(self, path, home) -> None:
         # fname = self._simple_name(path)

@@ -1,5 +1,0 @@
-[
-                push("empties", empty_stack())
-                last() -> var_table()
-                last() -> run_table()
-            ]

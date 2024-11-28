@@ -1,4 +1,0 @@
-[
-                @d = dup_lines()
-                empty(dup_lines())
-            ]

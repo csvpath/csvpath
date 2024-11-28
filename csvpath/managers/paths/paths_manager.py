@@ -12,6 +12,7 @@ from csvpath.util.error import ErrorHandler
 from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.reference_parser import ReferenceParser
 from .paths_registrar import PathsRegistrar
+from .paths_metadata import PathsMetadata
 
 # types added just for clarity
 NamedPathsName = NewType("NamedPathsName", str)
@@ -101,7 +102,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def __init__(self, *, csvpaths, named_paths=None):
         self.csvpaths = csvpaths
-        self._registrar = PathsRegistrar(self.csvpaths.config)
+        self._registrar = PathsRegistrar(manager=self, config=self.csvpaths.config)
 
     @property
     def registrar(self) -> PathsRegistrar:
@@ -195,18 +196,58 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             return self.add_named_paths_from_dir(name=name, directory=from_dir)
         elif from_json is not None:
             return self.add_named_paths_from_json(file_path=from_json)
-
         if not isinstance(paths, list):
             ie = InputException(
                 """Paths must be a list of csvpaths.
-                                 If you want to load a file use add_named_paths_from_file or
-                                 set_named_paths_from_json."""
+                    If you want to load a file use add_named_paths_from_file or
+                    set_named_paths_from_json."""
             )
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+            return
         self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
         for _ in paths:
             self.csvpaths.logger.debug("Adding %s to %s", _, name)
-        self.registrar.register_named_paths(name=name, paths=paths)
+        s = self._str_from_list(paths)
+        t = self._copy_in(name, s)
+        self.assure_named_paths_home(t)
+
+        ids = [t[0] for t in self._get_identified_paths_in(name)]
+        mdata = PathsMetadata()
+        mdata.named_paths_name = name
+        mdata.named_paths_file = t
+        mdata.named_paths = paths
+        mdata.named_paths_identities = ids
+        mdata.named_paths_count = len(ids)
+        self.registrar.register(mdata)
+
+    def _str_from_list(self, paths: list[str]) -> str:
+        f = ""
+        for _ in paths:
+            f = f"{f}\n\n---- CSVPATH ----\n\n{_}"
+        return f
+
+    def _copy_in(self, name, csvpathstr) -> None:
+        temp = self._group_file_path(name)
+        with open(temp, "w", encoding="utf-8") as file:
+            file.write(csvpathstr)
+        return temp
+
+    def _group_file_path(self, name: str) -> str:
+        temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
+        return temp
+
+    def named_paths_home(self, name: str) -> str:
+        home = os.path.join(self.named_paths_dir, name)
+        return home
+
+    def assure_named_paths_home(self, name: str) -> str:
+        home = self.named_paths_home(name)
+        if not os.path.exists(home):
+            os.makedirs(home)
+        return home
+
+    def named_paths_dir(self) -> str:
+        return self.config.inputs_csvpaths_path
 
     #
     # adding ref handling for the form: $many.csvpaths.food
@@ -260,9 +301,12 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
                 s = file.read()
         cs = s.split("---- CSVPATH ----")
         cs = [s for s in cs if s.strip() != ""]
-        # if someone put a new group.csvpaths file by hand we want to
-        # capture its fingerprint for future reference.
-        self.registrar.update_manifest_if(name=name)
+        #
+        # this update may not happen. it depends on if the group.csvpaths file has changed.
+        # if someone put a new group.csvpaths file by hand we want to capture its fingerprint
+        # for future reference. this shouldn't happen, but it probably will happen.
+        #
+        self.registrar.update_manifest_if(name=name, pathspath=grp)
         return cs
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:

@@ -8,7 +8,7 @@ from csvpath.util.error import Error, ErrorCollector
 from csvpath.util.printer import Printer
 from csvpath.util.exceptions import CsvPathsException
 from csvpath import CsvPath
-from ..line_spooler import LineSpooler, CsvLineSpooler
+from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
 
 
@@ -89,10 +89,6 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         i_dir = ResultSerializer(self.csvpath.config.archive_path).get_instance_dir(
             run_dir=self.run_dir, identity=self.identity_or_index
         )
-        """
-        if not os.path.exists(i_dir):
-            Path(i_dir).mkdir(parents=True, exist_ok=True)
-        """
         return i_dir
 
     @property

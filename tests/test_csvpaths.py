@@ -1,5 +1,5 @@
 import unittest
-from csvpath.csvpaths import CsvPaths
+from csvpaths import CsvPaths
 
 FILES = {
     "food": "tests/test_resources/named_files/food.csv",
@@ -10,18 +10,15 @@ NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
 
 class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_next_paths(self):
-        print("")
         cs = CsvPaths()
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cnt = 0
         for line in cs.next_paths(filename="food", pathsname="food"):
-            print(f"test_csvpaths_next_paths: path: {line[len(line) - 1]}")
             cnt += 1
         assert cnt == 4
 
     def test_csvpaths_fast_forward_paths(self):
-        print("")
         cs = CsvPaths()
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
@@ -72,7 +69,6 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
-        print(f"\ntest_csvpaths_metadata: meta: {meta}")
         assert meta is not None
         assert "paths_name" in meta
         assert "file_name" in meta
@@ -98,7 +94,6 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
-        print(f"\ntest_csvpaths_metadata: meta: {meta}")
         assert meta is not None
 
         cs.collect_by_line(filename="food", pathsname="many")
@@ -119,13 +114,8 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="import")
-        results = cs.results_manager.get_named_results("import")
-        for result in results:
-            for p in result.printouts:
-                print(f"\t   >> {p}")
-
+        cs.results_manager.get_named_results("import")
         vs = cs.results_manager.get_variables("import")
-        print(f"\n test_csvpaths_import_function: vars from import paths: {vs}")
         assert "import" in vs
         assert vs["import"] is True
 
@@ -135,11 +125,9 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping"):
-            print(f"test_csvpaths_stopping: lines[{i}]: {line}")
             i += 1
         cs.results_manager.get_named_results("stopping")
         vs = cs.results_manager.get_variables("stopping")
-        print(f"test_csvpaths_stopping: stopping vs: {vs}")
         assert i == 7
         assert vs["one"] == [0, 1, 2]
         assert vs["two"] == [0, 1, 2, 3, 4, 5, 6]
@@ -156,13 +144,11 @@ class TestNewCsvPaths(unittest.TestCase):
         lines = paths.collect_by_line(
             filename="test", pathsname="all_agree", if_all_agree=True
         )
-        print(f"\n test_csvpaths_correct_lines_returned: expect 1st 3 lines: {lines}")
         assert len(lines) == 3
 
         lines = paths.collect_by_line(
             filename="test", pathsname="all_agree", if_all_agree=False
         )
-        print(f"\n test_csvpaths_correct_lines_returned: expect first 6 lines: {lines}")
         assert len(lines) == 6
 
     def test_csvpaths_correct_lines_returned2(self):
@@ -180,22 +166,15 @@ class TestNewCsvPaths(unittest.TestCase):
             if_all_agree=True,
             collect_when_not_matched=True,
         )
-        print(
-            f"\n test_csvpaths_correct_lines_returned: not matched expect last 3 lines: {lines}"
-        )
         assert len(lines) == 3
         assert lines[0] == ["Ants", "Bat", "skriffle..."]
         assert lines[1] == ["Slug", "Bat", "oozeeee..."]
         assert lines[2] == ["Frog", "Bat", "growl"]
-
         lines = paths.collect_by_line(
             filename="test",
             pathsname="all_agree",
             if_all_agree=False,
             collect_when_not_matched=True,
-        )
-        print(
-            f"\n test_csvpaths_correct_lines_returned: not matched expect last 6 lines: {lines}"
         )
         assert len(lines) == 6
         assert lines[0] == ["Frog", "Bat", "ribbit..."]
@@ -220,7 +199,6 @@ class TestNewCsvPaths(unittest.TestCase):
         for i, r in enumerate(results):
             if i > 0:
                 assert r.csvpath.data_from_preceding is True
-        print(f"\n test_csvpaths_source_mode: {r}")
 
     def test_csvpaths_replay(self):
         paths = CsvPaths()
@@ -252,4 +230,3 @@ class TestNewCsvPaths(unittest.TestCase):
         for i, r in enumerate(results):
             if i > 0:
                 assert r.csvpath.data_from_preceding is True
-        print(f"\n test_csvpaths_source_mode: {r}")

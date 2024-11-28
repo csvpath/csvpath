@@ -1,6 +1,0 @@
-[
-                @st = int(" 3 ")
-                @no = int(yes())
-                @bo = int(8.58)
-                @so = int("$8,58")
-            ]

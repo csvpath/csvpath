@@ -1,7 +1,6 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from tests.save import Save
 from csvpath.matching.util.exceptions import MatchException
 
 PATH = "tests/test_resources/test.csv"
@@ -10,7 +9,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsFingerprint(unittest.TestCase):
     def test_function_fingerprint_1(self):
         path = CsvPath()
-        Save._save(path, "test_function_fingerprint_1")
         path.parse(
             f"""
             ${PATH}[3-6]
@@ -20,14 +18,12 @@ class TestFunctionsFingerprint(unittest.TestCase):
             ]"""
         )
         path.collect()
-        print(f"path meta: {path.metadata}")
         assert "file_fingerprint" in path.metadata
         assert "hash" in path.metadata
         assert path.metadata["hash"] == path.metadata["file_fingerprint"]
 
     def test_function_fingerprint_2(self):
         path = CsvPath()
-        Save._save(path, "test_function_fingerprint_2")
         path.parse(
             f"""
             ${PATH}[*]
@@ -37,14 +33,11 @@ class TestFunctionsFingerprint(unittest.TestCase):
             ]"""
         )
         path.collect()
-        print(f"path meta: {path.metadata}")
-        print(f"path vars: {path.variables}")
         assert "by_line_fingerprint" in path.metadata
         assert "by_line_fingerprint" not in path.variables
 
     def test_function_fingerprint_3(self):
         path = CsvPath()
-        Save._save(path, "test_function_fingerprint_3")
         path.parse(
             f"""
             ${PATH}[*]

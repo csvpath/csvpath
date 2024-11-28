@@ -23,17 +23,13 @@ class TestResultsManager(unittest.TestCase):
             run_dir="",
         )
         results = [result]
-
         rs = {}
         rs[pathsname] = results
-
         rm = paths.results_manager
         rm.set_named_results(results=rs)
-
         some = rm.get_named_results(pathsname)
         assert some
         assert len(some) == 1
-
         more_result = Result(
             lines=[],
             csvpath=path,
@@ -53,7 +49,6 @@ class TestResultsManager(unittest.TestCase):
         assert len(rm.named_results) == 0
 
     def test_results_mgr2(self):
-        print("")
         # set up a csvpaths that will have 1 file and 1 set of paths
         filename = "food"
         pathsname = "many"

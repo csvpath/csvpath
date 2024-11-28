@@ -1,9 +1,0 @@
-[
-                                tally(#lastname)
-                                @ah.so = #firstname
-                                @hmmm = @tally_lastname.Bat
-                                @ohhh = @hmmm.fish
-                                @tally_lastname.Bat = "fred"
-                                @tl = total_lines()
-                                no()
-                            ]

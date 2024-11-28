@@ -5,10 +5,13 @@ import shutil
 from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.file_readers import DataFileReader
+from csvpath.managers.registrar import Registrar
+from csvpath.managers.listener import Listener
+from csvpath.managers.metadata import Metadata
 
 
-class FileRegistrar:
-    """this file registers the metadata with a tracking system. e.g. an OpenLinage
+class FileRegistrar(Registrar, Listener):
+    """this file registers the metadata with a tracking system. e.g. an OpenLineage
     server, JSON file, or database"""
 
     def __init__(self, config):
@@ -37,11 +40,8 @@ class FileRegistrar:
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def metadata_update(self, mdata) -> None:
-        # name = mdata.named_file_name
+    def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
-        # home = mdata.name_home
-        # file_home = mdata.file_home
         rpath = mdata.archive_path
         h = mdata.fingerprint
         t = mdata.type
@@ -60,17 +60,9 @@ class FileRegistrar:
         with open(manifest_path, "w", encoding="utf-8") as file:
             json.dump(jdata, file, indent=2)
 
-    def register_named_file(self, mdata):
-        # name = mdata.named_file_name
+    def register(self, mdata: Metadata) -> None:
         path = mdata.origin_path
         home = mdata.name_home
-        # file_home = mdata.file_home
-        # rpath = mdata.archive_path
-        # h = mdata.fingerprint
-        #
-        # rpath is the fingerprinted file path
-        # h is the hash fingerprint itself
-        #
         i = path.find("#")
         mark = None
         if i > -1:
@@ -101,20 +93,8 @@ class FileRegistrar:
         mpath = self.manifest_path(home=home)
         mdata.manifest_path = mpath
         mdata.type = self._type_from_sourcepath(path)
-        """
-        if self.listeners[0] is not self:
-            raise CsvPathsException("FileRegistrar must be the first metadata listener")
-        for p in self.listeners:
-            p.metadata_update(mdata)
-        """
         self.distribute_update(mdata)
-        return mdata
-
-    def distribute_update(self, mdata) -> None:
-        if self.listeners[0] is not self:
-            raise InputException("FileRegistrar must be the first metadata listener")
-        for p in self.listeners:
-            p.metadata_update(mdata)
+        # return mdata
 
     def type_of_file(self, home: str) -> str:
         p = self.manifest_path(home)

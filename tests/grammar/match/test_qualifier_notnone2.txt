@@ -1,3 +1,0 @@
-[
-                    ~ this should not set and not match ~
-                    @t.notnone=none() ]

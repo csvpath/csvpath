@@ -1,3 +1,0 @@
-[
-                date("the 3rd of feb")
-            ]

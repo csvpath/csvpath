@@ -4,17 +4,14 @@ from lark.exceptions import VisitError, UnexpectedCharacters
 from csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Header
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
 
 class TestHeaders(unittest.TestCase):
     def test_header_names0(self):
-        print("")
         path = CsvPath()
         path.OR = True
-        Save._save(path, "test_header_names0")
         path.parse(
             """$tests/test_resources/March-2024.csv[*][
                 starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
@@ -44,25 +41,10 @@ class TestHeaders(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print("")
-        print(f"test_header_names0: lines: {lines}\n")
-        print("")
-        print(f"test_header_names0: lines cnt: {len(lines)}\n")
-        print("")
-        print(f"test_header_names0: vars: {path.variables}")
-        print("")
-        """
-        for s in path.variables["votes"]:
-            print(f">>> {s}")
-        for s in path.variables["dowhens"]:
-            print(f">>> {s}")
-        """
-
         assert len(lines) == 3
 
     def test_header_names11(self):
         path = CsvPath()
-        Save._save(path, "test_header_names11")
         path.parse(f"""${PATH}[*][ #"a.b" ]""")
         # the parser removes the '#' before instantiating the header
         h = Header(None, value="fruitbat", name='"a.b"')
@@ -73,7 +55,6 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names1(self):
         path = CsvPath()
-        Save._save(path, "test_header_names")
         path.parse(
             f"""${PATH}[*][
                 #a
@@ -86,7 +67,6 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names2(self):
         path = CsvPath()
-        Save._save(path, "test_header_names")
         path.parse(
             f"""${PATH}[*][
                 #_hmm
@@ -102,7 +82,6 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names3(self):
         path = CsvPath()
-        Save._save(path, "test_header_names")
         path.parse(
             f"""${PATH}[*][
                 #no-spaces
@@ -142,7 +121,6 @@ class TestHeaders(unittest.TestCase):
                 ]"""
             )
             path.fast_forward()  # pragma: no cover
-        print("test_header_bad_names: done")
 
     def test_header_bad_names4(self):
         path = CsvPath()

@@ -1,6 +1,5 @@
 import unittest
 from csvpath import CsvPath, CsvPaths
-from tests.save import Save
 from csvpath.matching.functions.print.jinjaf import Jinjaf
 
 PATH = "tests/test_resources/test.csv"
@@ -19,10 +18,6 @@ class TestJinja(unittest.TestCase):
         results = resultset[0]
         rcp = results.csvpath
         rcp.variables
-        print(f"test_parse_variable_reference1: rcp.variables: {rcp.variables}")
-        #
-        #
-        #
         path = cs.csvpath()
         path.parse(
             f"""
@@ -36,7 +31,6 @@ class TestJinja(unittest.TestCase):
         path.fast_forward()
         jinja = Jinjaf(path.matcher, name="testing")
         tokens = jinja._get_tokens(["zips"])
-        print(f"test_function_jinja_get_tokens: tokens: {tokens}")
         assert tokens
         assert "zips" in tokens
         assert "local" in tokens
@@ -51,10 +45,6 @@ class TestJinja(unittest.TestCase):
 
         assert tokens["local"]["csvpath"]["file_name"] == PATH
         assert isinstance(tokens["zips"]["headers"], dict)
-        for z in tokens["zips"]:
-            print(f"\n test_function_jinja_get_tokens: z: {z}")
-            for k, v in tokens["zips"][z].items():
-                print(f"    {k} = {v}")
         #
         # zip's last line is blank. atm we don't offer a way to roll
         # up a line. if we want to add a line index capability or something
@@ -67,9 +57,7 @@ class TestJinja(unittest.TestCase):
         paths = CsvPaths()
         out = "tests/test_resources/out.txt"
         inf = "tests/test_resources/in.txt"
-
         path = paths.csvpath()
-        Save._save(path, "test_function_jinja")
         path.parse(
             f""" ~name:jinja~ ${PATH}[*][ yes()
                              @name = "turtle"
@@ -77,11 +65,8 @@ class TestJinja(unittest.TestCase):
             ]
             """
         )
-        print("")
         path.fast_forward()
-        print(f"test_function_jinja: path vars: {path.variables}")
         with open(out, "r") as file:
             txt = file.read()
-            print(f"test_function_jinja1: created output text: \n{txt}")
             i = txt.find("scan count: 9")
             assert i >= 0

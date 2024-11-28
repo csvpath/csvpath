@@ -1,4 +1,0 @@
-[
-                push.notnone("pushed", yes() )
-                push("pushed2", yes() )
-            ]

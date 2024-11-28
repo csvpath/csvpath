@@ -1,3 +1,0 @@
-[
-             upper(#firstname)
-             lower(#firstname) ]

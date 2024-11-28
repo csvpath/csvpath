@@ -1,5 +1,0 @@
-[
-                            @t.onmatch=count()
-                            every.fish(#lastname=="Bat", 2)
-                            #lastname=="Bat"
-                        ]

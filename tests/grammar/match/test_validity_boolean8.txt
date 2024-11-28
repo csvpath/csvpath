@@ -1,3 +1,0 @@
-[
-                @b.asbool = boolean(false())
-            ]

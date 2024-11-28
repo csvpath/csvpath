@@ -1,4 +1,0 @@
-[
-                @b = boolean(yes())
-                @b
-            ]

@@ -1,3 +1,0 @@
-[
-                push( "dates", datetime( #date, #format ) )
-            ]

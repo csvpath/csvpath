@@ -14,7 +14,6 @@ class TestCsvPath(unittest.TestCase):
         path.fast_forward()
         v1 = path.matcher.get_header_value(None, 2)
         v2 = path.matcher.get_header_value(None, "say")
-        print(f"\n test_matcher_get_header: : {v1} == {v2}")
         assert v1 == v2
         assert v1 == "ribbit..."
 
@@ -41,8 +40,6 @@ class TestCsvPath(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"\n test_matcher_get_header2: : {lines}")
-        print(f"\n test_matcher_get_header2: : {path.variables}")
         assert len(lines) == 1
         assert path.variables["dob"] == "May 12, 1962"
 
@@ -54,10 +51,6 @@ class TestCsvPath(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"\n test_csvpath_stop_when_last: path.vars: {path.variables}")
-        print(
-            f"\n test_csvpath_stop_when_last: last line: {path.line_monitor.physical_line_number}"
-        )
         assert path.line_monitor.physical_line_number == 5
 
     def test_csvpath_total_lines_check(self):
@@ -69,7 +62,6 @@ class TestCsvPath(unittest.TestCase):
     def test_csvpath_has_errors(self):
         path = CsvPath()
         path.config.csvpath_errors_policy = [OnError.COLLECT.value]
-        print(f"path's policy: {path.config.csvpath_errors_policy}")
         path.parse(
             """$tests/test_resources/test.csv[1][
                             push.onmatch("i", int("five"))
@@ -77,9 +69,6 @@ class TestCsvPath(unittest.TestCase):
         )
         path.fast_forward()
         assert path.has_errors()
-        errors = path.errors
-        for e in errors:
-            print(f">>> error: \n{e}\n")
 
     def test_csvpath_vars_frozen(self):
         path = CsvPath()
@@ -91,7 +80,6 @@ class TestCsvPath(unittest.TestCase):
                    ]"""
         )
         path.fast_forward()
-        print(f"test_csvpath_vars_frozen: vars: {path.variables}")
         assert "c" in path.variables
         assert path.variables["c"] == 3
         assert "chk" in path.variables
@@ -105,9 +93,8 @@ class TestCsvPath(unittest.TestCase):
         # is just in case something similar.
         #
         for i in range(0, 1000):
-            print(f"test_csvpath_a_lot_of_csvpaths: starting {i}")
             path = CsvPath()
-            print(f"test_csvpath_a_lot_of_csvpaths: made a {i}th CsvPath! {path}")
+            path.logger
 
     def test_csvpath_includes(self):
         # csvpath = CsvPath()
@@ -165,11 +152,9 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_variables(self):
         path = CsvPath()
-        scanner = path.parse(f"${PATH}[2-4][@me = count()]")
-        print(f"{scanner}")
+        path.parse(f"${PATH}[2-4][@me = count()]")
         for i, ln in enumerate(path.next()):
             assert path.get_variable("me") == i + 1
-            print(f'...{i} = {path.get_variable("me")}')
 
     def test_csvpath_header_counting(self):
         path = CsvPath()
@@ -189,44 +174,37 @@ class TestCsvPath(unittest.TestCase):
         path = CsvPath()
         path.parse(f"${PATH}[2-4][@me = count()]")
         lns = path.collect_line_numbers()
-        print(f"test_csvpath_collect_line_numbers: lns: {lns}")
         assert lns == [2, 3, 4]
 
         path = CsvPath()
         path.parse(f"${PATH}[2*][@me = count()]")
         lns = path.collect_line_numbers()
-        print(f"test_csvpath_collect_line_numbers: lns: {lns}")
         assert lns == ["2..."]
 
         path = CsvPath()
         path.parse(f"${PATH}[3-0][@me = count()]")
         lns = path.collect_line_numbers()
-        print(f"test_csvpath_collect_line_numbers: lns: {lns}")
         assert lns == [0, 1, 2, 3]
 
         path = CsvPath()
         path.parse(f"${PATH}[3+0+5+1][@me = count()]")
         lns = path.collect_line_numbers()
-        print(f"test_csvpath_collect_line_numbers: lns: {lns}")
         assert lns == [3, 0, 5, 1]
 
     def test_csvpath_ff(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][@me = count()]")
-        print("")
 
         assert path.advance_count == 0
         path.advance(1)
         assert path.advance_count == 1
         for _ in path.next():
-            print(f"test_csvpath_ff: _: {_}")
             assert _[0] == "David"
             break
 
         i = 0
         for _ in path.next():
             if i == 0:
-                print(f"test_csvpath_ff: _: {_}")
                 assert _[0] == "firstname"
                 i += 1
                 path.advance(4)

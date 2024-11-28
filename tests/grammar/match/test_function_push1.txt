@@ -1,4 +1,0 @@
-[
-                push("pushed", count_lines())
-                @popped = pop("pushed")
-            ]

@@ -6,7 +6,6 @@ from csvpath import CsvPath, CsvPaths
 from csvpath.util.error import OnError
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.exceptions import CsvPathsException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -14,8 +13,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsImport(unittest.TestCase):
     def test_function_import1(self):
         path = CsvPath()
-        Save._save(path, "test_function_import")
-
         path.config.csvpath_errors_policy = [OnError.RAISE.value]
         # import has no name
         with pytest.raises(MatchException):
@@ -80,10 +77,8 @@ class TestFunctionsImport(unittest.TestCase):
             importer = results[1]
             importable = results[0]
 
-        print(f"importable: {importable.csvpath}")
         assert len(importable) == 0
         assert importable.csvpath.will_run is False
 
-        print(f"importer: {importer.csvpath}")
         assert len(importer) == 9
         assert importer.csvpath.will_run is True

@@ -44,8 +44,6 @@ class TestFilesManager(unittest.TestCase):
         rpath = m._fingerprint(home)
         assert d != rpath
         assert not os.path.exists(d)
-        print(f"\nd: {d}")
-        print(f"r: {rpath}")
         shutil.rmtree("inputs/named_files/mytest")
 
     """
@@ -91,11 +89,9 @@ class TestFilesManager(unittest.TestCase):
         m.add_named_file(name="testx", path="tests/test_resources/test.csv")
         mpath = reg.manifest_path(m.named_file_home("testx"))
         m = reg.get_manifest(mpath)
-        print(f"\nm: {m}")
         assert len(m) == 3
 
     def test_file_mgr_dir1(self):
-        print("")
         paths = CsvPaths()
         fm = paths.file_manager
         fm.remove_all_named_files()
@@ -103,7 +99,6 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count == 6
 
     def test_file_mgr_json1(self):
-        print("")
         paths = CsvPaths()
         fm = paths.file_manager
         fm.remove_all_named_files()
@@ -111,7 +106,6 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count == 2
 
     def test_file_mgr_json2(self):
-        print("")
         paths = CsvPaths()
         paths.config.csvpaths_errors_policy = ["raise"]
         fm = paths.file_manager
@@ -119,7 +113,6 @@ class TestFilesManager(unittest.TestCase):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):
-        print("")
         paths = CsvPaths()
         fm = paths.file_manager
         nf = {
@@ -134,7 +127,6 @@ class TestFilesManager(unittest.TestCase):
         shutil.rmtree("inputs/named_files/amazing")
 
     def test_file_mgr_dict2(self):
-        print("")
         paths = CsvPaths()
         fm = paths.file_manager
         try:
@@ -150,9 +142,6 @@ class TestFilesManager(unittest.TestCase):
         c = fm.named_files_count
         fm.add_named_file(name="outstanding", path="tests/test_resources/test.csv")
         c2 = fm.named_files_count
-
-        print(f"c2: {c2}")
-        print(f"c: {c}")
         assert c2 == (c + 1)
         afile = fm.get_named_file("wonderful")
         assert afile is not None

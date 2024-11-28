@@ -1,8 +1,0 @@
-[
-                line(
-                    float(#firstname),
-                    integer(#lastname),
-                    boolean(#say)
-                )
-
-            ]

@@ -1,10 +1,9 @@
 import unittest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.productions import Variable
 from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 BOOL = "tests/test_resources/bool.csv"
@@ -31,74 +30,52 @@ class TestFunctionsQualifiers(unittest.TestCase):
         # baseline
         #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone1")
         path.parse(
             f"""${PATH}[*][
                     ~ this should set and match ~
                     @t=none() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone1 a: lines: {len(lines)}")
-        print(f"test_qualifier_notnone1 a: path vars: {path.variables}\n")
         assert len(lines) == 9
         assert "t" in path.variables
 
     def test_qualifier_notnone2(self):
-        #
-        # not None
-        #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone2")
         path.parse(
             f"""${PATH}[*][
                     ~ this should not set and not match ~
                     @t.notnone=none() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone2 b: lines: {len(lines)}")
-        print(f"test_qualifier_notnone2 b: path vars: {path.variables}\n")
         assert len(lines) == 0
         assert "t" not in path.variables
 
     def test_qualifier_notnone3(self):
-        #
-        # not none and not none
-        #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone3")
         path.parse(
             f"""${PATH}[*][
                     ~ this should set ~
                     @t.notnone=yes() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone3 c: lines: {len(lines)}")
-        print(f"test_qualifier_notnone3 c: path vars: {path.variables}\n")
         assert len(lines) == 9
         assert "t" in path.variables
         assert path.variables["t"] is True
 
     def test_qualifier_notnone4(self):
-        #
-        # not none and nocontrib
-        #
         path = CsvPath()
-        Save._save(path, "test_qualifier_notnone4")
         path.parse(
             f"""${PATH}[*][
                     ~ this should match and not set ~
                     @t.notnone.nocontrib=yes() ]"""
         )
         lines = path.collect()
-        print(f"test_qualifier_notnone4 c: lines: {len(lines)}")
-        print(f"test_qualifier_notnone4 c: path vars: {path.variables}\n")
         assert len(lines) == 9
         assert "t" in path.variables
         assert path.variables["t"] is True
 
     def test_qualifier(self):
         path = CsvPath()
-        Save._save(path, "test_function_qualifier")
         path.parse(
             f"""${PATH}
                         [*]
@@ -109,10 +86,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"test_function_qualifier: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_function_qualifier: line: {line}")
-        print(f"test_function_qualifier: path vars: {path.variables}")
         assert len(lines) == 1
         assert "firstname_match" in path.variables
         assert path.variables["firstname_match"][True] == 1
@@ -135,7 +108,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_latch(self):
         path = CsvPath()
-        Save._save(path, "test_latch")
         path.parse(
             f"""
             ~ explain-mode: no-explain ~
@@ -146,13 +118,11 @@ class TestFunctionsQualifiers(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_latch: path vars: {path.variables}")
         assert path.variables["my_firstname"] == "David"
         assert path.variables["other_firstname"] == "Frog"
 
     def test_function_every_qualifier1(self):
         path = CsvPath()
-        Save._save(path, "test_function_every_qualifier1")
         path.parse(
             f"""${PATH}
                         [*]
@@ -168,10 +138,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
         # and we capture 3 #lastname=="Bat" because there are 7 such lines
         #
         lines = path.collect()
-        print(f"test_function_every_qualifier: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_function_every_qualifier1: line: {line}")
-        print(f"test_function_every_qualifier1: path vars: {path.variables}")
         assert len(lines) == 3
         assert path.variables["t"] == 3
         assert "fish" in path.variables
@@ -179,7 +145,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_every_qualifier2(self):
         path = CsvPath()
-        Save._save(path, "test_every_qualifier2")
         path.parse(
             f"""${PATH}
                         [*]
@@ -194,10 +159,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
         # and we match on 3 #lastnames because there are 7 "Bat"
         #
         lines = path.collect()
-        print(f"test_function_every_qualifier2: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_every_qualifier2: line: {line}")
-        print(f"test_every_qualifier2: path vars: {path.variables}")
         assert len(lines) == 3
         assert path.variables["t"] == 3
         assert "who" in path.variables
@@ -205,7 +166,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_first_and_second_non_term(self):
         path = CsvPath()
-        Save._save(path, "test_qualifier_header")
         path.parse(
             f"""${BOOL}
                 [*]
@@ -218,9 +178,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         es = path.matcher.expressions
         assert len(es) == 1
         e = es[0][0]
-        print(f"\n test_qualifier_first_and_second_non_term: e: {e}")
         count = e.children[0]
-        print(f"test_qualifier_first_and_second_non_term: count: {count}")
         assert count.name == "count"
         first = count.first_non_term_qualifier()
         assert first == "fred"
@@ -229,7 +187,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_header(self):
         path = CsvPath()
-        Save._save(path, "test_qualifier_header")
         path.parse(
             f"""${BOOL}
                 [*]
@@ -241,8 +198,6 @@ class TestFunctionsQualifiers(unittest.TestCase):
                 """
         )
         lines = path.collect()
-        print(f"test_qualifier_header: lines: {len(lines)}")
-        print(f"test_qualifier_header: path vars: {path.variables}")
         assert len(lines) == 2
         assert "a" in path.variables
         assert "b" in path.variables

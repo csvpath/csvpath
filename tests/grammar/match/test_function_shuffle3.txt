@@ -1,5 +1,0 @@
-[
-                @order.notnone = shuffle(0, 4)
-                print("Line: $.csvpath.line_number: $.variables.order: $.headers.firstname")
-                push("ordering", @order)
-            ]

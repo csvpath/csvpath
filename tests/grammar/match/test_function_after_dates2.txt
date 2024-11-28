@@ -1,5 +1,0 @@
-[
-                @w = between( "who", "on", "first" )
-                @o = between( "on", "who", "first" )
-                @f = between( "first", "on", "who" )
-            ]

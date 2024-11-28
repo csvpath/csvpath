@@ -1,2 +1,0 @@
-$tests/test_resources/test.csv
-                [1*]

@@ -1,6 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,7 +7,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsAnd(unittest.TestCase):
     def test_function_and1(self):
         path = CsvPath()
-        Save._save(path, "test_function_and1")
         path.parse(
             f"""${PATH}[*][
                 ~ count.houses counts all values of and(), regardless
@@ -34,8 +32,6 @@ class TestFunctionsAnd(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_and1: lines: {len(lines)}")
-        print(f"test_function_and1: path vars: {path.variables}")
         assert "c" in path.variables
         assert path.variables["c2"] == 2
         assert len(lines) == 2

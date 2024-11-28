@@ -15,10 +15,8 @@ class TestJsonNamedPaths(unittest.TestCase):
             "tests/examples/example_2_2/orders.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="orders")
-        result = paths.results_manager.get_specific_named_result("orders", "prices")
-        print(f"result: {result}")
+        paths.results_manager.get_specific_named_result("orders", "prices")
         valid = paths.results_manager.is_valid("orders")
-        print(f"is valid: {valid}")
         assert not valid
 
         a = "archive/orders"
@@ -26,7 +24,6 @@ class TestJsonNamedPaths(unittest.TestCase):
         dirs = [os.path.join(a, d) for d in dirs if os.path.isdir(os.path.join(a, d))]
         n = max(dirs, key=os.path.getmtime)
         file = f"{n}/prices/unmatched.csv"
-        print(f"file: {file}")
         assert os.path.exists(file)
 
     def test_result_manifest(self):

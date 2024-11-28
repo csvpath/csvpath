@@ -5,7 +5,7 @@ from pathlib import Path
 import datetime
 from typing import Dict, List, Any
 from abc import ABC, abstractmethod
-from ..line_spooler import LineSpooler
+from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.reference_parser import ReferenceParser
 from .result_registrar import ResultRegistrar
@@ -311,17 +311,8 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         # the copy before the metadata is serialized into the results.
         #
         self.do_transfers_if(result)
-        #
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
-        #
-        # register results into a manifest.json
-        #  - file fingerprints
-        #  - validity
-        #  - timestamp
-        #  - run-completeness
-        #  - files-expectedness
-        #
         ResultRegistrar(result=result, result_serializer=rs).write_manifest()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath

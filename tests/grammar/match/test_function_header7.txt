@@ -1,4 +1,0 @@
-[
-                @has_say = headers(2)
-                @not_more = headers(3)
-            ]

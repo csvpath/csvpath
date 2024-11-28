@@ -30,7 +30,6 @@ class TestPathsManager(unittest.TestCase):
         assert len(results[3]) == 0
 
     def test_named_paths_json1(self):
-        print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         pm.remove_all_named_paths()
@@ -42,7 +41,6 @@ class TestPathsManager(unittest.TestCase):
         assert pm.number_of_named_paths("needs split") == 1
 
     def test_named_paths_dict1(self):
-        print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
@@ -54,7 +52,6 @@ class TestPathsManager(unittest.TestCase):
         assert pm.number_of_named_paths("many") == 2
 
     def test_named_paths_dict2(self):
-        print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         np = ["wonderful", "amazing"]
@@ -69,7 +66,6 @@ class TestPathsManager(unittest.TestCase):
         assert pm.total_named_paths() == i + 1
 
     def test_named_paths_from_and_to_1(self):
-        print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         np = [
@@ -110,7 +106,6 @@ class TestPathsManager(unittest.TestCase):
     # . all in directory under one name
     # . add duplicates to name
     def test_named_paths_dir(self):
-        print("")
         paths = CsvPaths()
         pm = paths.paths_manager
         pm.remove_all_named_paths()

@@ -1,6 +1,0 @@
-[
-                                tally(#lastname) no()
-                                @hmmm = @lastname.Bat
-                                @ohhh = @hmmm.fish
-                                @tally_lastname.Bat = "fred"
-                            ]

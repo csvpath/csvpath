@@ -1,7 +1,0 @@
-[
-                regex(/sniffle/, #say)
-                firstline.nocontrib() -> @line = count_lines()
-                firstmatch.nocontrib() -> @match = count_lines()
-                firstscan.nocontrib() -> @scan = count_lines()
-
-            ]

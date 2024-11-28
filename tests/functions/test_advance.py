@@ -2,7 +2,6 @@ import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -10,7 +9,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsAdvance(unittest.TestCase):
     def test_function_advance1(self):
         path = CsvPath()
-        Save._save(path, "test_function_advance1")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -31,8 +29,6 @@ class TestFunctionsAdvance(unittest.TestCase):
         # match 4 - line_number = 6 - data_line_count = 7 - match count = 4 - scan count = 6
         # ...
         lines = path.collect()
-        print(f"test_function_advance1: lines: {lines}")
-        print(f"test_function_advance1: path vars: {path.variables}")
         assert len(lines) == 6
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
@@ -45,7 +41,6 @@ class TestFunctionsAdvance(unittest.TestCase):
 
     def test_function_advance_all1(self):
         path = CsvPath()
-        Save._save(path, "test_function_advance_all1")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -56,8 +51,6 @@ class TestFunctionsAdvance(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_advance1: lines: {lines}")
-        print(f"test_function_advance1: path vars: {path.variables}")
         assert len(lines) == 6
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 

@@ -41,5 +41,4 @@ class TestCsvPath(unittest.TestCase):
           ]"""
         )
         lines = path.collect()
-        print(f"test_csvpath_logical_or3: lines: {lines}")
         assert len(lines) == 2

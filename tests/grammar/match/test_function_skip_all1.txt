@@ -1,5 +1,0 @@
-[
-                ~ no change in function in skip_all ~
-                skip_all.once(#lastname == "Bat")
-                push.onmatch("line", count_lines())
-            ]

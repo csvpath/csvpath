@@ -1,6 +1,0 @@
-[
-                @i = increment.never.onmatch(yes(), 3)
-                @j = increment.always(yes(), 3)
-                @k = increment.onmatch.still_never(yes(), 3)
-                no()
-            ]

@@ -1,5 +1,0 @@
-[
-                @order = shuffle(0, "five")
-                print("Line: $.csvpath.line_number: $.variables.order: $.headers.firstname")
-                push("ordering", @order)
-            ]

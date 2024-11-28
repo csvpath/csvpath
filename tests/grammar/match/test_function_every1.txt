@@ -1,4 +1,0 @@
-[
-                            push( "chk", every.fishy(#lastname=="Bat", 2) )
-                            every.fishing(#lastname=="Bat", 2)
-                        ]

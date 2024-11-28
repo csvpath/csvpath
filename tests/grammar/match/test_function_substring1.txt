@@ -1,3 +1,0 @@
-[
-                @s = substring("testtest", 4)
-            ]

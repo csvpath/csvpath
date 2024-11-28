@@ -1,5 +1,0 @@
-[
-                    push("a", #1)
-                    last.nocontrib() -> @sd = stdev(stack("a"))
-                    last.nocontrib() -> print("stdev $.variables.sd")
-                ]

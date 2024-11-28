@@ -2,33 +2,66 @@ import os
 import json
 import hashlib
 from datetime import datetime
+from ..listener import Listener
+from ..metadata import Metadata
+from ..registrar import Registrar
+from .result_metadata import ResultMetadata
 
 
-class ResultRegistrar:
+class ResultRegistrar(Registrar, Listener):
     def __init__(self, *, result, result_serializer):
         self.result = result
         self.result_serializer = result_serializer
 
-    def write_manifest(self) -> None:
+    def register(self, mdata: Metadata = None) -> None:
+        #
+        # results manager delegates the bits to the
+        # serializer and the metadata assembly to this
+        # registrar, so we expect it to hand us nothing
+        # but the result object and serializer.
+        #
+        if mdata is None:
+            mdata = ResultMetadata()
+            mdata.archive_name = self._archive_name
+            mdata.named_results_name = self.result.paths_name
+            mdata.instance = self.result.run_time
+            mdata.instance_dir = self.result.instance_dir
+            mdata.identity = self.result.identity_or_index
+            mdata.input_data_file = self.result.file_name
+            mdata.file_fingerprints = self.file_fingerprints
+            mdata.file_count = len(mdata.file_fingerprints)
+            mdata.valid = self.result.csvpath.is_valid
+            mdata.completed = self.completed
+            mdata.expected = self.all_expected_files
+            mdata.transfers = self.result.csvpath.transfers
+        self.distribute_update(mdata)
+
+    def metadata_update(self, mdata: Metadata) -> None:
         m = {}
-        #  - file fingerprints
-        #  - validity
-        #  - timestamp
-        #  - run-completeness
-        #  - files-expectedness
-        ffs = self.file_fingerprints
-        valid = self.result.csvpath.is_valid
-        time = f"{datetime.now()}"
-        completed = self.completed
-        expected = self.all_expected_files
-        m["file_fingerprints"] = ffs
-        m["valid"] = valid
-        m["time"] = time
-        m["completed"] = completed
-        m["files_expected"] = expected
+        m["archive_name"] = mdata.archive_name
+        m["named_results_name"] = mdata.named_results_name
+        m["instance"] = mdata.instance
+        m["instance_dir"] = mdata.instance_dir
+        m["identity"] = mdata.identity
+        m["file_fingerprints"] = mdata.file_fingerprints
+        m["files_expected"] = mdata.expected
+        m["file_count"] = mdata.file_count
+        m["valid"] = mdata.valid
+        m["time"] = f"{mdata.time}"
+        m["completed"] = mdata.completed
+        m["input_data_file"] = mdata.input_data_file
+        m["transfers"] = mdata.transfers
         mp = self.manifest_path
+        m["manifest_path"] = mp
         with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file, indent=2)
+
+    def _archive_name(self) -> str:
+        ap = self.result.csvpath.config.archive_path
+        i = ap.rfind(os.sep)
+        if i > 0:
+            return ap[i + 1 :]
+        return ap
 
     @property
     def manifest(self) -> dict[str, str | bool]:

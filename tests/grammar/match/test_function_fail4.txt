@@ -1,5 +1,0 @@
-[
-                yes()
-                @valid = valid()
-                @failed = failed()
-            ]

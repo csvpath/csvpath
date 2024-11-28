@@ -2,16 +2,13 @@ import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 PATH = "tests/test_resources/numbers2.csv"
 
 
 class TestFunctionsSubtotal(unittest.TestCase):
     def test_function_subtotal1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_subtotal1")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -29,9 +26,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
         assert path.variables["areas"]["ocean"] == 10
 
     def test_function_subtotal2(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_subtotal2")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -44,9 +39,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
             path.fast_forward()
 
     def test_function_subtotal3(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_subtotal3")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -59,9 +52,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
             path.fast_forward()
 
     def test_function_subtotal4(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_subtotal4")
         path.parse(
             f"""
             ${PATH}[1*]

@@ -1,8 +1,0 @@
-[
-                increment.test( yes(), 3)
-                ~comment
-                 on lines
-                ~
-                @oc.onchange = @test_increment
-                print.onmatch("printing: oc: $.variables.oc, test: $.variables.test, count: $.csvpath.match_count")
-            ]

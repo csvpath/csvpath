@@ -28,7 +28,7 @@ from .util.exceptions import (
 from .matching.util.exceptions import MatchException
 from csvpath.util.printer import Printer
 from csvpath.util.file_readers import DataFileReader
-from csvpath.managers.line_spooler import LineSpooler, ListLineSpooler
+from csvpath.util.line_spooler import LineSpooler, ListLineSpooler
 from csvpath.modes.mode_controller import ModeController
 
 
@@ -680,23 +680,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     @property
     def transfers(self) -> list[tuple[str, str]]:
         return self.modes.transfer_mode.transfers
-
-    """
-    def update_arg_validation_mode_if(self) -> None:
-        if self.metadata and "validation-mode" in self.metadata:
-            # sets arg validation reporting. one or more or none of:
-            #  - print
-            #  - log
-            #  - raise
-            #
-            validation_mode = f"{self.metadata['validation-mode']}".strip()
-            if validation_mode:
-                self.set_validation_error_handling(validation_mode)
-                self.logger.info(
-                    "Setting 'validation-mode': %s",
-                    self.metadata["validation-mode"],
-                )
-    """
 
     @property
     def all_expected_files(self) -> list[str]:

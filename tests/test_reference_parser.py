@@ -41,9 +41,7 @@ class TestReferenceParser(unittest.TestCase):
         assert name == "2024-03-04_00-11-24"
 
     def test_ref_parser_1(self):
-        # a csvpath within a named-paths group
         ref = ReferenceParser("$many.csvpaths.first")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "csvpaths"
@@ -51,7 +49,6 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[1] is None
 
         ref = ReferenceParser("$many#first.variables.avar.atrack")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor == "first"
         assert ref.datatype == "variables"
@@ -59,7 +56,6 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[2] == "atrack"
 
         ref = ReferenceParser("$many.results.2024-01-01_00-24-01.first")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "results"
@@ -67,7 +63,6 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[2] == "first"
 
         ref = ReferenceParser("$many.results.2024-01-01_*.first")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "results"
@@ -75,7 +70,6 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[2] == "first"
 
         ref = ReferenceParser("$many.results.2024-01-01_:first.first")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "results"
@@ -83,7 +77,6 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[2] == "first"
 
         ref = ReferenceParser("$many#things.results.2024-01-01_:first.second#third")
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor == "things"
         assert ref.datatype == "results"
@@ -95,7 +88,6 @@ class TestReferenceParser(unittest.TestCase):
         ref = ReferenceParser(
             "$many#things.results.2024-01-01_:first#second.third#fourth"
         )
-        print(f"ref: {ref}")
         assert ref.root_major == "many"
         assert ref.root_minor == "things"
         assert ref.datatype == "results"

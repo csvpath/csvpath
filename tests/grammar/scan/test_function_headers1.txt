@@ -1,1 +1,0 @@
-$tests/test_resources/header_mismatch.csv[*]

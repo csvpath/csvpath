@@ -1,9 +1,0 @@
-[
-                line(
-                    string("food"),
-                    string("type"),
-                    blank("units"),
-                    decimal.notnone.weak("year"),
-                    boolean("healthy")
-                )
-            ]

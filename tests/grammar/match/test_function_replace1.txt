@@ -1,4 +1,0 @@
-[
-                yes()
-                replace(0, count_lines())
-            ]

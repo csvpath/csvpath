@@ -1,6 +1,5 @@
 import unittest
 from csvpath.csvpath import CsvPath
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -9,7 +8,6 @@ EMPTY = "tests/test_resources/empty.csv"
 class TestFunctionsExists(unittest.TestCase):
     def test_function_exists1(self):
         path = CsvPath()
-        Save._save(path, "test_function_exists1")
         path.parse(
             f"""
             ${PATH}[*]
@@ -18,13 +16,10 @@ class TestFunctionsExists(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_exists1: lines: {lines}")
-        print(f"test_function_exists1: path vars: {path.variables}")
         assert len(lines) == 9
 
     def test_function_exists2(self):
         path = CsvPath()
-        Save._save(path, "test_function_exists2")
         path.parse(
             f"""
             ${EMPTY}[2]
@@ -33,6 +28,4 @@ class TestFunctionsExists(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_exists1: lines: {lines}")
-        print(f"test_function_exists1: path vars: {path.variables}")
         assert len(lines) == 0

@@ -3,7 +3,6 @@ import pytest
 import logging
 from io import StringIO as buffer
 from csvpath import CsvPath
-from tests.save import Save
 from csvpath.util.log_utility import LogUtility
 
 PATH = "tests/test_resources/test.csv"
@@ -87,7 +86,6 @@ class TestFunctionsDebug(unittest.TestCase):
 
     def test_function_debug(self):
         path = CsvPath()
-        Save._save(path, "test_function_debug")
         path.logger.level = logging.DEBUG
         assert path.logger.level == logging.DEBUG
         if path.logger.level == logging.DEBUG:
@@ -103,7 +101,6 @@ class TestFunctionsDebug(unittest.TestCase):
 
     def test_function_brief_stack_trace(self):
         path = CsvPath()
-        Save._save(path, "test_function_brief_stack_trace")
         path.logger.level = logging.DEBUG
         assert path.logger.level == logging.DEBUG
         if path.logger.level == logging.DEBUG:
@@ -117,7 +114,6 @@ class TestFunctionsDebug(unittest.TestCase):
         path.collect()
         assert path.last_line
         assert path.last_line.find(", line") > -1
-
         path = CsvPath().parse(
             f"""
             ${PATH}[1]
@@ -128,7 +124,6 @@ class TestFunctionsDebug(unittest.TestCase):
 
     def test_function_do_when_stack(self):
         path = CsvPath()
-        Save._save(path, "test_function_do_when_stack")
         path.parse(
             f"""
             ${PATH}[1]
@@ -139,5 +134,4 @@ class TestFunctionsDebug(unittest.TestCase):
         """
         )
         path.collect()
-        print(f"test_function_do_when_stack: path.vars: {path.variables}")
         assert path.variables["dw"] == [True, False, False]

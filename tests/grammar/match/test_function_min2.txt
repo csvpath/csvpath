@@ -1,4 +1,0 @@
-[
-                @the_min = min(#firstname, "scan")
-                no()
-            ]

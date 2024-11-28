@@ -1,6 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -10,7 +9,6 @@ FOOD = "tests/test_resources/food.csv"
 class TestFunctionsMissing(unittest.TestCase):
     def test_function_missing1(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing1")
         path.parse(
             f"""
             ${PATH}[3]
@@ -28,7 +26,6 @@ class TestFunctionsMissing(unittest.TestCase):
     def test_function_missing2(self):
         print("")
         path = CsvPath()
-        Save._save(path, "test_function_missing2")
         path.parse(
             f"""
             ${EMPTY}[1*]
@@ -45,7 +42,6 @@ class TestFunctionsMissing(unittest.TestCase):
 
     def test_function_missing3(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing3")
         path.parse(
             f"""
             ${FOOD}[10]
@@ -60,7 +56,6 @@ class TestFunctionsMissing(unittest.TestCase):
 
     def test_function_missing4(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing4")
         path.parse(
             f"""
             ${FOOD}[10]
@@ -75,7 +70,6 @@ class TestFunctionsMissing(unittest.TestCase):
 
     def test_function_missing5(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing5")
         path.parse(
             f"""
             ${FOOD}[*]
@@ -90,7 +84,7 @@ class TestFunctionsMissing(unittest.TestCase):
 
     def test_function_missing6(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing6")
+
         path.parse(
             f"""
             ${FOOD}[*]
@@ -101,13 +95,10 @@ class TestFunctionsMissing(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_missing6: lines: {lines}")
-        print(f"test_function_missing6: path vars: {path.variables}")
         assert len(lines) == 11
 
     def test_function_missing7(self):
         path = CsvPath()
-        Save._save(path, "test_function_missing7")
         path.parse(
             f"""
             ${FOOD}[*]
@@ -118,6 +109,4 @@ class TestFunctionsMissing(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_missing7: lines: {lines}")
-        print(f"test_function_missing7: path vars: {path.variables}")
         assert len(lines) == 1

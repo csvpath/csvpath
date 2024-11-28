@@ -1,7 +1,0 @@
-[
-                @order.notnone = shuffle()
-                @order2.notnone = shuffle()
-                print("Line: $.csvpath.line_number: $.variables.order: $.variables.order2")
-                push("ordering", @order)
-                push("ordering2", @order2)
-            ]

@@ -11,7 +11,6 @@ PATH = "tests/test_resources/test.csv"
 class TestComments(unittest.TestCase):
     def test_update_settings_from_metadata(self):
         path = CsvPath()
-        print("")
         assert path.OR is False
         assert path.collect_when_not_matched is False
         assert path.has_default_printer is True
@@ -30,10 +29,8 @@ class TestComments(unittest.TestCase):
             ]
             """
         )
-        print(f"path meta: {path.metadata}")
         assert "logic-mode" in path.metadata
         assert "return-mode" in path.metadata
-        print(f"returnmode: {path.metadata['return-mode']}")
         assert "print-mode" in path.metadata
         assert "validation-mode" in path.metadata
         assert path.OR is True
@@ -56,14 +53,12 @@ class TestComments(unittest.TestCase):
             ]
             """
         )
-        print(f"path meta: {path.metadata}")
         assert "validation-mode" in path.metadata
         assert path.log_validation_errors is True
         assert path.print_validation_errors is True
         assert path.raise_validation_errors is False
         path.fast_forward()
         for p in path.printers:
-            print(f"last linnnner: {p.last_line}")
             assert (
                 p.last_line and p.last_line.find("Wrong value in match component") > -1
             )
@@ -82,7 +77,6 @@ class TestComments(unittest.TestCase):
             ]
             """
         )
-        print(f"path meta: {path.metadata}")
         assert "validation-mode" in path.metadata
         assert path.log_validation_errors is True
         assert path.print_validation_errors is True
@@ -178,7 +172,6 @@ class TestComments(unittest.TestCase):
             ~ what about me? fizzbats! ~
             """
         )
-        print(f"path meta: {path.metadata}")
         assert "collect" in path.metadata
         assert path.metadata["collect"] == "no-matches"
         assert "logic" in path.metadata

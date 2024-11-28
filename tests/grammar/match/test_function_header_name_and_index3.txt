@@ -1,3 +1,0 @@
-[
-                not( header_name(4) )
-            ]
