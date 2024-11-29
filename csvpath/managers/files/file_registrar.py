@@ -15,6 +15,7 @@ class FileRegistrar(Registrar, Listener):
     server, JSON file, or database"""
 
     def __init__(self, config):
+        super().__init__()
         self.config = config
         self.listeners = [self]
 

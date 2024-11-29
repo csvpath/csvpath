@@ -11,6 +11,7 @@ from ..registrar import Registrar
 
 class PathsRegistrar(Listener, Registrar):
     def __init__(self, *, manager, config):
+        super().__init__()
         self.config = config
         self.manager = manager
 
@@ -28,18 +29,23 @@ class PathsRegistrar(Listener, Registrar):
         return sname
 
     def store_json_paths_file(self, name: str, jsonpath: str) -> None:
-        home = self.assure_named_paths_home(name)
+        home = self.manager.named_paths_home(name)
         j = ""
         with open(jsonpath, "r", encoding="utf-8") as file:
             j = file.read()
         with open(os.path.join(home, "definition.json"), "w", encoding="utf-8") as file:
             file.write(j)
 
-    def _fingerprint(self, name) -> str:
-        home = self.named_paths_home(name)
-        fpath = os.path.join(home, "group.csvpaths")
-        if os.path.exists(fpath):
-            with open(fpath, "rb") as f:
+    def _fingerprint(self, *, name=None, group_file_path=None) -> str:
+        if group_file_path is None and name is not None:
+            home = self.manager.named_paths_home(name)
+            group_file_path = os.path.join(home, "group.csvpaths")
+        elif group_file_path is None and name is None:
+            raise InputException(
+                "Either the named-paths name or the path to the group file must be provided"
+            )
+        if os.path.exists(group_file_path):
+            with open(group_file_path, "rb") as f:
                 h = hashlib.file_digest(f, hashlib.sha256)
                 return h.hexdigest()
         return None
@@ -48,30 +54,59 @@ class PathsRegistrar(Listener, Registrar):
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def register(self, *, mdata: Metadata) -> None:
-        self.assure_manifest(mdata.named_paths_name)
-        mdata.manifest_path = self.assure_manifest(mdata.named_paths_name)
-        mdata.fingerprint = self._fingerprint(mdata.named_paths_name)
+    def register(self, mdata: Metadata) -> None:
+        mdata.manifest_path = self.manifest_path(name=mdata.named_paths_name)
+        mdata.fingerprint = self._fingerprint(name=mdata.named_paths_name)
         self.distribute_update(mdata)
+
+    def update_manifest_if(self, *, group_file_path, name, paths=None):
+        #
+        # if we find that the current group file does not have the same
+        # fingerprint as the most recent on file, we register a new version.
+        # this is not the expected way things work, but if someone makes an
+        # update in place, without re-adding the named-paths, this is what
+        # happens.
+        #
+        f = self._fingerprint(group_file_path=group_file_path)
+        mpath = self.manifest_path(name)
+        cf = self._most_recent_fingerprint(mpath)
+        if f != cf:
+            mdata = PathsMetadata()
+            mdata.named_paths_name = name
+            mdata.named_paths_file = group_file_path
+            mdata.named_paths = paths
+            mdata.named_paths_identities = [
+                t[0] for t in self.manager.get_identified_paths_in(name)
+            ]
+            if paths:
+                mdata.named_paths_count = len(paths)
+            mdata.manifest_path = mpath
+            mdata.fingerprint = f
+            self.distribute_update(mdata)
+
+    def _most_recent_fingerprint(self, manifest_path: str) -> str:
+        jdata = self.get_manifest(manifest_path)
+        if len(jdata) == 0:
+            return None
+        return jdata[len(jdata) - 1]["fingerprint"]
 
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
-            mdata = {}
-            mdata["file"] = mdata.named_paths_name
-            mdata["fingerprint"] = mdata.fingerprint
-            mdata["time"] = f"{mdata.time}"
-            mdata["count"] = mdata.count
-            mdata["manifest_path"] = mdata.manifest_path
-            jdata.append(mdata)
+            m = {}
+            m["file"] = mdata.named_paths_name
+            m["fingerprint"] = mdata.fingerprint
+            m["time"] = f"{mdata.time}"
+            m["count"] = mdata.named_paths_count
+            m["manifest_path"] = mdata.manifest_path
+            jdata.append(m)
             with open(mdata.manifest_path, "w", encoding="utf-8") as file:
                 json.dump(jdata, file, indent=2)
 
-    def assure_manifest(self, name: str) -> None:
-        nhome = self.named_paths_home(name)
+    def manifest_path(self, name: str) -> None:
+        nhome = self.manager.named_paths_home(name)
         mf = os.path.join(nhome, "manifest.json")
         if not os.path.exists(mf):
-            self.assure_named_paths_home(name)
             with open(mf, "w", encoding="utf-8") as file:
                 file.write("[]")
         return mf

@@ -1,5 +1,5 @@
 import unittest
-from csvpaths import CsvPaths
+from csvpath import CsvPaths
 
 FILES = {
     "energy": "tests/test_resources/xlsx/2023-reported-energy-and-water-metrics.xlsx",

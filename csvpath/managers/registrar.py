@@ -6,7 +6,6 @@ from .listener import Listener
 
 class Registrar(ABC):
     def __init__(self) -> None:
-        super().__init__()
         self.listeners: list[Listener] = [self]
 
     @abstractmethod

@@ -10,6 +10,7 @@ from .result_metadata import ResultMetadata
 
 class ResultRegistrar(Registrar, Listener):
     def __init__(self, *, result, result_serializer):
+        super().__init__()
         self.result = result
         self.result_serializer = result_serializer
 
@@ -22,27 +23,32 @@ class ResultRegistrar(Registrar, Listener):
         #
         if mdata is None:
             mdata = ResultMetadata()
-            mdata.archive_name = self._archive_name
+            mdata.archive_name = self.archive_name
             mdata.named_results_name = self.result.paths_name
-            mdata.instance = self.result.run_time
-            mdata.instance_dir = self.result.instance_dir
-            mdata.identity = self.result.identity_or_index
+            mdata.run = self.result_serializer.get_run_dir_name_from_datetime(
+                self.result.run_time
+            )
+            mdata.run_home = self.result.run_dir
+            mdata.instance_home = self.result.instance_dir
+            mdata.instance_identity = self.result.identity_or_index
             mdata.input_data_file = self.result.file_name
             mdata.file_fingerprints = self.file_fingerprints
             mdata.file_count = len(mdata.file_fingerprints)
             mdata.valid = self.result.csvpath.is_valid
             mdata.completed = self.completed
             mdata.expected = self.all_expected_files
-            mdata.transfers = self.result.csvpath.transfers
+            if self.result.csvpath.transfers:
+                mdata.transfers = self.result.csvpath.transfers
         self.distribute_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
         m["archive_name"] = mdata.archive_name
         m["named_results_name"] = mdata.named_results_name
-        m["instance"] = mdata.instance
-        m["instance_dir"] = mdata.instance_dir
-        m["identity"] = mdata.identity
+        m["run"] = mdata.run
+        m["run_home"] = mdata.run_home
+        m["instance_identity"] = mdata.instance_identity
+        m["instance_home"] = mdata.instance_home
         m["file_fingerprints"] = mdata.file_fingerprints
         m["files_expected"] = mdata.expected
         m["file_count"] = mdata.file_count
@@ -50,13 +56,16 @@ class ResultRegistrar(Registrar, Listener):
         m["time"] = f"{mdata.time}"
         m["completed"] = mdata.completed
         m["input_data_file"] = mdata.input_data_file
-        m["transfers"] = mdata.transfers
+        if mdata.transfers:
+            m["transfers"] = mdata.transfers
         mp = self.manifest_path
         m["manifest_path"] = mp
+        print(f"m: {m}")
         with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file, indent=2)
 
-    def _archive_name(self) -> str:
+    @property
+    def archive_name(self) -> str:
         ap = self.result.csvpath.config.archive_path
         i = ap.rfind(os.sep)
         if i > 0:

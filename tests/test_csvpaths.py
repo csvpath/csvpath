@@ -1,5 +1,5 @@
 import unittest
-from csvpaths import CsvPaths
+from csvpath import CsvPaths
 
 FILES = {
     "food": "tests/test_resources/named_files/food.csv",

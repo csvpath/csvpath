@@ -136,13 +136,19 @@ class ResultSerializer:
             paths_name = paths_name[0:i]
         return paths_name
 
+    def get_run_dir_name_from_datetime(self, dt) -> str:
+        t = dt.strftime("%Y-%m-%d_%I-%M-%S")
+        return t
+
     def get_run_dir(self, *, paths_name, run_time):
         paths_name = self._deref_paths_name(paths_name)
         run_dir = os.path.join(self.base_dir, paths_name)
         if not os.path.exists(run_dir):
             os.makedirs(run_dir, exist_ok=True)
         if not isinstance(run_time, str):
-            run_time = run_time.strftime("%Y-%m-%d_%I-%M-%S")
+            run_time = self.get_run_dir_name_from_datetime(
+                run_time
+            )  # run_time.strftime("%Y-%m-%d_%I-%M-%S")
         run_dir = os.path.join(run_dir, f"{run_time}")
         # the path existing for a different named-paths run in progress
         # or having completed less than 1000ms ago is expected to be

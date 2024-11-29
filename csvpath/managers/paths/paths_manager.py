@@ -209,9 +209,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             self.csvpaths.logger.debug("Adding %s to %s", _, name)
         s = self._str_from_list(paths)
         t = self._copy_in(name, s)
-        self.assure_named_paths_home(t)
-
-        ids = [t[0] for t in self._get_identified_paths_in(name)]
+        ids = [t[0] for t in self.get_identified_paths_in(name, paths=paths)]
         mdata = PathsMetadata()
         mdata.named_paths_name = name
         mdata.named_paths_file = t
@@ -238,16 +236,13 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def named_paths_home(self, name: str) -> str:
         home = os.path.join(self.named_paths_dir, name)
-        return home
-
-    def assure_named_paths_home(self, name: str) -> str:
-        home = self.named_paths_home(name)
         if not os.path.exists(home):
             os.makedirs(home)
         return home
 
+    @property
     def named_paths_dir(self) -> str:
-        return self.config.inputs_csvpaths_path
+        return self.csvpaths.config.inputs_csvpaths_path
 
     #
     # adding ref handling for the form: $many.csvpaths.food
@@ -294,7 +289,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         if not self.has_named_paths(name):
             return None
         s = ""
-        path = self.registrar.named_paths_home(name)
+        path = self.named_paths_home(name)
         grp = os.path.join(path, "group.csvpaths")
         if os.path.exists(grp):
             with open(grp, "r", encoding="utf-8") as file:
@@ -306,7 +301,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
         # if someone put a new group.csvpaths file by hand we want to capture its fingerprint
         # for future reference. this shouldn't happen, but it probably will happen.
         #
-        self.registrar.update_manifest_if(name=name, pathspath=grp)
+        self.registrar.update_manifest_if(name=name, group_file_path=grp, paths=cs)
         return cs
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
@@ -319,7 +314,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def _get_to(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
         ps = []
-        paths = self._get_identified_paths_in(npn)
+        paths = self.get_identified_paths_in(npn)
         for path in paths:
             ps.append(path[1])
             if path[0] == identity:
@@ -335,10 +330,11 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             ps.append(path[1])
         return ps
 
-    def _get_identified_paths_in(
-        self, nps: NamedPathsName
+    def get_identified_paths_in(
+        self, nps: NamedPathsName, paths: list[str] = None
     ) -> list[tuple[Identity, Csvpath]]:
-        paths = self.get_named_paths(nps)
+        if paths is None:
+            paths = self.get_named_paths(nps)
         idps = []
         for path in paths:
             c = CsvPath()
@@ -348,7 +344,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
         if npn is not None:
-            paths = self._get_identified_paths_in(npn)
+            paths = self.get_identified_paths_in(npn)
             for path in paths:
                 if path[0] == identity:
                     return path[1]

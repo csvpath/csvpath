@@ -8,10 +8,10 @@ class ResultMetadata(Metadata):
         super().__init__()
         self.archive_name: str = None
         self.named_results_name: str = None
-        self.instance: str = None
-        self.instance_dir: str = None
-        self.identity: str = None
-        self.identity_home: str = None
+        self.run: str = None
+        self.run_home: str = None
+        self.instance_home: str = None
+        self.instance_identity: str = None
         self.input_data_file: str = None
         self.file_count: int = -1
         self.file_fingerprints: dict[str, str] = None

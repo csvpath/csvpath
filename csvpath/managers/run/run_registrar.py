@@ -9,6 +9,7 @@ from csvpath.util.exceptions import FileException
 
 class RunRegistrar:
     def __init__(self, csvpaths):
+        super().__init__()
         self.csvpaths = csvpaths
         self.archive = self.csvpaths.config.archive_path
 
