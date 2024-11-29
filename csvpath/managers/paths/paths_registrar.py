@@ -15,41 +15,6 @@ class PathsRegistrar(Listener, Registrar):
         self.config = config
         self.manager = manager
 
-    @property
-    def named_paths_dir(self) -> str:
-        return self.config.inputs_csvpaths_path
-
-    def _simple_name(self, path) -> str:
-        i = path.rfind(os.sep)
-        sname = None
-        if i == -1:
-            sname = path
-        else:
-            sname = path[i + 1 :]
-        return sname
-
-    def store_json_paths_file(self, name: str, jsonpath: str) -> None:
-        home = self.manager.named_paths_home(name)
-        j = ""
-        with open(jsonpath, "r", encoding="utf-8") as file:
-            j = file.read()
-        with open(os.path.join(home, "definition.json"), "w", encoding="utf-8") as file:
-            file.write(j)
-
-    def _fingerprint(self, *, name=None, group_file_path=None) -> str:
-        if group_file_path is None and name is not None:
-            home = self.manager.named_paths_home(name)
-            group_file_path = os.path.join(home, "group.csvpaths")
-        elif group_file_path is None and name is None:
-            raise InputException(
-                "Either the named-paths name or the path to the group file must be provided"
-            )
-        if os.path.exists(group_file_path):
-            with open(group_file_path, "rb") as f:
-                h = hashlib.file_digest(f, hashlib.sha256)
-                return h.hexdigest()
-        return None
-
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
@@ -84,12 +49,6 @@ class PathsRegistrar(Listener, Registrar):
             mdata.fingerprint = f
             self.distribute_update(mdata)
 
-    def _most_recent_fingerprint(self, manifest_path: str) -> str:
-        jdata = self.get_manifest(manifest_path)
-        if len(jdata) == 0:
-            return None
-        return jdata[len(jdata) - 1]["fingerprint"]
-
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
@@ -110,3 +69,32 @@ class PathsRegistrar(Listener, Registrar):
             with open(mf, "w", encoding="utf-8") as file:
                 file.write("[]")
         return mf
+
+    def _most_recent_fingerprint(self, manifest_path: str) -> str:
+        jdata = self.get_manifest(manifest_path)
+        if len(jdata) == 0:
+            return None
+        return jdata[len(jdata) - 1]["fingerprint"]
+
+    def _simple_name(self, path) -> str:
+        i = path.rfind(os.sep)
+        sname = None
+        if i == -1:
+            sname = path
+        else:
+            sname = path[i + 1 :]
+        return sname
+
+    def _fingerprint(self, *, name=None, group_file_path=None) -> str:
+        if group_file_path is None and name is not None:
+            home = self.manager.named_paths_home(name)
+            group_file_path = os.path.join(home, "group.csvpaths")
+        elif group_file_path is None and name is None:
+            raise InputException(
+                "Either the named-paths name or the path to the group file must be provided"
+            )
+        if os.path.exists(group_file_path):
+            with open(group_file_path, "rb") as f:
+                h = hashlib.file_digest(f, hashlib.sha256)
+                return h.hexdigest()
+        return None
