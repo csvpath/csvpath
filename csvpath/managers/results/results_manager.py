@@ -1,111 +1,18 @@
 # pylint: disable=C0114
-from __future__ import annotations
 import os
 from pathlib import Path
 import datetime
 from typing import Dict, List, Any
-from abc import ABC, abstractmethod
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.reference_parser import ReferenceParser
 from .result_registrar import ResultRegistrar
+from .results_registrar import ResultsRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
 
 
-class CsvPathsResultsManager(ABC):
-    """this class is the manager of all the results associated with a
-    CsvPaths instance. Unlike CsvPath, which are single use, a single
-    CsvPaths can be used as often as needed. Results managers track all the
-    results for a set of named results. Each set of named results tracks the
-    output of a set of named csvpaths. Before rerunning a named set
-    CsvPaths clears the named results from the ResultsManager.
-    """
-
-    #
-    # - printout lines
-    # - lines of captured data
-    # - variables
-    # - csvpath.metadata
-    # - csvpath.csvpath data
-    # - unmatched lines
-    #
-
-    @abstractmethod
-    def get_variables(self, name: str) -> bool:
-        """gets all the variables from all csvpaths in one dict. variables may
-        overwrite each other"""
-
-    @abstractmethod
-    def is_valid(self, name: str) -> bool:
-        """True if all csvpaths are valid"""
-
-    @abstractmethod
-    def has_lines(self, name: str) -> bool:
-        """True if lines were captured by any of the csvpaths under name"""
-
-    @abstractmethod
-    def has_errors(self, name: str) -> bool:
-        """True if the error collectors for any of the csvpaths under name
-        have any errors"""
-
-    @abstractmethod
-    def get_number_of_errors(
-        self, name: str
-    ) -> bool:  # pylint: disable=C0116  pragma: no cover
-        pass
-
-    @abstractmethod
-    def get_number_of_results(
-        self, name: str
-    ) -> int:  # pylint: disable=C0116   pragma: no cover
-        pass
-
-    @abstractmethod
-    def set_named_results(self, results: Dict[str, List[Result]]) -> None:
-        """overwrite"""
-
-    @abstractmethod
-    def add_named_result(self, result: Result) -> None:
-        """additive. the results are named in the result object."""
-
-    @abstractmethod
-    def add_named_results(self, results: List[Result]) -> None:
-        """additive. the results are named in the result object."""
-
-    @abstractmethod
-    def get_named_results(self, name: str) -> List[Result]:
-        """For each named-paths, keeps and returns the most recent
-        run of the paths producing results
-        """
-
-    @abstractmethod
-    def get_specific_named_result(self, name: str, name_or_id: str) -> Result:
-        """Finds a result with a metadata field named id or name that has a
-        value matching name_or_id. id wins over name. first results with either
-        wins. the name or id comes from a comment's metadata field that would look
-        like ~ id: my_path ~ or ~ name: my_path ~
-        The allowable forms of id or name are all lower, all upper or initial case.
-        i.e.: id, ID, Id and name, NAME, Name.
-        """
-
-    @abstractmethod
-    def get_last_named_result(self, name: str) -> Result:
-        """returns the last result"""
-
-    @abstractmethod
-    def remove_named_results(self, name: str) -> None:
-        """should raise an exception if no such results"""
-
-    @abstractmethod
-    def clean_named_results(self, name: str) -> None:
-        """should remove any results, completing silently if no such results"""
-
-
-class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
-    FILES_MANAGER_TYPE = "files"
-    PATHS_MANAGER_TYPE = "paths"
-
+class ResultsManager:  # pylint: disable=C0115
     def __init__(self, *, csvpaths=None):
         self.named_results = {}
         self._csvpaths = None
@@ -113,12 +20,24 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         self.csvpaths = csvpaths
 
     @property
-    def csvpaths(self):  # noqa: F821 pylint: disable=C0116
+    def csvpaths(self):
         return self._csvpaths
 
     @csvpaths.setter
     def csvpaths(self, cs) -> None:  # noqa: F821
         self._csvpaths = cs
+
+    def end_run(self, *, run_dir, pathsname, results) -> None:
+        rr = ResultsRegistrar(
+            csvpaths=self.csvpaths,
+            run_dir=run_dir,
+            pathsname=pathsname,
+            results=results,
+        )
+        rr.write_manifest()
+
+    def begin_run(self, *, run_dir, pathsname, results) -> None:
+        pass
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
         """gets the run metadata. will include the metadata complete from
@@ -246,11 +165,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
         names.sort()
         return names
 
-    #
-    #
-    #
-    #
-    #
     def do_transfers_if(self, result) -> None:
         transfers = result.csvpath.transfers
         if transfers is None:
@@ -288,12 +202,6 @@ class ResultsManager(CsvPathsResultsManager):  # pylint: disable=C0115
             os.mkdirs(r)
             Path(r).mkdir(parents=True, exist_ok=True)
         return o
-
-    #
-    #
-    #
-    #
-    #
 
     def save(self, result: Result) -> None:
         if self._csvpaths is None:

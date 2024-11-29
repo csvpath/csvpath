@@ -1,9 +1,7 @@
 # pylint: disable=C0114
 import os
-from pathlib import Path
-from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
 from csvpath.util.error import Error, ErrorCollector
 from csvpath.util.printer import Printer
 from csvpath.util.exceptions import CsvPathsException
@@ -23,7 +21,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def __init__(
         self,
         *,
-        lines: List[List[Any]] = None,
+        lines: list[list[Any]] = None,
         csvpath: CsvPath,
         file_name: str,
         paths_name: str,
@@ -32,7 +30,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         run_dir: str,
         runtime_data: dict = None,
     ):
-        self._lines: List[List[Any]] = None
+        self._lines: list[list[Any]] = None
         self._csvpath = None
         self._runtime_data = runtime_data
         self._paths_name = paths_name
@@ -99,15 +97,15 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return s
 
     @property
-    def metadata(self) -> Dict[str, Any]:  # pylint: disable=C0116
+    def metadata(self) -> dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.metadata  # pragma: no cover
 
     @property
-    def variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
+    def variables(self) -> dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.variables  # pragma: no cover
 
     @property
-    def all_variables(self) -> Dict[str, Any]:  # pylint: disable=C0116
+    def all_variables(self) -> dict[str, Any]:  # pylint: disable=C0116
         return self.csvpath.csvpaths.results_manager.get_variables(self.paths_name)
 
     @property
@@ -131,7 +129,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     #
 
     @property
-    def lines(self) -> List[List[Any]]:  # pylint: disable=C0116
+    def lines(self) -> list[list[Any]]:
         if self._lines is None:
             #
             # we can assume the caller wants a container for lines. in that case,
@@ -145,17 +143,13 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return self._lines
 
     @lines.setter
-    def lines(self, ls: List[List[Any]]) -> None:
+    def lines(self, ls: list[list[Any]]) -> None:
         if self._lines and isinstance(self._lines, LineSpooler):
             self._lines.close()
         self._lines = ls
 
-    def append(self, line: List[Any]) -> None:
+    def append(self, line: list[Any]) -> None:
         self.lines.append(line)
-        # orig
-        # if self._lines is None:
-        #    self._lines = []
-        # self._lines.append(line)
 
     def __len__(self) -> int:
         if isinstance(self.lines, list):
@@ -186,11 +180,11 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._csvpath = path
 
     @property
-    def errors(self) -> List[Error]:  # pylint: disable=C0116
+    def errors(self) -> list[Error]:  # pylint: disable=C0116
         return self._errors
 
     @errors.setter
-    def errors(self, errors: List[Error]) -> None:
+    def errors(self, errors: list[Error]) -> None:
         self._errors = errors
 
     @property
@@ -214,7 +208,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return False
 
     @property
-    def printouts(self) -> List[str]:
+    def printouts(self) -> list[str]:
         """this method returns the default printouts. use get_printout_by_name
         for specific printouts"""
         if self._printouts is None:
@@ -224,12 +218,12 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def get_printouts(self) -> dict[str, list[str]]:
         return self._printouts
 
-    def set_printouts(self, name: str, lines: List[str]) -> None:
+    def set_printouts(self, name: str, lines: list[str]) -> None:
         if self._printouts is None:
             self._printouts = {}
         self._printouts[name] = lines
 
-    def get_printout_by_name(self, name: str) -> List[str]:  # pylint: disable=C0116
+    def get_printout_by_name(self, name: str) -> list[str]:  # pylint: disable=C0116
         if self._printouts is None:
             self._printouts = []
         return self._printouts[name] if name in self._printouts else []

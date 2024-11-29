@@ -15,7 +15,6 @@ from .managers.paths.paths_manager import PathsManager
 from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
-from .managers.results.results_registrar import ResultsRegistrar
 from .managers.run.run_registrar import RunRegistrar
 from . import CsvPath
 
@@ -299,10 +298,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
+        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
         )
         rr.write_manifest()
+        """
         #
         # update/write run manifests here
         #  - validity (are all paths valid)
@@ -425,10 +427,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
+        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
         )
         rr.write_manifest()
+        """
         self.clear_run_coordination()
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
@@ -504,10 +509,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
+
+        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
         )
         rr.write_manifest()
+        """
         self.clear_run_coordination()
 
     # =============== breadth first processing ================
@@ -725,6 +734,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             results.append(result)
             result.unmatched = r[0].unmatched
             self.results_manager.save(result)
+        self.results_manager.end_run(
+            run_dir=results[0].run_dir, pathsname=pathsname, results=results
+        )
+        """
         rr = ResultsRegistrar(
             csvpaths=self,
             run_dir=results[0].run_dir,
@@ -732,6 +745,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             results=results,
         )
         rr.write_manifest()
+        """
         self.clear_run_coordination()
 
     def _load_csvpath_objects(
