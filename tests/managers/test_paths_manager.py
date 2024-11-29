@@ -43,8 +43,12 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_dict1(self):
         paths = CsvPaths()
         pm = paths.paths_manager
-        np = ["wonderful", "amazing"]
-        pm.remove_named_paths("many")
+        np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
+        i = pm.total_named_paths()
+        if i > 0:
+            pm.remove_named_paths("many")
+            j = pm.total_named_paths()
+            assert j == i - 1
         i = pm.total_named_paths()
         pm.add_named_paths(name="many", paths=np)
         assert pm.total_named_paths() == i + 1
@@ -54,13 +58,13 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_dict2(self):
         paths = CsvPaths()
         pm = paths.paths_manager
-        np = ["wonderful", "amazing"]
+        np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         pm.remove_named_paths("numbers")
         pm.remove_named_paths("many")
         i = pm.total_named_paths()
         pm.add_named_paths(name="many", paths=np)
         assert pm.total_named_paths() == i + 1
-        pm.add_named_paths(name="numbers", paths=["a third path"])
+        pm.add_named_paths(name="numbers", paths=["~id:my 34d~$[*][~a third path~]"])
         assert pm.total_named_paths() == i + 2
         pm.remove_named_paths("many")
         assert pm.total_named_paths() == i + 1

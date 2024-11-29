@@ -209,7 +209,10 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             self.csvpaths.logger.debug("Adding %s to %s", _, name)
         s = self._str_from_list(paths)
         t = self._copy_in(name, s)
-        ids = [t[0] for t in self.get_identified_paths_in(name, paths=paths)]
+        print(f"above id patss in: paths is {paths}")
+        grp_paths = self.get_identified_paths_in(name, paths=paths)
+        print(f"grp_paths is {grp_paths}")
+        ids = [t[0] for t in grp_paths]
         mdata = PathsMetadata()
         mdata.named_paths_name = name
         mdata.named_paths_file = t
@@ -323,7 +326,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
 
     def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
         ps = []
-        paths = self._get_identified_paths_in(npn)
+        paths = self.get_identified_paths_in(npn)
         for path in paths:
             if path[0] != identity and len(ps) == 0:
                 continue
@@ -363,7 +366,7 @@ class PathsManager(CsvPathsManager):  # pylint: disable=C0115, C0116
             raise InputException(f"Named-paths name {name} not found")
         if not self.has_named_paths(name):
             return
-        home = self.registrar.named_paths_home(name)
+        home = self.named_paths_home(name)
         shutil.rmtree(home)
 
     def remove_all_named_paths(self) -> None:

@@ -19,6 +19,10 @@ classifiers = [
 ]
 include = ["config", "logs", "docs"]
 
+[tool.pytest.ini_options]
+#testpaths = ["tests"]
+norecursedirs = ["old"]
+
 [tool.poetry.urls]
 "Github" = "https://github.com/csvpath/csvpath.git"
 "Csvpath.org" = "https://www.csvpath.org"
@@ -29,19 +33,20 @@ cli = "csvpath.cli.cli:run"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+pytest = "^8.3.3"
+marquez-python = "^0.50.0"
+requests = "^2.32.3"
 ply = "^3.11"
 python-dateutil = "^2.9.0.post0"
 jinja2 = "^3.1.4"
-inflect = "^7.3.1"
+inflect = "^7.4.0"
 lark = "^1.2.2"
 tabulate = "^0.9.0"
 metaphone = "^0.6"
 pylightxl = "^1.61"
 bullet = "^2.2.0"
-pytest = "^8.3.3"
-smart-open = {extras = ["s3"], version = "^7.0.5", optional = true}
-pandas = { version = "^2.2.3", optional = true }
-pipdeptree = "^2.24.0"
+pytz = "^2024.2"
+openlineage-python = "^1.25.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
