@@ -19,7 +19,7 @@ class PathsRegistrar(Listener, Registrar):
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def register(self, mdata: Metadata) -> None:
+    def register_complete(self, mdata: Metadata) -> None:
         mdata.manifest_path = self.manifest_path(name=mdata.named_paths_name)
         mdata.fingerprint = self._fingerprint(name=mdata.named_paths_name)
         self.distribute_update(mdata)

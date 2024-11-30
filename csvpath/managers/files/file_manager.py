@@ -147,7 +147,7 @@ class FileManager:
         mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
-        self.registrar.register(mdata)
+        self.registrar.register_complete(mdata)
 
     def _copy_in(self, path, home) -> None:
         # fname = self._simple_name(path)

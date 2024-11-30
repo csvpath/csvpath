@@ -5,9 +5,13 @@ import hashlib
 from datetime import datetime
 from abc import ABC, abstractmethod
 from csvpath.util.exceptions import FileException
+from ..listener import Listener
+from ..registrar import Registrar
+from ..metadata import Metadata
+from .run_metadata import RunMetadata
 
 
-class RunRegistrar:
+class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
         super().__init__()
         self.csvpaths = csvpaths
@@ -27,66 +31,16 @@ class RunRegistrar:
         with open(self.manifest_path, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def _fingerprint_file(self, path) -> str:
-        with open(path, "rb") as f:
-            h = hashlib.file_digest(f, hashlib.sha256)
-            h = h.hexdigest()
-        return h
-
-    def size(self, path) -> str:
-        try:
-            return os.stat(path).st_size
-        except FileNotFoundError:
-            return 0
-
-    def last_change(self, path) -> str:
-        try:
-            last_mod = os.stat(path).st_mtime
-            last_mod = time.ctime(last_mod)
-            return last_mod
-        except FileNotFoundError:
-            return -1
-
-    def update_manifest(
-        self,
-        *,
-        csvpath,
-        filepath: str,
-        instancepath: str,
-        fingerprint: str,
-        identity: str,
-    ) -> None:
-        ffingerprint = self._fingerprint_file(filepath)
-        size = self.size(filepath)
-        last_change = self.last_change(filepath)
-        mdata = {}
-        mdata["file_path"] = filepath
-        mdata["file_size"] = size
-        mdata["file_last_change"] = last_change
-        mdata["fingerprint_provided"] = fingerprint
-        mdata["fingerprint_found"] = ffingerprint
-        mdata["time"] = f"{datetime.now()}"
-        mdata["target"] = instancepath
-        mdata["identity"] = identity
-        jdata = self.manifest
-        jdata.append(mdata)
-        with open(self.manifest_path, "w", encoding="utf-8") as file:
-            json.dump(jdata, file, indent=2)
-        houf = self.csvpaths.config.halt_on_unmatched_file_fingerprints()
-        if fingerprint != ffingerprint and csvpath.source_mode != "preceding":
-            self.csvpaths.logger.warning(
-                "fingerprints of input file %s do not agree: orig:%s != current:%s",
-                filepath,
-                fingerprint,
-                ffingerprint,
-            )
-        if (
-            houf is True
-            and fingerprint != ffingerprint
-            and csvpath.source_mode != "preceding"
-        ):
-            raise FileException(
-                "File was modified since being registered. See manifest for %s at %s. Processing halted.",
-                filepath,
-                mdata["time"],
-            )
+    def metadata_update(self, mdata: Metadata) -> None:
+        m = {}
+        m["time"] = f"{mdata.time}"
+        m["run_home"] = mdata.run_home
+        m["identity"] = mdata.identity
+        m["named_paths_name"] = mdata.named_paths_name
+        m["named_file_name"] = mdata.named_file_name
+        mp = self.manifest_path
+        m["manifest_path"] = mp
+        mani = self.manifest
+        mani.append(m)
+        with open(mp, "w", encoding="utf-8") as file:
+            json.dump(mani, file, indent=2)

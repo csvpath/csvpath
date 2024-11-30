@@ -149,8 +149,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._skip_all = False
         self._advance_all = 0
         self._current_run_time = None
-        self._csvpaths_registrars = []
-        self._csvpaths_registrars.append(RunRegistrar(self))
+        # self._csvpaths_registrars = []
+        # self._csvpaths_registrars.append(RunRegistrar(self))
         self._run_time_str = None
 
     def run_time_str(self, pathsname=None) -> str:
@@ -208,6 +208,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     def advance_all(self, lines: int) -> None:  # pragma: no cover
         self._advance_all = lines
 
+    """
     @property
     def csvpaths_registrars(self) -> list[RunRegistrar]:
         if self._csvpaths_registrars is None:
@@ -216,6 +217,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
 
     def add_csvpaths_registrar(self, creg) -> None:
         self.csvpaths_registrars.append(creg)
+    """
 
     @property
     def errors(self) -> List[Error]:  # pylint: disable=C0116
@@ -252,6 +254,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         )
         crt = self.run_time_str(pathsname)
         results = []
+        #
+        # run starts here
+        #
+        self.results_manager.start_run(
+            run_dir=crt, pathsname=pathsname, filename=filename
+        )
+        #
+        #
+        #
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             result = Result(
@@ -298,7 +309,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
-        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        #
+        # run ends here
+        #
+        self.results_manager.complete_run(
+            run_dir=crt, pathsname=pathsname, results=results
+        )
+        #
+        #
+        #
         """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
@@ -359,10 +378,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.info("Parsing csvpath %s", apath)
         csvpath.parse(apath)
         #
-        # ready to run. time to register the run.
+        # ready to run. time to register the run. this is separate from
+        # the run_register.py (ResultsRegister) event
         #
-        crt = self.run_time_str(pathsname)
-        fingerprint = self.file_manager.get_fingerprint_for_name(filename)
+        # crt = self.run_time_str(pathsname)
+        # fingerprint = self.file_manager.get_fingerprint_for_name(filename)
+        #
+        #
+        #
+        """
         for _ in self.csvpaths_registrars:
             _.update_manifest(
                 csvpath=csvpath,
@@ -371,6 +395,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 fingerprint=fingerprint,
                 identity=identity,
             )
+        """
         self.logger.debug("Done loading csvpath")
 
     def fast_forward_paths(self, *, pathsname, filename):
@@ -385,6 +410,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             filename,
         )
         crt = self.run_time_str(pathsname)
+        #
+        # run starts here
+        #
+        self.results_manager.start_run(
+            run_dir=crt, pathsname=pathsname, filename=filename
+        )
+        #
+        #
+        #
         results = []
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
@@ -427,7 +461,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
-        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        #
+        # run ends here
+        #
+        self.results_manager.complete_run(
+            run_dir=crt, pathsname=pathsname, results=results
+        )
+        #
+        #
+        #
         """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
@@ -449,6 +491,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
         crt = self.run_time_str(pathsname)
+        #
+        # run starts here
+        #
+        self.results_manager.start_run(
+            run_dir=crt, pathsname=pathsname, filename=filename
+        )
+        #
+        #
+        #
         results = []
         for i, path in enumerate(paths):
             if self._skip_all:
@@ -509,8 +560,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     raise e
             self.results_manager.save(result)
             results.append(result)
-
-        self.results_manager.end_run(run_dir=crt, pathsname=pathsname, results=results)
+        #
+        # run ends here
+        #
+        self.results_manager.complete_run(
+            run_dir=crt, pathsname=pathsname, results=results
+        )
+        #
+        #
+        #
         """
         rr = ResultsRegistrar(
             csvpaths=self, run_dir=crt, pathsname=pathsname, results=results
@@ -734,9 +792,16 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             results.append(result)
             result.unmatched = r[0].unmatched
             self.results_manager.save(result)
-        self.results_manager.end_run(
+
+        #
+        # run ends here
+        #
+        self.results_manager.complete_run(
             run_dir=results[0].run_dir, pathsname=pathsname, results=results
         )
+        #
+        #
+        #
         """
         rr = ResultsRegistrar(
             csvpaths=self,
@@ -787,6 +852,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
         crt = self.run_time_str(pathsname)
+        #
+        # run starts here
+        #
+        self.results_manager.start_run(
+            run_dir=crt, pathsname=pathsname, filename=filename
+        )
+        #
+        #
+        #
         for i, csvpath in enumerate(csvpath_objects):
             try:
                 #

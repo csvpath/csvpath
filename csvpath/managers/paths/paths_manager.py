@@ -140,7 +140,7 @@ class PathsManager:
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
-        self.registrar.register(mdata)
+        self.registrar.register_complete(mdata)
 
     #
     # adding ref handling for the form: $many.csvpaths.food

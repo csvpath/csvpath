@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC  # , abstractmethod
 from .metadata import Metadata
 from csvpath.util.exceptions import InputException
 from .listener import Listener
@@ -8,9 +8,11 @@ class Registrar(ABC):
     def __init__(self) -> None:
         self.listeners: list[Listener] = [self]
 
-    @abstractmethod
-    def register(self, mdata: Metadata) -> None:
-        pass
+    def register_start(self, mdata: Metadata) -> None:
+        self.distribute_update(mdata)
+
+    def register_complete(self, mdata: Metadata) -> None:
+        self.distribute_update(mdata)
 
     def distribute_update(self, mdata: Metadata) -> None:
         """any Listener will recieve a copy of a metadata that describes a

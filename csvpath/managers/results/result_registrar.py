@@ -14,7 +14,7 @@ class ResultRegistrar(Registrar, Listener):
         self.result = result
         self.result_serializer = result_serializer
 
-    def register(self, mdata: Metadata = None) -> None:
+    def register_complete(self, mdata: Metadata = None) -> None:
         #
         # results manager delegates the bits to the
         # serializer and the metadata assembly to this

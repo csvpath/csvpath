@@ -6,8 +6,11 @@ from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.reference_parser import ReferenceParser
-from .result_registrar import ResultRegistrar
+from ..run.run_metadata import RunMetadata
+from ..run.run_registrar import RunRegistrar
+from .results_metadata import ResultsMetadata
 from .results_registrar import ResultsRegistrar
+from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
 
@@ -27,17 +30,43 @@ class ResultsManager:  # pylint: disable=C0115
     def csvpaths(self, cs) -> None:  # noqa: F821
         self._csvpaths = cs
 
-    def end_run(self, *, run_dir, pathsname, results) -> None:
+    def complete_run(self, *, run_dir, pathsname, results) -> None:
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
             run_dir=run_dir,
             pathsname=pathsname,
             results=results,
         )
-        rr.write_manifest()
+        m = rr.manifest
+        mdata = ResultsMetadata()
+        mdata.time = m["time"]
+        mdata.uuid = m["uuid"]
+        mdata.named_file_fingerprint = m["named_file_fingerprint"]
+        mdata.named_file_fingerprint_on_file = m["named_file_fingerprint_on_file"]
+        mdata.named_file_name = m["named_file_name"]
+        mdata.named_file_path = m["named_file_path"]
 
-    def begin_run(self, *, run_dir, pathsname, results) -> None:
-        pass
+        mdata.run_home = run_dir
+        mdata.named_paths_name = pathsname
+        rr.register_complete(mdata)
+
+    def start_run(self, *, run_dir, pathsname, filename) -> None:
+        rr = ResultsRegistrar(
+            csvpaths=self.csvpaths,
+            run_dir=run_dir,
+            pathsname=pathsname,
+        )
+        mdata = ResultsMetadata()
+        mdata.named_file_name = filename
+        filepath = self.csvpaths.file_manager.get_named_file(filename)
+        mdata.named_file_path = filepath
+        mdata.run_home = run_dir
+        mdata.named_paths_name = pathsname
+        del mdata.all_completed
+        del mdata.all_valid
+        del mdata.error_count
+        del mdata.all_expected_files
+        rr.register_start(mdata)
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
         """gets the run metadata. will include the metadata complete from
@@ -148,6 +177,16 @@ class ResultsManager:  # pylint: disable=C0115
         else:
             self.named_results[name].append(result)
         self._variables = None
+        #
+        # this is the beginning of an identity run within a named-paths run
+        #
+        mdata = RunMetadata()
+        mdata.run_home = result.run_dir
+        mdata.identity = result.identity_or_index
+        mdata.named_paths_name = result.paths_name
+        mdata.named_file_name = result.file_name
+        rr = RunRegistrar(self.csvpaths)
+        rr.register_start(mdata)
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:
         self.named_results = {}
@@ -220,7 +259,7 @@ class ResultsManager:  # pylint: disable=C0115
         self.do_transfers_if(result)
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
-        ResultRegistrar(result=result, result_serializer=rs).register()
+        ResultRegistrar(result=result, result_serializer=rs).register_complete()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr) -> str:

@@ -61,7 +61,7 @@ class FileRegistrar(Registrar, Listener):
         with open(manifest_path, "w", encoding="utf-8") as file:
             json.dump(jdata, file, indent=2)
 
-    def register(self, mdata: Metadata) -> None:
+    def register_complete(self, mdata: Metadata) -> None:
         path = mdata.origin_path
         home = mdata.name_home
         i = path.find("#")
