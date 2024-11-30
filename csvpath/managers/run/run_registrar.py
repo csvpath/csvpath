@@ -13,8 +13,7 @@ from .run_metadata import RunMetadata
 
 class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
-        super().__init__()
-        self.csvpaths = csvpaths
+        super().__init__(csvpaths)
         self.archive = self.csvpaths.config.archive_path
 
     @property

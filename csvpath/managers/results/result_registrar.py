@@ -9,8 +9,8 @@ from .result_metadata import ResultMetadata
 
 
 class ResultRegistrar(Registrar, Listener):
-    def __init__(self, *, result, result_serializer):
-        super().__init__()
+    def __init__(self, *, csvpaths, result, result_serializer):
+        super().__init__(csvpaths)
         self.result = result
         self.result_serializer = result_serializer
 

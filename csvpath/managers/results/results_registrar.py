@@ -19,8 +19,8 @@ class ResultsRegistrar(Registrar, Listener):
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
-        super().__init__()
-        self.csvpaths = csvpaths
+        super().__init__(csvpaths)
+        # self.csvpaths = csvpaths
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results
@@ -137,7 +137,7 @@ class ResultsRegistrar(Registrar, Listener):
     def all_expected_files(self) -> bool:
         rs = ResultSerializer(self.csvpaths.config.archive_path)
         for r in self.results:
-            rr = ResultRegistrar(result=r, result_serializer=rs)
+            rr = ResultRegistrar(csvpaths=self.csvpaths, result=r, result_serializer=rs)
             if not rr.all_expected_files:
                 return False
         return True

@@ -14,9 +14,9 @@ class FileRegistrar(Registrar, Listener):
     """this file registers the metadata with a tracking system. e.g. an OpenLineage
     server, JSON file, or database"""
 
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
+    def __init__(self, csvpaths):
+        super().__init__(csvpaths)
+        self.config = csvpaths.config
         self.listeners = [self]
 
     def get_fingerprint(self, home) -> str:

@@ -102,7 +102,7 @@ class ResultsManager:  # pylint: disable=C0115
         if r is None:
             return None
         rs = ResultSerializer(self._csvpaths.config.archive_path)
-        rr = ResultRegistrar(result=r, result_serializer=rs)
+        rr = ResultRegistrar(csvpaths=self.csvpaths, result=r, result_serializer=rs)
         return rr.manifest
 
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
@@ -259,7 +259,9 @@ class ResultsManager:  # pylint: disable=C0115
         self.do_transfers_if(result)
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
-        ResultRegistrar(result=result, result_serializer=rs).register_complete()
+        ResultRegistrar(
+            csvpaths=self.csvpaths, result=result, result_serializer=rs
+        ).register_complete()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr) -> str:

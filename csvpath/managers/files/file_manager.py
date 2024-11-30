@@ -19,7 +19,7 @@ class FileManager:
         if named_files is None:
             named_files = {}
         self._csvpaths = csvpaths
-        self.registrar = FileRegistrar(csvpaths.config)
+        self.registrar = FileRegistrar(csvpaths)
         self.cacher = FileCacher(csvpaths)
 
     #

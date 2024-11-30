@@ -2,11 +2,12 @@ import os
 import json
 import logging
 import requests
-from csvpath.util.exceptions import InputException
 import http.client as http_client
+from csvpath.util.exceptions import InputException
+from ..listener import Listener
 
 
-class OpenLineageListener:
+class OpenLineageListener(Listener):
     def __init__(self, config):
         self.config = config
 

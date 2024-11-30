@@ -10,10 +10,10 @@ from ..registrar import Registrar
 
 
 class PathsRegistrar(Listener, Registrar):
-    def __init__(self, *, manager, config):
-        super().__init__()
-        self.config = config
-        self.manager = manager
+    def __init__(self, csvpaths):
+        super().__init__(csvpaths)
+        self.manager = csvpaths.paths_manager
+        self.config = csvpaths.config
 
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:

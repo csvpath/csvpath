@@ -23,7 +23,7 @@ class PathsManager:
 
     def __init__(self, *, csvpaths, named_paths=None):
         self.csvpaths = csvpaths
-        self._registrar = PathsRegistrar(manager=self, config=self.csvpaths.config)
+        self._registrar = None
 
     #
     # ================== publics =====================
@@ -31,6 +31,8 @@ class PathsManager:
 
     @property
     def registrar(self) -> PathsRegistrar:
+        if self._registrar is None:
+            self._registrar = PathsRegistrar(self.csvpaths)
         return self._registrar
 
     def named_paths_home(self, name: NamedPathsName) -> str:

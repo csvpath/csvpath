@@ -5,7 +5,11 @@ from .listener import Listener
 
 
 class Registrar(ABC):
-    def __init__(self) -> None:
+    def __init__(self, csvpaths) -> None:
+        self.csvpaths = csvpaths
+        #
+        # check config for any listeners to add
+        #
         self.listeners: list[Listener] = [self]
 
     def register_start(self, mdata: Metadata) -> None:
