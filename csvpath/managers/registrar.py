@@ -1,15 +1,13 @@
-from abc import ABC  # , abstractmethod
+from abc import ABC
 from .metadata import Metadata
 from csvpath.util.exceptions import InputException
 from .listener import Listener
+from ..util.class_loader import ClassLoader
 
 
 class Registrar(ABC):
     def __init__(self, csvpaths) -> None:
         self.csvpaths = csvpaths
-        #
-        # check config for any listeners to add
-        #
         self.listeners: list[Listener] = [self]
 
     def register_start(self, mdata: Metadata) -> None:
@@ -36,6 +34,19 @@ class Registrar(ABC):
         writes are done before other systems' listeners receive the metadata,
         in case they have a use for the manifest."""
         self.listeners.append(listener)
+
+    def load_additional_listeners(self, listener_type_name: str) -> None:
+        """look in [listeners] for listener_type_name keyed lists of listener classes"""
+        lists = self.csvpaths.config.additional_listeners(listener_type_name)
+        if lists and len(lists) > 0:
+            for lst in lists:
+                self.load_additional_listener(lst)
+
+    def load_additional_listener(self, load_cmd: str) -> None:
+        loader = ClassLoader()
+        alistener = loader.load(load_cmd)
+        if alistener is not None:
+            self.add_listener(alistener)
 
     def remove_listeners(self) -> None:
         """it is not possible to remove the registrar as listener"""

@@ -10,10 +10,20 @@ from ..registrar import Registrar
 from ..metadata import Metadata
 from .run_metadata import RunMetadata
 
+# from .stdout_run_listener import StdOutRunListener
+
 
 class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
         super().__init__(csvpaths)
+        #
+        # add additional listeners here if any. e.g.
+        #   self.add_listener(StdOutRunListener())
+        # we're going to get them from [listeners] in config.ini. e.g.
+        #    [listeners]
+        #    run=from csvpath.managers.run.std_out_listener import StdOutListener
+        #
+        self.load_additional_listeners("run")
         self.archive = self.csvpaths.config.archive_path
 
     @property

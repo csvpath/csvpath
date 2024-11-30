@@ -64,6 +64,7 @@ class Config:
         self.load = load
         self._cache_dir_path = None
         self._function_imports = None
+        self._additional_listeners = None
         self._csvpath_file_extensions = None
         self._csv_file_extensions = None
         self._csvpath_errors_policy = None
@@ -111,12 +112,11 @@ class Config:
             raise ConfigurationException("No config object available")
         try:
             s = self._config[section][name]
-            s = s.strip()
             ret = None
             if s.find(",") > -1:
                 ret = [s.strip() for s in s.split(",")]
             else:
-                ret = s
+                ret = s.strip()
             return ret
         except KeyError:
             print(
@@ -390,6 +390,17 @@ on_unmatched_file_fingerprints = halt
     @configpath.setter
     def configpath(self, path: str) -> None:
         self._configpath = path
+
+    def additional_listeners(self, listener_type) -> list[str]:
+        if self._additional_listeners is None:
+            self._additional_listeners = {}
+        if listener_type in self._additional_listeners:
+            return self._additional_listeners[listener_type]
+        lst = self._get("listeners", listener_type)
+        if lst is None:
+            lst = []
+        self._additional_listeners[listener_type] = lst
+        return lst
 
     @property
     def cache_dir_path(self) -> str:
