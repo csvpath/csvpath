@@ -10,11 +10,12 @@ from .result_registrar import ResultRegistrar
 from .results_metadata import ResultsMetadata
 from ..run.run_metadata import RunMetadata
 from ..registrar import Registrar
+from ..listener import Listener
 from ..metadata import Metadata
 from csvpath.util.exceptions import FileException
 
 
-class ResultsRegistrar(Registrar):
+class ResultsRegistrar(Registrar, Listener):
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
