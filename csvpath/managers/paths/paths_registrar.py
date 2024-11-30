@@ -14,6 +14,7 @@ class PathsRegistrar(Listener, Registrar):
         super().__init__(csvpaths)
         self.manager = csvpaths.paths_manager
         self.config = csvpaths.config
+        self.load_additional_listeners("paths")
 
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:

@@ -13,7 +13,14 @@ class TestListeners(unittest.TestCase):
         assert len(r.listeners) == 2
 
     def test_additional_listeners2(self):
-        r = Registrar(CsvPaths())
+        csvpaths = CsvPaths()
+        config = csvpaths.config
+        config._additional_listeners = {}
+        config._additional_listeners["run"] = [
+            "from csvpath.managers.run.stdout_run_listener import StdOutRunListener",
+            "from csvpath.managers.run.stdout_run_listener import StdOutRunListener",
+        ]
+        r = Registrar(csvpaths)
         assert len(r.listeners) == 1
         r.load_additional_listeners("run")
         assert len(r.listeners) == 3

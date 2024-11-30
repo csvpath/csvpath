@@ -10,8 +10,6 @@ from ..registrar import Registrar
 from ..metadata import Metadata
 from .run_metadata import RunMetadata
 
-# from .stdout_run_listener import StdOutRunListener
-
 
 class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):

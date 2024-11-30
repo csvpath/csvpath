@@ -13,6 +13,7 @@ class ResultRegistrar(Registrar, Listener):
         super().__init__(csvpaths)
         self.result = result
         self.result_serializer = result_serializer
+        self.load_additional_listeners("result")
 
     def register_complete(self, mdata: Metadata = None) -> None:
         #

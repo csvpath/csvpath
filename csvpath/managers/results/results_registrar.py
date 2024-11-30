@@ -20,10 +20,10 @@ class ResultsRegistrar(Registrar, Listener):
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
         super().__init__(csvpaths)
-        # self.csvpaths = csvpaths
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results
+        self.load_additional_listeners("results")
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = "start"
