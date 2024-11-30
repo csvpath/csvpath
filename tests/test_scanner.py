@@ -1,5 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 PATH2 = "tests/test_resources/test-2-with_-and&.csv"
@@ -10,7 +10,6 @@ class TestScanner(unittest.TestCase):
         path = CsvPath()
         path.parse(f"${PATH2}[*][]")
         scanner = path.scanner
-        print(f"{scanner}")
         # test properties
         assert scanner.from_line is None
         assert scanner.to_line is None
@@ -23,13 +22,11 @@ class TestScanner(unittest.TestCase):
         for i, ln in enumerate(path.next()):
             pass
         assert i == 8
-        print("special char filename worked")
 
     def test_scanner_scan_all(self):
         path = CsvPath()
         path.parse(f"${PATH}[*][]")
         scanner = path.scanner
-        print(f"{scanner}")
         # test properties
         assert scanner.from_line is None
         assert scanner.to_line is None
@@ -47,14 +44,12 @@ class TestScanner(unittest.TestCase):
         path = CsvPath().parse(f"${PATH}[2-4][]")
         scanner = path.scanner
         # test properties
-        print(f"{scanner}")
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
         assert len(scanner.these) == 0
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
         assert len(lns) == 3
@@ -72,7 +67,6 @@ class TestScanner(unittest.TestCase):
     def test_scanner_scan_from_line_to_end(self):
         path = CsvPath().parse(f"${PATH}[3*][]")
         scanner = path.scanner
-        print(f"{scanner}")
         # test properties
         assert scanner.from_line == 3
         assert scanner.to_line is None
@@ -80,14 +74,12 @@ class TestScanner(unittest.TestCase):
         assert len(scanner.these) == 0
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
         assert len(lns) == 1
         assert lns[0] == "3..."
         # test lines returned
         for i, ln in enumerate(path.next()):
-            print(f"   {i}...{ln}")
             if i == 0:
                 assert ln[0][0:4] == "Frog"
             elif i == 1:
@@ -103,7 +95,6 @@ class TestScanner(unittest.TestCase):
     def test_scanner_scan_one_line(self):
         path = CsvPath().parse(f"${PATH}[3][]")
         scanner = path.scanner
-        print(f"{scanner}")
         # test properties
         assert scanner.from_line is None
         assert scanner.to_line is None
@@ -111,7 +102,6 @@ class TestScanner(unittest.TestCase):
         assert len(scanner.these) == 1
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
         assert len(lns) == 1
@@ -126,14 +116,12 @@ class TestScanner(unittest.TestCase):
         path = CsvPath()
         path.parse(f"${PATH}[1+3][]")
         scanner = path.scanner
-        print(f"{scanner}")
         assert scanner.from_line is None
         assert scanner.to_line is None
         assert not scanner.all_lines
         assert len(scanner.these) == 2
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
         assert len(lns) == 2
@@ -153,14 +141,12 @@ class TestScanner(unittest.TestCase):
         path = CsvPath()
         path.parse(f"${PATH}[1+3+5][]")
         scanner = path.scanner
-        print(f"{scanner}")
         assert scanner.from_line is None
         assert scanner.to_line is None
         assert not scanner.all_lines
         assert len(scanner.these) == 3
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
         assert len(lns) == 3
@@ -179,22 +165,18 @@ class TestScanner(unittest.TestCase):
         path = CsvPath().parse(f"${PATH}[4-2][]")
         scanner = path.scanner
         # test properties
-        print(f"{scanner}")
         assert scanner.from_line == 4
         assert scanner.to_line == 2
         assert not scanner.all_lines
         assert len(scanner.these) == 0
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
-        print(f" lines are {lns}")
         assert len(lns) == 3
         assert 2 in lns and 3 in lns and 4 in lns
         # test lines returned
         for i, ln in enumerate(path.next()):
-            print(f"{i} = {ln}")
             if i == 0:
                 assert ln[0][0:4] == "Fish"
             elif i == 1:
@@ -207,22 +189,18 @@ class TestScanner(unittest.TestCase):
         path = CsvPath().parse(f"${PATH}[1-3+6-7][]")
         scanner = path.scanner
         # test properties
-        print(f"{scanner}")
         assert scanner.from_line is None
         assert scanner.to_line is None
         assert not scanner.all_lines
         assert len(scanner.these) == 5
         # test line numbers included
         lns = []
-        print(f"check from line: {scanner.from_line}")
         for ln in path.line_numbers():
             lns.append(ln)
-        print(f" lines are: {lns}")
         assert len(lns) == 5
         assert 1 in lns and 2 in lns and 3 in lns and 6 in lns and 7 in lns
         # test lines returned
         for i, ln in enumerate(path.next()):
-            print(f"{i} = {ln}")
             if i == 0:
                 assert ln[0][0:4] == "Davi"
             elif i == 1:
@@ -239,10 +217,6 @@ class TestScanner(unittest.TestCase):
         path = CsvPath().parse(f"${PATH}[1-3+6-7][]")
         scanner = path.scanner
         path.line_monitor._physical_end_line_number = 14
-        print(
-            f"test_scanner_is_last: path.line_monitor.physical_end_line_number: {path.line_monitor.physical_end_line_number}"
-        )
-        print(f"{scanner}")
         assert scanner.is_last(8, from_line=2, to_line=8, all_lines=False, these=[])
         assert not scanner.is_last(
             10, from_line=2, to_line=8, all_lines=False, these=[]

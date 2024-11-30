@@ -1,5 +1,0 @@
-[
-                print("line $.csvpath.line_number")
-                push( "dates", date( #date, #format ) )
-                yes()
-            ]

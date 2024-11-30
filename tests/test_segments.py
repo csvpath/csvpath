@@ -1,5 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
+from csvpath import CsvPath
 import pytest
 
 PATH = "a/test/file.csv"
@@ -28,10 +28,8 @@ class TestSegments(unittest.TestCase):
         t2 = "[test2]"
         # t3 = ".test3"
         path = f"{t1}{t2}"
-        print(f"\n1 path: {path}")
         csvpath = CsvPath()
         scan, match = csvpath._find_scan_and_match_parts(path)
-        print(f"1 parts: {scan}, {match}")
         assert scan == t1
         assert match == t2
 
@@ -40,9 +38,7 @@ class TestSegments(unittest.TestCase):
         t2 = "[test2]"
         t3 = ""
         path = f"{t1}{t2}{t3}"
-        print(f"\n1 path: {path}")
         csvpath = CsvPath()
         scan, match = csvpath._find_scan_and_match_parts(path)
-        print(f"1 parts: {scan}, {match}")
         assert scan == t1
         assert match == t2

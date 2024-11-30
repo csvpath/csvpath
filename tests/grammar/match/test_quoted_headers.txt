@@ -1,1 +1,0 @@
-[#0=="Frog" #"My lastname"=="Bats" count()==3]

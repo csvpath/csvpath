@@ -1,6 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,7 +7,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsEquals(unittest.TestCase):
     def test_function_equals(self):
         path = CsvPath()
-        Save._save(path, "test_function_equals")
         path.parse(
             f""" ${PATH}[*] [
                 @m = mod(count_lines(), 2)
@@ -18,9 +16,6 @@ class TestFunctionsEquals(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_equals: path vars: {path.variables}")
-        print(f"test_function_equals: lines: {lines}")
         assert path.variables["c"] == 5
         assert len(lines) == 9

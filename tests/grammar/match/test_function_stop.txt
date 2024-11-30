@@ -1,6 +1,0 @@
-[
-                @i = concat( #firstname, #lastname)
-                @c = count_lines()
-                yes()
-                stop(@i == "FishBat")
-            ]

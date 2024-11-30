@@ -11,7 +11,6 @@ NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
 
 class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
     def test_csvpaths_line_numbers_and_headers(self):
-        print("")
         paths = CsvPaths()
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
@@ -38,11 +37,9 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping2"):
-            print(f"test_csvpaths_stop_all_by_line: lines[{i}]: {line}")
             i += 1
         cs.results_manager.get_named_results("stopping2")
         vs = cs.results_manager.get_variables("stopping2")
-        print(f"test_csvpaths_stop_all_by_line: stopping vs: {vs}")
         assert i == 3
         assert vs["one"] == [0, 1, 2]
         assert vs["two"] == [0, 1, 2]
@@ -53,11 +50,9 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="stopping2"):
-            print(f"test_csvpaths_stop_all_by_line: lines[{i}]: {line}")
             i += 1
         cs.results_manager.get_named_results("stopping2")
         vs = cs.results_manager.get_variables("stopping2")
-        print(f"test_csvpaths_stop_all_by_line: stopping vs: {vs}")
         assert i == 3
         assert vs["one"] == [0, 1, 2]
 
@@ -67,10 +62,8 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="failing"):
-            print(f"test_csvpaths_fail_all_by_line: lines[{i}]: {line}")
             i += 1
         results = cs.results_manager.get_named_results("failing")
-        print(f"test_csvpaths_fail_all_by_line: failing results: {results}")
         assert len(results) == 2
         assert i == 11
         assert results[0].is_valid is False
@@ -82,10 +75,8 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="failing"):
-            print(f"test_csvpaths_fail_all_paths: lines[{i}]: {line}")
             i += 1
         results = cs.results_manager.get_named_results("failing")
-        print(f"test_csvpaths_fail_all_paths: failing results: {results}")
         assert len(results) == 2
         assert i == 22
         assert results[0].is_valid is False
@@ -141,10 +132,8 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="skipping", collect=True):
-            print(f"test_csvpaths_skip_all_paths: lines[{i}]: {line}")
             i += 1
         results = cs.results_manager.get_named_results("skipping")
-        print(f"test_csvpaths_skip_all_paths: skipping results: {results}")
         assert len(results) == 2
         assert i == 20
         results = cs.results_manager.get_named_results("skipping")
@@ -162,13 +151,8 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="advancing"):
-            print(f"test_csvpaths_advance_all_by_line: lines[{i}]: {line}")
             i += 1
         results = cs.results_manager.get_named_results("advancing")
-        for r in results:
-            print(
-                f"test_csvpaths_advance_all_by_line: r: {results}; vars: {r.csvpath.variables}"
-            )
         assert len(results) == 2
         # 0 we call advance 3 and return a match, if
         # 1 skip
@@ -182,12 +166,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="advancing", collect=True):
-            print(f"test_csvpaths_advance_all_paths: lines[{i}]: {line[0]}")
             i += 1
         results = cs.results_manager.get_named_results("advancing")
-        for r in results:
-            print(
-                f"test_csvpaths_advance_all_paths: r: {len(r)}; vars: {r.csvpath.variables}"
-            )
         assert len(results) == 2
         assert i == 17

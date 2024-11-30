@@ -1,4 +1,0 @@
-[
-                push("st", #1)
-                @r = stack("st")
-            ]

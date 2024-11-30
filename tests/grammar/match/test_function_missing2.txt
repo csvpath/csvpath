@@ -1,4 +1,0 @@
-[
-               @a.asbool = missing()
-               print("all.asbool: $.variables.a  $.csvpath.line_number")
-            ]

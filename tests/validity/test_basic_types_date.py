@@ -5,7 +5,6 @@ from csvpath import CsvPath
 from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers3.csv"
@@ -16,7 +15,6 @@ DATES2 = "tests/test_resources/dates2.csv"
 class TestValidBasicTypesDate(unittest.TestCase):
     def test_validity_date1(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date1")
         path.parse(
             f"""~id:validity_date1~ ${PATH}[*][
                 date()
@@ -27,7 +25,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date2(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date2")
         path.parse(
             f"""~id:validity_date2~ ${PATH}[*][
                 date.notnone(none())
@@ -38,7 +35,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date3(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date3")
         path.parse(
             f"""~id:validity_date3~ ${PATH}[*][
                 date("2024-01-01")
@@ -49,7 +45,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date4(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date4")
+
         path.parse(
             f"""~id:validity_date4~ ${PATH}[*][
                 @d = date("2024-01-01")
@@ -61,7 +57,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date5(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date5")
+
         path.parse(
             f"""~id:validity_date5~ ${PATH}[*][
                 date("the 3rd of feb")
@@ -73,7 +69,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date6(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date6")
+
         path.parse(
             f"""~id:validity_date6~ ${PATH}[*][
                 date("the 3rd of feb", "%Y")
@@ -85,7 +81,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date7(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date7")
         path.parse(
             f"""~id:validity_date7~
             ${DATES}[1][
@@ -97,7 +92,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date8(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date8")
         path.parse(
             f"""~id:validity_date7~
             ${DATES}[1][
@@ -109,7 +103,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date9(self):
         path = CsvPath()
-        Save._save(path, "test_validity_date9")
         path.parse(
             f"""~
                     id:validity_date7
@@ -124,7 +117,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now1(self):
         path = CsvPath()
-        Save._save(path, "test_validity_now2")
+
         path.parse(
             f"""~id:validity_now1~ ${PATH}[*][
                 now("%Y")
@@ -135,7 +128,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now2(self):
         path = CsvPath()
-        Save._save(path, "test_validity_now2")
+
         path.parse(
             f"""~id:validity_now2~ ${PATH}[*][
                 today("%Y")
@@ -147,7 +140,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now3(self):
         path = CsvPath()
-        Save._save(path, "test_validity_now3")
         path.parse(
             f"""~id:validity_now3~ ${PATH}[*][
                 now()
@@ -158,7 +150,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now4(self):
         path = CsvPath()
-        Save._save(path, "test_validity_now4")
         path.parse(
             f"""~id:validity_now4~ ${PATH}[*][
                 now("2024-01-01","%Y")

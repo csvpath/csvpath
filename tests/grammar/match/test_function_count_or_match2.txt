@@ -1,4 +1,0 @@
-[
-                @interesting.onmatch = count()
-                or(#firstname=="Fish", #lastname=="Kermit", #say=="oozeeee...")
-            ]

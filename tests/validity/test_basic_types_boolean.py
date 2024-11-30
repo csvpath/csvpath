@@ -5,7 +5,6 @@ from csvpath import CsvPath
 from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers3.csv"
@@ -14,7 +13,7 @@ NUMBERS = "tests/test_resources/numbers3.csv"
 class TestValidBasicTypesBoolean(unittest.TestCase):
     def test_validity_boolean1(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean1")
+
         path.parse(
             f""" ${PATH}[*][
                 boolean(yes())
@@ -25,7 +24,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean2(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean2")
+
         path.parse(
             f""" ~ None is acceptable if not notnone but it is not
                    a boolean value so we get nothing here ~
@@ -38,7 +37,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean3(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean3")
+
         path.parse(
             f""" ~ 1 is the 2nd column. it doesn't have booleans.
                    validation-mode: no-raise, no-stop
@@ -52,7 +51,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean4(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean4")
+
         path.parse(
             f""" ~ -1 is not a boolean and is not convertable to a boolean ~
             ${PATH}[*][
@@ -64,7 +63,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean45(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean45")
+
         path.parse(
             f""" ${PATH}[*][
                 boolean(5)
@@ -75,7 +74,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean5(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean5")
+
         path.parse(
             f""" ${PATH}[*][
                 boolean("fish")
@@ -86,7 +85,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean6(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean6")
+
         path.parse(
             f""" ~ note that @b standing alone is an existance test.
                    that means it's not yes()'s boolean or the boolean()'s
@@ -102,7 +101,6 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean7(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean7")
         path.parse(
             f""" ${PATH}[*][
                 ~ yes, it's a bool ~
@@ -118,7 +116,6 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean8(self):
         path = CsvPath()
-        Save._save(path, "test_validity_boolean8")
         path.parse(
             f""" ${PATH}[*][
                 @b.asbool = boolean(false())

@@ -1,4 +1,0 @@
-[
-                @the_median = median(count(#lastname), "line")
-                no()
-            ]

@@ -1,6 +1,0 @@
-[
-                    or(
-                        decimal.strict(1),
-                        decimal.strict.notnone(2)
-                    )
-                ]

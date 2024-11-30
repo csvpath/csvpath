@@ -1,9 +1,0 @@
-[
-                ~ this is a tricky case! it is duplicated (at least today) in
-                test_header.py. there are more detailed notes there on why the
-                results are what they are ~
-                @found = any.onmatch(headers())
-                @found2 = any(headers())
-                @notfound = not(any.onmatch(headers()))
-                no()
-            ]

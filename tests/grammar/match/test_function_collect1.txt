@@ -1,4 +1,0 @@
-[
-                collect(1)
-                print("$.csvpath.count_lines ")
-            ]

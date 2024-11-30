@@ -1,5 +1,0 @@
-[
-                int.notnone("a")
-                int.notnone("b")
-                and( int("c"), int("d") )
-            ]

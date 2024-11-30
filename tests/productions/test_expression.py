@@ -3,18 +3,16 @@ import pytest
 from csvpath.matching.productions import Expression
 from csvpath.matching.util.exceptions import DataException, MatchException
 from csvpath import CsvPath, CsvPaths
-from csvpath.managers.result import Result
+from csvpath.managers.results.result import Result
 from csvpath.matching.matcher import Matcher
 
 
 class RaisingChild:
     def __init__(self, ex: Exception):
-        print(f"RaisingChild.__init__: ex: {ex}")
         ex.datum = "some data"
         self.ex = ex
 
     def matches(self, *, skip=[]) -> bool:
-        print(f"RaisingChild.matches: raising: {self.ex}")
         raise self.ex
 
 
@@ -56,7 +54,6 @@ class TestExpressions(unittest.TestCase):
         )
         expr = Expression(matcher=matcher, name="dummy")
         de = DataException()
-        print(f"test_expression_errors1: de: {de}")
         child = RaisingChild(de)
         expr.children.append(child)
         matcher.expressions.append([expr, None])
@@ -71,7 +68,6 @@ class TestExpressions(unittest.TestCase):
         # path to have a copy?
         #
         # assert len(path.errors) == 1
-        print(f"path._errors: {path._errors}")
         #
         # another misunderstanding. path is returning its
         # error collector's errors, so there is 1
@@ -80,6 +76,5 @@ class TestExpressions(unittest.TestCase):
         assert path._error_collector is not None
         assert not path.is_valid
         assert path.stopped is True
-        print(f"results: {results}, {results.errors}")
         assert results.has_errors() is True
         assert len(results.errors) == 1

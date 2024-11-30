@@ -1,4 +1,0 @@
-[
-                skip.once(#lastname == "Bat")
-                push.onmatch("line", count_lines())
-            ]

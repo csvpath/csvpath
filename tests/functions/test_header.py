@@ -1,6 +1,5 @@
 import unittest
 from csvpath.csvpath import CsvPath
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTY = "tests/test_resources/empty.csv"
@@ -9,7 +8,6 @@ EMPTY = "tests/test_resources/empty.csv"
 class TestFunctionsHeader(unittest.TestCase):
     def test_function_header1(self):
         path = CsvPath()
-        Save._save(path, "test_function_header1")
         path.parse(
             f"""
             ${PATH}[3]
@@ -18,14 +16,12 @@ class TestFunctionsHeader(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_header1: lines: {lines}")
-        print(f"test_function_header1: path vars: {path.variables}")
         assert len(lines) == 1
         assert path.variables["frog"] is True
 
     def test_function_header3(self):
         path = CsvPath()
-        Save._save(path, "test_function_header3")
+
         path.parse(
             f"""
             ${PATH}[3]
@@ -41,8 +37,6 @@ class TestFunctionsHeader(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_header3: lines: {lines}")
-        print(f"test_function_header3: path vars: {path.variables}")
         assert len(lines) == 1
         assert path.variables["frog"] is True
         assert path.variables["found"] is True
@@ -54,7 +48,6 @@ class TestFunctionsHeader(unittest.TestCase):
 
     def test_function_header4(self):
         path = CsvPath()
-        Save._save(path, "test_function_header4")
         path.parse(
             f"""
             ${EMPTY}[1-2]
@@ -64,15 +57,12 @@ class TestFunctionsHeader(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_function_header4: lines: {lines}")
-        print(f"test_function_header4: path vars: {path.variables}")
         assert len(lines) == 2
         assert path.variables["found"] is False
         assert path.variables["notfound"] is True
 
     def test_function_header5(self):
         path = CsvPath()
-        Save._save(path, "test_function_header5")
         path.parse(
             f"""
             ${PATH}[1-2]
@@ -93,17 +83,13 @@ class TestFunctionsHeader(unittest.TestCase):
                 @notfound = not(any.onmatch.83(headers()))
             ]"""
         )
-        lines = path.collect()
-        print(f"json: {path.matcher.dump_all_expressions_to_json()}")
-        print(f"\n test_function_header5: lines: {lines}")
-        print(f"test_function_header5: path vars: {path.variables}")
+        path.fast_forward()
         assert path.variables["found"] is None
         assert path.variables["found2"] is True
         assert path.variables["notfound"] is False
 
     def test_function_header6(self):
         path = CsvPath()
-        Save._save(path, "test_function_header6")
         path.parse(
             f"""
             ${PATH}[*]
@@ -114,14 +100,10 @@ class TestFunctionsHeader(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_function_header6: path vars: {path.variables}")
-        # assert path.variables["has_firstname"] is True
         assert path.variables["has_space_aliens"] is False
-        # assert path.variables["fn"] is True
 
     def test_function_header7(self):
         path = CsvPath()
-        Save._save(path, "test_function_header7")
         path.parse(
             f"""
             ${PATH}[1]
@@ -131,6 +113,5 @@ class TestFunctionsHeader(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_function_header7: path vars: {path.variables}")
         assert path.variables["has_say"] is True
         assert path.variables["not_more"] is False

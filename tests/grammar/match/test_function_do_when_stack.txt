@@ -1,4 +1,0 @@
-[
-                yes() -> print("") no() -> print("") no() -> print("")
-                @dw = do_when_stack()
-            ]

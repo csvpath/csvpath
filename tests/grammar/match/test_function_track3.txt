@@ -1,4 +1,0 @@
-[
-                #food == "Apple"
-                track.food.onmatch(#food, #type)
-            ]

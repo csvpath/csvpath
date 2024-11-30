@@ -1,3 +1,0 @@
-[
-                any( length( concat("a", "b")))
-            ]

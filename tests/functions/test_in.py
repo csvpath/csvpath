@@ -2,7 +2,6 @@ import unittest
 import pytest
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 FOOD = "tests/test_resources/food.csv"
@@ -11,19 +10,13 @@ FOOD = "tests/test_resources/food.csv"
 class TestFunctionsIn(unittest.TestCase):
     def test_function_header_in1(self):
         path = CsvPath()
-        Save._save(path, "test_function_header_in1")
         path.parse(f'${PATH}[*][in(#firstname,"Bug|Bird|Ants")]')
         lines = path.collect()
-        print(f"test_function_header_in1: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_function_count_in: line: {line}")
-        print(f"test_function_header_in1: path vars: {path.variables}")
         assert len(lines) == 3
 
     def test_function_count_in2(self):
         """~this test is also in with count but there using onmatch"""
         path = CsvPath()
-        Save._save(path, "test_function_count_in2")
         path.parse(
             f"""
                         ${PATH}
@@ -32,10 +25,6 @@ class TestFunctionsIn(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"test_function_count_in2: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_function_count_in2: line: {line}")
-        print(f"test_function_count_in2: path vars: {path.variables}")
         assert len(lines) == 2
         assert "one" in path.variables
         assert path.variables["one"][True] == 3
@@ -43,7 +32,6 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_count_in3(self):
         path = CsvPath()
-        Save._save(path, "test_function_count_in3")
         path.parse(
             f"""
                 ${PATH}
@@ -55,17 +43,12 @@ class TestFunctionsIn(unittest.TestCase):
                    """
         )
         lines = path.collect()
-        print(f"test_function_count_in3: lines: {len(lines)}")
-        for line in lines:
-            print(f"test_function_count_in3: line: {line}")
-        print(f"test_function_count_in3: path vars: {path.variables}")
         assert "x" in path.variables
         assert path.variables["x"] == 3
         assert len(lines) == 3
 
     def test_function_in4(self):
         path = CsvPath()
-        Save._save(path, "test_function_in4")
         path.parse(
             f"""${FOOD}[*]
                         [ ~ Find the first time fruit were the most popular ~
@@ -79,21 +62,17 @@ class TestFunctionsIn(unittest.TestCase):
                     """
         )
         path.collect()
-        print(f"test_function_in4: path vars: {path.variables}")
         assert "year" in path.variables
         assert path.variables["year"]["1643"] == 4
 
     def test_function_in5(self):
         path = CsvPath()
-        Save._save(path, "test_function_in")
         path.parse(f'${PATH}[*][in( #0 , "Bug|Bird|Ants" )]')
         lines = path.collect()
-        print(f"test_function_in5: lines: {len(lines)}")
         assert len(lines) == 3
 
     def test_function_in6(self):
         path = CsvPath()
-        Save._save(path, "test_function_in6")
         path.parse(
             f""" ${PATH}[*] [
                 @oc.onchange.onmatch = in(#firstname, "Frog|Bug|Fish")
@@ -102,16 +81,12 @@ class TestFunctionsIn(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_in6: path vars: {path.variables}")
-        print(f"test_function_in6: lines: {lines}")
         assert path.variables["oc"] is True
         assert len(lines) == 4
 
     def test_function_new_in1(self):
         path = CsvPath()
-        Save._save(path, "test_function_new_in1")
         path.parse(
             f""" ${PATH}[1*] [
                 yes()
@@ -119,16 +94,13 @@ class TestFunctionsIn(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in1: path vars: {path.variables}")
-        print(f"test_function_new_in1: lines: {lines}")
         assert path.variables["oc"] is True
         assert len(lines) == 8
 
     def test_function_new_in2(self):
         path = CsvPath()
-        Save._save(path, "test_function_new_in2")
+
         path.parse(
             f""" ${PATH}[1*] [
                 ~ changes from None to True on line 1; after that no changes
@@ -144,16 +116,12 @@ class TestFunctionsIn(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in2: path vars: {path.variables}")
-        print(f"test_function_new_in2: lines: {lines}")
         assert path.variables["oc"] is True
         assert len(lines) == 1
 
     def test_function_new_in3(self):
         path = CsvPath()
-        Save._save(path, "test_function_new_in3")
         path.parse(
             f""" ${PATH}[1*] [
                 @oc.onchange = in(#firstname, #say, #firstname, #lastname)
@@ -164,16 +132,12 @@ class TestFunctionsIn(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in3: path vars: {path.variables}")
-        print(f"test_function_new_in3: lines: {lines}")
         assert path.variables["oc"] is True
         assert len(lines) == 1
 
     def test_function_new_in4(self):
         path = CsvPath()
-        Save._save(path, "test_function_new_in4")
         path.parse(
             f""" ${PATH}[1*] [
                 @oc = in(#firstname, "Brazil", #say, "Bird")
@@ -187,10 +151,7 @@ class TestFunctionsIn(unittest.TestCase):
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in4: path vars: {path.variables}")
-        print(f"test_function_new_in4: lines: {lines}")
         assert len(lines) == 1
         assert path.variables["oc"] is False
         assert path.variables["ln"] == 5
@@ -209,17 +170,14 @@ class TestFunctionsIn(unittest.TestCase):
         paths.fast_forward_paths(pathsname="food_lookup", filename="food")
 
         path = paths.csvpath()
-        Save._save(path, "test_function_new_in5")
+
         path.parse(
             f""" ${FOOD}[1*] [
                 @food_found = in(#food, $food_lookup.variables.food_names)
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in5: path vars: {path.variables}")
-        print(f"test_function_new_in5: lines: {lines}")
         assert len(lines) == 10
         assert path.variables["food_found"] is True
 
@@ -235,7 +193,6 @@ class TestFunctionsIn(unittest.TestCase):
                 """
             )
             path.fast_forward()
-        print("raised MatchException because no CsvPaths")
 
     def test_function_new_in7(self):
         paths = CsvPaths()
@@ -248,20 +205,14 @@ class TestFunctionsIn(unittest.TestCase):
         paths.collect_paths(pathsname="food_lookup", filename="food")
 
         path = paths.csvpath()
-        Save._save(path, "test_function_new_in5")
         path.parse(
             f""" ${FOOD}[1*] [
                 @food_found = in(#food, $food_lookup.headers.food)
             ]
             """
         )
-        print("")
         lines = path.collect()
-        print(f"test_function_new_in5: path vars: {path.variables}")
-        print(f"test_function_new_in5: lines: {lines}")
         assert len(lines) == 10
-
-    #        assert path.variables["food_found"] is True
 
     def test_function_in_bad1(self):
         path = CsvPath()

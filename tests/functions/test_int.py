@@ -2,7 +2,6 @@ import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -10,7 +9,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsInt(unittest.TestCase):
     def test_function_int0(self):
         path = CsvPath()
-        Save._save(path, "test_function_int0")
         path.parse(
             f"""
             ~ validation-mode: print ~
@@ -24,7 +22,6 @@ class TestFunctionsInt(unittest.TestCase):
             """
         )
         path.collect()
-        print(f"\ntest_function_int0: path.vars: {path.variables}")
         assert path.variables["st"] == 3
         assert path.variables["no"] == 3
         assert path.variables["bo"] == 0
@@ -33,7 +30,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_int1(self):
         path = CsvPath()
-        Save._save(path, "test_function_int1")
+
         path.parse(
             f""" ${PATH}[*] [
                 @st = int(" ")
@@ -49,7 +46,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_int2(self):
         path = CsvPath()
-        Save._save(path, "test_function_int2")
+
         path.parse(
             f""" ${PATH}[*] [
                 @st = int(" 3 ")
@@ -67,7 +64,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_float1(self):
         path = CsvPath()
-        Save._save(path, "test_function_float1")
+
         path.parse(
             f""" ${PATH}[*] [
                 @st = float(" 3 ")
@@ -92,7 +89,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_float2(self):
         path = CsvPath()
-        Save._save(path, "test_function_float2")
+
         path.parse(
             f""" ${PATH}[*] [
                 @st = float(" 3 ")
@@ -117,7 +114,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_float_mul1(self):
         path = CsvPath()
-        Save._save(path, "test_function_float_mul1")
+
         path.parse(
             f""" ${PATH}[*] [
                 @s2 = float(multiply(-1,3.8))
@@ -125,13 +122,12 @@ class TestFunctionsInt(unittest.TestCase):
             """
         )
         path.collect()
-        print(f"test_function_float_mul1: path.vars: {path.variables}")
         assert isinstance(path.variables["s2"], float)
         assert path.variables["s2"] == -3.8
 
     def test_function_float_notnone1(self):
         path = CsvPath()
-        Save._save(path, "test_function_float_notnone1")
+
         path.parse(
             f""" ${PATH}[*] [
                 push("nofloat", float(none()))
@@ -153,7 +149,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_function_float_notnone2(self):
         path = CsvPath()
-        Save._save(path, "test_function_float_notnone2")
+
         path.parse(
             f"""
              ~ validation-mode: no-match no-raise ~
@@ -167,7 +163,6 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_validity_int1(self):
         path = CsvPath()
-        Save._save(path, "test_validity_int1")
         path.parse(
             f"""${PATH}[*][
                 int.notnone(none())
@@ -177,9 +172,7 @@ class TestFunctionsInt(unittest.TestCase):
             path.fast_forward()
 
     def test_validity_int2(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_validity_int2")
         path.parse(
             f""" ~id:test_validity_none2~
                 ${"tests/test_resources/test.csv"}[*][
@@ -191,7 +184,6 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_validity_int3(self):
         path = CsvPath()
-        Save._save(path, "test_validity_int3")
         path.parse(
             f"""~id:validity_int3~ ${PATH}[*][
                 int.notnone("a")
@@ -201,9 +193,7 @@ class TestFunctionsInt(unittest.TestCase):
             path.fast_forward()
 
     def test_validity_int3b(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_validity_int3")
         path.parse(
             f"""~
                 id:validity_int3

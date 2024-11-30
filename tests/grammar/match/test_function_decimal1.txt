@@ -1,3 +1,0 @@
-[
-                @st = decimal("abc")
-            ]

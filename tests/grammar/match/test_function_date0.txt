@@ -1,3 +1,0 @@
-[
-                push( "dates", date( #firstname ) )
-            ]

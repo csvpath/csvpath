@@ -1,3 +1,0 @@
-[
-                after_blank() -> push( "after", line_number() )
-            ]

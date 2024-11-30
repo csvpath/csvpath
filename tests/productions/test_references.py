@@ -4,7 +4,6 @@ from lark.exceptions import VisitError
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.productions import Reference
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 NAMED_FILES_DIR = "tests/test_resources/named_files"
 NAMED_PATHS_DIR = "tests/test_resources/named_paths"
@@ -49,7 +48,6 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         path.collect()
-        print(f"vars: {path.variables}")
 
     def test_reference_no_csvpaths(self):
         path = CsvPath()
@@ -86,7 +84,6 @@ class TestReferences(unittest.TestCase):
         results = resultset[0]
         rcp = results.csvpath
         rcp.variables
-        print(f"test_parse_variable_reference1: rcp.variables: {rcp.variables}")
         assert "zipcodes" in rcp.variables
         assert "Boston" in rcp.variables["zipcodes"]
 
@@ -104,15 +101,7 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        if path.errors:
-            print(
-                f"test_parse_variable_reference1: there are errors: {len(path.errors)}"
-            )
-            for error in path.errors:
-                print(f"test_parse_variable_reference1: error: {error}")
         assert not path.has_errors()
-        print("test_parse_variable_reference1: done with fast forward")
-        print(f"test_parse_variable_reference1: variables: {path.variables}")
         assert path.variables["zip"] == "01915"
 
     def test_reference2(self):
@@ -120,11 +109,8 @@ class TestReferences(unittest.TestCase):
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
-
         rm = cs.results_manager
         resultset = rm.get_named_results("zips")
-        print(f"\n test_parse_variable_reference2: resultset: {resultset} ")
-
         assert resultset
         assert len(resultset) == 1
         results = resultset[0]
@@ -132,7 +118,6 @@ class TestReferences(unittest.TestCase):
         assert rcp
         assert results.lines
         assert len(results.lines) > 0
-        print(f"\n test_parse_variable_reference2: lookup lines: {results.lines}")
         #
         # now test if the header `points` has any values
         #
@@ -148,21 +133,11 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        if path.errors:
-            print(
-                f"test_parse_variable_reference2: there are errors: {len(path.errors)}"
-            )
-            for error in path.errors:
-                print(f"test_parse_variable_reference1: error: {error}")
         assert path.has_errors() is not True
-        print("test_parse_variable_reference2: done with fast forward")
-        print(f"test_parse_variable_reference2: variables: {path.variables}")
-
         assert "zips" in path.variables
         assert isinstance(path.variables["zips"], list)
         assert "empty_zips" in path.variables
         assert path.variables["empty_zips"] is True
-
         assert "cities" in path.variables
         assert isinstance(path.variables["cities"], list)
         assert "empty_cities" in path.variables
@@ -176,8 +151,6 @@ class TestReferences(unittest.TestCase):
 
         rm = cs.results_manager
         resultset = rm.get_named_results("zips")
-        print(f"\n test_parse_variable_reference3: resultset: {resultset} ")
-
         assert resultset
         assert len(resultset) == 1
         results = resultset[0]
@@ -185,10 +158,6 @@ class TestReferences(unittest.TestCase):
         assert rcp
         assert results.lines
         assert len(results.lines) > 0
-        print(f"\n test_parse_variable_reference3: lookup lines: {results.lines}")
-        #
-        #
-        #
         path = cs.csvpath()
         path.parse(
             f"""
@@ -225,7 +194,6 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\n test_reference3: path.vars: {path.variables}")
         assert len(lines) == 0
         assert "l" in path.variables
         assert path.variables["l"] > 0
@@ -262,8 +230,6 @@ class TestReferences(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_parse_variable_reference4: vars: {path.variables}")
         assert len(lines) == 1
-
         assert path.variables["in1"] is False
         assert path.variables["in2"] is True

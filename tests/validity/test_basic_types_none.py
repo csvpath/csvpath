@@ -5,7 +5,6 @@ from csvpath import CsvPath
 from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 NUMBERS = "tests/test_resources/numbers3.csv"
@@ -18,7 +17,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none1(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none")
         path.parse(
             f"""~id:validity_none1~ ${PATH}[*][
                 none("2024-01-01")
@@ -31,7 +29,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none2(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none2")
         path.parse(
             f"""~id:validity_none2~ ${PATH}[*][
                 none(none())
@@ -43,7 +40,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none3(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none3")
         path.parse(
             f"""~id:validity_none3~ ${PATH}[*][
                 none(-1)
@@ -55,7 +51,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none4(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none4")
         path.parse(
             f"""~id:validity_none4~ ${PATH}[*][
                 none(5, 9)
@@ -67,8 +62,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none5(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none5")
-        print("")
         path.parse(
             """
                 ~
@@ -85,8 +78,6 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def test_validity_none6(self):
         path = CsvPath()
         self._config(path)
-        Save._save(path, "test_validity_none6")
-        print("")
         path.parse(
             """
                 ~

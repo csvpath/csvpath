@@ -2,7 +2,6 @@ import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 FOOD = "tests/test_resources/food.csv"
@@ -12,12 +11,9 @@ PEOPLE3 = "tests/test_resources/people3.csv"
 
 class TestValidLine(unittest.TestCase):
     def test_valid_line1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line1")
         path.parse(
             f"""${PATH}[*][
-
                 line(
                     blank(),
                     blank(),
@@ -30,9 +26,7 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line2(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line2")
         path.parse(
             f"""${PATH}[*][
                 line(
@@ -44,9 +38,7 @@ class TestValidLine(unittest.TestCase):
             path.collect()
 
     def test_valid_line3(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line3")
         path.parse(
             f"""${PATH}[*][
                 line(
@@ -61,9 +53,7 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line4(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line4")
         path.parse(
             f"""${PATH}[*][
 
@@ -79,10 +69,8 @@ class TestValidLine(unittest.TestCase):
             path.collect()
 
     def test_valid_line5(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_validity_int5")
         path.parse(
             f"""${PATH}[1*][
                 line(
@@ -97,10 +85,8 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 0
 
     def test_valid_line6(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line6")
         path.parse(
             f"""~
             validation-mode: print, no-raise, no-stop
@@ -118,11 +104,8 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line7(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line7")
-        # a boolean fails and a decimal fails
         path.parse(
             f"""~ validation-mode: print, no-raise, no-stop ~
             ${FOOD}[1*][
@@ -139,10 +122,8 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 8
 
     def test_valid_line8(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line8")
         path.parse(
             f"""~
                 id: check foods :
@@ -177,10 +158,8 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 7
 
     def test_valid_line9(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line9")
         path.parse(
             f"""~
                 name: structural validation example with two rules
@@ -208,15 +187,11 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print("")
-        print(f"lines: {lines}")
         assert len(lines) == 5
 
     def test_valid_line10(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line10")
         path.parse(
             f"""~
                 name: structural validation example with two rules
@@ -244,17 +219,13 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print("")
-        print(f"lines: {lines}")
         assert len(lines) == 2
         assert lines[0][0] == "Jimmy"
         assert lines[1][0] == "Terry"
 
     def test_valid_line_wildcard1(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line_wildcard1")
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
@@ -270,14 +241,11 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"lines: {lines}")
         assert len(lines) == 5
 
     def test_valid_line_wildcard2(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line_wildcard2")
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
@@ -294,14 +262,11 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"lines: {lines}")
         assert len(lines) == 5
 
     def test_valid_line_wildcard3(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line_wildcard3")
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
@@ -318,14 +283,11 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"lines: {lines}")
         assert len(lines) == 5
 
     def test_valid_line_wildcard4(self):
-        print("")
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
-        Save._save(path, "test_valid_line_wildcard4")
         #
         # wildcard(4) means the wildcard itself + 3 more headers.
         # or think of it as saying: wildcard takes 4 places,
@@ -347,13 +309,10 @@ class TestValidLine(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"lines: {lines}")
         assert len(lines) == 5
 
     def test_valid_line_wildcard5(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line_wildcard5")
         #
         # wildcard(4) means the wildcard itself + 3 more headers.
         # or think of it as saying: wildcard takes 4 places,
@@ -381,9 +340,7 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 5
 
     def test_valid_line_wildcard6(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_valid_line_wildcard6")
         path.parse(
             f"""
             ~ id:fails distinct ~

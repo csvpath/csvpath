@@ -13,6 +13,5 @@ class TestSingleFromGroup(unittest.TestCase):
         )
         paths.fast_forward_paths(pathsname="many#many_two", filename="food")
         vars = paths.results_manager.get_variables("many#many_two")
-        print(f"vars: {vars}")
         assert "two" in vars
         assert "one" not in vars

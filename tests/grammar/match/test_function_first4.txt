@@ -1,8 +1,0 @@
-[ ~ Find the first time fruit were the most popular ~
-                            @fruit = in( #food, "Apple|Pear|Blueberry")
-                            ~@food.onmatch = #food~
-                            @fruit.asbool -> print("$.headers.food $.headers.year")
-                            first.year.onmatch( #year )
-                            exists( @fruit.asbool )
-                            last.nocontrib() -> print("First years most popular: $.variables.year")
-                        ]

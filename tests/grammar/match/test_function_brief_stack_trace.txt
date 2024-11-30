@@ -1,1 +1,0 @@
-[ brief_stack_trace() ]

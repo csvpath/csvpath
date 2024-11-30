@@ -1,6 +1,5 @@
 import unittest
 from csvpath.csvpath import CsvPath
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,7 +7,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsFail(unittest.TestCase):
     def test_function_fail1(self):
         path = CsvPath()
-        Save._save(path, "test_function_fail1")
         path.parse(
             f"""
             ${PATH}[1]
@@ -27,7 +25,6 @@ class TestFunctionsFail(unittest.TestCase):
 
     def test_function_fail12(self):
         path = CsvPath()
-        Save._save(path, "test_function_fail12")
         path.parse(
             f"""
             ${PATH}[1]
@@ -41,7 +38,6 @@ class TestFunctionsFail(unittest.TestCase):
 
     def test_function_fail3(self):
         path = CsvPath()
-        Save._save(path, "test_function_fail3")
         path.parse(
             f"""
             ${PATH}[1]
@@ -52,7 +48,6 @@ class TestFunctionsFail(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_fail3: variables: {path.variables}")
         assert len(lines) == 1
         assert path.is_valid is False
         assert path.variables["valid"] is False
@@ -60,7 +55,6 @@ class TestFunctionsFail(unittest.TestCase):
 
     def test_function_fail4(self):
         path = CsvPath()
-        Save._save(path, "test_function_fail4")
         path.parse(
             f"""
             ${PATH}[1]
@@ -71,7 +65,6 @@ class TestFunctionsFail(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_fail4: variables: {path.variables}")
         assert len(lines) == 1
         assert path.is_valid is True
         assert path.variables["valid"] is True
@@ -79,7 +72,7 @@ class TestFunctionsFail(unittest.TestCase):
 
     def test_function_fail_all1(self):
         path = CsvPath()
-        Save._save(path, "test_function_fail_all1")
+
         path.parse(
             f"""
             ${PATH}[1]

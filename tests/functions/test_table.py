@@ -3,7 +3,6 @@ from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.functions.boolean.any import Any
 from csvpath.matching.productions import Expression
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 EMPTIES = "tests/test_resources/test-4.csv"
@@ -11,9 +10,7 @@ EMPTIES = "tests/test_resources/test-4.csv"
 
 class TestFunctionsTable(unittest.TestCase):
     def test_function_header_table1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_header_table1")
         path.parse(
             f"""${PATH}[1][
                 header_table()
@@ -27,9 +24,7 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("2 │ say") > -1
 
     def test_function_row_table1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_row_table1")
         path.parse(
             f"""${PATH}[1][
                 row_table()
@@ -43,9 +38,7 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("hi!") > -1
 
     def test_function_row_table2(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_row_table2")
         path.parse(
             f"""${PATH}[1][
                 row_table(1)
@@ -61,9 +54,7 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("say") == -1
 
     def test_function_row_table3(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_row_table3")
         path.parse(
             f"""${PATH}[1][
                 row_table(1,2)
@@ -79,9 +70,7 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("firstname") == -1
 
     def test_function_var_table1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_var_table1")
         path.parse(
             f"""${PATH}[1-3][
                 push("ln", line_number())
@@ -100,9 +89,7 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("Frog Bat") > -1
 
     def test_function_var_table2(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_var_table2")
         path.parse(
             f"""${PATH}[1-3][
                 push("ln", line_number())
@@ -121,9 +108,8 @@ class TestFunctionsTable(unittest.TestCase):
         assert line.find("Frog Bat") == -1
 
     def test_function_var_table3(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_var_table3")
+
         path.parse(
             f"""${PATH}[1*][
                 tally(#firstname)
@@ -131,16 +117,13 @@ class TestFunctionsTable(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_function_var_table3: path.vars: {path.variables}")
         line = path.printers[0].last_line
         assert line[0] == "┌"
         assert line[len(line) - 1] == "┘"
         assert line.find("firstname") > -1
 
     def test_function_var_table4(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_var_table3")
         path.parse(
             f"""${EMPTIES}[1*][
                 push("empties", empty_stack())
@@ -148,16 +131,13 @@ class TestFunctionsTable(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_function_var_table4: path.vars: {path.variables}")
         line = path.printers[0].last_line
         assert line[0] == "┌"
         assert line[len(line) - 1] == "┘"
         assert line.find("firstname") > -1
 
     def test_function_run_table1(self):
-        print("")
         path = CsvPath()
-        Save._save(path, "test_function_run_table1")
         path.parse(
             f"""
                 ~ name: fishery ~
@@ -168,10 +148,6 @@ class TestFunctionsTable(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"test_function_var_table4: path.vars: {path.variables}")
         line = path.printers[0].last_line
         assert line[0] == "┌"
         assert line[len(line) - 1] == "┘"
-        # assert line.find("Runtime") > -1
-        # assert line.find("Metadata") > -1
-        # assert line.find("fishery") > -1

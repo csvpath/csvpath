@@ -1,6 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,7 +7,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionStop(unittest.TestCase):
     def test_function_stop(self):
         path = CsvPath()
-        Save._save(path, "test_function_stop")
+
         path.parse(
             f"""
             ${PATH}[*]
@@ -20,8 +19,6 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_stop: path vars: {path.variables}")
-        print(f"test_function_stop: lines: {lines}")
         assert path.stopped is True
         assert path.variables["i"] == "FishBat"
         assert path.variables["c"] == 3
@@ -29,7 +26,6 @@ class TestFunctionStop(unittest.TestCase):
 
     def test_function_skip1(self):
         path = CsvPath()
-        Save._save(path, "test_function_skip1")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -41,14 +37,11 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"\ntest_function_skip1: path vars: {path.variables}")
-        print(f"test_function_skip1: lines: {lines}")
         assert len(lines) == 7
         assert path.variables["not_skipped"] == [2, 4, 5, 6, 7, 8, 9]
 
     def test_function_skip2(self):
         path = CsvPath()
-        Save._save(path, "test_function_skip1")
         path.parse(
             f"""
             ${PATH}[*]
@@ -58,13 +51,11 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"\n test_function_skip2: path vars: {path.variables}")
         assert "line" in path.variables
         assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
 
     def test_function_skip_all1(self):
         path = CsvPath()
-        Save._save(path, "test_function_skip_all1")
         path.parse(
             f"""
             ${PATH}[*]
@@ -75,13 +66,11 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
-        print(f"\n test_function_skip_all1: path vars: {path.variables}")
         assert "line" in path.variables
         assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
 
     def test_function_stop_all1(self):
         path = CsvPath()
-        Save._save(path, "test_function_stop_all1")
         path.parse(
             f"""
             ${PATH}[*]
@@ -94,8 +83,6 @@ class TestFunctionStop(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_stop_all1: path vars: {path.variables}")
-        print(f"test_function_stop_all1: lines: {lines}")
         assert path.stopped is True
         assert path.variables["i"] == "FishBat"
         assert path.variables["c"] == 3

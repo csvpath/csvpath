@@ -1,7 +1,6 @@
 import unittest
 import pytest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
@@ -9,8 +8,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsGet(unittest.TestCase):
     def test_function_get1(self):
         path = CsvPath()
-        Save._save(path, "test_function_get1")
-        print("")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -21,16 +18,12 @@ class TestFunctionsGet(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_get1: lines: {lines}")
-        print(f"test_function_get1: vars: {path.variables}")
         assert len(lines) == 1
         assert "frog" in path.variables
         assert path.variables["frog"] == 2
 
     def test_function_get2(self):
         path = CsvPath()
-        Save._save(path, "test_function_get1")
-        print("")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -47,8 +40,6 @@ class TestFunctionsGet(unittest.TestCase):
 
     def test_function_get3(self):
         path = CsvPath()
-        Save._save(path, "test_function_get3")
-        print("")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -60,16 +51,12 @@ class TestFunctionsGet(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_get3: lines: {lines}")
-        print(f"test_function_get3: vars: {path.variables}")
         assert len(lines) == 4
         assert "fourth" in path.variables
         assert path.variables["fourth"] == "Bird"
 
     def test_function_get4(self):
         path = CsvPath()
-        Save._save(path, "test_function_get1")
-        print("")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -83,8 +70,6 @@ class TestFunctionsGet(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        print(f"test_function_get1: lines: {lines}")
-        print(f"test_function_get1: vars: {path.variables}")
         assert len(lines) == 1
         assert "frog" in path.variables
         assert path.variables["frog"] == 2

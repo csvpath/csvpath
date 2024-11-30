@@ -1,5 +1,4 @@
 import unittest
-import pandas as pd
 from csvpath import CsvPath
 from csvpath.util.file_readers import DataFileReader
 
@@ -8,6 +7,10 @@ PATH = "tests/test_resources/test.csv"
 
 class TestPandas(unittest.TestCase):
     def test_csvpaths_pandas_1(self):
+        try:
+            import pandas as pd
+        except ImportError:
+            return
         print("")
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
         DataFileReader.register_data(path="pandastest", filelike=df)

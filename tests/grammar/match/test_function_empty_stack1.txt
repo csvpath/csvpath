@@ -1,6 +1,0 @@
-[
-                ~ matches if len(stack) != 0
-                  returns stack of empty headers, of all headers ~
-                empty_stack()
-
-            ]

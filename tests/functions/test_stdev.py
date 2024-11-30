@@ -2,7 +2,6 @@ import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
-from tests.save import Save
 
 COR = "tests/test_resources/correlation.csv"
 
@@ -10,7 +9,7 @@ COR = "tests/test_resources/correlation.csv"
 class TestFunctionsStdev(unittest.TestCase):
     def test_function_stdev1(self):
         path = CsvPath()
-        Save._save(path, "test_function_stdev1")
+
         path.parse(
             f"""${COR}[1-10][
                     push("a", #1)
@@ -27,7 +26,7 @@ class TestFunctionsStdev(unittest.TestCase):
 
     def test_function_stdev2(self):
         path = CsvPath()
-        Save._save(path, "test_function_stdev2")
+
         path.parse(
             f"""${COR}[1-10][
                     push("a", #1)
@@ -45,7 +44,7 @@ class TestFunctionsStdev(unittest.TestCase):
     def test_function_stdev3(self):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
-        Save._save(path, "test_function_stdev3")
+
         path.parse(
             f"""${COR}[1-10][
                     ~ not stack, not string ~
@@ -58,7 +57,7 @@ class TestFunctionsStdev(unittest.TestCase):
 
     def test_function_stdev4(self):
         path = CsvPath()
-        Save._save(path, "test_function_stdev4")
+
         path.parse(
             f"""${COR}[1-10][
                     ~ stack name in pstdev ~
@@ -76,7 +75,7 @@ class TestFunctionsStdev(unittest.TestCase):
 
     def test_function_stdev5(self):
         path = CsvPath()
-        Save._save(path, "test_function_stdev4")
+
         path.parse(
             f"""${COR}[1-10][
                     ~ stack name in pstdev ~

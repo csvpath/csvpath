@@ -1,4 +1,0 @@
-[
-                line_fingerprint.hash()
-                last() -> store_line_fingerprint()
-            ]

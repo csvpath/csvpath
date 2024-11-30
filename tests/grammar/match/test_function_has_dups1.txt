@@ -1,5 +1,0 @@
-[
-                @d = dup_lines()
-                dup_lines() -> print("line $.csvpath.line_count has dups in $.variables.d")
-                @c = count_dups.two()
-            ]

@@ -1,9 +1,0 @@
-[
-
-                line(
-                    string(#firstname),
-                    string(#lastname),
-                    integer(#say)
-                )
-
-            ]

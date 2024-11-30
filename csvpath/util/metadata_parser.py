@@ -27,7 +27,9 @@ class MetadataParser:
         )
         csvpath = csvpath.strip()
         if not csvpath[0] in ["$", "~"]:
-            raise InputException(f"Csvpath must start with ~ or $, not {csvpath[0]}")
+            raise InputException(
+                f"Csvpath must start with ~ or $, not {csvpath[0]} in {csvpath}"
+            )
         csvpath2, comment = self.extract_csvpath_and_comment(csvpath)
         comment = comment.strip()
         # if there are any characters in the comment we should parse. 3 is

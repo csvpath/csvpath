@@ -1,1 +1,0 @@
-[@p=percent("line")  above(@p, .35) #lastname=="Bat"]

@@ -1,6 +1,5 @@
 import unittest
-from csvpath.csvpath import CsvPath
-from tests.save import Save
+from csvpath import CsvPath
 
 PATH = "tests/test_resources/test.csv"
 
@@ -8,7 +7,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsRound(unittest.TestCase):
     def test_function_round1(self):
         path = CsvPath()
-        Save._save(path, "test_function_round1")
         path.parse(
             f""" ${PATH}[2] [
                 @fourish = round( 4.5666666, 4 )
@@ -23,9 +21,7 @@ class TestFunctionsRound(unittest.TestCase):
             ]
             """
         )
-        print("")
         path.fast_forward()
-        print(f"test_function_round1: path vars: {path.variables}")
         assert path.variables["fourish"] == 4.5667
         assert path.variables["four"] == 4.00
         assert path.variables["fourone"] == 4.9

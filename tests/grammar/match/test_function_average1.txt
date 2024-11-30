@@ -1,4 +1,0 @@
-[
-                @the_average = average(count(), "match")
-                no()
-            ]

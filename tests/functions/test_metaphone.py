@@ -1,7 +1,6 @@
 import unittest
 from csvpath import CsvPath
 from csvpath import CsvPaths
-from tests.save import Save
 
 PATH = "tests/test_resources/test.csv"
 
@@ -9,7 +8,6 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsMetaphone(unittest.TestCase):
     def test_function_metaphone1(self):
         path = CsvPath()
-        Save._save(path, "test_function_metaphone1")
         path.parse(
             f"""
                         ${PATH}[*][
@@ -24,12 +22,10 @@ class TestFunctionsMetaphone(unittest.TestCase):
                    """
         )
         path.fast_forward()
-        print(f"test_function_metaphone1: {path.variables}")
         assert path.variables["z"] is True
         assert path.variables["s"] is True
 
     def test_function_metaphone2(self):
-        print("")
         # load the lookup table
         paths = CsvPaths()
         paths.file_manager.add_named_file(
@@ -40,15 +36,9 @@ class TestFunctionsMetaphone(unittest.TestCase):
             file_path="tests/test_resources/named_paths/metaphone_lookup.csvpaths",
         )
         paths.fast_forward_paths(pathsname="meta", filename="lookups")
-        results = paths.results_manager.get_named_results("meta")
-        r = results[0]
-        c = r.csvpath
-        print(f"test_function_metaphone2: c.vars: {c.variables}")
-        print("")
-
+        paths.results_manager.get_named_results("meta")
         # test the lookup
         path = paths.csvpath()
-        Save._save(path, "test_function_metaphone1")
         path.parse(
             f"""
                 ${PATH}[*][
@@ -75,7 +65,6 @@ class TestFunctionsMetaphone(unittest.TestCase):
             """
         )
         path.fast_forward()
-        print(f"test_function_metaphone2: {path.variables}")
         assert path.variables["z"] is True
         assert path.variables["s"] is True
         assert path.variables["i"] is True

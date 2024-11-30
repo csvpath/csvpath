@@ -1,9 +1,0 @@
-[
-
-                line(
-                    blank(),
-                    blank(),
-                    blank()
-                )
-
-            ]

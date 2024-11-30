@@ -1,3 +1,0 @@
-[
-                put(#firstname, line_number() )
-            ]

@@ -1,6 +1,0 @@
-[
-                push( "min", min_length( #lastname, 5))
-                push( "max", max_length( #lastname, 4))
-                push( "too_long", too_long( #lastname, 5))
-                push( "too_short", too_short( #lastname, 4))
-            ]

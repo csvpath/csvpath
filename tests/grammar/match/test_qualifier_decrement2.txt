@@ -1,4 +1,0 @@
-[
-                    ~ should not increase @up ~
-                    @down.decrease = #1
-                ]

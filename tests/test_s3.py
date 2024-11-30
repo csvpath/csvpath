@@ -30,9 +30,7 @@ class TestS3(unittest.TestCase):
         cs.collect_paths(filename="timezones", pathsname="tz")
         pathresults = cs.results_manager.get_named_results("tz")
 
-        print(f"pathresults are: {len(pathresults)}")
         results = pathresults[0]
-        print(f"results are: {len(results)}")
         valid = cs.results_manager.is_valid("tz")
         assert len(results) > 100
         assert valid

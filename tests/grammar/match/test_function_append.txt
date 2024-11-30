@@ -1,5 +1,0 @@
-[
-                line_number.nocontrib() == 0 -> append("rnd_id", "rnd_id")
-                above.nocontrib( line_number(), 0 ) -> append("rnd_id", shuffle())
-                print_line()
-            ]

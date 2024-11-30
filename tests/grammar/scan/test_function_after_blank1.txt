@@ -1,1 +1,0 @@
-$tests/test_resources/count_physical_lines.csv[*]

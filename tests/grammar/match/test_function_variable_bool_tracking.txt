@@ -1,4 +1,0 @@
-[
-                            count.t(#lastname=="Bat")
-                            @u = @t.True
-                        ]
