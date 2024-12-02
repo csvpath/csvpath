@@ -9,6 +9,7 @@ from csvpath.util.reference_parser import ReferenceParser
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
 from .results_metadata import ResultsMetadata
+from .result_metadata import ResultMetadata
 from .results_registrar import ResultsRegistrar
 from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
@@ -39,15 +40,19 @@ class ResultsManager:  # pylint: disable=C0115
         )
         m = rr.manifest
         mdata = ResultsMetadata()
-        mdata.time = m["time"]
-        mdata.uuid = m["uuid"]
+        if "time" not in m or m["time"] is None:
+            mdata.set_time()
+        else:
+            mdata.time_string = m["time"]
+        mdata.uuid_string = m["uuid"]
+        mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_fingerprint = m["named_file_fingerprint"]
         mdata.named_file_fingerprint_on_file = m["named_file_fingerprint_on_file"]
         mdata.named_file_name = m["named_file_name"]
         mdata.named_file_path = m["named_file_path"]
-
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
+        mdata.named_results_name = pathsname
         rr.register_complete(mdata)
 
     def start_run(self, *, run_dir, pathsname, filename) -> None:
@@ -57,15 +62,12 @@ class ResultsManager:  # pylint: disable=C0115
             pathsname=pathsname,
         )
         mdata = ResultsMetadata()
+        mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_name = filename
-        filepath = self.csvpaths.file_manager.get_named_file(filename)
-        mdata.named_file_path = filepath
+        # self.csvpaths.file_manager.get_named_file(filename)
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
-        del mdata.all_completed
-        del mdata.all_valid
-        del mdata.error_count
-        del mdata.all_expected_files
+        mdata.named_results_name = pathsname
         rr.register_start(mdata)
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
@@ -178,14 +180,41 @@ class ResultsManager:  # pylint: disable=C0115
             self.named_results[name].append(result)
         self._variables = None
         #
-        # this is the beginning of an identity run within a named-paths run
+        # this is the beginning of an identity run within a named-paths run.
+        # run metadata goes to the central record of runs kicking off within
+        # the archive. the run's own more complete record is below as a
+        # separate event. this could change, but atm seems reasonable.
         #
         mdata = RunMetadata()
+        mdata.uuid = result.uuid
+        mdata.archive_name = self.csvpaths.config.archive_name
+        mdata.time_start = result.run_time
         mdata.run_home = result.run_dir
         mdata.identity = result.identity_or_index
         mdata.named_paths_name = result.paths_name
         mdata.named_file_name = result.file_name
         rr = RunRegistrar(self.csvpaths)
+        rr.register_start(mdata)
+        #
+        # we prep the results event
+        #
+        # we use the same UUID for both metadata updates because the
+        # UUID represents the run, not the metadata object
+        #
+        mdata = ResultMetadata()
+        mdata.uuid = result.uuid
+        mdata.archive_name = self.csvpaths.config.archive_name
+        mdata.time_started = result.run_time
+        mdata.named_results_name = result.paths_name
+        mdata.run = result.run_dir[result.run_dir.rfind(os.sep) + 1 :]
+        mdata.run_home = result.run_dir
+        mdata.instance_home = result.instance_dir
+        mdata.instance_identity = result.identity_or_index
+        mdata.input_data_file = result.file_name
+        rs = ResultSerializer(self._csvpaths.config.archive_path)
+        rr = ResultRegistrar(
+            csvpaths=self.csvpaths, result=result, result_serializer=rs
+        )
         rr.register_start(mdata)
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:

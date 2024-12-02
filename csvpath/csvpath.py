@@ -5,7 +5,7 @@ import csv
 import time
 import os
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
@@ -271,7 +271,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # _function_times_value collects the time a function spends doing its to_value()
         #
         self._function_times_value = {}
-        self._created_at = datetime.now()
+        self._created_at = datetime.now(timezone.utc)
         self._run_started_at = None
         self._collecting = False
         #
@@ -1082,7 +1082,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             last_line = self.matcher.line
         self.line_monitor.next_line(last_line=last_line, data=line)
         if self.line_monitor.physical_line_number == 0:
-            self._run_started_at = datetime.now()
+            self._run_started_at = datetime.now(timezone.utc)
 
     def _consider_line(self, line):  # pylint: disable=R0912, R0911
         # re: R0912: this method has already been refactored but maybe

@@ -9,11 +9,16 @@ from .result_metadata import ResultMetadata
 
 
 class ResultRegistrar(Registrar, Listener):
-    def __init__(self, *, csvpaths, result, result_serializer):
+    def __init__(self, *, csvpaths, result, result_serializer=None):
         super().__init__(csvpaths)
         self.result = result
         self.result_serializer = result_serializer
         self.load_additional_listeners("result")
+
+    def register_start(self, mdata: Metadata) -> None:
+        p = self.named_paths_manifest
+        mdata.named_paths_uuid_string = p["uuid"]
+        self.distribute_update(mdata)
 
     def register_complete(self, mdata: Metadata = None) -> None:
         #
@@ -22,46 +27,54 @@ class ResultRegistrar(Registrar, Listener):
         # registrar, so we expect it to hand us nothing
         # but the result object and serializer.
         #
+        m = self.manifest
         if mdata is None:
             mdata = ResultMetadata()
-            mdata.archive_name = self.archive_name
-            mdata.named_results_name = self.result.paths_name
-            mdata.run = self.result_serializer.get_run_dir_name_from_datetime(
-                self.result.run_time
-            )
-            mdata.run_home = self.result.run_dir
-            mdata.instance_home = self.result.instance_dir
-            mdata.instance_identity = self.result.identity_or_index
-            mdata.input_data_file = self.result.file_name
-            mdata.file_fingerprints = self.file_fingerprints
-            mdata.file_count = len(mdata.file_fingerprints)
-            mdata.valid = self.result.csvpath.is_valid
-            mdata.completed = self.completed
-            mdata.expected = self.all_expected_files
-            if self.result.csvpath.transfers:
-                mdata.transfers = self.result.csvpath.transfers
+        mdata.from_manifest(m)
+        mdata.archive_name = self.archive_name
+        mdata.named_results_name = self.result.paths_name
+        mdata.run = self.result_serializer.get_run_dir_name_from_datetime(
+            self.result.run_time
+        )
+        mdata.run_home = self.result.run_dir
+        mdata.instance_home = self.result.instance_dir
+        mdata.instance_identity = self.result.identity_or_index
+        mdata.named_file_name = self.result.file_name
+        mdata.input_data_file = self.result.file_name
+        mdata.file_fingerprints = self.file_fingerprints
+        mdata.file_count = len(mdata.file_fingerprints)
+        mdata.error_count = self.result.errors_count
+        mdata.valid = self.result.csvpath.is_valid
+        mdata.completed = self.completed
+        mdata.files_expected = self.all_expected_files
+        if self.result.csvpath.transfers:
+            mdata.transfers = self.result.csvpath.transfers
         self.distribute_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
+        if mdata.time is None:
+            raise ValueError("Time cannot be None")
+        m["time"] = mdata.time_string
+        m["uuid"] = mdata.uuid_string
         m["archive_name"] = mdata.archive_name
         m["named_results_name"] = mdata.named_results_name
+        m["named_paths_uuid"] = mdata.named_paths_uuid_string
         m["run"] = mdata.run
         m["run_home"] = mdata.run_home
         m["instance_identity"] = mdata.instance_identity
         m["instance_home"] = mdata.instance_home
         m["file_fingerprints"] = mdata.file_fingerprints
-        m["files_expected"] = mdata.expected
+        m["files_expected"] = mdata.files_expected
         m["file_count"] = mdata.file_count
         m["valid"] = mdata.valid
-        m["time"] = f"{mdata.time}"
         m["completed"] = mdata.completed
         m["input_data_file"] = mdata.input_data_file
+        m["named_file_name"] = mdata.input_data_file
         if mdata.transfers:
             m["transfers"] = mdata.transfers
         mp = self.manifest_path
         m["manifest_path"] = mp
-        print(f"m: {m}")
         with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file, indent=2)
 
@@ -72,6 +85,19 @@ class ResultRegistrar(Registrar, Listener):
         if i > 0:
             return ap[i + 1 :]
         return ap
+
+    # gets the manifest for the named_paths as a whole
+    @property
+    def named_paths_manifest(self) -> dict[str, str | bool]:
+        with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
+            d = json.load(file)
+            return d
+        return None
+
+    # gets the manifest for the named_paths as a whole from the run dir
+    @property
+    def named_paths_manifest_path(self) -> str:
+        return os.path.join(self.result.run_dir, "manifest.json")
 
     @property
     def manifest(self) -> dict[str, str | bool]:

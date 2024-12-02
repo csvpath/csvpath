@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-import datetime
+from datetime import datetime, timezone
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header
 from csvpath.matching.functions.function import Function
@@ -33,7 +33,7 @@ class Now(ValueProducer):
             form = "%m"
         elif self.name == "today":
             form = "%d"
-        x = datetime.datetime.now()
+        x = datetime.now(timezone.utc)
         xs = None
         if form:
             xs = x.strftime(form)

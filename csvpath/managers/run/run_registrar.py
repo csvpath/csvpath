@@ -2,13 +2,11 @@ import os
 import time
 import json
 import hashlib
-from datetime import datetime
 from abc import ABC, abstractmethod
 from csvpath.util.exceptions import FileException
 from ..listener import Listener
 from ..registrar import Registrar
 from ..metadata import Metadata
-from .run_metadata import RunMetadata
 
 
 class RunRegistrar(Registrar, Listener):

@@ -445,6 +445,13 @@ on_unmatched_file_fingerprints = halt
         self._archive_path = p
 
     @property
+    def archive_name(self) -> str:
+        p = self.archive_path
+        if p.find(os.sep) > -1:
+            p = p[p.rfind(os.sep) + 1 :]
+        return p
+
+    @property
     def inputs_files_path(self) -> str:
         if self._inputs_files_path is None:
             self._inputs_files_path = self._get("inputs", "files")

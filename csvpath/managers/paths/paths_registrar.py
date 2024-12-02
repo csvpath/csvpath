@@ -1,7 +1,6 @@
 import os
 import json
 import hashlib
-from datetime import datetime
 from csvpath.util.exceptions import InputException
 from .paths_metadata import PathsMetadata
 from ..listener import Listener
@@ -9,12 +8,17 @@ from ..metadata import Metadata
 from ..registrar import Registrar
 
 
-class PathsRegistrar(Listener, Registrar):
+class PathsRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
         super().__init__(csvpaths)
-        self.manager = csvpaths.paths_manager
-        self.config = csvpaths.config
+        self._manager = None
         self.load_additional_listeners("paths")
+
+    @property
+    def manager(self):
+        if self._manager is None:
+            self._manager = self.csvpaths.paths_manager
+        return self._manager
 
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:
@@ -38,6 +42,7 @@ class PathsRegistrar(Listener, Registrar):
         cf = self._most_recent_fingerprint(mpath)
         if f != cf:
             mdata = PathsMetadata()
+            mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
             mdata.named_paths_file = group_file_path
             mdata.named_paths = paths
@@ -56,7 +61,7 @@ class PathsRegistrar(Listener, Registrar):
             m = {}
             m["file"] = mdata.named_paths_name
             m["fingerprint"] = mdata.fingerprint
-            m["time"] = f"{mdata.time}"
+            m["time"] = mdata.time_string
             m["count"] = mdata.named_paths_count
             m["manifest_path"] = mdata.manifest_path
             jdata.append(m)

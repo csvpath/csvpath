@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import datetime
 from typing import Any
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Header, Reference, Variable

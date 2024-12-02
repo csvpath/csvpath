@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 import csv
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from .util.error import ErrorHandler, ErrorCollector, Error
 from .util.config import Config
 from .util.log_utility import LogUtility
@@ -164,7 +164,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     @property
     def current_run_time(self) -> datetime:
         if self._current_run_time is None:
-            self._current_run_time = datetime.now()
+            self._current_run_time = datetime.now(timezone.utc)
         return self._current_run_time
 
     def clear_run_coordination(self) -> None:
@@ -262,7 +262,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
             try:
-                self.results_manager.add_named_result(result)
                 self._load_csvpath(
                     csvpath=csvpath,
                     path=path,
@@ -270,6 +269,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     pathsname=pathsname,
                     filename=filename,
                 )
+                #
+                # the add has to come after _load_csvpath because we need the identity or index
+                # to be stable and the identity is found in load, if it exists.
+                #
+                self.results_manager.add_named_result(result)
                 lines = result.lines
                 self.logger.debug("Collecting lines using a %s", type(lines))
                 csvpath.collect(lines=lines)
@@ -397,7 +401,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 run_dir=crt,
             )
             try:
-                self.results_manager.add_named_result(result)
                 self._load_csvpath(
                     csvpath=csvpath,
                     path=path,
@@ -405,6 +408,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     pathsname=pathsname,
                     filename=filename,
                 )
+                #
+                # the add has to come after _load_csvpath because we need the identity or index
+                # to be stable and the identity is found in load, if it exists.
+                #
+                self.results_manager.add_named_result(result)
                 self.logger.info(
                     "Parsed csvpath %s pointed at %s and starting to fast-forward",
                     i,
@@ -490,7 +498,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 )
                 csvpath.is_valid = False
             try:
-                self.results_manager.add_named_result(result)
                 self._load_csvpath(
                     csvpath=csvpath,
                     path=path,
@@ -498,13 +505,22 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     pathsname=pathsname,
                     filename=filename,
                 )
+                #
+                # the add has to come after _load_csvpath because we need the identity or index
+                # to be stable and the identity is found in load, if it exists.
+                #
+                self.results_manager.add_named_result(result)
                 for line in csvpath.next():
-                    line.append(result)
+                    #
+                    # removed dec 1. why was this? it doesn't seem to make sense and
+                    # removing it doesn't break any unit tests. was it a mistake?
+                    #
+                    # line.append(result)
                     if collect:
                         result.append(line)
                         result.unmatched = csvpath.unmatched
                     yield line
-            except Exception as ex:  # pylint: disable=W0718
+            except Exception as ex:
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 try:
@@ -514,6 +530,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 except Exception as e:
                     self.results_manager.save(result)
                     raise e
+
             self.results_manager.save(result)
             results.append(result)
         #
@@ -604,6 +621,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             filename=filename,
             pathsname=pathsname,
         )
+        #
+        # prep has to come after _load_csvpath_objects because we need the identity or
+        # indexes to be stable and the identity is found in the load, if it exists.
+        #
         self._prep_csvpath_results(
             csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname
         )
@@ -812,6 +833,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     run_dir=crt,
                 )
                 csvpath[1] = result
+                #
+                # the add has to come after _load_csvpath because we need the identity or index
+                # to be stable and the identity is found in load, if it exists.
+                #
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()

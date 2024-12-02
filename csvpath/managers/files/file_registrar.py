@@ -43,7 +43,7 @@ class FileRegistrar(Registrar, Listener):
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
-        rpath = mdata.archive_path
+        rpath = mdata.file_path
         h = mdata.fingerprint
         t = mdata.type
         mark = mdata.mark
@@ -52,7 +52,7 @@ class FileRegistrar(Registrar, Listener):
         mani["type"] = t
         mani["file"] = rpath
         mani["fingerprint"] = h
-        mani["time"] = f"{mdata.time}"
+        mani["time"] = mdata.time_string
         mani["from"] = path
         if mark is not None:
             mani["mark"] = mark

@@ -37,15 +37,18 @@ class Registrar(ABC):
 
     def load_additional_listeners(self, listener_type_name: str) -> None:
         """look in [listeners] for listener_type_name keyed lists of listener classes"""
-        lists = self.csvpaths.config.additional_listeners(listener_type_name)
-        if lists and len(lists) > 0:
-            for lst in lists:
+        ss = self.csvpaths.config.additional_listeners(listener_type_name)
+        if ss and not isinstance(ss, list):
+            ss = [ss]
+        if ss and len(ss) > 0:
+            for lst in ss:
                 self.load_additional_listener(lst)
 
     def load_additional_listener(self, load_cmd: str) -> None:
         loader = ClassLoader()
         alistener = loader.load(load_cmd)
         if alistener is not None:
+            alistener.config = self.csvpaths.config
             self.add_listener(alistener)
 
     def remove_listeners(self) -> None:

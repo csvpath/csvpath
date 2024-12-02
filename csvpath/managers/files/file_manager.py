@@ -141,8 +141,9 @@ class FileManager:
         #
         path = f"{path}#{mark}" if mark else path
         mdata.origin_path = path
-        mdata.archive_path = rpath
+        mdata.archive_name = self._csvpaths.config.archive_name
         mdata.fingerprint = h
+        mdata.file_path = rpath
         mdata.file_home = file_home
         mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
         mdata.name_home = name_home
