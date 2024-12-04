@@ -1,4 +1,4 @@
-from openlineage.client.client import OpenLineageClient
+from openlineage.client import OpenLineageClient
 
 from ..metadata import Metadata
 from ..listener import Listener
@@ -18,5 +18,6 @@ class OpenLineageFileListener(Listener):
                 client_url = "http://localhost:5000"
             self.ol_client = OpenLineageClient(url=client_url)
 
-        e = EventBuilder().build(mdata)
-        self.ol_client.emit(e)
+        es = EventBuilder().build(mdata)
+        for e in es:
+            self.ol_client.emit(e)

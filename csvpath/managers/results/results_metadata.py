@@ -4,8 +4,8 @@ from datetime import datetime
 
 
 class ResultsMetadata(Metadata):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
         self.time_completed: datetime = None
         self.run_home: str = None
         self.named_paths_name: str = None

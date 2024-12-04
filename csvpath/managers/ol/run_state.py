@@ -4,7 +4,7 @@ from ..results.result_metadata import ResultMetadata
 from ..paths.paths_metadata import PathsMetadata
 from ..files.file_metadata import FileMetadata
 from openlineage.client.facet_v2 import JobFacet
-from openlineage.client.run import Job, Run, RunEvent, RunState
+from openlineage.client.event_v2 import Job, Run, RunEvent, RunState
 
 
 class RunStateBuilder:
@@ -46,4 +46,11 @@ class RunStateBuilder:
             runstate = RunState.COMPLETE
         elif isinstance(mdata, FileMetadata):
             runstate = RunState.COMPLETE
+        #
+        # experiment!
+        #
+        runstate = RunState.START
+        #
+        #
+        #
         return runstate

@@ -19,5 +19,6 @@ class OpenLineageResultsListener(Listener):
                 client_url = "http://localhost:5000"
             self.ol_client = OpenLineageClient(url=client_url)
 
-        e = EventBuilder().build(mdata)
-        self.ol_client.emit(e)
+        es = EventBuilder().build(mdata)
+        for e in es:
+            self.ol_client.emit(e)

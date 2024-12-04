@@ -1,14 +1,21 @@
+import os
+
+from openlineage.client.facet_v2 import (
+    JobFacet,
+    job_type_job,
+    schema_dataset,
+    source_code_location_job,
+    documentation_job,
+    sql_job,
+)
+from openlineage.client.event_v2 import Job
+
 from ..metadata import Metadata
 from ..paths.paths_metadata import PathsMetadata
 from ..files.file_metadata import FileMetadata
 from ..results.result_metadata import ResultMetadata
 from ..results.results_metadata import ResultsMetadata
 from ..run.run_metadata import RunMetadata
-from openlineage.client.facet_v2 import JobFacet
-from openlineage.client.facet_v2 import job_type_job
-from openlineage.client.run import Job
-
-from openlineage.client.facet_v2 import documentation_job, source_code_location_job
 
 
 class JobException(Exception):
@@ -16,20 +23,17 @@ class JobException(Exception):
 
 
 class JobBuilder:
-    # https://openlineage.io/docs/spec/facets/job-facets/job-type
-    # They must be set after the `set_producer(_PRODUCER)`
-    # otherwise the `JobTypeJobFacet._producer` will be set with the default value
     JOB_TYPE_PATH = job_type_job.JobTypeJobFacet(
-        jobType="Path", integration="CSVPATH", processingType="DATALOAD"
+        jobType="COMMAND", integration="CSVPATH", processingType="LOAD"
     )
     JOB_TYPE_RESULT = job_type_job.JobTypeJobFacet(
-        jobType="Result", integration="CSVPATH", processingType="BATCH"
+        jobType="JOB", integration="CSVPATH", processingType="BATCH"
     )
     JOB_TYPE_RESULTS = job_type_job.JobTypeJobFacet(
-        jobType="Results", integration="CSVPATH", processingType="BATCH"
+        jobType="JOB", integration="CSVPATH", processingType="BATCH"
     )
     JOB_TYPE_FILE = job_type_job.JobTypeJobFacet(
-        jobType="File", integration="CSVPATH", processingType="BATCH"
+        jobType="COMMAND", integration="CSVPATH", processingType="BATCH"
     )
 
     def build(self, mdata: Metadata):
@@ -47,39 +51,50 @@ class JobBuilder:
 
     def build_file_job(self, mdata: Metadata):
         try:
-            job = self._base_job(mdata)
-            # fs = job.facets
-            # why does adding this line blow up OL?
-            # fs["jobType"] = JobBuilder.FILE_TYPE_PATH
-            job.name = mdata.named_file_name
-            return job
+            facets = {}
+            location = f"file:////{mdata.base_path}{os.sep}{mdata.file_path}"
+            facets[
+                "sourceCodeLocation"
+            ] = source_code_location_job.SourceCodeLocationJobFacet(
+                type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
+            )
+            facets["documentation"] = documentation_job.DocumentationJobFacet(
+                description="""Stages a source file for validation.
+                This job imports the file, registers it, and makes it available
+                for further processing."""
+            )
+            name = f"Stage:{mdata.named_file_name}"
+            return Job(namespace=mdata.archive_name, name=name, facets=facets)
         except Exception as e:
             print(f"error in jobbuilder: {e}")
 
     def build_paths_job(self, mdata: Metadata):
         try:
-            job = self._base_job(mdata)
-            fs = job.facets
-            fs[
+            facets = {}
+            location = f"file:////{mdata.base_path}{os.sep}{mdata.group_file_path}"
+            facets[
                 "sourceCodeLocation"
             ] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="CsvPath", url=mdata.named_paths_file
+                type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
             )
-            fs["jobType"] = JobBuilder.JOB_TYPE_PATH
-            job.name = f"X: {mdata.named_paths_name}"
-            return job
+            facets["documentation"] = documentation_job.DocumentationJobFacet(
+                description="""Loads a set of validation CsvPaths.
+                This job assembles the csvpaths into a named-paths group file, registers
+                them, and makes them ready for a run."""
+            )
+            name = f"Load:{mdata.named_paths_name}"
+            return Job(namespace=mdata.archive_name, name=name, facets=facets)
         except Exception as e:
             print(f"error in jobbuilder: {e}")
 
     def build_result_job(self, mdata: Metadata):
         try:
-            job = self._base_job(mdata)
-            fs = job.facets
+            fs = {}
             fs["documentation"] = documentation_job.DocumentationJobFacet(
                 description=mdata.instance_identity
             )
-            fs["jobType"] = JobBuilder.JOB_TYPE_RESULT
-            job.name = mdata.named_results_name
+            name = f"Instance:{mdata.instance_identity}"
+            job = Job(namespace=mdata.archive_name, name=name, facets=fs)
             return job
         except Exception as e:
             print(f"error in jobbuilder: {e}")
@@ -93,8 +108,7 @@ class JobBuilder:
             ] = source_code_location_job.SourceCodeLocationJobFacet(
                 type="CsvPath", url=f"{mdata.named_paths_name}/group.csvpaths"
             )
-            fs["jobType"] = JobBuilder.JOB_TYPE_RESULTS
-            job.name = f"Group: {mdata.named_results_name}"
+            job.name = f"Group:{mdata.named_results_name}"
             return job
         except Exception as e:
             print(f"error in jobbuilder: {e}")

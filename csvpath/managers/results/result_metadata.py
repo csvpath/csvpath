@@ -3,8 +3,8 @@ from csvpath.managers.metadata import Metadata
 
 
 class ResultMetadata(Metadata):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
         # these we know right away
         self._named_paths_uuid = None
         self.named_results_name: str = None

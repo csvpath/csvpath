@@ -32,10 +32,11 @@ class OpenLineageRunListener(Listener):
         #
         # make the new run
         #
-        run = (RunBuilder().build(mdata),)
-        job = (JobBuilder().build(mdata),)
-        e = EventBuilder().build(mdata, job, run)
-        self.ol_client.emit(e)
+        # run = (RunBuilder().build(mdata),)
+        # job = (JobBuilder().build(mdata),)
+        es = EventBuilder().build(mdata)
+        for e in es:
+            self.ol_client.emit(e)
 
     """
     def assure_job(self, mdata:Metadata, namespace) -> None:

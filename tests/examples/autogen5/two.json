@@ -1,0 +1,8 @@
+{
+    "one": [
+        "tests/examples/autogen5/assets/accountants.csvpath"
+    ],
+    "two": [
+        "tests/examples/autogen5/assets/accountants2.csvpath"
+    ]
+}

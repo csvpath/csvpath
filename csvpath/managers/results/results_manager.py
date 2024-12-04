@@ -39,7 +39,7 @@ class ResultsManager:  # pylint: disable=C0115
             results=results,
         )
         m = rr.manifest
-        mdata = ResultsMetadata()
+        mdata = ResultsMetadata(self.csvpaths.config)
         if "time" not in m or m["time"] is None:
             mdata.set_time()
         else:
@@ -61,7 +61,7 @@ class ResultsManager:  # pylint: disable=C0115
             run_dir=run_dir,
             pathsname=pathsname,
         )
-        mdata = ResultsMetadata()
+        mdata = ResultsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_name = filename
         # self.csvpaths.file_manager.get_named_file(filename)
@@ -185,7 +185,7 @@ class ResultsManager:  # pylint: disable=C0115
         # the archive. the run's own more complete record is below as a
         # separate event. this could change, but atm seems reasonable.
         #
-        mdata = RunMetadata()
+        mdata = RunMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.time_start = result.run_time
@@ -201,7 +201,7 @@ class ResultsManager:  # pylint: disable=C0115
         # we use the same UUID for both metadata updates because the
         # UUID represents the run, not the metadata object
         #
-        mdata = ResultMetadata()
+        mdata = ResultMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.time_started = result.run_time

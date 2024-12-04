@@ -137,10 +137,14 @@ class PathsManager:
         t = self._copy_in(name, s)
         grp_paths = self.get_identified_paths_in(name, paths=paths)
         ids = [t[0] for t in grp_paths]
-        mdata = PathsMetadata()
+        for i, t in enumerate(ids):
+            if t is None or t.strip() == "":
+                ids[i] = f"{i}"
+        mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
-        mdata.named_paths_file = t
+        mdata.named_paths_home = f"{mdata.named_paths_root}{os.sep}{name}"
+        mdata.group_file_path = f"{mdata.named_paths_home}{os.sep}group.csvpaths"
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)

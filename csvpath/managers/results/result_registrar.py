@@ -29,7 +29,7 @@ class ResultRegistrar(Registrar, Listener):
         #
         m = self.manifest
         if mdata is None:
-            mdata = ResultMetadata()
+            mdata = ResultMetadata(config=self.csvpaths.config)
         mdata.from_manifest(m)
         mdata.archive_name = self.archive_name
         mdata.named_results_name = self.result.paths_name

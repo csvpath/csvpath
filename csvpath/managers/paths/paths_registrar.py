@@ -46,6 +46,7 @@ class PathsRegistrar(Registrar, Listener):
             mdata.named_paths_name = name
             mdata.named_paths_file = group_file_path
             mdata.named_paths = paths
+            mdata.group_file_path = group_file_path
             mdata.named_paths_identities = [
                 t[0] for t in self.manager.get_identified_paths_in(name)
             ]
@@ -59,10 +60,26 @@ class PathsRegistrar(Registrar, Listener):
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
             m = {}
-            m["file"] = mdata.named_paths_name
+            #
+            # the inputs dir may be outside the archive dir, as by default, or
+            # inside. regardless, the point is that archive is the namespace.
+            # the inputs dirs are intended to stage assets for the archive
+            # regardless of if they are located in the archive or not.
+            #
+            m["archive_name"] = mdata.archive_name
+            m["named_paths_name"] = mdata.named_paths_name
+            m["named_paths_home"] = mdata.named_paths_home
+            m["group_file_path"] = mdata.group_file_path
+            m["named_paths"] = mdata.named_paths
+            m["named_paths_identities"] = mdata.named_paths_identities
+            m["named_paths_count"] = mdata.named_paths_count
             m["fingerprint"] = mdata.fingerprint
             m["time"] = mdata.time_string
-            m["count"] = mdata.named_paths_count
+            if mdata.time_started is not None:
+                m["time_started"] = mdata.time_started_string
+            if mdata.time_completed is not None:
+                m["time_completed"] = mdata.time_completed_string
+            m["uuid"] = mdata.uuid_string
             m["manifest_path"] = mdata.manifest_path
             jdata.append(m)
             with open(mdata.manifest_path, "w", encoding="utf-8") as file:

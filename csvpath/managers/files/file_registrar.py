@@ -16,6 +16,7 @@ class FileRegistrar(Registrar, Listener):
 
     def __init__(self, csvpaths):
         super().__init__(csvpaths)
+        self.csvpaths = csvpaths
         self.config = csvpaths.config
         self.load_additional_listeners("file")
 
@@ -51,6 +52,7 @@ class FileRegistrar(Registrar, Listener):
         mani = {}
         mani["type"] = t
         mani["file"] = rpath
+        mani["file_home"] = mdata.file_home
         mani["fingerprint"] = h
         mani["time"] = mdata.time_string
         mani["from"] = path
@@ -94,8 +96,23 @@ class FileRegistrar(Registrar, Listener):
         mpath = self.manifest_path(home=home)
         mdata.manifest_path = mpath
         mdata.type = self._type_from_sourcepath(path)
+        jdata = self.get_manifest(mpath)
+        if len(jdata) > 0:
+            _ = jdata[len(jdata) - 1]
+            # if the fingerprints are the same and we haven't renamed
+            # the file or moved all the files we don't need to reregister
+            # this file. at least that is the thinking today. it is possible
+            # we might want to reregister in the case of a new listener
+            # being added or for some other reason, but not atm.
+            if (
+                "fingerprint" in _
+                and _["fingerprint"] == mdata.fingerprint
+                and "file_home" in _
+                and _["file_home"] == mdata.file_home
+            ):
+                self.csvpaths.logger.debug("File has already been registered: {jdata}")
+                return
         self.distribute_update(mdata)
-        # return mdata
 
     def type_of_file(self, home: str) -> str:
         p = self.manifest_path(home)

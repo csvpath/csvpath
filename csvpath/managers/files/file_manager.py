@@ -22,6 +22,10 @@ class FileManager:
         self.registrar = FileRegistrar(csvpaths)
         self.cacher = FileCacher(csvpaths)
 
+    @property
+    def csvpaths(self):
+        return self._csvpaths
+
     #
     # named file dir is like: inputs/named_files
     #
@@ -132,7 +136,7 @@ class FileManager:
         name_home = self.named_file_home(name)
         rpath, h = self._fingerprint(home)
 
-        mdata = FileMetadata()
+        mdata = FileMetadata(self.csvpaths.config)
         mdata.named_file_name = name
         #
         # we need the declared path, incl. any extra path info, in order

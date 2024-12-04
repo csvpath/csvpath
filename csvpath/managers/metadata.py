@@ -1,17 +1,43 @@
 from uuid import uuid4, UUID
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone, date
 from dateutil import parser
 
 
 class Metadata(ABC):
-    def __init__(self):
+    def __init__(self, config):
         self.set_time()
+        self.config = config
         self._time_started: datetime = None
         self._time_completed: datetime = None
         self._uuid = uuid4()
         self.manifest_path: str = None
         self.archive_name: str = None
+        self._base_path = None
+        self._named_files_root: str = None
+        self._named_paths_root: str = None
+        #
+        # find base dir so we can add file:// refs, if needed
+        #
+
+    @property
+    def base_path(self):
+        if self._base_path is None:
+            self._base_path = os.getcwd()
+        return self._base_path
+
+    @property
+    def named_files_root(self):
+        if self._named_files_root is None:
+            self._named_files_root = self.config.inputs_files_path
+        return self._named_files_root
+
+    @property
+    def named_paths_root(self):
+        if self._named_paths_root is None:
+            self._named_paths_root = self.config.inputs_csvpaths_path
+        return self._named_paths_root
 
     def from_manifest(self, m) -> None:
         if m is None:

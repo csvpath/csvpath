@@ -1,8 +1,9 @@
+import os
+import json
+
 from .job import JobBuilder
 from openlineage.client.facet_v2 import JobFacet, parent_run
-
-
-from openlineage.client.run import Job, Run, RunEvent, RunState
+from openlineage.client.event_v2 import Job, Run, RunEvent, RunState
 
 from ..metadata import Metadata
 from ..results.results_metadata import ResultsMetadata
@@ -27,12 +28,12 @@ class RunBuilder:
             return None
 
     def build_file_run(self, mdata: Metadata):
-        facets = {}
-        return Run(runId=mdata.uuid_string, facets=facets)
+        run = Run(runId=mdata.uuid_string, facets={})
+        return run
 
     def build_paths_run(self, mdata: Metadata):
-        facets = {}
-        return Run(runId=mdata.uuid_string, facets=facets)
+        run = Run(runId=mdata.uuid_string, facets={})
+        return run
 
     def build_result_run(self, mdata: Metadata):
         facets = {}
@@ -45,7 +46,7 @@ class RunBuilder:
                 run=parent_run.Run(runId=mdata.named_paths_uuid_string),
                 job=parent_run.Job(
                     namespace=mdata.archive_name,
-                    name=f"Group: {mdata.named_results_name}",
+                    name=f"Group:{mdata.named_results_name}",
                 ),
             )
             facets["parent"] = parent_run_facet
@@ -53,4 +54,22 @@ class RunBuilder:
 
     def build_results_run(self, mdata: Metadata):
         facets = {}
+        #
+        # get the named paths uuid
+        #
+        puuid = None
+        mp = f"{mdata.named_paths_root}{os.sep}{mdata.named_paths_name}/manifest.json"
+        print(f"\n>>>>>> mpis: {mp}")
+        with open(mp, "r", encoding="utf-8") as file:
+            d = json.load(file)
+            puuid = d[len(d) - 1]["uuid"]
+        print(f">>>>>> puuid: {puuid} is: Load:{mdata.named_results_name}")
+        parent_run_facet = parent_run.ParentRunFacet(
+            run=parent_run.Run(runId=puuid),
+            job=parent_run.Job(
+                namespace=mdata.archive_name,
+                name=f"Load:{mdata.named_results_name}",
+            ),
+        )
+        facets["parent"] = parent_run_facet
         return Run(runId=mdata.uuid_string, facets=facets)

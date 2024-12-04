@@ -3,6 +3,7 @@
 ~ Check the categories ID: categories ~
 
 $[*][
+
     import("top_matter_import")
 
     not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
