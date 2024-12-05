@@ -36,7 +36,7 @@ class CsvPathsPublic(ABC):
 
     @abstractmethod
     def collect_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
-        """Sequentially does a CsvPath.collect() on filename for every named path"""
+        """Sequentially does a CsvPath.collect() on filename for every named path. lines are collected into results."""
 
     @abstractmethod
     def fast_forward_paths(self, *, pathsname, filename) -> None:  # pragma: no cover

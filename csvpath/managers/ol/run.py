@@ -2,7 +2,7 @@ import os
 import json
 
 from .job import JobBuilder
-from openlineage.client.facet_v2 import JobFacet, parent_run
+from openlineage.client.facet_v2 import JobFacet, parent_run, error_message_run
 from openlineage.client.event_v2 import Job, Run, RunEvent, RunState
 
 from ..metadata import Metadata
@@ -50,6 +50,19 @@ class RunBuilder:
                 ),
             )
             facets["parent"] = parent_run_facet
+
+        epath = f"{mdata.instance_home}/errors.json"
+        if os.path.exists(epath):
+            with open(epath, "r", encoding="utf-8") as file:
+                j = json.load(file)
+                for e in j:
+                    msg = f"{e['error']} at {e['line_count']}\nSource: {e['source']}\nFile: {e['filename']}\nSee errors.json for more details"
+                    facets["errorMessage"] = error_message_run.ErrorMessageRunFacet(
+                        message=msg,
+                        programmingLanguage="CsvPath/Python",
+                        stackTrace=e["trace"],
+                    )
+
         return Run(runId=mdata.uuid_string, facets=facets)
 
     def build_results_run(self, mdata: Metadata):
@@ -59,11 +72,9 @@ class RunBuilder:
         #
         puuid = None
         mp = f"{mdata.named_paths_root}{os.sep}{mdata.named_paths_name}/manifest.json"
-        print(f"\n>>>>>> mpis: {mp}")
         with open(mp, "r", encoding="utf-8") as file:
             d = json.load(file)
             puuid = d[len(d) - 1]["uuid"]
-        print(f">>>>>> puuid: {puuid} is: Load:{mdata.named_results_name}")
         parent_run_facet = parent_run.ParentRunFacet(
             run=parent_run.Run(runId=puuid),
             job=parent_run.Job(

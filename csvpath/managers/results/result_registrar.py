@@ -48,7 +48,10 @@ class ResultRegistrar(Registrar, Listener):
         mdata.completed = self.completed
         mdata.files_expected = self.all_expected_files
         if self.result.csvpath.transfers:
-            mdata.transfers = self.result.csvpath.transfers
+            tpaths = self.result.csvpath.csvpaths.results_manager.transfer_paths(
+                self.result
+            )
+            mdata.transfers = tpaths
         self.distribute_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:

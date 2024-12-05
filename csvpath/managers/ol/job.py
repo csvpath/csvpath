@@ -77,6 +77,18 @@ class JobBuilder:
             ] = source_code_location_job.SourceCodeLocationJobFacet(
                 type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
             )
+            #
+            #
+            #
+            qp = f"{mdata.group_file_path}"
+            q = ""
+            with open(qp, "r", encoding="utf-8") as qf:
+                q = qf.read()
+            facets["sql"] = sql_job.SQLJobFacet(query=q)
+
+            #
+            #
+            #
             facets["documentation"] = documentation_job.DocumentationJobFacet(
                 description="""Loads a set of validation CsvPaths.
                 This job assembles the csvpaths into a named-paths group file, registers

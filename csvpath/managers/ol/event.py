@@ -52,7 +52,12 @@ class EventBuilder:
         )
         path = Dataset(namespace=mdata.archive_name, name=mdata.named_results_name)
         inputs = [file, path, manifest]
-
+        #
+        # there are 3 types of outputs
+        #  - 6 standard files: data.csv, vars.json, errors.json, etc.
+        #  - manifest.json
+        #  - 0 or more transfers
+        #
         outputs = []
         if mdata.file_fingerprints is not None:
             for fingerprint in mdata.file_fingerprints:
@@ -61,17 +66,22 @@ class EventBuilder:
                     name=f"{mdata.instance_identity}/{fingerprint}",
                 )
                 outputs.append(o)
-                # print(f"capturing o: {o} the output of {mdata.instance_identity}/{fingerprint}")
+        # manifest
         outmani = Dataset(
             namespace=mdata.archive_name,
             name=f"{mdata.instance_identity}/manifest.json",
         )
         outputs.append(outmani)
-        """
-            run_facets["errorMessage"] = error_message_run.ErrorMessageRunFacet(
-                message=str(error), programmingLanguage="python", stackTrace=stack_trace
-            )
-        """
+        # transfers
+        tpaths = mdata.transfers
+        if tpaths is not None:
+            for t in tpaths:
+                o = Dataset(
+                    namespace=mdata.archive_name,
+                    name=f"{t[3]}",
+                )
+                outputs.append(o)
+
         job = job or JobBuilder().build(mdata)
         run = run or RunBuilder().build(mdata)
         if mdata.time is None:

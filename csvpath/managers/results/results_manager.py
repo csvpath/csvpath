@@ -237,17 +237,33 @@ class ResultsManager:  # pylint: disable=C0115
         transfers = result.csvpath.transfers
         if transfers is None:
             return
+        tpaths = self.transfer_paths(result)
+        self._do_transfers(tpaths)
+
+    def transfer_paths(self, result) -> list[tuple[str, str, str, str]]:
+        #
+        # 1: filename, no extension needed: data | unmatched
+        # 2: variable name containing the path to write to
+        # 3: path of source file
+        # 3: path to write to
+        #
+        transfers = result.csvpath.transfers
+        tpaths = []
         for t in transfers:
             filefrom = "data.csv" if t[0].startswith("data") else "unmatched.csv"
-            fileto = t[1]
+            varname = t[1]
             pathfrom = self._path_to_result(result, filefrom)
-            pathto = self._path_to_transfer_to(result, fileto)
+            pathto = self._path_to_transfer_to(result, varname)
+            tpaths.append((filefrom, varname, pathfrom, pathto))
+        return tpaths
+
+    def _do_transfers(self, tpaths) -> None:
+        for t in tpaths:
+            pathfrom = t[2]
+            pathto = t[3]
             with open(pathfrom, "r", encoding="utf-8") as pf:
                 with open(pathto, "w", encoding="utf-8") as pt:
                     pt.write(pf.read())
-            tm = {}
-            tm["from"] = pathfrom
-            tm["to"] = pathto
 
     def _path_to_transfer_to(self, result, t) -> str:
         p = result.csvpath.config.transfer_root

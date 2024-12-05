@@ -21,7 +21,13 @@ class ResultMetadata(Metadata):
         self.completed: bool = None
         self.files_expected: bool = None
         self.error_count: int = -1
-        self.transfers: tuple[str, str] = None
+        #
+        # 1: filename, no extension needed: data | unmatched
+        # 2: variable name containing the path to write to
+        # 3: path of source file
+        # 3: path to write to
+        #
+        self.transfers: tuple[str, str, str, str] = None
 
     def from_manifest(self, m) -> None:
         if m is None:
