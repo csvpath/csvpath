@@ -124,18 +124,25 @@ class FileManager:
         home = self.assure_file_home(name, path)
         file_home = home
         mark = None
-        if home.find("#") > -1:
-            home = home[0 : home.find("#")]
-        if path.find("#") > -1:
-            mark = path[path.find("#") + 1 :]
-            path = path[0 : path.find("#")]
+        #
+        # find mark if there. mark indicates a sheet. it is found
+        # as the trailing word after a # at the end of the path e.g.
+        # my-xlsx.xlsx#sheet2
+        #
+        hm = home.find("#")
+        if hm > -1:
+            mark = home[hm + 1 :]
+            home = home[0:hm]
+        pm = path.find("#")
+        if pm > -1:
+            mark = path[pm + 1 :]
+            path = path[0:pm]
         #
         # copy file to its home location
         #
         self._copy_in(path, home)
         name_home = self.named_file_home(name)
         rpath, h = self._fingerprint(home)
-
         mdata = FileMetadata(self.csvpaths.config)
         mdata.named_file_name = name
         #

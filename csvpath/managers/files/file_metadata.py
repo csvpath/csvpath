@@ -16,7 +16,7 @@ class FileMetadata(Metadata):
         self.file_home = None
         # like ab12cd546.csv
         self.file_name = None
-        # like the '#' char
+        # a name after a '#' char
         self.mark = None
         # like csv
         self.type = None

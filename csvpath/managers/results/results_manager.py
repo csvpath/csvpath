@@ -110,21 +110,7 @@ class ResultsManager:  # pylint: disable=C0115
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
         if results and len(results) > 0:
-            if before is None:
-                return results[len(results) - 1]
-            else:
-                for i, r in enumerate(results):
-                    if r.csvpath and r.csvpath.identity == before:
-                        if i == 0:
-                            self.csvpaths.logger.debug(
-                                "Last named result before %s is not possible because it is at index %s. results: %s. returning None.",
-                                before,
-                                i,
-                                results,
-                            )
-                            return None
-                        else:
-                            return results[i - 1]
+            return results[len(results) - 1]
         return None
 
     def is_valid(self, name: str) -> bool:
@@ -457,4 +443,6 @@ class ResultsManager:  # pylint: disable=C0115
         # if reached by a reference this error should be trapped at an
         # expression and handled according to the error policy.
         #
-        raise InputException(f"Results '{name}' not found")
+        raise InputException(
+            f"Results '{name}' not found. \nNamed-results are: {self.named_results}"
+        )

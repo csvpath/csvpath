@@ -329,7 +329,18 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # update the settings using the metadata fields we just collected
         csvpath.update_settings_from_metadata()
         #
-        # this next line is triggering a write to the inputs dir
+        # if we have a reference, resolve it. we may not actually use the file
+        # if we're in source-mode: preceding, but that doesn't matter from the
+        # pov of the reference.
+        #
+        if filename.startswith("$"):
+            self.logger.debug(
+                "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
+                filename,
+            )
+            file = self.results_manager.data_file_for_reference(filename)
+        #
+        #
         #
         if csvpath.data_from_preceding is True:
             #
@@ -340,6 +351,16 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             # saved data.
             #
             # find the preceding csvpath in the named-paths
+            #
+            # we may be in a file reference like: $sourcemode.csvpaths.source2:from. if so
+            # we just need the named-paths name.
+            #
+            if pathsname.startswith("$"):
+                self.logger.debug(
+                    "Named-paths name is a reference: %s. Stripping it down to just the actual named-paths name.",
+                    pathsname,
+                )
+                pathsname = pathsname[1 : pathsname.find(".")]
             result = self.results_manager.get_last_named_result(
                 name=pathsname, before=csvpath.identity
             )
@@ -352,6 +373,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
                     csvpath.identity,
                     file,
+                )
+            else:
+                self.logger.warning(
+                    "Cannot find a preceding data file to use for csvpath identified as %s running in source-mode",
+                    csvpath.identity,
                 )
         f = path.find("[")
         self.logger.debug("Csvpath matching part starts at char # %s", f)
@@ -791,7 +817,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     pathsname=pathsname,
                 )
                 if csvpath.data_from_preceding is True:
-                    self.logger.warning(
+                    raise CsvPathsException(
                         "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
                     )
                 csvpath_objects.append([csvpath, []])
