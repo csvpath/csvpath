@@ -37,11 +37,7 @@ class RunBuilder:
 
     def build_result_run(self, mdata: Metadata):
         facets = {}
-        if mdata.named_paths_uuid is None:
-            raise Exception(
-                "runbuilder result run: mdata.named_paths_uuid  cannot be None"
-            )
-        else:
+        if mdata.named_paths_uuid is not None:
             parent_run_facet = parent_run.ParentRunFacet(
                 run=parent_run.Run(runId=mdata.named_paths_uuid_string),
                 job=parent_run.Job(
@@ -50,6 +46,10 @@ class RunBuilder:
                 ),
             )
             facets["parent"] = parent_run_facet
+        else:
+            print(
+                "The OpenLineage run event builder cannot find the named_paths_uuid value in Metadata. If this is not testing please log a bug."
+            )
 
         epath = f"{mdata.instance_home}/errors.json"
         if os.path.exists(epath):
@@ -71,7 +71,18 @@ class RunBuilder:
         # get the named paths uuid
         #
         puuid = None
-        mp = f"{mdata.named_paths_root}{os.sep}{mdata.named_paths_name}/manifest.json"
+        npn = mdata.named_paths_name
+        if npn.startswith("$"):
+            npn = npn[1 : npn.find(".")]
+        #
+        # npn should also == mdata.named_results_name but let's go with
+        # the reference prefix because it is more likely to reflect the
+        # named-paths dir
+        #
+        m = npn.find("#")
+        if m > -1:
+            npn = npn[0:m]
+        mp = f"{mdata.named_paths_root}{os.sep}{npn}/manifest.json"
         with open(mp, "r", encoding="utf-8") as file:
             d = json.load(file)
             puuid = d[len(d) - 1]["uuid"]

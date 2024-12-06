@@ -16,7 +16,11 @@ class OpenLineageResultsListener(Listener):
         if self.ol_client is None:
             client_url = self.config._get("marquez", "base_url")
             if client_url is None:
-                client_url = "http://localhost:5000"
+                print(
+                    "WARNING: OpenLineage listeners are live but there is no Marquez API URL"
+                )
+                return
+                # client_url = "http://localhost:5000"
             self.ol_client = OpenLineageClient(url=client_url)
 
         es = EventBuilder().build(mdata)

@@ -118,30 +118,34 @@ class EventBuilder:
                                     fields.append(afield)
                         runtime_data = j["runtime_data"]
                         if runtime_data:
-                            afield = schema_dataset.SchemaDatasetFacetFields(
-                                name="count_lines",
-                                type=f"{runtime_data['count_lines']}",
-                                description="Number of lines",
-                            )
-                            fields.append(afield)
-                            afield = schema_dataset.SchemaDatasetFacetFields(
-                                name="count_matches",
-                                type=f"{runtime_data['count_matches']}",
-                                description="Number of lines that matched",
-                            )
-                            fields.append(afield)
-                            afield = schema_dataset.SchemaDatasetFacetFields(
-                                name="valid",
-                                type=f"{runtime_data['valid']}",
-                                description="True if validation does not fail",
-                            )
-                            fields.append(afield)
-                            afield = schema_dataset.SchemaDatasetFacetFields(
-                                name="stopped",
-                                type=f"{runtime_data['stopped']}",
-                                description="True if processing stopped early",
-                            )
-                            fields.append(afield)
+                            if "count_lines" in runtime_data:
+                                afield = schema_dataset.SchemaDatasetFacetFields(
+                                    name="count_lines",
+                                    type=f"{runtime_data['count_lines']}",
+                                    description="Number of lines",
+                                )
+                                fields.append(afield)
+                            if "count_matches" in runtime_data:
+                                afield = schema_dataset.SchemaDatasetFacetFields(
+                                    name="count_matches",
+                                    type=f"{runtime_data['count_matches']}",
+                                    description="Number of lines that matched",
+                                )
+                                fields.append(afield)
+                            if "valid" in runtime_data:
+                                afield = schema_dataset.SchemaDatasetFacetFields(
+                                    name="valid",
+                                    type=f"{runtime_data['valid']}",
+                                    description="True if validation does not fail",
+                                )
+                                fields.append(afield)
+                            if "stopped" in runtime_data:
+                                afield = schema_dataset.SchemaDatasetFacetFields(
+                                    name="stopped",
+                                    type=f"{runtime_data['stopped']}",
+                                    description="True if processing stopped early",
+                                )
+                                fields.append(afield)
 
                     sdf = schema_dataset.SchemaDatasetFacet(fields=fields)
                     fs["schema"] = sdf
