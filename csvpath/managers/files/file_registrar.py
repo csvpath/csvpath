@@ -110,7 +110,7 @@ class FileRegistrar(Registrar, Listener):
                 and "file_home" in _
                 and _["file_home"] == mdata.file_home
             ):
-                self.csvpaths.logger.debug("File has already been registered: {jdata}")
+                self.csvpaths.logger.info("File has already been registered: %s", jdata)
                 return
         self.distribute_update(mdata)
 

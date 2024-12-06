@@ -68,6 +68,11 @@ class ResultMetadata(Metadata):
 
     @named_paths_uuid_string.setter
     def named_paths_uuid_string(self, u: str) -> None:
+        #
+        # this is seen in testing
+        #
+        if u is None:
+            return
         if u and not isinstance(u, str):
             raise ValueError("Must be a string")
         self._named_paths_uuid = UUID(u)

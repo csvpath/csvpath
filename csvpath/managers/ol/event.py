@@ -1,8 +1,12 @@
 from datetime import datetime
 import os
 import json
-
-from openlineage.client.facet_v2 import JobFacet, schema_dataset
+from pathlib import Path
+from openlineage.client.facet_v2 import (
+    JobFacet,
+    schema_dataset,
+    output_statistics_output_dataset,
+)
 from openlineage.client.event_v2 import Dataset, RunEvent
 from openlineage.client.event_v2 import Job, Run, RunState
 from openlineage.client.event_v2 import InputDataset, OutputDataset
@@ -61,10 +65,97 @@ class EventBuilder:
         outputs = []
         if mdata.file_fingerprints is not None:
             for fingerprint in mdata.file_fingerprints:
-                o = Dataset(
-                    namespace=mdata.archive_name,
+                # o = Dataset(
+                #    namespace=mdata.archive_name,
+                #    name=f"{mdata.instance_identity}/{fingerprint}",
+                # )
+                fs = {}
+                #
+                # experiment: add output statistics facet. not working yet
+                # but doesn't break anything.
+                #
+                of = {}
+                fp = f"{mdata.instance_home}{os.sep}{fingerprint}"
+                exists = os.path.exists(fp)
+                if exists:
+                    size = Path(fp).stat().st_size
+                    lines = 0
+                    with open(fp, "r", encoding="utf-8") as file:
+                        for line in file:
+                            lines += 1
+                    of[
+                        "outputStatistics"
+                    ] = output_statistics_output_dataset.OutputStatisticsOutputDatasetFacet(
+                        rowCount=lines, size=size
+                    )
+
+                if exists and fingerprint == "vars.json":
+                    fields = []
+                    with open(fp, "r", encoding="utf-8") as file:
+                        j = json.load(file)
+                        for k, v in j.items():
+                            if not k.startswith("_intx_"):
+                                afield = schema_dataset.SchemaDatasetFacetFields(
+                                    name=f"{k}", type=f"{type(v)}", description=""
+                                )
+                                fields.append(afield)
+                    sdf = schema_dataset.SchemaDatasetFacet(fields=fields)
+                    fs["schema"] = sdf
+
+                if exists and fingerprint == "meta.json":
+                    fields = []
+                    with open(fp, "r", encoding="utf-8") as file:
+                        j = json.load(file)
+                        metadata = j["metadata"]
+                        if metadata:
+                            for k, v in metadata.items():
+                                if k.endswith("mode"):
+                                    afield = schema_dataset.SchemaDatasetFacetFields(
+                                        name=f"{k}",
+                                        type=f"{v}",
+                                        description="Instance-level setting",
+                                    )
+                                    fields.append(afield)
+                        runtime_data = j["runtime_data"]
+                        if runtime_data:
+                            afield = schema_dataset.SchemaDatasetFacetFields(
+                                name="count_lines",
+                                type=f"{runtime_data['count_lines']}",
+                                description="Number of lines",
+                            )
+                            fields.append(afield)
+                            afield = schema_dataset.SchemaDatasetFacetFields(
+                                name="count_matches",
+                                type=f"{runtime_data['count_matches']}",
+                                description="Number of lines that matched",
+                            )
+                            fields.append(afield)
+                            afield = schema_dataset.SchemaDatasetFacetFields(
+                                name="valid",
+                                type=f"{runtime_data['valid']}",
+                                description="True if validation does not fail",
+                            )
+                            fields.append(afield)
+                            afield = schema_dataset.SchemaDatasetFacetFields(
+                                name="stopped",
+                                type=f"{runtime_data['stopped']}",
+                                description="True if processing stopped early",
+                            )
+                            fields.append(afield)
+
+                    sdf = schema_dataset.SchemaDatasetFacet(fields=fields)
+                    fs["schema"] = sdf
+
+                o = OutputDataset(
                     name=f"{mdata.instance_identity}/{fingerprint}",
+                    namespace=mdata.archive_name,
+                    facets=fs,
+                    outputFacets=of,
                 )
+
+                #
+                # end exp
+                #
                 outputs.append(o)
         # manifest
         outmani = Dataset(

@@ -6,7 +6,7 @@ class StdOutRunListener(Listener):
     """this class just prints a line indicating that a run is
     starting. it is mainly used for testing"""
 
-    def __init__(self, config):
+    def __init__(self, config=None):
         super().__init__(config)
 
     def metadata_update(self, mdata: Metadata) -> None:

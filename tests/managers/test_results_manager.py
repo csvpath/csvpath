@@ -20,8 +20,17 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
-            run_dir="",
+            run_dir="archive/x/y",
         )
+        #
+        # if we don't save through the results registrar we cannot
+        # pick up the results uuid for the result registrar. might
+        # not be a problem here, but let's do it.
+        #
+        paths.results_manager.save(result)
+        #
+        #
+        #
         results = [result]
         rs = {}
         rs[pathsname] = results

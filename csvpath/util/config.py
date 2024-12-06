@@ -119,9 +119,9 @@ class Config:
                 ret = s.strip()
             return ret
         except KeyError:
-            print(
-                f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
-            )
+            if self.csvpath_log_level == LogLevels.DEBUG:
+                print(f"Check config at {self.config_path} for [{section}][{name}]")
+            return None
 
     def add_to_config(self, section, key, value) -> None:
         if not self._config.has_section(section):

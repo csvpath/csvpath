@@ -59,7 +59,7 @@ class RunBuilder:
                     msg = f"{e['error']} at {e['line_count']}\nSource: {e['source']}\nFile: {e['filename']}\nSee errors.json for more details"
                     facets["errorMessage"] = error_message_run.ErrorMessageRunFacet(
                         message=msg,
-                        programmingLanguage="CsvPath/Python",
+                        programmingLanguage="CsvPath and/or Python",
                         stackTrace=e["trace"],
                     )
 

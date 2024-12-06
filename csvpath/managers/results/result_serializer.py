@@ -137,6 +137,8 @@ class ResultSerializer:
         return paths_name
 
     def get_run_dir_name_from_datetime(self, dt) -> str:
+        if dt is None:
+            return None
         t = dt.strftime("%Y-%m-%d_%I-%M-%S")
         return t
 

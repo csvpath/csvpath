@@ -1,4 +1,5 @@
 import os
+import json
 
 from openlineage.client.facet_v2 import (
     JobFacet,
@@ -105,6 +106,31 @@ class JobBuilder:
             fs["documentation"] = documentation_job.DocumentationJobFacet(
                 description=mdata.instance_identity
             )
+            #
+            # exp: processing type seems to be fixed at batch, streaming, service.
+            # the others seem to be open, but also aren't shown in the UI afaik.
+            #
+            f = job_type_job.JobTypeJobFacet(
+                processingType="BATCH", integration="CSVPATH", jobType="VALIDATION"
+            )
+            fs["jobType"] = f
+            #
+            # end exp
+            #
+            # if we have meta.json available (after run is done) we can grab the
+            # csvpath for the instance job. we could go after it from the results's
+            # manifest or the group.csvpaths. tho atm not sure when it is available
+            # in results either and parsing the group file would be a small pain.
+            # after seems fine.
+            #
+            qp = f"{mdata.instance_home}{os.sep}meta.json"
+            if os.path.exists(qp):
+                q = ""
+                with open(qp, "r", encoding="utf-8") as file:
+                    m = json.load(file)
+                    q = f"{m['runtime_data']['scan_part']}{m['runtime_data']['match_part']}"
+                fs["sql"] = sql_job.SQLJobFacet(query=q)
+
             name = f"Instance:{mdata.instance_identity}"
             job = Job(namespace=mdata.archive_name, name=name, facets=fs)
             return job
@@ -113,14 +139,17 @@ class JobBuilder:
 
     def build_results_job(self, mdata: Metadata):
         try:
-            job = self._base_job(mdata)
-            fs = job.facets
+            fs = {}
+            fs["documentation"] = documentation_job.DocumentationJobFacet(
+                description="Kicks off the individual csvpath jobs within this named-paths group"
+            )
             fs[
                 "sourceCodeLocation"
             ] = source_code_location_job.SourceCodeLocationJobFacet(
                 type="CsvPath", url=f"{mdata.named_paths_name}/group.csvpaths"
             )
-            job.name = f"Group:{mdata.named_results_name}"
+            name = f"Group:{mdata.named_results_name}"
+            job = Job(namespace=mdata.archive_name, name=name, facets=fs)
             return job
         except Exception as e:
             print(f"error in jobbuilder: {e}")

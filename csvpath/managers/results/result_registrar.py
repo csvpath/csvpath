@@ -1,6 +1,8 @@
 import os
 import json
 import hashlib
+from pathlib import Path
+
 from datetime import datetime
 from ..listener import Listener
 from ..metadata import Metadata
@@ -17,7 +19,13 @@ class ResultRegistrar(Registrar, Listener):
 
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
-        mdata.named_paths_uuid_string = p["uuid"]
+        if p is None:
+            self.result.csvpath.csvpaths.logger.debug(
+                "No named-paths manifest available at %s so not setting named_paths_uuid_string",
+                self.named_paths_manifest_path,
+            )
+        else:
+            mdata.named_paths_uuid_string = p["uuid"]
         self.distribute_update(mdata)
 
     def register_complete(self, mdata: Metadata = None) -> None:
@@ -91,10 +99,11 @@ class ResultRegistrar(Registrar, Listener):
 
     # gets the manifest for the named_paths as a whole
     @property
-    def named_paths_manifest(self) -> dict[str, str | bool]:
-        with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
-            d = json.load(file)
-            return d
+    def named_paths_manifest(self) -> dict | None:
+        if os.path.exists(self.named_paths_manifest_path):
+            with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
+                d = json.load(file)
+                return d
         return None
 
     # gets the manifest for the named_paths as a whole from the run dir
@@ -103,7 +112,12 @@ class ResultRegistrar(Registrar, Listener):
         return os.path.join(self.result.run_dir, "manifest.json")
 
     @property
-    def manifest(self) -> dict[str, str | bool]:
+    def manifest(self) -> dict | None:
+        mp = self.manifest_path
+        if not os.path.exists(mp):
+            with open(self.manifest_path, "w", encoding="utf-8") as file:
+                json.dump({}, file, indent=2)
+                return {}
         with open(self.manifest_path, "r", encoding="utf-8") as file:
             d = json.load(file)
             return d
@@ -111,13 +125,16 @@ class ResultRegistrar(Registrar, Listener):
 
     @property
     def manifest_path(self) -> str:
-        return os.path.join(self.result_path, "manifest.json")
+        h = os.path.join(self.result_path, "manifest.json")
+        return h
 
     @property
     def result_path(self) -> str:
         rdir = self.result_serializer.get_instance_dir(
             run_dir=self.result.run_dir, identity=self.result.identity_or_index
         )
+        if not os.path.exists(rdir):
+            Path(rdir).mkdir(parents=True, exist_ok=True)
         return rdir
 
     @property
