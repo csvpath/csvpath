@@ -3,6 +3,9 @@ from .metadata import Metadata
 
 
 class Listener(ABC):
+    def __init__(self, config=None) -> None:
+        self.config = config
+
     @abstractmethod
     def metadata_update(self, mdata: Metadata) -> None:
         """any system that wants updates about a registrar's actions registers to

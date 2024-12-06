@@ -1,7 +1,6 @@
 import os
 import json
 import hashlib
-from datetime import datetime
 from csvpath.util.exceptions import InputException
 from .paths_metadata import PathsMetadata
 from ..listener import Listener
@@ -9,11 +8,17 @@ from ..metadata import Metadata
 from ..registrar import Registrar
 
 
-class PathsRegistrar(Listener, Registrar):
+class PathsRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
         super().__init__(csvpaths)
-        self.manager = csvpaths.paths_manager
-        self.config = csvpaths.config
+        self._manager = None
+        self.load_additional_listeners("paths")
+
+    @property
+    def manager(self):
+        if self._manager is None:
+            self._manager = self.csvpaths.paths_manager
+        return self._manager
 
     def get_manifest(self, mpath) -> list:
         with open(mpath, "r", encoding="utf-8") as file:
@@ -37,9 +42,11 @@ class PathsRegistrar(Listener, Registrar):
         cf = self._most_recent_fingerprint(mpath)
         if f != cf:
             mdata = PathsMetadata()
+            mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
             mdata.named_paths_file = group_file_path
             mdata.named_paths = paths
+            mdata.group_file_path = group_file_path
             mdata.named_paths_identities = [
                 t[0] for t in self.manager.get_identified_paths_in(name)
             ]
@@ -53,10 +60,26 @@ class PathsRegistrar(Listener, Registrar):
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
             m = {}
-            m["file"] = mdata.named_paths_name
+            #
+            # the inputs dir may be outside the archive dir, as by default, or
+            # inside. regardless, the point is that archive is the namespace.
+            # the inputs dirs are intended to stage assets for the archive
+            # regardless of if they are located in the archive or not.
+            #
+            m["archive_name"] = mdata.archive_name
+            m["named_paths_name"] = mdata.named_paths_name
+            m["named_paths_home"] = mdata.named_paths_home
+            m["group_file_path"] = mdata.group_file_path
+            m["named_paths"] = mdata.named_paths
+            m["named_paths_identities"] = mdata.named_paths_identities
+            m["named_paths_count"] = mdata.named_paths_count
             m["fingerprint"] = mdata.fingerprint
-            m["time"] = f"{mdata.time}"
-            m["count"] = mdata.named_paths_count
+            m["time"] = mdata.time_string
+            if mdata.time_started is not None:
+                m["time_started"] = mdata.time_started_string
+            if mdata.time_completed is not None:
+                m["time_completed"] = mdata.time_completed_string
+            m["uuid"] = mdata.uuid_string
             m["manifest_path"] = mdata.manifest_path
             jdata.append(m)
             with open(mdata.manifest_path, "w", encoding="utf-8") as file:

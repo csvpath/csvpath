@@ -148,8 +148,10 @@ class XlsxDataReader(DataFileReader):
 
     def next(self) -> list[str]:
         db = xl.readxl(fn=self._path)
+        print(f"xlsxdr: db:{db}, self_path:{self._path}")
         if not self._sheet:
             self._sheet = db.ws_names[0]
+        print(f"xlsxdr: self._sheet: {self._sheet}")
 
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]

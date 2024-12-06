@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import traceback
 from csvpath.util.config import OnError
@@ -79,7 +79,7 @@ class Error:
         self.json: str = None
         self.datum: Any = None
         self.filename: str = None
-        self.at: datetime.now()
+        self.at: datetime.now(timezone.utc)
 
     def to_json(self) -> dict:
         ret = {
@@ -232,7 +232,7 @@ class ErrorHandler:
         error = Error()
         error.error = ex
         error.exception_class = ex.__class__.__name__
-        error.at = datetime.now()
+        error.at = datetime.now(timezone.utc)
         if self._csvpath:
             if self._csvpath.line_monitor:
                 error.line_count = (

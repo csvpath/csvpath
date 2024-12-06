@@ -185,6 +185,7 @@ class TestNewCsvPaths(unittest.TestCase):
         assert lines[5] == ["Frog", "Bat", "growl"]
 
     def test_csvpaths_source_mode(self):
+        print("")
         paths = CsvPaths()
         paths.file_manager.add_named_file(
             name="sourcemode", path="tests/test_resources/named_files/test.csv"

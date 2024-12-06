@@ -1,0 +1,29 @@
+---- CSVPATH ----
+
+~ this is a test for marquez's ability to import.
+id: General data integrity checks
+     validation-mode: no-raise, print
+~
+$[1*][
+
+~ LATENCY ABOVE HERE ~
+    ~ Check for unique license numbers ~
+~
+    @license_numbers.onmatch = #"License Number"
+    in(#"License Number", @license_numbers) -> print("")
+~
+@x = "y"
+~
+    print("Error: Duplicate License Number $.headers.'License Number' on line $.csvpath.line_number", fail())
+~
+]
+
+
+
+
+
+
+
+
+
+

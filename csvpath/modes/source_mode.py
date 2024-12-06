@@ -1,5 +1,6 @@
 class SourceMode:
     PRECEDING = "preceding"
+    DEFAULT = "default"
     MODE = "source-mode"
 
     def __init__(self, controller):
@@ -20,6 +21,6 @@ class SourceMode:
 
     @value.setter
     def value(self, sm: bool) -> None:
-        m = SourceMode.PRECEDING if sm is True else None
+        m = SourceMode.PRECEDING if sm is True else SourceMode.DEFAULT
         self.controller.set(SourceMode.MODE, m)
         self.source_mode = sm

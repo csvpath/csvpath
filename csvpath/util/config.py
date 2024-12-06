@@ -64,6 +64,7 @@ class Config:
         self.load = load
         self._cache_dir_path = None
         self._function_imports = None
+        self._additional_listeners = None
         self._csvpath_file_extensions = None
         self._csv_file_extensions = None
         self._csvpath_errors_policy = None
@@ -111,17 +112,16 @@ class Config:
             raise ConfigurationException("No config object available")
         try:
             s = self._config[section][name]
-            s = s.strip()
             ret = None
             if s.find(",") > -1:
                 ret = [s.strip() for s in s.split(",")]
             else:
-                ret = s
+                ret = s.strip()
             return ret
         except KeyError:
-            print(
-                f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
-            )
+            if self.csvpath_log_level == LogLevels.DEBUG:
+                print(f"Check config at {self.config_path} for [{section}][{name}]")
+            return None
 
     def add_to_config(self, section, key, value) -> None:
         if not self._config.has_section(section):
@@ -391,6 +391,17 @@ on_unmatched_file_fingerprints = halt
     def configpath(self, path: str) -> None:
         self._configpath = path
 
+    def additional_listeners(self, listener_type) -> list[str]:
+        if self._additional_listeners is None:
+            self._additional_listeners = {}
+        if listener_type in self._additional_listeners:
+            return self._additional_listeners[listener_type]
+        lst = self._get("listeners", listener_type)
+        if lst is None:
+            lst = []
+        self._additional_listeners[listener_type] = lst
+        return lst
+
     @property
     def cache_dir_path(self) -> str:
         return self._cache_dir_path
@@ -432,6 +443,13 @@ on_unmatched_file_fingerprints = halt
     @archive_path.setter
     def archive_path(self, p) -> None:
         self._archive_path = p
+
+    @property
+    def archive_name(self) -> str:
+        p = self.archive_path
+        if p.find(os.sep) > -1:
+            p = p[p.rfind(os.sep) + 1 :]
+        return p
 
     @property
     def inputs_files_path(self) -> str:

@@ -89,7 +89,11 @@ class TestFilesManager(unittest.TestCase):
         m.add_named_file(name="testx", path="tests/test_resources/test.csv")
         mpath = reg.manifest_path(m.named_file_home("testx"))
         m = reg.get_manifest(mpath)
-        assert len(m) == 3
+        #
+        # file manager should add only 1x to manifest.json because the
+        # fingerprint and filename has not changed.
+        #
+        assert len(m) == 1
 
     def test_file_mgr_dir1(self):
         paths = CsvPaths()

@@ -9,6 +9,7 @@ from csvpath.util.reference_parser import ReferenceParser
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
 from .results_metadata import ResultsMetadata
+from .result_metadata import ResultMetadata
 from .results_registrar import ResultsRegistrar
 from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
@@ -38,16 +39,20 @@ class ResultsManager:  # pylint: disable=C0115
             results=results,
         )
         m = rr.manifest
-        mdata = ResultsMetadata()
-        mdata.time = m["time"]
-        mdata.uuid = m["uuid"]
+        mdata = ResultsMetadata(self.csvpaths.config)
+        if "time" not in m or m["time"] is None:
+            mdata.set_time()
+        else:
+            mdata.time_string = m["time"]
+        mdata.uuid_string = m["uuid"]
+        mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_fingerprint = m["named_file_fingerprint"]
         mdata.named_file_fingerprint_on_file = m["named_file_fingerprint_on_file"]
         mdata.named_file_name = m["named_file_name"]
         mdata.named_file_path = m["named_file_path"]
-
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
+        mdata.named_results_name = pathsname
         rr.register_complete(mdata)
 
     def start_run(self, *, run_dir, pathsname, filename) -> None:
@@ -56,16 +61,13 @@ class ResultsManager:  # pylint: disable=C0115
             run_dir=run_dir,
             pathsname=pathsname,
         )
-        mdata = ResultsMetadata()
+        mdata = ResultsMetadata(self.csvpaths.config)
+        mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_name = filename
-        filepath = self.csvpaths.file_manager.get_named_file(filename)
-        mdata.named_file_path = filepath
+        # self.csvpaths.file_manager.get_named_file(filename)
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
-        del mdata.all_completed
-        del mdata.all_valid
-        del mdata.error_count
-        del mdata.all_expected_files
+        mdata.named_results_name = pathsname
         rr.register_start(mdata)
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
@@ -108,21 +110,7 @@ class ResultsManager:  # pylint: disable=C0115
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
         if results and len(results) > 0:
-            if before is None:
-                return results[len(results) - 1]
-            else:
-                for i, r in enumerate(results):
-                    if r.csvpath and r.csvpath.identity == before:
-                        if i == 0:
-                            self.csvpaths.logger.debug(
-                                "Last named result before %s is not possible because it is at index %s. results: %s. returning None.",
-                                before,
-                                i,
-                                results,
-                            )
-                            return None
-                        else:
-                            return results[i - 1]
+            return results[len(results) - 1]
         return None
 
     def is_valid(self, name: str) -> bool:
@@ -178,14 +166,41 @@ class ResultsManager:  # pylint: disable=C0115
             self.named_results[name].append(result)
         self._variables = None
         #
-        # this is the beginning of an identity run within a named-paths run
+        # this is the beginning of an identity run within a named-paths run.
+        # run metadata goes to the central record of runs kicking off within
+        # the archive. the run's own more complete record is below as a
+        # separate event. this could change, but atm seems reasonable.
         #
-        mdata = RunMetadata()
+        mdata = RunMetadata(self.csvpaths.config)
+        mdata.uuid = result.uuid
+        mdata.archive_name = self.csvpaths.config.archive_name
+        mdata.time_start = result.run_time
         mdata.run_home = result.run_dir
         mdata.identity = result.identity_or_index
         mdata.named_paths_name = result.paths_name
         mdata.named_file_name = result.file_name
         rr = RunRegistrar(self.csvpaths)
+        rr.register_start(mdata)
+        #
+        # we prep the results event
+        #
+        # we use the same UUID for both metadata updates because the
+        # UUID represents the run, not the metadata object
+        #
+        mdata = ResultMetadata(self.csvpaths.config)
+        mdata.uuid = result.uuid
+        mdata.archive_name = self.csvpaths.config.archive_name
+        mdata.time_started = result.run_time
+        mdata.named_results_name = result.paths_name
+        mdata.run = result.run_dir[result.run_dir.rfind(os.sep) + 1 :]
+        mdata.run_home = result.run_dir
+        mdata.instance_home = result.instance_dir
+        mdata.instance_identity = result.identity_or_index
+        mdata.input_data_file = result.file_name
+        rs = ResultSerializer(self._csvpaths.config.archive_path)
+        rr = ResultRegistrar(
+            csvpaths=self.csvpaths, result=result, result_serializer=rs
+        )
         rr.register_start(mdata)
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:
@@ -208,17 +223,33 @@ class ResultsManager:  # pylint: disable=C0115
         transfers = result.csvpath.transfers
         if transfers is None:
             return
+        tpaths = self.transfer_paths(result)
+        self._do_transfers(tpaths)
+
+    def transfer_paths(self, result) -> list[tuple[str, str, str, str]]:
+        #
+        # 1: filename, no extension needed: data | unmatched
+        # 2: variable name containing the path to write to
+        # 3: path of source file
+        # 3: path to write to
+        #
+        transfers = result.csvpath.transfers
+        tpaths = []
         for t in transfers:
             filefrom = "data.csv" if t[0].startswith("data") else "unmatched.csv"
-            fileto = t[1]
+            varname = t[1]
             pathfrom = self._path_to_result(result, filefrom)
-            pathto = self._path_to_transfer_to(result, fileto)
+            pathto = self._path_to_transfer_to(result, varname)
+            tpaths.append((filefrom, varname, pathfrom, pathto))
+        return tpaths
+
+    def _do_transfers(self, tpaths) -> None:
+        for t in tpaths:
+            pathfrom = t[2]
+            pathto = t[3]
             with open(pathfrom, "r", encoding="utf-8") as pf:
                 with open(pathto, "w", encoding="utf-8") as pt:
                     pt.write(pf.read())
-            tm = {}
-            tm["from"] = pathfrom
-            tm["to"] = pathto
 
     def _path_to_transfer_to(self, result, t) -> str:
         p = result.csvpath.config.transfer_root
@@ -412,4 +443,6 @@ class ResultsManager:  # pylint: disable=C0115
         # if reached by a reference this error should be trapped at an
         # expression and handled according to the error policy.
         #
-        raise InputException(f"Results '{name}' not found")
+        raise InputException(
+            f"Results '{name}' not found. \nNamed-results are: {self.named_results}"
+        )

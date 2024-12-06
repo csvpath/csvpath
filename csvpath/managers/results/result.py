@@ -1,5 +1,7 @@
 # pylint: disable=C0114
 import os
+from uuid import UUID
+import uuid
 from datetime import datetime
 from typing import Any
 from csvpath.util.error import Error, ErrorCollector
@@ -46,6 +48,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._run_time = run_time
         self._run_dir = run_dir
         self._unmatched = None
+        self._uuid = None
         self._data_file_path = None
         if (
             csvpath.metadata is None
@@ -62,6 +65,18 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
             # precedence over this index. if the csvpath uses NAME it will overwrite.
             #
             csvpath.metadata["NAME"] = self.run_index
+
+    @property
+    def uuid(self) -> UUID:
+        if self._uuid is None:
+            self._uuid = uuid.uuid4()
+        return self._uuid
+
+    @uuid.setter
+    def uuid(self, u: UUID) -> None:
+        if not isinstance(u, UUID):
+            raise ValueError("Uuid must be a UUID")
+        self._uuid = u
 
     @property
     def run_time(self) -> datetime:

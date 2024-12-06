@@ -1,10 +1,8 @@
 
-~ name: source1
-~
+~ name: source1~
 $[*][
-~
-print("this is $.csvpath.identity at line $.csvpath.line_number working on data from $.csvpath.file_name with headers $.csvpath.headers")
-~    #firstname #lastname
+    #firstname #lastname
+    print.once("$.csvpath.identity: working on data from $.csvpath.file_name with headers: $.csvpath.headers")
     append("count", count(), yes())
     collect("firstname", "lastname", "count")
 ]
@@ -13,23 +11,20 @@ print("this is $.csvpath.identity at line $.csvpath.line_number working on data 
 
 ~ id: source2
   source-mode: preceding
-  validation-mode: print, no-raise, no-stop
-~
+  validation-mode: print, no-raise, no-stop~
 $[*][
     gt(#count, 4)
+    print.once("$.csvpath.identity: working on data from $.csvpath.file_name with headers: $.csvpath.headers")
     append("thinking", random(0,5), yes() )
-    print("this is $.csvpath.identity working on data from $.csvpath.file_name with headers: $.csvpath.headers")
     collect("firstname", "lastname", "thinking", "count")
 ]
 
 ---- CSVPATH ----
 
 ~ id: source3
-  source-mode: preceding
-~
+  source-mode: preceding~
 $[*][
-    print("this is $.csvpath.identity working on data from $.csvpath.file_name")
-    print("$.headers.firstname, $.headers.lastname, $.headers.thinking")
+    print.once("$.csvpath.identity: working on data from $.csvpath.file_name with headers: $.csvpath.headers")
     collect("firstname", "lastname", "thinking")
 ]
 

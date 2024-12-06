@@ -22,6 +22,10 @@ class FileManager:
         self.registrar = FileRegistrar(csvpaths)
         self.cacher = FileCacher(csvpaths)
 
+    @property
+    def csvpaths(self):
+        return self._csvpaths
+
     #
     # named file dir is like: inputs/named_files
     #
@@ -120,19 +124,26 @@ class FileManager:
         home = self.assure_file_home(name, path)
         file_home = home
         mark = None
-        if home.find("#") > -1:
-            home = home[0 : home.find("#")]
-        if path.find("#") > -1:
-            mark = path[path.find("#") + 1 :]
-            path = path[0 : path.find("#")]
+        #
+        # find mark if there. mark indicates a sheet. it is found
+        # as the trailing word after a # at the end of the path e.g.
+        # my-xlsx.xlsx#sheet2
+        #
+        hm = home.find("#")
+        if hm > -1:
+            mark = home[hm + 1 :]
+            home = home[0:hm]
+        pm = path.find("#")
+        if pm > -1:
+            mark = path[pm + 1 :]
+            path = path[0:pm]
         #
         # copy file to its home location
         #
         self._copy_in(path, home)
         name_home = self.named_file_home(name)
         rpath, h = self._fingerprint(home)
-
-        mdata = FileMetadata()
+        mdata = FileMetadata(self.csvpaths.config)
         mdata.named_file_name = name
         #
         # we need the declared path, incl. any extra path info, in order
@@ -141,8 +152,9 @@ class FileManager:
         #
         path = f"{path}#{mark}" if mark else path
         mdata.origin_path = path
-        mdata.archive_path = rpath
+        mdata.archive_name = self._csvpaths.config.archive_name
         mdata.fingerprint = h
+        mdata.file_path = rpath
         mdata.file_home = file_home
         mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
         mdata.name_home = name_home

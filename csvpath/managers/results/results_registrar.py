@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import time
 import hashlib
@@ -20,10 +20,10 @@ class ResultsRegistrar(Registrar, Listener):
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
         super().__init__(csvpaths)
-        # self.csvpaths = csvpaths
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results
+        self.load_additional_listeners("results")
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = "start"
@@ -63,7 +63,12 @@ class ResultsRegistrar(Registrar, Listener):
                 )
 
     def register_complete(self, mdata) -> None:
-        mdata.time_completed = f"{datetime.now()}"
+        #
+        # load what's already in the manifest
+        #
+        m = self.manifest
+        mdata.from_manifest(m)
+        mdata.set_time_completed()
         mdata.status = "complete"
         mdata.all_completed = self.all_completed()
         mdata.all_valid = self.all_valid()
@@ -74,16 +79,17 @@ class ResultsRegistrar(Registrar, Listener):
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
-        m["time"] = f"{mdata.time}"
-        m["uuid"] = f"{mdata.uuid}"
+        m["time"] = mdata.time_string
+        m["uuid"] = mdata.uuid_string
         if mdata.time_completed:
-            m["time_completed"] = mdata.time_completed
+            m["time_completed"] = mdata.time_completed_string
             m["all_completed"] = mdata.all_completed
             m["all_valid"] = mdata.all_valid
             m["error_count"] = mdata.error_count
             m["all_expected_files"] = mdata.all_expected_files
         m["status"] = mdata.status
         m["run_home"] = mdata.run_home
+        m["named_results_name"] = mdata.named_results_name
         m["named_paths_name"] = mdata.named_paths_name
         m["named_file_name"] = mdata.named_file_name
         m["named_file_path"] = mdata.named_file_path
