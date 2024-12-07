@@ -1,4 +1,5 @@
 import unittest
+import os
 from datetime import datetime
 from csvpath import CsvPaths
 from csvpath.managers.results.results_manager import ResultsManager
@@ -64,6 +65,8 @@ class TestResultsManager(unittest.TestCase):
         paths = CsvPaths()
         # get a csvpath. the csvpaths is not 100% configured but we don't need it.
         path = paths.csvpath()
+        run_dir = os.path.join(paths.config.archive_name, pathsname)
+        run_dir = os.path.join(run_dir, "arunid")
         # create a result as if we'd run paths against file
         result = Result(
             lines=[],
@@ -72,7 +75,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
-            run_dir="",
+            run_dir=run_dir,
         )
         results = [result]
         rs = {}
@@ -96,7 +99,7 @@ class TestResultsManager(unittest.TestCase):
             paths_name=pathsname,
             run_index=1,
             run_time=None,
-            run_dir="",
+            run_dir=run_dir,
         )
         rm.add_named_result(more_result)
 

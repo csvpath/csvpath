@@ -22,12 +22,25 @@ class ResultMetadata(Metadata):
         self.files_expected: bool = None
         self.error_count: int = -1
         #
+        # transfer tuples:
         # 1: filename, no extension needed: data | unmatched
         # 2: variable name containing the path to write to
         # 3: path of source file
         # 3: path to write to
         #
         self.transfers: tuple[str, str, str, str] = None
+
+    def __str__(self) -> str:
+        return f"""
+ResultMetadata(
+  {self.uuid}{self.named_paths_uuid},
+  {self.named_results_name},{self.named_file_name},{self.run},{self.instance_identity},
+  {self.run_home},{self.instance_home},
+  {self.input_data_file},
+  {self.file_fingerprints},
+  {self.valid},{self.completed},{self.files_expected},{self.error_count},{self.file_count},
+  {self.transfers}
+)"""
 
     def from_manifest(self, m) -> None:
         if m is None:
