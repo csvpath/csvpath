@@ -171,6 +171,7 @@ class ResultsManager:  # pylint: disable=C0115
         # the archive. the run's own more complete record is below as a
         # separate event. this could change, but atm seems reasonable.
         #
+
         mdata = RunMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name
@@ -181,12 +182,14 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_file_name = result.file_name
         rr = RunRegistrar(self.csvpaths)
         rr.register_start(mdata)
+
         #
         # we prep the results event
         #
         # we use the same UUID for both metadata updates because the
         # UUID represents the run, not the metadata object
         #
+
         mdata = ResultMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name

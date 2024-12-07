@@ -48,14 +48,30 @@ class EventBuilder:
     #
     def _build_result_event(self, mdata: Metadata, job, run, facets, inputs, outputs):
         # runstate = RunStateBuilder().build(mdata)
-
+        #
+        # if we are source mode preceding we're going to replace the original file
+        # with the preceding instance identity/data.csv
+        #
         file = Dataset(namespace=mdata.archive_name, name=mdata.input_data_file)
+        if mdata.preceding_instance_identity and mdata.source_mode_preceding is True:
+            file = Dataset(
+                namespace=mdata.archive_name,
+                name=f"{mdata.preceding_instance_identity}{os.sep}data.csv",
+            )
+        #
+        # we were showing the manifest as an input. that's not 100% obvious and
+        # it adds noise to the diagram. OL and the manifests or result of other
+        # listeners are orthogonal
+        #
+        """
         manifest = Dataset(
             namespace=mdata.archive_name,
             name=f"Group:{mdata.named_results_name}/manifest.json",
         )
+        """
         path = Dataset(namespace=mdata.archive_name, name=mdata.named_results_name)
-        inputs = [file, path, manifest]
+        # inputs = [file, path, manifest]
+        inputs = [file, path]
         #
         # there are 3 types of outputs
         #  - 6 standard files: data.csv, vars.json, errors.json, etc.
@@ -118,14 +134,22 @@ class EventBuilder:
                                     fields.append(afield)
                         runtime_data = j["runtime_data"]
                         if runtime_data:
-                            if "count_lines" in runtime_data:
+                            _ = "Serial" if mdata.by_line else "Breadth-first"
+                            afield = schema_dataset.SchemaDatasetFacetFields(
+                                name="Data flow",
+                                type=f"{_}",
+                                description="Sequential or breadth-first run",
+                            )
+                            fields.append(afield)
+
+                            if "count lines" in runtime_data:
                                 afield = schema_dataset.SchemaDatasetFacetFields(
                                     name="count_lines",
                                     type=f"{runtime_data['count_lines']}",
                                     description="Number of lines",
                                 )
                                 fields.append(afield)
-                            if "count_matches" in runtime_data:
+                            if "count matches" in runtime_data:
                                 afield = schema_dataset.SchemaDatasetFacetFields(
                                     name="count_matches",
                                     type=f"{runtime_data['count_matches']}",

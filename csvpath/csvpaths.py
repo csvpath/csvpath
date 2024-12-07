@@ -318,10 +318,22 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         )
 
     def _load_csvpath(
-        self, *, csvpath: CsvPath, path: str, file: str, pathsname: str = None, filename
+        self,
+        *,
+        csvpath: CsvPath,
+        path: str,
+        file: str,
+        pathsname: str = None,
+        filename,
+        by_line: bool = False,
     ) -> None:
         # file is the physical file (+/- if preceding mode) filename is the named-file name
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
+        #
+        # by_line==True means we are starting a run that is breadth-first ultimately using
+        # next_by_line(). by_line runs cannot be source-mode preceding and have different
+        # semantics around csvpaths influencing one another.
+        #
         # we strip comments from above the path so we need to extract them first
         path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
         identity = csvpath.identity
@@ -343,6 +355,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         #
         #
         if csvpath.data_from_preceding is True:
+            if by_line is True:
+                raise CsvPathsException(
+                    "Breadth-first runs do not support source-mode preceding because each line of data flows through each csvpath in order already"
+                )
             #
             # we are in source-mode: preceding
             # that means we ignore the original data file path and
@@ -815,8 +831,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     file=named_file,
                     filename=filename,
                     pathsname=pathsname,
+                    by_line=True,
                 )
                 if csvpath.data_from_preceding is True:
+                    # this exception raise may be redundant, but I'm leaving it for now for good measure.
                     raise CsvPathsException(
                         "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
                     )
@@ -857,6 +875,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     run_index=i,
                     run_time=self.current_run_time,
                     run_dir=crt,
+                    by_line=True,
                 )
                 csvpath[1] = result
                 #
