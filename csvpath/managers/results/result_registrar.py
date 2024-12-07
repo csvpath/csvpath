@@ -19,6 +19,17 @@ class ResultRegistrar(Registrar, Listener):
 
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
+        mdata.by_line = self.result.by_line
+        mdata.index_instance = self.result.run_index
+        mdata.actual_data_file = self.result.actual_data_file
+        mdata.origin_data_file = self.result.origin_data_file
+        ri = int(self.result.run_index) if self.result.run_index else 0
+        if ri >= 1:
+            rs = self.result.csvpath.csvpaths.results_manager.get_named_results(
+                self.result.paths_name
+            )
+            r = rs[ri - 1]
+            mdata.preceding_instance_identity = r.identity_or_index
         if p is None:
             self.result.csvpath.csvpaths.logger.debug(
                 "No named-paths manifest available at %s so not setting named_paths_uuid_string",
@@ -44,9 +55,12 @@ class ResultRegistrar(Registrar, Listener):
         mdata.run = self.result_serializer.get_run_dir_name_from_datetime(
             self.result.run_time
         )
+        mdata.by_line = self.result.by_line
+        mdata.source_mode_preceding = self.result.source_mode_preceding
         mdata.run_home = self.result.run_dir
         mdata.instance_home = self.result.instance_dir
         mdata.instance_identity = self.result.identity_or_index
+        mdata.index_instance = self.result.run_index
         mdata.named_file_name = self.result.file_name
         mdata.input_data_file = self.result.file_name
         mdata.file_fingerprints = self.file_fingerprints
@@ -60,6 +74,15 @@ class ResultRegistrar(Registrar, Listener):
                 self.result
             )
             mdata.transfers = tpaths
+        mdata.actual_data_file = self.result.actual_data_file
+        mdata.origin_data_file = self.result.origin_data_file
+        ri = int(self.result.run_index) if self.result.run_index else 0
+        if ri >= 1:
+            rs = self.result.csvpath.csvpaths.results_manager.get_named_results(
+                self.result.paths_name
+            )
+            r = rs[ri - 1]
+            mdata.preceding_instance_identity = r.identity_or_index
         self.distribute_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:
@@ -68,20 +91,26 @@ class ResultRegistrar(Registrar, Listener):
             raise ValueError("Time cannot be None")
         m["time"] = mdata.time_string
         m["uuid"] = mdata.uuid_string
+        m["serial"] = mdata.by_line is False
         m["archive_name"] = mdata.archive_name
         m["named_results_name"] = mdata.named_results_name
         m["named_paths_uuid"] = mdata.named_paths_uuid_string
         m["run"] = mdata.run
         m["run_home"] = mdata.run_home
         m["instance_identity"] = mdata.instance_identity
+        m["instance_index"] = mdata.instance_index
         m["instance_home"] = mdata.instance_home
         m["file_fingerprints"] = mdata.file_fingerprints
         m["files_expected"] = mdata.files_expected
         m["file_count"] = mdata.file_count
         m["valid"] = mdata.valid
         m["completed"] = mdata.completed
-        m["input_data_file"] = mdata.input_data_file
-        m["named_file_name"] = mdata.input_data_file
+        m["source_mode_preceding"] = mdata.source_mode_preceding
+        if mdata.source_mode_preceding:
+            m["preceding_instance_identity"] = mdata.preceding_instance_identity
+        m["actual_data_file"] = mdata.actual_data_file
+        m["origin_data_file"] = mdata.origin_data_file
+        m["named_file_name"] = mdata.named_file_name
         if mdata.transfers:
             m["transfers"] = mdata.transfers
         mp = self.manifest_path

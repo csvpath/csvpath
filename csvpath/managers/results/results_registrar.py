@@ -33,6 +33,8 @@ class ResultsRegistrar(Registrar, Listener):
         filepath = self.csvpaths.file_manager.get_named_file(filename)
         ffingerprint = self._fingerprint_file(filepath)
         mdata.named_file_fingerprint = ffingerprint
+        if self.results and len(self.results) > 0:
+            mdata.by_line = self.results[0].by_line
         mdata.named_file_fingerprint_on_file = fingerprint
         mdata.named_file_path = filepath
         mdata.named_file_size = self._size(filepath)
@@ -68,6 +70,8 @@ class ResultsRegistrar(Registrar, Listener):
         #
         m = self.manifest
         mdata.from_manifest(m)
+        if self.results and len(self.results) > 0:
+            mdata.by_line = self.results[0].by_line
         mdata.set_time_completed()
         mdata.status = "complete"
         mdata.all_completed = self.all_completed()
@@ -81,6 +85,7 @@ class ResultsRegistrar(Registrar, Listener):
         m = {}
         m["time"] = mdata.time_string
         m["uuid"] = mdata.uuid_string
+        m["serial"] = mdata.by_line is False
         if mdata.time_completed:
             m["time_completed"] = mdata.time_completed_string
             m["all_completed"] = mdata.all_completed

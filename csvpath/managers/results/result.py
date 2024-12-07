@@ -31,12 +31,14 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         run_time: datetime,
         run_dir: str,
         runtime_data: dict = None,
+        by_line: bool = False,
     ):
         self._lines: list[list[Any]] = None
         self._csvpath = None
         self._runtime_data = runtime_data
         self._paths_name = paths_name
         self._file_name = file_name
+        self._preceding = None
         self._errors = []
         self._printouts = {}
         self._print_count = 0
@@ -49,7 +51,18 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._run_dir = run_dir
         self._unmatched = None
         self._uuid = None
+        #
+        # data_file_path is the path to data.csv of this result
+        #
         self._data_file_path = None
+        #
+        # actual_data_file is the file the scanner found that we actually iterated through.
+        # if we are source-mode preceding this may not be the named-file path, which is the
+        # origin data file.
+        #
+        self._actual_data_file = None
+        self._origin_data_file = None
+        self._by_line = by_line
         if (
             csvpath.metadata is None
             or csvpath.identity is None
@@ -65,6 +78,20 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
             # precedence over this index. if the csvpath uses NAME it will overwrite.
             #
             csvpath.metadata["NAME"] = self.run_index
+
+    @property
+    def actual_data_file(self) -> str:
+        if self._actual_data_file is None:
+            self._actual_data_file = self.csvpath.scanner.filename
+        return self._actual_data_file
+
+    @property
+    def origin_data_file(self) -> str:
+        if self._origin_data_file is None:
+            self._origin_data_file = self.csvpath.csvpaths.file_manager.get_named_file(
+                self.file_name
+            )
+        return self._origin_data_file
 
     @property
     def uuid(self) -> UUID:
@@ -89,6 +116,16 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     @run_dir.setter
     def run_dir(self, d: str) -> None:
         self._run_dir = d
+
+    @property
+    def by_line(self) -> bool:
+        return self._by_line
+
+    @property
+    def source_mode_preceding(self) -> bool:
+        if self._preceding is None:
+            self._preceding = self.csvpath.data_from_preceding
+        return self._preceding
 
     @property
     def data_file_path(self) -> str:
