@@ -3,7 +3,7 @@
 
 CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
-CsvPath's goal is to make it easy to setup a Collect, Store, Validate-pattern flat-file landing zone that:
+CsvPath's goal is to make it easy to setup a Collect, Store, Validate Pattern flat-file landing zone that:
 - Analyzes the content and structure of flat files
 - Validates that files match expectations
 - Reports on content validity
