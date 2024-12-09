@@ -18,12 +18,12 @@ CsvPath's validation is inspired by:
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions are easy to create. CsvPath can stream events to an OpenLineage server, such as the open source Marquez server.
 
 <a href='https://openlineage.io' >
-<img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/openlineage-logo-sm.png" alt="OpenLineage"/></a>
+<img width="25%" src="https://github.com/csvpath/csvpath/blob/main/docs/images/openlineage-logo-sm.png" alt="OpenLineage"/></a>
 <a href='https://peppy-sprite-186812.netlify.app/' >
-<img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
+<img width="25%" src="https://github.com/csvpath/csvpath/blob/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
 
 
-Read more about CsvPath and see realistic CSV and Excel validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
+Read more about CsvPath and see CSV, Excel, and Data Frames validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
 
 If you need help, use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a> or the <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a> or talk to one of our [sponsors](#sponsors).
 
