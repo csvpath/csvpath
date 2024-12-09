@@ -65,7 +65,7 @@ The majority of companies depend on file processing for significant revenue oper
 
 CsvPath is first and foremost a validation language. It describes tabular data in simple declarative rules that define what valid means for that data. CsvPath can also extract and shape data and create reports.
 
-The CsvPath library implements the CsvPath language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between MFT (managed file transfer) and a typical data lake architecture.
+The CsvPath library implements the CsvPath language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
 
 CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library and framework, not a system, so it relies on being easy to integrate with other DataOps tools.
 
