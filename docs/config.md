@@ -6,15 +6,31 @@ CsvPaths has a few config options. By default, the config options are in `./conf
 - Create an instance of CsvPathConfig, set its CONFIG property, and call the `reload()` method
 
 The config options, at this time, are about:
+- File system locations
 - File extensions
 - Error handling
 - Logging
+- Event listeners
+- Custom functions
+
+## File System Locations
+
+CsvPath stores files in three places:
+- The data staging location
+- The csvpath files location
+- An archive or namespace of results
+
+The first two are in the `[inputs]` section as `files` and `csvpaths`. The default location for data files and csvpath files is under the `./inputs` directory. Each has its own folder. You can move these two locations anywhere you like.
+
+The archive is set in the `[results]` section as `archive`. By default it is a directory named `archive`. You can name the archive anything you like. Keep in mind that as well as simply storing files, the archive is also a namespacing tool. If you have many data partners or separate data operations you may want to have separate archives. If you do use separate archives and you are running OpenLineage events you will see your events namespaced by archive name. See below for configuring OpenLineage event listeners.
+
+In addition, there are cache, config, and log file locations. They have sensible defaults but can be moved, if needed.
+
+## File Extensions
 
 There are two types of files you can set extensions for:
 - CSV files
 - CsvPath files
-
-## File Extensions
 
 The defaults for these are:
 
@@ -65,6 +81,27 @@ As an example:
     log_files_to_keep = 100
     log_file_size = 52428800
 ```
+
+## Listeners
+
+CsvPath generates events that it converts to manifest files full of asset and runtime metadata. You can add OpenLineage listeners that will send results to an OpenLineage server like Marquez. In principle any OpenLineage API could receive CsvPath events, but only Marquez is tested and supported. You should be aware that OpenLineage events are currently handled in line, not out of band, asyncronously. That means there is a small performance hit. Typically this would not be noticable, but in certain instances it could be a factor. For example, CsvPath's hundreds of unit tests run slower when OpenLineage events are fired. This small performance hit may be remediated in the future if it becomes an issue.
+
+The settings are:
+````
+    [listeners]
+    #uncomment for OpenLineage events to a local Marquez
+    #file = from csvpath.managers.files.file_listener_ol import OpenLineageFileListener
+    #paths = from csvpath.managers.paths.paths_listener_ol import OpenLineagePathsListener
+    #result = from csvpath.managers.results.result_listener_ol import OpenLineageResultListener
+    #results = from csvpath.managers.results.results_listener_ol import OpenLineageResultsListener
+
+    [marquez]
+    base_url = http://localhost:5000
+````
+
+## Custom Functions
+
+<a href='https://github.com/csvpath/csvpath/blob/main/docs/functions/implementing_functions.md'>See this page for how to create and run custom functions</a>
 
 
 
