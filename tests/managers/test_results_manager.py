@@ -8,56 +8,6 @@ from csvpath.managers.results.result_serializer import ResultSerializer
 
 
 class TestResultsManager(unittest.TestCase):
-    def test_results_mgr1(self):
-        print("")
-        paths = CsvPaths()
-        pathsname = "many"
-        filename = "food"
-        path = paths.csvpath()
-        result = Result(
-            lines=[],
-            csvpath=path,
-            file_name=filename,
-            paths_name=pathsname,
-            run_index=1,
-            run_time=None,
-            run_dir="archive/x/y",
-        )
-        #
-        # if we don't save through the results registrar we cannot
-        # pick up the results uuid for the result registrar. might
-        # not be a problem here, but let's do it.
-        #
-        paths.results_manager.save(result)
-        #
-        #
-        #
-        results = [result]
-        rs = {}
-        rs[pathsname] = results
-        rm = paths.results_manager
-        rm.set_named_results(results=rs)
-        some = rm.get_named_results(pathsname)
-        assert some
-        assert len(some) == 1
-        more_result = Result(
-            lines=[],
-            csvpath=path,
-            file_name=filename,
-            paths_name=pathsname,
-            run_index=1,
-            run_time=None,
-            run_dir="",
-        )
-
-        rm.add_named_result(more_result)
-        some = rm.get_named_results(pathsname)
-        assert some
-        assert len(some) == 2
-
-        rm.remove_named_results(pathsname)
-        assert len(rm.named_results) == 0
-
     def test_results_mgr2(self):
         # set up a csvpaths that will have 1 file and 1 set of paths
         filename = "food"

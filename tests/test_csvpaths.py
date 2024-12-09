@@ -52,7 +52,7 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cnt = 0
-        for line in cs.next_by_line(filename="food", pathsname="many"):
+        for line in cs.next_by_line(filename="food", pathsname="many", collect=True):
             cnt += 1
         assert cnt == 11
         valid = cs.results_manager.is_valid("many")
