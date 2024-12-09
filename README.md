@@ -61,11 +61,13 @@ If you need help, use the <a href='https://www.csvpath.org/getting-started/get-h
 
 CSV files are everywhere!
 
-A surprisingly large number of companies depend on CSV processing for significant amounts of revenue. Research organizations are awash in CSV. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use day to day uses CSV for sharing. CSV is the lowest of common dominators. Many CSVs are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
+The majority of companies depend on file processing for significant revenue operations. Research organizations and archives are awash in CSVs. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use spits out CSV or Excel files for sharing. Delimited and tabular files are the lowest of common dominators. Many are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
 
-CsvPath is first and foremost a validation language. It describes tabular data in simple declarative rules that define what valid means for that data. CsvPath can also extract data, create reports, and do other useful things.
+CsvPath is first and foremost a validation language. It describes tabular data in simple declarative rules that define what valid means for that data. CsvPath can also extract and shape data and create reports.
 
-CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library, not a system, so it relies on being easy to integrate with other DataOps tools.
+The CsvPath library implements the CsvPath language, but goes far beyond it to provide a full Collect, Store, Validate Pattern framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap between MFT (managed file transfer) and a typical data lake architecture.
+
+CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library and framework, not a system, so it relies on being easy to integrate with other DataOps tools.
 
 
 <a name="install"></a>
