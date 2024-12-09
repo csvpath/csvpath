@@ -20,7 +20,7 @@ class ResultRegistrar(Registrar, Listener):
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
         mdata.by_line = self.result.by_line
-        mdata.index_instance = self.result.run_index
+        mdata.instance_index = self.result.run_index
         mdata.actual_data_file = self.result.actual_data_file
         mdata.origin_data_file = self.result.origin_data_file
         ri = int(self.result.run_index) if self.result.run_index else 0
@@ -60,7 +60,7 @@ class ResultRegistrar(Registrar, Listener):
         mdata.run_home = self.result.run_dir
         mdata.instance_home = self.result.instance_dir
         mdata.instance_identity = self.result.identity_or_index
-        mdata.index_instance = self.result.run_index
+        mdata.instance_index = self.result.run_index
         mdata.named_file_name = self.result.file_name
         mdata.input_data_file = self.result.file_name
         mdata.file_fingerprints = self.file_fingerprints

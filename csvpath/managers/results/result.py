@@ -82,7 +82,8 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     @property
     def actual_data_file(self) -> str:
         if self._actual_data_file is None:
-            self._actual_data_file = self.csvpath.scanner.filename
+            if self.csvpath.scanner:
+                self._actual_data_file = self.csvpath.scanner.filename
         return self._actual_data_file
 
     @property
