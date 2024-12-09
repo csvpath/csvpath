@@ -1,5 +1,5 @@
 
-# <a href='https://www.csvpath.org/'><img src='https://www.csvpath.org/~gitbook/image?url=https%3A%2F%2F3739708663-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Forganizations%252FMXTJeGvaEsqwNG39F37h%252Fsites%252Fsite_SPBqJ%252Ficon%252FMCSxo7k6rXWnqoPE204u%252Fcsvpath-icon.png%3Falt%3Dmedia%26token%3D28869fdd-d54e-400e-8917-b8097f935f42&width=32&dpr=2&quality=100&sign=71ca9f3e&sv=1'/></a> About CsvPath
+# <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/csvpath-icon-sm.png'/></a> About CsvPath
 
 CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
