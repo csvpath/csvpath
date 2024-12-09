@@ -1,13 +1,14 @@
 
 # <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/csvpath-icon-sm.png'/></a> About CsvPath
 
-CsvPath defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
+The CsvPath language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
-CsvPath's goal is to make it easy to setup a Collect, Store, Validate Pattern flat-file landing zone that:
-- Analyzes the content and structure of flat files
-- Validates that files match expectations
-- Reports on content validity
-- Creates new derived files using copy-on-write
+The CsvPath library's goal is to make it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
+- Registers files
+- Validates that the data matches expectations
+- Reports on content validity and other metadata
+- Shapes files for consistency using copy-on-write
+- And stages the results for loading into a data lake
 
 And does it all in an automation-friendly way.
 
