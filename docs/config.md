@@ -87,7 +87,7 @@ As an example:
 CsvPath generates events that it converts to manifest files full of asset and runtime metadata. You can add OpenLineage listeners that will send results to an OpenLineage server like Marquez. In principle any OpenLineage API could receive CsvPath events, but only Marquez is tested and supported. You should be aware that OpenLineage events are currently handled in line, not out of band, asyncronously. That means there is a small performance hit. Typically this would not be noticable, but in certain instances it could be a factor. For example, CsvPath's hundreds of unit tests run slower when OpenLineage events are fired. This small performance hit may be remediated in the future if it becomes an issue.
 
 The settings are:
-````
+```ini
     [listeners]
     #uncomment for OpenLineage events to a local Marquez
     #file = from csvpath.managers.files.file_listener_ol import OpenLineageFileListener
@@ -97,7 +97,7 @@ The settings are:
 
     [marquez]
     base_url = http://localhost:5000
-````
+```
 
 ## Custom Functions
 
