@@ -91,7 +91,6 @@ class PathsManager:
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
             self.csvpaths.logger.debug("Opening JSON file at %s", file_path)
-            print(f"pasthsmgr: json file_path: {file_path}")
             with open(file_path, encoding="utf-8") as f:
                 j = json.load(f)
                 self.csvpaths.logger.debug("Found JSON file with %s keys", len(j))
