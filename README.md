@@ -26,7 +26,7 @@ CsvPath is intended to fit with other DataOps and data quality tools. Files are 
 
 Read more about CsvPath and see CSV, Excel, and Data Frames validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
 
-If you need help, use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a> or the <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a> or talk to one of our [sponsors](#sponsors).
+If you need help, use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a> or the <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a> or talk to one of our [sponsors, below](#sponsors).
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=green&color=green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath)
 
