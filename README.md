@@ -182,8 +182,7 @@ The simplest way to get started is using the CLI. <a href='https://www.csvpath.o
 When you're ready to think about automation, you'll want to start with a simple driver. This is a very basic programmatic use of CsvPath.
 
 ```python
-    path = CsvPath()
-    path.parse("""
+    path = CsvPath().parse("""
             $test.csv[5-25][
                 #firstname == "Frog"
                 @lastname.onmatch = "Bat"

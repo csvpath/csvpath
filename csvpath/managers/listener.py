@@ -1,10 +1,25 @@
 from abc import ABC, abstractmethod
 from .metadata import Metadata
+from ..util import Config
 
 
 class Listener(ABC):
     def __init__(self, config=None) -> None:
-        self.config = config
+        super().__init__()
+        self._config = config
+
+    @property
+    def config(self):
+        if not self._config:
+            #
+            # this really should never happen. but perhaps in testing?
+            #
+            self._config = Config()
+        return self._config
+
+    @config.setter
+    def config(self, c):
+        self._config = c
 
     @abstractmethod
     def metadata_update(self, mdata: Metadata) -> None:

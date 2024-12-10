@@ -1,6 +1,7 @@
-from ..ol.ol_listener import OpenLineageListener
+from ..metadata import Metadata
+from .sender import Sender
 
 
-class OpenLineageResultListener(OpenLineageListener):
+class OpenLineageListener(Sender):
     def __init__(self, config=None, client=None):
         super().__init__(config=config, client=client)

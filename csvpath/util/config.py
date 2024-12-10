@@ -107,7 +107,7 @@ class Config:
     def config_path(self) -> str:
         return self._configpath
 
-    def _get(self, section: str, name: str):
+    def _get(self, section: str, name: str, default=None):
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
@@ -121,7 +121,7 @@ class Config:
         except KeyError:
             if self.csvpath_log_level == LogLevels.DEBUG:
                 print(f"Check config at {self.config_path} for [{section}][{name}]")
-            return None
+            return default
 
     def add_to_config(self, section, key, value) -> None:
         if not self._config.has_section(section):
@@ -176,6 +176,10 @@ path =
 #results = from csvpath.managers.results.results_listener_ol import OpenLineageResultsListener
 #[marquez]
 #base_url = http://localhost:5000
+#endpoint = api/v1/lineage
+#api_key = "none"
+#timeout = 5
+#verify = False
 #
 [results]
 archive = archive

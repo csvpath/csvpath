@@ -42,53 +42,10 @@ class EventBuilder:
             # do we want to support this one, if it comes?
             return None
 
-    """
-    def get_identities_facet(self, mdata):
-        mp = f"{mdata.base_path}{os.sep}{mdata.named_paths_root}{os.sep}{mdata.named_paths_name}/manifest.json"
-        j = []
-        with open(mp, "r", encoding="utf-8") as file:
-            j = json.load(file)
-        d = j[len(j)-1]
-        ps = d["named_paths"]
-        fields=[]
-        for p in d:
-            f = schema_dataset.SchemaDatasetFacetFields(
-                name=p, type="CsvPath", description=""
-            )
-            fields.append(f)
-        csvpaths = self.dataset(
-            f"{mdata.archive_name}/{mdata.named_paths_name}",
-            schema_dataset.SchemaDatasetFacet(fields=fields),
-            mdata.archive_name
-        )
-        return csvpaths
-
-    def dummy_facets(self):
-        print(">>> creating dataset data #{i}" )
-        user_history = self.dataset(
-            "archive",
-            schema_dataset.SchemaDatasetFacet(
-                fields=[
-                    schema_dataset.SchemaDatasetFacetFields(
-                        name="id", type="BIGINT", description="the user id"
-                    ),
-                    schema_dataset.SchemaDatasetFacetFields(
-                        name="email_domain", type="VARCHAR", description="the user id"
-                    ),
-                    schema_dataset.SchemaDatasetFacetFields(
-                        name="status", type="BIGINT", description="the user id"
-                    ),
-                ]
-            ),
-            "archive"
-        )
-        return user_history
-    """
-
     def _build_results_event(self, mdata: Metadata, job, run, facets, inputs):
         file = InputDataset(
             namespace=mdata.archive_name, name=f"{mdata.named_file_name}"
-        )  # , inputFacets=inputfacets
+        )
         path = InputDataset(
             namespace=mdata.archive_name, name=f"{mdata.named_paths_name}"
         )
