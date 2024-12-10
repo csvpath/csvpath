@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from .metadata import Metadata
-from ..util import Config
+from ..util.config import Config
 
 
 class Listener(ABC):
