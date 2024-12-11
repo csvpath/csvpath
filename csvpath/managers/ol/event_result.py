@@ -99,6 +99,15 @@ class ResultEventBuilder:
                     sdf = schema_dataset.SchemaDatasetFacet(fields=fields)
                     fs["schema"] = sdf
 
+                if exists and fingerprint == "errors.json":
+                    fields = []
+                    afield = schema_dataset.SchemaDatasetFacetFields(
+                        name="error count", type=f"{mdata.error_count}", description=""
+                    )
+                    fields.append(afield)
+                    sdf = schema_dataset.SchemaDatasetFacet(fields=fields)
+                    fs["schema"] = sdf
+
                 if exists and fingerprint == "meta.json":
                     fields = []
                     with open(fp, "r", encoding="utf-8") as file:

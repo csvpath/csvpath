@@ -55,6 +55,14 @@ class PathsRegistrar(Registrar, Listener):
             mdata.manifest_path = mpath
             mdata.fingerprint = f
             self.distribute_update(mdata)
+        else:
+            #
+            # leave as info so nobody has to dig to see why no update
+            #
+            self.csvpaths.logger.info(
+                "Fingerprints of named-paths %s match, as expected; no need to fire update event",
+                name,
+            )
 
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
@@ -84,6 +92,14 @@ class PathsRegistrar(Registrar, Listener):
             jdata.append(m)
             with open(mdata.manifest_path, "w", encoding="utf-8") as file:
                 json.dump(jdata, file, indent=2)
+        else:
+            #
+            # leave as info so nobody has to dig to see why no update
+            #
+            self.csvpaths.logger.info(
+                "Fingerprint of named-paths file for %s matches the manifest; no need to update",
+                mdata.named_paths_name,
+            )
 
     def manifest_path(self, name: str) -> None:
         nhome = self.manager.named_paths_home(name)
