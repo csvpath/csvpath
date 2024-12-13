@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import datetime
+import dateutil.parser
 from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
@@ -14,6 +15,7 @@ from .results_registrar import ResultsRegistrar
 from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
+from .result_reader import ResultReader
 
 
 class ResultsManager:  # pylint: disable=C0115
@@ -439,6 +441,24 @@ class ResultsManager:  # pylint: disable=C0115
         if name in self.named_results:
             return self.named_results[name]
         #
+        # find and load the result, if exists. we find
+        # results home with the name. run_home is the
+        # last run dir. the results we're looking for are
+        # the instance dirs in the run dir.
+        # we'll need another method for getting a specific
+        # run, rather than the default, the last one.
+        #
+        path = os.path.join(self.csvpaths.config.archive_path, name)
+        self.csvpaths.logger.debug(
+            "Attempting to load results for %s from %s", name, path
+        )
+        runs = os.listdir(path)
+        runs.sort()
+        run = runs[len(runs) - 1]
+        rs = self.get_named_results_for_run(name=name, run=run)
+        if rs is not None:
+            return rs
+        #
         # we treat this as a recoverable error because typically the user
         # has complete control of the csvpaths environment, making the
         # problem config that should be addressed.
@@ -447,5 +467,58 @@ class ResultsManager:  # pylint: disable=C0115
         # expression and handled according to the error policy.
         #
         raise InputException(
-            f"Results '{name}' not found. \nNamed-results are: {self.named_results}"
+            f"Results '{name}' not found. Named-results are: {self.named_results}"
         )
+
+    def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
+        path = os.path.join(self.csvpaths.config.archive_path, name)
+        path = os.path.join(path, run)
+        instances = os.listdir(path)
+        rs = []
+        for inst in instances:
+            if inst == "manifest.json":
+                continue
+            r = self.get_named_result_for_instance(
+                name=name, run_dir=path, run=run, instance=inst
+            )
+            rs.append(r)
+        return rs
+
+    def get_named_result_for_instance(
+        self, *, name: str, run_dir: str, run: str, instance: str
+    ) -> list[list[Any]]:
+        instance_dir = os.path.join(run_dir, instance)
+        mani = ResultReader.manifest(instance_dir)
+        #
+        # csvpath needs to be loaded with all meta.json->metadata and some/most of runtime_data
+        #
+        csvpath = self.csvpaths.csvpath()
+        meta = ResultReader.meta(instance_dir)
+        if meta:
+            #
+            # until there's a clear case for more, this is all we're going to load.
+            # for the most part, people should be using the metadata, not digging into
+            # run objects that may not be current. if we really need to recreate the
+            # csvpath perfectly we should probably go back and rethink. maybe pickle?
+            #
+            csvpath.metadata = meta["metadata"]
+            csvpath.modes.update()
+            csvpath.identity
+            csvpath.scan = meta["runtime_data"]["scan_part"]
+            csvpath.match = meta["runtime_data"]["match_part"]
+            csvpath.delimiter = meta["runtime_data"]["delimiter"]
+            csvpath.quotechar = meta["runtime_data"]["quotechar"]
+        #
+        # this may not be complete. let's see if it works or needs more.
+        #
+        r = Result(
+            csvpath=csvpath,
+            paths_name=name,
+            run_dir=run_dir,
+            file_name=mani["actual_data_file"],
+            run_index=mani["instance_index"],
+            run_time=dateutil.parser.parse(mani["time"]),
+            runtime_data=meta["runtime_data"],
+            by_line=not bool(mani["serial"]),
+        )
+        return r

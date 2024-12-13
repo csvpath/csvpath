@@ -1,5 +1,6 @@
 import os
 import csv
+import json
 from pathlib import Path
 from abc import ABC, abstractmethod
 from .error import Error, ErrorHandler
@@ -10,7 +11,7 @@ from .file_readers import DataFileReader
 class LineSpooler(ABC):
     def __init__(self, myresult) -> None:
         self.result = myresult
-        self._sink = None
+        self.sink = None
         self._count = 0
         self.closed = False
 
@@ -60,6 +61,17 @@ class CsvLineSpooler(LineSpooler):
         self.path = None
         self.writer = None
 
+    def __len__(self) -> int:
+        if self._count is None or self._count <= 0:
+            if self.result is not None and self.result.instance_dir:
+                d = os.path.join(self.result.instance_dir, "meta.json")
+                if os.path.exists(d):
+                    with open(d, "r", encoding="utf-8") as file:
+                        j = json.load(file)
+                        n = j["runtime_data"]["count_matches"]
+                        self._count = n
+        return self._count
+
     def load_if(self) -> None:
         p = self._instance_data_file_path()
         if p is not None:
@@ -83,18 +95,25 @@ class CsvLineSpooler(LineSpooler):
         ).next():
             yield line
 
+    def _warn_if(self) -> None:
+        if self.result and self.result.csvpath:
+            self.result.csvpath.logger.warn(
+                "CsvLineSpooler cannot find instance_data_file_path yet within %s",
+                self.result.run_dir,
+            )
+
     def _instance_data_file_path(self):
-        if (
-            self.result is None
-            or self.result.csvpath is None
-            or self.result.csvpath.scanner is None
-            or self.result.csvpath.scanner.filename is None
-        ):
-            if self.result and self.result.csvpath:
-                self.result.csvpath.logger.warn(
-                    "CsvLineSpooler cannot find instance_data_file_path yet within %s",
-                    self.result.run_dir,
-                )
+        if self.result is None:
+            self._warn_if()
+            return None
+        if self.result.csvpath is None:
+            self._warn_if()
+            return None
+        if self.result.csvpath.scanner is None:
+            self._warn_if()
+            return None
+        if self.result.csvpath.scanner.filename is None:
+            self._warn_if()
             return None
         #
         # data file could be not there. we can in principle make sure that doesn't happen.

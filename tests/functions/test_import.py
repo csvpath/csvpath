@@ -70,6 +70,7 @@ class TestFunctionsImport(unittest.TestCase):
         assert "hey" in pvars
         results = paths.results_manager.get_named_results("paths")
         assert len(results) == 2
+        print(f"test_imports_function_3: {results}")
         if results[0].csvpath.identity == "importer":
             importer = results[0]
             importable = results[1]
@@ -77,6 +78,7 @@ class TestFunctionsImport(unittest.TestCase):
             importer = results[1]
             importable = results[0]
 
+        print(f"test_imports_function_3: importable: {importable}")
         assert len(importable) == 0
         assert importable.csvpath.will_run is False
 

@@ -65,7 +65,7 @@ class TestResultsManager(unittest.TestCase):
 
         assert len(rm.named_results) == 0
 
-    def test_results_mgr3(self):
+    def test_results_print_to_printouts(self):
         paths = CsvPaths()
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths(
@@ -82,10 +82,10 @@ class TestResultsManager(unittest.TestCase):
         results = paths.results_manager.get_named_results("print_test")
         assert results
         assert len(results) == 1
-        ps = results[0].get_printout_by_name("error")
+        ps = results[0].get_printouts("error")
         assert len(ps) == 1
         assert ps[0].find("my msg") > -1
-        ps = results[0].get_printout_by_name("foo-bar")
+        ps = results[0].get_printouts("foo-bar")
         assert len(ps) == 1
         assert ps[0].find("my other msg") > -1
 
