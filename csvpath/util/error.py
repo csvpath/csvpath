@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, List
 from datetime import datetime, timezone
 from enum import Enum
+import dateutil.parser
 import traceback
 from csvpath.util.config import OnError
 from .exceptions import InputException
@@ -81,6 +82,46 @@ class Error:
         self.filename: str = None
         self.at: datetime.now(timezone.utc)
 
+    def __eq__(self, e) -> bool:
+        return (
+            self.line_count == e.line_count
+            and self.match_count == e.match_count
+            and self.scan_count == e.scan_count
+            and f"{self.error}".strip() == f"{e.error}".strip()
+            and f"{self.source}".strip() == f"{e.source}".strip()
+            and self.message == e.message
+            and self.trace == e.trace
+            and self.json == e.json
+            and self.datum == e.datum
+            and self.filename == e.filename
+            and f"{self.at}" == f"{e.at}"
+        )
+
+    def how_eq(self, e) -> bool:
+        print(f"Error.how_eq: is equal? {self.__eq__(e)}:")
+        b = self.line_count == e.line_count
+        print(f"line_count: {b}: {self.line_count} == {e.line_count}")
+        b = self.match_count == e.match_count
+        print(f"match_count: {b}: {self.match_count} == {e.match_count}")
+        b = self.scan_count == e.scan_count
+        print(f"scan_count: {b}: {self.scan_count} == {e.scan_count}")
+        b = f"{self.error}".strip() == f"{e.error}".strip()
+        print(f"error: {b}: {self.error} == {e.error}")
+        b = f"{self.source}".strip() == f"{e.source}".strip()
+        print(f"source: {b}: {self.source} == {e.source}")
+        b = self.message == e.message
+        print(f"message: {b}: {self.message} == {e.message}")
+        b = self.trace == e.trace
+        print(f"trace: {b}: {self.trace} == {e.trace}")
+        b = self.json == e.json
+        print(f"json: {b}: {self.json} == {e.json}")
+        b = self.datum == e.datum
+        print(f"datum: {b}: {self.datum} == {e.datum}")
+        b = self.filename == e.filename
+        print(f"filename: {b}: {self.filename} == {e.filename}")
+        b = self.at == e.at
+        print(f"at: {b}: {self.at} == {e.at}")
+
     def to_json(self) -> dict:
         ret = {
             "line_count": self.line_count,
@@ -96,6 +137,31 @@ class Error:
             "at": f"{self.at}",
         }
         return ret
+
+    def from_json(self, j: dict) -> None:
+        if "line_count" in j:
+            self.line_count = j["line_count"]
+        if "match_count" in j:
+            self.match_count = j["match_count"]
+        if "scan_count" in j:
+            self.scan_count = j["scan_count"]
+        if "error" in j:
+            self.error = j["error"]
+        if "source" in j:
+            self.source = j["source"]
+        if "message" in j:
+            self.message = j["message"]
+        if "trace" in j:
+            self.trace = j["trace"]
+        if "json" in j:
+            self.json = j["json"]
+        if "datum" in j:
+            self.datum = j["datum"]
+        if "filename" in j:
+            self.filename = j["filename"]
+        if "at" in j:
+            at = dateutil.parser.parse(j["at"])
+            self.at = at
 
     def __str__(self) -> str:
         string = f"""Error

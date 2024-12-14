@@ -1,0 +1,11 @@
+~
+    validation-mode:no-raise, no-stop
+~
+$[1*][
+    add("five", none())
+]
+
+---- CSVPATH ----
+
+
+

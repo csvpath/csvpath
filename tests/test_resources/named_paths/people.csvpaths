@@ -1,0 +1,27 @@
+~ id:nametags and checklist
+  unmatched-mode:keep
+~
+$[*][
+    #lastname.nocontrib == "Bat" -> print("My name is: $.headers.lastname", "name tags")
+
+    tally(#lastname)
+    in(#lastname, "Bat|Kermit") -> print("$.headers.firstname, $.headers.lastname, $.headers.say", "checklist")
+]
+
+---- CSVPATH ----
+
+~ id:remarks and notes
+  unmatched-mode:keep
+~
+$[*][
+    starts_with(#firstname, "F") -> and(
+        print("Welcome, $.headers.firstname", "remarks"),
+        print("$.headers.firstname joined us", "notes")
+    )
+]
+
+
+
+
+
+

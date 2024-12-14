@@ -24,12 +24,15 @@ class ResultSerializer:
         runtime_data = {}
         RuntimeDataCollector.collect(result.csvpath, runtime_data, local=True)
         runtime_data["run_index"] = result.run_index
+        es = []
+        if result is not None and result.errors:
+            es = [e.to_json() for e in result.errors]
         self._save(
             metadata=result.csvpath.metadata,
-            errors=[e.to_json() for e in result.errors],
+            errors=es,
             variables=result.variables,
             lines=result.lines,
-            printouts=result.get_printouts(),
+            printouts=result.printouts,
             runtime_data=runtime_data,
             paths_name=result.paths_name,
             file_name=result.file_name,
@@ -99,7 +102,16 @@ class ResultSerializer:
                     with open(os.path.join(run_dir, "data.csv"), "w") as f:
                         writer = csv.writer(f)
                         writer.writerows(lines)
-        if unmatched is not None and len(unmatched) > 0:
+        #
+        # writing is not needed. LineSpoolers are intended to stream their
+        # lines to disk. if we write here we'll be reading and writing the
+        # same file at the same time.
+        #
+        if (
+            unmatched is not None
+            and not isinstance(unmatched, LineSpooler)
+            and len(unmatched) > 0
+        ):
             with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
                 writer = csv.writer(f)
                 writer.writerows(unmatched)

@@ -140,6 +140,9 @@ class ResultRegistrar(Registrar, Listener):
     def named_paths_manifest_path(self) -> str:
         return os.path.join(self.result.run_dir, "manifest.json")
 
+    #
+    # switch to use ResultManifestReader.manifest
+    #
     @property
     def manifest(self) -> dict | None:
         mp = self.manifest_path

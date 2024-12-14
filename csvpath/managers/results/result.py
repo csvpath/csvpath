@@ -10,6 +10,7 @@ from csvpath.util.exceptions import CsvPathsException
 from csvpath import CsvPath
 from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
+from .readers.readers import ResultReadersFacade
 
 
 class Result(ErrorCollector, Printer):  # pylint: disable=R0902
@@ -18,43 +19,30 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     instances against the same file.
     """
 
-    # re: R0902: disagree that there's too many attributes in this case
-
     def __init__(
         self,
         *,
-        lines: list[list[Any]] = None,
-        csvpath: CsvPath,
-        file_name: str,
         paths_name: str,
-        run_index: int,
-        run_time: datetime,
-        run_dir: str,
+        run_dir: str = None,
+        lines: list[list[Any]] = None,
+        csvpath: CsvPath = None,
+        file_name: str = None,
+        run_index: int = None,
+        run_time: datetime = None,
         runtime_data: dict = None,
         by_line: bool = False,
     ):
-        self._lines: list[list[Any]] = None
         self._csvpath = None
+        self._uuid = None
         self._runtime_data = runtime_data
         self._paths_name = paths_name
         self._file_name = file_name
         self._preceding = None
-        self._errors = []
-        self._printouts = {}
         self._print_count = 0
         self._last_line = None
-        # use the properties so error_collector, etc. is set correctly
-        self.csvpath = csvpath
-        # self.lines = lines
         self.run_index = f"{run_index}"
         self._run_time = run_time
         self._run_dir = run_dir
-        self._unmatched = None
-        self._uuid = None
-        #
-        # data_file_path is the path to data.csv of this result
-        #
-        self._data_file_path = None
         #
         # actual_data_file is the file the scanner found that we actually iterated through.
         # if we are source-mode preceding this may not be the named-file path, which is the
@@ -63,8 +51,15 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self._actual_data_file = None
         self._origin_data_file = None
         self._by_line = by_line
+        #
+        # data_file_path is the path to data.csv of this result
+        #
+        self._data_file_path = None
+        # use the properties so error_collector, etc. is set correctly
+        self.csvpath = csvpath
         if (
-            csvpath.metadata is None
+            csvpath
+            and csvpath.metadata is None
             or csvpath.identity is None
             or csvpath.identity == ""
         ):
@@ -78,6 +73,16 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
             # precedence over this index. if the csvpath uses NAME it will overwrite.
             #
             csvpath.metadata["NAME"] = self.run_index
+        #
+        # readers
+        # add these last so that we can be sure they have access to everything they need.
+        # primarily, run_dir, instance, and csvpath
+        #
+        self._errors: list[Error] = None
+        self._printouts: dict[str, list[str]] = None
+        self._unmatched: list[list[Any]] = None
+        self._lines: list[list[Any]] = None
+        self._readers_facade = ResultReadersFacade(self)
 
     @property
     def actual_data_file(self) -> str:
@@ -150,18 +155,6 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return s
 
     @property
-    def metadata(self) -> dict[str, Any]:  # pylint: disable=C0116
-        return self.csvpath.metadata  # pragma: no cover
-
-    @property
-    def variables(self) -> dict[str, Any]:  # pylint: disable=C0116
-        return self.csvpath.variables  # pragma: no cover
-
-    @property
-    def all_variables(self) -> dict[str, Any]:  # pylint: disable=C0116
-        return self.csvpath.csvpaths.results_manager.get_variables(self.paths_name)
-
-    @property
     def paths_name(self) -> str:  # pylint: disable=C0116
         return self._paths_name
 
@@ -177,8 +170,142 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
     def file_name(self, file_name: str) -> None:
         self._file_name = file_name  # pragma: no cover
 
-    # ==========================
-    # lines collecting methods
+    @property
+    def is_valid(self) -> bool:  # pylint: disable=C0116
+        # if the csvpath has not been run -- e.g. because it represents results that were
+        # saved to disk and reloaded -- it won't have a run started time.
+        if self._csvpath and self._csvpath.run_started_at is not None:
+            return self._csvpath.is_valid
+        elif self._runtime_data and "valid" in self._runtime_data:
+            return self._runtime_data["valid"]
+        return False
+
+    @property
+    def last_line(self):  # pylint: disable=C0116
+        return self._last_line
+
+    #
+    # ======= LOADING ISSUES HERE DOWN ========
+    #
+    # =============== CSVPATH =================
+    #
+
+    @property
+    def csvpath(self) -> CsvPath:  # pylint: disable=C0116
+        return self._csvpath
+
+    @csvpath.setter
+    def csvpath(self, path: CsvPath) -> None:
+        path.error_collector = self
+        path.add_printer(self)
+        self._csvpath = path
+
+    #
+    # =============== METADATA =================
+    #
+
+    @property
+    def metadata(self) -> dict[str, Any]:  # pylint: disable=C0116
+        return self.csvpath.metadata  # pragma: no cover
+
+    #
+    # =============== VARIABLES =================
+    #
+
+    @property
+    def variables(self) -> dict[str, Any]:  # pylint: disable=C0116
+        return self.csvpath.variables  # pragma: no cover
+
+    @property
+    def all_variables(self) -> dict[str, Any]:  # pylint: disable=C0116
+        return self.csvpath.csvpaths.results_manager.get_variables(self.paths_name)
+
+    #
+    # =============== ERRORS =================
+    #
+
+    @property
+    def errors(self) -> list[Error]:  # pylint: disable=C0116
+        #
+        # if none, use reader
+        #
+        if self._errors is None:
+            self._errors = self._readers_facade.errors
+        return self._errors
+
+    @errors.setter
+    def errors(self, errors: list[Error]) -> None:
+        self._errors = errors
+
+    @property
+    def errors_count(self) -> int:  # pylint: disable=C0116
+        if self.errors:
+            return len(self.errors)
+        return 0
+
+    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
+        if self.errors is not None:
+            self.errors.append(error)
+
+    def has_errors(self) -> bool:
+        return self.errors_count > 0
+
+    #
+    # =============== PRINTOUTS =================
+    #
+
+    @property
+    def printouts(self) -> dict[str, list[str]]:
+        #
+        # if none, use reader
+        #
+        if self._printouts is None:
+            self._printouts = self._readers_facade.printouts
+        return self._printouts
+
+    def get_printouts(self, name="default") -> dict[str, list[str]]:
+        if self.printouts and name in self.printouts:
+            return self.printouts[name]
+        return []
+
+    def set_printouts(self, name: str, lines: list[str]) -> None:
+        self.printouts[name] = lines
+
+    def has_printouts(self) -> bool:  # pylint: disable=C0116
+        if len(self.printouts) > 0:
+            for k, v in self.printouts.items():
+                if len(v) > 0:
+                    return True
+        return False
+
+    @property
+    def lines_printed(self) -> int:  # pylint: disable=C0116
+        return self._print_count
+
+    def print(self, string: str) -> None:  # pylint: disable=C0116
+        self.print_to("default", string)
+
+    def print_to(self, name: str, string: str) -> None:  # pylint: disable=C0116
+        self._print_count += 1
+        if name not in self.printouts:
+            self.printouts[name] = []
+        self.printouts[name].append(string)
+        self._last_line = string
+
+    def dump_printing(self) -> None:  # pylint: disable=C0116
+        for k, v in self.printouts.items():
+            for line in v:
+                print(f"{k}: {line}")
+            print("")
+
+    def print_statements_count(self) -> int:  # pylint: disable=C0116
+        i = 0
+        for name in self.printouts:
+            i += len(self.printouts[name]) if self.printouts[name] else 0
+        return i
+
+    #
+    # =============== LINES =================
     #
 
     @property
@@ -192,7 +319,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
             # for today we'll just default to CsvLineSpooler, but assume we'll work
             # in other options later.
             #
-            self._lines = CsvLineSpooler(self)
+            self._lines = self._readers_facade.lines
         return self._lines
 
     @lines.setter
@@ -205,114 +332,41 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         self.lines.append(line)
 
     def __len__(self) -> int:
-        if isinstance(self.lines, list):
-            return len(self._lines)
-        i = 0
-        for _ in self.lines.next():
-            i += 1
-        return i
+        if self.lines is not None:
+            if isinstance(self.lines, list):
+                return len(self.lines)
+            i = 0
+            for _ in self.lines.next():
+                i += 1
+            return i
+        return None
+
+    #
+    # =============== UNMATCHED =================
+    #
 
     @property
     def unmatched(self) -> list[list[Any]]:
+        # return self._unmatched
+        if self._unmatched is None:
+            #
+            # we can assume the caller wants a container for lines. in that case,
+            # we want them to have a container that serializes lines as they come in
+            # rather than waiting for them all to arrive before writing to disk.
+            #
+            # for today we'll just default to CsvLineSpooler, but assume we'll work
+            # in other options later.
+            #
+            self._unmatched = self._readers_facade.unmatched
         return self._unmatched
 
     @unmatched.setter
     def unmatched(self, lines: list[list[Any]]) -> None:
         self._unmatched = lines
 
-    # ==========================
-
-    @property
-    def csvpath(self) -> CsvPath:  # pylint: disable=C0116
-        return self._csvpath
-
-    @csvpath.setter
-    def csvpath(self, path: CsvPath) -> None:
-        path.error_collector = self
-        path.add_printer(self)
-        self._csvpath = path
-
-    @property
-    def errors(self) -> list[Error]:  # pylint: disable=C0116
-        return self._errors
-
-    @errors.setter
-    def errors(self, errors: list[Error]) -> None:
-        self._errors = errors
-
-    @property
-    def errors_count(self) -> int:  # pylint: disable=C0116
-        return len(self._errors)
-
-    def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
-        self._errors.append(error)
-
-    def has_errors(self) -> bool:
-        return self.errors_count > 0
-
-    @property
-    def is_valid(self) -> bool:  # pylint: disable=C0116
-        # if the csvpath has not been run -- e.g. because it represents results that were
-        # saved to disk and reloaded -- it won't have a run started time.
-        if self._csvpath and self._csvpath.run_started_at is not None:
-            return self._csvpath.is_valid
-        elif self._runtime_data and "valid" in self._runtime_data:
-            return self._runtime_data["valid"]
-        return False
-
-    @property
-    def printouts(self) -> list[str]:
-        """this method returns the default printouts. use get_printout_by_name
-        for specific printouts"""
-        if self._printouts is None:
-            self._printouts = []
-        return self._printouts["default"] if "default" in self._printouts else []
-
-    def get_printouts(self) -> dict[str, list[str]]:
-        return self._printouts
-
-    def set_printouts(self, name: str, lines: list[str]) -> None:
-        if self._printouts is None:
-            self._printouts = {}
-        self._printouts[name] = lines
-
-    def get_printout_by_name(self, name: str) -> list[str]:  # pylint: disable=C0116
-        if self._printouts is None:
-            self._printouts = []
-        return self._printouts[name] if name in self._printouts else []
-
-    def has_printouts(self) -> bool:  # pylint: disable=C0116
-        return len(self._printouts) > 0 if self._printouts else False
-
-    @property
-    def lines_printed(self) -> int:  # pylint: disable=C0116
-        return self._print_count
-
-    def print(self, string: str) -> None:  # pylint: disable=C0116
-        self.print_to("default", string)
-
-    def print_to(self, name: str, string: str) -> None:  # pylint: disable=C0116
-        self._print_count += 1
-        if name not in self._printouts:
-            self._printouts[name] = []
-        self._printouts[name].append(string)
-        self._last_line = string
-
-    @property
-    def last_line(self):  # pylint: disable=C0116
-        return self._last_line
-
-    def dump_printing(self) -> None:  # pylint: disable=C0116
-        for name in self._printouts:
-            for line in self._printouts[name]:
-                print(line)
-            print("")
-
-    def print_statements_count(self) -> int:  # pylint: disable=C0116
-        i = 0
-        for name in self._printouts:
-            i += len(self._printouts[name]) if self._printouts[name] else 0
-        return i
+    #
+    # ===========================================
+    #
 
     def __str__(self) -> str:
         lastline = 0
@@ -337,4 +391,4 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
                    lines matched:{len(self._lines) if self._lines and not isinstance(self._lines, LineSpooler) else -1};
                    lines unmatched:{len(self.unmatched) if self.unmatched else 0};
                    print statements:{self.print_statements_count()};
-                   errors:{len(self.errors)}"""
+                   errors:{len(self.errors) if self.errors else -1}"""
