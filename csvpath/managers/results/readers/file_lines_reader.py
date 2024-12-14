@@ -1,9 +1,9 @@
 import os
 import csv
-from typing import NewType
 from abc import ABC, abstractmethod
 from .readers import LinesReader
 from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
+from typing import NewType
 
 
 FileContent = NewType("FileContent", list[list[str]] | LineSpooler)

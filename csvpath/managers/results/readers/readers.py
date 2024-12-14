@@ -6,9 +6,10 @@ from csvpath.util.error import Error
 
 class ResultReader(ABC):
     def __init__(self):
-        self._instance_dir = None
+        # self._instance_dir = None
         self._result = None
 
+    """
     @property
     def instance_dir(self) -> str:
         return self._instance_dir
@@ -16,6 +17,7 @@ class ResultReader(ABC):
     @instance_dir.setter
     def instance_dir(self, instance_dir: str) -> None:
         self._instance_dir = instance_dir
+    """
 
     @property
     def result(self) -> str:
@@ -91,6 +93,7 @@ class ResultReadersFacade(ErrorsReader, UnmatchedReader, LinesReader, PrintoutsR
     def run_dir(self) -> str:
         return self.result._run_dir
 
+    """
     @property
     def identity(self) -> str:
         return self._identity
@@ -100,6 +103,7 @@ class ResultReadersFacade(ErrorsReader, UnmatchedReader, LinesReader, PrintoutsR
         if self.result is not None:
             return self.result.instance_dir
         return None
+    """
 
     def load_readers(self) -> None:
         #

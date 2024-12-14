@@ -102,7 +102,16 @@ class ResultSerializer:
                     with open(os.path.join(run_dir, "data.csv"), "w") as f:
                         writer = csv.writer(f)
                         writer.writerows(lines)
-        if unmatched is not None and len(unmatched) > 0:
+        #
+        # writing is not needed. LineSpoolers are intended to stream their
+        # lines to disk. if we write here we'll be reading and writing the
+        # same file at the same time.
+        #
+        if (
+            unmatched is not None
+            and not isinstance(unmatched, LineSpooler)
+            and len(unmatched) > 0
+        ):
             with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
                 writer = csv.writer(f)
                 writer.writerows(unmatched)

@@ -347,6 +347,17 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @property
     def unmatched(self) -> list[list[Any]]:
+        # return self._unmatched
+        if self._unmatched is None:
+            #
+            # we can assume the caller wants a container for lines. in that case,
+            # we want them to have a container that serializes lines as they come in
+            # rather than waiting for them all to arrive before writing to disk.
+            #
+            # for today we'll just default to CsvLineSpooler, but assume we'll work
+            # in other options later.
+            #
+            self._unmatched = self._readers_facade.unmatched
         return self._unmatched
 
     @unmatched.setter

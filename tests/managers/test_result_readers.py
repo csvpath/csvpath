@@ -7,8 +7,6 @@ from csvpath.managers.results.readers.readers import ResultReadersFacade
 class TestResultReaders(unittest.TestCase):
     def test_result_readers(self):
         f = ResultReadersFacade(None)
-        # f.run_dir = "testing!"
-        # f.identity = "still-testing!"
         f.load_readers()
         assert f.errors_reader
         assert f.unmatched_reader
@@ -34,7 +32,6 @@ class TestResultReaders(unittest.TestCase):
         # now ready to reload
         #
         readers = ResultReadersFacade(result)
-        assert readers.instance_dir
         lines2 = readers.lines
         assert lines2 is not None
         assert len(lines2) == 1
@@ -56,7 +53,6 @@ class TestResultReaders(unittest.TestCase):
         errors = results[0].errors
         assert errors
         assert len(errors) == 8
-
         paths = CsvPaths()
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
@@ -64,11 +60,9 @@ class TestResultReaders(unittest.TestCase):
         errors2 = results[0].errors
         assert errors2 is not None
         assert len(errors2) == len(errors)
-
         assert errors[0] == errors2[0]
 
     def test_reload_printouts(self):
-        print("")
         paths = CsvPaths()
         paths.file_manager.add_named_file(
             name="people", path="tests/test_resources/test.csv"
@@ -81,20 +75,68 @@ class TestResultReaders(unittest.TestCase):
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
-        print("RESULTS ONE")
-        print(" >> name tags")
         printouts = results[0].get_printouts("name tags")
-        for p in printouts:
-            print(f"  ... {p}")
         assert printouts
         assert len(printouts) == 7
-
-        print(">> checklist")
         printouts = results[0].get_printouts("checklist")
-        for p in printouts:
-            print(f"  ... {p}")
-        # assert printouts
-        # assert len(printouts) == 8
+        assert printouts
+        assert len(printouts) == 8
+        #
+        #
+        #
+        paths = CsvPaths()
+        results2 = paths.results_manager.get_named_results("arrivals")
+        assert results2 is not None
+        assert len(results2) == 2
+        printouts = results2[0].get_printouts("name tags")
+        assert printouts
+        assert len(printouts) == 7
+        printouts = results2[1].get_printouts("remarks")
+        assert printouts
+        assert len(printouts) == 3
+
+    def test_reload_lines(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="people", path="tests/test_resources/test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file="tests/test_resources/named_paths/people.csvpaths",
+        )
+        paths.collect_paths(pathsname="arrivals", filename="test")
+        results = paths.results_manager.get_named_results("arrivals")
+        assert results is not None
+        assert len(results) == 2
+        assert len(results[0]) == 8
+        #
+        #
+        #
+        paths = CsvPaths()
+        results2 = paths.results_manager.get_named_results("arrivals")
+        assert results2 is not None
+        assert len(results2) == 2
+        assert len(results2[0]) == 8
+
+        lst1 = results[0].lines.to_list()
+        lst2 = results2[0].lines.to_list()
+        assert len(lst1) == len(lst2)
+        for i, _ in enumerate(lst1):
+            assert lst1[i] == lst2[i]
+
+    def test_reload_unmatched(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="people", path="tests/test_resources/test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file="tests/test_resources/named_paths/people.csvpaths",
+        )
+        paths.collect_paths(pathsname="arrivals", filename="test")
+        results = paths.results_manager.get_named_results("arrivals")
+        assert results is not None
+        assert len(results) == 2
         #
         #
         #
@@ -103,24 +145,16 @@ class TestResultReaders(unittest.TestCase):
         assert results2 is not None
         assert len(results2) == 2
 
-        print("\nRESULTS TWO")
-        print(" >> name tags")
-        printouts = results2[0].get_printouts("name tags")
-        for p in printouts:
-            print(f"  ... {p}")
-        assert printouts
-        assert len(printouts) == 7
+        lst1 = results[0].unmatched
+        lst2 = results2[0].unmatched.to_list()
+        assert len(lst1) == 1
+        assert len(lst1) == len(lst2)
+        for i, _ in enumerate(lst1):
+            assert lst1[i] == lst2[i]
 
-        print(" >> remarks")
-        printouts = results2[1].get_printouts("remarks")
-        for p in printouts:
-            print(f"  ... {p}")
-        assert printouts
-        assert len(printouts) == 3
-
-
-######
-#
-# lines
-# unmatched
-#
+        lst1 = results[1].unmatched
+        lst2 = results2[1].unmatched.to_list()
+        assert len(lst1) == 6
+        assert len(lst1) == len(lst2)
+        for i, _ in enumerate(lst1):
+            assert lst1[i] == lst2[i]

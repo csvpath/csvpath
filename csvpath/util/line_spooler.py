@@ -61,6 +61,32 @@ class CsvLineSpooler(LineSpooler):
         self.path = None
         self.writer = None
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        for _ in self.next():
+            yield _
+
+    def to_list(self) -> list[str]:
+        if self.path is None:
+            self._instance_data_file_path()
+        if os.path.exists(self.path) is False:
+            self.result.csvpath.logger.debug(
+                "There is no data.csv at %s. This may or may not be a problem.",
+                self.path,
+            )
+            return []
+        lst = []
+        for line in DataFileReader(
+            self.path,
+            filetype="csv",
+            delimiter=self.result.csvpath.delimiter,
+            quotechar=self.result.csvpath.quotechar,
+        ).next():
+            lst.append(line)
+        return lst
+
     def __len__(self) -> int:
         if self._count is None or self._count <= 0:
             if self.result is not None and self.result.instance_dir:
@@ -96,8 +122,8 @@ class CsvLineSpooler(LineSpooler):
             yield line
 
     def _warn_if(self) -> None:
-        if self.result and self.result.csvpath:
-            self.result.csvpath.logger.warn(
+        if self.result is not None and self.result.csvpath:
+            self.result.csvpath.logger.warning(
                 "CsvLineSpooler cannot find instance_data_file_path yet within %s",
                 self.result.run_dir,
             )

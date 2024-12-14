@@ -16,6 +16,7 @@ from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
 from .result_reader import ResultReader
+from csvpath.scanning.scanner import Scanner
 
 
 class ResultsManager:  # pylint: disable=C0115
@@ -501,6 +502,8 @@ class ResultsManager:  # pylint: disable=C0115
             # run objects that may not be current. if we really need to recreate the
             # csvpath perfectly we should probably go back and rethink. maybe pickle?
             #
+            csvpath.scanner = Scanner(csvpath=csvpath)
+            csvpath.scanner.parse(meta["runtime_data"]["scan_part"])
             csvpath.metadata = meta["metadata"]
             csvpath.modes.update()
             csvpath.identity
