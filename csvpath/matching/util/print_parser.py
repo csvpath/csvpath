@@ -23,9 +23,14 @@ class PrintParser:
     def _to_string(self, ts) -> str:
         res = ""
         for item in ts:
+            s = ""
             if isinstance(item, dict):
-                item = self._handle_replacement(item)
-            res = f"{res}{item}"
+                s = self._handle_replacement(item)
+                if "sentinel" in item:
+                    s = f"{s}{item['sentinel']}"
+            else:
+                s = item
+            res = f"{res}{s}"
         return res
 
     def _handle_replacement(self, ref) -> str:

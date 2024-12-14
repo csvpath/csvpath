@@ -264,7 +264,9 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return self._printouts
 
     def get_printouts(self, name="default") -> dict[str, list[str]]:
-        return self.printouts[name] if name in self._printouts else []
+        if self.printouts and name in self.printouts:
+            return self.printouts[name]
+        return []
 
     def set_printouts(self, name: str, lines: list[str]) -> None:
         self.printouts[name] = lines

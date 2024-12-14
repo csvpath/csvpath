@@ -67,6 +67,60 @@ class TestResultReaders(unittest.TestCase):
 
         assert errors[0] == errors2[0]
 
-        # print(f"\nerrors[0]: \n{errors[0]}")
-        # print(f"\nerrors2[0]: \n{errors2[0]}")
-        # print(f"\n\n\n{errors[0].how_eq(errors2[0])}")
+    def test_reload_printouts(self):
+        print("")
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="people", path="tests/test_resources/test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file="tests/test_resources/named_paths/people.csvpaths",
+        )
+        paths.collect_paths(pathsname="arrivals", filename="test")
+        results = paths.results_manager.get_named_results("arrivals")
+        assert results is not None
+        assert len(results) == 2
+        print("RESULTS ONE")
+        print(" >> name tags")
+        printouts = results[0].get_printouts("name tags")
+        for p in printouts:
+            print(f"  ... {p}")
+        assert printouts
+        assert len(printouts) == 7
+
+        print(">> checklist")
+        printouts = results[0].get_printouts("checklist")
+        for p in printouts:
+            print(f"  ... {p}")
+        # assert printouts
+        # assert len(printouts) == 8
+        #
+        #
+        #
+        paths = CsvPaths()
+        results2 = paths.results_manager.get_named_results("arrivals")
+        assert results2 is not None
+        assert len(results2) == 2
+
+        print("\nRESULTS TWO")
+        print(" >> name tags")
+        printouts = results2[0].get_printouts("name tags")
+        for p in printouts:
+            print(f"  ... {p}")
+        assert printouts
+        assert len(printouts) == 7
+
+        print(" >> remarks")
+        printouts = results2[1].get_printouts("remarks")
+        for p in printouts:
+            print(f"  ... {p}")
+        assert printouts
+        assert len(printouts) == 3
+
+
+######
+#
+# lines
+# unmatched
+#

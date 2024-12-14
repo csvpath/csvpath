@@ -289,6 +289,7 @@ class TestPrint(unittest.TestCase):
             #
             printstr = """ $.variables.tracking.value """
             result = parser.transform(printstr)
+            print(f"test_print: resx: {result}")
             assert result
             assert result.strip() == "fish"
             #

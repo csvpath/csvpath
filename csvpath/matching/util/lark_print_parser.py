@@ -13,8 +13,10 @@ class LarkPrintParser:
         reference: ROOT type name
         ROOT: /\$[^\.\$]*\./
         type: (VARIABLES|HEADERS|METADATA|CSVPATH)
-        name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))? SENTINEL
-        SENTINEL: /[^\.]|\.\./
+        name: "." (SIMPLE_NAME | QUOTED_NAME) ("." (SIMPLE_NAME | QUOTED_NAME))? sentinel
+        NON_SIMPLE_CHAR: /[\t\n\r \$!\^\:\,;%\(\)\-\+@#\{\}\[\]&<>\/\|\?"']/
+        DOT_DOT: ".."
+        sentinel: NON_SIMPLE_CHAR|DOT_DOT
         SIMPLE_NAME: /[^\.\$\s!\^\:\,;%\(\)\-\+@#\{\}\[\]&<>\/\|\?"']+/
         QUOTED_NAME: /'[^']+'/
         VARIABLES: "variables"
@@ -48,9 +50,6 @@ class LarkPrintParser:
 
 @v_args(inline=True)
 class LarkPrintTransformer(Transformer):
-    def printed(self, *items) -> List[Any]:
-        return items
-
     def __init__(self, csvpath=None):
         self.csvpath = csvpath
         self.pending_text = []
@@ -60,6 +59,10 @@ class LarkPrintTransformer(Transformer):
         for item in items:
             if isinstance(item, dict):
                 res += self._reconstruct_references(item)
+                if self.pending_text and len(self.pending_text):
+                    for _ in self.pending_text:
+                        res = f"{res}{_}"
+                    self.pending_text = []
             else:
                 res += item
             res += "\n"
@@ -74,6 +77,13 @@ class LarkPrintTransformer(Transformer):
         res += f"{ls}"
         return res
 
+    # =================
+    # productions
+    # =================
+
+    def printed(self, *items) -> List[Any]:
+        return items
+
     def TEXT(self, token):
         if len(self.pending_text):
             for _ in self.pending_text:
@@ -82,7 +92,13 @@ class LarkPrintTransformer(Transformer):
         return token.value
 
     def reference(self, root=None, datatype=None, name=None):
-        return {"root": root, "data_type": datatype, "name": name}
+        sentinel = ""
+        if self.pending_text and len(self.pending_text):
+            for _ in self.pending_text:
+                sentinel = f"{sentinel}{_}"
+            self.pending_text = []
+
+        return {"root": root, "data_type": datatype, "name": name, "sentinel": sentinel}
 
     def WS(self, whitespace):
         if len(self.pending_text):
@@ -127,9 +143,17 @@ class LarkPrintTransformer(Transformer):
     def CSVPATH(self, token):
         return token.value
 
-    def SENTINEL(self, token):
-        if token.value == "..":
+    def DOT_DOT(self, token):
+        if token and token.value is not None:
             self.pending_text.append(".")
-        else:
+
+    def NON_SIMPLE_CHAR(self, token):
+        if token and token.value is not None:
             self.pending_text.append(token.value)
-        return ""
+
+    def sentinel(self, non_simple_char=None, dot_dot=None):
+        # the sentinel values go into pending_text and
+        # are added to the reference under the "sentinel" key
+        # when we reduce the ref to text in PrintParser we
+        # append the sentinel.
+        pass
