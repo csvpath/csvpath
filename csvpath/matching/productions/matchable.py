@@ -74,11 +74,15 @@ class Matchable(Qualified):
 
     def raiseChildrenException(self, msg: str) -> None:
         msg = self.decorate_error_message(msg)
-        raise ChildrenException(msg)
 
+        e = ChildrenException(msg)
+        self.raise_if(e)
+
+    """
     @property
     def my_expression(self) -> Self:
         return ExpressionUtility.get_my_expression(self)
+    """
 
     def check_valid(self) -> None:
         """structural check; doesn't test the values. nothing should
@@ -161,7 +165,7 @@ class Matchable(Qualified):
         return self._id
 
     def raise_if(self, e, *, cause=None) -> None:
-        if self.matcher.csvpath.do_i_raise():
+        if self.matcher is None or self.matcher.csvpath.do_i_raise():
             if cause:
                 raise e from cause
             raise e

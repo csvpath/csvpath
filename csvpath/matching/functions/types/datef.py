@@ -81,8 +81,9 @@ class Date(ValueProducer, Type):
         v = self._value_one()
         if v and isinstance(v, (datetime.datetime, datetime.date)):
             return v
-        elif v and isinstance(v, str):
+        if v and isinstance(v, str):
             return ExpressionUtility.to_date(v)
+        return None
 
     def _from_two(self):
         v = self._value_one()
@@ -95,7 +96,7 @@ class Date(ValueProducer, Type):
         try:
             aformat = f"{aformat}".strip()
             return datetime.datetime.strptime(adate, aformat)
-        except Exception as e:
+        except ValueError as e:
             if adate == "" and not self.notnone:
                 return None
             msg = self.decorate_error_message(

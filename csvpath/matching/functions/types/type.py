@@ -1,6 +1,6 @@
 # pylint: disable=C0114
-from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term
+from ..function_focus import MatchDecider
 
 
 class Type(MatchDecider):

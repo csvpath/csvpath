@@ -14,7 +14,6 @@ class Qualities(Enum):
     INCREASE = "increase"
     # indicates that the value must go down or the match decision is negative
     DECREASE = "decrease"
-
     # to indicate all other match components must match for the qualified to take effect
     ONMATCH = "onmatch"
     # to indicate that the match decision is only positive when there is a change
@@ -38,8 +37,13 @@ class Qualities(Enum):
     DISTINCT = "distinct"
 
 
-class Qualified:
+class Qualified:  # pylint: disable=R0904
     """base class for productions that can have qualifiers"""
+
+    # re: R0904: too many public methods. this class supports all 10+
+    # qualifiers for its subclasses. we may want to create separate
+    # qualifier classes to handle each, or something, but atm the current
+    # layout is fine.
 
     QUALIFIERS = [
         Qualities.ONMATCH.value,
@@ -56,6 +60,11 @@ class Qualified:
 
     def __init__(self, *, name: str = None):
         self.name = name
+        # the subclasses will set matcher, but we need to use it in
+        # this class, so we need a placeholder. subclasses must call
+        # __init__() before setting matcher, but that is the normal
+        # order of things.
+        self.matcher = None
         # keep the original name so we can look up non-term
         # secondary qualifiers
         self.qualified_name = name
@@ -71,6 +80,10 @@ class Qualified:
                 self.qualifiers = qs
         if self.name is not None and self.name.strip() == "":
             raise ChildrenException(f"Name of {self} cannot be the empty string")
+
+    @property
+    def my_expression(self):
+        return ExpressionUtility.get_my_expression(self)
 
     def first_non_term_qualifier(self, default=None) -> Optional[str]:
         """non-term qualifiers are arbitrary names that may or may not affect
@@ -226,9 +239,8 @@ class Qualified:
                 return False
             self.matcher.csvpath.logger.debug("Not overriding frozen in %s", self)
             return True
-        else:
-            self.matcher.csvpath.logger.debug("Not overriding frozen in %s", self)
-            return False
+        self.matcher.csvpath.logger.debug("Not overriding frozen in %s", self)
+        return False
 
     def override_frozen(self) -> bool:
         """fail() and last() must override to return True"""
@@ -282,7 +294,7 @@ class Qualified:
             if not m:
                 e[1] = False
                 return not self.default_match()
-            elif m is True:
+            if m is True:
                 if not e[0] == self.my_expression:
                     e[1] = True
         #

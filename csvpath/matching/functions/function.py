@@ -1,16 +1,16 @@
 # pylint: disable=C0114
 import traceback
-import signal
 import time
 from typing import Any
 from ..productions.matchable import Matchable
-from ..util.exceptions import ChildrenException
 
 
-class CheckedUnset:
+class CheckedUnset:  # pylint: disable=R0903
     """pass on self.checked if setting self.value=None would not be clear/effective"""
 
-    pass
+    # re: R0903: too few methods. this is an interface class. it could have
+    # been an enum, class var, etc. maybe that would be better, but it can sit
+    # for now.
 
 
 class Function(Matchable):
@@ -101,13 +101,13 @@ class Function(Matchable):
         #
         endval = time.perf_counter_ns()
         t = (endval - startval) / 1000000
-        self.matcher.csvpath._up_function_time_value(self.__class__, t)
+        self.matcher.csvpath.up_function_time_value(self.__class__, t)
         #
         # exp end
         #
         return self.value
 
-    def matches(self, *, skip=None) -> bool:
+    def matches(self, *, skip=None) -> bool:  # pylint: disable=R0912
         if not skip:
             skip = []
         if self in skip:  # pragma: no cover
@@ -215,7 +215,8 @@ class Function(Matchable):
                         f"@{self}: appling default match, {self.match}, because !do_onmatch"
                     )
                     self.matching().result(self.match).because("onmatch")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
+            # W0718: to general exception. we need to not let anything through so we have to be general.
             e.trace = traceback.format_exc()
             e.source = self
             e.json = self.to_json()
@@ -225,7 +226,7 @@ class Function(Matchable):
         #
         endmatch = time.perf_counter_ns()
         t = (endmatch - startmatch) / 1000000
-        self.matcher.csvpath._up_function_time_match(self.__class__, t)
+        self.matcher.csvpath.up_function_time_match(self.__class__, t)
         #
         # exp end
         #

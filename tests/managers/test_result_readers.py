@@ -143,13 +143,20 @@ class TestResultReaders(unittest.TestCase):
         errors = results[0].errors
         assert errors
         assert len(errors) == 8
+        #
+        # reload
+        #
         paths = CsvPaths()
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
         assert len(results) == 1
+
         errors2 = results[0].errors
         assert errors2 is not None
         assert len(errors2) == len(errors)
+        print("\nHow are these equal?")
+        errors[0].how_eq(errors2[0])
+
         assert errors[0] == errors2[0]
 
     def test_reload_printouts(self):

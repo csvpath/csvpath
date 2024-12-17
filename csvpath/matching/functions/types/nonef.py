@@ -1,11 +1,10 @@
 # pylint: disable=C0114
-from typing import Any
-from ..function_focus import ValueProducer
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.functions.function import Function
 from ..args import Args
+from ..function_focus import ValueProducer
 
 
 class Nonef(ValueProducer):
@@ -25,11 +24,10 @@ class Nonef(ValueProducer):
         self.args.validate(self.siblings())
         super().check_valid()
 
-    # def to_value(self, *, skip=None) -> Any:  # pragma: no cover
     def _produce_value(self, skip=None) -> None:
         self.value = None
 
-    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:  # pragma: no cover
         if len(self.children) == 0:
             self.match = True
         if isinstance(self._child_one(), Term):
@@ -42,7 +40,7 @@ class Nonef(ValueProducer):
         else:
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 
-    def resolve_value(self, skip=None) -> str | None:
+    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
         return None
 
 
@@ -60,12 +58,12 @@ class Blank(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
-    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:  # pragma: no cover
         # if we're in line, line will check that our
         # contained Term, if any, matches.
         self.match = self.default_match()
 
-    def resolve_value(self, skip=None) -> str | None:
+    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
         return None
 
 
@@ -86,10 +84,10 @@ class Wildcard(ValueProducer):
             return
         self.value = self.children[0].to_value(skip=skip)
 
-    def _decide_match(self, *, skip=None) -> None:  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:  # pragma: no cover
         # if we're in line, line will check that our
         # contained Term, if any, matches.
         self.match = self.default_match()
 
-    def resolve_value(self, skip=None) -> str | None:
+    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
         return None

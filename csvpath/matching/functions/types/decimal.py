@@ -15,7 +15,7 @@ class Decimal(ValueProducer, Type):
         a = self.args.argset(5)
         a.arg(name="header name", types=[Term], actuals=[str, int])
         a.arg(name="max", types=[None, Term, Function], actuals=[None, float, int])
-        a.arg(name="min", types=[None, Term, Function], actuals=[None, float, int])
+        a.arg(name="mi<D-s>", types=[None, Term, Function], actuals=[None, float, int])
         self.args.validate(self.siblings())
         for s in self.siblings():
             if isinstance(s, Function) and not isinstance(s, Nonef):
@@ -42,9 +42,8 @@ class Decimal(ValueProducer, Type):
                 )
                 self.parent.raise_if(ChildrenException(msg))
                 return
-            else:
-                self.match = True
-                return
+            self.match = True
+            return
         if self.name == "decimal":
             #
             # we know this value is a number because Args checked it.
@@ -59,8 +58,7 @@ class Decimal(ValueProducer, Type):
                     )
                     self.parent.raise_if(ChildrenException(msg))
                     return
-                else:
-                    self.match = True
+                self.match = True
             elif self.has_qualifier("weak"):
                 self.match = True
             elif f"{h}".strip().find(".") == -1:
@@ -76,6 +74,9 @@ class Decimal(ValueProducer, Type):
         # validate min and max
         #
         val = self._to(h)
+        self._val_in_bounds(val, skip=skip)
+
+    def _val_in_bounds(self, val, skip=None) -> None:
         dmax = self._value_two(skip=skip)
         if dmax is not None:
             dmax = self._to(dmax)
@@ -91,5 +92,8 @@ class Decimal(ValueProducer, Type):
     def _to(self, n):
         if self.name == "decimal":
             return ExpressionUtility.to_float(n)
-        elif self.name == "integer":
+        if self.name == "integer":
             return ExpressionUtility.to_int(n)
+        msg = f"Unknown name: {self.name}"
+        self.parent.raise_if(ChildrenException(msg))
+        return None
