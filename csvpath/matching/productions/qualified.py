@@ -75,7 +75,7 @@ class Qualified:
     def first_non_term_qualifier(self, default=None) -> Optional[str]:
         """non-term qualifiers are arbitrary names that may or may not affect
         the operation of the component they are placed on"""
-        if not self.qualifiers:  # this shouldn't happen but what if it did
+        if not self.qualifiers:  # this shouldn't happen but what if it did?
             return default
         for q in self.qualifiers:
             if q not in Qualified.QUALIFIERS:

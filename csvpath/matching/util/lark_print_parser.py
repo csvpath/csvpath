@@ -54,29 +54,6 @@ class LarkPrintTransformer(Transformer):
         self.csvpath = csvpath
         self.pending_text = []
 
-    def to_string(self, *items):
-        res = ""
-        for item in items:
-            if isinstance(item, dict):
-                res += self._reconstruct_references(item)
-                if self.pending_text and len(self.pending_text):
-                    for _ in self.pending_text:
-                        res = f"{res}{_}"
-                    self.pending_text = []
-            else:
-                res += item
-            res += "\n"
-        return res
-
-    def _reconstruct_references(self, item):
-        res = ""
-        res += item["root"]
-        res += item["data_type"]
-        res += "."
-        ls = item["name"]
-        res += f"{ls}"
-        return res
-
     # =================
     # productions
     # =================
@@ -85,10 +62,20 @@ class LarkPrintTransformer(Transformer):
         return items
 
     def TEXT(self, token):
+        #
+        # 16 dec 2024: coverage indicated this and the
+        # analogous in WS are never used. adding an exception
+        # w/in the test never raises. leaving for now because
+        # maybe there is some corner case we'd only spot
+        # visually? if no indications in the next month or so
+        # remove.
+        #
+        """
         if len(self.pending_text):
             for _ in self.pending_text:
                 token.value = f"{_}{token.value}"
             self.pending_text = []
+        """
         return token.value
 
     def reference(self, root=None, datatype=None, name=None):
@@ -101,10 +88,20 @@ class LarkPrintTransformer(Transformer):
         return {"root": root, "data_type": datatype, "name": name, "sentinel": sentinel}
 
     def WS(self, whitespace):
+        #
+        # 16 dec 2024: coverage indicated this and the
+        # analogous in TEXT are never used. adding an exception
+        # w/in the test never raises. leaving for now because
+        # maybe there is some corner case we'd only spot
+        # visually? if no indications in the next month or so
+        # remove.
+        #
+        """
         if len(self.pending_text):
             for _ in self.pending_text:
                 whitespace.value = f"{_}{whitespace.value}"
             self.pending_text = []
+        """
         return whitespace.value
 
     def ROOT(self, token):

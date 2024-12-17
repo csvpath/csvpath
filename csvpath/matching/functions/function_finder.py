@@ -5,7 +5,12 @@ from csvpath.util.config_exception import ConfigurationException
 from .boolean.yes import Yes
 
 
-class FunctionFinder:
+class FunctionFinder:  # pylint: disable=R0903
+    #
+    # re: R0903 -- too few public methods: moved here from FunctionFactory
+    # to keep that class from becoming even larger. at some point this should
+    # merge with csvpath.util.ClassLoader in some way.
+    #
     EXTERNALS = "externalfunctionsloaded"
 
     @classmethod

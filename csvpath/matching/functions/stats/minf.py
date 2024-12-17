@@ -59,15 +59,20 @@ class MinMax(ValueProducer):
         return False
 
     def _store_and_compare(self, v, maxormin: bool) -> Any:
-        self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
-        all_values = self.matcher.get_variable(
-            "min" if maxormin is MinMax.MIN else "max"
-        )
+        name = "min" if maxormin is MinMax.MIN else "max"
+        #
+        # track the val by line in func name
+        #
+        t = f"{self._get_the_line()}"
+        self.matcher.set_variable("min", tracking=t, value=v)
+        #
+        # find the least/most
+        #
+        all_values = self.matcher.get_variable(name)
         m = None
-        for k, val in enumerate(all_values.items()):  # pylint: disable=W0612
-            # re: W0612: can change, but not now
+        for k, val in enumerate(all_values.items()):
             val = val[1]
-            if not m or ((val < m) if maxormin is MinMax.MIN else (val > m)):
+            if m is None or ((val < m) if maxormin is MinMax.MIN else (val > m)):
                 m = val
         return m
 
@@ -91,7 +96,9 @@ class Min(MinMax):
             return
         v = self._get_the_value_conformed()
         self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
+        print(f"min._profd: v: {v}")
         m = self._store_and_compare(v, MinMax.MIN)
+        print(f"min._profd: m: {m}")
         self.value = m
 
     def _decide_match(self, skip=None) -> None:

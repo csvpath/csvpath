@@ -7,6 +7,17 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsMin(unittest.TestCase):
+    def test_function_min0(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @the_min = min(line_number())
+             ]"""
+        ).fast_forward()
+        assert path.variables["the_min"] == 0
+
     def test_function_min1(self):
         path = CsvPath()
 

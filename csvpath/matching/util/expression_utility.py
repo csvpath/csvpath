@@ -147,7 +147,9 @@ class ExpressionUtility:
             return int(v)
         except ValueError as e:
             if should_i_raise is True:
-                raise ValueError("ExpressionUtility cannot convert '{v}' to int") from e
+                raise ValueError(
+                    f"ExpressionUtility cannot convert '{v}' to int"
+                ) from e
             else:
                 return v
 

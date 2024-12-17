@@ -14,6 +14,37 @@ class TestValidBasicTypesNone(unittest.TestCase):
     def _config(self, path) -> None:
         path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
 
+    def test_validity_none0(self):
+        path = CsvPath()
+        self._config(path)
+        path.parse(
+            f"""~id:validity_none0~ ${PATH}[*][
+                line(
+                    none(),
+                    wildcard()
+                )
+            ]"""
+        )
+        path.modes.update()
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_none01(self):
+        path = CsvPath()
+        self._config(path)
+        path.parse(
+            f"""~id:validity_none01~ ${PATH}[*][
+                line(
+                    integer("firstname"),
+                    boolean( yes() ),
+                    wildcard()
+                )
+            ]"""
+        )
+        path.modes.update()
+        with pytest.raises(MatchException):
+            path.collect()
+
     def test_validity_none1(self):
         path = CsvPath()
         self._config(path)

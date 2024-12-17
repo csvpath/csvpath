@@ -1,7 +1,11 @@
 import unittest
+import os
 from csvpath import CsvPaths
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.managers.results.readers.readers import ResultReadersFacade
+from csvpath.managers.results.result_reader import ResultReader
+from csvpath.util.file_readers import FileInfo
+from csvpath.util.line_spooler import CsvLineSpooler
 
 
 class TestResultReaders(unittest.TestCase):
@@ -12,6 +16,92 @@ class TestResultReaders(unittest.TestCase):
         assert f.unmatched_reader
         assert f.printouts_reader
         assert f.lines_reader
+
+    def test_result_spooler_instance_data_file_path(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="food", path="tests/test_resources/named_files/food.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
+        )
+        paths.collect_paths(pathsname="food", filename="food")
+        results = paths.results_manager.get_named_results("food")
+
+        result = results[0]
+
+        cs = CsvLineSpooler(None)
+        dpath = cs._instance_data_file_path()
+        assert dpath is None
+
+        cs = CsvLineSpooler(result)
+        c = result.csvpath
+        result.csvpath = None
+        dpath = cs._instance_data_file_path()
+        assert dpath is None
+        result.csvpath = c
+
+        dpath = result.data_file_path
+        assert dpath is not None
+        assert dpath == cs._instance_data_file_path()
+
+        dpath = result.data_file_path
+        assert dpath is not None
+        assert dpath == cs._instance_data_file_path()
+
+    def test_result_reader_helpers(self):
+        paths = CsvPaths()
+        paths.file_manager.add_named_file(
+            name="food", path="tests/test_resources/named_files/food.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
+        )
+        paths.collect_paths(pathsname="food", filename="food")
+        results = paths.results_manager.get_named_results("food")
+
+        result = results[0]
+        result_dir = os.path.join(result.run_dir, result.identity_or_index)
+        m = ResultReader.meta(result_dir)
+        assert m is not None
+        assert len(m) > 0
+        assert "runtime_data" in m
+        assert m["runtime_data"]["delimiter"] == ","
+
+        m = ResultReader.manifest(result_dir)
+        assert m is not None
+        assert len(m) > 0
+        assert "instance_home" in m
+        assert m["instance_home"] == result_dir
+
+        info = FileInfo.info(m["manifest_path"])
+        assert info
+        assert "created" in info
+        assert info["created"] is not None
+
+    def test_result_reader_helpers_2(self):
+        p = "tests/test_resources/deleteme"
+        if not os.path.exists(p):
+            os.makedirs(p)
+        f = os.path.join(p, "meta.json")
+        if os.path.exists(f):
+            os.remove(f)
+        m = ResultReader.meta(p)
+        assert m is not None
+        assert len(m) == 0
+        assert os.path.exists(f)
+        os.remove(f)
+        assert not os.path.exists(f)
+        #
+        #
+        #
+        f = os.path.join(p, "manifest.json")
+        m = ResultReader.manifest(p)
+        assert m is not None
+        assert len(m) == 0
+        assert os.path.exists(f)
+        os.remove(f)
+        assert not os.path.exists(f)
 
     def test_result_file_lines_reader(self):
         paths = CsvPaths()
@@ -78,6 +168,7 @@ class TestResultReaders(unittest.TestCase):
         printouts = results[0].get_printouts("name tags")
         assert printouts
         assert len(printouts) == 7
+        assert results[0].has_printouts()
         printouts = results[0].get_printouts("checklist")
         assert printouts
         assert len(printouts) == 8
@@ -123,6 +214,8 @@ class TestResultReaders(unittest.TestCase):
         assert len(lst1) == len(lst2)
         for i, _ in enumerate(lst1):
             assert lst1[i] == lst2[i]
+
+        assert results2[0].is_valid
 
     def test_reload_unmatched(self):
         paths = CsvPaths()

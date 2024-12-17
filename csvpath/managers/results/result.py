@@ -196,8 +196,11 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @csvpath.setter
     def csvpath(self, path: CsvPath) -> None:
-        path.error_collector = self
-        path.add_printer(self)
+        # during testing or for some other reason we may receive None
+        # let's assume the dev knows what they're doing and just go with it.
+        if path is not None:
+            path.error_collector = self
+            path.add_printer(self)
         self._csvpath = path
 
     #

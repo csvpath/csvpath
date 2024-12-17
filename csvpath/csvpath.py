@@ -1,7 +1,6 @@
 """ CsvPath is the main class for the library. most of the magic
-    happens either here or in individual functions. """
+    happens either here or in individual functions. """  # pylint: disable=C0302
 
-import csv
 import time
 import os
 import hashlib
@@ -9,9 +8,13 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
-from csvpath.util.config import Config
-from csvpath.util.line_monitor import LineMonitor
-from csvpath.util.log_utility import LogUtility
+from .util.config import Config
+from .util.line_monitor import LineMonitor
+from .util.log_utility import LogUtility
+from .util.printer import Printer
+from .util.file_readers import DataFileReader
+from .util.line_spooler import LineSpooler, ListLineSpooler
+from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
 from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
@@ -26,10 +29,6 @@ from .util.exceptions import (
     CsvPathsException,
 )
 from .matching.util.exceptions import MatchException
-from csvpath.util.printer import Printer
-from csvpath.util.file_readers import DataFileReader
-from csvpath.util.line_spooler import LineSpooler, ListLineSpooler
-from csvpath.modes.mode_controller import ModeController
 
 
 class CsvPathPublic(ABC):
@@ -327,7 +326,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @will_run.setter
     def will_run(self, mode) -> None:
-        self.self.modes.run_mode.value = mode
+        self.modes.run_mode.value = mode
 
     #
     # increases the total accumulated time spent doing c.matches() by t
@@ -406,29 +405,39 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def identity(self) -> str:
-        """returns id or name if found in metadata. the id or name gets
-        into metadata primarily if found in an "external" comment in
-        the csvpath. "external" meaning outside the []s. comments are
-        keyword:comment. we take id, Id, ID and name, Name, NAME. id
-        is preferred over name. E.g.:
-        ~ name: my path description: an example ~
+        """returns id or name if found in metadata.
+
+        the id or name gets into metadata primarily if found
+        in an "external" comment in the csvpath. "external"
+        meaning outside the []s. comments are keyword:comment.
+        we take id, Id, ID and name, Name, NAME.
+
+        id is preferred over name. E.g. in:
+        ~ name: my path description: an example id: this value wins ~
+        the id becomes the identity of the instance.
+
+        we prefer in this order: all-lower most, Initial-caps,
+        ALL-CAPS least
+
+        the ordering is relied on in Result and possibly
+        elsewhere.
         """
-        # this ordering is relied on in Result and possibly elsewhere
+        ret = None
         if not self.metadata:
-            return ""
-        if "id" in self.metadata:
-            return self.metadata["id"]
-        if "Id" in self.metadata:
-            return self.metadata["Id"]
-        if "ID" in self.metadata:
-            return self.metadata["ID"]
-        if "name" in self.metadata:
-            return self.metadata["name"]
-        if "Name" in self.metadata:
-            return self.metadata["Name"]
+            ret = ""
         if "NAME" in self.metadata:
-            return self.metadata["NAME"]
-        return ""
+            ret = self.metadata["NAME"]
+        if "Name" in self.metadata:
+            ret = self.metadata["Name"]
+        if "name" in self.metadata:
+            ret = self.metadata["name"]
+        if "ID" in self.metadata:
+            ret = self.metadata["ID"]
+        if "Id" in self.metadata:
+            ret = self.metadata["Id"]
+        if "id" in self.metadata:
+            ret = self.metadata["id"]
+        return ret
 
     @property
     def config(self) -> Config:  # pylint: disable=C0116
@@ -507,7 +516,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def has_default_printer(self) -> bool:
         if not self.printers:
             self.printers = []
-        for i, p in enumerate(self.printers):
+        for p in self.printers:
             if isinstance(p, StdOutPrinter):
                 return True
         return False
@@ -522,15 +531,17 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def last_line(self):
+        """this method only returns the default printer's last_line"""
         if not self.printers or len(self.printers) == 0:
             return None
         return self.printers[0].last_line
 
     @property
     def lines_printed(self) -> int:
+        """this method only returns the default printer's lines printed"""
         if not self.printers or len(self.printers) == 0:
             return -1
-        self.printers[0].lines_printed
+        return self.printers[0].lines_printed
 
     @property
     def is_frozen(self) -> bool:
@@ -631,10 +642,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #   - files-mode: all | no-data | no-unmatched | no-printouts | data | unmatched | errors | meta | vars | printouts
         #
         self.modes.update()
-        # self.update_arg_validation_mode_if()
 
     # =====================
-
+    # in principle the modes should come through the mode controller like:
+    #      self.modes.transfer_mode.value
+    # not wading into that today. low value.
+    #
     @property
     def transfer_mode(self) -> str:
         return self.metadata.get("transfer-mode")
@@ -774,7 +787,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         i = data.find("]")
         if i < 0:
             raise InputException(f"Cannot find the scan part of this csvpath: {data}")
-        elif i == len(data) - 1:
+        if i == len(data) - 1:
             raise InputException(
                 f"The scan part of this csvpath cannot be last: {data}"
             )
@@ -787,7 +800,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
         if ndata == "":
             raise InputException(f"There must be a match part of this csvpath: {data}")
-
         if ndata[0] != "[":
             raise InputException(f"Cannot find the match part of this csvpath: {data}")
         if ndata[len(ndata) - 1] != "]":
@@ -1024,42 +1036,18 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         if self.scanner.filename is None:
             raise FileException("There is no filename")
-        reader = DataFileReader(
+        #
+        # DataFileReader is abstract. instantiating it results in a concrete subclass.
+        # pylint doesn't like that just because it doesn't see what we're doing.
+        # otoh, is this a bad way to do it? not sure but it works fine.
+        #
+        reader = DataFileReader(  # pylint: disable=E0110
             self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
         )
         for line in reader.next():
             self.track_line(line=line)
             yield line
         self.finalize()
-
-    """
-    # potential replacement for method above
-    # this is a proposal for having the results of one csvpath feed into another
-    # in memory. the goal being to both shape the data chain-of-responsibility-style
-    # and also to narrow the data for performance gains.
-    #
-    # we would need:
-    #   - csvpaths.chain_result_data
-    #   - named-path added to csvpath metadata early-on
-    #
-    # caching this here for now. jury is out on if it should be added.
-    #
-    def _next_line_new(self) -> List[Any]:
-        self.logger.info("beginning to scan file: %s", self.scanner.filename)
-        if self.csvpath and self.csvpaths.chain_result_data:
-            rs = csvpath.result_manager.get_named_results(self.metadata["named-paths"])
-            for line in rs[len(rs)-1].lines:
-                yield line
-        elif:
-            with open(self.scanner.filename, "r", encoding="utf-8") as file:
-                reader = csv.reader(
-                    file, delimiter=self.delimiter, quotechar=self.quotechar
-                )
-                for line in reader:
-                    self.track_line(line=line)
-                    yield line
-        self.finalize()
-    """
 
     def finalize(self) -> None:
         """clears caches, etc. this is an internal method, but not _ because
@@ -1176,8 +1164,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 raise InputException(
                     f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k}"
                 )
-            else:
-                ls.append(line[k])
+            ls.append(line[k])
         return ls
 
     def advance(self, ff: int = -1) -> None:
@@ -1210,12 +1197,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self.get_total_lines_and_headers()
         return self.line_monitor.physical_end_line_number
 
-    def get_total_lines_and_headers(self) -> int:  # pylint: disable=C0116
+    def get_total_lines_and_headers(self) -> None:  # pylint: disable=C0116
         if not self.scanner or not self.scanner.filename:
             self.logger.error(
-                f"Csvpath identified as {self.identity} has no filename. Since that can happen during error handling an exception won't be raised."
+                "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
+                self.identity,
             )
-            return -1
         if self.csvpaths:
             self.line_monitor = self.csvpaths.file_manager.cacher.get_new_line_monitor(
                 self.scanner.filename

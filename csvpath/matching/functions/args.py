@@ -8,9 +8,9 @@ from csvpath.matching.functions.function import Function
 from csvpath.matching.productions.reference import Reference
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..util.exceptions import ChildrenException, ChildrenValidationException
 from csvpath.util.config_exception import ConfigurationException
 from csvpath.util.error import ErrorCommsManager
+from ..util.exceptions import ChildrenException
 
 #   from csvpath.util.log_utility import LogUtility
 #   LogUtility.log_brief_trace()
@@ -221,11 +221,11 @@ class ArgSet:
         found = len(actuals) == 0
         a = None
         i = 0
-        self._parent._csvpath.logger.debug(
+        self._parent.csvpath.logger.debug(
             "Beginning matches on arg actuals to expected actuals for argset %s",
             self.argset_number,
         )
-        self._parent._csvpath.logger.debug("Actuals: %s", str(actuals))
+        self._parent.csvpath.logger.debug("Actuals: %s", str(actuals))
         for i, a in enumerate(actuals):
             if i >= len(self._args):
                 #
@@ -256,23 +256,8 @@ class ArgSet:
             # in a more practical way.
             #
             # exp!
-            self._parent._csvpath.logger.debug("Checking arg[%i]: %s", i, arg)
-            """
-            if ( not arg or arg.actuals is None ):
-                if self._parent and self._parent._csvpath:
-                    self._parent._csvpath.logger.debug(
-                        "No expectations to validate actual values against in argset {self.argset_number}"
-                    )
-                found = True
-                break
-            if len(arg.actuals) == 0 and len(actuals) > 0:
-                if self._parent and self._parent._csvpath:
-                    self._parent._csvpath.logger.debug(
-                        "No optional args should be presented in {self.argset_number}"
-                    )
-                found = False
-                break
-            """
+            # experiment removed.
+            self._parent.csvpath.logger.debug("Checking arg[%i]: %s", i, arg)
             # end exp
             #
             # start orig w/orig comment:
@@ -281,8 +266,8 @@ class ArgSet:
             # remove the expectations from the args
             #
             if not arg or not arg.actuals or len(arg.actuals) == 0:
-                if self._parent and self._parent._csvpath:
-                    self._parent._csvpath.logger.debug(
+                if self._parent and self._parent.csvpath:
+                    self._parent.csvpath.logger.debug(
                         "No expectations to validate actual values against in argset {self.argset_number}"
                     )
                 found = True
@@ -291,11 +276,11 @@ class ArgSet:
             # end orig
             #
             if Any in arg.actuals:
-                self._parent._csvpath.logger.debug("Found Any so we're done")
+                self._parent.csvpath.logger.debug("Found Any so we're done")
                 found = True
                 continue
             _ = ExpressionUtility.is_one_of(a, arg.actuals)
-            self._parent._csvpath.logger.debug(
+            self._parent.csvpath.logger.debug(
                 "'%s' is_one_of %s returns %s", a, str(arg.actuals), _
             )
             if _ is True:
@@ -304,7 +289,7 @@ class ArgSet:
             found = False
             break
         if not found:
-            self._parent._csvpath.logger.debug(
+            self._parent.csvpath.logger.debug(
                 "%s(%s) not allowed in arg %s of argset %s",
                 type(a),
                 a,
@@ -315,7 +300,7 @@ class ArgSet:
                 f"{type(a)}({a}) not allowed in arg {i + 1} of {len(actuals)}"
             )
         if len(actuals) < self.min_length:
-            self._parent._csvpath.logger.debug(
+            self._parent.csvpath.logger.debug(
                 "Values received %s are too few for argset %s",
                 actuals,
                 self.argset_number,
@@ -354,6 +339,10 @@ class Args:
         self.matched = False
         self._args_match = True
 
+    @property
+    def csvpath(self):
+        return self._csvpath
+
     def reset(self) -> None:
         self._args_match = True
         self.matched = False
@@ -386,7 +375,7 @@ class Args:
             return
         if (
             len(self._argsets) > 0
-            and len(self._argsets[0]._args) == 0
+            and len(self._argsets[0].args) == 0
             and len(siblings) == 0
         ):
             return
@@ -424,7 +413,7 @@ class Args:
                 f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
             ]
         else:
-            for aseti, aset in enumerate(self._argsets):
+            for aset in self._argsets:
                 ms = aset.matches(actuals)
                 if len(ms) > 0:
                     mismatch_count += 1

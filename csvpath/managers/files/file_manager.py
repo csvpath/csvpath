@@ -162,7 +162,6 @@ class FileManager:
         self.registrar.register_complete(mdata)
 
     def _copy_in(self, path, home) -> None:
-        # fname = self._simple_name(path)
         fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
         # creates
         #   a/file.csv -> named_files/name/file.csv/file.csv

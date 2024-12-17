@@ -7,6 +7,17 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsMax(unittest.TestCase):
+    def test_function_max0(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @the_max = max(line_number())
+             ]"""
+        ).fast_forward()
+        assert path.variables["the_max"] == 8
+
     def test_function_max1(self):
         print("")
         path = CsvPath()

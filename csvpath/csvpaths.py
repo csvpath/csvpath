@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Any
-import csv
 import traceback
 from datetime import datetime, timezone
 from .util.error import ErrorHandler, ErrorCollector, Error
@@ -151,6 +150,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._run_time_str = None
 
     def run_time_str(self, pathsname=None) -> str:
+        """adds the stringified current run time to the named-paths
+        group home_dir to create the run_dir"""
         if self._run_time_str is None and pathsname is None:
             raise CsvPathsException(
                 "Cannot have None in both run_time_str and pathsname"
@@ -163,6 +164,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
 
     @property
     def current_run_time(self) -> datetime:
+        """gets the time marking the start of the run. used to create the run home directory."""
         if self._current_run_time is None:
             self._current_run_time = datetime.now(timezone.utc)
         return self._current_run_time
@@ -294,7 +296,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     ErrorHandler(
                         csvpaths=self, csvpath=csvpath, error_collector=result
                     ).handle_error(ex)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=W0718
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
@@ -410,6 +412,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.logger.debug("Done loading csvpath")
 
     def fast_forward_paths(self, *, pathsname, filename):
+        """runs the named-paths group named without collecting matches."""
         paths = self.paths_manager.get_named_paths(pathsname)
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Prepping %s and %s", filename, pathsname)
@@ -471,7 +474,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     ErrorHandler(
                         csvpaths=self, csvpath=csvpath, error_collector=result
                     ).handle_error(ex)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=W0718
                     self.results_manager.save(result)
                     raise e
             self.results_manager.save(result)
@@ -487,7 +490,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
 
-    def next_paths(self, *, pathsname, filename, collect: bool = False):
+    def next_paths(
+        self, *, pathsname, filename, collect: bool = False
+    ):  # pylint: disable=R0914
         """appends the Result for each CsvPath to the end of
         each line it produces. this is so that the caller can easily
         interrogate the CsvPath for its path parts, file, etc."""
@@ -562,14 +567,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                         result.append(line)
                         result.unmatched = csvpath.unmatched
                     yield line
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 try:
                     ErrorHandler(
                         csvpaths=self, csvpath=csvpath, error_collector=result
                     ).handle_error(ex)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=W0718
                     self.results_manager.save(result)
                     raise e
 
@@ -636,7 +641,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             filename,
         )
 
-    def next_by_line(  # pylint: disable=R0912
+    def next_by_line(  # pylint: disable=R0912,R0915,R0914
         self,
         *,
         pathsname,
@@ -780,7 +785,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                         csvpath=self.current_matcher,
                         error_collector=self.current_matcher,
                     ).handle_error(ex)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=W0718
                     for r in csvpath_objects:
                         result = r[1]
                         result.unmatched = r[0].unmatched

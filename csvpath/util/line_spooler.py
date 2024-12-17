@@ -10,7 +10,7 @@ from .file_readers import DataFileReader
 
 class LineSpooler(ABC):
     def __init__(self, myresult) -> None:
-        self.result = myresult
+        self.result = myresult if myresult is not None else None
         self.sink = None
         self._count = 0
         self.closed = False

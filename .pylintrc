@@ -290,7 +290,7 @@ exclude-too-few-public-methods=
 ignored-parents=
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=8
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
@@ -438,7 +438,8 @@ disable=raw-checker-failed,
         use-implicit-booleaness-not-comparison-to-zero,
         R0801,
         C0305,
-        W0511
+        W0511,
+        C0301
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

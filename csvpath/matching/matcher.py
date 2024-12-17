@@ -6,10 +6,13 @@ from .functions.function import Function
 from .util.expression_encoder import ExpressionEncoder
 from .util.expression_utility import ExpressionUtility
 from .util.exceptions import MatchException, ChildrenException
-from . import LarkParser, LarkTransformer
+from .lark_parser import LarkParser
+from .lark_transformer import LarkTransformer
 
 
 class What:
+    """holds info used in explain-mode"""
+
     def __init__(self, matcher, matchable) -> None:
         self._who = matchable
         self._matcher = matcher
@@ -22,7 +25,7 @@ class What:
             self._left = matchable.left
             self._right = matchable.right
 
-    def get_action(self, a):
+    def get_action(self):
         return self._action
 
     def action(self, a):
@@ -110,11 +113,11 @@ class Matcher:  # pylint: disable=R0902
         self._validity_checked = chked
 
     @property
-    def AND(self) -> bool:
+    def AND(self) -> bool:  # pylint: disable=C0103
         return self._AND  # pragma: no cover
 
     @AND.setter
-    def AND(self, a: bool) -> None:
+    def AND(self, a: bool) -> None:  # pylint: disable=C0103
         self._AND = a
 
     @property
@@ -170,9 +173,8 @@ class Matcher:  # pylint: disable=R0902
         i = ExpressionUtility.to_int(name, should_i_raise=False)
         if isinstance(i, int):
             return i
-        else:
-            x = self.csvpath.header_index(name)
-            return x
+        x = self.csvpath.header_index(name)
+        return x
 
     def header_name(self, i: int) -> str:
         """returns the name of a header given an index into the current headers.
@@ -187,7 +189,10 @@ class Matcher:  # pylint: disable=R0902
         nori = None
         try:
             nori = ExpressionUtility.to_int(name_or_index)
-        except Exception:
+        #
+        # changed from Exception to quiet pylint. seems safe to do.
+        #
+        except ValueError:
             self.csvpath.logger.debug(
                 "In get_header_value: '%s' not a column number. continuing.",
                 name_or_index,
@@ -201,7 +206,8 @@ class Matcher:  # pylint: disable=R0902
                 )
                 self.csvpath.logger.error(msg)
                 m.parent.raise_if(ChildrenException(msg))
-        elif nori >= len(self.line):
+            return None
+        if nori >= len(self.line):
             if quiet is False:
                 hs = self.csvpath.headers
                 msg = m.decorate_error_message(
@@ -210,13 +216,12 @@ class Matcher:  # pylint: disable=R0902
                 self.csvpath.logger.error(msg)
                 m.parent.raise_if(ChildrenException(msg))
             return None
-        else:
-            v = self.line[nori]
-            if ExpressionUtility.is_none(v):
-                v = None
-            if v is not None:
-                v = v.strip()
-            return v
+        v = self.line[nori]
+        if ExpressionUtility.is_none(v):
+            v = None
+        if v is not None:
+            v = v.strip()
+        return v
 
     def _do_lasts(self) -> None:
         for et in self.expressions:
@@ -249,9 +254,11 @@ class Matcher:  # pylint: disable=R0902
             _.clear_caches()
         self.cachers = []
 
-    def matches(self) -> bool:
+    def matches(self) -> bool:  # pylint: disable=R0912
         """this is the main work of the Matcher. we enumerate the self.expressions.
         if all evaluate to True in an AND operation we return True."""
+        # re: R0912 this method has been refactoring resistant and since it is
+        # working stably there isn't a pressing reason to try again.
         #
         # is this a blank last line? if so, we just want to activate any/all
         # last() in the csvpath.
@@ -264,7 +271,8 @@ class Matcher:  # pylint: disable=R0902
             self.clear_errors()
             return True
         ret = True
-        failed = False if self._AND else True
+        failed = self._AND is not True
+        # failed = False if self._AND else True
         self.csvpath.logger.debug(
             "Beginning %s match against line[%s]: %s",
             ("AND" if self._AND else "OR"),

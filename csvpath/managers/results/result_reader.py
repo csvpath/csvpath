@@ -13,7 +13,6 @@ class ResultReader:
         with open(mp, "r", encoding="utf-8") as file:
             d = json.load(file)
             return d
-        return None
 
     @classmethod
     def meta(self, result_home: str) -> dict | None:
@@ -25,4 +24,3 @@ class ResultReader:
         with open(mp, "r", encoding="utf-8") as file:
             d = json.load(file)
             return d
-        return None

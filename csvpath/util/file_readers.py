@@ -73,8 +73,13 @@ class DataFileReader(ABC):
         pass
 
     @abstractmethod
-    def file_metadata(self) -> dict[str, str | int | float]:
+    def file_info(self) -> dict[str, str | int | float]:
         pass
+
+    def next_raw(self) -> list[str]:
+        with open(uri=self._path, mode="r") as file:
+            for line in file:
+                yield line
 
 
 class CsvDataReader(DataFileReader):
@@ -103,29 +108,22 @@ class CsvDataReader(DataFileReader):
             for line in reader:
                 yield line
 
-    def next_raw(self) -> list[str]:
-        print(f"self._path: {self._path}")
-        with open(uri=self._path, mode="r") as file:
-            for line in file:
-                yield line
+    def file_info(self) -> dict[str, str | int | float]:
+        return FileInfo.info(self.path)
 
-    def file_metadata(self) -> dict[str, str | int | float]:
-        s = os.stat(self.path)
+
+class FileInfo:
+    @classmethod
+    def info(self, path) -> dict[str, str | int | float]:
+        s = os.stat(path)
         meta = {
-            "mode",
-            s.st_mode,
-            "device",
-            s.st_dev,
-            "bytes",
-            s.st_size,
-            "created",
-            s.st_ctime,
-            "last_read",
-            s.st_atime,
-            "last_mod",
-            s.st_mtime,
-            "flags",
-            s.st._flags,
+            "mode": s.st_mode,
+            "device": s.st_dev,
+            "bytes": s.st_size,
+            "created": s.st_ctime,
+            "last_read": s.st_atime,
+            "last_mod": s.st_mtime,
+            "flags": s.st_flags,
         }
         return meta
 
@@ -156,27 +154,5 @@ class XlsxDataReader(DataFileReader):
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]
 
-    def next_raw(self) -> list[str]:
-        with open(uri=self._path, mode="r") as file:
-            for line in file:
-                yield line
-
-    def file_metadata(self) -> dict[str, str | int | float]:
-        s = os.stat(self.path)
-        meta = {
-            "mode",
-            s.st_mode,
-            "device",
-            s.st_dev,
-            "bytes",
-            s.st_size,
-            "created",
-            s.st_ctime,
-            "last_read",
-            s.st_atime,
-            "last_mod",
-            s.st_mtime,
-            "flags",
-            s.st._flags,
-        }
-        return meta
+    def file_info(self) -> dict[str, str | int | float]:
+        return FileInfo.info(self.path)

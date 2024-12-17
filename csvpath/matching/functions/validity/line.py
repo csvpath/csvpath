@@ -53,10 +53,11 @@ class Line(MatchDecider):
                         )
                         self.raiseChildrenException(msg)
             else:
-                msg = self.decorate_error_message(
-                    f"Unexpected {s}. line() expects only names of headers."
-                )
-                self.raiseChildrenException(msg)
+                #
+                # not sure why this branch existed. emptying it. remove if still here.
+                #
+                raise Exception("Impossible branch")
+
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
