@@ -152,7 +152,7 @@ class Matcher:  # pylint: disable=R0902
     def explaination(self, es) -> None:
         self._explain = es
 
-    def _what(self, actor, action) -> What:
+    def what(self, actor, action) -> What:
         what = What(self, actor)
         what.action(action)
         self._explain.append(what)

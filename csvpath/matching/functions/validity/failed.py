@@ -22,4 +22,4 @@ class Failed(MatchDecider):
             self.match = self.matcher.csvpath.is_valid
         else:
             # correct as structure / children exception
-            self.raiseChildrenException(f"Incorrect function name {self.name}")
+            self.raise_children_exception(f"Incorrect function name {self.name}")

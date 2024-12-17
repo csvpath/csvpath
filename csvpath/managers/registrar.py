@@ -1,6 +1,6 @@
 from abc import ABC
-from .metadata import Metadata
 from csvpath.util.exceptions import InputException
+from .metadata import Metadata
 from .listener import Listener
 from ..util.class_loader import ClassLoader
 

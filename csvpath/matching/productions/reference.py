@@ -1,8 +1,7 @@
 # pylint: disable=C0114
 from typing import Any, Dict, List
 from csvpath.matching.productions.matchable import Matchable
-from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..util.exceptions import ChildrenException, MatchException, DataException
+from ..util.exceptions import MatchException, DataException
 
 
 class Reference(Matchable):
@@ -23,12 +22,10 @@ class Reference(Matchable):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
         if name is None:
-            # raise ChildrenException("Name cannot be None")
-            self.raiseChildrenException("Name cannot be None")  # pragma: no cover
+            self.raise_children_exception("Name cannot be None")  # pragma: no cover
 
         if name.strip() == "":
-            # raise ChildrenException("Name cannot be the empty string")
-            self.raiseChildrenException(
+            self.raise_children_exception(
                 "Name cannot be the empty string"
             )  # pragma: no cover
         #
@@ -77,14 +74,6 @@ class Reference(Matchable):
         if self.match is None:
             if self.value is None:
                 self.to_value(skip=skip)
-                """
-                #
-                # references cannot take qualifiers
-                #
-                if self.asbool:
-                    self.match = ExpressionUtility.asbool(self.value) # pragma: no cover
-                """
-            # else:
             self.match = self.value is not None
             self.matching().result(self.match)
         return self.match  # pragma: no cover
@@ -114,7 +103,7 @@ class Reference(Matchable):
             elif ref["data_type"] == Reference.CSVPATHS:
                 self.value = f"{ref['paths_name']}#{ref['name']}"
             else:
-                self.raiseChildrenException(
+                self.raise_children_exception(
                     "Incorrect reference data type: {ref['data_type']}"
                 )
         self.valuing().result(self.value)
@@ -178,21 +167,15 @@ class Reference(Matchable):
             Reference.HEADERS,
             Reference.CSVPATHS,
         ]:
-            # raise ChildrenException(
-            #    f"""References must be to variables or headers, not {ref["data_type"]}"""
-            # )
             msg = f"""References must be to variables or headers, not {ref["data_type"]}"""
-            self.raiseChildrenException(msg)
+            self.raise_children_exception(msg)
         return ref
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
         cs = self.matcher.csvpath.csvpaths  # pragma: no cover
         if cs is None:
-            # raise MatchException(
-            #    "References cannot be used without a CsvPaths instance"
-            # )
-            self.raiseChildrenException(
+            self.raise_children_exception(
                 "References cannot be used without a CsvPaths instance"
             )
         vs = cs.results_manager.get_variables(ref["paths_name"])
@@ -206,7 +189,7 @@ class Reference(Matchable):
             else:
                 ret = v
         else:
-            raise DataException("Results exist but the variable is unknown: %s", self)
+            raise DataException("Results exist but the variable is unknown: {self}")
         return ret
 
     def _header_value(self) -> Any:
@@ -218,7 +201,6 @@ class Reference(Matchable):
         ref = self._get_reference()
         name = ref["paths_name"]
         rm = self.matcher.csvpath.csvpaths.results_manager
-        ret = None
         if rm.has_lines(name):
             #
             # we pull data. if we have a tracking value we can pull a specific csvpath's result
@@ -226,7 +208,7 @@ class Reference(Matchable):
             if rm.get_number_of_results(name) == 1:
                 rs = rm.get_named_results(name)
                 return rs[0]
-            elif ref["tracking"]:
+            if ref["tracking"]:
                 #
                 # find the specific path if we have a tracking value.
                 # tested in test_reference_specific_header_lookup. manager has 100% coverage.
@@ -236,27 +218,21 @@ class Reference(Matchable):
                 )  # pragma: no cover
                 if r is None:
                     raise MatchException(
-                        "No results in %s for metadata id or name %s in %s",
-                        name,
-                        ref["tracking"],
-                        self,
+                        f"No results in {name} for metadata {ref['tracking']} in {self}"
                     )
                 return r
-            else:
-                #
-                # are we really going to aggregate all the values from all the
-                # csvpaths here? that would likely be too expensive in a large
-                # fraction of cases.
-                #
-                raise MatchException(
-                    """Too many results. At this time references must be to a
-                    single path. A named-paths with just one path or a path which is
-                    identified by a metadata id or name matched to a tracking value
-                    in the reference"""
-                )
-        else:
-            raise MatchException("Results may exist but no data was captured")
-        return ret
+            #
+            # are we really going to aggregate all the values from all the
+            # csvpaths here? that would likely be too expensive in a large
+            # fraction of cases.
+            #
+            raise MatchException(
+                """Too many results. At this time references must be to a
+                single path. A named-paths with just one path or a path which is
+                identified by a metadata id or name matched to a tracking value
+                in the reference"""
+            )
+        raise MatchException("Results may exist but no data was captured")
 
     def _get_value_from_results(self, ref, result):
         csvpath = result.csvpath

@@ -1,17 +1,19 @@
 # pylint: disable=C0114
 import traceback
-import signal
 from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
 from ..util.exceptions import ChildrenException
 
 
-class Matchable(Qualified):
+class Matchable(Qualified):  # pylint: disable=R0904
     """intermediate ancestor of match productions providing
     utility functions and the core to_value and matches
     methods"""
 
+    # re: R0904: too many public methods. we could separate some out but I
+    # don't love a deeper class chain or multiple inheritance. igore for now.
+    #
     FAILED_VALUE = -99999999
     """ used to signal to Function that a value failed validation. the
         signal allows Function to continue to validate children without
@@ -39,19 +41,19 @@ class Matchable(Qualified):
     #
     # from csvpath.matching.matcher import What
     def assign(self):
-        return self.matcher._what(self, "assign")
+        return self.matcher.what(self, "assign")
 
     def when_do(self):
-        return self.matcher._what(self, "when/do")
+        return self.matcher.what(self, "when/do")
 
     def equality(self):
-        return self.matcher._what(self, "equality")
+        return self.matcher.what(self, "equality")
 
     def matching(self):
-        return self.matcher._what(self, "matching")
+        return self.matcher.what(self, "matching")
 
     def valuing(self):
-        return self.matcher._what(self, "value")
+        return self.matcher.what(self, "value")
 
     #
     # end exp
@@ -72,17 +74,11 @@ class Matchable(Qualified):
         msg = f"{pid}{lid}{msg}"
         return msg
 
-    def raiseChildrenException(self, msg: str) -> None:
+    def raise_children_exception(self, msg: str) -> None:
         msg = self.decorate_error_message(msg)
 
         e = ChildrenException(msg)
         self.raise_if(e)
-
-    """
-    @property
-    def my_expression(self) -> Self:
-        return ExpressionUtility.get_my_expression(self)
-    """
 
     def check_valid(self) -> None:
         """structural check; doesn't test the values. nothing should
@@ -169,11 +165,10 @@ class Matchable(Qualified):
             if cause:
                 raise e from cause
             raise e
+        if self.my_expression is None or self.my_expression == self:
+            self.handle_error(e)
         else:
-            if self.my_expression is None or self.my_expression == self:
-                self.handle_error(e)
-            else:
-                self.parent.raise_if(e, cause=cause)
+            self.parent.raise_if(e, cause=cause)
 
     # convenience method for one or two arg functions
     def _value_one(self, skip=None):
@@ -259,8 +254,7 @@ class Matchable(Qualified):
             # give back the children of the equality, not our equality
             # child itself.
             return self.children[:]
-        else:
-            return self.siblings()
+        return self.siblings()
 
     def siblings(self) -> list:
         if len(self.children) == 0:
@@ -281,7 +275,8 @@ class Matchable(Qualified):
         #
         if len(self.children) == 1:
             return [self.children[0]]
-        if hasattr(self, "op") and self.op == ",":
+        if hasattr(self, "op") and self.op == ",":  # pylint: disable=E1101
+            # re: E1101: instance has no member: we know, hence the test.
             return self.children
         raise ChildrenException(
             f"Unexpected number of children, {len(self.children)}, in {self}"

@@ -1,9 +1,8 @@
 # pylint: disable=C0114
-from typing import Any
 import traceback
 import warnings
+from typing import Any
 from csvpath.util.error import ErrorHandler
-from csvpath.matching.util.expression_utility import ExpressionUtility
 from . import Matchable
 
 
@@ -62,11 +61,6 @@ class Expression(Matchable):
                 #   - the logger on the CsvPath or CsvPaths
                 #   - exceptions dumped on system.err
                 #
-                """
-                ErrorHandler(
-                    csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
-                ).handle_error(e)
-                """
                 self.errors.append(e)
                 #
                 # if we don't raise the exception we decline the match and
@@ -88,8 +82,8 @@ class Expression(Matchable):
         self.errors = []
         super().reset()
 
-    def handle_error(self, error) -> None:
-        self.errors.append(error)
+    def handle_error(self, e) -> None:
+        self.errors.append(e)
 
     def check_valid(self) -> None:
         warnings.filterwarnings("error")
@@ -105,11 +99,6 @@ class Expression(Matchable):
             e.source = self
             e.message = f"Failed csvpath validity check with: {e}"
             e.json = self.matcher.to_json(self)
-            """
-            ErrorHandler(
-                csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
-            ).handle_error(e)
-            """
             self.handle_error(e)
             #
             # We always stop if the csvpath itself is found to be invalid

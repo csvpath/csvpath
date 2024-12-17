@@ -55,7 +55,7 @@ class String(Type):
         if maxlen is None:
             maxlen = len(value)
         if maxlen < minlen:
-            self.raiseChildrenException(
+            self.raise_children_exception(
                 "Max length ({maxlen}) cannot be less than min length ({minlen})"
             )
         self.match = minlen <= len(value) <= maxlen

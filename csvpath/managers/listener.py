@@ -28,4 +28,3 @@ class Listener(ABC):
         named-results and other metadata to track jobs and datasets. the first
         registrar in the list of metadata receivers must be CsvPath Library's own
         registrar, which is also the source of the metadata that is shared."""
-        pass

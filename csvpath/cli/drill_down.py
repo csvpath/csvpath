@@ -1,5 +1,3 @@
-from csvpath import CsvPath, CsvPaths
-import sys
 import os
 from bullet import Bullet
 
@@ -22,21 +20,21 @@ class DrillDown:
         # get path
         #
         t = self._get_add_type()
-        p = self._get_path(t, self._cli._csvpaths.config.csv_file_extensions)
+        p = self._get_path(t, self._cli.csvpaths.config.csv_file_extensions)
         if p is False:
             return
         #
         # do the add
         #
         self._cli.clear()
-        self._cli._action(f"Adding: {p}\n")
+        self._cli.action(f"Adding: {p}\n")
         self._cli.pause()
         if t == "file":
-            self._cli._csvpaths.file_manager.add_named_file(name=name, path=p)
+            self._cli.csvpaths.file_manager.add_named_file(name=name, path=p)
         elif t == "dir":
-            self._cli._csvpaths.file_manager.add_named_files_from_dir(dirname=p)
+            self._cli.csvpaths.file_manager.add_named_files_from_dir(dirname=p)
         else:
-            self._cli._csvpaths.file_manager.set_named_files_from_json(
+            self._cli.csvpaths.file_manager.set_named_files_from_json(
                 name=name, filename=p
             )
 
@@ -54,7 +52,7 @@ class DrillDown:
         # get path
         #
         t = self._get_add_type()
-        exts = self._cli._csvpaths.config.csvpath_file_extensions
+        exts = self._cli.csvpaths.config.csvpath_file_extensions
         p = self._get_path(t, exts)
         if p is False:
             return
@@ -62,14 +60,14 @@ class DrillDown:
         # do the add
         #
         self._cli.clear()
-        self._cli._action(f"Adding: {p}\n")
+        self._cli.action(f"Adding: {p}\n")
         self._cli.pause()
         if t == "file":
-            self._cli._csvpaths.paths_manager.add_named_paths(name=name, from_file=p)
+            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_file=p)
         elif t == "dir":
-            self._cli._csvpaths.paths_manager.add_named_paths(name=name, from_dir=p)
+            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_dir=p)
         else:
-            self._cli._csvpaths.paths_manager.add_named_paths(name=name, from_json=p)
+            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_json=p)
 
     # ============================
     # Utilities
@@ -85,7 +83,7 @@ class DrillDown:
             extensions.append("")
         while p is not None and p != "" and not os.path.isfile(p):
             self._cli.clear()
-            self._cli._action(f"{p}\n")
+            self._cli.action(f"{p}\n")
             p = self._drill_down(
                 path=p,
                 json=True if t == "json" else False,

@@ -35,11 +35,11 @@ class Empty(MatchDecider):
         for s in sibs:
             # both structure / children exceptions
             if isinstance(s, Headers) and len(sibs) > 1:
-                self.raiseChildrenException(
+                self.raise_children_exception(
                     "If empty() has a headers() argument it can only have 1 argument"
                 )
             if isinstance(s, Term):
-                self.raiseChildrenException(
+                self.raise_children_exception(
                     "empty() arguments cannot include terms"
                 )  # pragma: no cover
 

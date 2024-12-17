@@ -41,7 +41,7 @@ class Line(MatchDecider):
                 msg = self.decorate_error_message(
                     f"Unexpected {s}. line() expects only names of headers."
                 )
-                self.raiseChildrenException(msg)
+                self.raise_children_exception(msg)
             elif isinstance(s.children[0], Term):
                 continue
             elif isinstance(s.children[0], Equality):
@@ -51,7 +51,7 @@ class Line(MatchDecider):
                         msg = self.decorate_error_message(
                             f"Unexpected {s}. line() expects only names of headers."
                         )
-                        self.raiseChildrenException(msg)
+                        self.raise_children_exception(msg)
             else:
                 #
                 # not sure why this branch existed. emptying it. remove if still here.
@@ -101,14 +101,14 @@ class Line(MatchDecider):
             msg = self.decorate_error_message(
                 f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
             )
-            self.raiseChildrenException(msg)
+            self.raise_children_exception(msg)
         if len(errors) > 0:
             for e in errors:
                 self.matcher.csvpath.print(e)
             msg = self.decorate_error_message(
                 f"Structure of {self.my_chain} does not match"
             )
-            self.raiseChildrenException(msg)
+            self.raise_children_exception(msg)
             self.match = False
         elif self._distinct_if(skip=skip):
             pass
@@ -127,7 +127,7 @@ class Line(MatchDecider):
                 msg = self.decorate_error_message(
                     "Duplicate line found where a distict set of values is expected"
                 )
-                self.raiseChildrenException(msg)
+                self.raise_children_exception(msg)
 
     def _get_advance(self, skip, i, s, sibs) -> int:
         advance = 0
@@ -140,7 +140,7 @@ class Line(MatchDecider):
                 msg = self.decorate_error_message(
                     "Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} is not correct for line"
                 )
-                self.raiseChildrenException(msg)
+                self.raise_children_exception(msg)
         elif isinstance(v, int):
             advance = v
         else:
@@ -151,7 +151,7 @@ class Line(MatchDecider):
                 msg = self.decorate_error_message(
                     f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} has an unknown value"
                 )
-                self.raiseChildrenException(msg)
+                self.raise_children_exception(msg)
         # minus 1 for the wildcard itself
         advance -= 1
         return advance

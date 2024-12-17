@@ -21,7 +21,7 @@ class Percent(ValueProducer):
         if which not in ["scan", "match", "line"]:
             # correct structure / children exception. we could probably do this
             # in check_validate since we're requiring a Term, but this is fine.
-            self.raiseChildrenException(
+            self.raise_children_exception(
                 "percent() argument must be scan, match, or line"
             )  # pragma: no cover
         if which == "line":

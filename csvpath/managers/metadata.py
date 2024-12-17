@@ -1,7 +1,7 @@
 from uuid import uuid4, UUID
 import os
-from abc import ABC, abstractmethod
-from datetime import datetime, timezone, date
+from abc import ABC
+from datetime import datetime, timezone
 from dateutil import parser
 
 

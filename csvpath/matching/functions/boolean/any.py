@@ -115,6 +115,6 @@ class Any(MatchDecider):
         else:
             c = self.children[0].left
             # definitely a structure / children exception
-            self.raiseChildrenException(
+            self.raise_children_exception(
                 f"Left child of any() must be header or variable, not {c}"
             )

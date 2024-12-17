@@ -132,9 +132,6 @@ class Scanner:  # pylint: disable=R0902
             print(f"Unexpected token: {p.value}")
             print("Symbol stack: ")
             stack = parser.symstack
-
-            import inspect
-
             for _ in stack:
                 print(f"  {_}")
             print("")
@@ -149,9 +146,6 @@ class Scanner:  # pylint: disable=R0902
             print(f"unexpected token: {p.value}")
             print("symbol stack: ")
             stack = self.parser.symstack
-
-            import inspect
-
             for _ in stack:
                 print(f"  {_}")
             print("")

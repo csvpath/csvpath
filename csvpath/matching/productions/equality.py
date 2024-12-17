@@ -88,12 +88,6 @@ class Equality(Matchable):
 
     def commas_to_list(self) -> List[Any]:
         """gets the children of op==',' equalities as a list of args"""
-        """
-        ls = []
-        for _ in self.children:
-            ls.append(_)
-        return ls
-        """
         if self.op != ",":
             raise ChildrenException(
                 f"Cannot get args from equality when operation is {self.op}. Use ','."
@@ -160,23 +154,6 @@ class Equality(Matchable):
         increase = self.left.increase
         decrease = self.left.decrease
         noqualifiers = self.has_known_qualifiers()
-        """
-        (
-            onchange is False
-            and latch is False
-            and asbool is False
-            and nocontrib is False
-            and onmatch is False
-            and increase is False
-            and decrease is False
-            #
-            # since we're treating notnone as a block on set_variable, rather than
-            # as part of the qualifiers decision tree, we don't actually want to
-            # acknowledge it here. can still pass it in under its name tho.
-            #
-            # and notnone is False
-        )
-        """
         #
         # WHAT WE WANT TO SET X TO
         #
@@ -236,7 +213,7 @@ class Equality(Matchable):
         #
         # other stuff
         #
-        noqualifiers = args["noqualifiers"]
+        # noqualifiers = args["noqualifiers"]
         y = args["new_value"]
         current_value = args["current_value"]
         line_matches = args[
@@ -404,11 +381,9 @@ class Equality(Matchable):
                 ret = self.default_match()
                 self.when_do().result(ret).because("sentinel")
                 return ret
-            else:
-                self.sentinel = True
+            self.sentinel = True
 
             lm = self.left.matches(skip=skip)
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
             if lm is True:
                 b = True
                 self.when_do().result(b).because("line matches")

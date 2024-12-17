@@ -399,7 +399,7 @@ class Args:
             if self._matchable is None:
                 # this should only be testing
                 raise ChildrenException(msg)
-            self._matchable.raiseChildrenException(msg)
+            self._matchable.raise_children_exception(msg)
         self.validated = True
 
     def matches(self, actuals: List[Any]) -> None:
@@ -462,4 +462,4 @@ class Args:
                 e = ChildrenException(pm)
                 self._matchable.handle_error(e)
             else:
-                self._matchable.raiseChildrenException(pm)
+                self._matchable.raise_children_exception(pm)

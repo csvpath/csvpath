@@ -167,7 +167,7 @@ class Function(Matchable):
                         sibs = self.sibling_values(skip=skip)
                         if Matchable.FAILED_VALUE in sibs:
                             # pln = self.matcher.csvpath.line_monitor.physical_line_number
-                            self.raiseChildrenException(
+                            self.raise_children_exception(
                                 f"Cannot continue with {self.my_chain} due to an invalid child"
                             )
                         #

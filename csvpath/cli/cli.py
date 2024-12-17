@@ -3,13 +3,13 @@ import os
 import time
 import traceback
 from bullet import Bullet
-from csvpath import CsvPath, CsvPaths
+from csvpath import CsvPaths
 from .drill_down import DrillDown
 
 
 class Cli:
     def __init__(self):
-        self._csvpaths = CsvPaths()
+        self.csvpaths = CsvPaths()
 
     def clear(self):
         print(chr(27) + "[2J")
@@ -35,7 +35,7 @@ class Cli:
     def _response(self, text: str) -> None:
         sys.stdout.write(f"\u001b[30;1m{text}{Cli.REVERT}\n")
 
-    def _action(self, text: str) -> None:
+    def action(self, text: str) -> None:
         sys.stdout.write(f"\033[36m{text}{Cli.REVERT}\n")
 
     def _input(self, prompt: str) -> str:
@@ -80,9 +80,9 @@ class Cli:
                 return
 
     def _do(self, t: str) -> str | None:
+        if t == "quit":
+            return t
         try:
-            if t == "quit":
-                return t
             if t == "run":
                 self.run()
             if t == "named-files":
@@ -112,8 +112,6 @@ class Cli:
             DrillDown(self).name_paths()
         if t == "list named-paths":
             self.list_named_paths()
-        if t == "cancel":
-            return
 
     def _results(self) -> None:
         choices = ["open named-result", "list named-results", "cancel"]
@@ -125,7 +123,7 @@ class Cli:
 
     def list_named_results(self):
         self.clear()
-        names = self._csvpaths.results_manager.list_named_results()
+        names = self.csvpaths.results_manager.list_named_results()
         print(f"{len(names)} named-results names:")
         for n in names:
             self._response(f"   {n}")
@@ -134,15 +132,15 @@ class Cli:
     def open_named_result(self):
         self.clear()
         try:
-            names = self._csvpaths.results_manager.list_named_results()
+            names = self.csvpaths.results_manager.list_named_results()
             print(f"{len(names)} named-results names:")
             names.append(self.CANCEL)
             cli = Bullet(bullet=" > ", choices=names)
             t = cli.launch()
             if t == self.CANCEL:
                 return
-            t = f"{self._csvpaths.config.archive_path}{os.sep}{t}"
-            self._action(f"Opening results at {t}...")
+            t = f"{self.csvpaths.config.archive_path}{os.sep}{t}"
+            self.action(f"Opening results at {t}...")
             self.short_pause()
             c = f"open {t}"
             os.system(c)
@@ -151,7 +149,7 @@ class Cli:
 
     def list_named_paths(self):
         self.clear()
-        names = self._csvpaths.paths_manager.named_paths_names
+        names = self.csvpaths.paths_manager.named_paths_names
         names.sort()
         print(f"{len(names)} named-paths names:")
         for n in names:
@@ -160,7 +158,7 @@ class Cli:
 
     def list_named_files(self):
         self.clear()
-        names = self._csvpaths.file_manager.named_file_names
+        names = self.csvpaths.file_manager.named_file_names
         names.sort()
         print(f"{len(names)} named-file names:")
         for n in names:
@@ -170,12 +168,12 @@ class Cli:
     def run(self):
         self.clear()
         print("What named-file? ")
-        files = self._csvpaths.file_manager.named_file_names
+        files = self.csvpaths.file_manager.named_file_names
         cli = Bullet(bullet=" > ", choices=files)
         file = cli.launch()
         self.clear()
         print("What named-paths? ")
-        allpaths = self._csvpaths.paths_manager.named_paths_names
+        allpaths = self.csvpaths.paths_manager.named_paths_names
         cli = Bullet(bullet=" > ", choices=allpaths)
         paths = cli.launch()
         self.clear()
@@ -183,13 +181,13 @@ class Cli:
         cli = Bullet(bullet=" > ", choices=["collect", "fast-forward"])
         method = cli.launch()
         self.clear()
-        self._action(f"Running {paths} against {file} using {method}\n")
+        self.action(f"Running {paths} against {file} using {method}\n")
         self.pause()
         try:
             if method == "collect":
-                self._csvpaths.collect_paths(filename=file, pathsname=paths)
+                self.csvpaths.collect_paths(filename=file, pathsname=paths)
             else:
-                self._csvpaths.fast_forward_paths(filename=file, pathsname=paths)
+                self.csvpaths.fast_forward_paths(filename=file, pathsname=paths)
         except Exception:
             print(traceback.format_exc())
         self._return_to_cont()
