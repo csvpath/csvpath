@@ -1,5 +1,5 @@
 
-# <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/csvpath-icon-sm.png'/></a> About CsvPath
+# <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/csvpath-logo-wordmark-tight.svg'/></a> About CsvPath
 
 The CsvPath language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
