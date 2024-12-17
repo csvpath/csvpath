@@ -406,6 +406,22 @@ on_unmatched_file_fingerprints = halt
         self._configpath = path
 
     def additional_listeners(self, listener_type) -> list[str]:
+        # pull type for group names
+        # for each group name find:
+        #    listener_type.groupname=listner
+        listeners = []
+        groups = self._get("listeners", "groups")
+        if groups is None:
+            groups = []
+        for group in groups:
+            listener = self._get("listeners", f"{group}.{listener_type}")
+            if listener is not None:
+                listeners.append(listener)
+        return listeners
+        """
+        #
+        # orig
+        #
         if self._additional_listeners is None:
             self._additional_listeners = {}
         if listener_type in self._additional_listeners:
@@ -415,6 +431,7 @@ on_unmatched_file_fingerprints = halt
             lst = []
         self._additional_listeners[listener_type] = lst
         return lst
+        """
 
     @property
     def cache_dir_path(self) -> str:

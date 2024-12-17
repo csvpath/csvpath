@@ -1,7 +1,9 @@
 import unittest
+import os
 from datetime import datetime
 from csvpath.managers.registrar import Registrar
 from csvpath import CsvPaths
+from csvpath.util.config import Config
 
 
 class TestListeners(unittest.TestCase):
@@ -12,15 +14,37 @@ class TestListeners(unittest.TestCase):
         r.load_additional_listener(stmt)
         assert len(r.listeners) == 2
 
-    def test_additional_listeners2(self):
-        csvpaths = CsvPaths()
-        config = csvpaths.config
-        config._additional_listeners = {}
-        config._additional_listeners["run"] = [
+    def test_additional_listeners3(self):
+        testini = "tests/test_resources/deleteme/config.ini"
+        if os.path.exists(testini):
+            os.remove(testini)
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
+        paths = CsvPaths()
+        config = paths.config
+        assert os.path.exists(testini)
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
+        config.add_to_config("listeners", "groups", "foo, bar, baz")
+        config.add_to_config(
+            "listeners",
+            "foo.file",
             "from csvpath.managers.run.run_listener_stdout import StdOutRunListener",
+        )
+        config.add_to_config(
+            "listeners",
+            "bar.file",
             "from csvpath.managers.run.run_listener_stdout import StdOutRunListener",
-        ]
-        r = Registrar(csvpaths)
+        )
+
+        listeners = config.additional_listeners("file")
+
+        assert len(listeners) == 2
+        assert (
+            "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
+            in listeners
+        )
+        # assert "b" in listeners
+
+        r = Registrar(paths)
         assert len(r.listeners) == 1
-        r.load_additional_listeners("run")
+        r.load_additional_listeners("file")
         assert len(r.listeners) == 3
