@@ -11,12 +11,12 @@ from openlineage.client.facet_v2 import (
 )
 from openlineage.client.event_v2 import Job
 
-from ..metadata import Metadata
-from ..paths.paths_metadata import PathsMetadata
-from ..files.file_metadata import FileMetadata
-from ..results.result_metadata import ResultMetadata
-from ..results.results_metadata import ResultsMetadata
-from ..run.run_metadata import RunMetadata
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.paths.paths_metadata import PathsMetadata
+from csvpath.managers.files.file_metadata import FileMetadata
+from csvpath.managers.results.result_metadata import ResultMetadata
+from csvpath.managers.results.results_metadata import ResultsMetadata
+from csvpath.managers.run.run_metadata import RunMetadata
 
 
 class JobException(Exception):

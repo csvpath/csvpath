@@ -1,16 +1,16 @@
 import os
 import json
 
-from .job import JobBuilder
 from openlineage.client.facet_v2 import JobFacet, parent_run, error_message_run
 from openlineage.client.event_v2 import Job, Run, RunEvent, RunState
 
-from ..metadata import Metadata
-from ..results.results_metadata import ResultsMetadata
-from ..results.result_metadata import ResultMetadata
-from ..paths.paths_metadata import PathsMetadata
-from ..files.file_metadata import FileMetadata
-from ..run.run_metadata import RunMetadata
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.results.results_metadata import ResultsMetadata
+from csvpath.managers.results.result_metadata import ResultMetadata
+from csvpath.managers.paths.paths_metadata import PathsMetadata
+from csvpath.managers.files.file_metadata import FileMetadata
+from csvpath.managers.run.run_metadata import RunMetadata
+from .job import JobBuilder
 
 
 class RunBuilder:

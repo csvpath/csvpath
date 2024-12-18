@@ -15,7 +15,7 @@ from .results_registrar import ResultsRegistrar
 from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
-from .result_reader import ResultReader
+from .result_file_reader import ResultFileReader
 from csvpath.scanning.scanner import Scanner
 
 
@@ -67,7 +67,6 @@ class ResultsManager:  # pylint: disable=C0115
         mdata = ResultsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_name = filename
-        # self.csvpaths.file_manager.get_named_file(filename)
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
         mdata.named_results_name = pathsname
@@ -489,12 +488,12 @@ class ResultsManager:  # pylint: disable=C0115
         self, *, name: str, run_dir: str, run: str, instance: str
     ) -> list[list[Any]]:
         instance_dir = os.path.join(run_dir, instance)
-        mani = ResultReader.manifest(instance_dir)
+        mani = ResultFileReader.manifest(instance_dir)
         #
         # csvpath needs to be loaded with all meta.json->metadata and some/most of runtime_data
         #
         csvpath = self.csvpaths.csvpath()
-        meta = ResultReader.meta(instance_dir)
+        meta = ResultFileReader.meta(instance_dir)
         if meta:
             #
             # until there's a clear case for more, this is all we're going to load.

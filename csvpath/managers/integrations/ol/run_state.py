@@ -1,10 +1,11 @@
-from ..metadata import Metadata
-from ..results.results_metadata import ResultsMetadata
-from ..results.result_metadata import ResultMetadata
-from ..paths.paths_metadata import PathsMetadata
-from ..files.file_metadata import FileMetadata
 from openlineage.client.facet_v2 import JobFacet
 from openlineage.client.event_v2 import Job, Run, RunEvent, RunState
+
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.results.results_metadata import ResultsMetadata
+from csvpath.managers.results.result_metadata import ResultMetadata
+from csvpath.managers.paths.paths_metadata import PathsMetadata
+from csvpath.managers.files.file_metadata import FileMetadata
 
 
 class RunStateBuilder:

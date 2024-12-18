@@ -1,6 +1,10 @@
 ---- CSVPATH ----
 
-~ Check the file length ~
+~
+    Check the file length
+    event-mode: slack
+    on-invalid-slack: hooks.slack.com/services/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
+~
 
 $[*][
     import("top_matter_import")

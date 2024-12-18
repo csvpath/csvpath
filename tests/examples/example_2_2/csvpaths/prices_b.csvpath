@@ -6,6 +6,7 @@
     unmatched-mode: keep
     files-mode:data, unmatched
     validation-mode: no-raise, no-stop
+    on-valid-slack: hooks.slack.com/services/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
 ~
 
 $[*][
