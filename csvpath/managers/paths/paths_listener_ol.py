@@ -1,9 +1,7 @@
 from openlineage.client import OpenLineageClient
 
 from ..metadata import Metadata
-from ..ol.event import EventBuilder
-from ..ol.sender import Sender
-from ..ol.ol_listener import OpenLineageListener
+from ..integrations.ol.ol_listener import OpenLineageListener
 
 
 class OpenLineagePathsListener(OpenLineageListener):

@@ -413,25 +413,14 @@ on_unmatched_file_fingerprints = halt
         groups = self._get("listeners", "groups")
         if groups is None:
             groups = []
+        if isinstance(groups, str):
+            groups = [groups]
         for group in groups:
-            listener = self._get("listeners", f"{group}.{listener_type}")
+            lst = f"{group}.{listener_type}"
+            listener = self._get("listeners", lst)
             if listener is not None:
                 listeners.append(listener)
         return listeners
-        """
-        #
-        # orig
-        #
-        if self._additional_listeners is None:
-            self._additional_listeners = {}
-        if listener_type in self._additional_listeners:
-            return self._additional_listeners[listener_type]
-        lst = self._get("listeners", listener_type)
-        if lst is None:
-            lst = []
-        self._additional_listeners[listener_type] = lst
-        return lst
-        """
 
     @property
     def cache_dir_path(self) -> str:

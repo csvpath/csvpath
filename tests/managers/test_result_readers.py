@@ -3,7 +3,7 @@ import os
 from csvpath import CsvPaths
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.managers.results.readers.readers import ResultReadersFacade
-from csvpath.managers.results.result_reader import ResultReader
+from csvpath.managers.results.result_file_reader import ResultFileReader
 from csvpath.util.file_readers import FileInfo
 from csvpath.util.line_spooler import CsvLineSpooler
 
@@ -62,13 +62,13 @@ class TestResultReaders(unittest.TestCase):
 
         result = results[0]
         result_dir = os.path.join(result.run_dir, result.identity_or_index)
-        m = ResultReader.meta(result_dir)
+        m = ResultFileReader.meta(result_dir)
         assert m is not None
         assert len(m) > 0
         assert "runtime_data" in m
         assert m["runtime_data"]["delimiter"] == ","
 
-        m = ResultReader.manifest(result_dir)
+        m = ResultFileReader.manifest(result_dir)
         assert m is not None
         assert len(m) > 0
         assert "instance_home" in m
@@ -86,7 +86,7 @@ class TestResultReaders(unittest.TestCase):
         f = os.path.join(p, "meta.json")
         if os.path.exists(f):
             os.remove(f)
-        m = ResultReader.meta(p)
+        m = ResultFileReader.meta(p)
         assert m is not None
         assert len(m) == 0
         assert os.path.exists(f)
@@ -96,7 +96,7 @@ class TestResultReaders(unittest.TestCase):
         #
         #
         f = os.path.join(p, "manifest.json")
-        m = ResultReader.manifest(p)
+        m = ResultFileReader.manifest(p)
         assert m is not None
         assert len(m) == 0
         assert os.path.exists(f)

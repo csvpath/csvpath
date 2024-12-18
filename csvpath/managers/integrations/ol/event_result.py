@@ -11,8 +11,8 @@ from openlineage.client.event_v2 import Dataset, RunEvent
 from openlineage.client.event_v2 import Job, Run, RunState
 from openlineage.client.event_v2 import InputDataset, OutputDataset
 
-from ..metadata import Metadata
-from ..results.result_metadata import ResultMetadata
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.results.result_metadata import ResultMetadata
 
 from .job import JobBuilder
 from .run import RunBuilder

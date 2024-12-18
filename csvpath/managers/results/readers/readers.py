@@ -9,16 +9,6 @@ class ResultReader(ABC):
         # self._instance_dir = None
         self._result = None
 
-    """
-    @property
-    def instance_dir(self) -> str:
-        return self._instance_dir
-
-    @instance_dir.setter
-    def instance_dir(self, instance_dir: str) -> None:
-        self._instance_dir = instance_dir
-    """
-
     @property
     def result(self) -> str:
         return self._result

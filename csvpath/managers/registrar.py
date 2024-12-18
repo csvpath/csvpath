@@ -6,8 +6,9 @@ from ..util.class_loader import ClassLoader
 
 
 class Registrar(ABC):
-    def __init__(self, csvpaths) -> None:
+    def __init__(self, csvpaths, result=None) -> None:
         self.csvpaths = csvpaths
+        self.result = result
         self.listeners: list[Listener] = [self]
 
     def register_start(self, mdata: Metadata) -> None:
@@ -48,6 +49,10 @@ class Registrar(ABC):
         loader = ClassLoader()
         alistener = loader.load(load_cmd)
         if alistener is not None:
+            if hasattr(alistener, "csvpaths"):
+                setattr(alistener, "csvpaths", self.csvpaths)
+            if hasattr(alistener, "result"):
+                setattr(alistener, "result", self.result)
             alistener.config = self.csvpaths.config
             self.add_listener(alistener)
 

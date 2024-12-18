@@ -19,7 +19,7 @@ class ResultsRegistrar(Registrar, Listener):
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
-        super().__init__(csvpaths)
+        super().__init__(csvpaths=csvpaths)
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results

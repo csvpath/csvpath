@@ -6,9 +6,9 @@ from openlineage.client.transport.http import (
     HttpCompression,
     HttpTransport,
 )
-from ..metadata import Metadata
-from ..ol.event import EventBuilder
-from ..listener import Listener
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.listener import Listener
+from .event import EventBuilder
 
 
 class Sender(Listener):

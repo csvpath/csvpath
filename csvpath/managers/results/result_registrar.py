@@ -12,8 +12,9 @@ from .result_metadata import ResultMetadata
 
 class ResultRegistrar(Registrar, Listener):
     def __init__(self, *, csvpaths, result, result_serializer=None):
-        super().__init__(csvpaths)
-        self.result = result
+        super().__init__(csvpaths, result)
+        # moved to super class so we can pass it to loaded listeners
+        # self.result = result
         self.result_serializer = result_serializer
         self.load_additional_listeners("result")
 
