@@ -48,11 +48,26 @@ class SlackSender(Listener, threading.Thread):
             #
             if "webhook_url" in event:
                 url = event["webhook_url"]
-            else:
-                url = self._url
+            if url is None:
+                url = self.url
             #
             # send
             #
             x = requests.post(url, json=payload, headers=headers)
-            print(f"mdataupdate: x: {x}")
-            print(f"mdataupdate: content: {x.content}")
+            if x and x.status_code != 200:
+                if self.csvpaths is not None:
+                    self.csvpaths.logger.info(
+                        "SlackSender received status code %s from %s",
+                        x.status_code,
+                        url,
+                    )
+                elif self.result is not None:
+                    self.result.csvpath.logger.info(
+                        "SlackSender received status code %s from %s",
+                        x.status_code,
+                        url,
+                    )
+                else:
+                    print(
+                        f"SlackSender received status code {x.status_code} from {url}"
+                    )
