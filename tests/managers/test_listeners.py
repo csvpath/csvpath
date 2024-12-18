@@ -10,9 +10,10 @@ class TestListeners(unittest.TestCase):
     def test_additional_listeners1(self):
         stmt = "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
         r = Registrar(csvpaths=CsvPaths())
-        assert len(r.listeners) == 1
-        r.load_additional_listener(stmt)
-        assert len(r.listeners) == 2
+        listeners = [r]
+        assert len(listeners) == 1
+        r.load_additional_listener(stmt, listeners)
+        assert len(listeners) == 2
 
     def test_additional_listeners3(self):
         testini = "tests/test_resources/deleteme/config.ini"
@@ -34,7 +35,6 @@ class TestListeners(unittest.TestCase):
             "bar.file",
             "from csvpath.managers.run.run_listener_stdout import StdOutRunListener",
         )
-
         listeners = config.additional_listeners("file")
 
         assert len(listeners) == 2
@@ -45,6 +45,7 @@ class TestListeners(unittest.TestCase):
         # assert "b" in listeners
 
         r = Registrar(paths)
-        assert len(r.listeners) == 1
-        r.load_additional_listeners("file")
-        assert len(r.listeners) == 3
+        # assert len(r.listeners) == 1
+        listeners = [r]
+        r.load_additional_listeners("file", listeners)
+        assert len(listeners) == 3
