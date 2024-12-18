@@ -67,7 +67,6 @@ class ResultsManager:  # pylint: disable=C0115
         mdata = ResultsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_name = filename
-        # self.csvpaths.file_manager.get_named_file(filename)
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
         mdata.named_results_name = pathsname

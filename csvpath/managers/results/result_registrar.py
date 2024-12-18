@@ -16,7 +16,7 @@ class ResultRegistrar(Registrar, Listener):
         # moved to super class so we can pass it to loaded listeners
         # self.result = result
         self.result_serializer = result_serializer
-        self.load_additional_listeners("result")
+        self.type = "result"
 
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest

@@ -104,8 +104,25 @@ class EventBuilder:
         # not none when it ends.
         #
         if mdata.manifest_path is not None:
-            mani = ResultFileReader.json_file(mdata.manifest_path)
             event = Event()
+            #
+            # if not valid we check if the user put an 'on-invalid-slack' metadata
+            # value. otherwise 'on-valid-slack'. if they did we'll use that as
+            # the webhook url. the value cannot start with https:// because of the
+            # colon in the protocol. we'll add that as a prefix.
+            #
+            if mdata.valid is False:
+                if "on-invalid-slack" in self.sender.result.csvpath.metadata:
+                    event[
+                        "webhook_url"
+                    ] = f"https://{self.sender.result.csvpath.metadata['on-invalid-slack']}"
+            else:
+                if "on-valid-slack" in self.sender.result.csvpath.metadata:
+                    event[
+                        "webhook_url"
+                    ] = f"https://{self.sender.result.csvpath.metadata['on-valid-slack']}"
+
+            mani = ResultFileReader.json_file(mdata.manifest_path)
             event["payload"] = {}
             headers = ["Key", "Value"]
             rows = []

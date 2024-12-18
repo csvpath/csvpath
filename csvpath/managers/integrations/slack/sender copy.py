@@ -1,19 +1,16 @@
 import requests
-import threading
-
 from abc import ABC
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from .event import EventBuilder
 
 
-class SlackSender(Listener, threading.Thread):
+class SlackSender(Listener):
     def __init__(self, *, config=None):
         super().__init__(config)
         self._url = None
         self.csvpaths = None
         self.result = None
-        self.metadata = None
 
     @property
     def url(self):
@@ -23,14 +20,8 @@ class SlackSender(Listener, threading.Thread):
                 self._url = self._url.strip()
         return self._url
 
-    def run(self):
-        self._metadata_update(self.metadata)
-
     def metadata_update(self, mdata: Metadata) -> None:
-        self.metadata = mdata
-        self.start()
-
-    def _metadata_update(self, mdata: Metadata) -> None:
+        print(f"mdataupdate: sending to slack on {self.url}")
         #
         # build event
         #

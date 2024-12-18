@@ -18,7 +18,7 @@ class FileRegistrar(Registrar, Listener):
         super().__init__(csvpaths)
         self.csvpaths = csvpaths
         self.config = csvpaths.config
-        self.load_additional_listeners("file")
+        self.type = "file"
 
     def get_fingerprint(self, home) -> str:
         mpath = self.manifest_path(home)

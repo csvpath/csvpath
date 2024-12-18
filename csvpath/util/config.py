@@ -167,20 +167,36 @@ path =
 imports =
 [cache]
 path =
-#
-#[listeners]
-#uncomment for OpenLineage events to a local Marquez
-#file = from csvpath.managers.files.file_listener_ol import OpenLineageFileListener
-#paths = from csvpath.managers.paths.paths_listener_ol import OpenLineagePathsListener
-#result = from csvpath.managers.results.result_listener_ol import OpenLineageResultListener
-#results = from csvpath.managers.results.results_listener_ol import OpenLineageResultsListener
-#[marquez]
-#base_url = http://localhost:5000
-#endpoint = api/v1/lineage
-#api_key = "none"
-#timeout = 5
-#verify = False
-#
+
+[listeners]
+groups =
+#slack, marquez
+
+#add marquez to the list of groups above for OpenLineage events to a local Marquez
+file = from csvpath.managers.files.file_listener_ol import OpenLineageFileListener
+paths = from csvpath.managers.paths.paths_listener_ol import OpenLineagePathsListener
+result = from csvpath.managers.results.result_listener_ol import OpenLineageResultListener
+results = from csvpath.managers.results.results_listener_ol import OpenLineageResultsListener
+
+# add slack to the list of groups above for alerts to slack webhooks
+slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
+
+[marquez]
+base_url = http://localhost:5000
+endpoint = api/v1/lineage
+api_key = "none"
+timeout = 5
+verify = False
+
+[slack]
+# add your main webhook here. to set webhooks on a csvpath-by-csvpath basis add
+# on-valid-slack: webhook-minus-'https://' and/or
+# on-invalid-slack: webhook-minus-'https://'
+webhook_url =
+
 [results]
 archive = archive
 transfers = transfers

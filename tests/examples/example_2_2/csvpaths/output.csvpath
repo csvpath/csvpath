@@ -2,6 +2,8 @@
     id:output
     transfer-mode: data > out
     source-mode: preceding
+    on-valid-slack: hooks.slack.com/services/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
+
 ~
 $[*][
     @out = "transfer.txt"

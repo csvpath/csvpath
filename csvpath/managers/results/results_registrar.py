@@ -23,7 +23,7 @@ class ResultsRegistrar(Registrar, Listener):
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results
-        self.load_additional_listeners("results")
+        self.type = "results"
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = "start"

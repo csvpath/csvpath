@@ -12,7 +12,7 @@ class PathsRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
         super().__init__(csvpaths)
         self._manager = None
-        self.load_additional_listeners("paths")
+        self.type = "paths"
 
     @property
     def manager(self):
