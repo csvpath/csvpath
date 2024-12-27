@@ -25,9 +25,9 @@ CsvPath can stream events to an OpenLineage server, such as the open source Marq
 <a href='https://peppy-sprite-186812.netlify.app/' >
 <img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
 
-<a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="CKAN Data Portal"/></a>
-
 Need to publish datasets to a CKAN data portal? <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank">Read about how CsvPath is integrated with CKAN</a>.
+
+<a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="CKAN Data Portal"/></a>
 
 Read more about CsvPath and see CSV, Excel, and Data Frames validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
 
