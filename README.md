@@ -16,7 +16,7 @@ CsvPath's validation is inspired by:
 - XPath for XML files
 - The ISO standard <a href='https://schematron.com/'>Schematron validation</a>
 
-CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions are easy to create.
+CsvPath is intended to fit tightly with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions and listeners are easy to create.
 
 CsvPath can stream events to an OpenLineage server, such as the open source Marquez server. Read about <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-openlineage" target="_blank">CsvPath and OpenLineage here</a>.
 
