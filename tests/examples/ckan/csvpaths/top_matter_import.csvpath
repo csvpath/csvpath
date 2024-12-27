@@ -1,0 +1,16 @@
+---- CSVPATH ----
+
+~ reset headers when they go up and otherwise, if there
+  aren't enough headers, just skip
+
+    run-mode: no-run
+~
+
+$[*][
+    @header_change = mismatch("signed")
+    gt.nocontrib(@header_change, 9) -> reset_headers(skip())
+    lt.nocontrib(count_headers(), 9) -> skip()
+]
+
+
+

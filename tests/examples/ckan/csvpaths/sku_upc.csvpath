@@ -5,7 +5,7 @@
   validation-mode: no-raise, no-stop
   unmatched-mode: keep
 
-  ckan-publish: always
+  ckan-publish: never
   ckan-group: A Big Test
   ckan-dataset-name: orders_august
   ckan-dataset-title: Orders August 2024
@@ -22,8 +22,9 @@
   ckan-errors-title: Run Errors
 ~
 $[*][
-    import("top_matter_import")
+    import($ckantest.csvpaths.top_matter_import)
     print("Line $.csvpath.line_number: $.csvpath.headers", "Headers by line")
+    @name = "this is a var value"
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
     not.nocontrib( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
     not(#SKU)

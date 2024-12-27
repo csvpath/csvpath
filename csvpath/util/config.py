@@ -169,14 +169,20 @@ imports =
 path =
 
 [listeners]
+# add listener group names to send events to the channel they represent
 groups =
-#slack, marquez
+#slack, marquez, ckan
 
-#add marquez to the list of groups above for OpenLineage events to a local Marquez
-file = from csvpath.managers.files.file_listener_ol import OpenLineageFileListener
-paths = from csvpath.managers.paths.paths_listener_ol import OpenLineagePathsListener
-result = from csvpath.managers.results.result_listener_ol import OpenLineageResultListener
-results = from csvpath.managers.results.results_listener_ol import OpenLineageResultsListener
+# add ckan to the list of groups above to push content and metadata to CKAN
+ckan.paths = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
+ckan.result = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
+ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
+
+#add marquez to the list of groups above for OpenLineage events to a Marquez server
+marquez.file = from csvpath.managers.integrations.ol.file_listener_ol import OpenLineageFileListener
+marquez.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
+marquez.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
+marquez.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
 
 # add slack to the list of groups above for alerts to slack webhooks
 slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
