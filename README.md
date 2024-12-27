@@ -19,12 +19,14 @@ CsvPath's validation is inspired by:
 CsvPath is intended to fit with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions are easy to create.
 
 CsvPath can stream events to an OpenLineage server, such as the open source Marquez server. Read about <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-openlineage" target="_blank">CsvPath and OpenLineage here</a>.
+
 <a href='https://openlineage.io' >
 <img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/openlineage-logo-sm.png" alt="OpenLineage"/></a>
 <a href='https://peppy-sprite-186812.netlify.app/' >
 <img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
 
-<a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="Marquez Server"/></a><br/>
+<a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="CKAN Data Portal"/></a>
+
 Need to publish datasets to a CKAN data portal? <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank">Read about how CsvPath is integrated with CKAN</a>.
 
 Read more about CsvPath and see CSV, Excel, and Data Frames validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
