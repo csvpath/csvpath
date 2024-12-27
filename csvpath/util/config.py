@@ -174,8 +174,6 @@ groups =
 #slack, marquez, ckan
 
 # add ckan to the list of groups above to push content and metadata to CKAN
-ckan.paths = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
-ckan.result = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 
 #add marquez to the list of groups above for OpenLineage events to a Marquez server
@@ -189,6 +187,10 @@ slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
+
+[ckan]
+server = http://localhost:80
+api_token =
 
 [marquez]
 base_url = http://localhost:5000

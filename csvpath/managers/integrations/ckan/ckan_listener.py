@@ -228,35 +228,6 @@ class CkanListener(Listener):
                                 mdata=mdata,
                                 dataset_id=dataset_id,
                             )
-                            """
-                            i = p.find("\n")
-                            name = p[0:i]
-                            name = name.strip()
-                            if name == "default":
-                                name = result.csvpath.metadata.get("ckan-printouts-title")
-                                if name is None:
-                                    name = "Default printer"
-                            body = p[i+1:]
-                            body = body.strip()
-                            if body == "":
-                                continue
-                            with NamedTemporaryFile(delete_on_close=False) as file:
-                                file.write(body.encode('utf-8'))
-                                file.close()
-                                datafile = Datafile(
-                                        listener=self,
-                                        result=result,
-                                        manifest=mani,
-                                        metadata=mdata,
-                                        filetype="printouts",
-                                        path=file.name
-                                )
-                                datafile.dataset_id = dataset_id
-                                datafile.name = name
-                                datafile.mime_type = "text/plain"
-                                ckan = Ckan(config=self.config, manifest=mani, csvpaths=self.csvpaths)
-                                ckan.upload_datafile( datafile )
-                            """
             else:
                 datafile = Datafile(
                     listener=self,
