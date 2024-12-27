@@ -1,4 +1,4 @@
-from ..integrations.ol.ol_listener import OpenLineageListener
+from .ol_listener import OpenLineageListener
 
 
 class OpenLineageFileListener(OpenLineageListener):

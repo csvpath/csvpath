@@ -21,6 +21,7 @@ class ResultRegistrar(Registrar, Listener):
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
         mdata.by_line = self.result.by_line
+        mdata.manifest_path = self.manifest_path
         mdata.instance_index = self.result.run_index
         mdata.actual_data_file = self.result.actual_data_file
         mdata.origin_data_file = self.result.origin_data_file

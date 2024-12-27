@@ -4,7 +4,7 @@ from csvpath import CsvPaths
 
 
 class TestJsonNamedPaths(unittest.TestCase):
-    def test_json_named_paths_load_only(self):
+    def test_named_paths_json_load_only(self):
         paths = CsvPaths()
         #
         # adding files and paths is optional, but a good idea for tests because

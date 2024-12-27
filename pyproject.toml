@@ -47,6 +47,7 @@ pylightxl = "^1.61"
 bullet = "^2.2.0"
 pytz = "^2024.2"
 openlineage-python = "^1.25.0"
+ckanapi = "^4.8"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

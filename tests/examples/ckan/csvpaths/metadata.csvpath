@@ -1,0 +1,14 @@
+---- CSVPATH ----
+
+~ collect metadata fields from comments ID: metadata-extraction ~
+$[*][
+    starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
+    starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
+
+    skip( lt(count_headers_in_line(), 9) )
+
+    and( @runid, @userid ) ->
+        print(" Contact: $.variables.userid for batch ID: $.variables.runid", stop())
+]
+
+

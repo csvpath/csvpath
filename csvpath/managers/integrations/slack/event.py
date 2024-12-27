@@ -112,16 +112,23 @@ class EventBuilder:
             # colon in the protocol. we'll add that as a prefix.
             #
             if mdata.valid is False:
-                if "on-invalid-slack" in self.sender.result.csvpath.metadata:
-                    event[
-                        "webhook_url"
-                    ] = f"https://{self.sender.result.csvpath.metadata['on-invalid-slack']}"
+                # original but deprecated. prefer the slack namespace first to match other
+                # integrations with more metadata needs
+                invalid = self.sender.result.csvpath.metadata.get("on-invalid-slack")
+                if invalid is None:
+                    invalid = self.sender.result.csvpath.metadata.get(
+                        "slack-on-invalid"
+                    )
+                if invalid is not None:
+                    event["webhook_url"] = f"https://{invalid}"
             else:
-                if "on-valid-slack" in self.sender.result.csvpath.metadata:
-                    event[
-                        "webhook_url"
-                    ] = f"https://{self.sender.result.csvpath.metadata['on-valid-slack']}"
-
+                # original but deprecated. prefer the slack namespace first to match other
+                # integrations with more metadata needs
+                valid = self.sender.result.csvpath.metadata.get("on-valid-slack")
+                if valid is None:
+                    valid = self.sender.result.csvpath.metadata.get("slack-on-valid")
+                if valid is not None:
+                    event["webhook_url"] = f"https://{valid}"
             mani = ResultFileReader.json_file(mdata.manifest_path)
             event["payload"] = {}
             headers = ["Key", "Value"]
