@@ -7,12 +7,20 @@ from .exceptions import InputException
 class PandasDataReader(DataFileReader):
     """
     this class can only be used when the optional "pandas"
-    dependency (a.k.a. an "extra") is installed. use csvpath[pandas]
+    dependency (a.k.a. an "extra") is installed. use: poetry add csvpath[pandas]
     at add/install time.
 
     for the reader to work it requires that a dataframe is registered
-    with the DataFileReader class
+    with the DataFileReader class.
     """
+
+    #
+    # the point here is to handle tabular data from any source pandas
+    # supports -- the dataframe, rather than the specific file format.
+    # is there any use in supporting loading files into pandas and then
+    # setting up the dataframe behind the scenes? probably, but better
+    # to wait for demand w/a specific use case.
+    #
 
     def __init__(
         self, path: str, *, sheet=None, delimiter=None, quotechar=None

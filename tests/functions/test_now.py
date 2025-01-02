@@ -8,8 +8,8 @@ NUMBERS = "tests/test_resources/numbers.csv"
 class TestFunctionsNow(unittest.TestCase):
     def test_function_now(self):
         path = CsvPath()
-        # TODO: obviously this will break and need updating 1x a year
-        path.parse(f'${PATH}[*][now("%Y") == "2024"]')
+        # TODO: obviously this will break and need updating 1x a year. :(
+        path.parse(f'${PATH}[*][now("%Y") == "2025"]')
         lines = path.collect()
         assert len(lines) == 9
 

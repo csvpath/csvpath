@@ -177,6 +177,9 @@ class FileManager:
 
     def _copy_down(self, path, temp) -> None:
         reader = DataFileReader(path)
+        #
+        # TODO: need a DataFileWriter that knows how to write local and S3
+        #
         with open(temp, "w", encoding="utf-8") as file:
             for line in reader.next_raw():
                 file.write(line)

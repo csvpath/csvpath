@@ -258,6 +258,9 @@ class PathsManager:
 
     def _copy_in(self, name, csvpathstr) -> None:
         temp = self._group_file_path(name)
+        #
+        # TODO: use a DataFileWriter that supports S3 and local to write.
+        #
         with open(temp, "w", encoding="utf-8") as file:
             file.write(csvpathstr)
         return temp
@@ -267,6 +270,9 @@ class PathsManager:
         return temp
 
     def _get_csvpaths_from_file(self, file_path: str) -> list[str]:
+        #
+        # TODO: use DataFileReader to support S3 and local
+        #
         with open(file_path, "r", encoding="utf-8") as f:
             cp = f.read()
             _ = [

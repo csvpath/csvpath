@@ -57,8 +57,13 @@ class DataFileReader(ABC):
                     delimiter=delimiter,
                     quotechar=quotechar,
                 )
+            #
+            # e.g. s3://csvpath-example-1/timezones.csv
+            #
             if path.startswith("s3://"):
-                # e.g. s3://csvpath-example-1/timezones.csv
+                #
+                # TODO: prefer ClassLoader.load('from csvpath.util.s3_data_reader import S3DataReader')
+                #
                 module = importlib.import_module("csvpath.util.s3_data_reader")
                 class_ = getattr(module, "S3DataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)

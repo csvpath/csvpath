@@ -5,6 +5,9 @@ from smart_open import open
 from .file_readers import CsvDataReader
 
 
+#
+# TODO: only works with CSV atm. need Excel.
+#
 class S3DataReader(CsvDataReader):
     def next(self) -> list[str]:
         with open(uri=self._path, mode="r") as file:
