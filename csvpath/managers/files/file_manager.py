@@ -1,9 +1,7 @@
 import os
 import json
 import csv
-import hashlib
 from json import JSONDecodeError
-from typing import Dict, List, Tuple
 from csvpath.util.error import ErrorHandler
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
@@ -16,7 +14,7 @@ from .file_metadata import FileMetadata
 
 
 class FileManager:
-    def __init__(self, *, named_files: Dict[str, str] = None, csvpaths=None):
+    def __init__(self, *, named_files: dict[str, str] = None, csvpaths=None):
         if named_files is None:
             named_files = {}
         self._csvpaths = csvpaths
@@ -50,7 +48,7 @@ class FileManager:
     #
     # file homes are paths to files like:
     #   inputs/named_files/March-2024/March-2024.csv/March-2024.csv
-    # which become paths to hash-named file versions like:
+    # which become paths to fingerprint-named file versions like:
     #   inputs/named_files/March-2024/March-2024.csv/12467d811d1589ede586e3a42c41046641bedc1c73941f4c21e2fd2966f188b4.csv
     # once the files have been fingerprinted
     #
@@ -89,7 +87,7 @@ class FileManager:
         for name in names:
             self.remove_named_file(name)
 
-    def set_named_files(self, nf: Dict[str, str]) -> None:
+    def set_named_files(self, nf: dict[str, str]) -> None:
         for k, v in nf.items():
             self.add_named_file(name=k, path=v)
 
@@ -188,15 +186,17 @@ class FileManager:
             Nos(path).copy(temp)
         elif not path.startswith("s3:") and not home.startswith("s3"):
             self._copy_down(path, temp, mode="wb")
+        elif not path.startswith("s3:") and home.startswith("s3"):
+            self._copy_down(path, temp, mode="wb")
         else:
-            self._copy_down(path, temp)
+            ...  # not possible. just being explicit for the moment.
         return temp
 
     def _copy_down(self, path, temp, mode="wb") -> None:
-        reader = DataFileReader(path)
-        with DataFileWriter(path=temp, mode=mode) as writer:
-            for line in reader.next_raw():
-                writer.append(line)
+        with DataFileReader(path) as reader:
+            with DataFileWriter(path=temp, mode=mode) as writer:
+                for line in reader.next_raw():
+                    writer.append(line)
 
     #
     # can take a reference. the ref would only be expected to point
@@ -225,6 +225,9 @@ class FileManager:
         if name.startswith("$"):
             # atm, we don't give fingerprints for references doing rewind/replay
             return ""
+        #
+        # note: this is not creating fingerprints, just getting existing ones.
+        #
         return self.registrar.get_fingerprint(self.named_file_home(name))
 
     #
@@ -264,7 +267,7 @@ class FileManager:
         with DataFileReader(fpath) as f:
             h = f.fingerprint()
             #
-            # creating the new path using the hash as filename
+            # creating the new path using the fingerprint as filename
             #
             hpath = os.path.join(path, h)
             if t is not None:
@@ -279,7 +282,7 @@ class FileManager:
                 Nos(fpath).remove()
                 return hpath, h
             #
-            # if a first add, rename the file to the hash + ext
+            # if a first add, rename the file to the fingerprint + ext
             #
             Nos(fpath).rename(hpath)
         return hpath, h

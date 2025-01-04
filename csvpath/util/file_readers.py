@@ -44,11 +44,37 @@ class DataFileReader(ABC):
         with open(self._path, "rb") as source:
             h = hashlib.file_digest(source, hashlib.sha256)
             h = h.hexdigest()
+            #
+            # we use fingerprints as names in some cases. that means that ':' and
+            # '/' and '\' are problemmatic. all fingerprints come from this or any
+            # subclasses' override, so if we hack on the fingerprint here it should
+            # be fine. the exception would be that a forensic view would also
+            # require the same escape, if checking for file mods. for matching not
+            # a problem.
+            #
+            h = self.percent_encode(h)
         return h
+
+    def percent_encode(self, fingerprint: str) -> str:
+        fingerprint = fingerprint.replace(":", "%3A")
+        fingerprint = fingerprint.replace("/", "%2F")
+        fingerprint = fingerprint.replace("\\", "%5C")
+        return fingerprint
 
     def load_if(self) -> None:
         if self.source is None:
-            self.source = open(self._path, "r", encoding="utf-8")
+            p = self._path
+            self.source = open(p, "r", encoding="utf-8")
+
+    def read(self) -> str:
+        #
+        # this method may not work as-is for some files, e.g. xlsx.
+        # however, today we only need it for csvpaths files.
+        #
+        self.load_if()
+        s = self.source.read()
+        self.close()
+        return s
 
     def exists(self, path: str) -> bool:
         os.path.exists(path)
@@ -123,10 +149,15 @@ class DataFileReader(ABC):
     def file_info(self) -> dict[str, str | int | float]:
         pass
 
-    def next_raw(self) -> list[str]:
-        with open(self._path, mode="rb") as file:
-            for line in file:
-                yield line
+    def next_raw(self, mode: str = "r") -> list[str]:
+        try:
+            with open(self._path, mode=mode, encoding="utf-8") as file:
+                for line in file:
+                    yield line
+        except UnicodeDecodeError:
+            with open(self._path, mode="rb") as file:
+                for line in file:
+                    yield line
 
 
 class CsvDataReader(DataFileReader):

@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 import os
 import json
-import shutil
 from typing import NewType
 from json import JSONDecodeError
 from csvpath import CsvPath
@@ -9,6 +8,9 @@ from csvpath.util.exceptions import InputException
 from csvpath.util.error import ErrorHandler
 from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
 
@@ -37,8 +39,12 @@ class PathsManager:
 
     def named_paths_home(self, name: NamedPathsName) -> str:
         home = os.path.join(self.named_paths_dir, name)
+        if not Nos(home).exists():
+            Nos(home).makedirs()
+        """
         if not os.path.exists(home):
             os.makedirs(home)
+        """
         return home
 
     @property
@@ -61,8 +67,10 @@ class PathsManager:
         if directory is None:
             ie = InputException("Named paths collection name needed")
             ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
-        if os.path.isdir(directory):
-            dlist = os.listdir(directory)
+        if not Nos(directory).isfile():
+            # if os.path.isdir(directory):
+            dlist = Nos(directory).listdir()
+            # dlist = os.listdir(directory)
             base = directory
             for p in dlist:
                 if p[0] == ".":
@@ -142,8 +150,9 @@ class PathsManager:
         mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
-        mdata.named_paths_home = f"{mdata.named_paths_root}{os.sep}{name}"
-        mdata.group_file_path = f"{mdata.named_paths_home}{os.sep}group.csvpaths"
+        sep = Nos(mdata.named_paths_root).sep
+        mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
+        mdata.group_file_path = f"{mdata.named_paths_home}{sep}group.csvpaths"
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
@@ -167,6 +176,9 @@ class PathsManager:
             identity = ref.name_one
         else:
             npn, identity = self._paths_name_path(name)
+        print(
+            f"pathsmgr: get_named_paths: npn: {npn}, identity: {identity}, hasnamedpaths: {self.has_named_paths(npn)}"
+        )
         if identity is None and self.has_named_paths(npn):
             ret = self._get_named_paths(npn)
         elif identity is not None and identity.find(":") == -1:
@@ -193,15 +205,24 @@ class PathsManager:
     def store_json_paths_file(self, name: str, jsonpath: str) -> None:
         home = self.named_paths_home(name)
         j = ""
+        file = DataFileReader(jsonpath)
+        j = file.read()
+        """
         with open(jsonpath, "r", encoding="utf-8") as file:
             j = file.read()
+        """
+        with DataFileWriter(path=os.path.join(home, "definition.json")) as writer:
+            writer.write(j)
+        """
         with open(os.path.join(home, "definition.json"), "w", encoding="utf-8") as file:
             file.write(j)
+        """
 
     @property
     def named_paths_names(self) -> list[str]:
         path = self.named_paths_dir
-        names = [n for n in os.listdir(path) if not n.startswith(".")]
+        names = [n for n in Nos(path).listdir() if not n.startswith(".")]
+        # names = [n for n in os.listdir(path) if not n.startswith(".")]
         return names
 
     def remove_named_paths(self, name: NamedPathsName, strict: bool = False) -> None:
@@ -210,7 +231,8 @@ class PathsManager:
         if not self.has_named_paths(name):
             return
         home = self.named_paths_home(name)
-        shutil.rmtree(home)
+        Nos(home).remove()
+        # shutil.rmtree(home)
 
     def remove_all_named_paths(self) -> None:
         names = self.named_paths_names
@@ -219,7 +241,9 @@ class PathsManager:
 
     def has_named_paths(self, name: NamedPathsName) -> bool:
         path = os.path.join(self.named_paths_dir, name)
-        return os.path.exists(path)
+        print(f"pathsmgr: has_named_paths: path: {path}")
+        return Nos(path).dir_exists()
+        # return os.path.exists(path)
 
     def number_of_named_paths(self, name: NamedPathsName) -> int:
         return len(self._get_named_paths(name))
@@ -237,9 +261,14 @@ class PathsManager:
         s = ""
         path = self.named_paths_home(name)
         grp = os.path.join(path, "group.csvpaths")
+        if Nos(grp).exists():
+            with DataFileReader(grp) as reader:
+                s = reader.read()
+        """
         if os.path.exists(grp):
             with open(grp, "r", encoding="utf-8") as file:
                 s = file.read()
+        """
         cs = s.split("---- CSVPATH ----")
         cs = [s for s in cs if s.strip() != ""]
         #
@@ -261,8 +290,12 @@ class PathsManager:
         #
         # TODO: use a DataFileWriter that supports S3 and local to write.
         #
+        with DataFileWriter(path=temp, mode="w") as writer:
+            writer.append(csvpathstr)
+        """
         with open(temp, "w", encoding="utf-8") as file:
             file.write(csvpathstr)
+        """
         return temp
 
     def _group_file_path(self, name: NamedPathsName) -> str:
@@ -273,6 +306,17 @@ class PathsManager:
         #
         # TODO: use DataFileReader to support S3 and local
         #
+        with DataFileReader(file_path) as reader:
+            cp = reader.read()
+            _ = [
+                apath.strip()
+                for apath in cp.split(PathsManager.MARKER)
+                if apath.strip() != ""
+            ]
+            self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
+            return _
+
+        """
         with open(file_path, "r", encoding="utf-8") as f:
             cp = f.read()
             _ = [
@@ -282,6 +326,7 @@ class PathsManager:
             ]
             self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
             return _
+        """
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
         specificpath = None

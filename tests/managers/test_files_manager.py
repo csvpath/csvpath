@@ -3,6 +3,7 @@ import pytest
 import shutil
 import os
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
 from csvpath.matching.util.exceptions import MatchException
 
 DIR = "tests/test_resources/named_files"
@@ -15,14 +16,14 @@ class TestFilesManager(unittest.TestCase):
         m = paths.file_manager
         d = m.named_files_dir
         assert d is not None
-        assert d == "inputs/named_files"
+        assert d.endswith("inputs/named_files")
 
     def test_named_file_home(self):
         paths = CsvPaths()
         m = paths.file_manager
         d = m.named_file_home("aname")
         assert d is not None
-        assert d == "inputs/named_files/aname"
+        assert d.endswith("inputs/named_files/aname")
 
     def test_copy_in(self):
         paths = CsvPaths()
@@ -31,8 +32,11 @@ class TestFilesManager(unittest.TestCase):
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
         assert d is not None
-        assert d == "inputs/named_files/mytest/test.csv/test.csv"
-        shutil.rmtree("inputs/named_files/mytest")
+        assert d.endswith("inputs/named_files/mytest/test.csv/test.csv")
+        p = "inputs/named_files/mytest"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()
 
     def test_reg_fingerprint(self):
         paths = CsvPaths()
@@ -40,11 +44,14 @@ class TestFilesManager(unittest.TestCase):
         tf = "tests/test_resources/test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
-        assert os.path.exists(d)
+        assert Nos(d).exists()
         rpath = m._fingerprint(home)
         assert d != rpath
-        assert not os.path.exists(d)
-        shutil.rmtree("inputs/named_files/mytest")
+        assert not Nos(d).exists()
+        p = "inputs/named_files/mytest"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()
 
     """
     # this test would need to be converted to use FileMetadata. not
@@ -106,6 +113,7 @@ class TestFilesManager(unittest.TestCase):
         paths = CsvPaths()
         fm = paths.file_manager
         fm.remove_all_named_files()
+        assert fm.named_files_count == 0
         fm.set_named_files_from_json(JSON)
         assert fm.named_files_count == 2
 
@@ -127,8 +135,17 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count >= 2
         assert fm.name_exists("wonderful")
         assert fm.name_exists("amazing")
-        shutil.rmtree("inputs/named_files/wonderful")
-        shutil.rmtree("inputs/named_files/amazing")
+
+        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/wonderful").remove()
+        p = "inputs/named_files/wonderful"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()
+        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
+        p = "inputs/named_files/amazing"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()
 
     def test_file_mgr_dict2(self):
         paths = CsvPaths()
@@ -151,5 +168,15 @@ class TestFilesManager(unittest.TestCase):
         assert afile is not None
         fm.remove_named_file("wonderful")
         assert fm.named_files_count == c
-        shutil.rmtree("inputs/named_files/outstanding")
-        shutil.rmtree("inputs/named_files/amazing")
+
+        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/outstanding").remove()
+        p = "inputs/named_files/outstanding"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()
+
+        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
+        p = "inputs/named_files/amazing"
+        if paths.config.inputs_files_path.find("://") > -1:
+            p = f"{paths.config.inputs_files_path}/{p}"
+        Nos(p).remove()

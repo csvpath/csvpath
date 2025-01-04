@@ -21,7 +21,7 @@ include = ["config", "logs", "docs"]
 
 [tool.pytest.ini_options]
 #testpaths = ["tests"]
-norecursedirs = ["old"]
+#norecursedirs = ["old"]
 #filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.poetry.urls]

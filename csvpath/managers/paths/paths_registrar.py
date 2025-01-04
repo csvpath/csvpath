@@ -1,7 +1,9 @@
 import os
 import json
-import hashlib
 from csvpath.util.exceptions import InputException
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
 from .paths_metadata import PathsMetadata
 from ..listener import Listener
 from ..metadata import Metadata
@@ -21,8 +23,13 @@ class PathsRegistrar(Registrar, Listener):
         return self._manager
 
     def get_manifest(self, mpath) -> list:
+        with DataFileReader(mpath) as file:
+            j = json.load(file.source)
+            return j
+        """
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
+        """
 
     def register_complete(self, mdata: Metadata) -> None:
         mdata.manifest_path = self.manifest_path(name=mdata.named_paths_name)
@@ -90,8 +97,12 @@ class PathsRegistrar(Registrar, Listener):
             m["uuid"] = mdata.uuid_string
             m["manifest_path"] = mdata.manifest_path
             jdata.append(m)
+            with DataFileWriter(path=mdata.manifest_path) as file:
+                json.dump(jdata, file.sink, indent=2)
+            """
             with open(mdata.manifest_path, "w", encoding="utf-8") as file:
                 json.dump(jdata, file, indent=2)
+            """
         else:
             #
             # leave as info so nobody has to dig to see why no update
@@ -104,9 +115,13 @@ class PathsRegistrar(Registrar, Listener):
     def manifest_path(self, name: str) -> None:
         nhome = self.manager.named_paths_home(name)
         mf = os.path.join(nhome, "manifest.json")
-        if not os.path.exists(mf):
+        if not Nos(mf).exists():
+            with DataFileWriter(path=mf) as file:
+                file.append("[]")
+            """
             with open(mf, "w", encoding="utf-8") as file:
                 file.write("[]")
+            """
         return mf
 
     def _most_recent_fingerprint(self, manifest_path: str) -> str:
@@ -116,7 +131,7 @@ class PathsRegistrar(Registrar, Listener):
         return jdata[len(jdata) - 1]["fingerprint"]
 
     def _simple_name(self, path) -> str:
-        i = path.rfind(os.sep)
+        i = path.rfind(Nos(path).sep)
         sname = None
         if i == -1:
             sname = path
@@ -132,8 +147,8 @@ class PathsRegistrar(Registrar, Listener):
             raise InputException(
                 "Either the named-paths name or the path to the group file must be provided"
             )
-        if os.path.exists(group_file_path):
-            with open(group_file_path, "rb") as f:
-                h = hashlib.file_digest(f, hashlib.sha256)
-                return h.hexdigest()
+        if Nos(group_file_path).exists():
+            with DataFileReader(group_file_path) as reader:
+                h = reader.fingerprint()
+                return h
         return None

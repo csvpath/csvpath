@@ -14,7 +14,9 @@ class S3DataWriter(DataFileWriter):
                 aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
             )
             self.sink = open(
-                self._path, "w", transport_params={"client": session.client("s3")}
+                self._path,
+                self._mode,
+                transport_params={"client": session.client("s3")},
             )
 
     def write(self, data) -> None:
@@ -27,7 +29,7 @@ class S3DataWriter(DataFileWriter):
             aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
         )
         with open(
-            self._path, "w", transport_params={"client": session.client("s3")}
+            self._path, "wb", transport_params={"client": session.client("s3")}
         ) as file:
             file.write(data.encode("utf-8"))
 

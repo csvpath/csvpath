@@ -37,6 +37,7 @@ class S3DataReader(CsvDataReader):
     def fingerprint(self) -> str:
         self.load_if()
         h = S3Fingerprinter().fingerprint(self._path)
+        h = self.percent_encode(h)
         self.close()
         return h
 
@@ -56,6 +57,10 @@ class S3DataReader(CsvDataReader):
                 "The old path and the new location must have the same bucket"
             )
         return S3Utils.rename(bucket, key, new_key)
+
+    def read(self) -> str:
+        with open(uri=self._path, mode="r", encoding="utf-8") as file:
+            return file.read()
 
     def next_raw(self) -> str:
         with open(uri=self._path, mode="rb") as file:

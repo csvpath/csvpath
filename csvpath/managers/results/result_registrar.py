@@ -1,9 +1,9 @@
 import os
 import json
-import hashlib
 from pathlib import Path
-
 from datetime import datetime
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
 from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
@@ -244,9 +244,10 @@ class ResultRegistrar(Registrar, Listener):
         return fps
 
     def _fingerprint(self, path) -> str:
-        if os.path.exists(path):
-            with open(path, "rb") as f:
-                h = hashlib.file_digest(f, hashlib.sha256)
-                h = h.hexdigest()
-            return h
+        if path.find("://") == -1 and not path.startswith("/"):
+            path = f"{os.getcwd()}/{path}"
+        if Nos(path).exists():
+            with DataFileReader(path) as f:
+                h = f.fingerprint()
+                return h
         return None

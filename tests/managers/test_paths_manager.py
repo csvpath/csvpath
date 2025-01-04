@@ -1,5 +1,6 @@
 import unittest
 import os
+from uuid import uuid4
 from csvpath import CsvPaths
 from csvpath.managers.paths.paths_manager import PathsManager
 
@@ -8,6 +9,18 @@ JSON = "tests/test_resources/named_paths.json"
 
 
 class TestPathsManager(unittest.TestCase):
+    def test_named_paths_adda(self):
+        name = f"{uuid4()}"
+        apath = "$[*][yes()]"
+        CsvPaths().paths_manager.add_named_paths(name=name, paths=[apath])
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst
+        assert len(lst) == 1
+        assert lst[0].strip() == apath.strip()
+        CsvPaths().paths_manager.remove_named_paths(name)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst is None
+
     def test_named_paths_set_named_paths1(self):
         paths = CsvPaths()
         paths.file_manager.add_named_file(
