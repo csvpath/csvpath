@@ -2,13 +2,14 @@ import os
 import json
 import csv
 import hashlib
-import shutil
 from json import JSONDecodeError
 from typing import Dict, List, Tuple
 from csvpath.util.error import ErrorHandler
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.reference_parser import ReferenceParser
 from csvpath.util.exceptions import InputException, FileException
+from csvpath.util.nos import Nos
 from .file_registrar import FileRegistrar
 from .file_cacher import FileCacher
 from .file_metadata import FileMetadata
@@ -43,7 +44,7 @@ class FileManager:
     def assure_named_file_home(self, name: str) -> str:
         home = self.named_file_home(name)
         if not os.path.exists(home):
-            os.makedirs(home)
+            Nos(home).makedirs()
         return home
 
     #
@@ -56,11 +57,12 @@ class FileManager:
     def assure_file_home(self, name: str, path: str) -> str:
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
-        fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
+        sep = Nos(path).sep
+        fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         home = self.named_file_home(name)
         home = os.path.join(home, fname)
-        if not os.path.exists(home):
-            os.makedirs(home)
+        if not Nos(home).exists():
+            Nos(home).makedirs()
         return home
 
     @property
@@ -70,16 +72,17 @@ class FileManager:
     @property
     def named_file_names(self) -> list:
         b = self.named_files_dir
-        ns = [n for n in os.listdir(b) if not os.path.isfile(os.path.join(b, n))]
+        ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
         return ns
 
     def name_exists(self, name: str) -> bool:
         p = self.named_file_home(name)
-        return os.path.exists(p)
+        b = Nos(p).dir_exists()
+        return b
 
     def remove_named_file(self, name: str) -> None:
         p = os.path.join(self.named_files_dir, name)
-        shutil.rmtree(p)
+        Nos(p).remove()
 
     def remove_all_named_files(self) -> None:
         names = self.named_file_names
@@ -91,7 +94,13 @@ class FileManager:
             self.add_named_file(name=k, path=v)
 
     def set_named_files_from_json(self, filename: str) -> None:
+        """named-files from json files are always local"""
         try:
+            #
+            # TODO: named-files json files are always local. they should
+            # be able to be on s3 so that we are completely independent of
+            # the local disk w/re file manager
+            #
             with open(filename, "r", encoding="utf-8") as f:
                 j = json.load(f)
                 self.set_named_files(j)
@@ -99,7 +108,7 @@ class FileManager:
             ErrorHandler(csvpaths=self._csvpaths).handle_error(ex)
 
     def add_named_files_from_dir(self, dirname: str):
-        dlist = os.listdir(dirname)
+        dlist = Nos(dirname).listdir()
         base = dirname
         for p in dlist:
             _ = p.lower()
@@ -115,7 +124,6 @@ class FileManager:
 
     #
     # -------------------------------------
-    # move functions to this class and file_data_filesystem_storekeeper
     #
     def add_named_file(self, *, name: str, path: str) -> None:
         #
@@ -156,33 +164,39 @@ class FileManager:
         mdata.fingerprint = h
         mdata.file_path = rpath
         mdata.file_home = file_home
-        mdata.file_name = file_home[file_home.rfind(os.sep) + 1 :]
+        mdata.file_name = file_home[file_home.rfind(Nos(file_home).sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
         self.registrar.register_complete(mdata)
 
     def _copy_in(self, path, home) -> None:
-        fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
+        sep = Nos(path).sep
+        fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         # creates
         #   a/file.csv -> named_files/name/file.csv/file.csv
         # the dir name matching the resulting file name is correct
         # once the file is landed and fingerprinted, the file
         # name is changed.
         temp = os.path.join(home, fname)
-        if path.startswith("s3:"):
-            self._copy_down(path, temp)
+        #
+        # this is another place that is too s3 vs. local. we'll have
+        # other source/sinks to support.
+        #
+        if path.startswith("s3:") and not home.startswith("s3"):
+            self._copy_down(path, temp, mode="wb")
+        elif path.startswith("s3:") and home.startswith("s3"):
+            Nos(path).copy(temp)
+        elif not path.startswith("s3:") and not home.startswith("s3"):
+            self._copy_down(path, temp, mode="wb")
         else:
-            shutil.copy(path, temp)
+            self._copy_down(path, temp)
         return temp
 
-    def _copy_down(self, path, temp) -> None:
+    def _copy_down(self, path, temp, mode="wb") -> None:
         reader = DataFileReader(path)
-        #
-        # TODO: need a DataFileWriter that knows how to write local and S3
-        #
-        with open(temp, "w", encoding="utf-8") as file:
+        with DataFileWriter(path=temp, mode=mode) as writer:
             for line in reader.next_raw():
-                file.write(line)
+                writer.append(line)
 
     #
     # can take a reference. the ref would only be expected to point
@@ -215,7 +229,6 @@ class FileManager:
 
     #
     # -------------------------------------
-    # move to file_data_filesystem_storekeeper?
     #
     def get_named_file_reader(self, name: str) -> DataFileReader:
         path = self.get_named_file(name)
@@ -231,7 +244,8 @@ class FileManager:
         )
 
     def _fingerprint(self, path) -> str:
-        fname = path if path.rfind(os.sep) == -1 else path[path.rfind(os.sep) + 1 :]
+        sep = Nos(path).sep
+        fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         t = None
         i = fname.find(".")
         if i > -1:
@@ -243,25 +257,29 @@ class FileManager:
         # creating the initial file name, where the file starts
         #
         fpath = os.path.join(path, fname)
-        with open(fpath, "rb") as f:
-            h = hashlib.file_digest(f, hashlib.sha256)
-            h = h.hexdigest()
+        h = None
         #
-        # creating the new path using the hash as filename
+        # this version should work local and minimize traffic when in S3
         #
-        hpath = os.path.join(path, h)
-        if t is not None:
-            hpath = f"{hpath}.{t}"
-        #
-        # if we're re-adding the file we don't need to make
-        # another copy of it. re-adds are fine.
-        #
-        b = os.path.exists(hpath)
-        if b:
-            os.remove(fpath)
-            return hpath, h
-        #
-        # if a first add, rename the file to the hash + ext
-        #
-        os.rename(fpath, hpath)
+        with DataFileReader(fpath) as f:
+            h = f.fingerprint()
+            #
+            # creating the new path using the hash as filename
+            #
+            hpath = os.path.join(path, h)
+            if t is not None:
+                hpath = f"{hpath}.{t}"
+            #
+            # if we're re-adding the file we don't need to make
+            # another copy of it. re-adds are fine.
+            #
+            # need an s3 way to do this
+            b = Nos(hpath).exists()
+            if b:
+                Nos(fpath).remove()
+                return hpath, h
+            #
+            # if a first add, rename the file to the hash + ext
+            #
+            Nos(fpath).rename(hpath)
         return hpath, h

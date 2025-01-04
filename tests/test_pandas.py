@@ -11,7 +11,6 @@ class TestPandas(unittest.TestCase):
             import pandas as pd
         except ImportError:
             return
-        print("")
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
         DataFileReader.register_data(path="pandastest", filelike=df)
         c = """

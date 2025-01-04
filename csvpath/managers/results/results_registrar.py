@@ -13,6 +13,7 @@ from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
 from csvpath.util.exceptions import FileException
+from csvpath.util.file_readers import DataFileReader
 
 
 class ResultsRegistrar(Registrar, Listener):
@@ -108,9 +109,13 @@ class ResultsRegistrar(Registrar, Listener):
             json.dump(m, file, indent=2)
 
     def _fingerprint_file(self, path) -> str:
+        with DataFileReader(path) as f:
+            h = f.fingerprint()
+        """
         with open(path, "rb") as f:
             h = hashlib.file_digest(f, hashlib.sha256)
             h = h.hexdigest()
+        """
         return h
 
     def _size(self, path) -> str:

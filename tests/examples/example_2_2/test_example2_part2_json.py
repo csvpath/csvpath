@@ -16,8 +16,9 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_json_named_file_load_only(self):
         paths = CsvPaths()
+        print("")
         #
-        # adding files and paths is optional, but a good idea for tests because
+        # adding files and paths more than 1x is optional, but a good idea for tests because
         # the source test files and dirs could change.
         #
         paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
@@ -80,6 +81,9 @@ class TestJsonNamedPaths(unittest.TestCase):
         assert m["completed"] is False
 
     def test_transfer_mode(self):
+        from csvpath.util.log_utility import LogUtility
+
+        LogUtility.log_brief_trace()
         paths = CsvPaths()
         try:
             os.remove("transfers/transfer.txt")

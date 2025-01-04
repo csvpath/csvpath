@@ -1,14 +1,21 @@
 # pylint: disable=C0114
 import csv
 import importlib
+import hashlib
 import os
 from abc import ABC, abstractmethod
 import pylightxl as xl
 from .exceptions import InputException
+from .file_info import FileInfo
+from .class_loader import ClassLoader
 
 
 class DataFileReader(ABC):
     DATA = {}
+
+    def __init__(self) -> None:
+        self._path = None
+        self.source = None
 
     @classmethod
     def register_data(cls, *, path, filelike) -> None:
@@ -18,8 +25,44 @@ class DataFileReader(ABC):
     def deregister_data(cls, path) -> None:
         del DataFileReader.DATA[path]
 
-    def __init__(self) -> None:
-        self._path = None
+    def __enter__(self):
+        self.load_if()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
+    def close(self) -> None:
+        if self.source is not None:
+            self.source.close()
+            self.source = None
+
+    def fingerprint(self) -> str:
+        """non-local file-like situations -- e.g. smart-open -- must
+        implement their own fingerprint method
+        """
+        with open(self._path, "rb") as source:
+            h = hashlib.file_digest(source, hashlib.sha256)
+            h = h.hexdigest()
+        return h
+
+    def load_if(self) -> None:
+        if self.source is None:
+            self.source = open(self._path, "r", encoding="utf-8")
+
+    def exists(self, path: str) -> bool:
+        os.path.exists(path)
+
+    def remove(self, path: str) -> None:
+        os.remove(path)
+
+    #
+    # new can be a path -- on an os. in
+    # S3 it is a key within the same bucket
+    # that is part of the path argument.
+    #
+    def rename(self, path: str, new: str) -> None:
+        os.rename(path, new)
 
     @property
     def path(self) -> str:
@@ -61,12 +104,11 @@ class DataFileReader(ABC):
             # e.g. s3://csvpath-example-1/timezones.csv
             #
             if path.startswith("s3://"):
-                #
-                # TODO: prefer ClassLoader.load('from csvpath.util.s3_data_reader import S3DataReader')
-                #
-                module = importlib.import_module("csvpath.util.s3_data_reader")
-                class_ = getattr(module, "S3DataReader")
-                instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                instance = ClassLoader.load(
+                    "from csvpath.util.s3.s3_data_reader import S3DataReader",
+                    args=[path],
+                    kwargs={"delimiter": delimiter, "quotechar": quotechar},
+                )
                 return instance
             return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
@@ -82,7 +124,7 @@ class DataFileReader(ABC):
         pass
 
     def next_raw(self) -> list[str]:
-        with open(uri=self._path, mode="r") as file:
+        with open(self._path, mode="rb") as file:
             for line in file:
                 yield line
 
@@ -97,6 +139,7 @@ class CsvDataReader(DataFileReader):
         delimiter=None,
         quotechar=None,
     ) -> None:
+        super().__init__()
         self._path = path
         if sheet is not None or path.find("#") > -1:
             raise InputException(
@@ -117,22 +160,6 @@ class CsvDataReader(DataFileReader):
         return FileInfo.info(self.path)
 
 
-class FileInfo:
-    @classmethod
-    def info(self, path) -> dict[str, str | int | float]:
-        s = os.stat(path)
-        meta = {
-            "mode": s.st_mode,
-            "device": s.st_dev,
-            "bytes": s.st_size,
-            "created": s.st_ctime,
-            "last_read": s.st_atime,
-            "last_mod": s.st_mtime,
-            "flags": s.st_flags,
-        }
-        return meta
-
-
 class XlsxDataReader(DataFileReader):
     def __init__(
         self,
@@ -143,6 +170,7 @@ class XlsxDataReader(DataFileReader):
         delimiter=None,
         quotechar=None,
     ) -> None:
+        super().__init__()
         self._sheet = sheet
         self._path = path
         if path.find("#") > -1:
@@ -151,11 +179,8 @@ class XlsxDataReader(DataFileReader):
 
     def next(self) -> list[str]:
         db = xl.readxl(fn=self._path)
-        print(f"xlsxdr: db:{db}, self_path:{self._path}")
         if not self._sheet:
             self._sheet = db.ws_names[0]
-        print(f"xlsxdr: self._sheet: {self._sheet}")
-
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]
 
