@@ -1,10 +1,11 @@
 import os
 import json
 import hashlib
-import shutil
 from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
@@ -30,17 +31,34 @@ class FileRegistrar(Registrar, Listener):
         return man[len(man) - 1]["fingerprint"]
 
     def manifest_path(self, home) -> str:
-        if not os.path.exists(home):
+        if (
+            home.find("s3://csvpath-example-1/inputs/named_files/") == 0
+            and len(home) > 50
+        ):
+            from csvpath.util.log_utility import LogUtility
+
+            LogUtility.log_brief_trace()
+        if not Nos(home).dir_exists():
+            # if not os.path.exists(home):
             raise InputException(f"Named file home does not exist: {home}")
         mf = os.path.join(home, "manifest.json")
-        if not os.path.exists(mf):
+        if not Nos(mf).exists():
+            # if not os.path.exists(mf):
+            with DataFileWriter(path=mf, mode="w") as writer:
+                writer.append("[]")
+            """
             with open(mf, "w", encoding="utf-8") as file:
                 file.write("[]")
+            """
         return mf
 
     def get_manifest(self, mpath) -> list:
+        with DataFileReader(mpath) as reader:
+            return json.load(reader.source)
+        """
         with open(mpath, "r", encoding="utf-8") as file:
             return json.load(file)
+        """
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -60,8 +78,13 @@ class FileRegistrar(Registrar, Listener):
             mani["mark"] = mark
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
+
+        with DataFileWriter(path=manifest_path, mode="w") as writer:
+            json.dump(jdata, writer.sink, indent=2)
+        """
         with open(manifest_path, "w", encoding="utf-8") as file:
             json.dump(jdata, file, indent=2)
+        """
 
     def register_complete(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -75,7 +98,8 @@ class FileRegistrar(Registrar, Listener):
             raise InputException(
                 f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
             )
-        if not path.startswith("s3:") and not os.path.exists(path):
+        if not path.startswith("s3:") and not Nos(path).exists():
+            # if not path.startswith("s3:") and not os.path.exists(path):
             #
             # try for a data reader in case we're smart-opening
             #
@@ -134,8 +158,10 @@ class FileRegistrar(Registrar, Listener):
 
     def registered_file(self, home: str) -> str:
         mpath = self.manifest_path(home)
-        with open(mpath, "r", encoding="utf-8") as file:
-            mdata = json.load(file)
+        with DataFileReader(mpath) as reader:
+            mdata = json.load(reader.source)
+            # with open(mpath, "r", encoding="utf-8") as file:
+            # mdata = json.load(file)
             if mdata is None or len(mdata) == 0:
                 raise InputException(f"Manifest for {home} at {mpath} is empty")
             m = mdata[len(mdata) - 1]
