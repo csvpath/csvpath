@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 import json
 import time
-import hashlib
 from .result import Result
 from .result_serializer import ResultSerializer
 from .result_registrar import ResultRegistrar
@@ -111,11 +110,6 @@ class ResultsRegistrar(Registrar, Listener):
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
             h = f.fingerprint()
-        """
-        with open(path, "rb") as f:
-            h = hashlib.file_digest(f, hashlib.sha256)
-            h = h.hexdigest()
-        """
         return h
 
     def _size(self, path) -> str:

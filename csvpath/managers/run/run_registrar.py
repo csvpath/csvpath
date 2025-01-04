@@ -1,7 +1,6 @@
 import os
 import time
 import json
-import hashlib
 from abc import ABC, abstractmethod
 from csvpath.util.exceptions import FileException
 from ..listener import Listener

@@ -1,6 +1,5 @@
 import os
 import json
-import hashlib
 from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.file_readers import DataFileReader
@@ -46,10 +45,6 @@ class FileRegistrar(Registrar, Listener):
             # if not os.path.exists(mf):
             with DataFileWriter(path=mf, mode="w") as writer:
                 writer.append("[]")
-            """
-            with open(mf, "w", encoding="utf-8") as file:
-                file.write("[]")
-            """
         return mf
 
     def get_manifest(self, mpath) -> list:

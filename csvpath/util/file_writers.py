@@ -39,6 +39,8 @@ class DataFileWriter(ABC):
 
     def append(self, data) -> None:
         self.load_if()
+        if self._mode.find("b") > -1 and isinstance(data, str):
+            data = data.encode("utf-8")
         self.sink.write(data)
 
     @property

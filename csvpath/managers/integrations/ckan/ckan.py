@@ -4,7 +4,6 @@ from csvpath import CsvPaths
 from csvpath.util.config import Config
 from .dataset import Dataset
 from .datafile import Datafile
-import hashlib
 import os
 
 
