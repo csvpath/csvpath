@@ -10,6 +10,8 @@ class Cache:
         self.csvpaths = csvpaths
 
     def _cache_name(self, filename: str) -> str:
+        if filename is None:
+            raise ValueError("Filename cannot be None")
         h = hashlib.sha256(filename.encode("utf-8")).hexdigest()
         return h
 
