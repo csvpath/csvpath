@@ -11,7 +11,7 @@ from .class_loader import ClassLoader
 
 class DataFileWriter(ABC):
     """
-    to write a csv line-by-line use LineSpooler.
+    to write a csv line-by-line we use a line spooler.
     """
 
     def __init__(self, *, path: str, mode="w") -> None:

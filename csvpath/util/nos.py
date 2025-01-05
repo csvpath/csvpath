@@ -31,6 +31,7 @@ class Nos:
         self.do.remove()
 
     def exists(self) -> bool:
+        self.do
         return self.do.exists()
 
     def dir_exists(self) -> bool:
@@ -65,7 +66,8 @@ class S3Do:
 
     def exists(self) -> bool:
         bucket, key = S3Utils.path_to_parts(self.path)
-        return S3Utils.exists(bucket, key)
+        ret = S3Utils.exists(bucket, key)
+        return ret
 
     def dir_exists(self) -> bool:
         lst = self.listdir()

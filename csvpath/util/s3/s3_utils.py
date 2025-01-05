@@ -17,7 +17,13 @@ class S3Utils:
     def exists(self, bucket: str, key: str) -> bool:
         client = boto3.client("s3")
         try:
+            import warnings
+
+            warnings.filterwarnings(
+                action="ignore", message=r"datetime.datetime.utcnow"
+            )
             client.head_object(Bucket=bucket, Key=key)
+
         except ClientError as e:
             assert str(e).find("404") > -1
             return False

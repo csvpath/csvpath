@@ -196,8 +196,8 @@ class PathsManager:
     def store_json_paths_file(self, name: str, jsonpath: str) -> None:
         home = self.named_paths_home(name)
         j = ""
-        file = DataFileReader(jsonpath)
-        j = file.read()
+        with DataFileReader(jsonpath) as file:
+            j = file.read()
         with DataFileWriter(path=os.path.join(home, "definition.json")) as writer:
             writer.write(j)
 

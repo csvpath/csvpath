@@ -12,9 +12,6 @@ from csvpath.util.config_exception import ConfigurationException
 from csvpath.util.error import ErrorCommsManager
 from ..util.exceptions import ChildrenException
 
-#   from csvpath.util.log_utility import LogUtility
-#   LogUtility.log_brief_trace()
-
 
 class Arg:
     def __init__(

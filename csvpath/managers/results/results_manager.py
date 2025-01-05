@@ -7,6 +7,10 @@ from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
+
+from csvpath.scanning.scanner import Scanner
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
 from .results_metadata import ResultsMetadata
@@ -16,7 +20,6 @@ from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
 from .result_file_reader import ResultFileReader
-from csvpath.scanning.scanner import Scanner
 
 
 class ResultsManager:  # pylint: disable=C0115
@@ -252,8 +255,10 @@ class ResultsManager:  # pylint: disable=C0115
         for t in tpaths:
             pathfrom = t[2]
             pathto = t[3]
-            with open(pathfrom, "r", encoding="utf-8") as pf:
-                with open(pathto, "w", encoding="utf-8") as pt:
+            with DataFileReader(pathfrom) as pf:
+                with DataFileWriter(path=pathto, mode="w") as pt:
+                    # with open(pathfrom, "r", encoding="utf-8") as pf:
+                    # with open(pathto, "w", encoding="utf-8") as pt:
                     pt.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:

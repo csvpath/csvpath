@@ -81,9 +81,6 @@ class TestJsonNamedPaths(unittest.TestCase):
         assert m["completed"] is False
 
     def test_transfer_mode(self):
-        from csvpath.util.log_utility import LogUtility
-
-        LogUtility.log_brief_trace()
         paths = CsvPaths()
         try:
             os.remove("transfers/transfer.txt")
