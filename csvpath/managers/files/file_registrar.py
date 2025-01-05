@@ -43,10 +43,6 @@ class FileRegistrar(Registrar, Listener):
     def get_manifest(self, mpath) -> list:
         with DataFileReader(mpath) as reader:
             return json.load(reader.source)
-        """
-        with open(mpath, "r", encoding="utf-8") as file:
-            return json.load(file)
-        """
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -66,13 +62,8 @@ class FileRegistrar(Registrar, Listener):
             mani["mark"] = mark
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
-
         with DataFileWriter(path=manifest_path, mode="w") as writer:
             json.dump(jdata, writer.sink, indent=2)
-        """
-        with open(manifest_path, "w", encoding="utf-8") as file:
-            json.dump(jdata, file, indent=2)
-        """
 
     def register_complete(self, mdata: Metadata) -> None:
         path = mdata.origin_path

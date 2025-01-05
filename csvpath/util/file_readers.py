@@ -119,6 +119,19 @@ class DataFileReader(ABC):
                 class_ = getattr(module, "PandasDataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
+            if path.find("s3://") > -1 and (
+                (filetype is not None and filetype == "xlsx") or path.endswith("xlsx")
+            ):
+                instance = ClassLoader.load(
+                    "from csvpath.util.s3.s3_xlsx_data_reader import S3XlsxDataReader",
+                    args=[path],
+                    kwargs={
+                        "sheet": sheet if sheet != path else None,
+                        "delimiter": delimiter,
+                        "quotechar": quotechar,
+                    },
+                )
+                return instance
             if (filetype is not None and filetype == "xlsx") or path.endswith("xlsx"):
                 return XlsxDataReader(
                     path,
@@ -126,10 +139,10 @@ class DataFileReader(ABC):
                     delimiter=delimiter,
                     quotechar=quotechar,
                 )
-            #
-            # e.g. s3://csvpath-example-1/timezones.csv
-            #
             if path.startswith("s3://"):
+                #
+                # e.g. s3://csvpath-example-1/timezones.csv
+                #
                 instance = ClassLoader.load(
                     "from csvpath.util.s3.s3_data_reader import S3DataReader",
                     args=[path],
@@ -188,7 +201,7 @@ class CsvDataReader(DataFileReader):
                 yield line
 
     def file_info(self) -> dict[str, str | int | float]:
-        return FileInfo.info(self.path)
+        return FileInfo.info(self._path)
 
 
 class XlsxDataReader(DataFileReader):
@@ -204,6 +217,9 @@ class XlsxDataReader(DataFileReader):
         super().__init__()
         self._sheet = sheet
         self._path = path
+        #
+        # path should have already been trimmed in __new__ above.
+        #
         if path.find("#") > -1:
             self._sheet = path[path.find("#") + 1 :]
             self._path = path[0 : path.find("#")]
@@ -216,4 +232,4 @@ class XlsxDataReader(DataFileReader):
             yield [f"{datum}" for datum in row]
 
     def file_info(self) -> dict[str, str | int | float]:
-        return FileInfo.info(self.path)
+        return FileInfo.info(self._path)
