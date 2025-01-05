@@ -13,6 +13,8 @@ class FileCacher:
         self.pathed_lines_and_headers = {}
 
     def get_new_line_monitor(self, filename: str) -> LineMonitor:
+        if filename is None:
+            raise ValueError("Filename cannot be None")
         if filename not in self.pathed_lines_and_headers:
             self._find_lines_and_headers(filename)
         lm = self.pathed_lines_and_headers[filename][0]
@@ -25,6 +27,8 @@ class FileCacher:
         return self.pathed_lines_and_headers[filename][1][:]
 
     def _find_lines_and_headers(self, filename: str) -> None:
+        if filename is None:
+            raise ValueError("Filename cannot be None")
         lm, headers = self._cached_lines_and_headers(filename)
         if lm is None or headers is None:
             lc = LineCounter(self.csvpaths)
@@ -33,6 +37,8 @@ class FileCacher:
         self.pathed_lines_and_headers[filename] = (lm, headers)
 
     def _cached_lines_and_headers(self, filename: str) -> Tuple[LineMonitor, List[str]]:
+        if filename is None:
+            raise ValueError("Filename cannot be None")
         lm = LineMonitor()
         json = self.cache.cached_text(filename, "json")
         if json is not None and not json.strip() == "":

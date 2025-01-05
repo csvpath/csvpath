@@ -3,7 +3,19 @@ import os
 
 class FileInfo:
     @classmethod
-    def info(self, path) -> dict[str, str | int | float]:
+    def info(cls, path) -> dict[str, str | int | float]:
+        if path is None:
+            raise ValueError("Path cannot be None")
+        if path.find("://") > -1:
+            return cls._remote(path)
+        return cls._local(path)
+
+    @classmethod
+    def _remote(cls, path):
+        return {}
+
+    @classmethod
+    def _local(cls, path):
         s = os.stat(path)
         meta = {
             "mode": s.st_mode,

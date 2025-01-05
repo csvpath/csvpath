@@ -26,10 +26,6 @@ class PathsRegistrar(Registrar, Listener):
         with DataFileReader(mpath) as file:
             j = json.load(file.source)
             return j
-        """
-        with open(mpath, "r", encoding="utf-8") as file:
-            return json.load(file)
-        """
 
     def register_complete(self, mdata: Metadata) -> None:
         mdata.manifest_path = self.manifest_path(name=mdata.named_paths_name)
@@ -99,10 +95,6 @@ class PathsRegistrar(Registrar, Listener):
             jdata.append(m)
             with DataFileWriter(path=mdata.manifest_path) as file:
                 json.dump(jdata, file.sink, indent=2)
-            """
-            with open(mdata.manifest_path, "w", encoding="utf-8") as file:
-                json.dump(jdata, file, indent=2)
-            """
         else:
             #
             # leave as info so nobody has to dig to see why no update
@@ -118,10 +110,6 @@ class PathsRegistrar(Registrar, Listener):
         if not Nos(mf).exists():
             with DataFileWriter(path=mf) as file:
                 file.append("[]")
-            """
-            with open(mf, "w", encoding="utf-8") as file:
-                file.write("[]")
-            """
         return mf
 
     def _most_recent_fingerprint(self, manifest_path: str) -> str:

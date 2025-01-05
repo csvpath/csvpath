@@ -1,11 +1,15 @@
 import os
 import csv
 import json
+import boto3
 from pathlib import Path
 from abc import ABC, abstractmethod
 from .error import Error, ErrorHandler
 from .exceptions import InputException
 from .file_readers import DataFileReader
+from .file_writers import DataFileWriter
+from .file_info import FileInfo
+from .nos import Nos
 
 
 class LineSpooler(ABC):
@@ -71,7 +75,8 @@ class CsvLineSpooler(LineSpooler):
     def to_list(self) -> list[str]:
         if self.path is None:
             self._instance_data_file_path()
-        if os.path.exists(self.path) is False:
+        if Nos(self.path).exists() is False:
+            # if os.path.exists(self.path) is False:
             self.result.csvpath.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
@@ -91,9 +96,12 @@ class CsvLineSpooler(LineSpooler):
         if self._count is None or self._count <= 0:
             if self.result is not None and self.result.instance_dir:
                 d = os.path.join(self.result.instance_dir, "meta.json")
-                if os.path.exists(d):
-                    with open(d, "r", encoding="utf-8") as file:
-                        j = json.load(file)
+                if Nos(d).exists() is True:
+                    # if os.path.exists(d):
+                    with DataFileReader(d) as file:
+                        # with open(d, "r", encoding="utf-8") as file:
+                        j = json.load(file.source)
+                        # j = json.load(file)
                         n = j["runtime_data"]["count_matches"]
                         self._count = n
         return self._count
@@ -101,13 +109,24 @@ class CsvLineSpooler(LineSpooler):
     def load_if(self) -> None:
         p = self._instance_data_file_path()
         if p is not None:
-            self.sink = open(p, "a")
+            self.sink = self._open_file(p)
+            # self.sink = open(p, "a")
             self.writer = csv.writer(self.sink)
+
+    def _open_file(self, path: str):
+        # TODO: set this up better for other protocols besides s3
+        if path.find("://") > -1:
+            dw = DataFileWriter(path=path, mode="w")
+            dw.load_if()
+            return dw.sink
+        file = open(path, "a")
+        return file
 
     def next(self):
         if self.path is None:
             self._instance_data_file_path()
-        if os.path.exists(self.path) is False:
+        if Nos(self.path).exists() is False:
+            # if os.path.exists(self.path) is False:
             self.result.csvpath.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
@@ -163,7 +182,12 @@ class CsvLineSpooler(LineSpooler):
         # there may be no file if we're on/before line 0 of the data.csv
         # that is Ok.
         try:
-            return os.stat(p).st_size
+            i = FileInfo.info(p)
+            if i and "bytes" in i:
+                return i["bytes"]
+            else:
+                return -1
+            # return os.stat(p).st_size
         except FileNotFoundError:
             return 0
 

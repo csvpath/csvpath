@@ -20,10 +20,11 @@ class Registrar(ABC):
     def distribute_update(self, mdata: Metadata) -> None:
         """any Listener will recieve a copy of a metadata that describes a
         change to a named-file, named-paths, or named-results."""
-        listeners = [self]
-        self.load_additional_listeners(self.type, listeners)
         if mdata is None:
             raise InputException("Metadata cannot be None")
+        listeners = [self]
+        self.load_additional_listeners(self.type, listeners)
+        print(f"Registrar.dist_update: listners: {listeners}, mdata: {mdata}")
         for lst in listeners:
             lst.metadata_update(mdata)
 

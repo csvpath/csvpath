@@ -1,8 +1,8 @@
 import os
 import json
-from pathlib import Path
 from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from ..listener import Listener
 from ..metadata import Metadata
@@ -117,13 +117,16 @@ class ResultRegistrar(Registrar, Listener):
             m["transfers"] = mdata.transfers
         mp = self.manifest_path
         m["manifest_path"] = mp
-        with open(mp, "w", encoding="utf-8") as file:
-            json.dump(m, file, indent=2)
+        with DataFileWriter(path=mp) as file:
+            # with open(mp, "w", encoding="utf-8") as file:
+            json.dump(m, file.sink, indent=2)
 
     @property
     def archive_name(self) -> str:
         ap = self.result.csvpath.config.archive_path
-        i = ap.rfind(os.sep)
+        sep = Nos(ap).sep
+        i = ap.rfind(sep)
+        # i = ap.rfind(os.sep)
         if i > 0:
             return ap[i + 1 :]
         return ap
@@ -131,9 +134,11 @@ class ResultRegistrar(Registrar, Listener):
     # gets the manifest for the named_paths as a whole
     @property
     def named_paths_manifest(self) -> dict | None:
-        if os.path.exists(self.named_paths_manifest_path):
-            with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
-                d = json.load(file)
+        if Nos(self.named_paths_manifest_path).exists():
+            # if os.path.exists(self.named_paths_manifest_path):
+            with DataFileReader(self.named_paths_manifest_path) as file:
+                # with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
+                d = json.load(file.source)
                 return d
         return None
 
@@ -148,12 +153,15 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def manifest(self) -> dict | None:
         mp = self.manifest_path
-        if not os.path.exists(mp):
-            with open(self.manifest_path, "w", encoding="utf-8") as file:
-                json.dump({}, file, indent=2)
+        if not Nos(mp).exists():
+            # if not os.path.exists(mp):
+            with DataFileWriter(path=self.manifest_path) as file:
+                # with open(self.manifest_path, "w", encoding="utf-8") as file:
+                json.dump({}, file.sink, indent=2)
                 return {}
-        with open(self.manifest_path, "r", encoding="utf-8") as file:
-            d = json.load(file)
+        with DataFileReader(self.manifest_path) as file:
+            # with open(self.manifest_path, "r", encoding="utf-8") as file:
+            d = json.load(file.source)
             return d
         return None
 
@@ -167,8 +175,10 @@ class ResultRegistrar(Registrar, Listener):
         rdir = self.result_serializer.get_instance_dir(
             run_dir=self.result.run_dir, identity=self.result.identity_or_index
         )
-        if not os.path.exists(rdir):
-            Path(rdir).mkdir(parents=True, exist_ok=True)
+        if not Nos(rdir).exists():
+            # if not os.path.exists(rdir):
+            Nos(rdir).makedir()
+            # Path(rdir).mkdir(parents=True, exist_ok=True)
         return rdir
 
     @property
@@ -178,10 +188,13 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def all_expected_files(self) -> bool:
         #
-        # we can not have data.csv, unmatched.csv, and printouts.txt without it
-        # necessarily being a failure mode. but we can require them as a matter
-        # of content validation.
+        # we can not have any/all of data.csv, unmatched.csv, and printouts.txt without
+        # it necessarily being a failure mode. but we can require them as a matter of
+        # content validation.
         #
+        print(
+            f"result_reg: all_expected_files: in: {self.result.identity_or_index}, all expected: {self.result.csvpath.all_expected_files}"
+        )
         if (
             self.result.csvpath.all_expected_files is None
             or len(self.result.csvpath.all_expected_files) == 0
@@ -194,6 +207,7 @@ class ResultRegistrar(Registrar, Listener):
                 return False
             return True
         for t in self.result.csvpath.all_expected_files:
+            print(f"result_reg: all_expected_files: t: {t}")
             t = t.strip()
             if t.startswith("no-data"):
                 if self.has_file("data.csv"):
@@ -223,7 +237,8 @@ class ResultRegistrar(Registrar, Listener):
 
     def has_file(self, t: str) -> bool:
         r = self.result_path
-        return os.path.exists(os.path.join(r, t))
+        return Nos(os.path.join(r, t)).exists()
+        # return os.path.exists(os.path.join(r, t))
 
     @property
     def file_fingerprints(self) -> dict[str]:

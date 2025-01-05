@@ -1,8 +1,14 @@
 import os
-from pathlib import Path
+
+# from pathlib import Path
 from datetime import datetime, timezone
 import json
 import time
+from csvpath.util.nos import Nos
+from csvpath.util.file_info import FileInfo
+from csvpath.util.exceptions import FileException
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
 from .result import Result
 from .result_serializer import ResultSerializer
 from .result_registrar import ResultRegistrar
@@ -11,8 +17,6 @@ from ..run.run_metadata import RunMetadata
 from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
-from csvpath.util.exceptions import FileException
-from csvpath.util.file_readers import DataFileReader
 
 
 class ResultsRegistrar(Registrar, Listener):
@@ -104,8 +108,9 @@ class ResultsRegistrar(Registrar, Listener):
         m["named_file_fingerprint_on_file"] = mdata.named_file_fingerprint_on_file
         mp = mdata.manifest_path
         m["manifest_path"] = mp
-        with open(mp, "w", encoding="utf-8") as file:
-            json.dump(m, file, indent=2)
+        with DataFileWriter(path=mp) as file:
+            # with open(mp, "w", encoding="utf-8") as file:
+            json.dump(m, file.sink, indent=2)
 
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
@@ -114,15 +119,21 @@ class ResultsRegistrar(Registrar, Listener):
 
     def _size(self, path) -> str:
         try:
-            return os.stat(path).st_size
+            fi = FileInfo.info(path)
+            return fi["bytes"] if fi and "bytes" in fi else -1
+            # return os.stat(path).st_size
         except FileNotFoundError:
             return 0
 
     def _last_change(self, path) -> str:
         try:
-            last_mod = os.stat(path).st_mtime
-            last_mod = time.ctime(last_mod)
-            return last_mod
+            fi = FileInfo.info(path)
+            if fi and "last_mod" in fi:
+                last_mod = fi["last_mod"]
+                # last_mod = os.stat(path).st_mtime
+                last_mod = time.ctime(last_mod)
+                return last_mod
+            return None
         except FileNotFoundError:
             return -1
 
@@ -155,14 +166,17 @@ class ResultsRegistrar(Registrar, Listener):
     @property
     def manifest(self) -> dict[str, str | bool]:
         mp = self.manifest_path
-        with open(mp, "r", encoding="utf-8") as file:
-            d = json.load(file)
+        with DataFileReader(mp) as file:
+            # with open(mp, "r", encoding="utf-8") as file:
+            d = json.load(file.source)
             return d
         return None
 
     @property
     def manifest_path(self) -> str:
-        if not os.path.exists(self.run_dir):
-            Path(self.run_dir).mkdir(parents=True, exist_ok=True)
+        if not Nos(self.run_dir).exists():
+            # if not os.path.exists(self.run_dir):
+            Nos(self.run_dir).makedir()
+            # Path(self.run_dir).mkdir(parents=True, exist_ok=True)
         mp = os.path.join(self.run_dir, "manifest.json")
         return mp

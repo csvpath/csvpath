@@ -14,6 +14,7 @@ class Metadata(ABC):
         self._uuid = uuid4()
         self.manifest_path: str = None
         self.archive_name: str = None
+        self.archive_path: str = None
         self._base_path = None
         self._named_files_root: str = None
         self._named_paths_root: str = None
@@ -54,6 +55,8 @@ class Metadata(ABC):
             self.manifest_path = m.get("manifest_path")
         if m.get("archive_name") is not None:
             self.archive_name = m.get("archive_name")
+        if m.get("archive_path") is not None:
+            self.archive_path = m.get("archive_path")
 
     @property
     def uuid(self) -> UUID:

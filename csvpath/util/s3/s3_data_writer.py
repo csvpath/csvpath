@@ -13,6 +13,12 @@ class S3DataWriter(DataFileWriter):
                 aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
                 aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
             )
+            import warnings
+
+            warnings.filterwarnings(
+                action="ignore", message=r"datetime.datetime.utcnow"
+            )
+
             self.sink = open(
                 self._path,
                 self._mode,

@@ -4,6 +4,7 @@ import shutil
 import boto3
 from botocore.exceptions import ClientError
 from .s3.s3_utils import S3Utils
+from pathlib import Path
 
 
 class Nos:
@@ -31,6 +32,7 @@ class Nos:
         self.do.remove()
 
     def exists(self) -> bool:
+        self.do
         return self.do.exists()
 
     def dir_exists(self) -> bool:
@@ -44,6 +46,9 @@ class Nos:
 
     def makedirs(self) -> None:
         self.do.makedirs()
+
+    def makedir(self) -> None:
+        self.do.makedir()
 
     def listdir(self) -> list[str]:
         return self.do.listdir()
@@ -65,7 +70,8 @@ class S3Do:
 
     def exists(self) -> bool:
         bucket, key = S3Utils.path_to_parts(self.path)
-        return S3Utils.exists(bucket, key)
+        ret = S3Utils.exists(bucket, key)
+        return ret
 
     def dir_exists(self) -> bool:
         lst = self.listdir()
@@ -88,6 +94,10 @@ class S3Do:
         return S3Utils.copy(bucket, key, new_bucket, new_key)
 
     def makedirs(self) -> None:
+        # may not be needed?
+        ...
+
+    def makedir(self) -> None:
         # may not be needed?
         ...
 
@@ -161,6 +171,9 @@ class FileDo:
 
     def makedirs(self) -> None:
         os.makedirs(self.path)
+
+    def makedir(self) -> None:
+        Path(self.path).mkdir(parents=True, exist_ok=True)
 
     def listdir(self) -> list[str]:
         return os.listdir(self.path)

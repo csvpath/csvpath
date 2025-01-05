@@ -30,13 +30,6 @@ class FileRegistrar(Registrar, Listener):
         return man[len(man) - 1]["fingerprint"]
 
     def manifest_path(self, home) -> str:
-        if (
-            home.find("s3://csvpath-example-1/inputs/named_files/") == 0
-            and len(home) > 50
-        ):
-            from csvpath.util.log_utility import LogUtility
-
-            LogUtility.log_brief_trace()
         if not Nos(home).dir_exists():
             # if not os.path.exists(home):
             raise InputException(f"Named file home does not exist: {home}")
