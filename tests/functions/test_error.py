@@ -2,6 +2,8 @@ import unittest
 import os
 import json
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 
 PATH = "tests/test_resources/test.csv"
 
@@ -28,9 +30,14 @@ class TestFunctionsError(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         assert result.has_errors()
-        assert os.path.exists(result.instance_dir)
+        print(f"test_function_error_file: instance_dir: {result.instance_dir}")
+        assert Nos(result.instance_dir).dir_exists()
+        # assert os.path.exists(result.instance_dir)
         ef = os.path.join(result.instance_dir, "errors.json")
-        assert os.path.exists(ef)
-        with open(ef, "r", encoding="utf-8") as file:
-            j = json.load(file)
+        print(f"test_function_error_file: ef: {ef}")
+        assert Nos(ef).exists()
+        # assert os.path.exists(ef)
+        with DataFileReader(ef) as file:
+            # with open(ef, "r", encoding="utf-8") as file:
+            j = json.load(file.source)
             assert len(j) == 4

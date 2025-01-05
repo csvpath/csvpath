@@ -119,17 +119,21 @@ class ResultsRegistrar(Registrar, Listener):
 
     def _size(self, path) -> str:
         try:
-            return FileInfo.info(path)["bytes"]
+            fi = FileInfo.info(path)
+            return fi["bytes"] if fi and "bytes" in fi else -1
             # return os.stat(path).st_size
         except FileNotFoundError:
             return 0
 
     def _last_change(self, path) -> str:
         try:
-            last_mod = FileInfo.info(path)["last_mod"]
-            # last_mod = os.stat(path).st_mtime
-            last_mod = time.ctime(last_mod)
-            return last_mod
+            fi = FileInfo.info(path)
+            if fi and "last_mod" in fi:
+                last_mod = fi["last_mod"]
+                # last_mod = os.stat(path).st_mtime
+                last_mod = time.ctime(last_mod)
+                return last_mod
+            return None
         except FileNotFoundError:
             return -1
 
