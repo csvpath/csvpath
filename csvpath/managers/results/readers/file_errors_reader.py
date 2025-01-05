@@ -2,6 +2,8 @@ import os
 import json
 from abc import ABC, abstractmethod
 from csvpath.util.error import Error
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 from .readers import ErrorsReader
 
 
@@ -15,9 +17,11 @@ class FileErrorsReader(ErrorsReader):
         if self._errors is None and self.result is not None:
             ej = None
             p = os.path.join(self.result.instance_dir, "errors.json")
-            if os.path.exists(p):
-                with open(p, "r") as file:
-                    ej = json.load(file)
+            if Nos(p).exists():
+                # if os.path.exists(p):
+                with DataFileReader(p) as file:
+                    # with open(p, "r") as file:
+                    ej = json.load(file.source)
             self._errors = []
             if ej:
                 for e in ej:

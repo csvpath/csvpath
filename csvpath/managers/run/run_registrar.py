@@ -3,6 +3,9 @@ import time
 import json
 from abc import ABC, abstractmethod
 from csvpath.util.exceptions import FileException
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
 from ..listener import Listener
 from ..registrar import Registrar
 from ..metadata import Metadata
@@ -20,13 +23,18 @@ class RunRegistrar(Registrar, Listener):
 
     @property
     def manifest(self) -> list:
-        if not os.path.exists(self.archive):
-            os.makedirs(self.archive, exist_ok=True)
-        if not os.path.exists(self.manifest_path):
-            with open(self.manifest_path, "w", encoding="utf-8") as file:
-                json.dump([], file, indent=2)
-        with open(self.manifest_path, "r", encoding="utf-8") as file:
-            return json.load(file)
+        if not Nos(self.archive).exists():
+            # if not os.path.exists(self.archive):
+            Nos(self.archive).makedirs()
+            # os.makedirs(self.archive, exist_ok=True)
+        if not Nos(self.manifest_path).exists():
+            # if not os.path.exists(self.manifest_path):
+            with DataFileWriter(path=self.manifest_path) as file:
+                # with open(self.manifest_path, "w", encoding="utf-8") as file:
+                json.dump([], file.sink, indent=2)
+        with DataFileReader(self.manifest_path) as file:
+            # with open(self.manifest_path, "r", encoding="utf-8") as file:
+            return json.load(file.source)
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
@@ -37,7 +45,21 @@ class RunRegistrar(Registrar, Listener):
         m["named_file_name"] = mdata.named_file_name
         mp = self.manifest_path
         m["manifest_path"] = mp
+        #
+        # adding to help make clearer where assets are for each
+        # run. we now have the potential for much more flexibility.
+        # it is possible that this is not enough identification.
+        #
+        m["archive_name"] = mdata.archive_name
+        m["archive_path"] = mdata.archive_path
+        m["base_path"] = mdata.base_path
+        m["named_files_root"] = mdata.named_files_root
+        m["named_paths_root"] = mdata.named_paths_root
+        #
+        #
+        #
         mani = self.manifest
         mani.append(m)
-        with open(mp, "w", encoding="utf-8") as file:
-            json.dump(mani, file, indent=2)
+        with DataFileWriter(path=mp) as file:
+            # with open(mp, "w", encoding="utf-8") as file:
+            json.dump(mani, file.sink, indent=2)

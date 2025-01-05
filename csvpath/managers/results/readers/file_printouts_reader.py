@@ -1,5 +1,7 @@
 import os
 from abc import ABC, abstractmethod
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 from .readers import PrintoutsReader
 
 
@@ -20,10 +22,11 @@ class FilePrintoutsReader(PrintoutsReader):
         if self._printouts is None:
             if self.result is not None and self.result.instance_dir:
                 d = os.path.join(self.result.instance_dir, "printouts.txt")
-                if os.path.exists(d):
+                if Nos(d).exists():
                     self._printouts = Printouts()
-                    with open(d, "r", encoding="utf-8") as file:
-                        t = file.read()
+                    with DataFileReader(d) as file:
+                        # with open(d, "r", encoding="utf-8") as file:
+                        t = file.source.read()
                         printouts = t.split("---- PRINTOUT:")
                         for p in printouts:
                             name = p[0 : p.find("\n")]

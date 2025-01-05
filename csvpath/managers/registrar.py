@@ -10,7 +10,6 @@ class Registrar(ABC):
         self.csvpaths = csvpaths
         self.result = result
         self.type = None
-        self.listeners = None
 
     def register_start(self, mdata: Metadata) -> None:
         self.distribute_update(mdata)
@@ -23,25 +22,24 @@ class Registrar(ABC):
         change to a named-file, named-paths, or named-results."""
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        self.load_additional_listeners_if()
-        for lst in self.listeners:
+        listeners = [self]
+        self.load_additional_listeners(self.type, listeners)
+        print(f"Registrar.dist_update: listners: {listeners}, mdata: {mdata}")
+        for lst in listeners:
             lst.metadata_update(mdata)
 
-    def load_additional_listeners_if(self) -> None:
-        if self.listeners is None:
-            self.listeners = [self]
-            self.load_additional_listeners()
-
-    def load_additional_listeners(self) -> None:
+    def load_additional_listeners(
+        self, listener_type_name: str, listeners: list
+    ) -> None:
         """look in [listeners] for listener_type_name keyed lists of listener classes"""
-        ss = self.csvpaths.config.additional_listeners(self.type)
+        ss = self.csvpaths.config.additional_listeners(listener_type_name)
         if ss and not isinstance(ss, list):
             ss = [ss]
         if ss and len(ss) > 0:
             for lst in ss:
-                self.load_additional_listener(lst)
+                self.load_additional_listener(lst, listeners)
 
-    def load_additional_listener(self, load_cmd: str) -> None:
+    def load_additional_listener(self, load_cmd: str, listeners: list) -> None:
         loader = ClassLoader()
         alistener = loader.load(load_cmd)
         if alistener is not None:
@@ -50,4 +48,4 @@ class Registrar(ABC):
             if hasattr(alistener, "result"):
                 setattr(alistener, "result", self.result)
             alistener.config = self.csvpaths.config
-            self.listeners.append(alistener)
+            listeners.append(alistener)

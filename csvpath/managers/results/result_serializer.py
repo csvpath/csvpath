@@ -6,6 +6,7 @@ from datetime import datetime
 from csvpath import CsvPath
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath.util.line_spooler import LineSpooler
+from csvpath.util.file_writers import DataFileWriter
 
 Simpledata = NewType("Simpledata", Union[None | str | int | float | bool])
 Listdata = NewType("Listdata", list[None | str | int | float | bool])
@@ -62,6 +63,9 @@ class ResultSerializer:
         unmatched: list[Listdata],
     ) -> None:
         """Save a single Result object to basedir/paths_name/run_time/identity_or_index."""
+        print(
+            f"ResultSerializer: save: paths_name: {paths_name}, identity: {identity}, run_dir: {run_dir}, run_index: {run_index}"
+        )
         meta = {
             "paths_name": paths_name,
             "file_name": file_name,
@@ -73,12 +77,20 @@ class ResultSerializer:
         }
         run_dir = self.get_instance_dir(run_dir=run_dir, identity=identity)
         # Save the JSON files
+        with DataFileWriter(path=os.path.join(run_dir, "meta.json")) as f:
+            json.dump(meta, f.sink, indent=2)
+        with DataFileWriter(path=os.path.join(run_dir, "errors.json")) as f:
+            json.dump(errors, f.sink, indent=2)
+        with DataFileWriter(path=os.path.join(run_dir, "vars.json")) as f:
+            json.dump(variables, f.sink, indent=2)
+        """
         with open(os.path.join(run_dir, "meta.json"), "w") as f:
             json.dump(meta, f, indent=2)
         with open(os.path.join(run_dir, "errors.json"), "w") as f:
             json.dump(errors, f, indent=2)
         with open(os.path.join(run_dir, "vars.json"), "w") as f:
             json.dump(variables, f, indent=2)
+        """
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
         if lines is not None:
@@ -99,8 +111,9 @@ class ResultSerializer:
                 # poor indicator of the method anyway.
                 #
                 if lines is not None and len(lines) > 0:
-                    with open(os.path.join(run_dir, "data.csv"), "w") as f:
-                        writer = csv.writer(f)
+                    with DataFileWriter(path=os.path.join(run_dir, "data.csv")) as f:
+                        # with open(os.path.join(run_dir, "data.csv"), "w") as f:
+                        writer = csv.writer(f.sink)
                         writer.writerows(lines)
         #
         # writing is not needed. LineSpoolers are intended to stream their
@@ -112,17 +125,19 @@ class ResultSerializer:
             and not isinstance(unmatched, LineSpooler)
             and len(unmatched) > 0
         ):
-            with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
-                writer = csv.writer(f)
+            with DataFileWriter(path=os.path.join(run_dir, "unmatched.csv")) as f:
+                # with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
+                writer = csv.writer(f.sink)
                 writer.writerows(unmatched)
 
         # Save the printout lines
         if self._has_printouts(printouts):
-            with open(os.path.join(run_dir, "printouts.txt"), "w") as f:
+            with DataFileWriter(path=os.path.join(run_dir, "printouts.txt")) as f:
+                # with open(os.path.join(run_dir, "printouts.txt"), "w") as f:
                 for k, v in printouts.items():
-                    f.write(f"---- PRINTOUT: {k}\n")
+                    f.sink.write(f"---- PRINTOUT: {k}\n")
                     for _ in v:
-                        f.write(f"{_}\n")
+                        f.sink.write(f"{_}\n")
 
     def _has_printouts(self, pos) -> bool:
         if pos is None:

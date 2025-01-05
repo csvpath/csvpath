@@ -83,18 +83,6 @@ class ResultReadersFacade(ErrorsReader, UnmatchedReader, LinesReader, PrintoutsR
     def run_dir(self) -> str:
         return self.result._run_dir
 
-    """
-    @property
-    def identity(self) -> str:
-        return self._identity
-
-    @property
-    def instance_dir(self) -> str:
-        if self.result is not None:
-            return self.result.instance_dir
-        return None
-    """
-
     def load_readers(self) -> None:
         #
         # eventually, probably, look in [readers] for names -> reader classes. assumption is

@@ -8,10 +8,12 @@ from csvpath.util.config import Config
 
 class TestListeners(unittest.TestCase):
     def test_additional_listeners1(self):
+        stmt = "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
         r = Registrar(csvpaths=CsvPaths())
-        assert r.listeners is None
-        r.load_additional_listeners_if()
-        assert len(r.listeners) == 1
+        listeners = [r]
+        assert len(listeners) == 1
+        r.load_additional_listener(stmt, listeners)
+        assert len(listeners) == 2
 
     def test_additional_listeners3(self):
         testini = "tests/test_resources/deleteme/config.ini"
@@ -40,8 +42,10 @@ class TestListeners(unittest.TestCase):
             "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
             in listeners
         )
+        # assert "b" in listeners
 
         r = Registrar(paths)
-        r.type = "file"
-        r.load_additional_listeners_if()
-        assert len(r.listeners) == 3
+        # assert len(r.listeners) == 1
+        listeners = [r]
+        r.load_additional_listeners("file", listeners)
+        assert len(listeners) == 3

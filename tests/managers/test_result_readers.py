@@ -74,10 +74,13 @@ class TestResultReaders(unittest.TestCase):
         assert "instance_home" in m
         assert m["instance_home"] == result_dir
 
-        info = FileInfo.info(m["manifest_path"])
-        assert info
-        assert "created" in info
-        assert info["created"] is not None
+        if paths.config.archive_path.find("://") > -1:
+            print("Not checking file info because atm we don't support file info in S3")
+        else:
+            info = FileInfo.info(m["manifest_path"])
+            assert info
+            assert "created" in info
+            assert info["created"] is not None
 
     def test_result_reader_helpers_2(self):
         p = "tests/test_resources/deleteme"
