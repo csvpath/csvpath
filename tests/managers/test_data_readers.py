@@ -57,7 +57,8 @@ class TestDataReaders(unittest.TestCase):
         self._clean()
         paths = CsvPaths()
         mgr = paths.file_manager
-        mgr.remove_named_file("xlsx")
+        if mgr.name_exists("xlsx"):
+            mgr.remove_named_file("xlsx")
         mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
         xreader = mgr.get_named_file_reader("xlsx")
         assert isinstance(xreader, XlsxDataReader)
