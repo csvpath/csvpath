@@ -218,7 +218,8 @@ class FileManager:
         else:
             if not self.name_exists(name):
                 return None
-            ret = self.registrar.registered_file(self.named_file_home(name))
+            n = self.named_file_home(name)
+            ret = self.registrar.registered_file(n)
         return ret
 
     def get_fingerprint_for_name(self, name) -> str:

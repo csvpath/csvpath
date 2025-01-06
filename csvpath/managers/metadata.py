@@ -71,7 +71,6 @@ class Metadata(ABC):
     @property
     def uuid_string(self) -> str:
         return str(self._uuid)
-        # return self._uuid.hex
 
     @uuid_string.setter
     def uuid_string(self, u: str) -> None:
@@ -131,7 +130,6 @@ class Metadata(ABC):
 
     @time_completed_string.setter
     def time_completed_string(self, s: str) -> None:
-        # self._time_completed = datetime.date.fromisoformat(s)
         self._time_completed = parser.parse(s)
 
     @property

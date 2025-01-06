@@ -6,7 +6,6 @@ from csvpath.util.error import Error
 
 class ResultReader(ABC):
     def __init__(self):
-        # self._instance_dir = None
         self._result = None
 
     @property

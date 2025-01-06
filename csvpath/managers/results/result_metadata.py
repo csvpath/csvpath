@@ -102,7 +102,6 @@ ResultMetadata(
         if self._named_paths_uuid is None:
             return None
         return str(self._named_paths_uuid)
-        # return self._named_paths_uuid.hex
 
     @named_paths_uuid_string.setter
     def named_paths_uuid_string(self, u: str) -> None:

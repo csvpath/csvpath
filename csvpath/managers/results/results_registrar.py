@@ -1,6 +1,4 @@
 import os
-
-# from pathlib import Path
 from datetime import datetime, timezone
 import json
 import time
@@ -109,7 +107,6 @@ class ResultsRegistrar(Registrar, Listener):
         mp = mdata.manifest_path
         m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
-            # with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file.sink, indent=2)
 
     def _fingerprint_file(self, path) -> str:
@@ -121,7 +118,6 @@ class ResultsRegistrar(Registrar, Listener):
         try:
             fi = FileInfo.info(path)
             return fi["bytes"] if fi and "bytes" in fi else -1
-            # return os.stat(path).st_size
         except FileNotFoundError:
             return 0
 
@@ -129,10 +125,7 @@ class ResultsRegistrar(Registrar, Listener):
         try:
             fi = FileInfo.info(path)
             if fi and "last_mod" in fi:
-                last_mod = fi["last_mod"]
-                # last_mod = os.stat(path).st_mtime
-                last_mod = time.ctime(last_mod)
-                return last_mod
+                return fi["last_mod"]
             return None
         except FileNotFoundError:
             return -1
@@ -167,7 +160,6 @@ class ResultsRegistrar(Registrar, Listener):
     def manifest(self) -> dict[str, str | bool]:
         mp = self.manifest_path
         with DataFileReader(mp) as file:
-            # with open(mp, "r", encoding="utf-8") as file:
             d = json.load(file.source)
             return d
         return None
@@ -175,8 +167,6 @@ class ResultsRegistrar(Registrar, Listener):
     @property
     def manifest_path(self) -> str:
         if not Nos(self.run_dir).exists():
-            # if not os.path.exists(self.run_dir):
             Nos(self.run_dir).makedir()
-            # Path(self.run_dir).mkdir(parents=True, exist_ok=True)
         mp = os.path.join(self.run_dir, "manifest.json")
         return mp

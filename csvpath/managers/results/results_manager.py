@@ -203,7 +203,6 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_results_name = result.paths_name
         sep = Nos(result.run_dir).sep
         mdata.run = result.run_dir[result.run_dir.rfind(sep) + 1 :]
-        # mdata.run = result.run_dir[result.run_dir.rfind(os.sep) + 1 :]
         mdata.run_home = result.run_dir
         mdata.instance_home = result.instance_dir
         mdata.instance_identity = result.identity_or_index
@@ -226,7 +225,6 @@ class ResultsManager:  # pylint: disable=C0115
     def list_named_results(self) -> list[str]:
         path = self._csvpaths.config.archive_path
         names = Nos(path).listdir()
-        # names = os.listdir(path)
         names = [n for n in names if not n.startswith(".")]
         names.sort()
         return names
@@ -261,8 +259,6 @@ class ResultsManager:  # pylint: disable=C0115
             pathto = t[3]
             with DataFileReader(pathfrom) as pf:
                 with DataFileWriter(path=pathto, mode="w") as pt:
-                    # with open(pathfrom, "r", encoding="utf-8") as pf:
-                    # with open(pathto, "w", encoding="utf-8") as pt:
                     pt.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
@@ -275,11 +271,8 @@ class ResultsManager:  # pylint: disable=C0115
         rp = os.path.join(p, f)
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
-        # rd = rp[0 : rp.rfind(os.sep)]
         if not Nos(rd).exists():
-            # if not os.path.exists(rd):
             Nos(rd).mkdir()
-            # Path(rd).mkdir(parents=True, exist_ok=True)
         return rp
 
     def _path_to_result(self, result, t) -> str:
@@ -287,13 +280,9 @@ class ResultsManager:  # pylint: disable=C0115
         o = os.path.join(d, t)
         sep = Nos(o).sep
         r = o[0 : o.rfind(sep)]
-        # r = o[0 : o.rfind(os.sep)]
         if not Nos(r).exists():
-            # if not os.path.exists(r):
             Nos(r).makedirs()
-            # os.mkdirs(r)
             Nos(r).makedir()
-            # Path(r).mkdir(parents=True, exist_ok=True)
         return o
 
     def save(self, result: Result) -> None:
@@ -328,13 +317,8 @@ class ResultsManager:  # pylint: disable=C0115
         instance = ref.name_one
         path = ref.name_three
         base = self._csvpaths.config.archive_path
-        print(
-            f"results_mgr.data_file_for_reference: namedpaths: {namedpaths}, instance: {instance}, path: {path}, base: {base}"
-        )
         filename = os.path.join(base, namedpaths)
-        print(f"results_mgr.data_file_for_reference: filename: {filename}")
         if not Nos(filename).dir_exists():
-            # if not os.path.exists(filename):
             raise InputException(
                 f"Reference {refstr} generated {filename} path that does not point to a previously run named-paths group"
             )
@@ -347,19 +331,16 @@ class ResultsManager:  # pylint: disable=C0115
         instance = self._find_instance(filename, instance)
         filename = os.path.join(filename, instance)
         if not Nos(filename).dir_exists():
-            # if not os.path.exists(filename):
             raise InputException(
                 f"Reference {refstr} does not point to a valid named-paths run file at {filename}"
             )
         filename = os.path.join(filename, path)
         if not Nos(filename).dir_exists():
-            # if not os.path.exists(filename):
             raise InputException(
                 f"Reference to {filename} does not point to a csvpath in a named-paths group run"
             )
         filename = os.path.join(filename, "data.csv")
         if not Nos(filename).exists():
-            # if not os.path.exists(filename):
             raise InputException(
                 "Reference does not point to a data file resulting from a named-paths group run"
             )
@@ -376,7 +357,6 @@ class ResultsManager:  # pylint: disable=C0115
             filename = os.path.join(filename, instance)
             return filename
         if not Nos(filename).dir_exists():
-            # if not os.path.exists(filename):
             raise InputException(f"The base dir {filename} must exist")
         var = instance[c:]
         instance = instance[0:c]
@@ -399,7 +379,6 @@ class ResultsManager:  # pylint: disable=C0115
 
     def _find(self, filename, instance, last: bool = True) -> str:
         names = Nos(filename).listdir()
-        # names = os.listdir(filename)
         return self._find_in_dir_names(instance, names, last)
 
     def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
@@ -481,7 +460,6 @@ class ResultsManager:  # pylint: disable=C0115
             "Attempting to load results for %s from %s", name, path
         )
         runs = Nos(path).listdir()
-        # runs = os.listdir(path)
         runs.sort()
         run = runs[len(runs) - 1]
         rs = self.get_named_results_for_run(name=name, run=run)
@@ -503,7 +481,6 @@ class ResultsManager:  # pylint: disable=C0115
         path = os.path.join(self.csvpaths.config.archive_path, name)
         path = os.path.join(path, run)
         instances = Nos(path).listdir()
-        # instances = os.listdir(path)
         rs = []
         for inst in instances:
             if inst == "manifest.json":
@@ -518,11 +495,7 @@ class ResultsManager:  # pylint: disable=C0115
         self, *, name: str, run_dir: str, run: str, instance: str
     ) -> list[list[Any]]:
         instance_dir = os.path.join(run_dir, instance)
-        print(
-            f"results_mgr: get_named_result_for_instance: manifest at: {instance_dir}"
-        )
         mani = ResultFileReader.manifest(instance_dir)
-        print(f"results_mgr: get_named_result_for_instance: mani: {mani}")
         #
         # csvpath needs to be loaded with all meta.json->metadata and some/most of runtime_data
         #

@@ -19,7 +19,6 @@ class TestDataReaders(unittest.TestCase):
         path = "inputs/named_files/xlsx"
         b = os.path.exists(path)
         if b:
-            print("cleaning: path: {path}")
             shutil.rmtree(path)
 
     def test_data_readers_1(self):
@@ -56,11 +55,11 @@ class TestDataReaders(unittest.TestCase):
 
     def test_data_readers_3(self):
         self._clean()
-        print("")
         paths = CsvPaths()
         mgr = paths.file_manager
+        if mgr.name_exists("xlsx"):
+            mgr.remove_named_file("xlsx")
         mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
-
         xreader = mgr.get_named_file_reader("xlsx")
         assert isinstance(xreader, XlsxDataReader)
         i = 0

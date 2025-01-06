@@ -112,7 +112,6 @@ class ResultSerializer:
                 #
                 if lines is not None and len(lines) > 0:
                     with DataFileWriter(path=os.path.join(run_dir, "data.csv")) as f:
-                        # with open(os.path.join(run_dir, "data.csv"), "w") as f:
                         writer = csv.writer(f.sink)
                         writer.writerows(lines)
         #
@@ -126,14 +125,12 @@ class ResultSerializer:
             and len(unmatched) > 0
         ):
             with DataFileWriter(path=os.path.join(run_dir, "unmatched.csv")) as f:
-                # with open(os.path.join(run_dir, "unmatched.csv"), "w") as f:
                 writer = csv.writer(f.sink)
                 writer.writerows(unmatched)
 
         # Save the printout lines
         if self._has_printouts(printouts):
             with DataFileWriter(path=os.path.join(run_dir, "printouts.txt")) as f:
-                # with open(os.path.join(run_dir, "printouts.txt"), "w") as f:
                 for k, v in printouts.items():
                     f.sink.write(f"---- PRINTOUT: {k}\n")
                     for _ in v:
@@ -198,56 +195,3 @@ class ResultSerializer:
         run_dir = os.path.join(run_dir, identity)
         os.makedirs(run_dir, exist_ok=True)
         return run_dir
-
-    """
-    def load_result(self, paths_name: str, run_time: str, identity: str):
-        ""Load a single Result object from the base directory.""
-        run_dir = self._run_dir(
-            paths_name=paths_name, run_time=run_time, identity=identity
-        )
-        if not os.path.exists(run_dir):
-            return None
-        return self._load_result(run_dir)
-
-    def _load_result(self, run_dir: str):
-        if not os.path.exists(run_dir):
-            return None
-        try:
-            meta = None
-            variables = None
-            errors = None
-            data = None
-            printouts = None
-
-            with open(os.path.join(run_dir, "meta.json"), "r") as f:
-                meta = json.load(f)
-            with open(os.path.join(run_dir, "vars.json"), "r") as f:
-                variables = json.load(f)
-            with open(os.path.join(run_dir, "errors.json"), "r") as f:
-                errors = json.load(f)
-            with open(os.path.join(run_dir, "data.csv"), "r") as f:
-                reader = csv.reader(f)
-                data = [",".join(row) for row in reader]
-            with open(os.path.join(run_dir, "printouts.txt"), "r") as f:
-                printouts = f.readlines()
-
-            c = CsvPath()
-            c.variables = variables
-            c.metadata = meta["metadata"]
-            c.identity = meta["identity"]
-            result = Result(
-                lines=data,
-                csvpath=c,
-                file_name=meta["file_name"],
-                paths_name=meta["paths_name"],
-                run_index=meta["run_index"],
-                run_time=meta["run_time"],
-                runtime_data=meta["runtime_data"],
-            )
-            result.errors = errors
-            result.set_printouts("all", printouts)
-
-            return result
-        except (FileNotFoundError, ValueError, IOError):
-            return None
-    """

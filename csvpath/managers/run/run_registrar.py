@@ -24,16 +24,11 @@ class RunRegistrar(Registrar, Listener):
     @property
     def manifest(self) -> list:
         if not Nos(self.archive).exists():
-            # if not os.path.exists(self.archive):
             Nos(self.archive).makedirs()
-            # os.makedirs(self.archive, exist_ok=True)
         if not Nos(self.manifest_path).exists():
-            # if not os.path.exists(self.manifest_path):
             with DataFileWriter(path=self.manifest_path) as file:
-                # with open(self.manifest_path, "w", encoding="utf-8") as file:
                 json.dump([], file.sink, indent=2)
         with DataFileReader(self.manifest_path) as file:
-            # with open(self.manifest_path, "r", encoding="utf-8") as file:
             return json.load(file.source)
 
     def metadata_update(self, mdata: Metadata) -> None:
@@ -61,5 +56,4 @@ class RunRegistrar(Registrar, Listener):
         mani = self.manifest
         mani.append(m)
         with DataFileWriter(path=mp) as file:
-            # with open(mp, "w", encoding="utf-8") as file:
             json.dump(mani, file.sink, indent=2)

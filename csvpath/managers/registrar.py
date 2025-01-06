@@ -24,7 +24,6 @@ class Registrar(ABC):
             raise InputException("Metadata cannot be None")
         listeners = [self]
         self.load_additional_listeners(self.type, listeners)
-        print(f"Registrar.dist_update: listners: {listeners}, mdata: {mdata}")
         for lst in listeners:
             lst.metadata_update(mdata)
 

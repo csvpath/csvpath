@@ -18,9 +18,7 @@ class FileErrorsReader(ErrorsReader):
             ej = None
             p = os.path.join(self.result.instance_dir, "errors.json")
             if Nos(p).exists():
-                # if os.path.exists(p):
                 with DataFileReader(p) as file:
-                    # with open(p, "r") as file:
                     ej = json.load(file.source)
             self._errors = []
             if ej:
