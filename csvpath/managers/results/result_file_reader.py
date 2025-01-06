@@ -9,13 +9,10 @@ class ResultFileReader:
     @classmethod
     def json_file(self, path: str) -> dict | None:
         if not Nos(path).exists():
-            # if not os.path.exists(path):
             with DataFileWriter(path=path) as file:
-                # with open(path, "w", encoding="utf-8") as file:
                 json.dump({}, file.sink, indent=2)
                 return {}
         with DataFileReader(path) as file:
-            # with open(path, "r", encoding="utf-8") as file:
             d = json.load(file.source)
             return d
 

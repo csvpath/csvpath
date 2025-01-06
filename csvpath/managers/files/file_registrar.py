@@ -31,11 +31,9 @@ class FileRegistrar(Registrar, Listener):
 
     def manifest_path(self, home) -> str:
         if not Nos(home).dir_exists():
-            # if not os.path.exists(home):
             raise InputException(f"Named file home does not exist: {home}")
         mf = os.path.join(home, "manifest.json")
         if not Nos(mf).exists():
-            # if not os.path.exists(mf):
             with DataFileWriter(path=mf, mode="w") as writer:
                 writer.append("[]")
         return mf
@@ -139,8 +137,6 @@ class FileRegistrar(Registrar, Listener):
         mpath = self.manifest_path(home)
         with DataFileReader(mpath) as reader:
             mdata = json.load(reader.source)
-            # with open(mpath, "r", encoding="utf-8") as file:
-            # mdata = json.load(file)
             if mdata is None or len(mdata) == 0:
                 raise InputException(f"Manifest for {home} at {mpath} is empty")
             m = mdata[len(mdata) - 1]

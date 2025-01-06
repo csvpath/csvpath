@@ -25,7 +25,6 @@ class FilePrintoutsReader(PrintoutsReader):
                 if Nos(d).exists():
                     self._printouts = Printouts()
                     with DataFileReader(d) as file:
-                        # with open(d, "r", encoding="utf-8") as file:
                         t = file.source.read()
                         printouts = t.split("---- PRINTOUT:")
                         for p in printouts:

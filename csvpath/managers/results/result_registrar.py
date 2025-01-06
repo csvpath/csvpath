@@ -13,8 +13,6 @@ from .result_metadata import ResultMetadata
 class ResultRegistrar(Registrar, Listener):
     def __init__(self, *, csvpaths, result, result_serializer=None):
         super().__init__(csvpaths, result)
-        # moved to super class so we can pass it to loaded listeners
-        # self.result = result
         self.result_serializer = result_serializer
         self.type = "result"
 
@@ -118,7 +116,6 @@ class ResultRegistrar(Registrar, Listener):
         mp = self.manifest_path
         m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
-            # with open(mp, "w", encoding="utf-8") as file:
             json.dump(m, file.sink, indent=2)
 
     @property
@@ -126,7 +123,6 @@ class ResultRegistrar(Registrar, Listener):
         ap = self.result.csvpath.config.archive_path
         sep = Nos(ap).sep
         i = ap.rfind(sep)
-        # i = ap.rfind(os.sep)
         if i > 0:
             return ap[i + 1 :]
         return ap
@@ -135,9 +131,7 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def named_paths_manifest(self) -> dict | None:
         if Nos(self.named_paths_manifest_path).exists():
-            # if os.path.exists(self.named_paths_manifest_path):
             with DataFileReader(self.named_paths_manifest_path) as file:
-                # with open(self.named_paths_manifest_path, "r", encoding="utf-8") as file:
                 d = json.load(file.source)
                 return d
         return None
@@ -154,13 +148,10 @@ class ResultRegistrar(Registrar, Listener):
     def manifest(self) -> dict | None:
         mp = self.manifest_path
         if not Nos(mp).exists():
-            # if not os.path.exists(mp):
             with DataFileWriter(path=self.manifest_path) as file:
-                # with open(self.manifest_path, "w", encoding="utf-8") as file:
                 json.dump({}, file.sink, indent=2)
                 return {}
         with DataFileReader(self.manifest_path) as file:
-            # with open(self.manifest_path, "r", encoding="utf-8") as file:
             d = json.load(file.source)
             return d
         return None
@@ -176,9 +167,7 @@ class ResultRegistrar(Registrar, Listener):
             run_dir=self.result.run_dir, identity=self.result.identity_or_index
         )
         if not Nos(rdir).exists():
-            # if not os.path.exists(rdir):
             Nos(rdir).makedir()
-            # Path(rdir).mkdir(parents=True, exist_ok=True)
         return rdir
 
     @property
@@ -192,9 +181,6 @@ class ResultRegistrar(Registrar, Listener):
         # it necessarily being a failure mode. but we can require them as a matter of
         # content validation.
         #
-        print(
-            f"result_reg: all_expected_files: in: {self.result.identity_or_index}, all expected: {self.result.csvpath.all_expected_files}"
-        )
         if (
             self.result.csvpath.all_expected_files is None
             or len(self.result.csvpath.all_expected_files) == 0
@@ -207,7 +193,6 @@ class ResultRegistrar(Registrar, Listener):
                 return False
             return True
         for t in self.result.csvpath.all_expected_files:
-            print(f"result_reg: all_expected_files: t: {t}")
             t = t.strip()
             if t.startswith("no-data"):
                 if self.has_file("data.csv"):
@@ -238,7 +223,6 @@ class ResultRegistrar(Registrar, Listener):
     def has_file(self, t: str) -> bool:
         r = self.result_path
         return Nos(os.path.join(r, t)).exists()
-        # return os.path.exists(os.path.join(r, t))
 
     @property
     def file_fingerprints(self) -> dict[str]:

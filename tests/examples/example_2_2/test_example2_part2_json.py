@@ -1,6 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
 
 
 class TestJsonNamedPaths(unittest.TestCase):
@@ -34,16 +35,18 @@ class TestJsonNamedPaths(unittest.TestCase):
             "tests/examples/example_2_2/orders.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="orders")
-        paths.results_manager.get_specific_named_result("orders", "prices")
+        result = paths.results_manager.get_specific_named_result("orders", "prices")
         valid = paths.results_manager.is_valid("orders")
         assert not valid
 
-        a = "archive/orders"
-        dirs = os.listdir(a)
-        dirs = [os.path.join(a, d) for d in dirs if os.path.isdir(os.path.join(a, d))]
-        n = max(dirs, key=os.path.getmtime)
-        file = f"{n}/prices/unmatched.csv"
-        assert os.path.exists(file)
+        a = f"{paths.config.archive_path}/orders"
+        assert Nos(a).dir_exists()
+        dirs = Nos(a).listdir()
+        dirs = [
+            os.path.join(a, d) for d in dirs if not Nos(os.path.join(a, d)).isfile()
+        ]
+        file = f"{result.run_dir}/prices/unmatched.csv"
+        assert Nos(file).exists()
 
     def test_result_manifest(self):
         paths = CsvPaths()

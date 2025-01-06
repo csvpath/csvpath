@@ -350,7 +350,6 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
 
     @property
     def unmatched(self) -> list[list[Any]]:
-        # return self._unmatched
         if self._unmatched is None:
             #
             # we can assume the caller wants a container for lines. in that case,
