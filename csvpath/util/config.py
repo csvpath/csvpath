@@ -107,6 +107,9 @@ class Config:
     def config_path(self) -> str:
         return self._configpath
 
+    def get(self, *, section: str, name: str, default=None):
+        return self._get(section, name, default)
+
     def _get(self, section: str, name: str, default=None):
         if self._config is None:
             raise ConfigurationException("No config object available")
@@ -172,7 +175,13 @@ path =
 [listeners]
 # add listener group names to send events to the channel they represent
 groups =
-#slack, marquez, ckan
+#slack, marquez, ckan, sftp, sftpplus
+
+# add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
+sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener
+
+# add sftp to the list of groups above to push content and metadata to an SFTP account
+sftp.results = from csvpath.managers.integrations.sftp.sftp_listener import SftpListener
 
 # add ckan to the list of groups above to push content and metadata to CKAN
 ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
@@ -188,6 +197,12 @@ slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
+
+[sftpplus]
+admin_user = SFTPPLUS_ADMIN_USERNAME
+admin_password = SFTPPLUS_ADMIN_PASSWORD
+server = SFTPPLUS_SERVER
+port = SFTPPLUS_PORT
 
 [ckan]
 server = http://localhost:80
