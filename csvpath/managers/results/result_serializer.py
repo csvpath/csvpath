@@ -16,7 +16,7 @@ Metadata = NewType("Metadata", Dict[str, Simpledata])
 
 class ResultSerializer:
     def __init__(self, base_dir: str):
-        # archive dir from config.ini
+        # base is the archive dir from config.ini
         self.base_dir = base_dir
         self.result = None
 
@@ -63,9 +63,6 @@ class ResultSerializer:
         unmatched: list[Listdata],
     ) -> None:
         """Save a single Result object to basedir/paths_name/run_time/identity_or_index."""
-        print(
-            f"ResultSerializer: save: paths_name: {paths_name}, identity: {identity}, run_dir: {run_dir}, run_index: {run_index}"
-        )
         meta = {
             "paths_name": paths_name,
             "file_name": file_name,
@@ -83,14 +80,6 @@ class ResultSerializer:
             json.dump(errors, f.sink, indent=2)
         with DataFileWriter(path=os.path.join(run_dir, "vars.json")) as f:
             json.dump(variables, f.sink, indent=2)
-        """
-        with open(os.path.join(run_dir, "meta.json"), "w") as f:
-            json.dump(meta, f, indent=2)
-        with open(os.path.join(run_dir, "errors.json"), "w") as f:
-            json.dump(errors, f, indent=2)
-        with open(os.path.join(run_dir, "vars.json"), "w") as f:
-            json.dump(variables, f, indent=2)
-        """
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
         if lines is not None:
@@ -172,9 +161,7 @@ class ResultSerializer:
         if not os.path.exists(run_dir):
             os.makedirs(run_dir, exist_ok=True)
         if not isinstance(run_time, str):
-            run_time = self.get_run_dir_name_from_datetime(
-                run_time
-            )  # run_time.strftime("%Y-%m-%d_%I-%M-%S")
+            run_time = self.get_run_dir_name_from_datetime(run_time)
         run_dir = os.path.join(run_dir, f"{run_time}")
         # the path existing for a different named-paths run in progress
         # or having completed less than 1000ms ago is expected to be

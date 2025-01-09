@@ -209,6 +209,7 @@ class TestResultReaders(unittest.TestCase):
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
+        print(f"results[0]: {results[0]}")
         assert len(results[0]) == 8
         #
         #

@@ -6,7 +6,7 @@ from csvpath.managers.integrations.ckan.dataset import Dataset
 from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 
 
-class TestJsonNamedPaths(unittest.TestCase):
+class TestCkan(unittest.TestCase):
     def test_ckan_visibility(self):
         paths = CsvPaths()
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
@@ -181,5 +181,5 @@ class TestJsonNamedPaths(unittest.TestCase):
     # ------------------------------
     #
     #
-    # TODO: refactor send files and create tests
+    # TODO: more tests
     #

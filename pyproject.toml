@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "csvpath"
 version = "0.0.504"
-description = "A declarative language for validating CSV, Excel, and other tabular data files"
+description = "A framework for validating CSV, Excel, and other tabular data files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
 classifiers = [
@@ -50,6 +50,7 @@ openlineage-python = "^1.25.0"
 ckanapi = "^4.8"
 boto3 = "^1.35.91"
 smart-open = "^7.1.0"
+paramiko = "^3.5.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

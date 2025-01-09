@@ -123,12 +123,13 @@ class Config:
                 print(f"Check config at {self.config_path} for [{section}][{name}]")
             return default
 
-    def add_to_config(self, section, key, value) -> None:
+    def add_to_config(self, section, key, value, save_load: bool = True) -> None:
         if not self._config.has_section(section):
             self._config.add_section(section)
         self._config.set(section, key, value)
-        self.save_config()
-        self._load_config()
+        if save_load is True:
+            self.save_config()
+            self._load_config()
 
     def save_config(self) -> None:
         with open(self.configpath, "w") as f:
@@ -363,7 +364,7 @@ on_unmatched_file_fingerprints = halt
         ):
             raise ConfigurationException("CsvPath error policy is wrong")
         for _ in self.csvpath_errors_policy:
-            if _ not in OnError:
+            if _ not in [s.value for s in OnError]:
                 raise ConfigurationException(f"CsvPath error policy {_} is wrong")
         if (
             self.csvpaths_errors_policy is None
@@ -372,7 +373,7 @@ on_unmatched_file_fingerprints = halt
         ):
             raise ConfigurationException("CsvPaths error policy is wrong")
         for _ in self.csvpaths_errors_policy:
-            if _ not in OnError:
+            if _ not in [s.value for s in OnError]:
                 raise ConfigurationException(f"CsvPaths error policy {_} is wrong")
         #
         # log levels
@@ -383,13 +384,13 @@ on_unmatched_file_fingerprints = halt
             raise ConfigurationException(
                 f"CsvPath log level is wrong: {self.csvpath_log_level}"
             )
-        if self.csvpath_log_level not in LogLevels:
+        if self.csvpath_log_level not in [s.value for s in LogLevels]:
             raise ConfigurationException(f"CsvPath log level {_} is wrong")
         if self.csvpaths_log_level is None or not isinstance(
             self.csvpaths_log_level, str
         ):
             raise ConfigurationException("CsvPaths log level is wrong")
-        if self.csvpaths_log_level not in LogLevels:
+        if self.csvpaths_log_level not in [s.value for s in LogLevels]:
             raise ConfigurationException(f"CsvPaths log level {_} is wrong")
         #
         # log files config

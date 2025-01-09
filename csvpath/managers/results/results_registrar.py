@@ -18,6 +18,8 @@ from ..metadata import Metadata
 
 
 class ResultsRegistrar(Registrar, Listener):
+    COMPLETE = "complete"
+
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
@@ -75,7 +77,7 @@ class ResultsRegistrar(Registrar, Listener):
         if self.results and len(self.results) > 0:
             mdata.by_line = self.results[0].by_line
         mdata.set_time_completed()
-        mdata.status = "complete"
+        mdata.status = ResultsRegistrar.COMPLETE
         mdata.all_completed = self.all_completed()
         mdata.all_valid = self.all_valid()
         mdata.error_count = self.error_count()

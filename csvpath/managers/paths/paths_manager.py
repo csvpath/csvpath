@@ -39,7 +39,7 @@ class PathsManager:
 
     def named_paths_home(self, name: NamedPathsName) -> str:
         home = os.path.join(self.named_paths_dir, name)
-        if not Nos(home).exists():
+        if not Nos(home).dir_exists():
             Nos(home).makedirs()
         return home
 
@@ -198,7 +198,8 @@ class PathsManager:
         j = ""
         with DataFileReader(jsonpath) as file:
             j = file.read()
-        with DataFileWriter(path=os.path.join(home, "definition.json")) as writer:
+        p = os.path.join(home, "definition.json")
+        with DataFileWriter(path=p) as writer:
             writer.write(j)
 
     @property
