@@ -1,0 +1,12 @@
+{
+    "sftptest": [
+        "tests/examples/sftp/csvpaths/top_matter_import.csvpath",
+        "tests/examples/sftp/csvpaths/metadata.csvpath",
+        "tests/examples/sftp/csvpaths/file_length.csvpath",
+        "tests/examples/sftp/csvpaths/reset.csvpath",
+        "tests/examples/sftp/csvpaths/categories.csvpath",
+        "tests/examples/sftp/csvpaths/prices.csvpath",
+        "tests/examples/sftp/csvpaths/sku_upc.csvpath"
+    ]
+}
+

@@ -286,6 +286,12 @@ class ResultsManager:  # pylint: disable=C0115
         return o
 
     def save(self, result: Result) -> None:
+        #
+        # at this time we're not holding on to the result.
+        # we have a place for that, but for now not holding
+        # forces the deserialization to work completely, so
+        # it is worth more than the minor speed up of caching.
+        #
         if self._csvpaths is None:
             raise CsvPathsException("Cannot save because there is no CsvPaths instance")
         if result.lines and isinstance(result.lines, LineSpooler):
@@ -445,6 +451,11 @@ class ResultsManager:  # pylint: disable=C0115
             #
 
     def get_named_results(self, name) -> List[List[Any]]:
+        #
+        # CsvPaths instances should not be long lived. they are not servers or
+        # agents. for each new run, unless there is a reason to not create a new
+        # CsvPaths instance, we would create a new one.
+        #
         if name in self.named_results:
             return self.named_results[name]
         #
@@ -509,6 +520,7 @@ class ResultsManager:  # pylint: disable=C0115
             # csvpath perfectly we should probably go back and rethink. maybe pickle?
             #
             csvpath.scanner = Scanner(csvpath=csvpath)
+            # print(f"ResultsMgr: get_named_result_for_instance: scanner: {csvpath.scanner}")
             csvpath.scanner.parse(meta["runtime_data"]["scan_part"])
             csvpath.metadata = meta["metadata"]
             csvpath.modes.update()
