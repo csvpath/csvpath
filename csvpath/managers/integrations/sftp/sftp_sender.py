@@ -65,6 +65,7 @@ class SftpSender(Listener, threading.Thread):
                 self.csvpaths.logger.warning(
                     "SftpSender only listens for results events. Other event types are ignored."
                 )
+            return
         if mdata.status == ResultsRegistrar.COMPLETE:
             self.metadata = mdata
             self.start()
