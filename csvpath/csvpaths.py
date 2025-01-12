@@ -232,6 +232,12 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         paths = self.paths_manager.get_named_paths(pathsname)
         if paths is None:
             raise InputException(f"No named-paths found for {pathsname}")
+        if len(paths) == 0:
+            raise InputException(f"Named-paths group {pathsname} is empty")
+        if "" in paths:
+            raise InputException(
+                f"Named-paths group {pathsname} has one or more empty csvpaths"
+            )
         file = self.file_manager.get_named_file(filename)
         if file is None:
             raise InputException(f"No named-file found for {filename}")

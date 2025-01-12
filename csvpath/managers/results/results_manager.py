@@ -520,7 +520,6 @@ class ResultsManager:  # pylint: disable=C0115
             # csvpath perfectly we should probably go back and rethink. maybe pickle?
             #
             csvpath.scanner = Scanner(csvpath=csvpath)
-            # print(f"ResultsMgr: get_named_result_for_instance: scanner: {csvpath.scanner}")
             csvpath.scanner.parse(meta["runtime_data"]["scan_part"])
             csvpath.metadata = meta["metadata"]
             csvpath.modes.update()

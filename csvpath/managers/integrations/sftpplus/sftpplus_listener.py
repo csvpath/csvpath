@@ -4,9 +4,10 @@ import threading
 import paramiko
 from tempfile import NamedTemporaryFile
 from csvpath.managers.metadata import Metadata
-from csvpath.managers.results.results_metadata import PathsMetadata
+from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.managers.listener import Listener
 from csvpath.util.var_utility import VarUtility
+from csvpath.util.metadata_parser import MetadataParser
 
 
 #
@@ -30,57 +31,66 @@ class SftpPlusListener(Listener, threading.Thread):
         super().__init__(config)
         self._server = None
         self._port = None
-        self._user = None
-        self._password = None
-        self._target_path = "csvpath_messages"
-        self._delete_on_success = True
-        self._publish = False
-        self._expected_file_name = None
+        self._mailbox_user = None
+        self._mailbox_password = None
+        #
+        # shouldn't this be a dir for the named-paths name?
+        #
+        self._mailbox_path = None
+        self._active = False
+        self._named_file_name = None
+        # vvvv not needed!
         self._execute_before_script_name = None
+        self._run_method = None
+        #
         self.csvpaths = None
         self.result = None
         self.metadata = None
         self.results = None
 
     def _collect_fields(self) -> None:
-        # directives stuff:
-        self._publish = VarUtility.get_bool(self.result, "sftpplus-publish")
-        self._expected_file_name = VarUtility.get_str(
-            self.result, "sftpplus-named-file-name"
-        )
-        self._method = VarUtility.get_str(self.result, "sftpplus-run-method")
+        # collect the metadata from comments. we don't have vars so just an
+        # empty set there. as we loop through we will overwrite metadata keys
+        # if there are dups across the csvpaths. this raises the topic of
+        # how to organize data providers/streams in CsvPath. regardless, there
+        # are enough ways to organize that imho we don't have to be overly
+        # sensitive to the constraint here.
+        m = {}
+        for p in self.metadata.named_paths:
+            MetadataParser(None).collect_metadata(m, p)
+        v = {}
+        self._active = VarUtility.get_bool(m, v, "sftpplus-active")
+        self._named_file_name = VarUtility.get_str(m, v, "sftpplus-named-file-name")
+        self._run_method = VarUtility.get_str(m, v, "sftpplus-run-method")
         # config.ini stuff:
-        self._user = self.csvpath.config.get(section="sftpplus", name="admin_user")
+        self._user = self.csvpaths.config.get(section="sftpplus", name="mailbox_user")
         if self._user is None:
-            raise ValueError("SFTPPlus Admin username cannot be None")
+            raise ValueError("SFTPPlus mailbox username cannot be None")
         if self._user.isupper():
             self._user = os.getenv(self._user)
-        self._password = self.csvpath.config.get(
-            section="sftpplus", name="admin_password"
+        self._password = self.csvpaths.config.get(
+            section="sftpplus", name="mailbox_password"
         )
         if self._password is None:
-            raise ValueError("SFTPPlus Admin password cannot be None")
+            raise ValueError("SFTPPlus mailbox password cannot be None")
         if self._password.isupper():
             self._password = os.getenv(self._password)
-        self._server = self.csvpath.config.get(section="sftpplus", name="server")
+        self._server = self.csvpaths.config.get(section="sftpplus", name="server")
         if self._server is None:
             raise ValueError("SFTPPlus server cannot be None")
         if self._server.isupper():
             self._server = os.getenv(self._server)
-        self._port = self.csvpath.config.get(section="sftpplus", name="port")
+        self._port = self.csvpaths.config.get(section="sftpplus", name="port")
         if self._port is None:
             raise ValueError("SFTPPlus port cannot be None")
         if self._port.isupper():
             self._port = os.getenv(self._port)
-        self._delete_on_success = self.csvpath.config.get(
-            section="sftpplus",
-            name="sftpplus-delete-on-success",
-            default=self._delete_on_success,
-        )
+        if self._mailbox_path is None:
+            self._mailbox_path = self.metadata.named_paths_name
 
     @property
     def run_method(self) -> str:
-        if self._method is None or self._method not in [
+        if self._run_method is None or self._method not in [
             "collect_paths",
             "fast_forward_paths",
             "collect_by_line",
@@ -89,22 +99,8 @@ class SftpPlusListener(Listener, threading.Thread):
             self.csvpaths.logger.warning(
                 "No acceptable sftpplus-run-method found by SftpSender for {self.metadata.named_paths_name}: {self._method}. Defaulting to collect_paths."
             )
-            self._method = "collect_paths"
-        return self._method
-
-    @property
-    def scripts_base(self) -> str:
-        return self.csvpaths.config.get(section="sftppath", name="scripts_base")
-
-    @property
-    def script_dir(self) -> str:
-        return self.csvpaths.config.get(section="sftppath", name="scripts_dir")
-
-    @property
-    def execute_before_script_name(self) -> str:
-        return self.csvpaths.config.get(
-            section="sftppath", name="execute_before_script_name"
-        )
+            self._run_method = "collect_paths"
+        return self._run_method
 
     def run(self):
         self.csvpaths.logger.info("Checking for requests to send result files by SFTP")
@@ -132,30 +128,32 @@ class SftpPlusListener(Listener, threading.Thread):
         #
         with NamedTemporaryFile(mode="w+t", delete_on_close=False) as file:
             json.dump(msg, file, indent=2)
-            file.close()
             file.seek(0)
 
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             try:
+                print(
+                    f"SftpPlus list: server: {self._server}, port: {self._port}, user: {self._user}, passwd: {self._password}"
+                )
                 client.connect(self._server, self._port, self._user, self._password)
                 sftp = client.open_sftp()
                 self.csvpaths.logger.info(
                     "SFTPPlus listener prepping instruction to %s",
-                    f"{self._user}/{self._target_path}",
+                    f"{self._user}/{self._mailbox_path}",
                 )
                 #
                 # create the remote dir, in the messages account, if needed.
                 #
                 try:
-                    sftp.stat(self._target_path)
+                    sftp.stat(self._mailbox_path)
                 except FileNotFoundError:
-                    sftp.mkdir(self._target_path)
+                    sftp.mkdir(self._mailbox_path)
                 #
                 # land the file at the UUID so that if anything weird we'll only ever
                 # interfere with ourselves.
                 #
-                remote_path = f"{self._target_path}/{self.metadata.uuid_string}.txt"
+                remote_path = f"{self._mailbox_path}/{self.metadata.uuid_string}.txt"
                 self.csvpaths.logger.info("Putting %s to %s", file, remote_path)
                 sftp.putfo(file, remote_path)
                 sftp.close()
@@ -165,21 +163,21 @@ class SftpPlusListener(Listener, threading.Thread):
     def _create_instructions(self) -> dict:
         #
         # SFTPPLUS TRANSFER SETUP STUFF
-        # we are making the file-receiving transfer, not the message-receiving
-        # transfer. this will be used by the message-receiving transfer to prep
-        # the landing site for new files to be run against this named-paths.
+        # we are collecting info for the transfer creator class.
+        # it will be used to create the message-receiving transfer
+        # that handles new file arrivals.
+        #
+        # most of the information the transer creating code needs comes
+        # from its own config.ini.
         #
         msg = {}
         msg["name"] = self.metadata.named_paths_name
-        msg["method"] = self.metadata.named_paths_name
-        msg[
-            "execute_before"
-        ] = f"{self.scripts_base}/{self.scripts_dir}/{self.execute_before_script_name}"
-        msg["delete_source_on_success"] = f"{self._delete_on_success}"
-        msg["source_uuid"] = "DEFAULT-LOCAL-FILESYSTEM"
-        msg["source_path"] = f"{self._expected_file_name}"
-        msg["destination_uuid"] = "DEFAULT-LOCAL-FILESYSTEM"
-        msg["destination_path"] = f"{self._expected_file_name}/handled"
+        msg["method"] = self._run_method
+        #
+        # make "description" to "uuid". doesn't matter here
+        # that it ends up in the transfer's description field
+        #
         msg["description"] = f"{self.metadata.uuid_string}"
-        msg["named_file_name"] = f"{self._expected_file_name}"
-        msg["publish"] = f"{self._publish}"
+        msg["named_file_name"] = f"{self._named_file_name}"
+        msg["active"] = self._active
+        return msg

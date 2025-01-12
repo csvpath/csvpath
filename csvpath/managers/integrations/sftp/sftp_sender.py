@@ -39,13 +39,15 @@ class SftpSender(Listener, threading.Thread):
         self.results = None
 
     def _collect_fields(self) -> None:
-        self._server = VarUtility.get_str(self.result, "sftp-server")
-        self._port = VarUtility.get_int(self.result, "sftp-port")
-        self._user = VarUtility.get_str(self.result, "sftp-user")
-        self._password = VarUtility.get_str(self.result, "sftp-password")
-        self._target_path = VarUtility.get_str(self.result, "sftp-target-path")
-        self._original = VarUtility.get_bool(self.result, "sftp-original-data")
-        self._files = VarUtility.get_value_pairs(self.result, "sftp-files")
+        m = self.result.csvpath.metadata
+        v = self.result.csvpath.variables
+        self._server = VarUtility.get_str(m, v, "sftp-server")
+        self._port = VarUtility.get_int(m, v, "sftp-port")
+        self._user = VarUtility.get_str(m, v, "sftp-user")
+        self._password = VarUtility.get_str(m, v, "sftp-password")
+        self._target_path = VarUtility.get_str(m, v, "sftp-target-path")
+        self._original = VarUtility.get_bool(m, v, "sftp-original-data")
+        self._files = VarUtility.get_value_pairs(m, v, "sftp-files")
 
     def run(self):
         self.csvpaths.logger.info("Checking for requests to send result files by SFTP")

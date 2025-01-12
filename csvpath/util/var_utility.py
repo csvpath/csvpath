@@ -4,7 +4,9 @@ from csvpath.managers.results.result import Result
 
 class VarUtility:
     @classmethod
-    def get_value_pairs(cls, result: Result, directive: str) -> list[tuple[str, str]]:
+    def get_value_pairs(
+        cls, mdata: dict, variables: dict, directive: str
+    ) -> list[tuple[str, str]]:
         #
         # gets values like key: a > b, c > d
         # the return is [(a,b),(b,c)]
@@ -14,19 +16,19 @@ class VarUtility:
         #
         if directive is None:
             return None
-        v = result.csvpath.metadata.get(directive)
+        v = mdata.get(directive)
         if v is None:
             return None
         v = f"{v}"
         vs = v.split(",")
         pairs = []
         for v in vs:
-            pair = VarUtility.create_pair(result, v)
+            pair = VarUtility.create_pair(mdata, variables, v)
             pairs.append(pair)
         return pairs
 
     @classmethod
-    def create_pair(self, result: Result, v: str) -> tuple[str, str]:
+    def create_pair(self, mdata: dict, variables: dict, v: str) -> tuple[str, str]:
         v = v.strip()
         i = v.find(">")
         if i == -1:
@@ -36,32 +38,32 @@ class VarUtility:
         v2 = v[i + 1 :]
         v2 = v2.strip()
 
-        v3 = VarUtility.value_or_var_value(result, v2)
+        v3 = VarUtility.value_or_var_value(mdata, variables, v2)
         if v3 is not None:
             v2 = v3.strip()
         return (v1, v2)
 
     @classmethod
-    def get_value(cls, result: Result, v: str):
+    def get_value(cls, mdata: dict, variables: dict, v: str):
         if v is None:
             return None
-        v = result.csvpath.metadata.get(v)
+        v = mdata.get(v)
         if v is None:
             return None
         if isinstance(v, str):
-            v = VarUtility.value_or_var_value(result, v)
+            v = VarUtility.value_or_var_value(mdata, variables, v)
         return v
 
     @classmethod
-    def value_or_var_value(cls, result: Result, v: str) -> ...:
+    def value_or_var_value(cls, mdata: dict, variables: dict, v: str) -> ...:
         #
         # do any var swapping first
         i = v.find("var|")
         if i != -1:
             v2 = v[4:]
             v2 = v2.strip()
-            if v2 in result.csvpath.variables:
-                v2 = result.csvpath.variables[v2]
+            if v2 in variables:
+                v2 = variables[v2]
             v = v2
         #
         # if the value is ALL CAPS check if it is an
@@ -74,15 +76,15 @@ class VarUtility:
         return v
 
     @classmethod
-    def get_str(cls, result: Result, directive: str):
-        v = VarUtility.get_value(result, directive)
+    def get_str(cls, mdata: dict, variables: dict, directive: str):
+        v = VarUtility.get_value(mdata, variables, directive)
         v = f"{v}"
         v = v.strip()
         return v
 
     @classmethod
-    def get_int(cls, result: Result, directive: str):
-        v = VarUtility.get_value(result, directive)
+    def get_int(cls, mdata: dict, variables: dict, directive: str):
+        v = VarUtility.get_value(mdata, variables, directive)
         return VarUtility.to_int(v)
 
     @classmethod
@@ -97,8 +99,8 @@ class VarUtility:
         return v
 
     @classmethod
-    def get_bool(cls, result: Result, directive: str) -> bool:
-        v = VarUtility.get_value(result, directive)
+    def get_bool(cls, mdata: dict, variables: dict, directive: str) -> bool:
+        v = VarUtility.get_value(mdata, variables, directive)
         return VarUtility.is_true(v)
 
     @classmethod
