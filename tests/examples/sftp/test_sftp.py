@@ -83,8 +83,9 @@ class TestSftp(unittest.TestCase):
         paths.collect_paths(filename="March-2024", pathsname="sftptest")
         r = paths.results_manager.get_specific_named_result("sftptest", "upc-sku")
         assert r
-
-        lst = VarUtility.get_value_pairs(r, "sftp-files")
+        m = r.csvpath.metadata
+        v = r.csvpath.variables
+        lst = VarUtility.get_value_pairs(m, v, "sftp-files")
         assert lst
         assert len(lst) == 3
         assert lst[0] == ("data.csv", "data.csv")
@@ -96,17 +97,17 @@ class TestSftp(unittest.TestCase):
         # get an ENV_VAR
         #
         os.environ["SFTP_USER"] = "auser"
-        v = VarUtility.get_str(r, "sftp-user")
+        v = VarUtility.get_str(m, v, "sftp-user")
         assert v == "auser"
 
-        v = VarUtility.get_int(r, "sftp-port")
+        v = VarUtility.get_int(m, v, "sftp-port")
         assert v == 10022
 
-        v = VarUtility.get_bool(r, "sftp-original")
+        v = VarUtility.get_bool(m, v, "sftp-original")
         v is False
 
         r.csvpath.metadata["sftp-original"] = True
-        v = VarUtility.get_bool(r, "sftp-original")
+        v = VarUtility.get_bool(m, v, "sftp-original")
         v is True
 
         assert VarUtility.is_true(1)

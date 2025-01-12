@@ -5,26 +5,24 @@ from .exceptions import InputException
 
 class MetadataParser:
     def __init__(self, csvpath) -> None:
-        if not hasattr(csvpath, "logger"):
-            raise ConfigurationException(
-                "Log holder cannot be Nothing. You must pass a CsvPaths or CsvPath to MetadataParser."
-            )
-        self.log_holder = csvpath
+        # we were passing in csvpath to get a logger but we
+        # weren't actually using it and it complicates using
+        # the parser in new ways.
+        ...
 
     def extract_metadata(self, *, instance, csvpath: str) -> str:
-        """extracts metadata from a comment. the comment is removed.
-        at this time we're expecting 0 or 1 comments above the csvpath.
-        we do not look below or for secondary comments. both would
-        cause errors. we are also not looking within the csvpath. that
-        is handled by the matcher's parser and we do not collect
-        metadata from internal comments at this time. in principle we
-        could run the comments the matching parser finds through this
-        parser in order to extract metadata fields. not today's problem
-        though.
+        mdata = instance.metadata
+        if mdata is None:
+            mdata = {}
+            instance.metadata = mdata
+        return self.collect_metadata(mdata, csvpath)
+
+    def collect_metadata(self, mdata: dict, csvpath: str) -> str:
+        """collects metadata from a comment into the dict passed in. the
+        comment is removed. at this time we're expecting 0 or 1 comments
+        above the csvpath. we do not look below or for secondary comments.
+        we do not collect metadata from internal comments at this time.
         """
-        self.log_holder.logger.debug(
-            "Beginning to extract metadata from csvpath: %s", csvpath
-        )
         csvpath = csvpath.strip()
         if not csvpath[0] in ["$", "~"]:
             raise InputException(
@@ -35,11 +33,8 @@ class MetadataParser:
         # if there are any characters in the comment we should parse. 3 is
         # the minimum metadata, because "x:y", but there could be a number or something.
         if len(comment) > 0:
-            self.collect_metadata(instance, comment)
-            # keep the original comment for future ref
-            if not instance.metadata:
-                instance.metadata = {}
-            instance.metadata["original_comment"] = comment
+            self._collect_metadata(mdata, comment)
+            mdata["original_comment"] = comment
         return csvpath2
 
     def extract_csvpath_and_comment(self, csvpath) -> Tuple[str, str]:
@@ -80,7 +75,7 @@ class MetadataParser:
                     csvpath2 += c
         return csvpath2, comment
 
-    def collect_metadata(self, instance, comment) -> None:
+    def _collect_metadata(self, mdata: dict, comment: str) -> None:
         #
         # pull the metadata out of the comment
         #
@@ -120,7 +115,5 @@ class MetadataParser:
                 metafield.strip() if metafield is not None else None
             )
         # add found metadata to instance. keys will overwrite preexisting.
-        if not instance.metadata:
-            instance.metadata = {}
         for k, v in metadata_fields.items():
-            instance.metadata[k] = v
+            mdata[k] = v

@@ -47,9 +47,12 @@ class PathsRegistrar(Registrar, Listener):
             mdata = PathsMetadata()
             mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
-            mdata.named_paths_file = group_file_path
-            mdata.named_paths = paths
+            #
+            # why two of these? :/
+            #
+            # mdata.named_paths_file = group_file_path
             mdata.group_file_path = group_file_path
+            mdata.named_paths = paths
             mdata.named_paths_identities = [
                 t[0] for t in self.manager.get_identified_paths_in(name)
             ]
