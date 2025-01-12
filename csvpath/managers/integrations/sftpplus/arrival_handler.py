@@ -9,7 +9,7 @@ from csvpath import CsvPaths
 #
 class SftpPlusArrivalHandler:
     def __init__(self, path):
-        self._csvpaths = CsvPaths()
+        self.csvpaths = CsvPaths()
         self._path = path
         self._named_file_name = None
         self._named_paths_name = None
@@ -47,28 +47,20 @@ class SftpPlusArrivalHandler:
         #
         # register the file
         #
-        self._csvpaths.file_manager.add_named_file(
-            name=self.named_file_name, path=self.path
-        )
+        f = self.named_file_name
+        self.csvpaths.file_manager.add_named_file(name=f, path=self.path)
         #
         # do the run
         #
         m = self.run_method
+        p = self.named_paths_name
         if m is None or self.run_method == "collect_paths":
-            self._csvpaths.collect_paths(
-                filename=self.named_file_name, pathsname=self.named_paths_name
-            )
+            self.csvpaths.collect_paths(filename=f, pathsname=p)
         elif m == "fast_forward_paths":
-            self._csvpaths.fast_forward_paths(
-                filename=self.named_file_name, pathsname=self.named_paths_name
-            )
+            self.csvpaths.fast_forward_paths(filename=f, pathsname=p)
         elif m == "collect_by_line":
-            self._csvpaths.collect_by_line(
-                filename=self.named_file_name, pathsname=self.named_paths_name
-            )
+            self.csvpaths.collect_by_line(filename=f, pathsname=p)
         elif m == "fast_forward_by_line":
-            self._csvpaths.fast_forward_by_line(
-                filename=self.named_file_name, pathsname=self.named_paths_name
-            )
+            self.csvpaths.fast_forward_by_line(filename=f, pathsname=p)
         else:
-            self._csvpaths.config.error("Run method is incorrect: {m}")
+            self.csvpaths.config.error("Run method is incorrect: {m}")

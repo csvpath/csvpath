@@ -3,6 +3,7 @@ import json
 import threading
 import paramiko
 from tempfile import NamedTemporaryFile
+from csvpath import CsvPaths
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.managers.listener import Listener
@@ -33,17 +34,11 @@ class SftpPlusListener(Listener, threading.Thread):
         self._port = None
         self._mailbox_user = None
         self._mailbox_password = None
-        #
-        # shouldn't this be a dir for the named-paths name?
-        #
-        self._mailbox_path = None
         self._active = False
         self._named_file_name = None
-        # vvvv not needed!
-        self._execute_before_script_name = None
+        self._account_name = None
         self._run_method = None
-        #
-        self.csvpaths = None
+        self.csvpaths = CsvPaths()
         self.result = None
         self.metadata = None
         self.results = None
@@ -59,34 +54,49 @@ class SftpPlusListener(Listener, threading.Thread):
         for p in self.metadata.named_paths:
             MetadataParser(None).collect_metadata(m, p)
         v = {}
+        # comments metadata
         self._active = VarUtility.get_bool(m, v, "sftpplus-active")
+        self._account_name = VarUtility.get_str(m, v, "sftpplus-account-name")
         self._named_file_name = VarUtility.get_str(m, v, "sftpplus-named-file-name")
         self._run_method = VarUtility.get_str(m, v, "sftpplus-run-method")
+        #
         # config.ini stuff:
-        self._user = self.csvpaths.config.get(section="sftpplus", name="mailbox_user")
-        if self._user is None:
+        #
+        # user
+        #
+        self._mailbox_user = self.csvpaths.config.get(
+            section="sftpplus", name="mailbox_user"
+        )
+        if self._mailbox_user is None:
             raise ValueError("SFTPPlus mailbox username cannot be None")
-        if self._user.isupper():
-            self._user = os.getenv(self._user)
-        self._password = self.csvpaths.config.get(
+        if self._mailbox_user.isupper():
+            self._mailbox_user = os.getenv(self._user)
+        #
+        # password
+        #
+        self._mailbox_password = self.csvpaths.config.get(
             section="sftpplus", name="mailbox_password"
         )
-        if self._password is None:
+        if self._mailbox_password is None:
             raise ValueError("SFTPPlus mailbox password cannot be None")
         if self._password.isupper():
             self._password = os.getenv(self._password)
+        #
+        # server
+        #
         self._server = self.csvpaths.config.get(section="sftpplus", name="server")
         if self._server is None:
             raise ValueError("SFTPPlus server cannot be None")
         if self._server.isupper():
             self._server = os.getenv(self._server)
+        #
+        # port
+        #
         self._port = self.csvpaths.config.get(section="sftpplus", name="port")
         if self._port is None:
             raise ValueError("SFTPPlus port cannot be None")
         if self._port.isupper():
             self._port = os.getenv(self._port)
-        if self._mailbox_path is None:
-            self._mailbox_path = self.metadata.named_paths_name
 
     @property
     def run_method(self) -> str:
@@ -129,31 +139,28 @@ class SftpPlusListener(Listener, threading.Thread):
         with NamedTemporaryFile(mode="w+t", delete_on_close=False) as file:
             json.dump(msg, file, indent=2)
             file.seek(0)
-
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             try:
                 print(
-                    f"SftpPlus list: server: {self._server}, port: {self._port}, user: {self._user}, passwd: {self._password}"
+                    f"SftpPlus list: server: {self._server}, port: {self._port}, user: {self._mailbox_user}, passwd: {self._mailbox_password}"
                 )
-                client.connect(self._server, self._port, self._user, self._password)
-                sftp = client.open_sftp()
-                self.csvpaths.logger.info(
-                    "SFTPPlus listener prepping instruction to %s",
-                    f"{self._user}/{self._mailbox_path}",
+                client.connect(
+                    self._server, self._port, self._mailbox_user, self._mailbox_password
                 )
                 #
                 # create the remote dir, in the messages account, if needed.
                 #
+                sftp = client.open_sftp()
                 try:
-                    sftp.stat(self._mailbox_path)
+                    sftp.stat(self._account_name)
                 except FileNotFoundError:
-                    sftp.mkdir(self._mailbox_path)
+                    sftp.mkdir(self._account_name)
                 #
                 # land the file at the UUID so that if anything weird we'll only ever
                 # interfere with ourselves.
                 #
-                remote_path = f"{self._mailbox_path}/{self.metadata.uuid_string}.txt"
+                remote_path = f"{self._account_name}/{self.metadata.uuid_string}.txt"
                 self.csvpaths.logger.info("Putting %s to %s", file, remote_path)
                 sftp.putfo(file, remote_path)
                 sftp.close()
@@ -171,13 +178,14 @@ class SftpPlusListener(Listener, threading.Thread):
         # from its own config.ini.
         #
         msg = {}
-        msg["name"] = self.metadata.named_paths_name
+        msg["named_paths_name"] = self.metadata.named_paths_name
+        msg["account_name"] = self._account_name
         msg["method"] = self._run_method
         #
         # make "description" to "uuid". doesn't matter here
         # that it ends up in the transfer's description field
         #
-        msg["description"] = f"{self.metadata.uuid_string}"
+        msg["uuid"] = f"{self.metadata.uuid_string}"
         msg["named_file_name"] = f"{self._named_file_name}"
         msg["active"] = self._active
         return msg

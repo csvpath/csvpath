@@ -6,24 +6,25 @@ from csvpath.util.config import Config
 
 
 #
-# this class listens for messages. when it gets one it generates
-# instructions for admin-shell.
+# this class listens for messages via an sftpplus transfer. when
+# it gets one it generates instructions for admin-shell to create
+# a new transfer for a particular data partner's named files.
 #
-# we also generate another script for the new transfer. that script
-# loads the files as named-files and executes a run of the named-paths
-# on the new named-file.
+# we generate a script for the new transfer. that script executes
+# a python class to load the files as named-files and execute a
+# run of the originating named-paths on the new named-file.
 #
-# it then moves the arrived file to a holding location for process
-# debugging reference. the single-source authorative file is at this
-# point in the named-files inputs directory, whereever that is
-# configured.
+# the named-file receiving transfer then moves the arrived file to
+# a holding location for process debugging reference. the single-
+# source authorative file is at this point in the named-files
+# inputs directory, wherever that is configured.
 #
 class SftpPlusTransferCreator:
     SFTPPLUS_ADMIN_USERNAME = "SFTPPATH_ADMIN_USERNAME"
     SFTPPLUS_ADMIN_PASSWORD = "SFTPPATH_ADMIN_PASSWORD"
 
     def __init__(self):
-        self._csvpaths = CsvPaths()
+        self.csvpaths = CsvPaths()
         self._path = None
         self._msg = None
 
@@ -33,10 +34,11 @@ class SftpPlusTransferCreator:
 
     @message_path.setter
     def message_path(self, p: str) -> None:
-        #
-        # f"{mailbox_path}/{mailbox_user}/{mailbox_name}/{p}"
-        #
-        self._path = f"/srv/storage/test_user/mailbox/{p}"
+        transfers_base_dir = self.csvpaths.config.get(
+            section="sftpplus", name="transfers_base_dir"
+        )
+        mailbox_user = self.csvpaths.config.get(section="sftpplus", name="mailbox_user")
+        self._path = f"{transfers_base_dir}{os.sep}{mailbox_user}{os.sep}{p}"
 
     @property
     def admin_username(self) -> str:
@@ -54,7 +56,7 @@ class SftpPlusTransferCreator:
 
     @property
     def config(self) -> Config:
-        return self._csvpaths.config
+        return self.csvpaths.config
 
     def process_message(self, msg_path) -> None:
         if msg_path is not None:
@@ -100,7 +102,7 @@ class SftpPlusTransferCreator:
         print(f"transcrt._get_msg: cwd: {os.getcwd()}, mp: {self.message_path}")
         with open(self.message_path, "r", encoding="utf-8") as file:
             msg = json.load(file)
-        uuid = msg.get("description")
+        uuid = msg.get("uuid")
         if uuid is None:
             raise ValueError(
                 f"uuid of named-paths group must be present in transfer setup message: {msg}"
@@ -112,7 +114,8 @@ class SftpPlusTransferCreator:
         return msg
 
     def _cmd(self, cmd: str) -> str:
-        c = f"""/opt/sftpplus/bin/admin-shell.sh -k -u {self.admin_username} -p - {cmd} """
+        admin_shell = self.csvpaths.config.get(section="sftpplus", name="admin_shell")
+        c = f"""{admin_shell} -k -u {self.admin_username} -p - {cmd} """
         return c
 
     def _find_existing_transfer(self, msg: dict) -> str:
@@ -129,10 +132,47 @@ class SftpPlusTransferCreator:
         tuuid = None
         ts = out.split("--------------------------------------------------")
         for t in ts:
-            if t.find(msg["description"]) > -1:
+            #
+            # our uuid is in the description field. when we see it we know we
+            # found the existing transfer, so we get the transfer's uuid.
+            #
+            if t.find(msg["uuid"]) > -1:
                 i = t.find("uuid = ")
                 tuuid = t[i + 9 : t.find('"', i + 10)]
-                print(f"found tuuid: {tuuid}")
+        return tuuid
+
+    def _create_new_transfer(self, *, msg: dict) -> str:
+        # create the commands
+        tuuid = self._create_transfer(msg["named_file_name"])
+        execute = self._execute_before_script
+        transfers_base_dir = self.csvpath.config.get(
+            section="sftpplus", name="transfers_base_dir"
+        )
+        account_name = msg["account_name"]
+        named_file_name = msg["named_file_name"]
+        source = f"{transfers_base_dir}{os.sep}{account_name}{os.sep}{named_file_name}"
+        destination = f"{source}{os.sep}handled"
+        active = msg["active"].lower() if "active" in msg else "true"
+        cmds = [
+            self._cmd(f'configure transfer {tuuid} execute_before "{execute}"'),
+            self._cmd(f'configure transfer {tuuid} source_path "{source}"'),
+            self._cmd(f'configure transfer {tuuid} destination_path "{destination}"'),
+            self._cmd(f"configure transfer {tuuid} enabled={active}"),
+        ]
+        for cmd in cmds:
+            self._run_cmd(cmd)
+
+    def _create_transfer(self, name: str) -> str:
+        c = self._cmd(f"add transfer {name}")
+        o = self._run_cmd(c)
+        #
+        # output is like:
+        #   New transfers created with UUID: f6ec10a0-baff-449d-9ba2-f89748b10dd4
+        #
+        i = o.find("UUID: ")
+        tuuid = o[i + 6 :]
+        tuuid = tuuid.strip()
+        print(f"_create_transfer: tuuid: {tuuid}")
         return tuuid
 
     def _run_cmd(self, cmd: str) -> str:
@@ -151,45 +191,25 @@ class SftpPlusTransferCreator:
         print(f"_run_command: output: {output}")
         return output
 
-    def _create_transfer(self, name: str) -> str:
-        c = self._cmd(f"add transfer {name}")
-        o = self._run_cmd(c)
-        #
-        # output is like:
-        #   New transfers created with UUID: f6ec10a0-baff-449d-9ba2-f89748b10dd4
-        #
-        i = o.find("UUID: ")
-        tuuid = o[i + 6 :]
-        tuuid = tuuid.strip()
-        print(f"_create_transfer: tuuid: {tuuid}")
-        return tuuid
-
     @property
     def _execute_before_script(self) -> str:
-        path = f"/opt/sftpplus/run/csvpath_sftpplus/{self._msg['named_file_name']}/handle_arrival.sh"
+        #
+        # we create one of these for every transfer
+        #
+        scripts = self.csvpath.config.get(section="sftpplus", name="scripts_dir")
+        account_name = self._msg["account_name"]
+        named_file_name = self._msg["named_file_name"]
+        path = f"{scripts}{os.sep}{account_name}{os.sep}{named_file_name}{os.sep}handle_arrival.sh"
         print(f"_execute_before_script: path: {path}")
         return path
 
     def _execute_before_python_main(self) -> str:
-        path = "/opt/sftpplus/run/csvpath_sftpplus/arrival_handler_main.py"
+        #
+        # we just need one of these, total. if not found, we'll create it.
+        #
+        scripts = self.csvpath.config.get(section="sftpplus", name="scripts_dir")
+        path = f"{scripts}{os.sep}arrival_handler_main.py"
         return path
-
-    def _create_new_transfer(self, *, msg: dict) -> str:
-        # create the commands
-        tuuid = self._create_transfer(msg["named_file_name"])
-        execute = self._execute_before_script
-        # execute = f"/opt/sftpplus/run/csvpath_sftpplus/{msg['named_file_name']}/handle_arrival.sh"
-        source = f"/srv/storage/{msg['named_file_name']}"
-        dest = f"{source}/handled"
-        cmds = [
-            self._cmd(f'configure transfer {tuuid} execute_before "{execute}"'),
-            # self._cmd(f"configure transfer {tuuid} delete_source_on_success = true "),
-            self._cmd(f'configure transfer {tuuid} source_path "{source}"'),
-            self._cmd(f'configure transfer {tuuid} destination_path "{dest}"'),
-            # self._cmd(f'configure transfer {tuuid} enabled=true'),
-        ]
-        for cmd in cmds:
-            self._run_cmd(cmd)
 
     def _update_existing_transfer(self, *, tuuid: str, msg: dict) -> None:
         cmds = [
@@ -204,7 +224,7 @@ class SftpPlusTransferCreator:
 
     @property
     def python_cmd(self) -> str:
-        return "/root/.local/bin/poetry run python "
+        return f"{self.csvpaths.config.get(section='sftpplus', name='python_cmd')} "
 
     def _generate_and_place_scripts(self, msg: dict) -> str:
         path = self._execute_before_script
@@ -214,7 +234,7 @@ class SftpPlusTransferCreator:
 # THIS FILE IS GENERATED AT RUNTIME. DO NOT EDIT IT.
 #
 # add named_file_name, filename here (and named_paths_name?)
-{self._python_cmd} run python arrival_handler_main.py "$1"
+{self.python_cmd} {path} "$1"
         """
         print(f"_generate_and_place_scripts: python runner script: {s}")
         with open(path, "w", encoding="utf-8") as file:
@@ -227,6 +247,9 @@ class SftpPlusTransferCreator:
         # and run the named-paths group
         #
         if not os.path(self._execute_before_python_main).exists():
+            method = msg["method"]
+            named_paths_name = msg["named_paths_name"]
+            account_name = msg["account_name"]
             s = f"""
 import sys
 import os
@@ -234,18 +257,23 @@ from csvpath import CsvPaths
 from csvpath.managers.integrations.sftpplus.arrival_handler import SftpPlusArrivalHandler
 #
 # THIS FILE IS GENERATED AT RUNTIME. DO NOT EDIT IT.
+# args:
+#  - account_name (account name)
+#  - named file name
+#  - arriving filename
 #
 if __name__ == "__main__":
     paths = CsvPaths()
-    named_file_name = sys.argv[1]
-    file_name = sys.argv[2]
+    account_name = {account_name}
+    named_file_name = {named_file_name}
+    file_name = arg[1]
     transfers_base = paths.config.get(section="sftpplus", name="transfers_base_dir")
-    path = f"{transfers_base}{os.sep}{named_file_name}{os.sep}{file_name}" # noqa: F821
+    path = f"{{transfers_base}}{{os.sep}}{{account_name}}{{os.sep}}{{named_file_name}}{{os.sep}}{{file_name}}" # noqa: F821
     h = SftpPlusArrivalHandler(path)
     # create the path here
     h.named_file_name = named_file_name
-    h.run_method = "{msg['method']}"
-    h.named_paths_name = "{msg['named_paths_name']}"
+    h.run_method = "{method}"
+    h.named_paths_name = "{named_paths_name}"
     h.process_arrival()
 """
             with open(path, "w", encoding="utf-8") as file:
