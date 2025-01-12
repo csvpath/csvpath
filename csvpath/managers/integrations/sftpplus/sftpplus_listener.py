@@ -69,8 +69,8 @@ class SftpPlusListener(Listener, threading.Thread):
         )
         if self._mailbox_user is None:
             raise ValueError("SFTPPlus mailbox username cannot be None")
-        if self._mailbox_user.isupper():
-            self._mailbox_user = os.getenv(self._user)
+        if VarUtility.isupper(self._mailbox_user):
+            self._mailbox_user = os.getenv(self._mailbox_user)
         #
         # password
         #
@@ -79,15 +79,15 @@ class SftpPlusListener(Listener, threading.Thread):
         )
         if self._mailbox_password is None:
             raise ValueError("SFTPPlus mailbox password cannot be None")
-        if self._password.isupper():
-            self._password = os.getenv(self._password)
+        if VarUtility.isupper(self._mailbox_password):
+            self._mailbox_password = os.getenv(self._mailbox_password)
         #
         # server
         #
         self._server = self.csvpaths.config.get(section="sftpplus", name="server")
         if self._server is None:
             raise ValueError("SFTPPlus server cannot be None")
-        if self._server.isupper():
+        if VarUtility.isupper(self._server):
             self._server = os.getenv(self._server)
         #
         # port
@@ -95,7 +95,7 @@ class SftpPlusListener(Listener, threading.Thread):
         self._port = self.csvpaths.config.get(section="sftpplus", name="port")
         if self._port is None:
             raise ValueError("SFTPPlus port cannot be None")
-        if self._port.isupper():
+        if VarUtility.isupper(self._port):
             self._port = os.getenv(self._port)
 
     @property
@@ -142,9 +142,11 @@ class SftpPlusListener(Listener, threading.Thread):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             try:
-                print(
+                """
+                raise Exception(
                     f"SftpPlus list: server: {self._server}, port: {self._port}, user: {self._mailbox_user}, passwd: {self._mailbox_password}"
                 )
+                """
                 client.connect(
                     self._server, self._port, self._mailbox_user, self._mailbox_password
                 )
