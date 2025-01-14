@@ -181,5 +181,6 @@ class ResultSerializer:
 
     def get_instance_dir(self, run_dir, identity) -> str:
         run_dir = os.path.join(run_dir, identity)
-        Nos(run_dir).makedirs()
+        if not Nos(run_dir).exists():
+            Nos(run_dir).makedirs()
         return run_dir
