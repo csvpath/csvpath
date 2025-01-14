@@ -6,13 +6,33 @@ class FileInfo:
     def info(cls, path) -> dict[str, str | int | float]:
         if path is None:
             raise ValueError("Path cannot be None")
-        if path.find("://") > -1:
-            return cls._remote(path)
-        return cls._local(path)
+        try:
+            if path.find("://") > -1:
+                return cls._remote(path)
+            return cls._local(path)
+        except Exception:
+            # this shouldn't happen, but it also shouldn't be the
+            # main source of friction. If we have a wrong path or
+            # an asset we don't know how to get info on, we'll know it
+            # above and can handle it there in a more meaningful
+            # context.
+            return cls._empty()
 
     @classmethod
     def _remote(cls, path):
-        return {}
+        return cls._empty()
+
+    @classmethod
+    def _empty(cls) -> dict:
+        return {
+            "mode": "",
+            "device": "",
+            "bytes": -1,
+            "created": None,
+            "last_read": None,
+            "last_mod": None,
+            "flags": None,
+        }
 
     @classmethod
     def _local(cls, path):
