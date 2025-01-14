@@ -227,17 +227,16 @@ class SftpPlusTransferCreator:
         return f"{self.csvpaths.config.get(section='sftpplus', name='python_cmd')} "
 
     def _generate_and_place_scripts(self, msg: dict) -> str:
-        path = self._execute_before_script
-        print(f"transfer script path is: {path}")
+        before_script = self._execute_before_script
+        print(f"transfer script path is: {before_script}")
         s = f"""
 #
 # THIS FILE IS GENERATED AT RUNTIME. DO NOT EDIT IT.
 #
-# add named_file_name, filename here (and named_paths_name?)
-{self.python_cmd} {path} "$1"
+{self.python_cmd} {self._execute_before_python_main} "$1"
         """
         print(f"_generate_and_place_scripts: python runner script: {s}")
-        with open(path, "w", encoding="utf-8") as file:
+        with open(before_script, "w", encoding="utf-8") as file:
             file.write(s)
         #
         # do we need to +x the script?
@@ -276,5 +275,5 @@ if __name__ == "__main__":
     h.named_paths_name = "{named_paths_name}"
     h.process_arrival()
 """
-            with open(path, "w", encoding="utf-8") as file:
+            with open(self._execute_before_python_main, "w", encoding="utf-8") as file:
                 file.write(s)

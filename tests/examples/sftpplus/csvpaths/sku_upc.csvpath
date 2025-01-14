@@ -6,7 +6,7 @@
   unmatched-mode: keep
 
   sftpplus-active: yes
-  sftpplus-named-file-name:orders
+  sftpplus-named-file-name: orders
   sftpplus-run-method: collect_paths
   sftpplus-account-name: tin_penny_toys
 
@@ -14,6 +14,5 @@
 $[*][
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
     not.nocontrib( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
-    not(#SKU)
 ]
 

@@ -254,6 +254,8 @@ on_unmatched_file_fingerprints = halt
         if self.load:
             if self.archive_path is None or self.archive_path.strip() == "":
                 self.archive_path = "archive"
+            if self.archive_path.strip().lower().startswith("s3://"):
+                return
             if not path.exists(self.archive_path):
                 os.makedirs(self.archive_path)
 
@@ -268,6 +270,8 @@ on_unmatched_file_fingerprints = halt
         if self.load:
             if self.inputs_files_path is None or self.inputs_files_path.strip() == "":
                 self.inputs_files_path = "inputs/named_files"
+            if self.inputs_files_path.strip().lower().startswith("s3://"):
+                return
             if not path.exists(self.inputs_files_path):
                 os.makedirs(self.inputs_files_path)
 
@@ -278,10 +282,15 @@ on_unmatched_file_fingerprints = halt
                 or self.inputs_csvpaths_path.strip() == ""
             ):
                 self.inputs_csvpaths_path = "inputs/named_paths"
+            if self.inputs_csvpaths_path.strip().lower().startswith("s3://"):
+                return
             if not path.exists(self.inputs_csvpaths_path):
                 os.makedirs(self.inputs_csvpaths_path)
 
     def _assure_cache_path(self) -> None:
+        uc = self.get(section="cache", name="use_cache")
+        if uc and uc.strip().lower() == "no":
+            return
         if self.load:
             if self.cache_dir_path is None or self.cache_dir_path.strip() == "":
                 self.cache_dir_path = "cache"

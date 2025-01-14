@@ -7,6 +7,7 @@ from smart_open import open
 from ..file_readers import CsvDataReader
 from .s3_utils import S3Utils
 from .s3_fingerprinter import S3Fingerprinter
+from csvpath.util.box import Box
 
 
 #
@@ -15,18 +16,22 @@ from .s3_fingerprinter import S3Fingerprinter
 class S3DataReader(CsvDataReader):
     def load_if(self) -> None:
         if self.source is None:
-            session = boto3.Session(
-                aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-                aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-            )
-            try:
-                self.source = open(
-                    self._path, "r", transport_params={"client": session.client("s3")}
+            client = Box.STUFF.get("boto_client")
+            if client is None:
+                session = boto3.Session(
+                    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+                    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
                 )
+                client = session.client("s3")
+            try:
+                self.source = open(self._path, "r", transport_params={"client": client})
             except DeprecationWarning:
                 ...
 
     def next(self) -> list[str]:
+        #
+        # TODO: check if smart-open is in play and open w/o client is correct
+        #
         with open(uri=self._path, mode="r") as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar

@@ -5,6 +5,7 @@ import boto3
 from smart_open import open
 from ..file_readers import XlsxDataReader
 from .s3_fingerprinter import S3Fingerprinter
+from csvpath.util.box import Box
 
 
 class S3XlsxDataReader(XlsxDataReader):
@@ -18,13 +19,16 @@ class S3XlsxDataReader(XlsxDataReader):
 
     def load_if(self) -> None:
         if self.source is None:
-            session = boto3.Session(
-                aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-                aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-            )
+            client = Box.STUFF.get("boto_client")
+            if client is None:
+                session = boto3.Session(
+                    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+                    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+                )
+                client = session.client("s3")
             try:
                 self.source = open(
-                    self._path, "rb", transport_params={"client": session.client("s3")}
+                    self._path, "rb", transport_params={"client": client}
                 )
             except DeprecationWarning:
                 ...

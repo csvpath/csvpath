@@ -8,7 +8,6 @@
 # the scripts_dir key in the sftpplus-side config/config.ini in sync.
 #
 cd /opt/sftpplus/run/csvpath_sftpplus
-echo "$1"
 sudo /root/.local/bin/poetry run python ./message_handler.py "$1"
 
 

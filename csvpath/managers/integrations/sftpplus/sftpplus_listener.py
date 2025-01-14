@@ -162,7 +162,7 @@ class SftpPlusListener(Listener, threading.Thread):
                 # land the file at the UUID so that if anything weird we'll only ever
                 # interfere with ourselves.
                 #
-                remote_path = f"{self._account_name}/{self.metadata.uuid_string}.txt"
+                remote_path = f"{self.metadata.uuid_string}.json"
                 self.csvpaths.logger.info("Putting %s to %s", file, remote_path)
                 sftp.putfo(file, remote_path)
                 sftp.close()
