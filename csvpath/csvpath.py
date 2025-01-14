@@ -1204,7 +1204,16 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
                 self.identity,
             )
-        if self.csvpaths:
+        #
+        # there are times, e.g. when using Lambda, when it may be better to
+        # not use a cache. in the case of Lambda the reason is to avoid working
+        # around the read-only filesystem.
+        #
+        use_cache = self.csvpaths is not None
+        if use_cache:
+            uc = self.csvpaths.config.get(section="cache", name="use_cache")
+            use_cache = uc is None or uc.strip().lower() != "no"
+        if self.csvpaths and use_cache is True:
             self.line_monitor = self.csvpaths.file_manager.cacher.get_new_line_monitor(
                 self.scanner.filename
             )

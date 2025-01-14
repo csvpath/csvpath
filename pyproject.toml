@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.506"
+version = "0.0.508"
 description = "An edge governance framework for managing and validating CSV, Excel, and other tabular data files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
@@ -21,8 +21,6 @@ include = ["config", "logs", "docs"]
 
 [tool.pytest.ini_options]
 #testpaths = ["tests"]
-#norecursedirs = ["old"]
-#filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.poetry.urls]
 "Github" = "https://github.com/csvpath/csvpath.git"
@@ -48,13 +46,13 @@ bullet = "^2.2.0"
 pytz = "^2024.2"
 openlineage-python = "^1.25.0"
 ckanapi = "^4.8"
-boto3 = "^1.35.91"
 smart-open = "^7.1.0"
 paramiko = "^3.5.0"
+boto3 = "^1.35.91"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
-smartopen = ["smart-open"]
+#smartopen = ["smart-open"]
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.0"

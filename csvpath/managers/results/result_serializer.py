@@ -7,6 +7,7 @@ from csvpath import CsvPath
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
 
 Simpledata = NewType("Simpledata", Union[None | str | int | float | bool])
 Listdata = NewType("Listdata", list[None | str | int | float | bool])
@@ -158,8 +159,8 @@ class ResultSerializer:
     def get_run_dir(self, *, paths_name, run_time):
         paths_name = self._deref_paths_name(paths_name)
         run_dir = os.path.join(self.base_dir, paths_name)
-        if not os.path.exists(run_dir):
-            os.makedirs(run_dir, exist_ok=True)
+        if not Nos(run_dir).dir_exists():
+            Nos(run_dir).makedirs()
         if not isinstance(run_time, str):
             run_time = self.get_run_dir_name_from_datetime(run_time)
         run_dir = os.path.join(run_dir, f"{run_time}")
@@ -169,10 +170,10 @@ class ResultSerializer:
         # atm. a server process would namespace each CsvPaths instance
         # to prevent conflicts. if there is a conflict the two runs would
         # overwrite each other. this prevents that.
-        if os.path.exists(run_dir):
+        if Nos(run_dir).dir_exists():
             i = 0
             adir = f"{run_dir}.{i}"
-            while os.path.exists(adir):
+            while Nos(adir).dir_exists():
                 i += 1
                 adir = f"{run_dir}.{i}"
             run_dir = adir
@@ -180,5 +181,6 @@ class ResultSerializer:
 
     def get_instance_dir(self, run_dir, identity) -> str:
         run_dir = os.path.join(run_dir, identity)
-        os.makedirs(run_dir, exist_ok=True)
+        if not Nos(run_dir).exists():
+            Nos(run_dir).makedirs()
         return run_dir
