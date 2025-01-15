@@ -36,7 +36,37 @@ class FileManager:
     # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: str) -> str:
-        home = os.path.join(self.named_files_dir, name)
+        #
+        # not a named-file name
+        #
+        if name.find("/") > -1:
+            #
+            # this is definitely not what we should be returning. but it is what
+            # works in the new world of remote and fully-qualified local paths.
+            # for now, going with it. the previous implementation was wonky too,
+            # in a different and not visible way, but not good, so this is a step
+            # up in multiple ways.
+            #
+            return ""
+        #
+        # added
+        #
+        home = None
+        if name.startswith("/"):
+            home = name
+        else:
+            #
+            # done add
+            #
+            home = os.path.join(self.named_files_dir, name)
+        #
+        # added
+        #
+        if Nos(home).isfile():
+            home = home[0 : home.rfind(Nos(home).sep)]
+        #
+        # done add
+        #
         return home
 
     def assure_named_file_home(self, name: str) -> str:

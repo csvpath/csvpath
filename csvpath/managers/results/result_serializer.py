@@ -24,6 +24,9 @@ class ResultSerializer:
     def save_result(self, result) -> None:
         self.result = result
         runtime_data = {}
+        result.csvpath.csvpaths.logger.debug(
+            "Saving result of %s.%s", result.paths_name, result.identity_or_index
+        )
         RuntimeDataCollector.collect(result.csvpath, runtime_data, local=True)
         runtime_data["run_index"] = result.run_index
         es = []

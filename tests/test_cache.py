@@ -15,6 +15,8 @@ NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
 class TestCache(unittest.TestCase):
     def test_cache_files(self):
         cs = CsvPaths()
+        v = cs.config.get(section="cache", name="use_cache")
+        cs.config.add_to_config("cache", "use_cache", "yes", save_load=True)
         cachedir = cs.file_manager.cacher.cache._cachedir()
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
@@ -25,9 +27,12 @@ class TestCache(unittest.TestCase):
         assert cachedir
         assert os.path.exists(cachedir)
         assert len(os.listdir(cachedir)) == 2
+        cs.config.add_to_config("cache", "use_cache", v, save_load=True)
 
     def test_cache_dir(self):
         csvpaths = CsvPaths()
+        v = csvpaths.config.get(section="cache", name="use_cache")
+        csvpaths.config.add_to_config("cache", "use_cache", "yes", save_load=True)
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
         assert cachedir
         assert os.path.exists(cachedir)
@@ -36,9 +41,12 @@ class TestCache(unittest.TestCase):
         csvpaths = CsvPaths()
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
         assert os.path.exists(cachedir)
+        csvpaths.config.add_to_config("cache", "use_cache", v, save_load=True)
 
     def test_cache_csv(self):
         csvpaths = CsvPaths()
+        v = csvpaths.config.get(section="cache", name="use_cache")
+        csvpaths.config.add_to_config("cache", "use_cache", "yes", save_load=True)
         cache = csvpaths.file_manager.cacher.cache
         filename = "/a/file/name"
         headers = ["a", "header", "row"]
@@ -48,9 +56,12 @@ class TestCache(unittest.TestCase):
         cheaders = cache.cached_text(filename, "csv")
         assert cheaders == headers
         assert len(cheaders) == len(headers)
+        csvpaths.config.add_to_config("cache", "use_cache", v, save_load=True)
 
     def test_cache_line_mon1(self):
         csvpaths = CsvPaths()
+        v = csvpaths.config.get(section="cache", name="use_cache")
+        csvpaths.config.add_to_config("cache", "use_cache", "yes", save_load=True)
         cache = csvpaths.file_manager.cacher.cache
         filename = PATH
         lm = LineMonitor()
@@ -69,9 +80,12 @@ class TestCache(unittest.TestCase):
         assert lm.physical_end_line_number == lm2.physical_end_line_number
         assert lm.data_end_line_count == lm2.data_end_line_count
         assert lm.data_end_line_number == lm2.data_end_line_number
+        csvpaths.config.add_to_config("cache", "use_cache", v, save_load=True)
 
     def test_cache_line_mon2(self):
         csvpaths = CsvPaths()
+        v = csvpaths.config.get(section="cache", name="use_cache")
+        csvpaths.config.add_to_config("cache", "use_cache", "yes", save_load=True)
         cache = csvpaths.file_manager.cacher.cache
         filename = PATH
         lm = LineMonitor()
@@ -92,3 +106,4 @@ class TestCache(unittest.TestCase):
         assert lm.physical_end_line_number == lm2.physical_end_line_number
         assert lm.data_end_line_count == lm2.data_end_line_count
         assert lm.data_end_line_number == lm2.data_end_line_number
+        csvpaths.config.add_to_config("cache", "use_cache", v, save_load=True)

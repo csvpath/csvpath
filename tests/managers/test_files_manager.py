@@ -33,9 +33,10 @@ class TestFilesManager(unittest.TestCase):
         d = m._copy_in(tf, home)
         assert d is not None
         assert d.endswith("inputs/named_files/mytest/test.csv/test.csv")
-        p = "inputs/named_files/mytest"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        # p = "inputs/named_files/mytest"
+        p = f"{paths.config.inputs_files_path}/mytest"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        # p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     def test_reg_fingerprint(self):
@@ -48,9 +49,9 @@ class TestFilesManager(unittest.TestCase):
         rpath = m._fingerprint(home)
         assert d != rpath
         assert not Nos(d).exists()
-        p = "inputs/named_files/mytest"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        p = f"{paths.config.inputs_files_path}/mytest"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     """
@@ -137,14 +138,14 @@ class TestFilesManager(unittest.TestCase):
         assert fm.name_exists("amazing")
 
         # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/wonderful").remove()
-        p = "inputs/named_files/wonderful"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        p = f"{paths.config.inputs_files_path}/wonderful"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
         # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
-        p = "inputs/named_files/amazing"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        p = f"{paths.config.inputs_files_path}/amazing"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     def test_file_mgr_dict2(self):
@@ -170,13 +171,13 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count == c
 
         # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/outstanding").remove()
-        p = "inputs/named_files/outstanding"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        p = f"{paths.config.inputs_files_path}/outstanding"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
         # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
-        p = "inputs/named_files/amazing"
-        if paths.config.inputs_files_path.find("://") > -1:
-            p = f"{paths.config.inputs_files_path}/{p}"
+        p = f"{paths.config.inputs_files_path}/amazing"
+        # if paths.config.inputs_files_path.find("://") > -1:
+        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()

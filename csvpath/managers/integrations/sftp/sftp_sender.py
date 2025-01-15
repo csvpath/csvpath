@@ -7,6 +7,7 @@ from csvpath.managers.results.result import Result
 from csvpath.managers.listener import Listener
 from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
+from csvpath.util.file_readers import DataFileReader
 
 
 #
@@ -105,10 +106,24 @@ class SftpSender(Listener, threading.Thread):
                     raise ValueError("File name {file} is not in {files}")
                 if to is None:
                     raise ValueError("File name {file} has no destination")
-                path = f"/Users/davidkershaw/dev/csvpath/{self.metadata.run_home}{sep}{self.result.identity_or_index}{sep}{file}"
+                path = f"{self.metadata.run_home}{sep}{self.result.identity_or_index}{sep}{file}"
                 remote_path = f"{self._target_path}/{to}"
                 self.csvpaths.logger.info("Putting %s to %s", path, remote_path)
-                sftp.put(path, remote_path)
+                #
+                # need to use data reader and stream. if we're
+                # sftping from s3 or something this is going to
+                # be slow
+                #
+                # sftp.put(path, remote_path)
+                try:
+                    sftp.stat(self._target_path)
+                except FileNotFoundError:
+                    sftp.mkdir(self._target_path)
+                with DataFileReader(path) as reader:
+                    flo = reader.source
+                    f = sftp.open(remote_path, "wb")
+                    f.write(flo.read())
+                    f.close()
             #
             # send the original file if we need to. this will always be the normative
             # original, w/o regard to source-mode or by_line chaining or to rewind.

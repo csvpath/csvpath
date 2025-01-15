@@ -1,9 +1,22 @@
+import os
 import boto3
 import uuid
 from botocore.exceptions import ClientError
 
 
 class S3Utils:
+    @classmethod
+    def make_client(cls):
+        import warnings
+
+        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
+        session = boto3.Session(
+            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+        )
+        client = session.client("s3")
+        return client
+
     @classmethod
     def path_to_parts(self, path) -> tuple[str, str]:
         if path.startswith("s3://"):

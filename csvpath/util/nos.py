@@ -139,6 +139,12 @@ class S3Do:
     def isfile(self) -> bool:
         bucket, key = S3Utils.path_to_parts(self.path)
         client = boto3.client("s3")
+        #
+        # boto3 uses a deprecated feature. pytest doesn't like it. this is a quick fix.
+        #
+        import warnings
+
+        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
         try:
             client.head_object(Bucket=bucket, Key=key)
         except ClientError as e:

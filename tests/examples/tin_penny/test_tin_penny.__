@@ -1,0 +1,36 @@
+import unittest
+#import json
+#import os
+#import traceback
+#import logging
+#import boto3
+from csvpath import CsvPaths
+#from csvpath.util.box import Box
+
+#client = boto3.client('s3')
+
+class test_tin_penny(unittest.TestCase):
+
+    #
+    # this test is just a harness for debugging an example lambda
+    # it can go away once that example is done.
+    #
+    def test_tin_penny(self):
+        #with Box() as b:
+        #b.STUFF["boto_client"] = client
+        #logger = logging.getLogger()
+        #logger.setLevel(logging.INFO)
+
+        #paths = CsvPaths()
+        #namedfile = os.environ['file']
+        #namedpaths = os.environ['paths']
+        #newfile = f"s3://{event['Records'][0]['s3']['bucket']['name']}/{event['Records'][0]['s3']['object']['key']}"
+
+        #paths.file_manager.add_named_file(name="orders", path="tests/examples/tin_penny/csvs/tin_penny_january_orders.csv")
+        #paths.collect_paths(filename="orders", pathsname="orders")
+
+        #return {
+        #    'statusCode': 200,
+        #    'body': json.dumps('Success! Check the archive.')
+        #}
+

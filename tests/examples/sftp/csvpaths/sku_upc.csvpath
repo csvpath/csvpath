@@ -15,8 +15,8 @@
 
 ~
 $[*][
-    import($sftptest.csvpaths.top_matter_import)
-    print("Line $.csvpath.line_number: $.csvpath.headers", "Headers by line")
+    ~print("Line $.csvpath.line_number: $.csvpath.headers", "Headers by line")
+    ~
     @name = "dirname"
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
     not.nocontrib( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
