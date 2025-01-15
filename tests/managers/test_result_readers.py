@@ -8,6 +8,28 @@ from csvpath.util.file_readers import FileInfo
 from csvpath.util.line_spooler import CsvLineSpooler
 
 
+def setup_module(module):
+    print("\n **** setting up module ****")
+    paths = CsvPaths()
+    paths.paths_manager.add_named_paths(
+        name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
+    )
+    paths.paths_manager.add_named_paths(
+        name="arrivals",
+        from_file="tests/test_resources/named_paths/people.csvpaths",
+    )
+    paths.file_manager.add_named_file(
+        name="food", path="tests/test_resources/named_files/food.csv"
+    )
+    paths.file_manager.add_named_file(
+        name="people", path="tests/test_resources/test.csv"
+    )
+    paths.paths_manager.add_named_paths(
+        name="error_reload",
+        from_file="tests/test_resources/named_paths/error_reload.csvpath",
+    )
+
+
 class TestResultReaders(unittest.TestCase):
     def test_result_readers(self):
         f = ResultReadersFacade(None)
@@ -17,14 +39,8 @@ class TestResultReaders(unittest.TestCase):
         assert f.printouts_reader
         assert f.lines_reader
 
-    def test_result_spooler_instance_data_file_path(self):
+    def test_reload_result_spooler_instance_data_file_path(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
-        )
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
 
@@ -49,14 +65,8 @@ class TestResultReaders(unittest.TestCase):
         assert dpath is not None
         assert dpath == cs._instance_data_file_path()
 
-    def test_result_reader_helpers(self):
+    def test_reload_result_reader_helpers(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
-        )
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
 
@@ -82,7 +92,7 @@ class TestResultReaders(unittest.TestCase):
             assert "created" in info
             assert info["created"] is not None
 
-    def test_result_reader_helpers_2(self):
+    def test_reload_result_reader_helpers_2(self):
         p = "tests/test_resources/deleteme"
         if not os.path.exists(p):
             os.makedirs(p)
@@ -106,14 +116,8 @@ class TestResultReaders(unittest.TestCase):
         os.remove(f)
         assert not os.path.exists(f)
 
-    def test_result_file_lines_reader(self):
+    def test_reload_result_file_lines_reader(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
-        )
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
         assert len(results) == 2
@@ -132,14 +136,7 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_errors(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="test", path="tests/test_resources/test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file="tests/test_resources/named_paths/error_reload.csvpath",
-        )
-        paths.collect_paths(pathsname="error_reload", filename="test")
+        paths.collect_paths(pathsname="error_reload", filename="people")
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
         assert len(results) == 1
@@ -164,13 +161,6 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_printouts(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="people", path="tests/test_resources/test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file="tests/test_resources/named_paths/people.csvpaths",
-        )
         paths.collect_paths(pathsname="arrivals", filename="test")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
@@ -198,13 +188,6 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_lines(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="people", path="tests/test_resources/test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file="tests/test_resources/named_paths/people.csvpaths",
-        )
         paths.collect_paths(pathsname="arrivals", filename="test")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
@@ -230,13 +213,6 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_unmatched(self):
         paths = CsvPaths()
-        paths.file_manager.add_named_file(
-            name="people", path="tests/test_resources/test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file="tests/test_resources/named_paths/people.csvpaths",
-        )
         paths.collect_paths(pathsname="arrivals", filename="test")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
