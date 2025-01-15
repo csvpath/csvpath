@@ -16,7 +16,7 @@ from csvpath.util.box import Box
 class S3DataReader(CsvDataReader):
     def load_if(self) -> None:
         if self.source is None:
-            client = Box.STUFF.get("boto_client")
+            client = Box.STUFF.get("boto_s3_client")
             if client is None:
                 client = S3Utils.make_client()
                 """

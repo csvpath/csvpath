@@ -2,11 +2,19 @@ import os
 import boto3
 import uuid
 from botocore.exceptions import ClientError
+from csvpath.util.box import Box
 
 
 class S3Utils:
+    # CLIENT_COUNT = 0
+
     @classmethod
     def make_client(cls):
+        # box = Box()
+        # client = box.get("boto_s3_client")
+        # cls.CLIENT_COUNT += 1
+        # print(f"made s3 client {cls.CLIENT_COUNT}")
+        # if not client:
         import warnings
 
         warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
@@ -15,6 +23,12 @@ class S3Utils:
             aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
         )
         client = session.client("s3")
+        # cls.CLIENT_COUNT += 1
+        # box.add("boto_s3_client", client)
+        #
+        # we aren't closing this client here or cleaning up the box.
+        # we do this in only a few places. dangerous?
+        #
         return client
 
     @classmethod

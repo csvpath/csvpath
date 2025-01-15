@@ -1,6 +1,6 @@
 #
 # just a box to put things in. initial use is
-# sharing a boto3 client under "boto_client".
+# sharing a boto3 client under "boto_s3_client".
 #
 class Box:
     STUFF = {}

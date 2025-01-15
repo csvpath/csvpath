@@ -11,7 +11,7 @@ from csvpath.util.s3.s3_utils import S3Utils
 class S3DataWriter(DataFileWriter):
     def load_if(self) -> None:
         if self.sink is None:
-            client = Box.STUFF.get("boto_client")
+            client = Box.STUFF.get("boto_s3_client")
             if client is None:
                 client = S3Utils.make_client()
                 """
@@ -36,7 +36,7 @@ class S3DataWriter(DataFileWriter):
         as a context manager for this method. for multiple write
         calls to the same file handle use append().
         """
-        client = Box.STUFF.get("boto_client")
+        client = Box.STUFF.get("boto_s3_client")
         if client is None:
             client = S3Utils.make_client()
             """

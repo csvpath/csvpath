@@ -35,12 +35,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_collect_paths_1(self):
         cs = CsvPaths()
         cs.file_manager.set_named_files(FILES)
-        #
-        # this add is duplicative, like most of them. when all is local the
-        # additional work is nothing. when the paths are in s3 or elsewhere
-        # out in the world it is very slow.
-        #
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="food")
         valid = cs.results_manager.is_valid("food")
         assert not valid
