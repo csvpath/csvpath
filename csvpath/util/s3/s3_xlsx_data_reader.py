@@ -23,13 +23,6 @@ class S3XlsxDataReader(XlsxDataReader):
             client = Box.STUFF.get("boto_s3_client")
             if client is None:
                 client = S3Utils.make_client()
-                """
-                session = boto3.Session(
-                    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-                    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-                )
-                client = session.client("s3")
-                """
             try:
                 self.source = open(
                     self._path, "rb", transport_params={"client": client}
