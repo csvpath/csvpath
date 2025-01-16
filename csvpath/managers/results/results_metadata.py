@@ -1,5 +1,4 @@
 from csvpath.managers.metadata import Metadata
-
 from datetime import datetime
 
 

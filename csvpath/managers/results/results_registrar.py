@@ -106,6 +106,9 @@ class ResultsRegistrar(Registrar, Listener):
         m["named_file_last_change"] = mdata.named_file_last_change
         m["named_file_fingerprint"] = mdata.named_file_fingerprint
         m["named_file_fingerprint_on_file"] = mdata.named_file_fingerprint_on_file
+        m["hostname"] = mdata.hostname
+        m["username"] = mdata.username
+        m["ip_address"] = mdata.ip_address
         mp = mdata.manifest_path
         m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
