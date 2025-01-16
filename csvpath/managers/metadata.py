@@ -3,6 +3,8 @@ import os
 from abc import ABC
 from datetime import datetime, timezone
 from dateutil import parser
+import getpass
+import socket
 
 
 class Metadata(ABC):
@@ -18,6 +20,19 @@ class Metadata(ABC):
         self._base_path = None
         self._named_files_root: str = None
         self._named_paths_root: str = None
+        self.username = None
+        try:
+            self.username = getpass.getuser()
+        except Exception:
+            ...
+        self.hostname = None
+        self.ip_address = None
+        try:
+            self.hostname = socket.gethostname()
+            self.ip_address = socket.gethostbyname(self.hostname)
+        except Exception:
+            ...
+
         #
         # find base dir so we can add file:// refs, if needed
         #

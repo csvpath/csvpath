@@ -148,6 +148,16 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._advance_all = 0
         self._current_run_time = None
         self._run_time_str = None
+        #
+        # metrics is for OTLP OpenTelemetry. it should only
+        # be used by the OTLP listener. it is here because
+        # the integration may need a long-lived presence. if
+        # needed, the first OTLP listener will set it up
+        # before spinning up a thread. any other OTLP
+        # listener threads that need to use a long-lived metric
+        # will work with this property.
+        #
+        self.metrics = None
 
     def run_time_str(self, pathsname=None) -> str:
         """adds the stringified current run time to the named-paths

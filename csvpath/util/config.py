@@ -175,10 +175,11 @@ path =
 [listeners]
 # add listener group names to send events to the channel they represent
 groups =
-#slack, marquez, ckan, sftp, sftpplus
+#slack, marquez, ckan, sftp, sftpplus, otlp
 
-# add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
-sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener
+# add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint
+otlp.result = from csvpath.managers.integrations.otlp.otlp_result_listener import OpenTelemetryResultListener
+otlp.results = from csvpath.managers.integrations.otlp.otlp_results_listener import OpenTelemetryResultsListener
 
 # add sftp to the list of groups above to push content and metadata to an SFTP account
 sftp.results = from csvpath.managers.integrations.sftp.sftp_listener import SftpListener
