@@ -1,5 +1,6 @@
 import subprocess
 import os
+import json
 from csvpath import CsvPaths
 
 
@@ -11,21 +12,12 @@ class SftpPlusArrivalHandler:
     def __init__(self, path):
         self.csvpaths = CsvPaths()
         self._path = path
-        self._named_file_name = None
-        self._named_paths_name = None
-        self._run_method = None
+        file_home = path[0, path.rfind(os.sep)]
+        self.named_file_name = file_home[0, file_home.rfind(os.sep)]
 
     @property
     def path(self) -> str:
         return self._path
-
-    @property
-    def run_method(self) -> str:
-        return self.run_method
-
-    @run_method.setter
-    def run_method(self, n: str) -> None:
-        self.run_method = n
 
     @property
     def named_file_name(self) -> str:
@@ -35,14 +27,6 @@ class SftpPlusArrivalHandler:
     def named_file_name(self, n: str) -> None:
         self._named_file_name = n
 
-    @property
-    def named_paths_name(self) -> str:
-        return self._named_paths_name
-
-    @named_paths_name.setter
-    def named_paths_name(self, n: str) -> None:
-        self._named_paths_name = n
-
     def process_arrival(self) -> None:
         #
         # register the file
@@ -50,17 +34,44 @@ class SftpPlusArrivalHandler:
         f = self.named_file_name
         self.csvpaths.file_manager.add_named_file(name=f, path=self.path)
         #
-        # do the run
+        # do work per set of instructions found in the meta dir
         #
-        m = self.run_method
-        p = self.named_paths_name
-        if m is None or self.run_method == "collect_paths":
-            self.csvpaths.collect_paths(filename=f, pathsname=p)
+        p = self.path
+        p = p[0 : p.rfind(os.sep)]
+        meta = os.path.join(p, "meta")
+        #
+        # loop on all files in meta. not expecting meta ever won't
+        # exist. but it could be a possibility if we're only interested
+        # in getting inbound files registered.
+        #
+        if os.path.exists(meta):
+            ms = os.listdir(meta)
+            for m in ms:
+                instructions = os.path.join(meta, m)
+                with open(instructions, "r", encoding="utf-8") as file:
+                    j = json.load(file)
+                    self._process_meta_file(self, j)
+
+    def _process_meta_file(self, meta: dict) -> None:
+        #
+        # do a run
+        #
+        m = meta["method"]
+        p = meta["named_paths_name"]
+        archive = m.get("archive")
+        if archive is not None:
+            self.csvpath.config.add_to_config(
+                "results", "archive", archive, save_load=False
+            )
+        if m is None or m == "collect_paths":
+            self.csvpaths.collect_paths(filename=self.named_file_name, pathsname=p)
         elif m == "fast_forward_paths":
-            self.csvpaths.fast_forward_paths(filename=f, pathsname=p)
+            self.csvpaths.fast_forward_paths(filename=self.named_file_name, pathsname=p)
         elif m == "collect_by_line":
-            self.csvpaths.collect_by_line(filename=f, pathsname=p)
+            self.csvpaths.collect_by_line(filename=self.named_file_name, pathsname=p)
         elif m == "fast_forward_by_line":
-            self.csvpaths.fast_forward_by_line(filename=f, pathsname=p)
+            self.csvpaths.fast_forward_by_line(
+                filename=self.named_file_name, pathsname=p
+            )
         else:
             self.csvpaths.config.error("Run method is incorrect: {m}")

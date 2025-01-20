@@ -1,8 +1,58 @@
 import os
+from os import environ
+from csvpath import CsvPaths
 from csvpath.managers.results.result import Result
+from .config import Config
 
 
 class VarUtility:
+
+    #
+    # finds variables that may be in env vars. does these steps:
+    #  1. if env var name passed check for it
+    #  2. if None, look in config.ini
+    #  3. if None, return default
+    #  4. if value found is not isupper return value
+    #  5. if value found isupper, check env
+    #  6. if env is None, return the uppercase value
+    #  7. return the env value
+    #
+    @classmethod
+    def get(
+        cls,
+        *,
+        section: str = None,
+        name: str = None,
+        env: str = None,
+        default=None,
+        config: Config = None,
+    ) -> str:
+        v = None
+        if env:
+            v = environ.get(env)
+        if v is not None:
+            return v
+        # check config
+        if section and name:
+            if config is None:
+                config = CsvPaths().config
+            v = config.get(section=section, name=name)
+        elif section or name:
+            if config is None:
+                config = CsvPaths().config
+            config.logger.warn(
+                "Get var with section or name but not both will not work: %s, %s",
+                section,
+                name,
+            )
+        # config val or None
+        if v is None:
+            return default
+        v2 = None
+        if cls.isupper(v):
+            v2 = environ.get(env)
+        return v if v2 is None else v2
+
     @classmethod
     def isupper(cls, s: str) -> bool:
         if s is None:

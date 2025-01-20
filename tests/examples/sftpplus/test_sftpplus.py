@@ -4,9 +4,40 @@ import time
 import paramiko
 import stat
 from csvpath import CsvPaths
+from csvpath.managers.integrations.sftpplus.transfer_creator import (
+    SftpPlusTransferCreator,
+)
 
 
 class TestSftpPlus(unittest.TestCase):
+    def test_sftpplus_parse_config(self):
+        config1 = None
+        with open(
+            "tests/test_resources/sftpplus_server_1.ini", "r", encoding="utf-8"
+        ) as file:
+            config1 = file.read()
+        config2 = None
+        with open(
+            "tests/test_resources/sftpplus_server_2.ini", "r", encoding="utf-8"
+        ) as file:
+            config2 = file.read()
+
+        existing_uuid = "7d7c2aeb-31c6-4baf-8357-6ffd80c04b21"
+        yes_uuid = "7d7c2aeb-31c6-4baf-8357-6ffd80cxxxxx"
+        no_uuid = "aaaaaaeb-31c6-4baf-8357-6ffd80c04b21"
+        msg = {"uuid": no_uuid}
+        tuuid = SftpPlusTransferCreator._find_existing_transfer_in_config_string(
+            msg, config1
+        )
+        print(f"tuuid: {type(tuuid)}")
+        assert tuuid is None
+        msg = {"uuid": yes_uuid}
+        tuuid = SftpPlusTransferCreator._find_existing_transfer_in_config_string(
+            msg, config2
+        )
+        assert tuuid is not None
+        assert tuuid == existing_uuid
+
     def test_sftpplus_basic(self):
         if not self._check_for_server():
             return
