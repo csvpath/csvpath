@@ -23,10 +23,7 @@ class Transfers:
             raise ValueError("Name cannot be None")
         result = self.rpc.send("get_index")
         transfers = result["configuration"]["transfers"]
-        print(f">>>>>> transfers: {transfers}")
         for k, v in transfers.items():
-            print(f"  >>>>>> k: {k}")
-            print(f"  >>>>>> v: {v}")
             if v.get("name") == name:
                 return k
         return None

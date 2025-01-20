@@ -86,7 +86,6 @@ class Rpc:
             message = error.get("message", "No error details.")
             raise RpcException("%s: %s" % (error_id, message))
         try:
-            print(f"results: {results}")
             if self._rpc_id in results:
                 ret = results[self._rpc_id]["result"]
             else:

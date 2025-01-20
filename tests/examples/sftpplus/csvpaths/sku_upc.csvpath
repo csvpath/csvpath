@@ -8,8 +8,8 @@
   sftpplus-active: yes
   sftpplus-named-file-name: orders
   sftpplus-run-method: collect_paths
-  sftpplus-account-name: tin_penny_toys
-
+  sftpplus-account-name: tinpenny
+  sftpplus-execute-timeout: 600
 ~
 $[*][
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())

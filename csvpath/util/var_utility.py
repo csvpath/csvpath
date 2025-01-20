@@ -50,7 +50,7 @@ class VarUtility:
             return default
         v2 = None
         if cls.isupper(v):
-            v2 = environ.get(env)
+            v2 = environ.get(v)
         return v if v2 is None else v2
 
     @classmethod

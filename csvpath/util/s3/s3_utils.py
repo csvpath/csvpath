@@ -37,7 +37,6 @@ class S3Utils:
                 action="ignore", message=r"datetime.datetime.utcnow"
             )
             client.head_object(Bucket=bucket, Key=key)
-
         except ClientError as e:
             assert str(e).find("404") > -1
             return False
