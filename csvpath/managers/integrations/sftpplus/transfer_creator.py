@@ -81,7 +81,7 @@ class SftpPlusTransferCreator:
 
     @property
     def _get_transfer_uuid(self) -> bool:
-        return Transfers().transfer_uuid_for_name(self._transfer_name(self.message))
+        return Transfers().transfer_uuid_for_name(self._transfer_name)
 
     @property
     def _transfer_name(self) -> str:
@@ -101,10 +101,15 @@ class SftpPlusTransferCreator:
     @property
     def _paths(self) -> dict:
         msg = self.message
+
+        print(f"\n _paths: msg path: {self.message_path}\n")
+        base = self.message_path[0 : self.message_path.rfind(os.sep)]
+        print(f"\n _paths: base1: {base}\n")
+        base = base[0 : base.rfind(os.sep)]
+        print(f"\n _paths: base2: {base}\n")
+
         account_name = msg["account_name"]
         named_file_name = msg["named_file_name"]
-        base = self.message_path[0 : self.message_path.rfind(os.sep)]
-        base = base[0 : self.message_path.rfind(os.sep)]
         account_dir = os.path.join(base, account_name)
         nfn = os.path.join(account_dir, named_file_name)
         handled = os.path.join(nfn, "handled")
@@ -188,14 +193,14 @@ class SftpPlusTransferCreator:
         #
         ts = Transfers()
         values = {
-            "name": self._transfer_name(msg),
+            "name": self._transfer_name,
             "enabled": VarUtility.is_true(msg["active"]),
             "execute_before": self._execute_before_script,
             "source_path": msg["source"],
             "destination_path": msg["destination"],
             "description": msg["uuid"],
         }
-        ts.create_transfer(self, values["name"], values)
+        ts.create_transfer(values["name"], values)
 
     def _update_existing_transfer(self, tuuid: str) -> None:
         msg = self.message

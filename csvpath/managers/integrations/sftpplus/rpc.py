@@ -27,11 +27,12 @@ class Rpc:
             section="sftpplus",
             name="api_url",
             default="https://localhost:10020/json",
-            config=self._config,
+            config=self.csvpaths.config,
         )
-        result = self._rpc("login", username=self.username, password=self.password)
+        result = self.send("login", username=self.username, password=self.password)
         self._session_id = result["session_id"]
 
+    @property
     def username(self) -> str:
         if self._username is None:
             self._username = VarUtility.get(
@@ -39,6 +40,7 @@ class Rpc:
             )
         return self._username
 
+    @property
     def password(self) -> str:
         if self._password is None:
             self._password = VarUtility.get(
@@ -84,7 +86,11 @@ class Rpc:
             message = error.get("message", "No error details.")
             raise RpcException("%s: %s" % (error_id, message))
         try:
-            ret = results[self._rpc_id]["result"]
+            print(f"results: {results}")
+            if self._rpc_id in results:
+                ret = results[self._rpc_id]["result"]
+            else:
+                ret = results["result"]
         except KeyError as e:
             raise RpcException('Invalid response: no "result" key') from e
         return ret
