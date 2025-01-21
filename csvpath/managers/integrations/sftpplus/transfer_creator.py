@@ -81,7 +81,7 @@ class SftpPlusTransferCreator:
 
     @property
     def _get_transfer_uuid(self) -> bool:
-        return Transfers().transfer_uuid_for_name(self._transfer_name(self.message))
+        return Transfers().transfer_uuid_for_name(self._transfer_name)
 
     @property
     def _transfer_name(self) -> str:
@@ -95,34 +95,32 @@ class SftpPlusTransferCreator:
     def _execute_before_script(self) -> str:
         scripts = self.csvpaths.config.get(section="sftpplus", name="scripts_dir")
         path = f"{scripts}{os.sep}{SftpPlusTransferCreator.HANDLE_AUTO_ARRIVAL}.sh"
-        print(f"_execute_before_script: path: {path}")
         return path
 
     @property
     def _paths(self) -> dict:
         msg = self.message
+        base = self.message_path[0 : self.message_path.rfind(os.sep)]
+        base = base[0 : base.rfind(os.sep)]
         account_name = msg["account_name"]
         named_file_name = msg["named_file_name"]
-        base = self.message_path[0 : self.message_path.rfind(os.sep)]
-        base = base[0 : self.message_path.rfind(os.sep)]
         account_dir = os.path.join(base, account_name)
         nfn = os.path.join(account_dir, named_file_name)
         handled = os.path.join(nfn, "handled")
         meta = os.path.join(nfn, "meta")
-        return {
+        paths = {
             "meta": meta,
             "handled": handled,
             "named-file": nfn,
             "account": account_dir,
         }
+        print(f"transctr: _paths: paths: {paths}")
+        return paths
 
     @property
     def message(self) -> dict:
         if self._msg is None:
             msg = None
-            print(
-                f"TransferCreator.process_msg: transcrt._get_msg: cwd: {os.getcwd()}, mp: {self.message_path}"
-            )
             with open(self.message_path, "r", encoding="utf-8") as file:
                 msg = json.load(file)
             if "account_name" not in msg:
@@ -145,6 +143,11 @@ class SftpPlusTransferCreator:
                 raise ValueError(
                     f"Method must be present in transfer setup message: {msg}"
                 )
+            if "execute_timeout" not in msg:
+                eto = self.csvpath.config.get(
+                    section="sftpplus", name="execute_timeout", default=300
+                )
+                msg["execute_timeout"] = eto
             self._msg = msg
         return self._msg
 
@@ -169,14 +172,24 @@ class SftpPlusTransferCreator:
             self._update_existing_transfer(uuid)
 
     def _create_new_transfer(self) -> str:
+        print("_create_new_transfer: starting to create a transfer")
         msg = self.message
         #
         # make the dirs the transfer needs. the account dir must already exist
         #
         paths = self._paths
-        os.mkdir(paths["named-file"])
-        os.mkdir(paths["handled"])
-        os.mkdir(paths["meta"])
+        nfn = paths["named-file"]
+        os.mkdir(nfn)
+        print(f"_create_new_transfer: created: {nfn}")
+
+        handled = paths["handled"]
+        os.mkdir(handled)
+        print(f"_create_new_transfer: created: {handled}")
+
+        meta = paths["meta"]
+        os.mkdir(meta)
+        print(f"_create_new_transfer: created: {meta}")
+
         msg["source"] = paths["named-file"]
         msg["destination"] = paths["handled"]
         #
@@ -188,22 +201,29 @@ class SftpPlusTransferCreator:
         #
         ts = Transfers()
         values = {
-            "name": self._transfer_name(msg),
-            "enabled": VarUtility.is_true(msg["active"]),
+            "name": self._transfer_name,
             "execute_before": self._execute_before_script,
+            "enabled": VarUtility.is_true(msg["active"]),
             "source_path": msg["source"],
             "destination_path": msg["destination"],
             "description": msg["uuid"],
+            "execute_timeout": msg["execute_timeout"],
+            "delete_source_on_success": True,
+            "recursive": False,
+            "overwrite_rule": "overwrite",
         }
-        ts.create_transfer(self, values["name"], values)
+        ts.create_transfer(values["name"], values)
 
     def _update_existing_transfer(self, tuuid: str) -> None:
+        print(f"_update_existing_transfer: tuuid: {tuuid}")
         msg = self.message
         ts = Transfers()
         active = msg.get("active")
         if active == "delete":
+            print(f"_update_existing_transfer: deleting tuuid: {tuuid}")
             ts.delete_transfer(uuid=tuuid)
         else:
+            print(f"_update_existing_transfer: updating tuuid: {tuuid}")
             ts.update_transfer(
                 uuid=tuuid, update="enabled", value=VarUtility.is_true(msg["active"])
             )
