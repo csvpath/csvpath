@@ -93,23 +93,3 @@ class Rpc:
         except KeyError as e:
             raise RpcException('Invalid response: no "result" key') from e
         return ret
-
-
-"""
-if __name__ == "__main__":
-    rpc = Rpc()
-    print(f"session: {rpc2._session_id}")
-
-    #args = {'0': {'operation': 'create', 'path': 'transfers/', 'value': {'name': 'shiny4', 'enabled': False}}}
-    args = { '0': { 'operation': 'create', 'path': 'transfers/',
-                'value': {
-                    'name': 'shiny5',
-                    'enabled': False,
-                    'execute_before': 'do-first.py',
-                    'source_path': 'from-here',
-                    'destination_path': 'to-there'
-            } } }
-
-    response = rpc.send("apply", changes=args)
-    print(f"respose: {response['results']['0']['result']}")
-"""
