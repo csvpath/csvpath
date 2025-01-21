@@ -25,7 +25,21 @@ class TestSftpPlus(unittest.TestCase):
         paths.paths_manager.add_named_paths_from_dir(
             name="sftpplus", directory="tests/examples/sftpplus/csvpaths"
         )
-        # self._check_arrival( [""] )
+        #
+        # no way to determine automatically if this succeeds yet
+        #
+
+    def test_sftpplus_drop_file(self):
+        if not self._check_for_server():
+            return
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect("localhost", 10022, "tinpenny", "tinpenny")
+        sftp = client.open_sftp()
+        sftp.put("tests/examples/sftpplus/csvs/March-2024.csv", "orders/March-2024.csv")
+        #
+        # no way to determine automatically if this succeeds yet
+        #
 
     def test_sftpplus_basic(self):
         if not self._check_for_server():

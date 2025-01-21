@@ -12,8 +12,11 @@ class SftpPlusArrivalHandler:
     def __init__(self, path):
         self.csvpaths = CsvPaths()
         self._path = path
-        file_home = path[0, path.rfind(os.sep)]
-        self.named_file_name = file_home[0, file_home.rfind(os.sep)]
+        file_home = path[0 : path.rfind(os.sep)]
+        self.named_file_name = file_home[file_home.rfind(os.sep) + 1 :]
+        print(
+            f"Handler: init: file_home: {file_home}, named_file_name: {self.named_file_name}"
+        )
 
     @property
     def path(self) -> str:
@@ -32,6 +35,7 @@ class SftpPlusArrivalHandler:
         # register the file
         #
         f = self.named_file_name
+        print(f"Handler: process_arrival: name: {f}, path: {self.path}")
         self.csvpaths.file_manager.add_named_file(name=f, path=self.path)
         #
         # do work per set of instructions found in the meta dir
@@ -48,9 +52,14 @@ class SftpPlusArrivalHandler:
             ms = os.listdir(meta)
             for m in ms:
                 instructions = os.path.join(meta, m)
-                with open(instructions, "r", encoding="utf-8") as file:
-                    j = json.load(file)
-                    self._process_meta_file(self, j)
+                print(f"process_arrival: found instructions at: {instructions}")
+                try:
+                    with open(instructions, "r", encoding="utf-8") as file:
+                        j = json.load(file)
+                        self._process_meta_file(j)
+                except Exception as e:
+                    self.csvpaths.logger.error(e)
+                    print(f"Error: {e}")
 
     def _process_meta_file(self, meta: dict) -> None:
         #
@@ -58,11 +67,14 @@ class SftpPlusArrivalHandler:
         #
         m = meta["method"]
         p = meta["named_paths_name"]
-        archive = m.get("archive")
+        archive = meta.get("archive")
         if archive is not None:
             self.csvpath.config.add_to_config(
                 "results", "archive", archive, save_load=False
             )
+        print(
+            f"_process_meta_file: method: {m}, named_paths_name: {p}, archive: {archive}"
+        )
         if m is None or m == "collect_paths":
             self.csvpaths.collect_paths(filename=self.named_file_name, pathsname=p)
         elif m == "fast_forward_paths":
