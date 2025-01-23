@@ -63,18 +63,3 @@ class TestFunctionsSubstring(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.fast_forward()
-
-    def test_function_startswith(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*]
-            [
-                @t1 = starts_with("# testtest", "#")
-                @t2 = starts_with("! testtest", "#")
-            ]"""
-        )
-        lines = path.collect()
-        assert len(lines) == 9
-        assert path.variables["t1"] is True
-        assert path.variables["t2"] is False

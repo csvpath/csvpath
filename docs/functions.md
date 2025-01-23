@@ -216,6 +216,7 @@ There are lots more simple examples on the individual function pages.
 <tr><th>Function   <a name="strings">  </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>concat(value, value, ...)</a> </td><td> Joins any number of values.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/contains.md'>contains(value, value)</a> </td><td> True if the second string is contained in the first.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>ends_with(value, value)</a>   </td><td> Checks if the first value ends with the second. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>exact(regex-string, value)</a> </td><td> Exact match on a regular expression. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/contains.md'>find(value, value)</a> </td><td> Returns the index of the second string within the first.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>length(value)</a>             </td><td> Returns the length of the value.   </td></tr>

@@ -348,7 +348,7 @@ class FunctionFactory:
             f = Subtotal(matcher, name, child)
         elif name == "reset_headers":
             f = ResetHeaders(matcher, name, child)
-        elif name == "starts_with":
+        elif name in ["starts_with", "startswith", "ends_with", "endswith"]:
             f = StartsWith(matcher, name, child)
         elif name in ["skip", "take"]:
             f = Skip(matcher, name, child)

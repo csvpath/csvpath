@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
+from csvpath.matching.util.exceptions import ChildrenException
 from ..function import Function
 from ..args import Args
 
@@ -11,17 +12,38 @@ class StartsWith(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING, None],
+        )
+        a.arg(
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str, self.args.EMPTY_STRING, None],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         v = self.children[0].left.to_value(skip=skip)
+        if v is None:
+            self.value = False
+            return
         v = f"{v}".strip()
         sw = self.children[0].right.to_value(skip=skip)
+        if sw is None:
+            self.value = False
+            return
         sw = f"{sw}".strip()
-        self.value = v.startswith(sw)
+        if sw == "":
+            self.value = False
+            return
+
+        if self.name in ["startswith", "starts_with"]:
+            self.value = v.startswith(sw)
+        elif self.name in ["endswith", "ends_with"]:
+            self.value = v.endswith(sw)
+        else:
+            raise ChildrenException(f"Unknown function name: {self.name}")
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
