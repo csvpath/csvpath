@@ -152,6 +152,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> Stops scanning lines if a condition is met. </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>take(value)</a> </td><td> Skips to the next line scanned if a condition is met. Matches, or "takes", the line it skips out of. </td>
 
+
 </table>
 
 

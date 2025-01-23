@@ -25,6 +25,7 @@ Skip is different from `advance()` in that `advance()` allows the line to comple
 
 ## Side Effects
 
+
 Both `skip()` and `stop()` prevent side effects that would be triggered by match components after them. Match component order is important. The components always activate in the same left to right, top to bottom order. When `skip()` or `stop()` match, no more components run.
 
 For e.g. imagine you have a `skip()` in front of a `print()`. If the skip matches, the `print()` will not happen. If the `print()` were before the `skip()` it would happen, regardless of `skip()`.
