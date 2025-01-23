@@ -1,5 +1,5 @@
 
-# Stop and Skip
+# Stop, Skip, and Take
 
 ## Stop
 `stop()` stops the scan immediately when:
@@ -18,6 +18,10 @@ Also see the validation functions, including `fail_and_stop()`.
 `skip()` also stops matching, but only for a single line. When `skip()` is activated no later match components are considered and the line does not match overall. The next line in the CSV file begins its matching immediately.
 
 Skip is different from `advance()` in that `advance()` allows the line to complete; whereas, when it is seen, `skip()` immediately stops matching on the current row and moves to the next one.
+
+## Take
+
+`take()` is the same as `skip()` with the exception that it matches the line it is skipping out of. Skip does not match the line it breaks out of.
 
 ## Side Effects
 

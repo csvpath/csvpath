@@ -125,8 +125,47 @@ class SftpPlusListener(Listener, threading.Thread):
 
     def _metadata_update(self) -> None:
         self._collect_fields()
+        if not self._has_fields_needed():
+            self.csvpaths.logger.info(
+                "SftpPlus listener does not have the fields needed to create a transfer for this named-paths"
+            )
+            return
         msg = self._create_instructions()
         self._send_message(msg)
+
+    def _has_fields_needed(self) -> bool:
+        self.csvpaths.logger.debug("SftpPlus listener fields: server: %s", self._server)
+        self.csvpaths.logger.debug("SftpPlus listener fields: port: %s", self._port)
+        self.csvpaths.logger.debug(
+            "SftpPlus listener fields: mailbox_user: %s", self._mailbox_user
+        )
+        self.csvpaths.logger.debug(
+            "SftpPlus listener fields: mailbox_password: %s", self._mailbox_password
+        )
+        self.csvpaths.logger.debug(
+            "SftpPlus listener fields: named_file_name: %s", self._named_file_name
+        )
+        self.csvpaths.logger.debug(
+            "SftpPlus listener fields: account_name: %s", self._account_name
+        )
+        self.csvpaths.logger.debug(
+            "SftpPlus listener fields: run_method: %s", self._run_method
+        )
+        if self._server is None:
+            return False
+        if self._port is None:
+            return False
+        if self._mailbox_user is None:
+            return False
+        if self._mailbox_password is None:
+            return False
+        if self._named_file_name is None:
+            return False
+        if self._account_name is None:
+            return False
+        if self._run_method is None:
+            return False
+        return True
 
     def _send_message(self, msg: dict) -> None:
         #
@@ -138,9 +177,6 @@ class SftpPlusListener(Listener, threading.Thread):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             try:
-                print(
-                    f"sftpplus-list: server: {self._server}, port: {self._port}, user: {self._mailbox_user}, passwd: {self._mailbox_password}"
-                )
                 client.connect(
                     self._server, self._port, self._mailbox_user, self._mailbox_password
                 )
@@ -159,7 +195,6 @@ class SftpPlusListener(Listener, threading.Thread):
                 # interfere with ourselves.
                 #
                 remote_path = f"{self._account_name}-{msg['named_file_name']}-{msg['named_paths_name']}.json"
-                print(f"Putting {file} to {remote_path}")
                 self.csvpaths.logger.info("Putting %s to %s", file, remote_path)
                 sftp.putfo(file, remote_path)
                 sftp.close()

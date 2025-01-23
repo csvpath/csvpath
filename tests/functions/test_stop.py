@@ -87,3 +87,30 @@ class TestFunctionStop(unittest.TestCase):
         assert path.variables["i"] == "FishBat"
         assert path.variables["c"] == 3
         assert len(lines) == 3
+
+    def test_function_take_1(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[*] [
+                push("first_plus_header", #firstname)
+                firstscan.nocontrib() -> take()
+                push("firstname", #firstname)
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+        #
+        # if True, we skipped correctly
+        #
+        assert len(path.variables["firstname"]) == 8
+        assert path.variables["firstname"][0] == "David"
+        #
+        # if True, we grabbed before we skipped
+        #
+        assert len(path.variables["first_plus_header"]) == 9
+        assert path.variables["first_plus_header"][0] == "firstname"
+        #
+        # if True, we correctly actually did a take() rather than a skip()
+        #
+        assert lines[0][0] == "firstname"

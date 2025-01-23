@@ -78,6 +78,8 @@ class Skipper(SideEffect):
             b = self.children[0].matches(skip=skip)
             if b is True:
                 self.matcher.skip = True
+                if self.name == "take":
+                    self.matcher.take = True
                 if self.once:
                     self._set_has_happened()
                 pln = self.matcher.csvpath.line_monitor.physical_line_number
@@ -86,6 +88,8 @@ class Skipper(SideEffect):
                 )
         else:
             self.matcher.skip = True
+            if self.name == "take":
+                self.matcher.take = True
             if self.once:
                 self._set_has_happened()
             pln = self.matcher.csvpath.line_monitor.physical_line_number

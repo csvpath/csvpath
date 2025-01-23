@@ -16,11 +16,15 @@ class Regex(MatchDecider):
         a = self.args.argset(3)
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, self.args.EMPTY_STRING],
+            actuals=[str, self.args.EMPTY_STRING, None],
         )
+        #
+        # because we accept the regex in 0 or 1 we have to accept None
+        # as an actual value in both.
+        #
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, self.args.EMPTY_STRING],
+            actuals=[str, self.args.EMPTY_STRING, None],
         )
         a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[int])
         self.args.validate(self.siblings())

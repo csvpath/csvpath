@@ -150,6 +150,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/first.md'>first(value, value, ...)</a> </td><td> Matches the first occurrence and captures the line number.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>skip(value)</a> </td><td> Skips to the next line scanned if a condition is met.   </td>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>stop(value)</a> </td><td> Stops scanning lines if a condition is met. </td>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/stop.md'>take(value)</a> </td><td> Skips to the next line scanned if a condition is met. Matches, or "takes", the line it skips out of. </td>
 
 </table>
 
@@ -213,7 +214,9 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function   <a name="strings">  </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>concat(value, value, ...)</a> </td><td> Joins any number of values.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/contains.md'>contains(value, value)</a> </td><td> True if the second string is contained in the first.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/regex.md'>exact(regex-string, value)</a> </td><td> Exact match on a regular expression. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/contains.md'>find(value, value)</a> </td><td> Returns the index of the second string within the first.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>length(value)</a>             </td><td> Returns the length of the value.   </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>lower(value)</a>              </td><td> Makes a value lowercase. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>max_length(value)</a>  </td><td> Returns the length of the value.  </td></tr>

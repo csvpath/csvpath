@@ -1,0 +1,16 @@
+UsageClass,CheckoutType,MaterialType,CheckoutYear,CheckoutMonth,Checkouts,True,ISBN,Creator,Subjects,Publisher,PublicationYear
+Physical,Horizon,BOOK,2019,2,20,True,,"Scharer, Whitney","Miller Lee 1907 1977 Fiction, Man Ray 1890 1976 Fiction, Models Persons Fiction, War photographers Fiction, World War 1939 1945 Fiction, Biographical fiction, Historical fiction","Little, Brown and Company,",2019
+Digital,OverDrive,EBOOK,2019,2,14,True,,Whitney Scharer,"Fiction, Historical Fiction, Literature","Hachette Digital, Inc.",2019
+Digital,OverDrive,AUDIOBOOK,2019,3,8,True,,Whitney Scharer,"Fiction, Historical Fiction, Literature","Blackstone Audio, Inc.",2019
+Physical,Horizon,SOUNDDISC,2019,3,3,True,,"Scharer, Whitney","Miller Lee 1907 1977 Fiction, Man Ray 1890 1976 Fiction, Models Persons Fiction, Photographers Fiction, Man woman relationships Fiction, Career changes Fiction, Apprentices Fiction, Paris France Fiction, World War 1939 1945 Europe Fiction, Historical fiction, Romance fiction, Audiobooks","Hachette Audio,",[2019]
+Digital,OverDrive,EBOOK,2021,9,2,True,,Benjamin Labatut,"Fiction, Literature, Historical Fiction","Random House, Inc.",2021
+Physical,Horizon,BOOK,2021,10,7,True,,"Labatut, Benjamín, 1980-","Labatut Benjam¡n 1980 Translations into English, Scientists Fiction, Short stories","New York Review Books,",[2021]
+Digital,OverDrive,AUDIOBOOK,2021,10,4,True,,Benjamin Labatut,"Fiction, Historical Fiction","Dreamscape Media, LLC",2021
+Physical,Horizon,BOOK,2021,11,6,True,,"Labatut, Benjamín, 1980-","Labatut Benjam¡n 1980 Translations into English, Scientists Fiction, Short stories","New York Review Books,",[2021]
+Digital,OverDrive,EBOOK,2021,11,9,True,,Benjamin Labatut,"Fiction, Literature, Historical Fiction","Random House, Inc.",2021
+Physical,Horizon,SOUNDDISC,2021,12,3,True,,"Labatut, Benjamín, 1980-","Scientists Fiction, Short stories, Audiobooks","Dreamscape Media, LLC,",[2021]
+Physical,Horizon,BOOK,2022,5,8,True,"0593459415, 9780593459416","Shipstead, Maggie","Rescues Fiction, Women air pilots Fiction, Disappeared persons Fiction, Actresses Fiction, Life change events Fiction, Biographical films Fiction, Missing persons Fiction, Self actualization Psychology in women Fiction, Large type books, Historical fiction, Action and adventure fiction","Random House Large Print,",[2021]
+Digital,OverDrive,EBOOK,2023,9,142,True,9.78059E+12,Hernan Diaz,"Fiction, Literature, Historical Fiction","Penguin Group (USA), Inc.",2022
+Digital,OverDrive,EBOOK,2023,10,154,True,9.78059E+12,Hernan Diaz,"Fiction, Literature, Historical Fiction","Penguin Group (USA), Inc.",2022
+Digital,OverDrive,AUDIOBOOK,2023,3,112,True,9.78059E+12,Hernan Diaz,"Fiction, Literature, Historical Fiction",Books on Tape,2022
+Physical,Horizon,BOOK,2022,5,10,True,"0593420314, 0593541545, 9780593420317, 9780593420331, 9780593541548","Díaz, Hernán, 1973-","Rich people Fiction, Financial services industry Fiction, Truthfulness and falsehood Fiction, Mental illness Fiction, New York N Y History 1898 1951 Fiction, Historical fiction","Riverhead Books,",2022

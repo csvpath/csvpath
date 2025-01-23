@@ -1,0 +1,29 @@
+{
+  "time": "2025-01-22T20:37:32.041197+00:00",
+  "uuid": "35826a16-f2ad-4f79-8b41-516cca09beae",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "title_fix",
+  "named_paths_uuid": "1e862906-dc08-4a93-8d8b-92b9df640eae",
+  "run": "2025-01-22_08-37-32",
+  "run_home": "archive/title_fix/2025-01-22_08-37-32",
+  "instance_identity": "title fix",
+  "instance_index": "0",
+  "instance_home": "archive/title_fix/2025-01-22_08-37-32/title fix",
+  "file_fingerprints": {
+    "data.csv": "bda09b3c0bb49b3231d40458a23f1c5d3301ebe7bcb075b3088df9b05b3892ca",
+    "meta.json": "2f0b55d9a8b1c6847774e08b1d43ee35f179c9f72d922e5e93c9b288a7e4d16e",
+    "printouts.txt": "749b16a3a5359ee99ffd9932eb9e726541cc75aac46d0104372e2b432e5b0966",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "e5a002133f6f203b74079f9a791341ec7d0e88ef86bba535a6e45c6c0455ab35"
+  },
+  "files_expected": true,
+  "file_count": 5,
+  "valid": true,
+  "completed": true,
+  "source_mode_preceding": false,
+  "actual_data_file": "inputs/named_files/title_fix/checkouts.csv/0dbb2b9713634cda4a0ec3bf69fadb3486ad706bad62eb8c00638515b9d2481d.csv",
+  "origin_data_file": "inputs/named_files/title_fix/checkouts.csv/0dbb2b9713634cda4a0ec3bf69fadb3486ad706bad62eb8c00638515b9d2481d.csv",
+  "named_file_name": "title_fix",
+  "manifest_path": "archive/title_fix/2025-01-22_08-37-32/title fix/manifest.json"
+}

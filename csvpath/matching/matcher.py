@@ -78,7 +78,18 @@ class Matcher:  # pylint: disable=R0902
         self._id = f"{myid}"
         self.expressions = []
         self.if_all_match = []
+        #
+        # skip shortcircuts the match and results in the line not matching
+        # and potentially other match components being unconsidered (the general
+        # intent; though not always the case).
+        #
+        # take is the same as skip, but matching the row. e.g. we might want to
+        # scan a 0th line to collect the headers but no more than that. take()
+        # let's us grab the line and not have to deflect the rest of the match
+        # components.
+        #
         self.skip = False
+        self.take = False
         self.cachers = []
         self._explain = []
         self._AND = True  # pylint: disable=C0103
@@ -308,7 +319,11 @@ class Matcher:  # pylint: disable=R0902
                 self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
                 self.clear_errors()
-                return False
+                if self.take is True:
+                    self.take = False
+                    return True
+                else:
+                    return False
             #
             # from here down we care what the expression tells us.
             # we can require concordance or we can allow executive

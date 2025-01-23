@@ -163,6 +163,8 @@ class VarUtility:
         v = VarUtility.get_value(mdata, variables, directive)
         v = f"{v}"
         v = v.strip()
+        if v == "None":
+            return None
         return v
 
     @classmethod

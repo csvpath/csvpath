@@ -4,6 +4,7 @@ from .function import Function
 from .function_finder import FunctionFinder
 from .dates.now import Now
 from .strings.lower import Lower
+from .strings.contains import Contains
 from .strings.upper import Upper
 from .strings.substring import Substring
 from .strings.starts_with import StartsWith
@@ -176,6 +177,8 @@ class FunctionFactory:
             f = In(matcher, name, child)
         elif name == "concat":
             f = Concat(matcher, name, child)
+        elif name in ["contains", "find"]:
+            f = Contains(matcher, name, child)
         elif name == "lower":
             f = Lower(matcher, name, child)
         elif name == "upper":
@@ -347,7 +350,7 @@ class FunctionFactory:
             f = ResetHeaders(matcher, name, child)
         elif name == "starts_with":
             f = StartsWith(matcher, name, child)
-        elif name == "skip":
+        elif name in ["skip", "take"]:
             f = Skip(matcher, name, child)
         elif name == "skip_all":
             f = SkipAll(matcher, name, child)

@@ -1,0 +1,7 @@
+~ id: title fix
+~
+$[*][
+    @title = regex(/([^\/]*)\/(.*)/, #Title, 1 )
+    @title.nocontrib -> replace( "Title", @title )
+]
+

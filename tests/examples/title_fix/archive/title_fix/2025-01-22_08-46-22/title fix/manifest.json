@@ -1,0 +1,28 @@
+{
+  "time": "2025-01-22T20:46:22.535951+00:00",
+  "uuid": "d7e4a9c5-82e3-4a63-af2e-dfa10d6467b7",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "title_fix",
+  "named_paths_uuid": "381387b0-655c-4b77-a4b1-674d4124702b",
+  "run": "2025-01-22_08-46-22",
+  "run_home": "archive/title_fix/2025-01-22_08-46-22",
+  "instance_identity": "title fix",
+  "instance_index": "0",
+  "instance_home": "archive/title_fix/2025-01-22_08-46-22/title fix",
+  "file_fingerprints": {
+    "data.csv": "e5aa2b11f87cdf06f34e4234110612043c0572a7f4751838cf566b7b4acf8d00",
+    "meta.json": "ba1736321a8e8d218404b1626b472fb8d7bcad1ad83b4629f3fc34ca4440a051",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "b0f26e9b331ffe685db7d6c7389cbf9e3a2341bb88389abe6220a101cd746894"
+  },
+  "files_expected": true,
+  "file_count": 4,
+  "valid": true,
+  "completed": true,
+  "source_mode_preceding": false,
+  "actual_data_file": "inputs/named_files/title_fix/checkouts.csv/0dbb2b9713634cda4a0ec3bf69fadb3486ad706bad62eb8c00638515b9d2481d.csv",
+  "origin_data_file": "inputs/named_files/title_fix/checkouts.csv/0dbb2b9713634cda4a0ec3bf69fadb3486ad706bad62eb8c00638515b9d2481d.csv",
+  "named_file_name": "title_fix",
+  "manifest_path": "archive/title_fix/2025-01-22_08-46-22/title fix/manifest.json"
+}

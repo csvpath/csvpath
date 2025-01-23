@@ -139,7 +139,6 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.skip_blank_lines = skip_blank_lines
         self.current_matcher: CsvPath = None
         self.logger = LogUtility.logger(self)
-        self.logger.info("initialized CsvPaths")
         self._errors = []
         # coordinator attributes
         self._stop_all = False
@@ -158,6 +157,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # will work with this property.
         #
         self.metrics = None
+        self.logger.info("initialized CsvPaths")
 
     def run_time_str(self, pathsname=None) -> str:
         """adds the stringified current run time to the named-paths
@@ -187,6 +187,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._skip_all = False
         self._advance_all = 0
         self._current_run_time = None
+        self._run_time_str = None
         self.logger.debug("Cleared run coordination")
 
     def csvpath(self) -> CsvPath:
@@ -237,6 +238,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         """at this time we do not recommend reusing CsvPaths, but it is doable
         you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
+        self.clear_run_coordination()
 
     def collect_paths(self, *, pathsname, filename) -> None:
         paths = self.paths_manager.get_named_paths(pathsname)
