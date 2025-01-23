@@ -88,6 +88,7 @@ from .types.nonef import Nonef, Blank, Wildcard
 from .types.decimal import Decimal
 from .types.boolean import Boolean
 from .types.datef import Date
+from .types.email import Email
 from .types.string import String
 
 
@@ -344,6 +345,8 @@ class FunctionFactory:
             f = Track(matcher, name, child)
         elif name == "sum":
             f = Sum(matcher, name, child)
+        elif name == "email":
+            f = Email(matcher, name, child)
         elif name == "subtotal":
             f = Subtotal(matcher, name, child)
         elif name == "reset_headers":

@@ -248,6 +248,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td>boolean(value)</td><td> A boolean value  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>email(value)</a>    </td><td> A string as an email. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>float(value)</a>    </td><td> A number as a float. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>int(value)</a>    </td><td> A number as an int. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
