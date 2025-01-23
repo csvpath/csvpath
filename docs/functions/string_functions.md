@@ -25,11 +25,11 @@ Lowercases a string.
 
 ### starts_with(does_this, start_with_this)
 
-Checks if the first value, stringified, starts with the second value. The values are stripped. Alias: `startswith()`. If either value is `none()` or None the result is False. If the second value is `""` the result is False.
+Checks if the first value, stringified, starts with the second value. The values are stripped. Alias: `startswith()`. If either value is `none()` or `None` the result is False. If the second value is `""` the result is False.
 
 ### ends_with(does_this, end_with_this)
 
-Checks if the first value, stringified, ends with the second value. The values are stripped. Alias: `endswith()`.  If either value is `none()` or None the result is False. If the second value is `""` the result is False.
+Checks if the first value, stringified, ends with the second value. The values are stripped. Alias: `endswith()`.  If either value is `none()` or `None` the result is False. If the second value is `""` the result is False.
 
 
 ### strip(value)
