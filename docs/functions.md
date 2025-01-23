@@ -241,7 +241,6 @@ There are lots more simple examples on the individual function pages.
 <tr><td> vote_stack()           </td><td> Returns a stack with True or False for each match component's match decision. </td></tr>
 </table>
 
-
 ## Types
 <table>
 <tr><th>Function            <a name="types"> </th><th> What it does                                              </th></tr>
