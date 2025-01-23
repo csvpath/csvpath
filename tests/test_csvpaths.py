@@ -235,7 +235,6 @@ class TestNewCsvPaths(unittest.TestCase):
         #
         # do a run
         #
-        """
         paths.file_manager.add_named_file(
             name="sourcemode", path="tests/test_resources/named_files/test.csv"
         )
@@ -243,7 +242,6 @@ class TestNewCsvPaths(unittest.TestCase):
             name="sourcemode",
             file_path="tests/test_resources/named_paths/source_mode.csvpaths",
         )
-        """
         paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
         #
         # replay:

@@ -288,6 +288,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     file=file,
                     pathsname=pathsname,
                     filename=filename,
+                    crt=crt,
                 )
                 #
                 # the add has to come after _load_csvpath because we need the identity or index
@@ -346,6 +347,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         pathsname: str = None,
         filename,
         by_line: bool = False,
+        crt: str,
     ) -> None:
         # file is the physical file (+/- if preceding mode) filename is the named-file name
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
@@ -370,7 +372,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
                 filename,
             )
-            file = self.results_manager.data_file_for_reference(filename)
+            file = self.results_manager.data_file_for_reference(filename, not_name=crt)
         #
         #
         #
@@ -470,6 +472,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     file=file,
                     pathsname=pathsname,
                     filename=filename,
+                    crt=crt,
                 )
                 #
                 # the add has to come after _load_csvpath because we need the identity or index
@@ -569,6 +572,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     file=file,
                     pathsname=pathsname,
                     filename=filename,
+                    crt=crt,
                 )
                 #
                 # the add has to come after _load_csvpath because we need the identity or index
@@ -679,19 +683,30 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             raise InputException(
                 f"Pathsname '{pathsname}' must name a list of csvpaths"
             )
+        #
+        # experiment!
+        #
+        crt = self.run_time_str(pathsname)
+        #
+        # also use of crt below
+        #
         csvpath_objects = self._load_csvpath_objects(
             paths=paths,
             named_file=fn,
             collect_when_not_matched=collect_when_not_matched,
             filename=filename,
             pathsname=pathsname,
+            crt=crt,
         )
         #
         # prep has to come after _load_csvpath_objects because we need the identity or
         # indexes to be stable and the identity is found in the load, if it exists.
         #
         self._prep_csvpath_results(
-            csvpath_objects=csvpath_objects, filename=filename, pathsname=pathsname
+            csvpath_objects=csvpath_objects,
+            filename=filename,
+            pathsname=pathsname,
+            crt=crt,
         )
         #
         # setting fn into the csvpath is less obviously useful at CsvPaths
@@ -842,6 +857,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         collect_when_not_matched=False,
         filename,
         pathsname,
+        crt: str,
     ):
         csvpath_objects = []
         for path in paths:
@@ -855,6 +871,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     filename=filename,
                     pathsname=pathsname,
                     by_line=True,
+                    crt=crt,
                 )
                 if csvpath.data_from_preceding is True:
                     # this exception raise may be redundant, but I'm leaving it for now for good measure.
@@ -873,8 +890,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 )  # pragma: no cover
         return csvpath_objects
 
-    def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname):
-        crt = self.run_time_str(pathsname)
+    def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname, crt: str):
+        # crt = self.run_time_str(pathsname)
         #
         # run starts here
         #

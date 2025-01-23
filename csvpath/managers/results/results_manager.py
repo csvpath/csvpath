@@ -313,7 +313,7 @@ class ResultsManager:  # pylint: disable=C0115
         ).register_complete()
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
-    def data_file_for_reference(self, refstr) -> str:
+    def data_file_for_reference(self, refstr, not_name: str = None) -> str:
         ref = ReferenceParser(refstr)
         if ref.datatype != ReferenceParser.RESULTS:
             raise InputException(
@@ -321,7 +321,8 @@ class ResultsManager:  # pylint: disable=C0115
             )
         namedpaths = ref.root_major
         instance = ref.name_one
-        path = ref.name_three
+        path = ref.name_three  # not used? why?
+        name_three = ref.name_three
         base = self._csvpaths.config.archive_path
         filename = os.path.join(base, namedpaths)
         if not Nos(filename).dir_exists():
@@ -334,7 +335,9 @@ class ResultsManager:  # pylint: disable=C0115
         #   2024-01-01_10-:first
         #   2024-01-01_10-:0
         #
-        instance = self._find_instance(filename, instance)
+        instance = self._find_instance(
+            filename, instance, not_name=not_name, name_three=name_three
+        )
         filename = os.path.join(filename, instance)
         if not Nos(filename).dir_exists():
             raise InputException(
@@ -352,7 +355,9 @@ class ResultsManager:  # pylint: disable=C0115
             )
         return filename
 
-    def _find_instance(self, filename, instance) -> str:
+    def _find_instance(
+        self, filename, instance, not_name: str = None, name_three: str = None
+    ) -> str:
         """remember that you cannot replay a replay using :last. the reason is that both
         runs will be looking for the same assets but the last replay run will not have
         the asset needed. in principle, we could fix this, but in practice, any magic
@@ -368,24 +373,63 @@ class ResultsManager:  # pylint: disable=C0115
         instance = instance[0:c]
         ret = None
         if var == ":last":
-            ret = self._find_last(filename, instance)
+            ret = self._find_last(
+                filename, instance, not_name=not_name, name_three=name_three
+            )
         elif var == ":first":
-            ret = self._find_first(filename, instance)
+            ret = self._find_first(
+                filename, instance, not_name=not_name, name_three=name_three
+            )
         else:
             raise InputException(f"Unknown reference var-sub token {var}")
         return ret
 
-    def _find_last(self, filename, instance) -> str:
+    def _find_last(
+        self, filename, instance, not_name: str = None, name_three: str = None
+    ) -> str:
         last = True
-        return self._find(filename, instance, last)
+        return self._find(
+            filename, instance, last, not_name=not_name, name_three=name_three
+        )
 
-    def _find_first(self, filename, instance) -> str:
+    def _find_first(
+        self, filename, instance, not_name: str = None, name_three: str = None
+    ) -> str:
         first = False
-        return self._find(filename, instance, first)
+        return self._find(
+            filename, instance, first, not_name=not_name, name_three=name_three
+        )
 
-    def _find(self, filename, instance, last: bool = True) -> str:
+    def _find(
+        self,
+        filename,
+        instance,
+        last: bool = True,
+        not_name: str = None,
+        name_three: str = None,
+    ) -> str:
         names = Nos(filename).listdir()
-        return self._find_in_dir_names(instance, names, last)
+        ns = []
+        for n in names:
+            if not_name is not None and not_name.endswith(n):
+                continue
+            if n.startswith("."):
+                continue
+            #
+            # test for manifest existing here?
+            #
+            mani = os.path.join(filename, n)
+            mani = os.path.join(mani, "manifest.json")
+            if not Nos(mani).exists():
+                continue
+            if name_three:
+                mani = os.path.join(filename, n)
+                mani = os.path.join(mani, name_three)
+                mani = os.path.join(mani, "manifest.json")
+                if not Nos(mani).exists():
+                    continue
+            ns.append(n)
+        return self._find_in_dir_names(instance, ns, last)
 
     def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
         ms = "%Y-%m-%d_%H-%M-%S.%f"
