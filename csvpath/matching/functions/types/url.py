@@ -1,12 +1,12 @@
 # pylint: disable=C0114
-from email_validator import validate_email, EmailNotValidError
+import validators
 from csvpath.matching.productions import Term, Header, Variable, Reference
 from csvpath.matching.functions.function import Function
 from ..args import Args
 from .type import Type
 
 
-class Email(Type):
+class Url(Type):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(1)
@@ -34,13 +34,11 @@ class Email(Type):
             val = self.resolve_value(skip=skip)
         else:
             val = self._value_one()
-        if (val is None or f"{val}".strip() == "") and self.notnone:
+        val = f"{val}".strip()
+        if val == "" and self.notnone:
             self.match = False
-        elif val is None or f"{val}".strip() == "":
+            return
+        elif val == "":
             self.match = True
-        else:
-            try:
-                validate_email(val, check_deliverability=False)
-                self.match = True
-            except EmailNotValidError:
-                self.match = False
+            return
+        self.match = validators.url(val) is True

@@ -51,6 +51,7 @@ paramiko = "^3.5.0"
 boto3 = "^1.35.91"
 opentelemetry-distro = {extras = ["otlp"], version = "^0.50b0"}
 email-validator = "^2.2.0"
+validators = "^0.34.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

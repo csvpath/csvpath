@@ -2037,6 +2037,20 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "validators"
+version = "0.34.0"
+description = "Python Data Validation for Humans™"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "validators-0.34.0-py3-none-any.whl", hash = "sha256:c804b476e3e6d3786fa07a30073a4ef694e617805eb1946ceee3fe5a9b8b1321"},
+    {file = "validators-0.34.0.tar.gz", hash = "sha256:647fe407b45af9a74d245b943b18e6a816acf4926974278f6dd617778e1e781f"},
+]
+
+[package.extras]
+crypto-eth-addresses = ["eth-hash[pycryptodome] (>=0.7.0)"]
+
+[[package]]
 name = "virtualenv"
 version = "20.28.0"
 description = "Virtual Python Environment builder"
@@ -2155,4 +2169,4 @@ pandas = []
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "0a09dab2a1e213c88da407df065e39bf10cab3d14dc86cc40a5df317d6d8424d"
+content-hash = "fc4c2c3d5bb180a676d4bbadc911f2c1a9de2c8a238796ed407eab13e07d78b6"

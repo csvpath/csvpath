@@ -253,6 +253,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>num(value, int, int, int, int)</a>    </td><td> A number defined as min/max before and after the decimal. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a> </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>url(value)</a>    </td><td> A string as a standard url. </td></tr>
 </table>
 
 

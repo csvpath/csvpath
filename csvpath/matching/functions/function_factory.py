@@ -89,6 +89,7 @@ from .types.decimal import Decimal
 from .types.boolean import Boolean
 from .types.datef import Date
 from .types.email import Email
+from .types.url import Url
 from .types.string import String
 
 
@@ -347,6 +348,8 @@ class FunctionFactory:
             f = Sum(matcher, name, child)
         elif name == "email":
             f = Email(matcher, name, child)
+        elif name == "url":
+            f = Url(matcher, name, child)
         elif name == "subtotal":
             f = Subtotal(matcher, name, child)
         elif name == "reset_headers":
