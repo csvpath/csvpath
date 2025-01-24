@@ -24,6 +24,9 @@ CsvPath can stream lineage events to an OpenLineage server, such as the open sou
 <a href='https://peppy-sprite-186812.netlify.app/' >
 <img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
 
+DataOps demands observability! Pipe CsvPath events through OpenTelemetry to your APM or observability platform. Read about <a href='https://www.csvpath.org/getting-started/integrations/getting-started-with-csvpath-+-opentelemetry' target="_blank">how to get started here</a>, with an example using Grafana.
+<img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/opentelemetry.png" alt="OpenTelemetry Logo"/>
+
 Need to publish validated datasets to a CKAN data portal? <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank">Read about how CsvPath is integrated with CKAN</a>.
 <a href="https://ckan.org/" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="CKAN Data Portal"/></a>
 
