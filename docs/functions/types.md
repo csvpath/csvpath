@@ -42,7 +42,39 @@ To limit matching to values with a `.` character add the qualifier `strict`.
 ## Blank
 `blank()` represents a header whose type is unknown, changes, or is immaterial.
 
+## Wildcard
+`wildcard()` stands in for any number of headers in a row. It takes an integer indicating the number of headers expected or a `*` to indicate an unknown number of headers. Headers that are wildcarded are not type checked.
+
 # Examples
 
+```python
+    $[*][
+      line.distinct.person(
+        string.notnone("firstname", 25),
+        blank("middlename"),
+        string.notnone("lastname", 35, 2),
+        wildcard(4)
+    )
+    line.address(
+        wildcard(3),
+        string.notnone("street"),
+        string.notnone("city"),
+        string.notnone("state"),
+        integer.notnone("zip")
+    )
+    count_headers_in_line() == 7
+]
+```
+This csvpath defines a line as having two entities side-by-side. The first is a person. Because of the `distinct` qualifier, we know that the combination of their first name and family name must be unique within the dataset.
 
+A person is made up of three header values: `firstname`, `middlename`, and `lastname`. `firstname` must be greater than or equal to one character long and `25` or fewer characters. `lastname` must be `2` or more characters and `35` or fewer. Both `firstname` and `lastname are required to be filled. `middlename` can be empty.
+
+Sitting right beside each person is an address. We know address is beside person because:
+- CsvPath validates line-by-line
+- The person entity has the first three positions, then a wildcard of four headers.
+- The address wildcards three headers, then takes the following four positions.
+
+There cannot be further headers in a row. We can tell only the two entities are allowed because `count_headers_in_line()` requires 7 headers. That is a line-by-line check. If we want to also check the header line we could use `header_count()`.
+
+See <a target='_blank' href='https://www.csvpath.org/getting-started/your-first-validation-the-easy-way'>this How-to</a> and this <a target='_blank' href='https://www.csvpath.org/topics/validation/schemas-or-rules'>description of CsvPath structural validation</a> for more examples and discussion of type-based validation.
 

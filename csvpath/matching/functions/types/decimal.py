@@ -15,7 +15,7 @@ class Decimal(ValueProducer, Type):
         a = self.args.argset(5)
         a.arg(name="header name", types=[Term], actuals=[str, int])
         a.arg(name="max", types=[None, Term, Function], actuals=[None, float, int])
-        a.arg(name="mi<D-s>", types=[None, Term, Function], actuals=[None, float, int])
+        a.arg(name="min", types=[None, Term, Function], actuals=[None, float, int])
         self.args.validate(self.siblings())
         for s in self.siblings():
             if isinstance(s, Function) and not isinstance(s, Nonef):

@@ -24,7 +24,7 @@ Converts its argument to a float similar to the way `int()` does, if possible. I
 
 Used for its value, `num()` converts any type to `float`, if possible, with the exception leaving `int`s and `bool`s as they are.
 
-In matching num takes up to five arguments:
+`num()` can be used in matching. You should prefer to use `integer()` and `decimal()`, which exist for type checking in structural schemas. However, in some cases you may still want to use `num()` or have existing csvpaths that use `num()`. `num()` takes up to five arguments:
 - The required value from any match component
 - Optionally:
     - Max number of digits before the decimal

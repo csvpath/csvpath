@@ -162,8 +162,11 @@ There are lots more simple examples on the individual function pages.
 <tr><th>Function    <a name="math"></a>     </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>add(value, value, ...)</a>       </td><td> Adds numbers.    </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>divide(value, value, ...)</a>    </td><td> Divides numbers.    </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>float(value)</a>    </td><td> Converts to a float. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>int(value)</a>    </td><td> Converts to an int. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>mod(value, value)</a>            </td><td> Returns the modulus of two numbers. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>multiply(value, value, ...)</a>  </td><td> Multiplies numbers.   </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>num(value, int, int, int, int)</a>    </td><td> A number defined as min/max before and after the decimal. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>round(value)</a>                 </td><td> Rounds a number. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtotal.md'>subtotal(value)</a>              </td><td> Returns a running subtotal of a value subtotaled by another value. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/subtract.md'>subtract(value, value, ...)</a>  </td><td> Subtracts numbers or makes a number negative. Aliases: minus(). </td></tr>
@@ -244,16 +247,17 @@ There are lots more simple examples on the individual function pages.
 ## Types
 <table>
 <tr><th>Function            <a name="types"> </th><th> What it does                                              </th></tr>
-<tr><td>boolean(value)</td><td> A boolean value  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Returns a date parsed according to a format string.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Returns a datetime parsed according to a format string.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>email(value)</a>    </td><td> A string as an email. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>float(value)</a>    </td><td> A number as a float. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>int(value)</a>    </td><td> A number as an int. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Returns None. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/intf.md'>num(value, int, int, int, int)</a>    </td><td> A number defined as min/max before and after the decimal. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>blank(value)</a>/td><td> Expects a blank header value  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>boolean(value)</a>/td><td> A boolean value  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Declares a date parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Declares a datetime parsed according to a format string.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>decimal(value, value, value)</a>    </td><td> Declares a decimal. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>email(value)</a>    </td><td> Declares an integer value. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>integer(value)</a>    </td><td> Declares a string as an email. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Expects a None. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a> </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>url(value)</a>    </td><td> A string as a standard url. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>url(value)</a>    </td><td> Declares a string as a standard url. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>wildcard(value)</a>    </td><td> Declares a string as a standard url. </td></tr>
 </table>
 
 
