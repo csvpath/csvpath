@@ -1,9 +1,11 @@
 
 # Types
 
-The core types functions give you a way to identify the correct type of a header value. Whereas the `int()` function will convert a value to an int, the purpose of the type function `integer()` is to indicate that a value should be an int and to check if it is in fact an int.
+These types work with `line()` to enable structural validation. Structural, or schema, validation is what XSD, DDL, and JSON Schema do. They define entities (or call them tables, structures, etc.) that describe the expected form of the data. CsvPath offers the same capability in a format that is similar to DDL's.
 
-This difference is important when you are setting up structural or schema-based validation. CsvPath uses the `line()` function to declare the types of tabular data. Line uses the type functions as its primitives.
+The core type functions give you a way to identify the correct type of a header value. CsvPath uses the `line()` function to declare the order of typed-headers. The type functions and their qualifiers are the `line()` function's complete set of primitives. There can be multiple `line()` functions per line of data, even overlapping ones.
+
+See the links below for more discussion and examples of CsvPath's structural validation capabilities.
 
 ## String
 `string()` takes three arguments:

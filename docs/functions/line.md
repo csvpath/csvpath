@@ -4,15 +4,17 @@
 The `line()` function is the core tool for structural validation. It gives you a way to declare the data-shape of a line. `line()` is similar to the `TABLE` declaration in SQL's DDL.
 
 `line()` takes any number of functions as arguments. The only allowed functions are data primatives. They include:
-- `string()`
-- `int()`
-- `float()`
-- `num()`
+- `blank()`
+- `bool()`
+- `decimal()`
 - `date()`
 - `datetime()`
-- `bool()`
+- `email()`
+- `integer()`
 - `none()`
-- `blank()`
+- `string()`
+- `url()`
+- `wildcard()`
 
 All of these type functions can have a `notnone` qualifier. `string()` can optionally take max and min arguments. `none()` requires an empty header. `blank()` indicates an unspecified header.
 
@@ -33,7 +35,7 @@ The order of the type functions determines what order of headers is valid. You c
             string.notnone(#firstname, 20, 1),
             string        (#middlename, 20),
             string.notnone(#lastname, 30, 2),
-            int           (#age),
+            integer       (#age),
             date          (#date_of_birth),
             string        (#country),
             string        (#email, 30)
@@ -56,7 +58,7 @@ Because `return-mode` is set to `no-matches`, if a line doesn't match this descr
             string.notnone(#firstname, 20, 1),
             none(),
             string.notnone(#lastname, 30, 2),
-            int           (#age),
+            integer       (#age),
             date          (#date_of_birth),
             blank(),
             string        (#email, 30),
