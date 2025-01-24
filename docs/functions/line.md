@@ -3,7 +3,7 @@
 
 The `line()` function is the core tool for structural validation. It gives you a way to declare the data-shape of a line. `line()` is similar to the `TABLE` declaration in SQL's DDL.
 
-`line()` takes any number of functions as arguments. The only allowed functions are data primatives. They include:
+`line()` takes any number of functions as arguments. The only allowed functions are data primitives. They include:
 - `blank()`
 - `bool()`
 - `decimal()`
@@ -16,9 +16,7 @@ The `line()` function is the core tool for structural validation. It gives you a
 - `url()`
 - `wildcard()`
 
-All of these type functions can have a `notnone` qualifier. `string()` can optionally take max and min arguments. `none()` requires an empty header. `blank()` indicates an unspecified header.
-
-The type functions only take headers as children, with the exception of string, which also optionally takes max and min int arguments. No other functions are allowed.
+All of these type functions can have a `notnone` qualifier. The expected first argument is the name of a header. Many types take optional arguments. For e.g., `string()` can optionally take max and min arguments.
 
 The order of the type functions determines what order of headers is valid. You can think of line as being like a specialized `all()` with a defined order and the ability to accept None values, when so declared.
 
