@@ -1,4 +1,6 @@
 import unittest
+import pytest
+from lark.exceptions import UnexpectedCharacters
 from csvpath.csvpath import CsvPath
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.matcher import Matcher
@@ -9,6 +11,38 @@ NUMBERS = "tests/test_resources/numbers.csv"
 
 
 class TestAssignment(unittest.TestCase):
+    def test_equal_rhs_1(self):
+        path = (
+            CsvPath()
+            .parse(
+                f"""${PATH}[*][
+                @a == none() -> @a = 1
+                ~ @c = 1 == 0 will throw an exception so we have to use the equals function ~
+                @b = eq(1,0)
+            ]"""
+            )
+            .fast_forward()
+        )
+        v = path.variables
+        print(f"vars: {v}")
+        assert v["a"] == 1
+        assert v["b"] is False
+
+    def test_equal_rhs_2(self):
+        path = CsvPath().parse(
+            f"""${PATH}[*][
+                @a == none() -> @a = 1
+                ~ the current version of the Lark parser grammar does not allow for
+                  the == operator to be used as the right-hand-side of an assignment.
+                  the constraint isn't ideal, but equals() is an easy work-around, so
+                  for now we're accepting it.
+                ~
+                @c = 1==0
+            ]"""
+        )
+        with pytest.raises(UnexpectedCharacters):
+            path.fast_forward()
+
     def test_qualifier_increment1(self):
         path = CsvPath()
         path.parse(

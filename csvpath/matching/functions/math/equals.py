@@ -38,6 +38,8 @@ class Equals(MatchDecider):
             ret = True
         else:
             ret = False
+        if self.name == "neq":
+            ret = not ret
         self.match = ret
 
     def _is_float(self, fs) -> bool:

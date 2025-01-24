@@ -1,0 +1,17 @@
+url
+http://username:password@192.168.10.10:4010
+http://10.0.10.1
+https://255.255.255.255
+https://example.com/foo/?bar#!baz/inga/8SA-M3as7A8"
+https://example.org?q=search');alert(document.domain);
+foo.com
+http://foo.bar?q=Spaces should be encoded
+http://foo.bar?q=Spaces%20should%20be%20encoded
+http://fo..com
+http://
+sftp://a.b.c
+sftp://10.10.10.10
+s3://a.b.c
+slack://a.b.c
+jdbc:a.b.c
+
