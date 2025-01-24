@@ -1,7 +1,9 @@
 
 # Replace and Append
 
-`replace()` replaces a header value with another value. It takes two arguments. The first argument is the name or index of the header value to be replaced. The second argument generates the replacement value.
+`replace()` replaces a header value with another value. It takes two arguments:
+- The header or the name or index of the header whose value will be replaced
+- The replacement value
 
 The replaced values will be seen in the lines iteration from either CsvPaths or CsvPath. It will also be seen in the named-results collected by the results manager, if you are running CsvPaths and are collecting lines. That means your transformed results would then be accessible by reference from other csvpaths.
 

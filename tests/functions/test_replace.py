@@ -40,6 +40,22 @@ class TestFunctionsReplace(unittest.TestCase):
         assert lines[0] == [2, "Kermit, a friendly animal", "hi!"]
         assert lines[1] == [3, "Bat, a friendly animal", "blurgh..."]
 
+    def test_function_replace3(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                yes()
+                replace(#firstname, count_lines())
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 8
+        assert len(lines[0]) == 3
+        assert lines[0] == [2, "Kermit", "hi!"]
+        assert lines[1] == [3, "Bat", "blurgh..."]
+
     def test_function_append(self):
         path = CsvPath()
         path.parse(

@@ -249,7 +249,7 @@ There are lots more simple examples on the individual function pages.
 <table>
 <tr><th>Function            <a name="types"> </th><th> What it does                                              </th></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>blank(value)</a></td><td> Expects a blank header value  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>boolean(value)</a></td><td> A boolean value  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>boolean(value)</a></td><td> Declares a boolean value  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Declares a date parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Declares a datetime parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>decimal(value, value, value)</a>    </td><td> Declares a decimal. </td></tr>
