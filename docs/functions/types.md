@@ -36,7 +36,9 @@ To limit matching to values with a `.` character add the qualifier `strict`.
     - `"false"`
     - `0`
 
-## Date
+## Date and Datetime
+
+## Email and URL
 
 ## None
 `none()` is the absence of a value. In Python, `None`. In CSVs, two delimiters with no non-whitespace characters between them is also a none value. However, the absence of a value is not treated as a boolean `False`, even though an explicit `None` is considered `False`.
