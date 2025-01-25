@@ -33,20 +33,16 @@ class TestFunctionsAdvance(unittest.TestCase):
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
     def test_function_advance2(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
-        path.parse(f""" ${PATH}[1*] [ advance("please") ]""")
+        path = CsvPath().parse(f""" ${PATH}[1*] [ advance("please") ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
     def test_function_advance_all1(self):
         path = CsvPath()
         path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+            f"""${PATH}[1*][
                 push.onmatch("cnt", count_lines())
-                print("count_lines is: $.csvpath.count_lines ")
                 count.nocontrib() == 3 -> advance_all(2)
             ]"""
         )
@@ -55,8 +51,7 @@ class TestFunctionsAdvance(unittest.TestCase):
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
     def test_function_advance_all2(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
-        path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
+        path = CsvPath().parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
-            path.collect()
+            path.fast_forward()

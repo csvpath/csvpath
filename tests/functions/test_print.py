@@ -45,6 +45,7 @@ class TestPrint(unittest.TestCase):
 
     def test_print_get_runtime_data_from_results(self):
         paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"

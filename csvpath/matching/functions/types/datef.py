@@ -28,7 +28,6 @@ class Date(ValueProducer, Type):
             types=[None, Term, Header],
             actuals=[str],
         )
-
         a = self.args.argset(2)
         a.arg(
             name="header name",
@@ -40,7 +39,6 @@ class Date(ValueProducer, Type):
             types=[None, Term],
             actuals=[str],
         )
-
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -106,7 +104,7 @@ class Date(ValueProducer, Type):
             return None
 
     def _from_header_if(self, skip=None, quiet=False):
-        v = self.resolve_value(skip=skip, quiet=quiet)
+        v = self._value_one(skip=skip)
         if not v:
             return None
         fmt = self._value_two(skip=skip)
@@ -118,14 +116,4 @@ class Date(ValueProducer, Type):
         return ret
 
     def _decide_match(self, skip=None) -> None:
-        #
-        # if we're deciding a match and we have a term we'll be reffing a header
-        #
-        """
-        t = self._child_one()
-        if isinstance(t, Term):
-            v = self._from_header(skip=skip)
-            self.match = ExpressionUtility.is_date_type(v)
-        else:
-        """
         self.match = self.to_value(skip=skip) is not None

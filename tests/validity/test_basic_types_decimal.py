@@ -12,12 +12,12 @@ NUMBERS = "tests/test_resources/numbers3.csv"
 
 class TestValidBasicTypesDecimal(unittest.TestCase):
     def test_function_decimal1(self):
-        path = CsvPath()
-        path.parse(
+        path = CsvPath().parse(
             f""" ${NUMBERS}[*] [
                 @st = decimal("abc")
             ] """
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
@@ -26,21 +26,21 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
         path.parse(
             f""" ${NUMBERS}[1] [
                 ~ too high 3.52 ~
-                push("a", decimal("numbers31", 1, 1) )
+                push("a", decimal(#numbers31, 1, 1) )
                 ~ too high 3.52 ~
                 push("a", decimal(0, 1, 0) )
                 ~ fits 3.52 ~
-                push("a", decimal("numbers31", 20) )
+                push("a", decimal(#numbers31, 20) )
                 ~ fits 3.52 ~
-                push("a", decimal(0, 20, 2) )
+                push("a", decimal(#0, 20, 2) )
                 ~ too low 3.52 ~
-                push("a", decimal("numbers31", none(), 18.60) )
+                push("a", decimal(#numbers31, none(), 18.60) )
                 ~ too high 3.52 ~
-                push("a", decimal(0, -1, -50) )
+                push("a", decimal(#0, -1, -50) )
                 ~ too high 3.52 ~
-                push("a", decimal("numbers31", -20) )
+                push("a", decimal(#numbers31, -20) )
                 ~ fits: 3.52 ~
-                push("a", decimal(0, none(), -10) )
+                push("a", decimal(#0, none(), -10) )
             ]
             """
         )
@@ -51,17 +51,15 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
         assert a == expected
 
     def test_function_decimal3(self):
-        path = CsvPath()
-        path.parse(
+        path = CsvPath().parse(
             f"""
                 ~ return-mode: matches
                   validation-mode: no-raise, no-stop
-                  explain-mode:no-explain
-                ~
+                  explain-mode:no-explain ~
                 ${NUMBERS}[1*] [
                     or(
-                        decimal.strict(1),
-                        decimal.strict.notnone(2)
+                        decimal.strict(#1),
+                        decimal.strict.notnone(#2)
                     )
                 ]"""
         )
@@ -72,14 +70,13 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
         testini = "tests/test_resources/deleteme/config.ini"
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
         path = CsvPath()
-
         path.parse(
             f"""
                 ~ return-mode: matches
                   validation-mode: no-raise, no-stop ~
                 ${NUMBERS}[1*] [
-                        decimal.weak(1)
-                        decimal.weak.notnone(2)
+                        decimal.weak(#1)
+                        decimal.weak.notnone(#2)
                 ]"""
         )
         lines = path.collect()

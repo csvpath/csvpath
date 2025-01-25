@@ -70,7 +70,8 @@ class Function(Matchable):
                     "Validating arg actuals for %s in to_value", self.name
                 )
                 chk = len(self.my_expression.errors)
-                self.args.matches(self.sibling_values(skip=skip))
+                vs = self.sibling_values(skip=skip)
+                self.args.matches(vs)
                 if chk < len(self.my_expression.errors):
                     # we have issues. return because nothing should work.
                     return self.value
@@ -187,7 +188,8 @@ class Function(Matchable):
                         "%s, a %s, calling decide match", self, self.FOCUS
                     )
                     if (
-                        self.args.args_match is False
+                        self.args
+                        and self.args.args_match is False
                         and self.matcher.csvpath.stop_on_validation_errors
                     ):
                         self.matcher.csvpath.stop()

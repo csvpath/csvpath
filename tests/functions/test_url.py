@@ -12,13 +12,12 @@ class TestFunctionsUrl(unittest.TestCase):
             CsvPath()
             .parse(
                 f"""${PATH}[1*][
-                @v = url( "url" )
+                @v = url( #url )
                 push( "u", @v )
             ]"""
             )
             .fast_forward()
         )
-        assert "u" in path.variables
         u = path.variables["u"]
         assert u[0:3] == [True, True, True]
         assert u[3:7] == [False, False, False, False]
@@ -29,15 +28,9 @@ class TestFunctionsUrl(unittest.TestCase):
     def test_function_url_2(self):
         path = (
             CsvPath()
-            .parse(
-                f"""${PATH}[13*][
-                @v = url( "url" )
-                push( "u", @v )
-            ]"""
-            )
+            .parse(f"""${PATH}[13*][ @v = url( #url ) push( "u", @v ) ]""")
             .fast_forward()
         )
-        assert "u" in path.variables
         u = path.variables["u"]
         assert u[0:3] == [False, False, False]
 
@@ -47,17 +40,10 @@ class TestFunctionsUrl(unittest.TestCase):
                 @v2 = url.notnone( none() )
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_url_4(self):
-        path = (
-            CsvPath()
-            .parse(
-                f"""${PATH}[1*][
-                @v = url( none() )
-            ]"""
-            )
-            .fast_forward()
-        )
+        path = CsvPath().parse(f"""${PATH}[1*][ @v = url( none() ) ]""").fast_forward()
         assert path.variables["v"] is False

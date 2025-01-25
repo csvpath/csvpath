@@ -146,10 +146,20 @@ class ExpressionUtility:
             # if this doesn't work, handle the error upstack
             return int(v)
         except ValueError as e:
+            #
+            # this mess is waiting on a new solution to error reporting.
+            # coming soon to a branch near you.
+            #
+            """
+            if f"{e}" == "invalid literal for int() with base 10: '[2019]'":
+                from csvpath.util.log_utility import LogUtility
+                print(f"\ne: {e}")
+                print(f"\ne: of type {type(e)}")
+                LogUtility.log_brief_trace()
+            raise e
+            """
             if should_i_raise is True:
-                raise ValueError(
-                    f"ExpressionUtility cannot convert '{v}' to int"
-                ) from e
+                raise ValueError(f"Cannot convert '{v}' to int") from e
             else:
                 return v
 
@@ -438,17 +448,24 @@ class ExpressionUtility:
 
     @classmethod
     def name_or_class(cls, thing, show_eq_and_exp=False):
+        ret = None
         if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
-            return ""
-        if not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:
-            return ""
-        if not hasattr(thing, "name"):
-            return cls.simple_class_name(thing)
-        if f"{type(thing)}".find("Term") != -1:
-            return thing.to_value()
-        if thing.name is None:
-            return cls.simple_class_name(thing)
-        return thing.name
+            ret = ""
+        elif not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:
+            ret = ""
+        elif thing.first_non_term_qualifier() is not None:
+            q = thing.first_non_term_qualifier()
+            ret = q
+        elif not hasattr(thing, "name"):
+            ret = cls.simple_class_name(thing)
+        elif f"{type(thing)}".find("Term") != -1:
+            ret = thing.to_value()
+        elif thing.name is None:
+            ret = cls.simple_class_name(thing)
+        else:
+            i = thing.parent.children.index(thing)
+            ret = f"{thing.name}[{i}]"
+        return ret
 
     @classmethod
     def simple_class_name(cls, thing):

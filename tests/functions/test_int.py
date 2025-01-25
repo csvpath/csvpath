@@ -162,33 +162,22 @@ class TestFunctionsInt(unittest.TestCase):
         assert len(lines) == 0
 
     def test_validity_int1(self):
-        path = CsvPath()
-        path.parse(
-            f"""${PATH}[*][
-                int.notnone(none())
-            ]"""
-        )
+        path = CsvPath().parse(f"""${PATH}[*][ int.notnone(none()) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_int2(self):
-        path = CsvPath()
-        path.parse(
-            f""" ~id:test_validity_none2~
-                ${"tests/test_resources/test.csv"}[*][
-                    any( length( concat("a", int(random(0)))))
-                ]"""
+        path = CsvPath().parse(
+            f""" ~id:int2~ ${"tests/test_resources/test.csv"}[*][any(length(concat("a", int(random(0)))))]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_int3(self):
-        path = CsvPath()
-        path.parse(
-            f"""~id:validity_int3~ ${PATH}[*][
-                int.notnone("a")
-            ]"""
-        )
+        path = CsvPath().parse(f"""~id:int3~ ${PATH}[*][ int.notnone("a") ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 

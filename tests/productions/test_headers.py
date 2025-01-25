@@ -31,7 +31,6 @@ class TestHeaders(unittest.TestCase):
                 not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
                     print( "\nBad category $.headers.category at line $.csvpath.count_lines ", fail())
 
-
                 not( exact( end(), /\\$?(\\d*\\.\\d{0,2})/ ) ) ->
                     print("\nBad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
 
@@ -81,63 +80,35 @@ class TestHeaders(unittest.TestCase):
         path.fast_forward()
 
     def test_header_names3(self):
-        path = CsvPath()
-        path.parse(
-            f"""${PATH}[*][
-                #no-spaces
-                #"I have spaces"
-                #nothing
-            ]"""
-        )
+        path = CsvPath().parse(f"""${PATH}[*][#no-spaces #"I have spaces" #nothing ]""")
         path.fast_forward()
 
     def test_header_bad_names1(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
+        path = CsvPath().parse(f"""${PATH}[*][ #.hidden ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(VisitError):
-            path.parse(
-                f"""${PATH}[*][
-                    #.hidden
-                ]"""
-            )
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names2(self):
-        path = CsvPath()
+        path = CsvPath().parse(f"""${PATH}[*][#!not allowed]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
-            path.parse(
-                f"""${PATH}[*][
-                    #!not allowed
-                ]"""
-            )
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names3(self):
-        path = CsvPath()
+        path = CsvPath().parse(f"""${PATH}[*][#'not allowed']""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
-            path.parse(
-                f"""${PATH}[*][
-                    #'not allowed'
-                ]"""
-            )
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names4(self):
-        path = CsvPath()
+        path = CsvPath().parse(f"""${PATH}[*][ #$$ ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
-            path.parse(
-                f"""${PATH}[*][
-                    #$$
-                ]"""
-            )
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names5(self):
-        path = CsvPath()
+        path = CsvPath().parse(f"""${PATH}[*][ #`no good` ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
-            path.parse(
-                f"""${PATH}[*][
-                    #`no good`
-                ]"""
-            )
             path.fast_forward()  # pragma: no cover

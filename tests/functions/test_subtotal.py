@@ -26,40 +26,34 @@ class TestFunctionsSubtotal(unittest.TestCase):
         assert path.variables["areas"]["ocean"] == 10
 
     def test_function_subtotal2(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[1*][
                 subtotal.areas(#count1, #area)
                 last() -> print("$.variables.areas")
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_subtotal3(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[1*][
                 subtotal.areas(#area)
                 last() -> print("$.variables.areas")
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_subtotal4(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[1*][
                 subtotal.areas(#area, #count1, #count2)
                 last() -> print("$.variables.areas")
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()

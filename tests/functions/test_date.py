@@ -10,21 +10,17 @@ TEST = "tests/test_resources/test.csv"
 
 class TestFunctionsDate(unittest.TestCase):
     def test_function_date0(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-                ~ validation-mode: raise ~
-            ${TEST}[4] [
+        path = CsvPath().parse(
+            f""" ~ validation-mode: raise ~ ${TEST}[4] [
                 push( "dates", date( #firstname ) )
             ]"""
         )
-        # Children exception is wrapped by Match exception
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_date10(self):
-        path = CsvPath()
-        path.parse(
+        path = CsvPath().parse(
             f"""
             ${TEST}[4] [
                 push( "dates", date( "2024-01-01" ) )

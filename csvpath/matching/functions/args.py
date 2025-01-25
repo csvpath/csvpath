@@ -233,9 +233,10 @@ class ArgSet:
                 # we'll want to not provide the mismatches unless we completely
                 # fail to match.
                 #
-                mismatches.append(
-                    f"No match with argset {self.argset_number}. More actuals than args."
-                )
+                m = "Args do not match expected"
+                if len(self._parent.argsets) > 1:
+                    m = f"{m} in argset {self.argset_number}"
+                mismatches.append(m)
                 break
             arg = self._args[i]
             #
@@ -443,20 +444,31 @@ class Args:
     def handle_errors_if(self, mismatch_count, mismatches):
         if mismatch_count == len(self._argsets):
             self._args_match = False
-            pm = f"mismatch in {self.matchable.my_chain}"
-            ei = ExpressionUtility.get_my_expressions_index(self._matchable)
-            pm = f"Wrong value in match component {ei}: {pm}"
-            lpm = f"{pm}: {mismatches}"
-            self._matchable.matcher.csvpath.logger.error(lpm)
-            if (
-                not ErrorCommsManager(
-                    csvpath=self._matchable.matcher.csvpath
-                ).do_i_raise()
-                and self._matchable.matcher.csvpath.match_validation_errors
-            ):
-                # we match on errors so we have to handle and keep going as best we can.
-                pm = self._matchable.decorate_error_message(pm)
-                e = ChildrenException(pm)
-                self._matchable.handle_error(e)
+            ei = ExpressionUtility.my_chain(self._matchable)
+            # ei = ExpressionUtility.get_my_expressions_index(self._matchable)
+            pm = f"Wrong value in {ei}"
+            lpm = f"{pm}: "
+            lpms = []
+            if len(mismatches) == 1:
+                lpm = f"{lpm}{mismatches[0]}"
+                lpms.append(lpm)
             else:
-                self._matchable.raise_children_exception(pm)
+                #
+                # should we enumerate these one per line?
+                #
+                for m in mismatches:
+                    lpms.append(f"{lpm}{m}")
+            for lpm in lpms:
+                self._matchable.matcher.csvpath.logger.error(lpm)
+                if (
+                    not ErrorCommsManager(
+                        csvpath=self._matchable.matcher.csvpath
+                    ).do_i_raise()
+                    and self._matchable.matcher.csvpath.match_validation_errors
+                ):
+                    # we match on errors so we have to handle and keep going as best we can.
+                    pm = self._matchable.decorate_error_message(lpm)
+                    e = ChildrenException(pm)
+                    self._matchable.handle_error(e)
+                else:
+                    self._matchable.raise_children_exception(lpm)

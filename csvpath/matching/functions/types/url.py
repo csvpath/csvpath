@@ -11,14 +11,14 @@ class Url(Type):
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
-            name="header name",
-            types=[Term],
+            name="Url is mainly for validating headers",
+            types=[Header],
             actuals=[str],
         )
         a = self.args.argset(1)
         a.arg(
-            name="the value found",
-            types=[Header, Variable, Reference, Function],
+            name="other value alternatives",
+            types=[Variable, Reference, Function],
             actuals=[str, None, self.args.EMPTY_STRING],
         )
         self.args.validate(self.siblings())
@@ -29,11 +29,7 @@ class Url(Type):
         self.value = self.match
 
     def _decide_match(self, skip=None) -> None:
-        val = None
-        if isinstance(self._child_one(), Term):
-            val = self.resolve_value(skip=skip)
-        else:
-            val = self._value_one()
+        val = self._value_one()
         val = f"{val}".strip()
         if val == "" and self.notnone:
             self.match = False

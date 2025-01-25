@@ -26,14 +26,8 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line2(self):
-        path = CsvPath()
-        path.parse(
-            f"""${PATH}[*][
-                line(
-                    blank()
-                )
-            ]"""
-        )
+        path = CsvPath().parse(f"""${PATH}[*][ line( blank()) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
@@ -42,9 +36,9 @@ class TestValidLine(unittest.TestCase):
         path.parse(
             f"""${PATH}[*][
                 line(
-                    string("firstname"),
-                    string("lastname"),
-                    string("say")
+                    string(#firstname),
+                    string(#lastname),
+                    string(#say)
                 )
 
             ]"""
@@ -53,18 +47,16 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line4(self):
-        path = CsvPath()
-        path.parse(
+        path = CsvPath().parse(
             f"""${PATH}[*][
-
                 line(
                     string(#firstname),
                     string(#lastname),
                     integer(#say)
                 )
-
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
@@ -92,16 +84,16 @@ class TestValidLine(unittest.TestCase):
             validation-mode: print, no-raise, no-stop
             ~${FOOD}[1*][
                 line(
-                    string("food"),
-                    string("type"),
-                    nonspecific("units"),
-                    integer("year"),
-                    boolean("healthy")
+                    string(#food),
+                    string(#type),
+                    nonspecific(#units),
+                    integer(#year),
+                    boolean(#healthy)
                 )
             ]"""
         )
         lines = path.collect()
-        assert len(lines) == 9
+        assert len(lines) == 8
 
     def test_valid_line7(self):
         path = CsvPath()
@@ -110,11 +102,11 @@ class TestValidLine(unittest.TestCase):
             f"""~ validation-mode: print, no-raise, no-stop ~
             ${FOOD}[1*][
                 line(
-                    string("food"),
-                    string("type"),
-                    blank("units"),
-                    decimal.notnone.weak("year"),
-                    boolean("healthy")
+                    string(#food),
+                    string(#type),
+                    blank(#units),
+                    decimal.notnone.weak(#year),
+                    boolean(#healthy)
                 )
             ]"""
         )
@@ -135,11 +127,11 @@ class TestValidLine(unittest.TestCase):
                   effect on the match if validation-mode has either
                   match or no-match; otherwise, it is just a printout ~
                 line.nocontrib(
-                    string("food"),
-                    string("type"),
-                    nonspecific("units"),
-                    integer.notnone("year"),
-                    boolean("healthy")
+                    string(#food),
+                    string(#type),
+                    nonspecific(#units),
+                    integer.notnone(#year),
+                    boolean(#healthy)
                 )
                 ~ we grab the food type check and we apply it to matching.
                   assignments don't count for matching so to get in() to
@@ -171,14 +163,14 @@ class TestValidLine(unittest.TestCase):
                 and( firstscan(), after_blank() ) -> reset_headers(skip())
                 ~ DOB needs format string ~
                 line(
-                    string.notnone("firstname", 20, 1),
-                    string        ("middlename", 20),
-                    string.notnone("lastname", 30, 2),
-                    integer       ("age"),
-                    date          ("date_of_birth"),
-                    decimal       ("height"),
-                    string        ("country"),
-                    string        ("email", 30)
+                    string.notnone(#firstname, 20, 1),
+                    string        (#middlename, 20),
+                    string.notnone(#lastname, 30, 2),
+                    integer       (#age),
+                    date          (#date_of_birth),
+                    decimal       (#height),
+                    string        (#country),
+                    string        (#email, 30)
                 )
                 ~
                 or( exists(#age), exists(#date_of_birth) )
@@ -203,14 +195,14 @@ class TestValidLine(unittest.TestCase):
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 ~ DOB needs format string ~
                 line(
-                    string.notnone("firstname", 20, 1),
-                    string        ("middlename", 20),
-                    string.notnone("lastname", 30, 2),
-                    integer       ("age"),
-                    date          ("date_of_birth", "%Y-%m-%d"),
-                    decimal.strict("height"),
-                    string        ("country"),
-                    string        ("email", 30)
+                    string.notnone(#firstname, 20, 1),
+                    string        (#middlename, 20),
+                    string.notnone(#lastname, 30, 2),
+                    integer       (#age),
+                    date          (#date_of_birth, "%Y-%m-%d"),
+                    decimal.strict(#height),
+                    string        (#country),
+                    string        (#email, 30)
                 )
                 ~
                 or( exists(#age), exists(#date_of_birth) )
@@ -233,9 +225,9 @@ class TestValidLine(unittest.TestCase):
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
-                    string.notnone("firstname", 20, 1),
-                    string        ("middlename", 20),
-                    string.notnone("lastname", 30, 2),
+                    string.notnone(#firstname, 20, 1),
+                    string        (#middlename, 20),
+                    string.notnone(#lastname, 30, 2),
                     wildcard()
                 )
             ]"""
@@ -245,19 +237,19 @@ class TestValidLine(unittest.TestCase):
 
     def test_valid_line_wildcard2(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect"]
+        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
                   validation-mode: print, no-raise, no-stop ~
-                ${PEOPLE}[1*][
+            ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
-                    string.notnone("firstname", 20, 1),
+                    string.notnone(#firstname, 20, 1),
                     wildcard(),
-                    decimal("height"),
-                    string("country"),
-                    string("email")
+                    decimal(#height),
+                    string(#country),
+                    string(#email)
                 )
             ]"""
         )
@@ -274,11 +266,11 @@ class TestValidLine(unittest.TestCase):
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
-                    string.notnone("firstname", 20, 1),
+                    string.notnone(#firstname, 20, 1),
                     wildcard("*"),
-                    decimal("height"),
-                    string("country"),
-                    string("email")
+                    decimal(#height),
+                    string(#country),
+                    string(#email)
                 )
             ]"""
         )
@@ -300,11 +292,11 @@ class TestValidLine(unittest.TestCase):
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
-                    string.notnone("firstname", 20, 1),
+                    string.notnone(#firstname, 20, 1),
                     wildcard(4),
-                    decimal("height"),
-                    string("country"),
-                    string("email")
+                    decimal(#height),
+                    string(#country),
+                    string(#email)
                 )
             ]"""
         )
@@ -323,43 +315,43 @@ class TestValidLine(unittest.TestCase):
             ${PEOPLE}[*][
                after_blank.nocontrib() -> reset_headers(skip())
                line.person(
-                   string.notnone("firstname", 25, 1),
-                   blank("middlename"),
-                   string.notnone("lastname", 35, 2),
+                   string.notnone(#firstname, 25, 1),
+                   blank(#middlename),
+                   string.notnone(#lastname, 35, 2),
                    wildcard(5)
                )
                line.distinct.address(
                    wildcard(6),
-                   string.notnone("country"),
-                   string.notnone("email")
+                   string.notnone(#country),
+                   string.notnone(#email)
                )
             ]
             """
         )
         lines = path.collect()
-        assert len(lines) == 5
+        assert len(lines) == 3
 
     def test_valid_line_wildcard6(self):
-        path = CsvPath()
-        path.parse(
+        path = CsvPath().parse(
             f"""
             ~ id:fails distinct ~
             ${PEOPLE3}[*][
                after_blank.nocontrib() -> reset_headers(skip())
                line.person(
-                   string.notnone("firstname", 25, 1),
-                   blank("middlename"),
-                   string.notnone("lastname", 35, 2),
+                   string.notnone(#firstname, 25, 1),
+                   blank(#middlename),
+                   string.notnone(#lastname, 35, 2),
                    wildcard(5)
                )
                ~ blows up because dup line on 5 email ~
                line.distinct.address(
                    wildcard(6),
-                   string.notnone("country"),
-                   string.notnone("email")
+                   string.notnone(#country),
+                   string.notnone(#email)
                )
             ]
             """
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()

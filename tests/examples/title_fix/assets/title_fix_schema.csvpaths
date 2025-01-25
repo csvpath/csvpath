@@ -1,0 +1,21 @@
+$[1*][
+    line.checkouts(
+        string.usage.notnone(#UsageClass),
+        blank(#CheckoutType),
+        string.notnone(#MaterialType),
+        integer.year_checkedout.notnone(#CheckoutYear, none(), 2018),
+        integer.checkoutMonth.notnone(#CheckoutMonth, 12, 1),
+        integer.checkouts(#Checkouts, none(), 1),
+        string.notnone(#Title),
+        string(#ISBN),
+        string.notnone(#Creator),
+        string(#Subjects),
+        string(#Publisher),
+        integer.year_published(#PublicationYear)
+    )
+
+    in(#UsageClass, "Digital|Physical")
+    in(#CheckoutType, "Horizon|OverDrive")
+    in(#MaterialType, "BOOK|EBOOK|AUDIOBOOK")
+
+]

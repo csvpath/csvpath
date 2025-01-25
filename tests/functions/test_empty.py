@@ -94,14 +94,13 @@ class TestFunctionsEmpty(unittest.TestCase):
 
     def test_function_empty6(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
         path.skip_blank_lines = False
         path.parse(
-            f"""
-            ${EMPTY}[1*][
+            f""" ${EMPTY}[1*][
                 empty(#firstname, headers())
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 

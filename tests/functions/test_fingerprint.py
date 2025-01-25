@@ -37,11 +37,8 @@ class TestFunctionsFingerprint(unittest.TestCase):
         assert "by_line_fingerprint" not in path.variables
 
     def test_function_fingerprint_3(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*]
-            [
+        path = CsvPath().parse(
+            f""" ${PATH}[*][
                 line_fingerprint.hash()
                 last() -> store_line_fingerprint()
             ]"""
@@ -53,5 +50,6 @@ class TestFunctionsFingerprint(unittest.TestCase):
         # try to figure it out, but that would be error prone and
         # brittle.
         #
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()

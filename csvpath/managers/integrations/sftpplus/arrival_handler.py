@@ -68,10 +68,10 @@ class SftpPlusArrivalHandler:
         m = meta["method"]
         p = meta["named_paths_name"]
         archive = meta.get("archive")
+        orig_archive = None
         if archive is not None:
-            self.csvpath.config.add_to_config(
-                "results", "archive", archive, save_load=False
-            )
+            orig_archive = self.csvpath.config.get(section="results", name="archive")
+            self.csvpath.config.add_to_config("results", "archive", archive)
         print(
             f"_process_meta_file: method: {m}, named_paths_name: {p}, archive: {archive}"
         )
@@ -87,3 +87,5 @@ class SftpPlusArrivalHandler:
             )
         else:
             self.csvpaths.config.error("Run method is incorrect: {m}")
+        if orig_archive is not None:
+            self.csvpath.config.add_to_config("results", "archive", orig_archive)

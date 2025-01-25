@@ -13,6 +13,8 @@ from csvpath.matching.functions.types import (
     Date,
     Decimal,
     Boolean,
+    Email,
+    Url,
     Wildcard,
 )
 from ..args import Args
@@ -28,43 +30,28 @@ class Line(MatchDecider):
         a = self.args.argset()
         a.arg(
             name="Header value types",
-            types=[None, Wildcard, String, Boolean, Decimal, Date, Nonef, Blank],
+            types=[
+                None,
+                Wildcard,
+                String,
+                Boolean,
+                Decimal,
+                Date,
+                Nonef,
+                Blank,
+                Email,
+                Url,
+            ],
             actuals=[None, Any],
         )
         sibs = self.siblings()
         self.args.validate(sibs)
-        for i, s in enumerate(sibs):
-            # check that no types are hiding non-headers
-            if len(s.children) == 0:
-                continue
-            elif not isinstance(s.children[0], (Term, Equality)):
-                msg = self.decorate_error_message(
-                    f"Unexpected {s}. line() expects only names of headers."
-                )
-                self.raise_children_exception(msg)
-            elif isinstance(s.children[0], Term):
-                continue
-            elif isinstance(s.children[0], Equality):
-                ags = s.children[0].siblings()
-                for a in ags:
-                    if not isinstance(a, Term):
-                        msg = self.decorate_error_message(
-                            f"Unexpected {s}. line() expects only names of headers."
-                        )
-                        self.raise_children_exception(msg)
-            else:
-                #
-                # not sure why this branch existed. emptying it. remove if still here.
-                #
-                raise Exception("Impossible branch")
-
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
         self.value = self.matches(skip=skip)
 
-    def _decide_match(self, skip=None) -> None:
-        errors = []
+    def _count_headers(self, *, errors, skip=None) -> None:
         sibs = self.siblings()
         advance = 0
         advanced = 0
@@ -92,10 +79,14 @@ class Line(MatchDecider):
                 errors.append(msg)
             b = s.matches(skip=skip)
             if b is not True:
-                msg = self.decorate_error_message(f"Invalid value at position {i}: {s}")
+                msg = self.decorate_error_message(f"Invalid value at {s.my_chain}")
                 errors.append(msg)
-
         found = len(sibs) + advanced + advance
+        return found
+
+    def _decide_match(self, skip=None) -> None:
+        errors = []
+        found = self._count_headers(errors=errors)
         expected = len(self.matcher.csvpath.headers)
         if expected != found:
             msg = self.decorate_error_message(
@@ -105,9 +96,6 @@ class Line(MatchDecider):
         if len(errors) > 0:
             for e in errors:
                 self.matcher.csvpath.print(e)
-            msg = self.decorate_error_message(
-                f"Structure of {self.my_chain} does not match"
-            )
             self.raise_children_exception(msg)
             self.match = False
         elif self._distinct_if(skip=skip):
@@ -118,8 +106,7 @@ class Line(MatchDecider):
     def _distinct_if(self, skip) -> None:
         if self.distinct:
             name = self.first_non_term_qualifier(self.name)
-            sibs = self.siblings()
-            sibs = [s.resolve_value() for s in sibs]
+            sibs = self.sibling_values()
             fingerprint, lines = FingerPrinter._capture_line(
                 self, name, skip=skip, sibs=sibs
             )
@@ -137,9 +124,9 @@ class Line(MatchDecider):
             if advance == 0:
                 advance = len(self.matcher.csvpath.headers) - i
             if advance is None:
-                msg = self.decorate_error_message(
-                    "Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} is not correct for line"
-                )
+                msg = f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} "
+                msg = f"{msg}is not correct for line"
+                msg = self.decorate_error_message(msg)
                 self.raise_children_exception(msg)
         elif isinstance(v, int):
             advance = v
@@ -159,7 +146,7 @@ class Line(MatchDecider):
     def _find_next_specified_header(self, skip, i, sibs):
         if i + 1 == len(sibs):
             return 0
-        name = sibs[i + 1]._value_one(skip=skip)
+        name = sibs[i + 1]._child_one().name
         a = self.matcher.header_index(name)
         if a is None:
             return a
@@ -168,11 +155,14 @@ class Line(MatchDecider):
     def _handle_blank_if(self, skip, i, s, errors) -> bool:
         if not isinstance(s, (Blank)):
             return False
-        t = s._value_one(skip=skip)
-        if t is not None and t != self.matcher.csvpath.headers[i]:
+        t = s._child_one()
+        #
+        # if t is a named header check that. if it is a numbered header
+        #
+        if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
             msg = self.decorate_error_message(
-                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not name a current header"
+                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
             )
             errors.append(msg)
         return True
@@ -180,11 +170,11 @@ class Line(MatchDecider):
     def _handle_types_if(self, skip, i, s, errors) -> bool:
         if not isinstance(s, (String, Decimal, Date, Boolean)):
             return False
-        t = s._value_one(skip=skip)
-        if t != self.matcher.csvpath.headers[i]:
+        t = s._child_one()
+        if t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
             msg = self.decorate_error_message(
-                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not name a current header"
+                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
             )
             errors.append(msg)
         return True

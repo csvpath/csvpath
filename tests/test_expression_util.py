@@ -252,4 +252,4 @@ class TestExpressionUtil(unittest.TestCase):
         es = m.expressions[0]
         c = es[0].children[0].children[0].children[0].children[0].children[0]
         chain = ExpressionUtility.my_chain(c)
-        assert chain == "any.length.concat.a"
+        assert chain == "any[0].length[0].concat[0].a"

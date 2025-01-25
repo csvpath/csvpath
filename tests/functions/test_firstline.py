@@ -75,7 +75,7 @@ class TestFunctionsFirstLine(unittest.TestCase):
 
     def test_function_firstline5(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect(
                 f""" ${PATH}[*][

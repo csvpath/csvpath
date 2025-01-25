@@ -40,6 +40,7 @@ class TestAssignment(unittest.TestCase):
                 @c = 1==0
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()
 

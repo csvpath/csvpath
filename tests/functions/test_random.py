@@ -43,11 +43,8 @@ class TestFunctionsRandom(unittest.TestCase):
     def test_function_shuffle(self):
         path = CsvPath()
         path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+            f"""${PATH}[1*][
                 @order = shuffle()
-                print("Line: $.csvpath.line_number: $.variables.order: $.headers.firstname")
                 push("ordering", @order)
             ]"""
         )
@@ -59,16 +56,13 @@ class TestFunctionsRandom(unittest.TestCase):
         assert len(path.variables["ordering"]) == 8
 
     def test_function_shuffle2(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[1*]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[1*][
                 @order = shuffle(0, "five")
-                print("Line: $.csvpath.line_number: $.variables.order: $.headers.firstname")
                 push("ordering", @order)
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 

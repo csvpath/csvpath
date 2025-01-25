@@ -52,12 +52,7 @@ class TestFunctionsAdd(unittest.TestCase):
         assert path.variables["l"] == 15
 
     def test_function_add_error1(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
+        path = CsvPath().parse(f""" ${PATH}[1][ @l = add( count() ) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${PATH}[1]
-                [ @l = add( count() ) ]"""
-            )
             path.fast_forward()

@@ -40,9 +40,6 @@ class Nonef(ValueProducer):
         else:
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 
-    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
-        return None
-
 
 class Blank(ValueProducer):
     """returns True to match, returns its child's value or None. represents any value"""
@@ -51,7 +48,7 @@ class Blank(ValueProducer):
         self.args = Args(matchable=self)
         self.args.argset(0)
         a = self.args.argset(1)
-        a.arg(types=[Term], actuals=[str])
+        a.arg(types=[Header], actuals=[str, None, self.args.EMPTY_STRING])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -63,9 +60,6 @@ class Blank(ValueProducer):
         # contained Term, if any, matches.
         self.match = self.default_match()
 
-    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
-        return None
-
 
 class Wildcard(ValueProducer):
     """returns True to match, return value: the arg: 1-9+ or '*', or None.
@@ -76,6 +70,9 @@ class Wildcard(ValueProducer):
         a = self.args.argset(1)
         a.arg(types=[None, Term], actuals=[int, str])
         self.args.validate(self.siblings())
+        #
+        # should check for int or * here
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -88,6 +85,3 @@ class Wildcard(ValueProducer):
         # if we're in line, line will check that our
         # contained Term, if any, matches.
         self.match = self.default_match()
-
-    def resolve_value(self, skip=None) -> str | None:  # pylint: disable=W0613
-        return None

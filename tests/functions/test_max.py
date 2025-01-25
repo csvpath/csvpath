@@ -10,8 +10,7 @@ class TestFunctionsMax(unittest.TestCase):
     def test_function_max0(self):
         path = CsvPath()
         path.parse(
-            f"""
-            ${PATH}[*]
+            f"""${PATH}[*]
             [
                 @the_max = max(line_number())
              ]"""
@@ -19,27 +18,23 @@ class TestFunctionsMax(unittest.TestCase):
         assert path.variables["the_max"] == 8
 
     def test_function_max1(self):
-        print("")
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*] [
+        path = CsvPath().parse(
+            f"""${PATH}[*] [
                 @the_max = max(#firstname)
                 no()
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_max2(self):
-        print("")
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*] [
+        path = CsvPath().parse(
+            f"""${PATH}[*] [
                 @the_max = max(#1)
                 no()
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()

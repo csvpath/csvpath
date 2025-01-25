@@ -11,13 +11,8 @@ NUMBERS = "tests/test_resources/numbers3.csv"
 
 
 class TestValidBasicTypesNone(unittest.TestCase):
-    def _config(self, path) -> None:
-        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
-
     def test_validity_none0(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
+        path = CsvPath().parse(
             f"""~id:validity_none0~ ${PATH}[*][
                 line(
                     none(),
@@ -25,41 +20,38 @@ class TestValidBasicTypesNone(unittest.TestCase):
                 )
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         path.modes.update()
         with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none01(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
+        path = CsvPath().parse(
             f"""~id:validity_none01~ ${PATH}[*][
                 line(
-                    integer("firstname"),
+                    integer(#firstname),
                     boolean( yes() ),
                     wildcard()
                 )
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         path.modes.update()
         with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none1(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
-            f"""~id:validity_none1~ ${PATH}[*][
-                none("2024-01-01")
-            ]"""
+        path = CsvPath().parse(
+            f"""~id:validity_none1~ ${PATH}[*][ none("2024-01-01") ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         path.modes.update()
         with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none2(self):
         path = CsvPath()
-        self._config(path)
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         path.parse(
             f"""~id:validity_none2~ ${PATH}[*][
                 none(none())
@@ -69,31 +61,19 @@ class TestValidBasicTypesNone(unittest.TestCase):
         assert len(lines) == 9
 
     def test_validity_none3(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
-            f"""~id:validity_none3~ ${PATH}[*][
-                none(-1)
-            ]"""
-        )
+        path = CsvPath().parse(f"""~id:none3~ ${PATH}[*][ none(-1) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none4(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
-            f"""~id:validity_none4~ ${PATH}[*][
-                none(5, 9)
-            ]"""
-        )
+        path = CsvPath().parse(f"""~id:validity_none4~ ${PATH}[*][ none(5, 9)]""")
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         with pytest.raises(MatchException):
             path.collect()
 
     def test_validity_none5(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
+        path = CsvPath().parse(
             """
                 ~
                     id:validity_none5
@@ -103,21 +83,20 @@ class TestValidBasicTypesNone(unittest.TestCase):
                 none(#3)
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         lines = path.collect()
         assert len(lines) == 1
 
     def test_validity_none6(self):
-        path = CsvPath()
-        self._config(path)
-        path.parse(
-            """
-                ~
+        path = CsvPath().parse(
+            """ ~
                     id:validity_none5
                     validation-mode:no-raise, no-stop
                 ~
                 $tests/test_resources/food.csv[9-10][
-                none("year")
+                none(#year)
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise, print, collect, stop")
         lines = path.collect()
         assert len(lines) == 1

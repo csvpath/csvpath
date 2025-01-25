@@ -10,22 +10,21 @@ NAMED_PATHS_DIR = "tests/test_resources/xlsx/named_paths"
 
 class TestXlsx(unittest.TestCase):
     def test_csvpaths_xlsx_primary_1(self):
-        cs = CsvPaths()
-        cs.file_manager.set_named_files(FILES)
-        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
-        cs.collect_paths(filename="primary", pathsname="primary")
-
-        pathresults = cs.results_manager.get_named_results("primary")
+        paths = CsvPaths()
+        paths.file_manager.set_named_files(FILES)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.collect_paths(filename="primary", pathsname="primary")
+        pathresults = paths.results_manager.get_named_results("primary")
         results = pathresults[0]
-        valid = cs.results_manager.is_valid("primary")
+        valid = paths.results_manager.is_valid("primary")
         # set for no-fail
         assert valid
         # increase rejects most of the lines
         assert len(results) == 22
 
     def test_csvpaths_bytes_written_1(self):
-        cs = CsvPaths()
-        cs.file_manager.set_named_files(FILES)
-        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
-        cs.collect_paths(filename="energy", pathsname="bytes")
-        assert cs.results_manager.is_valid("bytes")
+        paths = CsvPaths()
+        paths.file_manager.set_named_files(FILES)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.collect_paths(filename="energy", pathsname="bytes")
+        assert paths.results_manager.is_valid("bytes")

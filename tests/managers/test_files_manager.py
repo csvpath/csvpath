@@ -33,10 +33,7 @@ class TestFilesManager(unittest.TestCase):
         d = m._copy_in(tf, home)
         assert d is not None
         assert d.endswith("inputs/named_files/mytest/test.csv/test.csv")
-        # p = "inputs/named_files/mytest"
         p = f"{paths.config.inputs_files_path}/mytest"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        # p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     def test_reg_fingerprint(self):
@@ -50,8 +47,6 @@ class TestFilesManager(unittest.TestCase):
         assert d != rpath
         assert not Nos(d).exists()
         p = f"{paths.config.inputs_files_path}/mytest"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     """
@@ -120,7 +115,7 @@ class TestFilesManager(unittest.TestCase):
 
     def test_file_mgr_json2(self):
         paths = CsvPaths()
-        paths.config.csvpaths_errors_policy = ["raise"]
+        paths.config.add_to_config("errors", "csvpath", "raise")
         fm = paths.file_manager
         with pytest.raises(MatchException):
             fm.set_named_files_from_json("xyz")
@@ -136,16 +131,9 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count >= 2
         assert fm.name_exists("wonderful")
         assert fm.name_exists("amazing")
-
-        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/wonderful").remove()
         p = f"{paths.config.inputs_files_path}/wonderful"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
-        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
         p = f"{paths.config.inputs_files_path}/amazing"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
 
     def test_file_mgr_dict2(self):
@@ -169,15 +157,7 @@ class TestFilesManager(unittest.TestCase):
         assert afile is not None
         fm.remove_named_file("wonderful")
         assert fm.named_files_count == c
-
-        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/outstanding").remove()
         p = f"{paths.config.inputs_files_path}/outstanding"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()
-
-        # Nos(f"{paths.config.inputs_files_path}/inputs/named_files/amazing").remove()
         p = f"{paths.config.inputs_files_path}/amazing"
-        # if paths.config.inputs_files_path.find("://") > -1:
-        #    p = f"{paths.config.inputs_files_path}/{p}"
         Nos(p).remove()

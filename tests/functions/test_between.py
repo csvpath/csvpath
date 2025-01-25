@@ -158,45 +158,29 @@ class TestFunctionsBetween(unittest.TestCase):
         assert path.variables["3"] is True
 
     def test_function_between_args1(self):
-        path = CsvPath()
-        with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${DATES}[1][
+        path = CsvPath().parse(
+            f""" ${DATES}[1][
                     @2 = between( 2, "0" )
                 ]"""
-            )
+        )
+        path.config.add_to_config("errors", "csvpath", "raise")
+        with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_between_args2(self):
-        path = CsvPath()
+        path = CsvPath().parse(f"""${DATES}[1][ @2 = between( 2 ) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${DATES}[1][
-                    @2 = between( 2 )
-                ]"""
-            )
             path.fast_forward()
 
     def test_function_between_args3(self):
-        path = CsvPath()
+        path = CsvPath().parse(f""" ${DATES}[1][ @2 = between() ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${DATES}[1][
-                    @2 = between()
-                ]"""
-            )
             path.fast_forward()
 
     def test_function_between_args4(self):
-        path = CsvPath()
+        path = CsvPath().parse(f""" ${DATES}[1][ @2 = between(1, 2, 3, 4) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
-            path.parse(
-                f"""
-                ${DATES}[1][
-                    @2 = between(1, 2, 3, 4)
-                ]"""
-            )
             path.fast_forward()

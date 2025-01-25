@@ -181,9 +181,12 @@ class Matcher:  # pylint: disable=R0902
         i = None
         if isinstance(name, int):
             return name
-        i = ExpressionUtility.to_int(name, should_i_raise=False)
-        if isinstance(i, int):
-            return i
+        try:
+            i = ExpressionUtility.to_int(name, should_i_raise=False)
+            if isinstance(i, int):
+                return i
+        except ValueError:
+            ...
         x = self.csvpath.header_index(name)
         return x
 

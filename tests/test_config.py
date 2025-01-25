@@ -52,7 +52,6 @@ class TestConfig(unittest.TestCase):
         assert "quiet" in config.csvpaths_errors_policy
         assert len(config.csvpath_errors_policy) == 1
         assert config is path.config
-        path.config.csvpath_errors_policy = ["raise"]
         with pytest.raises(ConfigurationException):
             config.set_config_path_and_reload("tests/test_resources/bad_config.ini")
 

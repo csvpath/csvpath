@@ -18,8 +18,8 @@ class TestValidBasicTypesInteger(unittest.TestCase):
                 ~ return-mode: matches
                   validation-mode: no-raise, no-stop ~
                 ${NUMBERS}[1*] [
-                        integer(1)
-                        integer(2)
+                        integer(#1)
+                        integer(#2)
                 ]"""
         )
         lines = path.collect()
@@ -32,8 +32,8 @@ class TestValidBasicTypesInteger(unittest.TestCase):
                 ~ return-mode: matches
                   validation-mode: no-raise, no-stop ~
                 ${NUMBERS}[6] [
-                        integer(1)
-                        integer(2)
+                        integer(#1)
+                        integer(#2)
                 ]"""
         )
         lines = path.collect()

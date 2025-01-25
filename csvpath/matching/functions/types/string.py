@@ -1,5 +1,7 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Term
+from csvpath.matching.productions import Header, Variable, Reference, Term
+from csvpath.matching.functions.function import Function
+
 from ..args import Args
 from .type import Type
 
@@ -7,21 +9,11 @@ from .type import Type
 class String(Type):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
-        a = self.args.argset(1)
-        a.arg(
-            name="header name",
-            types=[Term],
-            actuals=[str, int],
-        )
-        # why self.args.EMPTY_STRING? we'll never have an empty string
-        # term. if we only allow terms we're only ever pointing to a
-        # header. If we allow other types we'll resolve them potentially
-        # to the empty string, but that's not what we're doing today.
         a = self.args.argset(3)
         a.arg(
-            name="header name",
-            types=[Term],
-            actuals=[str, int],
+            name="header",
+            types=[Header, Variable, Function, Reference],
+            actuals=[str, None, self.args.EMPTY_STRING],
         )
         a.arg(name="max value", types=[None, Term], actuals=[int])
         a.arg(name="min value", types=[None, Term], actuals=[int])
@@ -35,11 +27,7 @@ class String(Type):
     def _decide_match(self, skip=None) -> None:
         value = self._value_one(skip=skip)
         value = f"{value}" if value is not None else None
-        # resolve the value of the header that our value names
-        val = self.resolve_value(skip=skip)
-        # our to_value cannot be none because Args
-        # our resolved value can be none or '' and
-        # we might not accept that
+        val = self._value_one(skip=skip)
         if val is None and self.notnone:
             self.match = False
         elif val is None:
@@ -55,6 +43,10 @@ class String(Type):
         if maxlen is None:
             maxlen = len(value)
         if maxlen < minlen:
+            #
+            # TODO: we could also check this in check_valid(). it is most often
+            # going to be two Term ints, not a dynamic value.
+            #
             self.raise_children_exception(
                 "Max length ({maxlen}) cannot be less than min length ({minlen})"
             )

@@ -47,6 +47,15 @@ class Sections(Enum):
     CACHE = "cache"
 
 
+#
+# main external methods:
+#  - load
+#  - save
+#  - refresh
+#  - reload
+#  - add_to_config
+#  - get
+#
 class Config:
     """by default finds config files at ./config/config.ini.
     To set a different location:
@@ -126,13 +135,17 @@ class Config:
                 print(f"Check config at {self.config_path} for [{section}][{name}]")
             return default
 
-    def add_to_config(self, section, key, value, save_load: bool = True) -> None:
+    #
+    # adds the value to the internal configparser object. doesn't save.
+    # does a refresh to make sure any lists or other interpreted values
+    # are up to date. if you want to save you need to call the save
+    # method.
+    #
+    def add_to_config(self, section, key, value) -> None:
         if not self._config.has_section(section):
             self._config.add_section(section)
-        self._config.set(section, key, value)
-        if save_load is True:
-            self.save_config()
-            self._load_config()
+        self._config[section][key] = value
+        self.refresh()
 
     def save_config(self) -> None:
         with open(self.configpath, "w") as f:
@@ -316,6 +329,14 @@ on_unmatched_file_fingerprints = halt
         #
         #
         self._config.read(self._configpath)
+        self.refresh()
+
+    #
+    # we hold lists and such that may need refreshing from the configparser
+    # object, if that has been updated or loaded. this method doesn't load from
+    # file, it just gathers and translates settings for external use.
+    #
+    def refresh(self) -> None:
         self.csvpath_file_extensions = self._get(
             Sections.CSVPATH_FILES.value, "extensions"
         )

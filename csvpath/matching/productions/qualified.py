@@ -92,7 +92,7 @@ class Qualified:  # pylint: disable=R0904
             return default
         for q in self.qualifiers:
             if q not in Qualified.QUALIFIERS:
-                return q
+                return q.strip()
         return default
 
     def second_non_term_qualifier(self, default=None) -> Optional[str]:
@@ -105,7 +105,7 @@ class Qualified:  # pylint: disable=R0904
             if q == first:
                 continue
             if q not in Qualified.QUALIFIERS:
-                return q
+                return q.strip()
         return default
 
     def set_qualifiers(self, qs) -> None:  # pylint: disable=C0116

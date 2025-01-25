@@ -8,54 +8,46 @@ PATH = "tests/test_resources/test.csv"
 
 class TestFunctionsMin(unittest.TestCase):
     def test_function_min0(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*]
-            [
+        path = (
+            CsvPath()
+            .parse(
+                f""" ${PATH}[*][
                 @the_min = min(line_number())
              ]"""
-        ).fast_forward()
+            )
+            .fast_forward()
+        )
         assert path.variables["the_min"] == 0
 
     def test_function_min1(self):
-        path = CsvPath()
-
-        path.parse(
-            f"""
-            ${PATH}[*]
-            [
+        path = CsvPath().parse(
+            f""" ${PATH}[*][
                 @the_min = min(#firstname)
                 no()
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_min2(self):
-        path = CsvPath()
-
-        path.parse(
-            f"""
-            ${PATH}[3-5]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[3-5][
                 @the_min = min(#firstname, "scan")
                 no()
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_min3(self):
-        path = CsvPath()
-
-        path.parse(
-            f"""
-            ${PATH}[3-5]
-            [
+        path = CsvPath().parse(
+            f"""${PATH}[3-5][
                 @the_min = min(#firstname, "match")
                 no()
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()

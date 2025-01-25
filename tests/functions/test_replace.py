@@ -74,21 +74,21 @@ class TestFunctionsReplace(unittest.TestCase):
         assert path.matcher.line[3] is not None
 
     def test_function_append2(self):
-        path = CsvPath()
-        path.parse(
-            f""" ${PATH}[*][
+        path = CsvPath().parse(
+            f"""${PATH}[*][
                 line_number.nocontrib() == 0 -> append(3, "rnd_id")
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_function_append3(self):
-        path = CsvPath()
-        path.parse(
-            f""" ${PATH}[*][
+        path = CsvPath().parse(
+            f"""${PATH}[*][
                 line_number.nocontrib() == 0 -> append("rnd_id")
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()

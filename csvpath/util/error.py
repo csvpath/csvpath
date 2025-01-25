@@ -35,33 +35,34 @@ class ErrorCommsManager:
 
     def __init__(self, csvpath=None, csvpaths=None) -> None:
         self._csvpath = csvpath
-        self._policy = None
-        if csvpath:
-            self._policy = csvpath.config.csvpath_errors_policy
-        elif csvpaths:
-            self._policy = csvpaths.config.csvpaths_errors_policy
-        else:
+        self._csvpaths = csvpaths
+        if not csvpath and not csvpaths:
             raise ErrorHandlingException("Must have a CsvPath or CsvPaths instance")
+
+    def _in_policy(self, v) -> bool:
+        if self._csvpath:
+            return v in self._csvpath.config.csvpath_errors_policy
+        return v in self._csvpaths.config.csvpaths_errors_policy
 
     def do_i_raise(self) -> bool:
         if self._csvpath and self._csvpath.raise_validation_errors is not None:
             return self._csvpath.raise_validation_errors
-        return OnError.RAISE.value in self._policy
+        return self._in_policy(OnError.RAISE.value)
 
     def do_i_print(self) -> bool:
         if self._csvpath and self._csvpath.print_validation_errors is not None:
             return self._csvpath.print_validation_errors
-        return OnError.PRINT.value in self._policy
+        return self._in_policy(OnError.PRINT.value)
 
     def do_i_stop(self) -> bool:
         if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
             return self._csvpath.stop_on_validation_errors
-        return OnError.STOP.value in self._policy
+        return self._in_policy(OnError.STOP.value)
 
     def do_i_fail(self) -> bool:
         if self._csvpath and self._csvpath.fail_on_validation_errors is not None:
             return self._csvpath.fail_on_validation_errors
-        return OnError.FAIL.value in self._policy
+        return self._in_policy(OnError.FAIL.value)
 
 
 class Error:

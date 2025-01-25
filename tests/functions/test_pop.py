@@ -24,15 +24,13 @@ class TestPop(unittest.TestCase):
         assert path.variables["popped"] == 9
 
     def test_function_push2(self):
-        path = CsvPath()
-        path.parse(
-            f"""
-            ${PATH}[*]
-            [
+        path = CsvPath().parse(
+            f""" ${PATH}[*][
                 no()
                 push.notnone("pushed", none())
             ]"""
         )
+        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
 
