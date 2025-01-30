@@ -131,6 +131,9 @@ class Line(MatchDecider):
         elif isinstance(v, int):
             advance = v
         else:
+            #
+            # TODO: this conversion error should be caught by Args
+            #
             v2 = ExpressionUtility.to_int(v, should_i_raise=False)
             if not isinstance(v2, int):
                 msg = f"Cannot convert {v} to int"

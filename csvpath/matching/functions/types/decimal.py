@@ -16,7 +16,7 @@ class Decimal(ValueProducer, Type):
         a.arg(
             name="header",
             types=[Header, Variable, Function, Reference],
-            actuals=[str, int],
+            actuals=[None, str, int],
         )
         a.arg(
             name="max",
@@ -49,10 +49,15 @@ class Decimal(ValueProducer, Type):
             #
             if self.notnone is True:
                 self.match = False
+                #
+                # should be caught by Args
+                #
+                """ """
                 msg = f"'{self._value_one(skip=skip)}' cannot be empty"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
+                """ """
                 return
             self.match = True
             return

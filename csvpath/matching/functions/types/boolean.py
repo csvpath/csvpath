@@ -38,6 +38,9 @@ class Boolean(ValueProducer):
                 self.value = v
             else:
                 self.value = CheckedUnset()
+                #
+                # pretty sure this none should also be caught by Args
+                #
                 msg = f"Not a boolean value in {self.my_chain}: '{v}'"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():

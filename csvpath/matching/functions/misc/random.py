@@ -61,18 +61,28 @@ class Shuffle(ValueProducer):
                 # correct Args-type / data exception
                 raise DataException("Upper must be an int > than the first arg")
             lower2 = ExpressionUtility.to_int(lower)
+            #
+            # should be caught by Args
+            #
+            """
             if not isinstance(lower2, int):
                 msg = f"Cannot convert {lower} to int"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
+            """
             lower = lower2
             upper2 = ExpressionUtility.to_int(upper)
+            #
+            # should be caught by Args
+            #
+            """
             if not isinstance(upper2, int):
                 msg = f"Cannot convert {upper} to int"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
+            """
             upper = upper2
             order = sample(range(lower, upper), upper - lower)
         elif order == []:

@@ -91,13 +91,13 @@ class ArgumentValidationHelper:
             elif t == str:
                 type_names.append("a string")
             elif t == float:
-                type_names.append("a number")
+                type_names.append("a decimal")
             elif t == datetime.datetime:
                 type_names.append("a datetime")
             elif t == datetime.date:
                 type_names.append("a date")
             elif t == bool:
-                type_names.append("a bool")
+                type_names.append("a boolean")
             #
             # Add more type mappings as needed
             #

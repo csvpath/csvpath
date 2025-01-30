@@ -38,12 +38,17 @@ class Counter(ValueProducer):
             if not isinstance(v, int):
                 v2 = ExpressionUtility.to_int(v)
                 if not isinstance(v2, int):
+                    #
+                    # this should be caught by Args
+                    #
+                    """
                     msg = f"Cannot convert {v} to an int"
                     self.matcher.csvpath.error_manager.handle_error(
                         source=self, msg=msg
                     )
                     if self.matcher.csvpath.do_i_raise():
                         raise MatchException(msg)
+                    """
                     v = v2
             counter += v
         self.matcher.set_variable(name, value=counter)

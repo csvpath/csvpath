@@ -28,12 +28,17 @@ class Round(ValueProducer):
             places = 2
 
         places2 = ExpressionUtility.to_int(places)
+        #
+        # TODO: Args should catch conversion error
+        #
         if not isinstance(places2, int):
             msg = f"Cannot convert {places} to int"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
-
+        #
+        # TODO: Args should catch conversion error
+        #
         value2 = ExpressionUtility.to_float(value)
         if not isinstance(value2, float):
             msg = f"Cannot convert {value} to float"
