@@ -17,6 +17,9 @@ class Variable(Matchable):
         n, qs = ExpressionUtility.get_name_and_qualifiers(name)
         self.name = n
         self.qualifiers = qs
+        #
+        # don't see any way this could happen outside dev so not checking do_i_raise()
+        #
         if n is None:
             raise ChildrenException("Name cannot be None")
         if n.strip() == "":

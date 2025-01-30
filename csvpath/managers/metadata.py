@@ -32,7 +32,9 @@ class Metadata(ABC):
             self.ip_address = socket.gethostbyname(self.hostname)
         except Exception:
             ...
-
+        if config:
+            self.archive_name = config.archive_name
+            self.archive_path = config.archive_path
         #
         # find base dir so we can add file:// refs, if needed
         #

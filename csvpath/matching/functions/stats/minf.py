@@ -96,9 +96,7 @@ class Min(MinMax):
             return
         v = self._get_the_value_conformed()
         self.matcher.set_variable("min", tracking=f"{self._get_the_line()}", value=v)
-        print(f"min._profd: v: {v}")
         m = self._store_and_compare(v, MinMax.MIN)
-        print(f"min._profd: m: {m}")
         self.value = m
 
     def _decide_match(self, skip=None) -> None:
@@ -120,6 +118,7 @@ class Max(MinMax):
         if self._ignore():
             return
         v = self._get_the_value_conformed()
+        print(f" vvvv: {v}")
         self.matcher.set_variable("max", tracking=f"{self._get_the_line()}", value=v)
         m = self._store_and_compare(v, MinMax.MAX)
         self.value = m

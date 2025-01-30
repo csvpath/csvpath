@@ -5,7 +5,7 @@
     ID: categories_b
     files-mode:unmatched
     unmatched-mode:no-keep
-    validation-mode:no-raise, no-stop, print, no-fail
+    validation-mode:raise, no-stop, print, no-fail
 ~
 
 $[*][

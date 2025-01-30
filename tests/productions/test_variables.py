@@ -68,11 +68,11 @@ class TestVariables(unittest.TestCase):
         assert len(path.variables) == 7
 
     def test_variable_bad_names(self):
-        path = CsvPath()
+        path = CsvPath().parse(
+            f"""${PATH}[*][
+                @.hidden = "not really hidden. just starts with period."
+            ]"""
+        )
+        path.config.add_to_config("errors", "csvpath", "raise,print")
         with pytest.raises(VisitError):
-            path.parse(
-                f"""${PATH}[*][
-                    @.hidden = "not really hidden. just starts with period."
-                ]"""
-            )
             path.fast_forward()

@@ -5,7 +5,6 @@ from typing import NewType
 from json import JSONDecodeError
 from csvpath import CsvPath
 from csvpath.util.exceptions import InputException
-from csvpath.util.error import ErrorHandler
 from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
@@ -50,8 +49,10 @@ class PathsManager:
     def set_named_paths(self, np: dict[NamedPathsName, list[Csvpath]]) -> None:
         for name in np:
             if not isinstance(np[name], list):
-                ie = InputException(f"Must be a list of csvpath: {name}")
-                ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+                msg = f"{name} does not key a list of csvpaths"
+                self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+                if self.csvpaths.ecoms.do_i_raise():
+                    raise InputException(msg)
                 return
         for k, v in np.items():
             self.add_named_paths(name=k, paths=v)
@@ -61,8 +62,10 @@ class PathsManager:
         self, *, directory: str, name: NamedPathsName = None
     ) -> None:
         if directory is None:
-            ie = InputException("Named paths collection name needed")
-            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+            msg = "Named paths collection name needed"
+            self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise InputException(msg)
         if not Nos(directory).isfile():
             dlist = Nos(directory).listdir()
             base = directory
@@ -80,8 +83,10 @@ class PathsManager:
                     aname = self._name_from_name_part(p)
                 self.add_named_paths_from_file(name=aname, file_path=path)
         else:
-            ie = InputException("Dirname must point to a directory")
-            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+            msg = "Dirname must point to a directory"
+            self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise InputException(msg)
 
     def add_named_paths_from_file(
         self, *, name: NamedPathsName, file_path: str
@@ -105,8 +110,9 @@ class PathsManager:
                         paths += _
                     self.add_named_paths(name=k, paths=paths)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            self.csvpaths.logger.error(f"Error: cannot load {file_path}: {ex}")
-            ErrorHandler(csvpaths=self.csvpaths).handle_error(ex)
+            self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+            if self.csvpaths.ecoms.do_i_raise():
+                raise
 
     def add_named_paths(
         self,
@@ -124,12 +130,12 @@ class PathsManager:
         elif from_json is not None:
             return self.add_named_paths_from_json(file_path=from_json)
         if not isinstance(paths, list):
-            ie = InputException(
-                """Paths must be a list of csvpaths.
+            msg = """Paths must be a list of csvpaths.
                     If you want to load a file use add_named_paths_from_file or
                     set_named_paths_from_json."""
-            )
-            ErrorHandler(csvpaths=self.csvpaths).handle_error(ie)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise InputException(msg)
             return
         self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
         for _ in paths:

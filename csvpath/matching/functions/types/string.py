@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.functions.function import Function
+from csvpath.matching.util.exceptions import ChildrenException
 
 from ..args import Args
 from .type import Type
@@ -47,7 +48,8 @@ class String(Type):
             # TODO: we could also check this in check_valid(). it is most often
             # going to be two Term ints, not a dynamic value.
             #
-            self.raise_children_exception(
-                "Max length ({maxlen}) cannot be less than min length ({minlen})"
-            )
+            msg = "Max length ({maxlen}) cannot be less than min length ({minlen})"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
         self.match = minlen <= len(value) <= maxlen

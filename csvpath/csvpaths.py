@@ -5,7 +5,10 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 import traceback
 from datetime import datetime, timezone
-from .util.error import ErrorHandler, ErrorCollector, Error
+from .managers.errors.error import Error
+from .managers.errors.error_comms import ErrorCommunications
+from .managers.errors.error_manager import ErrorManager
+from .managers.errors.error_collector import ErrorCollector
 from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
@@ -130,9 +133,22 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         config: Config = None,
     ):
         self._config = Config() if config is None else config
+        #
+        # managers centralize activities, offer async potential, and
+        # are where integrations hook in. ErrorManager functionality
+        # must be available in CsvPath too. The others are CsvPaths
+        # only.
+        #
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
         self.results_manager = ResultsManager(csvpaths=self)
+        self.error_manager = ErrorManager(csvpaths=self)
+        #
+        # TODO:
+        # self.print_manager = ... <<<=== should we do this?
+        #
+        #
+        self.ecoms = ErrorCommunications(csvpaths=self)
         self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -147,6 +163,9 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self._advance_all = 0
         self._current_run_time = None
         self._run_time_str = None
+        self.named_paths_name = None
+        self.named_file_name = None
+
         #
         # metrics is for OTLP OpenTelemetry. it should only
         # be used by the OTLP listener. it is here because
@@ -203,6 +222,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             #
             config=None,
             print_default=self.print_default,
+            error_manager=self.error_manager,
         )
         return path
 
@@ -239,6 +259,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         you should clean before reuse unless you want to accumulate results."""
         self.results_manager.clean_named_results(paths)
         self.clear_run_coordination()
+        # self.error_manager.reset()
+        self._errors = []
+        self.named_paths_name = None
+        self.named_file_name = None
 
     def collect_paths(self, *, pathsname, filename) -> None:
         paths = self.paths_manager.get_named_paths(pathsname)
@@ -309,15 +333,12 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 #
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                try:
-                    ErrorHandler(
-                        csvpaths=self, csvpath=csvpath, error_collector=result
-                    ).handle_error(ex)
-                except Exception as e:  # pylint: disable=W0718
+                # ex.trace = traceback.format_exc()
+                # ex.source = self
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.ecoms.do_i_raise():
                     self.results_manager.save(result)
-                    raise e
+                    raise
             self.results_manager.save(result)
             results.append(result)
         #
@@ -351,6 +372,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
     ) -> None:
         # file is the physical file (+/- if preceding mode) filename is the named-file name
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
+        csvpath.named_paths_name = pathsname
+        self.named_paths_name = pathsname
+        csvpath.named_file_name = filename
+        self.named_file_name = filename
         #
         # by_line==True means we are starting a run that is breadth-first ultimately using
         # next_by_line(). by_line runs cannot be source-mode preceding and have different
@@ -489,15 +514,12 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     "Completed fast forward of csvpath %s against %s", i, file
                 )
             except Exception as ex:  # pylint: disable=W0718
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                try:
-                    ErrorHandler(
-                        csvpaths=self, csvpath=csvpath, error_collector=result
-                    ).handle_error(ex)
-                except Exception as e:  # pylint: disable=W0718
+                # ex.trace = traceback.format_exc()
+                # ex.source = self
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.ecoms.do_i_raise():
                     self.results_manager.save(result)
-                    raise e
+                    raise
             self.results_manager.save(result)
             results.append(result)
         #
@@ -590,16 +612,10 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                         result.unmatched = csvpath.unmatched
                     yield line
             except Exception as ex:  # pylint: disable=W0718
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                try:
-                    ErrorHandler(
-                        csvpaths=self, csvpath=csvpath, error_collector=result
-                    ).handle_error(ex)
-                except Exception as e:  # pylint: disable=W0718
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.ecoms.do_i_raise():
                     self.results_manager.save(result)
-                    raise e
-
+                    raise
             self.results_manager.save(result)
             results.append(result)
         #
@@ -802,29 +818,15 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                         line = self.current_matcher.limit_collection(line)
                         p[1].append(line)
             except Exception as ex:  # pylint: disable=W0718
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                #
-                # was like this, but doing save here fails to
-                # save the present exception. doing save below
-                # in 2nd handler should give better visibility
-                #
-                # for r in csvpath_objects:
-                #    r = r[1]
-                #    self.results_manager.save(r)
-                try:
-                    ErrorHandler(
-                        csvpaths=self,
-                        csvpath=self.current_matcher,
-                        error_collector=self.current_matcher,
-                    ).handle_error(ex)
-                except Exception as e:  # pylint: disable=W0718
+                # ex.trace = traceback.format_exc()
+                # ex.source = self
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.ecoms.do_i_raise():
                     for r in csvpath_objects:
                         result = r[1]
                         result.unmatched = r[0].unmatched
                         self.results_manager.save(result)
-                    raise e
-
+                    raise
             # we yield even if we stopped in this iteration.
             # caller needs to see what we stopped on.
             #
@@ -882,16 +884,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 ex.trace = traceback.format_exc()
                 ex.source = self
-                # the error handler is the Results. it registers itself with
-                # the csvpath as the error collector. not as straightforward a way to
-                # get ErrorHandler what it needs, but effectively same as we do above
-                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(
-                    ex
-                )  # pragma: no cover
+                # the error collector is the Results. it registers itself with
+                # the csvpath as the error collector. not as straightforward but
+                # effectively same as we do above
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
         return csvpath_objects
 
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname, crt: str):
-        # crt = self.run_time_str(pathsname)
         #
         # run starts here
         #
@@ -924,9 +923,12 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 #
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
+                """
                 ex.trace = traceback.format_exc()
                 ex.source = self
                 ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
+                """
+                self.error_manager.handle_error(source=self, msg=f"{ex}")
                 #
                 # keep this comment for modelines avoidance
                 #

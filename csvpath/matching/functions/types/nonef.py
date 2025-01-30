@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import ChildrenException, MatchException
 from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.functions.function import Function
 from ..args import Args
@@ -35,8 +35,10 @@ class Nonef(ValueProducer):
             h = self.matcher.get_header_value(self, v)
             self.match = ExpressionUtility.is_none(h)
             if self.match is False:
-                msg = self.decorate_error_message(f"'{v}' must be empty")
-                self.parent.raise_if(ChildrenException(msg))
+                msg = f"'{v}' must be empty"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
         else:
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 

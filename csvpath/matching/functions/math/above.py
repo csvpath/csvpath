@@ -21,11 +21,11 @@ class AboveBelow(MatchDecider):
         #
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[None, int, date, datetime, str],
+            actuals=[None, int, float, date, datetime, str],
         )
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[None, int, date, datetime, str],
+            actuals=[None, int, float, date, datetime, str],
         )
         self.args.validate(self.siblings())
         super().check_valid()

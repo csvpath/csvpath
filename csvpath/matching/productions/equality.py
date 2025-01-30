@@ -89,6 +89,10 @@ class Equality(Matchable):
     def commas_to_list(self) -> List[Any]:
         """gets the children of op==',' equalities as a list of args"""
         if self.op != ",":
+            #
+            # this should only be raised during function development. because of that
+            # we don't need to check do_i_raise()
+            #
             raise ChildrenException(
                 f"Cannot get args from equality when operation is {self.op}. Use ','."
             )
@@ -367,60 +371,63 @@ class Equality(Matchable):
     # ==============================
 
     def _do_when(self, *, skip=None) -> bool:
-        b = None
-        if self.op == "->":
+        if self.op != "->":
             #
-            # when we use the skip list to prevent loops we are
-            # returning the default_match -- the affirmative --
-            # resulting in the right-hand side being considered
-            # early, before the left-hand side is ready. the
-            # sentinel makes sure we don't descend the right-hand
-            # side.
+            # this could only happen during development. because of that
+            # we don't need to check do_i_raise()
             #
-            if self.sentinel:
-                ret = self.default_match()
-                self.when_do().result(ret).because("sentinel")
-                return ret
-            self.sentinel = True
+            raise ChildrenException(
+                "Not a when/do operation"
+            )  # this can't really happen
 
-            lm = self.left.matches(skip=skip)
-            if lm is True:
-                b = True
-                self.when_do().result(b).because("line matches")
-                if self.matcher._AND is False and self._left_nocontrib(self.left):
-                    b = not b
-                    self.when_do().result(b).because("not AND")
-                #
-                # adding complication..., but if left is last() we want to unfreeze
-                # to let it do what it does. e.g. last() -> print("done!")
-                # that opens us to variable changes but even that is probably
-                # desirable in this case.
-                #
-                override = (
-                    isinstance(self.left, Function) and self.left.override_frozen()
+        b = None
+        #
+        # when we use the skip list to prevent loops we are
+        # returning the default_match -- the affirmative --
+        # resulting in the right-hand side being considered
+        # early, before the left-hand side is ready. the
+        # sentinel makes sure we don't descend the right-hand
+        # side.
+        #
+        if self.sentinel:
+            ret = self.default_match()
+            self.when_do().result(ret).because("sentinel")
+            return ret
+        self.sentinel = True
+        lm = self.left.matches(skip=skip)
+        if lm is True:
+            b = True
+            self.when_do().result(b).because("line matches")
+            if self.matcher._AND is False and self._left_nocontrib(self.left):
+                b = not b
+                self.when_do().result(b).because("not AND")
+            #
+            # adding complication..., but if left is last() we want to unfreeze
+            # to let it do what it does. e.g. last() -> print("done!")
+            # that opens us to variable changes but even that is probably
+            # desirable in this case.
+            #
+            override = isinstance(self.left, Function) and self.left.override_frozen()
+            if override:
+                self.matcher.csvpath.is_frozen = False
+                self.matcher.csvpath.logger.debug(
+                    "Overriding frozen in when/do: %s", self
                 )
-                if override:
-                    self.matcher.csvpath.is_frozen = False
-                    self.matcher.csvpath.logger.debug(
-                        "Overriding frozen in when/do: %s", self
-                    )
-                self.DO_WHEN = True
-                self.right.matches(skip=skip)
-                if override:
-                    self.matcher.csvpath.logger.debug(
-                        "Resetting frozen after when/do: %s", self
-                    )
-                    self.matcher.csvpath.is_frozen = True
-            else:
-                self.DO_WHEN = False
-                if not self.matcher._AND and self._left_nocontrib(self.left):
-                    b = False
-                    self.when_do().result(b).because("not AND and nocontrib")
-                else:
-                    b = self._left_nocontrib(self.left)
-                    self.when_do().result(b).because("nocontrib")
+            self.DO_WHEN = True
+            self.right.matches(skip=skip)
+            if override:
+                self.matcher.csvpath.logger.debug(
+                    "Resetting frozen after when/do: %s", self
+                )
+                self.matcher.csvpath.is_frozen = True
         else:
-            raise ChildrenException("Not a when operation")  # this can't really happen
+            self.DO_WHEN = False
+            if not self.matcher._AND and self._left_nocontrib(self.left):
+                b = False
+                self.when_do().result(b).because("not AND and nocontrib")
+            else:
+                b = self._left_nocontrib(self.left)
+                self.when_do().result(b).because("nocontrib")
         return b
 
     def _do_equality(self, *, skip=None) -> bool:

@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import ChildrenException, MatchException
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.functions.function import Function
 from .nonef import Nonef
@@ -32,10 +32,10 @@ class Decimal(ValueProducer, Type):
         for i, s in enumerate(self.siblings()):
             if isinstance(s, Function) and not isinstance(s, Nonef):
                 self.match = False
-                msg = self.decorate_error_message(
-                    f"Incorrect argument: {s} is not allowed"
-                )
-                self.parent.raise_if(ChildrenException(msg))
+                msg = f"Incorrect argument: {s} is not allowed"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -49,10 +49,10 @@ class Decimal(ValueProducer, Type):
             #
             if self.notnone is True:
                 self.match = False
-                msg = self.decorate_error_message(
-                    f"'{self._value_one(skip=skip)}' cannot be empty"
-                )
-                self.parent.raise_if(ChildrenException(msg))
+                msg = f"'{self._value_one(skip=skip)}' cannot be empty"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
                 return
             self.match = True
             return
@@ -65,10 +65,12 @@ class Decimal(ValueProducer, Type):
                 if f"{h}".strip().find(".") == -1:
                     self.match = False
                     n = self._value_one()
-                    msg = self.decorate_error_message(
-                        f"'{n}' has 'strict' but value does not have a '.'"
+                    msg = f"'{n}' has 'strict' but value does not have a '.'"
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
                     )
-                    self.parent.raise_if(ChildrenException(msg))
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
                     return
                 self.match = True
             elif self.has_qualifier("weak"):
@@ -106,9 +108,26 @@ class Decimal(ValueProducer, Type):
 
     def _to(self, n):
         if self.name == "decimal":
-            return ExpressionUtility.to_float(n)
+            f = ExpressionUtility.to_float(n)
+            if not isinstance(f, float):
+                msg = f"Cannot convert {n} to float"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            return f
         if self.name == "integer":
-            return ExpressionUtility.to_int(n)
+            i = ExpressionUtility.to_int(n)
+            if not isinstance(i, int):
+                msg = f"Cannot convert {n} to int"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            return i
+        #
+        #
+        #
         msg = f"Unknown name: {self.name}"
-        self.parent.raise_if(ChildrenException(msg))
+        self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+        if self.matcher.csvpath.do_i_raise():
+            raise MatchException(msg)
         return None

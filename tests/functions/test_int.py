@@ -176,16 +176,16 @@ class TestFunctionsInt(unittest.TestCase):
             path.fast_forward()
 
     def test_validity_int3(self):
-        path = CsvPath().parse(f"""~id:int3~ ${PATH}[*][ int.notnone("a") ]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path = CsvPath().parse(f"""~id:int3~ ${PATH}[3][ int.notnone("a") ]""")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
 
-    def test_validity_int3b(self):
+    def test_validity_int4(self):
         path = CsvPath()
         path.parse(
             f"""~
-                id:validity_int3
+                id:validity_int4
                 validation-mode: print no-raise
             ~
             ${PATH}[*][

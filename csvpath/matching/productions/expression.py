@@ -2,11 +2,13 @@
 import traceback
 import warnings
 from typing import Any
-from csvpath.util.error import ErrorHandler
+from csvpath.managers.listener import Listener
+from csvpath.managers.metadata import Metadata
+from ..util.exceptions import ChildrenException, MatchException
 from . import Matchable
 
 
-class Expression(Matchable):
+class Expression(Matchable, Listener):
     """root of a match component. the match components are expressions,
     even if we think of them as variables, headers, etc. expressions
     live in a list in the matcher. matcher tracks their activation
@@ -18,15 +20,25 @@ class Expression(Matchable):
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, name=name, value=value)
-        self.errors = []
+        self.error_count = 0
+        self._index = -1
 
-    def handle_errors_if(self) -> None:
-        es = self.errors
-        self.errors = []
-        for e in es:
-            ErrorHandler(
-                csvpath=self.matcher.csvpath, error_collector=self.matcher.csvpath
-            ).handle_error(e)
+    #
+    # we need to implement the error_listener interface
+    # when we get an error over it, we need to just increment
+    # the error count. nothing else.
+    #
+    def metadata_update(self, mdata: Metadata) -> None:
+        if mdata.expression_index == self.index:
+            self.error_count += 1
+
+    @property
+    def index(self) -> int:
+        if self._index == -1:
+            for i, e in enumerate(self.matcher.expressions):
+                if e[0] is self:
+                    self._index = i
+        return self._index
 
     def __str__(self) -> str:
         s = ""
@@ -49,26 +61,21 @@ class Expression(Matchable):
                         ret = False
                 self.match = ret
             except Exception as e:  # pylint: disable=W0718
-                # re: W0718: there may be a better way, but however we
-                # do it we have to let nothing through
-                e.trace = traceback.format_exc()
-                e.source = self
-                e.json = self.matcher.to_json(self)
-                #
-                # for output ErrorHandler has:
-                #   - the print() on the CsvPath
-                #   - the error_collector
-                #   - the logger on the CsvPath or CsvPaths
-                #   - exceptions dumped on system.err
-                #
-                self.errors.append(e)
-                #
-                # if we don't raise the exception we decline the match and
-                # continue
-                #
-                # is this False needed?
-                # self.match = False
-        if len(self.errors) > 0:
+                if not isinstance(e, (ChildrenException, MatchException)):
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=f"{e}"
+                    )
+                    self.matcher.csvpath.logger.error(e)
+                if self.matcher.csvpath.do_i_raise():
+                    raise
+        #
+        # it is important that the handle_error() calls down-stack already
+        # resulted in an update to self.error_count. the way we do
+        # threads today that won't be a problem. presumably since order is
+        # important in csvpath the grain of async will continue to be
+        # more or less the same going forward.
+        #
+        if self.error_count > 0:
             #
             # if we are matching on errors we want to not just fail lines
             #
@@ -79,29 +86,20 @@ class Expression(Matchable):
     def reset(self) -> None:
         self.value = None
         self.match = None
-        self.errors = []
+        self.error_count = 0
         super().reset()
-
-    def handle_error(self, e) -> None:
-        self.errors.append(e)
 
     def check_valid(self) -> None:
         warnings.filterwarnings("error")
         try:
             super().check_valid()
         except Exception as e:  # pylint: disable=W0718
-
-            # re: W0718: there may be a better way. this case is
-            # less clear-cut than the above. still, we probably want
-            # to err on the side of over-protecting in case dataops/
-            # automation doesn't fully control the csvpaths.
-            e.trace = traceback.format_exc()
-            e.source = self
-            e.message = f"Failed csvpath validity check with: {e}"
-            e.json = self.matcher.to_json(self)
-            self.handle_error(e)
             #
-            # We always stop if the csvpath itself is found to be invalid
-            # before the run starts. The error policy doesn't override that.
+            # we always stop a csvpath that is malformed
             #
             self.matcher.stopped = True
+            if not isinstance(e, (ChildrenException, MatchException)):
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
+                self.matcher.csvpath.logger.error(e)
+            if self.matcher.csvpath.do_i_raise():
+                raise

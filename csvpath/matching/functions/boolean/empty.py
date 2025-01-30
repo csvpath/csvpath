@@ -35,13 +35,15 @@ class Empty(MatchDecider):
         for s in sibs:
             # both structure / children exceptions
             if isinstance(s, Headers) and len(sibs) > 1:
-                self.raise_children_exception(
-                    "If empty() has a headers() argument it can only have 1 argument"
-                )
+                msg = "If empty() has a headers() argument it can only have 1 argument"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
             if isinstance(s, Term):
-                self.raise_children_exception(
-                    "empty() arguments cannot include terms"
-                )  # pragma: no cover
+                msg = "empty() arguments cannot include terms"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
 
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)

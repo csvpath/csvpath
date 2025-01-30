@@ -9,6 +9,7 @@ from csvpath.matching.productions import (
     Equality,
     Matchable,
 )
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
 
@@ -18,10 +19,10 @@ class Or(MatchDecider):
 
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name, child=child)
-        self.hold = []
+        self.errors = []
 
     def reset(self) -> None:
-        self.hold = []
+        self.errors = []
         super().reset()
 
     def check_valid(self) -> None:
@@ -31,11 +32,23 @@ class Or(MatchDecider):
         a.arg(types=[Matchable], actuals=[None, Any])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
+        ds = ExpressionUtility.get_my_descendents(self, include_equality=True)
+        self.matcher.csvpath.error_manager.veto_callback(sources=ds, callback=self)
 
-    def raise_if(self, e, *, cause=None) -> None:
-        # not bubbling up until we know we don't have a
-        # match on all options
-        self.hold.append((e, cause))
+    #
+    # the "optional" errors problem. or() only shows errors if all its branches fail. but matchables
+    # handle their own errors with the error_manager. solution:
+    #
+    # first catch all MatchExceptions and hold to reraise if every branch fails
+    #
+    # second get a list of all descendents. pass the list to error_manager for a callback on me.
+    # the callback is to handle_error(source, mgs). I collect the messages and resend them to error_manager
+    # if all branches fail, as well as raising an exception. setup the veto callback during validation.
+    #
+    # this keeps all the config between just me and the error_manager
+    #
+    def handle_error(self, source: Matchable, msg: str) -> None:
+        self.errors.append(msg)
 
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
@@ -43,15 +56,31 @@ class Or(MatchDecider):
     def _decide_match(self, skip=None) -> None:
         child = self.children[0]
         siblings = child.commas_to_list()
+        exceptions = []
         for sib in siblings:
-            b = sib.matches(skip=skip)
+            try:
+                b = sib.matches(skip=skip)
+            #
+            # should we only catch MatchException?
+            #
+            except Exception as e:
+                exceptions.append(e)
             if b:
                 self.match = True
                 # if we find a True we succeed and dump any errors
-                self.hold = []
+                self.errors = []
                 return
         self.match = False
-        # if we fail we progress any errors up the stack
-        for err in self.hold:
-            super().raise_if(err[0], cause=err[1])
-        self.hold = []
+        #
+        # if we fail we progress any errors up the stack. remember that
+        # we have to become the source for all these messages. that shouldn't
+        # be unclear, but regardless.
+        #
+        for msg in self.errors:
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+        #
+        # we only get to throw one. is that enough?
+        #
+        for e in exceptions:
+            for e in self.hold:
+                raise e

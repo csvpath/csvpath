@@ -2,7 +2,7 @@
 import datetime
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from ..function_focus import ValueProducer
 from ..args import Args
 from ..function import Function
@@ -14,31 +14,24 @@ class Date(ValueProducer, Type):
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
-        #
-        # we check if a term is a date first. if it isn't, we go to the headers.
-        #
+        a = self.args.argset(1)
+        a.arg(
+            name="date",
+            types=[Header, Variable, Function, Reference],
+            actuals=[None, datetime.datetime, datetime.date],
+        )
         a = self.args.argset(2)
         a.arg(
-            name="date string or object",
+            name="date string",
             types=[Term, Header, Variable, Function, Reference],
-            actuals=[datetime.datetime, datetime.date],
-        )
-        a.arg(
-            name="format",
-            types=[None, Term, Header],
-            actuals=[str],
-        )
-        a = self.args.argset(2)
-        a.arg(
-            name="header name",
-            types=[Term],
-            actuals=[str],
+            actuals=[None, str],
         )
         a.arg(
             name="format",
             types=[None, Term],
             actuals=[str],
         )
+        self.args.explain = "It must be a date object or a date string with a format."
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -61,11 +54,15 @@ class Date(ValueProducer, Type):
         elif ExpressionUtility.is_none(v):
             if self.notnone:
                 self.value = None
-                msg = self.decorate_error_message("Date cannot be empty")
-                self.parent.raise_if(ChildrenException(msg))
+                msg = "Date cannot be empty"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
         else:
-            msg = self.decorate_error_message(f"'{v}' is not a date or datetime")
-            self.parent.raise_if(ChildrenException(msg))
+            msg = f"'{v}' is not a date or datetime"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
 
     def _is_header(self, skip=None):
         h = self._value_one(skip=skip)
@@ -94,13 +91,13 @@ class Date(ValueProducer, Type):
         try:
             aformat = f"{aformat}".strip()
             return datetime.datetime.strptime(adate, aformat)
-        except ValueError as e:
+        except ValueError:
             if adate == "" and not self.notnone:
                 return None
-            msg = self.decorate_error_message(
-                f"Cannot parse date '{adate}' using '{aformat}'"
-            )
-            self.parent.raise_if(ChildrenException(msg), cause=e)
+            msg = f"Cannot parse date '{adate}' using '{aformat}'"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
             return None
 
     def _from_header_if(self, skip=None, quiet=False):

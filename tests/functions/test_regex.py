@@ -83,7 +83,7 @@ class TestFunctionsRegex(unittest.TestCase):
                 @group1.onmatch = regex(/s(niff)le/, #say, 11)
             ]"""
         )
-        with pytest.raises(MatchException):
+        with pytest.raises(IndexError):
             path.collect()
 
     def test_function_bad_regex1(self):

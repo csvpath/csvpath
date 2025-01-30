@@ -50,11 +50,18 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_result_manifest(self):
         paths = CsvPaths()
+        #
+        # setup
+        #
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
         paths.paths_manager.add_named_paths_from_json(
             "tests/examples/example_2_2/expected_files.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="expected_files")
+        #
+        # check categories results
+        #
         m = paths.results_manager.get_specific_named_result_manifest(
             "expected_files", "categories_b"
         )
@@ -63,6 +70,9 @@ class TestJsonNamedPaths(unittest.TestCase):
         )
         assert r.is_valid
         assert m["files_expected"] is False
+        #
+        # prices
+        #
         m = paths.results_manager.get_specific_named_result_manifest(
             "expected_files", "prices_b"
         )
@@ -74,7 +84,9 @@ class TestJsonNamedPaths(unittest.TestCase):
         assert m["files_expected"] is True
         assert "file_fingerprints" in m
         assert len(m["file_fingerprints"]) == 6
-
+        #
+        # sku_upc results
+        #
         m = paths.results_manager.get_specific_named_result_manifest(
             "expected_files", "sku_upc_b"
         )

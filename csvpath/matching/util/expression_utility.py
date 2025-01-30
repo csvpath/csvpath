@@ -3,7 +3,6 @@ import math
 import datetime
 import dateutil.parser
 from typing import Tuple, Any, List
-from .exceptions import MatchException
 
 
 class EmptyString(str):
@@ -68,13 +67,15 @@ class ExpressionUtility:
         if f"{v}".strip() == "":
             return False
         try:
-            cls.to_int(v)
-            return True
+            a = cls.to_int(v)
+            if isinstance(a, int):
+                return True
         except Exception:
             pass
         try:
-            cls.to_float(v)
-            return True
+            a = cls.to_float(v)
+            if isinstance(a, float):
+                return True
         except Exception:
             return False
 
@@ -113,7 +114,7 @@ class ExpressionUtility:
             return False
 
     @classmethod
-    def to_int(cls, v: Any, should_i_raise=True) -> float:
+    def to_int(cls, v: Any) -> float:
         if v is None:
             return 0
         if v is True:
@@ -145,23 +146,8 @@ class ExpressionUtility:
                 v = float(v)
             # if this doesn't work, handle the error upstack
             return int(v)
-        except ValueError as e:
-            #
-            # this mess is waiting on a new solution to error reporting.
-            # coming soon to a branch near you.
-            #
-            """
-            if f"{e}" == "invalid literal for int() with base 10: '[2019]'":
-                from csvpath.util.log_utility import LogUtility
-                print(f"\ne: {e}")
-                print(f"\ne: of type {type(e)}")
-                LogUtility.log_brief_trace()
-            raise e
-            """
-            if should_i_raise is True:
-                raise ValueError(f"Cannot convert '{v}' to int") from e
-            else:
-                return v
+        except ValueError:
+            return v
 
     @classmethod
     def to_float(cls, v: Any) -> float:
@@ -179,7 +165,7 @@ class ExpressionUtility:
         try:
             v = float(v)
             return v
-        except Exception:
+        except ValueError:
             if v.find(",") == len(v) - 3:
                 a = v[0 : v.find(",")]
                 a += "."
@@ -191,7 +177,10 @@ class ExpressionUtility:
             v = v.replace("€", "")
             v = v.replace("£", "")
         # if this doesn't work, handle upstack
-        return float(v)
+        try:
+            return float(v)
+        except ValueError:
+            return v
 
     @classmethod
     def ascompariable(cls, v: Any) -> Any:
@@ -294,6 +283,11 @@ class ExpressionUtility:
             return True
         if len(acts) == 0:
             return False
+        #
+        # added 29 jan: Any cannot be used with isinstance
+        #
+        if Any in acts:
+            return True
         actst = acts[:]
         if None in actst:
             actst.remove(None)
@@ -307,28 +301,32 @@ class ExpressionUtility:
         actst = tuple(actst)
         if isinstance(a, actst):
             # empty == NULL in CSV so we disallow an empty string here
+            ret = None
             if (
                 isinstance(a, str)
                 and cls.is_empty(a)
                 and None not in acts
                 and cls.EMPTY_STRING not in acts
             ):
-                return False
+                ret = False
             else:
-                return True
+                ret = True
+            return ret
         for act in acts:
             if act is None:
                 if cls.is_none(a):
                     return True
             elif act == int:
                 try:
-                    cls.to_int(a)
+                    i = cls.to_int(a)
+                    i = i + 0
                     return True
                 except Exception:
                     continue
             elif act == float:
                 try:
-                    cls.to_float(a)
+                    i = cls.to_float(a)
+                    i = i + 0
                     return True
                 except Exception:
                     continue
@@ -403,7 +401,7 @@ class ExpressionUtility:
                 somequals = name[dot + 1 :]
                 cls._next_qual(quals, somequals)
         if aname is None or aname.strip() == "":
-            raise ValueError("Name variable 'aname' cannot be None or empty")
+            raise ValueError("Name and qualifiers cannot be None or empty")
         return aname, quals
 
     @classmethod
@@ -474,6 +472,8 @@ class ExpressionUtility:
 
     @classmethod
     def get_my_expression(cls, thing):
+        if f"{type(thing)}".find("Expression") > -1:
+            return thing
         p = thing.parent
         ret = p
         while p:
@@ -509,3 +509,16 @@ class ExpressionUtility:
             if cls.get_my_expression(c) == expression:
                 return True
         return False
+
+    @classmethod
+    def get_my_descendents(
+        cls, thing, *, descendents: list = None, include_equality=False
+    ) -> list:
+        descendents = [] if descendents is None else descendents
+        for d in thing.children:
+            if include_equality is True or not hasattr(d, "op"):
+                descendents.append(d)
+            cls.get_my_descendents(
+                d, descendents=descendents, include_equality=include_equality
+            )
+        return descendents

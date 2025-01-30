@@ -32,4 +32,8 @@ class Multiply(ValueProducer):
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:
+        # we want to_value called so that if we would blow-up in
+        # assignment, equality, etc. we still blow-up even though we're not
+        # using the product.
+        self.to_value(skip=skip)
         self.match = self.default_match()

@@ -72,13 +72,16 @@ class Qualified:  # pylint: disable=R0904
             self.name = self.name.strip()
         self.qualifier = None
         self._qualifiers = []
-        # self.qualifiers = []
         if name is not None:
             n, qs = ExpressionUtility.get_name_and_qualifiers(name)
             self.name = n
             if qs is not None:
                 self.qualifiers = qs
         if self.name is not None and self.name.strip() == "":
+            #
+            # there's no realistic way this can happen outside dev, even with custom
+            # functions, so not changing to do_i_raise()
+            #
             raise ChildrenException(f"Name of {self} cannot be the empty string")
 
     @property

@@ -23,6 +23,7 @@ class Subtotal(ValueProducer):
         c = self._value_two(skip=skip)
         varname = self.first_non_term_qualifier(self.name)
         val = self.matcher.get_variable(varname, tracking=t, set_if_none=0)
+        # this may blow up if c is not convertable, but that is fine
         val += ExpressionUtility.to_float(c)
         self.matcher.set_variable(varname, tracking=t, value=val)
         self.value = val

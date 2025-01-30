@@ -1,5 +1,6 @@
 # pylint: disable=C0114
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Variable
 from csvpath.matching.functions.function import Function
@@ -28,8 +29,13 @@ class Advance(SideEffect):
         self.to_value(skip=skip)
         child = self.children[0]
         v = child.to_value(skip=skip)
-        v = int(v)
-        self.matcher.csvpath.advance_count = v
+        v2 = ExpressionUtility.to_int(v)
+        if not isinstance(v2, int):
+            msg = f"Cannot convert {v} to an int"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+        self.matcher.csvpath.advance_count = v2
         self.match = self.default_match()
 
 

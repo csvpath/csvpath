@@ -136,13 +136,16 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_errors(self):
         paths = CsvPaths()
+        paths.config.add_to_config(
+            section="errors", key="csvpath", value="raise, print"
+        )
         paths.collect_paths(pathsname="error_reload", filename="people")
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
         assert len(results) == 1
         errors = results[0].errors
         assert errors
-        assert len(errors) == 8
+        assert len(errors) == 16
         #
         # reload
         #

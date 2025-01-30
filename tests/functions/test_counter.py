@@ -8,6 +8,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsCounter(unittest.TestCase):
     def test_function_counter(self):
         path = CsvPath()
+        path.config.add_to_config(section="errors", key="csvpath", value="raise, print")
         path.parse(
             f"""
             ${PATH}[1*][

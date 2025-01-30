@@ -51,5 +51,5 @@ class TestFunctionsFingerprint(unittest.TestCase):
         # brittle.
         #
         path.config.add_to_config("errors", "csvpath", "raise")
-        with pytest.raises(MatchException):
+        with pytest.raises(KeyError):
             path.collect()

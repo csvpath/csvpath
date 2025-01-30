@@ -70,16 +70,14 @@ class Line(MatchDecider):
                 advance = self._get_advance(skip, i, s, sibs)
             elif isinstance(s, Nonef):
                 if not ExpressionUtility.is_none(self.matcher.line[i]):
-                    msg = self.decorate_error_message(f"Position {i} is not empty")
+                    msg = f"Position {i} is not empty"
                     errors.append(msg)
             else:
-                msg = self.decorate_error_message(
-                    f"Unexpected type at position {i}: {s}"
-                )
+                msg = f"Unexpected type at position {i}: {s}"
                 errors.append(msg)
             b = s.matches(skip=skip)
             if b is not True:
-                msg = self.decorate_error_message(f"Invalid value at {s.my_chain}")
+                msg = f"Invalid value at {s.my_chain}"
                 errors.append(msg)
         found = len(sibs) + advanced + advance
         return found
@@ -89,15 +87,16 @@ class Line(MatchDecider):
         found = self._count_headers(errors=errors)
         expected = len(self.matcher.csvpath.headers)
         if expected != found:
-            msg = self.decorate_error_message(
-                f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
-            )
-            self.raise_children_exception(msg)
+            msg = f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         if len(errors) > 0:
-            for e in errors:
-                self.matcher.csvpath.print(e)
-            self.raise_children_exception(msg)
+            msg = f"{len(errors)} errors in line()"
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
             self.match = False
+
         elif self._distinct_if(skip=skip):
             pass
         else:
@@ -111,10 +110,10 @@ class Line(MatchDecider):
                 self, name, skip=skip, sibs=sibs
             )
             if len(lines) > 1:
-                msg = self.decorate_error_message(
-                    "Duplicate line found where a distict set of values is expected"
-                )
-                self.raise_children_exception(msg)
+                msg = "Duplicate line found where a distict set of values is expected"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
 
     def _get_advance(self, skip, i, s, sibs) -> int:
         advance = 0
@@ -126,19 +125,19 @@ class Line(MatchDecider):
             if advance is None:
                 msg = f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} "
                 msg = f"{msg}is not correct for line"
-                msg = self.decorate_error_message(msg)
-                self.raise_children_exception(msg)
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
         elif isinstance(v, int):
             advance = v
         else:
-            v = ExpressionUtility.to_int(v, should_i_raise=False)
-            if isinstance(v, int):
-                advance = v
-            else:
-                msg = self.decorate_error_message(
-                    f"Wildcard '{v}' at position {ExpressionUtility._numeric_string(i)} has an unknown value"
-                )
-                self.raise_children_exception(msg)
+            v2 = ExpressionUtility.to_int(v, should_i_raise=False)
+            if not isinstance(v2, int):
+                msg = f"Cannot convert {v} to int"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            advance = v2
         # minus 1 for the wildcard itself
         advance -= 1
         return advance
@@ -161,9 +160,7 @@ class Line(MatchDecider):
         #
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
-            msg = self.decorate_error_message(
-                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
-            )
+            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
             errors.append(msg)
         return True
 
@@ -173,8 +170,6 @@ class Line(MatchDecider):
         t = s._child_one()
         if t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
-            msg = self.decorate_error_message(
-                f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
-            )
+            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
             errors.append(msg)
         return True

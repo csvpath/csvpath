@@ -1,8 +1,9 @@
 # pylint: disable=C0114
 
-from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
+from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.exceptions import MatchException
+from ..function_focus import ValueProducer
 from ..function import Function
 from ..args import Args
 
@@ -32,8 +33,18 @@ class Add(ValueProducer):
             v = sib.to_value(skip=skip)
             if ExpressionUtility.is_none(v):
                 v = 0
-            ret = float(v) + float(ret)
+            try:
+                ret = float(v) + float(ret)
+            except ValueError as e:
+                msg = f"{e}"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg) from e
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:
+        # we want to_value called so that if we would blow-up in
+        # assignment, equality, etc. we still blow-up even though we're not
+        # using the sum.
+        self.to_value(skip=skip)
         self.match = self.default_match()

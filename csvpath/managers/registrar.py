@@ -10,6 +10,7 @@ class Registrar(ABC):
         self.csvpaths = csvpaths
         self.result = result
         self.type = None
+        self.internal_listeners = []
 
     def register_start(self, mdata: Metadata) -> None:
         self.distribute_update(mdata)
@@ -19,10 +20,10 @@ class Registrar(ABC):
 
     def distribute_update(self, mdata: Metadata) -> None:
         """any Listener will recieve a copy of a metadata that describes a
-        change to a named-file, named-paths, or named-results."""
+        change to a named-file, named-paths, named-results, etc."""
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        listeners = [self]
+        listeners = [self] + self.internal_listeners
         self.load_additional_listeners(self.type, listeners)
         for lst in listeners:
             lst.metadata_update(mdata)
@@ -30,13 +31,18 @@ class Registrar(ABC):
     def load_additional_listeners(
         self, listener_type_name: str, listeners: list
     ) -> None:
-        """look in [listeners] for listener_type_name keyed lists of listener classes"""
-        ss = self.csvpaths.config.additional_listeners(listener_type_name)
-        if ss and not isinstance(ss, list):
-            ss = [ss]
-        if ss and len(ss) > 0:
-            for lst in ss:
-                self.load_additional_listener(lst, listeners)
+        """if we have a csvpaths we look in config.ini [listeners] for
+        listener type-keyed lists of listener classes. only csvpaths
+        deals with integrations. if running solo CsvPath doesn't
+        involve them.
+        """
+        if self.csvpaths:
+            ss = self.csvpaths.config.additional_listeners(listener_type_name)
+            if ss and not isinstance(ss, list):
+                ss = [ss]
+            if ss and len(ss) > 0:
+                for lst in ss:
+                    self.load_additional_listener(lst, listeners)
 
     def load_additional_listener(self, load_cmd: str, listeners: list) -> None:
         loader = ClassLoader()

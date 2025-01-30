@@ -1,0 +1,232 @@
+from typing import Any
+import datetime
+from csvpath.matching.functions.function import Function
+from csvpath.matching.productions import Variable, Header, Reference, Term
+from csvpath.matching.util.expression_utility import ExpressionUtility
+import traceback
+
+
+class ArgumentValidationHelper:
+    def validate(self, args_definition, actual_values, function_name):
+        error_messages = []
+        valid_argsets = self._find_valid_argsets(args_definition, actual_values)
+        if len(valid_argsets) == 0:
+            if len(args_definition.argsets) == 1:
+                expected = len(args_definition.argsets[0].args)
+                return f"{function_name} requires {expected} argument{'s' if expected != 1 else ''}"
+            return self._get_argument_count_error(function_name, args_definition)
+        #
+        # Validate each argument against the argset.
+        # this part gets ugly. we should instead just say:
+        #   f"invalid {argset.matchable.name}. {argset.explain}"
+        # and then write the explaination into the classes. (OMG! but it would be best, imho).
+        #
+        results = []
+        for va in valid_argsets:
+            #
+            # in the rare cases where arg.actuals is [] we don't validate.
+            # presumably the intent would be to accept any values coming from
+            # the expected types of match components. reset_headers()
+            # and empty() are examples of []. not sure if good examples. []
+            # should probably be avoided.
+            #
+            for i, actual in enumerate(actual_values):
+                arg_def = va.args[i]
+                error = self._validate_argument(actual, arg_def, i)
+                if error:
+                    error_messages.append(f"{function_name} {error}")
+            if len(error_messages) == 0:
+                return None
+            results.append(". ".join(error_messages))
+            error_messages = []
+        results = self._dedup(results)
+        ret = None
+        if len(results) > 1:
+            ret = " or ".join(results)
+        else:
+            ret = f"{results[0]}"
+        return ret
+
+    def _find_valid_argsets(self, args, actual_values):
+        valid_argsets = []
+        for argset in args.argsets:
+            if argset.max_length == -1:
+                valid_argsets.append(argset)
+            elif len(argset.args) == len(actual_values):
+                valid_argsets.append(argset)
+            elif argset.min_length <= len(actual_values) and argset.max_length >= len(
+                actual_values
+            ):
+                valid_argsets.append(argset)
+        return valid_argsets
+
+    def _validate_argument(self, actual_value, arg_def, position):
+        # this case is unusual, but happens. we don't validate.
+        if len(arg_def.actuals) == 0:
+            return None
+        # Check if value can be None
+        p1 = position + 1
+        if actual_value is None and None not in arg_def.actuals:
+            if arg_def.is_noneable:
+                return f"requires a value for argument {p1} or no {p1}{self._th(p1)} argument"
+            else:
+                return f"requires a value for argument {p1}"
+
+        # Check actual type against allowed types
+        if actual_value is not None:
+            actual_type = type(actual_value)
+            a = Any not in arg_def.actuals
+            b = actual_type not in arg_def.actuals
+            c = not ExpressionUtility.is_one_of(actual_value, arg_def.actuals)
+            if a and b and c:
+                expected = self._format_expected_types(arg_def.actuals)
+                return f"requires {expected} for argument {p1}"
+        return None
+
+    def _format_expected_types(self, allowed_types):
+        type_names = []
+        for t in allowed_types:
+            if t == int:
+                type_names.append("an integer")
+            elif t == str:
+                type_names.append("a string")
+            elif t == float:
+                type_names.append("a number")
+            elif t == datetime.datetime:
+                type_names.append("a datetime")
+            elif t == datetime.date:
+                type_names.append("a date")
+            elif t == bool:
+                type_names.append("a bool")
+            #
+            # Add more type mappings as needed
+            #
+        if len(type_names) == 1:
+            return type_names[0]
+        return f"one of: {', '.join(type_names)}"
+
+    def _get_argument_count_error(self, function_name, args_definition):
+        possibilities = []
+        for argset in args_definition.argsets:
+            if argset.max_length == -1:
+                return f"{function_name} accepts any number of arguments"
+            possibilities.append(str(len(argset.args)))
+
+        if len(possibilities) == 1 or self._all_same(possibilities):
+            return f"{function_name} requires {possibilities[0]} arguments"
+        return f"{function_name} requires {' or '.join(possibilities)} arguments"
+
+    # =============
+    # helpers
+    # =============
+
+    def _dedup(self, poss: list[str]) -> list[str]:
+        us = []
+        [us.append(x) for x in poss if x not in us]
+        return us
+
+    def _all_same(self, poss: list) -> bool:
+        a = poss[0]
+        for i, b in enumerate(poss):
+            if i == 0:
+                continue
+            if b != a:
+                return False
+        return True
+
+    def _th(self, i: int) -> str:
+        if i == 1:
+            return "st"
+        if i == 2:
+            return "nd"
+        if i == 3:
+            return "rd"
+        else:
+            return "th"
+
+
+"""
+def test1():
+    print("TEST 1")
+    args = Args(matchable=None)
+    a = args.argset(3)
+    a.arg(
+        name="header",
+        types=[Header, Variable, Function, Reference],
+        actuals=[str, None, args.EMPTY_STRING],
+    )
+    a.arg(name="max value", types=[None, Term], actuals=[int])
+    a.arg(name="min value", types=[None, Term], actuals=[int])
+    #
+    # goods
+    v = ArgumentValidator()
+    msg = v.validate( args, ["astring", 2], "string" )
+    print(f"1 error: {msg}")
+    msg = v.validate( args, ["astring"], "string" )
+    print(f"2 error: {msg}")
+    msg = v.validate( args, ["astring", 2, 5], "string" )
+    print(f"3 error: {msg}")
+    msg = v.validate( args, ["", 2, 5], "string" )
+    print(f"4 error: {msg}")
+    #
+    # bads
+    print("")
+    msg = v.validate( args, [], "string" )
+    print(f"1 error: {msg}")
+    msg = v.validate( args, ["astring", 2, 5, 6], "string" )
+    print(f"2 error: {msg}")
+    msg = v.validate( args, [1, 2, 5], "string" )
+    print(f"3 error: {msg}")
+    msg = v.validate( args, ["astring", 2, None], "string" )
+    print(f"4 error: {msg}")
+
+
+def test2():
+    print("\nTEST 2")
+    args = Args(matchable=None)
+    a = args.argset(2)
+    a.arg(
+        name="date string or object",
+        types=[Term, Header, Variable, Function, Reference],
+        actuals=[datetime.datetime, datetime.date],
+    )
+    a.arg(
+        name="format",
+        types=[None, Term, Header],
+        actuals=[str],
+    )
+    a = args.argset(2)
+    a.arg(
+        name="header name",
+        types=[Term],
+        actuals=[str],
+    )
+    a.arg(
+        name="format",
+        types=[None, Term],
+        actuals=[str],
+    )
+    #
+    v = ArgumentValidator()
+    msg = v.validate( args, [], "date" )
+    print(f"1 error: {msg}")
+    msg = v.validate( args, ["str","str","str"], "date" )
+    print(f"2 error: {msg}")
+    msg = v.validate( args, [3, 4], "date" )
+    print(f"3 error: {msg}")
+
+    # should be good
+    #datetime.datetime, datetime.date
+    #msg = v.validate( args, [datetime.datetime.now()], "date" )
+    #print(f"3 error: {msg}")
+
+
+
+if __name__ == "__main__":
+    print("")
+    # v = ArgumentValidator()
+    #
+    #test1()
+    test2()
+
+"""

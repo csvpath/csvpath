@@ -54,7 +54,7 @@ class TestFunctionStop(unittest.TestCase):
         assert "line" in path.variables
         assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
 
-    def test_function_skip_all1(self):
+    def test_function_all_skip_1(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -69,7 +69,7 @@ class TestFunctionStop(unittest.TestCase):
         assert "line" in path.variables
         assert path.variables["line"] == [1, 2, 4, 5, 6, 7, 8, 9]
 
-    def test_function_stop_all1(self):
+    def test_function_all_stop_1(self):
         path = CsvPath()
         path.parse(
             f"""

@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Matchable
@@ -34,8 +34,13 @@ class Every(ValueProducer):
         self.matcher.set_variable(self.me(), tracking=tracked_value, value=cnt)
 
         every = child.right.to_value(skip=skip)
-        every = ExpressionUtility.to_int(every)
-        self.value = cnt % every
+        i = ExpressionUtility.to_int(every)
+        if not isinstance(i, int):
+            msg = f"Cannot convert {every} to int"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+        self.value = cnt % i
 
     def _decide_match(self, skip=None) -> None:
         cnt = self.to_value(skip=skip)

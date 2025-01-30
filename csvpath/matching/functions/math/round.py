@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.matching.productions import Term, Variable, Header
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.exceptions import MatchException
 from ..function_focus import ValueProducer
 from ..function import Function
 from ..args import Args
@@ -25,9 +26,22 @@ class Round(ValueProducer):
         places = self._value_two(skip=skip)
         if places is None:
             places = 2
-        places = ExpressionUtility.to_int(places)
-        value = ExpressionUtility.to_float(value)
-        self.value = round(value, places)
+
+        places2 = ExpressionUtility.to_int(places)
+        if not isinstance(places2, int):
+            msg = f"Cannot convert {places} to int"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+
+        value2 = ExpressionUtility.to_float(value)
+        if not isinstance(value2, float):
+            msg = f"Cannot convert {value} to float"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+
+        self.value = round(value2, places2)
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)

@@ -18,7 +18,11 @@ from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
 from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
-from .util.error import Error, ErrorCollector, ErrorCommsManager
+from .managers.errors.error import Error
+from .managers.errors.error_collector import ErrorCollector
+from .managers.errors.error_comms import ErrorCommunications
+from .managers.errors.error_manager import ErrorManager
+from .managers.metadata import Metadata
 from .util.printer import StdOutPrinter
 from .util.line_counter import LineCounter
 from .util.exceptions import VariableException, InputException, ParsingException
@@ -102,6 +106,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         skip_blank_lines=True,
         print_default=True,
         config=None,
+        error_manager=None,
     ):
         # re: R0913: all reasonable pass-ins with sensible defaults
         self.scanner = None
@@ -114,6 +119,21 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # have some of those capabilities.
         #
         self.csvpaths = csvpaths
+        #
+        # if we don't have a csvpaths these will both be None
+        #
+        self.named_paths_name = None
+        self.named_file_name = None
+        #
+        # all errors come to our manager if they occur during matching. we use
+        # the CsvPaths manager if possible. Otherwise, we just make our own that
+        # only knows how to collect errors, not distribute them.
+        #
+        self.error_manager = ErrorManager(csvpath=self)
+        if csvpaths is not None:
+            self.error_manager.add_listener(csvpaths.error_manager)
+        elif error_manager is None:
+            ...
         #
         # modes are set in external comments
         #
@@ -208,12 +228,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         # error collecting is at the CsvPath instance by default. CsvPath
         # instances that are managed by a CsvPaths have their errors collected
-        # by their ResultsManager. the policy for errors -- their noise level,
-        # effect on validity, etc. -- is set in config.ini at the CsvPath and
-        # CsvPaths level.
+        # by their Results as well. Result handles persistence.
         #
-        self._errors: List[Error] = None
-        self._error_collector = None
+        # errors policies are set in config.ini at CsvPath and CsvPaths levels.
+        #
+        self._errors: List[Error] = []
         #
         # saves the scan and match parts of paths for reference. mainly helpful
         # for testing the CsvPath library itself; not used end users. the run
@@ -261,7 +280,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.logger = LogUtility.logger(self)
         self.logger.info("initialized CsvPath")
-        self._ecoms = ErrorCommsManager(csvpath=self)
+        self.ecoms = ErrorCommunications(csvpath=self)
         #
         # _function_times_match collects the time a function spends doing its matches()
         #
@@ -357,7 +376,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self._function_times_value
 
     def do_i_raise(self) -> bool:
-        return self._ecoms.do_i_raise()
+        return self.ecoms.do_i_raise()
 
     @property
     def advance_count(self) -> int:  # pragma: no cover
@@ -445,41 +464,30 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self._config = Config()
         return self._config
 
-    def has_errors(self) -> bool:
-        if self.errors and len(self.errors) > 0:
-            return True
-        if self.error_collector:
-            return self.error_collector.has_errors()
-        return False
+    # ==========================
+    # Errors
+    # <thinking> if we have a csvpaths people should look at the result to find errors
+    # but we give access to metadata, vars, etc. from the csvpath, so we should
+    # give errors too. that means we need to have our own listener. ultimately we'd
+    # just be adding pointers, not dup the original error data.
+    #
+    def metadata_update(self, mdata: Metadata) -> None:
+        if isinstance(mdata, Error):
+            self.collect_error(mdata)
 
     @property
     def errors(self) -> List[Error]:  # pylint: disable=C0116
-        return (
-            self._errors
-            if self._error_collector is None
-            else self._error_collector.errors
-        )
+        return self._errors
 
     @property
-    def error_collector(self):  # pylint: disable=C0116
-        return self._error_collector
-
-    @error_collector.setter
-    def error_collector(self, error_collector) -> None:
-        self._error_collector = error_collector
+    def errors_count(self) -> int:  # pylint: disable=C0116
+        return len(self.errors)
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
-        #
-        # errors must be built and handled in ErrorHandler.
-        # here we're just collecting them if collect is
-        # selected by our configuration
-        #
-        if self._error_collector is not None:
-            self._error_collector.collect_error(error)
-        else:
-            if self._errors is None:
-                self._errors = []
-            self._errors.append(error)
+        self.errors.append(error)
+
+    def has_errors(self) -> bool:
+        return self.errors_count > 0
 
     @property
     def stop_on_validation_errors(self) -> bool:
@@ -906,6 +914,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     #
     # collect(), fast_forward(), and next() are the central methods of CsvPath.
     #
+    # remember that since next() is a public method and collect() and fast_forward()
+    # rely on it, we have to cut off exceptions at next(). users will not see
+    # fast_forward and collect in the stack trace. probably that's not a big deal.
+    # if it seems confusing we can work around the problem.
     #
     def collect(
         self, csvpath: str = None, *, nexts: int = -1, lines=None
@@ -975,56 +987,68 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             pass
         return self
 
+    #
+    # dont_raise is for the use of fast_forward and collect who
+    # may want to handle raising errors themselves.
+    #
     def next(self, csvpath=None):
         """Iterates over the lines in the CSV file returning those that match
         the csvpath. collect() and fast_forward() call next() behind the scenes.
         """
-        if self.scanner is None and csvpath is not None:
-            self.parse(csvpath)
-        start = time.time()
-        if self.will_run is True:
-            for line in self._next_line():
-                b = self._consider_line(line)
-                if b:
-                    line = self.limit_collection(line)
-                    if line is None:
-                        msg = "Line cannot be None"
-                        self.logger.error(msg)
-                        raise MatchException(msg)
-                    if len(line) == 0:
-                        msg = "Line cannot be len() == 0"
-                        self.logger.error(msg)
-                        raise MatchException(msg)
-                    yield line
-                elif self.collecting and self.unmatched_available:
-                    if self.unmatched is None:
-                        self.unmatched = []
-                    line = self.limit_collection(line)
-                    # we aren't None and 0 checking as above. needed?
-                    self.unmatched.append(line)
-                if self.stopped:
-                    self.logger.info(
-                        "CsvPath has been stopped at line %s",
-                        self.line_monitor.physical_line_number,
-                    )
-                    break
-        else:
-            self.logger.warning(
-                "Csvpath identified as {self.identity} is disabled by run-mode:no-run"
+        try:
+            if self.scanner is None and csvpath is not None:
+                self.parse(csvpath)
+            start = time.time()
+            if self.will_run is True:
+                for line in self._next_line():
+                    b = self._consider_line(line)
+                    if b:
+                        line = self.limit_collection(line)
+                        if line is None:
+                            msg = "Line cannot be None"
+                            self.logger.error(msg)
+                            raise MatchException(msg)
+                        if len(line) == 0:
+                            msg = "Line cannot be len() == 0"
+                            self.logger.error(msg)
+                            raise MatchException(msg)
+                        yield line
+                    elif self.collecting and self.unmatched_available:
+                        if self.unmatched is None:
+                            self.unmatched = []
+                        line = self.limit_collection(line)
+                        # we aren't None and 0 checking as above. needed?
+                        self.unmatched.append(line)
+                    if self.stopped:
+                        self.logger.info(
+                            "CsvPath has been stopped at line %s",
+                            self.line_monitor.physical_line_number,
+                        )
+                        break
+            else:
+                self.logger.warning(
+                    "Csvpath identified as {self.identity} is disabled by run-mode:no-run"
+                )
+            self.finalize()
+            end = time.time()
+            self.total_iteration_time = end - start
+            self.logger.info("Run against %s is complete.", self.scanner.filename)
+            self.logger.info(
+                "Iteration time was %s", round(self.total_iteration_time, 2)
             )
-        self.finalize()
-        # moving to finalize
-        # self._freeze_path = True
-        end = time.time()
-        self.total_iteration_time = end - start
-        self.logger.info("Run against %s is complete.", self.scanner.filename)
-        self.logger.info("Iteration time was %s", round(self.total_iteration_time, 2))
-        self.logger.info(
-            "%s per line",
-            round(
-                self.total_iteration_time / self.line_monitor.physical_end_line_count, 2
-            ),
-        )
+            self.logger.info(
+                "%s per line",
+                round(
+                    self.total_iteration_time
+                    / self.line_monitor.physical_end_line_count,
+                    2,
+                ),
+            )
+        except Exception as e:
+            if not self.ecoms.do_i_quiet():
+                self.logger.error(e, exc_info=True)
+            if self.ecoms.do_i_raise():
+                raise
 
     def _next_line(self) -> List[Any]:
         self.logger.info("beginning to scan file: %s", self.scanner.filename)
@@ -1258,6 +1282,13 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
             self.matcher.AND = self.AND
+            #
+            # we need to register all the Expressions as error listeners. not
+            # sure it matters if we do it here or allow the Matcher to do it.
+            # since the Matcher is responsible for its Expressions, has a handle
+            # this CsvPath, and through it has the error_manager let's let it
+            # register the expressions.
+            #
         else:
             self.logger.debug("Resetting and reloading matcher")
             self.matcher.reset()

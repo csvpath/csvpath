@@ -144,6 +144,7 @@ class TestFunctionsBetween(unittest.TestCase):
 
     def test_function_between_string_and_int(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         path.parse(
             f"""
             ${DATES}[1][

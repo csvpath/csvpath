@@ -8,7 +8,7 @@
 $[*][
     import("top_matter_import")
 
-    ~ this fails keeping us from completing because we stop on error ~
+    ~ this intentional fail keeps us from completing because we stop on error ~
     line_number() == 11 -> add("five", none())
 
     not( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())

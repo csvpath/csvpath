@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from random import randrange
 from random import sample
-from csvpath.matching.util.exceptions import DataException
+from csvpath.matching.util.exceptions import DataException, MatchException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header, Variable
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -60,8 +60,20 @@ class Shuffle(ValueProducer):
             elif upper <= lower:
                 # correct Args-type / data exception
                 raise DataException("Upper must be an int > than the first arg")
-            lower = ExpressionUtility.to_int(lower)
-            upper = ExpressionUtility.to_int(upper)
+            lower2 = ExpressionUtility.to_int(lower)
+            if not isinstance(lower2, int):
+                msg = f"Cannot convert {lower} to int"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            lower = lower2
+            upper2 = ExpressionUtility.to_int(upper)
+            if not isinstance(upper2, int):
+                msg = f"Cannot convert {upper} to int"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            upper = upper2
             order = sample(range(lower, upper), upper - lower)
         elif order == []:
             return

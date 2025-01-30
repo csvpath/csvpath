@@ -58,19 +58,19 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_boolean45(self):
+    def test_validity_boolean5(self):
         path = CsvPath().parse(f"""${PATH}[*][boolean(5)]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_boolean5(self):
+    def test_validity_boolean6(self):
         path = CsvPath().parse(f"""${PATH}[*][ boolean("fish") ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_boolean6(self):
+    def test_validity_boolean7(self):
         path = CsvPath().parse(
             f""" ~ note that @b standing alone is an existance test.
                    that means it's not yes()'s boolean or the boolean()'s
@@ -84,7 +84,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_validity_boolean7(self):
+    def test_validity_boolean8(self):
         path = CsvPath()
         path.parse(
             f""" ${PATH}[*][
@@ -99,7 +99,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_validity_boolean8(self):
+    def test_validity_boolean9(self):
         path = CsvPath()
         path.parse(
             f""" ${PATH}[*][

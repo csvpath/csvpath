@@ -4,7 +4,6 @@ import json
 import boto3
 from pathlib import Path
 from abc import ABC, abstractmethod
-from .error import Error, ErrorHandler
 from .exceptions import InputException
 from .file_readers import DataFileReader
 from .file_writers import DataFileWriter
@@ -201,11 +200,8 @@ class CsvLineSpooler(LineSpooler):
             # drop the sink so no chance for recurse
             self.sink = None
             try:
-                ErrorHandler(
-                    csvpaths=self.result.csvpath.csvpaths,
-                    csvpath=self.result.csvpath,
-                    error_collector=self.result,
-                ).handle_error(ex)
+                c = self.csvpath if self.csvpath else self.csvpaths
+                c.error_manager.handle_error(source=self, msg=f"{ex}")
             except Exception as e:
                 self.result.csvpath.logger.error(
                     f"Caught {e}. Not raising an exception because closing."

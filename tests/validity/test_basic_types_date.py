@@ -15,13 +15,13 @@ DATES2 = "tests/test_resources/dates2.csv"
 class TestValidBasicTypesDate(unittest.TestCase):
     def test_validity_date1(self):
         path = CsvPath().parse(f"""~id:date1~ ${PATH}[*][ date()]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
 
     def test_validity_date2(self):
         path = CsvPath().parse(f"""~id:date2~ ${PATH}[*][date.notnone(none())]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
 
@@ -116,7 +116,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now2(self):
         path = CsvPath().parse(f"""~id:validity_now2~ ${PATH}[*][today("%Y")]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.collect()
 
@@ -132,6 +132,6 @@ class TestValidBasicTypesDate(unittest.TestCase):
                 now("2024-01-01","%Y")
             ]"""
         )
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.collect()
