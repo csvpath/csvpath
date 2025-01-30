@@ -63,5 +63,6 @@ class Print(SideEffect):
                     self.matcher.csvpath.print(f"{v}")
                     if right is not None:
                         right.matches(skip=skip)
-                self._set_has_happened()
+                if self.once:
+                    self._set_has_happened()
         self.match = self.default_match()

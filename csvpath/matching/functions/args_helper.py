@@ -31,7 +31,16 @@ class ArgumentValidationHelper:
             # should probably be avoided.
             #
             for i, actual in enumerate(actual_values):
-                arg_def = va.args[i]
+                #
+                # va args can be less than i. we assume that means
+                # actual must == the valid argset's last arg in the ith
+                # position.
+                #
+                arg_def = None
+                if i >= len(va.args):
+                    arg_def = va.args[len(va.args) - 1]
+                else:
+                    arg_def = va.args[i]
                 error = self._validate_argument(actual, arg_def, i)
                 if error:
                     error_messages.append(f"{function_name} {error}")
