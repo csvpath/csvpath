@@ -6,32 +6,22 @@ from csvpath.matching.productions.matchable import Matchable
 
 
 class Error(Metadata):
-    """builds errors"""
+    """error metadata data"""
 
     def __init__(self, *, source=None, msg=None, error_manager=None):
         config = None
+        csvpath = None
         if error_manager:
             config = (
                 error_manager.csvpath.config
                 if error_manager.csvpath
                 else error_manager.csvpaths.config
             )
-        super().__init__(config)
-        if error_manager:
-            self.named_paths_name = (
-                error_manager.csvpath.named_paths_name
-                if error_manager.csvpath
-                else None
-            )
-            self.named_file_name = (
-                error_manager.csvpath.named_file_name if error_manager.csvpath else None
-            )
-            self.identity: str = (
-                error_manager.csvpath.identity if error_manager.csvpath else None
-            )
             csvpath = error_manager.csvpath
-            # csvpaths = error_manager.csvpaths
-            self.load(csvpath)
+            self.named_file_name = csvpath.named_file_name if csvpath else None
+            self.named_paths_name = csvpath.named_paths_name if csvpath else None
+            self.identity: str = csvpath.identity if error_manager.csvpath else None
+        super().__init__(config)
         self.expression_index: int = -1
         self.source: Any = source
         if source and isinstance(source, Matchable):
@@ -42,6 +32,7 @@ class Error(Metadata):
         self.scan_count: int = -1
         self.message: str = msg
         self.filename: str = None
+        self.load(csvpath)
 
     def load(self, csvpath) -> None:
         if csvpath is None:
@@ -128,9 +119,22 @@ class Error(Metadata):
             self.time = time
 
     def __str__(self) -> str:
+        #
+        #
+        #
+        import __main__
+        import os
+
+        loc = os.path.basename(__main__.__file__)
+        cwd = os.getcwd()
+        #
+        #
+        #
         string = f"""Error
 time: {self.time_string},
 uuid: {self.uuid_string},
+code: {loc},
+cwd: {cwd},
 archive: {self.archive_name},
 archive path: {self.archive_path},
 named_files_root: {self.named_files_root},
@@ -138,15 +142,12 @@ named_paths_root: {self.named_paths_root},
 hostname: {self.hostname},
 ip_address: {self.ip_address},
 username: {self.username},
-filename: {self.filename if self.filename else ""},
 named_paths_name: {self.named_paths_name if self.named_paths_name else ""},
 named_file_name: {self.named_file_name if self.named_file_name else ""},
-identity: {self.identity if self.identity else ""},
+filename: {self.filename if self.filename else ""},
+path identity: {self.identity if self.identity else ""},
 expression_index: {self.expression_index if self.expression_index else ""},
 source: {self.source if self.source else ""},
-datetime: {self.time}"""
-        if self.message:
-            string = f"""{string}
 message: {self.message},"""
         string = f"""{string}
 line: {self.line_count if self.line_count is not None else ""},

@@ -196,7 +196,9 @@ class Reference(Matchable):
             else:
                 ret = v
         else:
-            raise DataException("Results exist but the variable is unknown: {self}")
+            raise DataException(
+                f"Results exist but the variable is unknown: {self.my_chain}"
+            )
         return ret
 
     def _header_value(self) -> Any:
