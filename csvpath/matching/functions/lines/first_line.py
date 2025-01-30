@@ -17,12 +17,17 @@ class FirstLine(MatchDecider):
         if len(self.children) == 1 and isinstance(self.children[0], Equality):
             if not self.children[0].op == "=":
                 # correct as structure / children exception
-                self.raise_children_exception(
-                    "Child can only be either a function or a variable assignment"
-                )
+                msg = "Child can only be either a function or a variable assignment"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
+
         if self.name not in ["firstmatch", "firstscan", "firstline"]:
             # correct as structure / children exception
-            self.raise_children_exception(f"Unknown function name: {self.name}")
+            msg = f"Unknown function name: {self.name}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

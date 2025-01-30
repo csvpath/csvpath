@@ -9,8 +9,8 @@ from csvpath.matching.productions.reference import Reference
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.util.config_exception import ConfigurationException
-from csvpath.util.error import ErrorCommsManager
-from ..util.exceptions import ChildrenException
+from ..util.exceptions import ChildrenException, MatchException
+from .args_helper import ArgumentValidationHelper
 
 
 class Arg:
@@ -27,6 +27,9 @@ class Arg:
     def __str__(self) -> str:
         return f"Arg (types:{self.types}, actuals:{self.actuals})"
 
+    #
+    # noneable means optional arg, not None value
+    #
     @property
     def is_noneable(self) -> bool:
         return self._noneable
@@ -253,10 +256,7 @@ class ArgSet:
             # we have no case. given that, letting this idea go until it resurfaces
             # in a more practical way.
             #
-            # exp!
-            # experiment removed.
             self._parent.csvpath.logger.debug("Checking arg[%i]: %s", i, arg)
-            # end exp
             #
             # start orig w/orig comment:
             # we can't validate arg if we have no actuals expectations.
@@ -336,6 +336,18 @@ class Args:
         #
         self.matched = False
         self._args_match = True
+        #
+        # this is a narrative description of what the function requires.
+        # it won't be used in every error for every function because in
+        # some cases it won't add much, but in more complex functions it
+        # is going to be the best way to communicate to the user. In
+        # principle we could somehow assemble the text on the fly from
+        # looking at the data structure, but i haven't cracked that in
+        # three attempts, so it falls to someone else.
+        #
+        # see types/datef.py for what this could look like.
+        #
+        self.explain = None
 
     @property
     def csvpath(self):
@@ -368,14 +380,22 @@ class Args:
     def argsets(self) -> list[ArgSet]:
         return self._argsets
 
+    def _has_none(self, actuals: List[Any]):
+        for _ in actuals:
+            if ExpressionUtility.is_none(_):
+                return True
+        return False
+
     def validate(self, siblings: List[Matchable]) -> None:
         if len(self._argsets) == 0 and len(siblings) == 0:
+            self.validated = True
             return
         if (
             len(self._argsets) > 0
             and len(self._argsets[0].args) == 0
             and len(siblings) == 0
         ):
+            self.validated = True
             return
         #
         # we want to check all the argsets even if we find a match
@@ -388,87 +408,56 @@ class Args:
             if _m is None:
                 good = True
         if not good:
-            # _ = f" at {self.matchable.my_chain}" if self.matchable else ""
-            # msg = f"{self._csvpath_id()} Incorrectly written{_}. Wrong type or number of args: {_m}."
-            # raise ChildrenException(msg)
-            #
-            _ = f" at {self.matchable.my_chain}" if self.matchable else ""
-            msg = f"Incorrectly written{_}. Wrong type or number of args: {_m}."
-            if self._matchable is None:
-                # this should only be testing
+            msg = None
+            if self.matchable:
+                msg = f"Problem in {self.matchable.my_chain}: {_m}"
+            else:
+                msg = "CsvPath Language syntax problem"
+            self._matchable.matcher.csvpath.error_manager.handle_error(
+                source=self._matchable, msg=msg
+            )
+            if self._matchable.matcher.csvpath.do_i_raise():
+                #
+                # ChildrenException because we're validating CsvPath syntax
+                #
                 raise ChildrenException(msg)
-            self._matchable.raise_children_exception(msg)
         self.validated = True
 
     def matches(self, actuals: List[Any]) -> None:
         if len(self._argsets) == 0 and len(actuals) == 0:
+            self.matched = True
             return
-        mismatch_count = 0
-        mismatches = []
+        msg = None
         if self.matchable.notnone and self._has_none(actuals):
-            mismatch_count = len(self._argsets)
-            mismatches = [
-                f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
-            ]
+            msg = f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
         else:
-            for aset in self._argsets:
-                ms = aset.matches(actuals)
-                if len(ms) > 0:
-                    mismatch_count += 1
-                    mismatches += ms
-        self.handle_errors_if(mismatch_count, mismatches)
+            #
+            # if we have an equality testing equals as the matchable's child, we have the wrong
+            # actuals. in that case the actuals is [bool] because Equality with == is always
+            # true or false. we can pass [True] and get the right answer even if the ultimate
+            # actual is False.
+            #
+            if (
+                len(self.matchable.children) == 1
+                and isinstance(self.matchable.children[0], Equality)
+                and self.matchable.children[0].op == "=="
+            ):
+                actuals = [True]
+            msg = ArgumentValidationHelper().validate(
+                self, actuals, self.matchable.name
+            )
+        if msg is not None:
+            self._matchable.matcher.csvpath.error_manager.handle_error(
+                source=self._matchable, msg=msg
+            )
+            if self._matchable.matcher.csvpath.do_i_raise():
+                #
+                # MatchException because we're validating data during matching
+                #
+                raise MatchException(msg)
         #
         # self.matched = True means that we have run arg validation matching
         # on this match component. it does not mean that the match component
         # had no errors or "matched" either the line or the args.
         #
         self.matched = True
-
-    def _has_none(self, actuals: List[Any]):
-        for _ in actuals:
-            if ExpressionUtility.is_none(_):
-                return True
-        return False
-
-    def _csvpath_id(self) -> str:
-        cid = ""
-        if self._csvpath is None:
-            return cid
-        if self._csvpath.csvpaths:
-            cid = self._csvpath.identity
-            if not cid or cid.strip() == "":
-                cid = "<<no ID or name>>"
-            cid = f"[Csvpath {cid}]"
-        return cid
-
-    def handle_errors_if(self, mismatch_count, mismatches):
-        if mismatch_count == len(self._argsets):
-            self._args_match = False
-            ei = ExpressionUtility.my_chain(self._matchable)
-            # ei = ExpressionUtility.get_my_expressions_index(self._matchable)
-            pm = f"Wrong value in {ei}"
-            lpm = f"{pm}: "
-            lpms = []
-            if len(mismatches) == 1:
-                lpm = f"{lpm}{mismatches[0]}"
-                lpms.append(lpm)
-            else:
-                #
-                # should we enumerate these one per line?
-                #
-                for m in mismatches:
-                    lpms.append(f"{lpm}{m}")
-            for lpm in lpms:
-                self._matchable.matcher.csvpath.logger.error(lpm)
-                if (
-                    not ErrorCommsManager(
-                        csvpath=self._matchable.matcher.csvpath
-                    ).do_i_raise()
-                    and self._matchable.matcher.csvpath.match_validation_errors
-                ):
-                    # we match on errors so we have to handle and keep going as best we can.
-                    pm = self._matchable.decorate_error_message(lpm)
-                    e = ChildrenException(pm)
-                    self._matchable.handle_error(e)
-                else:
-                    self._matchable.raise_children_exception(lpm)

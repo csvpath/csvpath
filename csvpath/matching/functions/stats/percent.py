@@ -21,9 +21,11 @@ class Percent(ValueProducer):
         if which not in ["scan", "match", "line"]:
             # correct structure / children exception. we could probably do this
             # in check_validate since we're requiring a Term, but this is fine.
-            self.raise_children_exception(
-                "percent() argument must be scan, match, or line"
-            )  # pragma: no cover
+            msg = "percent() argument must be scan, match, or line"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
+
         if which == "line":
             count = self.matcher.csvpath.line_monitor.data_line_count
         elif which == "scan":

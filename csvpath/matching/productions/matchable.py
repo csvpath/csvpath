@@ -3,7 +3,7 @@ import traceback
 from typing import Any, Self
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
-from ..util.exceptions import ChildrenException
+from ..util.exceptions import ChildrenException, MatchException
 
 
 class Matchable(Qualified):  # pylint: disable=R0904
@@ -55,31 +55,6 @@ class Matchable(Qualified):  # pylint: disable=R0904
     def valuing(self):
         return self.matcher.what(self, "value")
 
-    #
-    # end exp
-    #
-    def decorate_error_message(self, msg: str) -> str:
-        cid = ""
-        if self.matcher and self.matcher.csvpath:
-            cid = self.matcher.csvpath.identity
-        if cid is None:
-            cid = "<<Unidentified CsvPath>>"
-        pid = f"[{cid}] "
-        pln = ""
-        if self.matcher and self.matcher.csvpath:
-            pln = self.matcher.csvpath.line_monitor.physical_line_number
-        lid = ""
-        if self.matcher and self.matcher.validity_checked is True:
-            lid = f"Line {pln}: "
-        msg = f"{pid}{lid}{msg}"
-        return msg
-
-    def raise_children_exception(self, msg: str) -> None:
-        msg = self.decorate_error_message(msg)
-
-        e = ChildrenException(msg)
-        self.raise_if(e)
-
     def check_valid(self) -> None:
         """structural check; doesn't test the values. nothing should
         test or use the values until this test is completed."""
@@ -89,11 +64,6 @@ class Matchable(Qualified):  # pylint: disable=R0904
     def clear_caches(self) -> None:
         """most matchables won't cache anything, but references will. we
         don't want that info after a run completes"""
-
-    def handle_error(self, e: Exception) -> None:
-        # my exp may be none in testing. no other known reasons.
-        if self.my_expression:
-            self.my_expression.handle_error(e)
 
     def _simple_class_name(self) -> str:
         return ExpressionUtility.simple_class_name(self)
@@ -159,16 +129,6 @@ class Matchable(Qualified):  # pylint: disable=R0904
             thing = self if not child else child
             self._id = ExpressionUtility.get_id(thing=thing)
         return self._id
-
-    def raise_if(self, e, *, cause=None) -> None:
-        if self.matcher is None or self.matcher.csvpath.do_i_raise():
-            if cause:
-                raise e from cause
-            raise e
-        if self.my_expression is None or self.my_expression == self:
-            self.handle_error(e)
-        else:
-            self.parent.raise_if(e, cause=cause)
 
     # convenience method for one or two arg functions
     def _value_one(self, skip=None):
@@ -266,18 +226,22 @@ class Matchable(Qualified):  # pylint: disable=R0904
         ):
             return self.children[0].commas_to_list()
         #
-        # exp
+        #
         #
         if len(self.children) == 1 and hasattr(self.children[0], "op"):
             return self.children[0].children
         #
-        # end exp
+        #
         #
         if len(self.children) == 1:
             return [self.children[0]]
         if hasattr(self, "op") and self.op == ",":  # pylint: disable=E1101
             # re: E1101: instance has no member: we know, hence the test.
             return self.children
+        #
+        # this seems likely to be only a dev error, so we'll not check do_i_raise()
+        # for now. reassess if it is ever seen.
+        #
         raise ChildrenException(
             f"Unexpected number of children, {len(self.children)}, in {self}"
         )
@@ -286,15 +250,8 @@ class Matchable(Qualified):  # pylint: disable=R0904
         sibs = self.siblings()
         vs = []
         for sib in sibs:
-            try:
-                v = sib.to_value(skip=skip)
-                vs.append(v)
-            except Exception as e:
-                e.trace = traceback.format_exc()
-                e.source = self
-                e.json = self.to_json()
-                self.my_expression.handle_error(e)
-                vs.append(Matchable.FAILED_VALUE)
+            v = sib.to_value(skip=skip)
+            vs.append(v)
         return vs
 
     def default_match(self) -> bool:

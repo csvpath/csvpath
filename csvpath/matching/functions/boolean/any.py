@@ -115,6 +115,7 @@ class Any(MatchDecider):
         else:
             c = self.children[0].left
             # definitely a structure / children exception
-            self.raise_children_exception(
-                f"Left child of any() must be header or variable, not {c}"
-            )
+            msg = f"Left child of any() must be header or variable, not {c}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)

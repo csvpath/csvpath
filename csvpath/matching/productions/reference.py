@@ -22,12 +22,15 @@ class Reference(Matchable):
     def __init__(self, matcher, *, value: Any = None, name: str = None):
         super().__init__(matcher, value=value, name=name)
         if name is None:
-            self.raise_children_exception("Name cannot be None")  # pragma: no cover
-
+            msg = "Name cannot be None"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         if name.strip() == "":
-            self.raise_children_exception(
-                "Name cannot be the empty string"
-            )  # pragma: no cover
+            msg = "Name cannot be the empty string"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         #
         # references are in the form:
         #    $path.(csvpath|metadata|variable|header).name[.tracking_name/index]
@@ -103,9 +106,10 @@ class Reference(Matchable):
             elif ref["data_type"] == Reference.CSVPATHS:
                 self.value = f"{ref['paths_name']}#{ref['name']}"
             else:
-                self.raise_children_exception(
-                    "Incorrect reference data type: {ref['data_type']}"
-                )
+                msg = "Incorrect reference data type: {ref['data_type']}"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
         self.valuing().result(self.value)
         return self.value
 
@@ -168,16 +172,19 @@ class Reference(Matchable):
             Reference.CSVPATHS,
         ]:
             msg = f"""References must be to variables or headers, not {ref["data_type"]}"""
-            self.raise_children_exception(msg)
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         return ref
 
     def _variable_value(self) -> Any:
         ref = self._get_reference()
         cs = self.matcher.csvpath.csvpaths  # pragma: no cover
         if cs is None:
-            self.raise_children_exception(
-                "References cannot be used without a CsvPaths instance"
-            )
+            msg = "References cannot be used without a CsvPaths instance"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         vs = cs.results_manager.get_variables(ref["paths_name"])
         ret = None
         if ref["name"] in vs:
@@ -217,6 +224,11 @@ class Reference(Matchable):
                     name, ref["tracking"]
                 )  # pragma: no cover
                 if r is None:
+                    #
+                    # dispatch error event
+                    # -- then --
+                    # self.matcher.csvpath.ecomms.do_i_raise()
+                    #
                     raise MatchException(
                         f"No results in {name} for metadata {ref['tracking']} in {self}"
                     )

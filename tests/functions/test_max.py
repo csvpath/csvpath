@@ -18,15 +18,20 @@ class TestFunctionsMax(unittest.TestCase):
         assert path.variables["the_max"] == 8
 
     def test_function_max1(self):
+        #
+        # note to self: max is done more simply today with a: @varname.increase = x
+        # max() needs a rethink
+        #
         path = CsvPath().parse(
             f"""${PATH}[*] [
-                @the_max = max(#firstname)
+                @the_max = max(#lastname)
                 no()
             ]"""
         )
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
+            print(f"path.vars: {path.variables}")
 
     def test_function_max2(self):
         path = CsvPath().parse(
@@ -35,6 +40,6 @@ class TestFunctionsMax(unittest.TestCase):
                 no()
             ]"""
         )
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()

@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from csvpath.util.class_loader import ClassLoader
-from csvpath.util.error import Error
+from csvpath.managers.errors.error import Error
 
 
 class ResultReader(ABC):

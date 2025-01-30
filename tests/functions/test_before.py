@@ -131,6 +131,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_string1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         path.parse(
             f"""
             ~ string > unconverted float == True ~

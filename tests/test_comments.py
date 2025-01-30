@@ -44,12 +44,11 @@ class TestComments(unittest.TestCase):
         assert path.print_validation_errors is True
         path.parse(
             f"""
-            ~
-            validation-mode: print no-raise
-            ~
+            ~ validation-mode: print no-raise ~
             ${PATH}[1*][
                 ~ this path is simple and so are its comments ~
-                concat("a", "b", stack("s"))
+                @c = concat("a", "b", "c")
+                print("$.variables.c")
             ]
             """
         )
@@ -59,7 +58,7 @@ class TestComments(unittest.TestCase):
         assert path.raise_validation_errors is False
         path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find(": Wrong value in") > -1
+            assert p.last_line and p.last_line.find("abc") > -1
 
     def test_update_settings_from_metadata3(self):
         path = CsvPath()
@@ -69,7 +68,8 @@ class TestComments(unittest.TestCase):
             ~ validation-mode: raise, print ~
             ${PATH}[1*][
                 ~ this path is simple and so are its comments ~
-                concat("a", "b", stack("s"))
+                @a = add("five", none())
+                print("$.variables.a")
             ] """
         )
         path.config.add_to_config("errors", "csvpath", "raise, collect")
@@ -80,36 +80,42 @@ class TestComments(unittest.TestCase):
         with pytest.raises(MatchException):
             path.fast_forward()
         for p in path.printers:
-            assert p.last_line and p.last_line.find(": Wrong value in ") > -1
+            assert p.last_line and p.last_line.find("add requires") > -1
         assert path.has_errors() is True
 
-    def test_update_settings_from_metadata_match_error(self):
+    def test_update_settings_from_metadata_match_error_1(self):
         path = CsvPath()
         assert path.raise_validation_errors is None
         path.parse(
             f"""
-            ~ validation-mode: print, match, no-raise, no-stop ~
+            ~
+            id:match :
+            because we have match we will ignore the four errors and collect 8 lines.
+            validation-mode: print, match, no-raise, no-stop
+            ~
             ${PATH}[1*][
                 mod.nocontrib(line_number(), 2) == 1 -> @a = 5
                 mod.nocontrib(line_number(), 2) == 0 -> @a = "five"
                 ~ every other line we blow up, but because we're matching
                   validation errors we collect all the lines ~
-                add( @a, 1 )
+                @b = add( @a, 1 )
             ]
             """
         )
         lines = path.collect()
         assert path.has_errors() is True
         assert len(lines) == 8
+
+    def test_update_settings_from_metadata_match_error_2(self):
         path = CsvPath()
-        assert path.raise_validation_errors is None
         path.parse(
-            f"""
-            ~ validation-mode: print, no-raise, no-stop ~
+            f"""~
+            because we don't have validation-mode match we will only match on non-error lines == 4
+            validation-mode: print, no-raise, no-stop ~
             ${PATH}[1*][
                 mod.nocontrib(line_number(), 2) == 1 -> @a = 5
                 mod.nocontrib(line_number(), 2) == 0 -> @a = "five"
-                add( @a, 1 )
+                @b = add( @a, 1 )
             ]
             """
         )

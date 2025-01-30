@@ -117,7 +117,7 @@ class TestFilesManager(unittest.TestCase):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise")
         fm = paths.file_manager
-        with pytest.raises(MatchException):
+        with pytest.raises(FileNotFoundError):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):

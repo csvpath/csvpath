@@ -24,10 +24,14 @@ class Print(SideEffect):
         )
         a = self.args.argset(2)
         a.arg(name="print this", types=[Term], actuals=[str, self.args.EMPTY_STRING])
+        #
+        # jan 29: added None to actuals. stop().to_value() is None. there's a note in stop()
+        # this may need a rethink.
+        #
         a.arg(
             name="run matches",
             types=[None, Function, Equality],
-            actuals=[Any],
+            actuals=[None, Any],
         )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()

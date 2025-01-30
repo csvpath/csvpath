@@ -2,7 +2,7 @@
 
 ~ description: Check for SKUs and UPCs
   id: upc-sku
-  validation-mode: no-raise, no-stop
+  validation-mode: raise, no-stop
   unmatched-mode: keep
 
   ckan-publish: always

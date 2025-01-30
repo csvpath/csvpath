@@ -3,6 +3,7 @@ import traceback
 import time
 from typing import Any
 from ..productions.matchable import Matchable
+from csvpath.matching.util.exceptions import ChildrenException
 
 
 class CheckedUnset:  # pylint: disable=R0903
@@ -69,10 +70,10 @@ class Function(Matchable):
                 self.matcher.csvpath.logger.debug(
                     "Validating arg actuals for %s in to_value", self.name
                 )
-                chk = len(self.my_expression.errors)
+                chk = self.my_expression.error_count
                 vs = self.sibling_values(skip=skip)
                 self.args.matches(vs)
-                if chk < len(self.my_expression.errors):
+                if chk < self.my_expression.error_count:
                     # we have issues. return because nothing should work.
                     return self.value
             elif self.args:
@@ -120,118 +121,116 @@ class Function(Matchable):
         #
         startmatch = time.perf_counter_ns()
         # exp end
-        try:
-            #
-            #
-            #
-            if self.do_frozen():
-                # doing frozen means not doing anything else. this is the
-                # inverse of onmatch and other qualifiers. but it makes sense
-                # and we're not talking about a qualifier, in any case. the
-                # csvpath writer doesn't know anything about this.
-                self.matcher.csvpath.logger.debug("We're frozen in %s", self)
-                ret = self._noop_value()
-                self.matching().result(ret).because("frozen")
-                return ret
-            if self.match is None:
-                if self.do_onmatch():
+        #
+        # all exceptions are checked at Expression and caught at CsvPath.
+        # don't think we want to do that here anymore. and error handling
+        # separate from raising is done at the point of raise.
+        #
+        # try:
+        #
+        #
+        #
+        if self.do_frozen():
+            # doing frozen means not doing anything else. this is the
+            # inverse of onmatch and other qualifiers. but it makes sense
+            # and we're not talking about a qualifier, in any case. the
+            # csvpath writer doesn't know anything about this.
+            self.matcher.csvpath.logger.debug("We're frozen in %s", self)
+            ret = self._noop_value()
+            self.matching().result(ret).because("frozen")
+            return ret
+        if self.match is None:
+            if self.do_onmatch():
+                #
+                # out of order (child before parent) seems like it would be a problem
+                # for some functions (e.g. print) that notionally do their thing and
+                # then do a child thing. in reality, i'm not sure this ever matters.
+                # skip, fail, stop, print don't need the ordering. there may be some
+                # i'm forgetting, but if there's a need for strict ordering we should
+                # probably consider a "post" qualifier to be more intentional about it.
+                #
+                # count() doesn't yet use args. it is grandfathered, for now.
+                if self.args and not self.args.matched:
+                    self.matcher.csvpath.logger.debug(
+                        "Validating arg actuals for %s in matches", self.name
+                    )
                     #
-                    # out of order (child before parent) seems like it would be a problem
-                    # for some functions (e.g. print) that notionally do their thing and
-                    # then do a child thing. in reality, i'm not sure this ever matters.
-                    # skip, fail, stop, print don't need the ordering. there may be some
-                    # i'm forgetting, but if there's a need for strict ordering we should
-                    # probably consider a "post" qualifier to be more intentional about it.
+                    # why did vvvv break counter() and other funcs? answer:
+                    # in the case of gt() we were disallowing None. not validating on
+                    # matches allowed us to never see a None. however, None > x is                                  # a valid comparison, for us, equaling False. had to adjust the
+                    # validation. the missing matches validation was in equality --
+                    # the -> only called matches allowing some match components to
+                    # never be validated.
                     #
-                    # count() doesn't yet use args. it is grandfathered, for now.
-                    if self.args and not self.args.matched:
-                        self.matcher.csvpath.logger.debug(
-                            "Validating arg actuals for %s in matches", self.name
+                    #
+                    # we're collecting errors from child sibs and using sigint
+                    # to indicate that a value couldn't be gotten and that this
+                    # parent should raise an exception and stop. the point is
+                    # to collect all the problems before stopping, rather than
+                    # the user seeing problems one by one as they fix and retry.
+                    # this obviously won't catch all errors. it doen't include
+                    # the structure verification and rules created by the user.
+                    #
+                    sibs = self.sibling_values(skip=skip)
+                    if Matchable.FAILED_VALUE in sibs:
+                        # pln = self.matcher.csvpath.line_monitor.physical_line_number
+                        msg = f"Cannot continue with {self.my_chain} due to an invalid child"
+                        self.matcher.csvpath.error_manager.handle_error(
+                            source=self, msg=msg
                         )
-                        #
-                        # why did vvvv break counter() and other funcs? answer:
-                        # in the case of gt() we were disallowing None. not validating on
-                        # matches allowed us to never see a None. however, None > x is                                  # a valid comparison, for us, equaling False. had to adjust the
-                        # validation. the missing matches validation was in equality --
-                        # the -> only called matches allowing some match components to
-                        # never be validated.
-                        #
-                        #
-                        # we're collecting errors from child sibs and using sigint
-                        # to indicate that a value couldn't be gotten and that this
-                        # parent should raise an exception and stop. the point is
-                        # to collect all the problems before stopping, rather than
-                        # the user seeing problems one by one as they fix and retry.
-                        # this obviously won't catch all errors. it doen't include
-                        # the structure verification and rules created by the user.
-                        #
-                        sibs = self.sibling_values(skip=skip)
-                        if Matchable.FAILED_VALUE in sibs:
-                            # pln = self.matcher.csvpath.line_monitor.physical_line_number
-                            self.raise_children_exception(
-                                f"Cannot continue with {self.my_chain} due to an invalid child"
-                            )
-                        #
-                        # ready to run the match!
-                        #
-                        self.args.matches(sibs)
+                        if self.matcher.csvpath.do_i_raise():
+                            raise ChildrenException(msg)
 
-                    elif self.args:
-                        self.matcher.csvpath.logger.debug(
-                            "Validation already done on arg actuals for %s in matches",
-                            self.name,
-                        )
                     #
+                    # ready to run the match!
                     #
-                    #
+                    self.args.matches(sibs)
+
+                elif self.args:
                     self.matcher.csvpath.logger.debug(
-                        "%s, a %s, calling decide match", self, self.FOCUS
+                        "Validation already done on arg actuals for %s in matches",
+                        self.name,
                     )
-                    if (
-                        self.args
-                        and self.args.args_match is False
-                        and self.matcher.csvpath.stop_on_validation_errors
-                    ):
-                        self.matcher.csvpath.stop()
-                    if (
-                        self.args
-                        and self.args.args_match is False
-                        and self.matcher.csvpath.fail_on_validation_errors
-                    ):
-                        self.matcher.csvpath.is_valid = False
-                    if (
-                        self.args
-                        and self.args.args_match is False
-                        and self.matcher.csvpath.match_validation_errors is not None
-                    ):
-                        self.match = self.matcher.csvpath.match_validation_errors
-                    else:
-                        self._decide_match(skip=skip)
-                        self.matcher.csvpath.logger.debug(
-                            "Function.matches _decide_match returned %s", self.match
-                        )
-                        self.matching().result(self.match)
+                #
+                #
+                #
+                self.matcher.csvpath.logger.debug(
+                    "%s, a %s, calling decide match", self, self.FOCUS
+                )
+                if (
+                    self.args
+                    and self.args.args_match is False
+                    and self.matcher.csvpath.stop_on_validation_errors
+                ):
+                    self.matcher.csvpath.stop()
+                if (
+                    self.args
+                    and self.args.args_match is False
+                    and self.matcher.csvpath.fail_on_validation_errors
+                ):
+                    self.matcher.csvpath.is_valid = False
+                if (
+                    self.args
+                    and self.args.args_match is False
+                    and self.matcher.csvpath.match_validation_errors is not None
+                ):
+                    self.match = self.matcher.csvpath.match_validation_errors
                 else:
-                    self.match = self.default_match()
+                    self._decide_match(skip=skip)
                     self.matcher.csvpath.logger.debug(
-                        f"@{self}: appling default match, {self.match}, because !do_onmatch"
+                        "Function.matches _decide_match returned %s", self.match
                     )
-                    self.matching().result(self.match).because("onmatch")
-        except Exception as e:  # pylint: disable=W0718
-            # W0718: to general exception. we need to not let anything through so we have to be general.
-            e.trace = traceback.format_exc()
-            e.source = self
-            e.json = self.to_json()
-            self.my_expression.handle_error(e)
-        #
-        # experiment - timing
-        #
+                    self.matching().result(self.match)
+            else:
+                self.match = self.default_match()
+                self.matcher.csvpath.logger.debug(
+                    f"@{self}: appling default match, {self.match}, because !do_onmatch"
+                )
+                self.matching().result(self.match).because("onmatch")
+
         endmatch = time.perf_counter_ns()
         t = (endmatch - startmatch) / 1000000
         self.matcher.csvpath.up_function_time_match(self.__class__, t)
-        #
-        # exp end
-        #
         return self.match
 
     def _produce_value(self, skip=None) -> None:

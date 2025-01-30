@@ -142,10 +142,9 @@ class TestExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.to_int("1,550") == 1550
 
     def test_exp_util_to_int2(self):
-        with pytest.raises(ValueError):
-            assert ExpressionUtility.to_int(CsvPath()) == 0
-        with pytest.raises(ValueError):
-            assert ExpressionUtility.to_int("five") == 0
+        assert not isinstance(ExpressionUtility.to_int(CsvPath()), int)
+        assert not isinstance(ExpressionUtility.to_int("five"), int)
+        assert ExpressionUtility.to_int("five") == "five"
 
     def test_is_number(self):
         assert ExpressionUtility.is_number(1)
@@ -177,10 +176,9 @@ class TestExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.to_float("1,550") == 1550.00
 
     def test_exp_util_to_float2(self):
-        with pytest.raises(ValueError):
-            assert ExpressionUtility.to_float(CsvPath()) == 0
-        with pytest.raises(ValueError):
-            assert ExpressionUtility.to_float("five") == 0
+        assert not isinstance(ExpressionUtility.to_float(CsvPath()), float)
+        assert not isinstance(ExpressionUtility.to_float("five"), float)
+        assert "five" == ExpressionUtility.to_float("five")
 
     def test_exp_util_all(self):
         assert ExpressionUtility.all(None) is False
@@ -253,3 +251,30 @@ class TestExpressionUtil(unittest.TestCase):
         c = es[0].children[0].children[0].children[0].children[0].children[0]
         chain = ExpressionUtility.my_chain(c)
         assert chain == "any[0].length[0].concat[0].a"
+
+    def test_exp_util_descendents(self):
+        path = CsvPath()
+        path.parse(
+            f"""${"tests/test_resources/test.csv"}[*][
+                or( length( concat("a", "b") ), boolean(none()) )
+            ]"""
+        )
+        path.fast_forward()
+        m = path.matcher
+        es = m.expressions[0]
+
+        print("")
+        # find or()
+        o = es[0].children[0]
+        ds = ExpressionUtility.get_my_descendents(o)
+        for i, d in enumerate(ds):
+            print(f"ds[{i}]: {d}")
+        assert ds
+        assert len(ds) == 6
+        print("")
+        ds = ExpressionUtility.get_my_descendents(o, include_equality=True)
+        for i, d in enumerate(ds):
+            print(f"ds[{i}]: {d}")
+
+        assert ds
+        assert len(ds) == 8

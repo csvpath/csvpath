@@ -7,6 +7,6 @@ You can pass `counter()` an integer to set the increment; otherwise, it incremen
 
 ## Examples
 
-    $[*][ counter.my_counter() @my_counter() == 5 -> counter.fives(5) ]
+    $[*][ counter.my_counter() @my_counter == 5 -> counter.fives(5) ]
 
 This csvpath has two counters: `my_counter` and `fives`. Both are accessible at any point as regular variables.

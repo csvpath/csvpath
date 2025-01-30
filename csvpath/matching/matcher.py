@@ -105,6 +105,20 @@ class Matcher:  # pylint: disable=R0902
             expressions = []
             for e in es:
                 expressions.append([e, None])
+                #
+                # expressions need to know when an error happens. they may be
+                # explicitly configured to match or not match on error. errors
+                # other than unexpected non-CsvPath exceptions (e.g. ValueError)
+                # don't go through the expression, so the expression needs to be
+                # notified so it can match accordingly. keep in mind that this
+                # assumes the CsvPath internals (for any given CsvPath) are
+                # single-threaded. 3rd party integration error listeners may and
+                # often should be async, but we need each expression to know about
+                # its errors before it completes processing and gives the Matcher
+                # a determination.
+                #
+                if self.csvpath:
+                    self.csvpath.error_manager.add_listener(e)
             self.expressions = expressions
             self.check_valid()
         if self.csvpath:
@@ -181,8 +195,11 @@ class Matcher:  # pylint: disable=R0902
         i = None
         if isinstance(name, int):
             return name
+        #
+        # to_int is no longer going to raise exceptions. we can remove the try/except
+        #
         try:
-            i = ExpressionUtility.to_int(name, should_i_raise=False)
+            i = ExpressionUtility.to_int(name)
             if isinstance(i, int):
                 return i
         except ValueError:
@@ -200,35 +217,26 @@ class Matcher:  # pylint: disable=R0902
         return self.csvpath.headers[i]
 
     def get_header_value(self, m, name_or_index, quiet=False):
-        nori = None
-        try:
-            nori = ExpressionUtility.to_int(name_or_index)
-        #
-        # changed from Exception to quiet pylint. seems safe to do.
-        #
-        except ValueError:
-            self.csvpath.logger.debug(
-                "In get_header_value: '%s' not a column number. continuing.",
-                name_or_index,
-            )
+        nori = ExpressionUtility.to_int(name_or_index)
+        if not isinstance(nori, int):
             nori = self.header_index(name_or_index)
         if nori is None:
             if quiet is False:
                 hs = self.csvpath.headers
-                msg = m.decorate_error_message(
-                    f"No headers match '{name_or_index}'. Current headers are: {hs}"
-                )
+                msg = f"No headers match '{name_or_index}'. Current headers are: {hs}"
                 self.csvpath.logger.error(msg)
-                m.parent.raise_if(ChildrenException(msg))
+                self.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.csvpath.do_i_raise():
+                    raise MatchException(msg)
             return None
         if nori >= len(self.line):
             if quiet is False:
                 hs = self.csvpath.headers
-                msg = m.decorate_error_message(
-                    f"No headers match '{name_or_index}'. Current headers are: {hs}"
-                )
+                msg = f"No headers match '{name_or_index}'. Current headers are: {hs}"
                 self.csvpath.logger.error(msg)
-                m.parent.raise_if(ChildrenException(msg))
+                self.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.csvpath.do_i_raise():
+                    raise MatchException(msg)
             return None
         v = self.line[nori]
         if ExpressionUtility.is_none(v):
@@ -282,7 +290,7 @@ class Matcher:  # pylint: disable=R0902
                 "Is last line and blank. Doing lasts and then returning True"
             )
             self._do_lasts()
-            self.clear_errors()
+            # self.clear_errors()
             return True
         ret = True
         failed = self._AND is not True
@@ -309,7 +317,7 @@ class Matcher:  # pylint: disable=R0902
                 #
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Stopped at line %s", pln)
-                self.clear_errors()
+                # self.clear_errors()
                 return False
             if self.skip is True:
                 #
@@ -321,7 +329,7 @@ class Matcher:  # pylint: disable=R0902
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
-                self.clear_errors()
+                # self.clear_errors()
                 if self.take is True:
                     self.take = False
                     return True
@@ -375,7 +383,7 @@ class Matcher:  # pylint: disable=R0902
             pln,
             not failed,
         )
-        self.clear_errors()
+        # self.clear_errors()
         #
         # exp!  do we want to keep this?
         #
@@ -389,9 +397,11 @@ class Matcher:  # pylint: disable=R0902
         #
         return not failed
 
+    """
     def clear_errors(self) -> None:
         for es in self.expressions:
             es[0].handle_errors_if()
+    """
 
     def check_valid(self) -> None:  # pylint: disable=C0116
         if self.csvpath:
@@ -401,7 +411,7 @@ class Matcher:  # pylint: disable=R0902
         self.validity_checked = False
         for _ in self.expressions:
             _[0].check_valid()
-        self.clear_errors()
+        # self.clear_errors()
         if self.csvpath:
             self.csvpath.logger.debug(
                 "Pre-iteration match components structure validation done"

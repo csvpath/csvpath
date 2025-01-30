@@ -18,6 +18,7 @@ class TestFunctionsError(unittest.TestCase):
             ~validation-mode:print, no-raise, no-stop~
             ${PATH}[1*]
             [
+                print("$.csvpath.line_number")
                 mod.nocontrib(line_number(), 2) == 0 -> add("five", none())
                 true()
             ]"""
@@ -30,14 +31,9 @@ class TestFunctionsError(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         assert result.has_errors()
-        print(f"test_function_error_file: instance_dir: {result.instance_dir}")
         assert Nos(result.instance_dir).dir_exists()
-        # assert os.path.exists(result.instance_dir)
         ef = os.path.join(result.instance_dir, "errors.json")
-        print(f"test_function_error_file: ef: {ef}")
         assert Nos(ef).exists()
-        # assert os.path.exists(ef)
         with DataFileReader(ef) as file:
-            # with open(ef, "r", encoding="utf-8") as file:
             j = json.load(file.source)
-            assert len(j) == 4
+            assert len(j) == 8

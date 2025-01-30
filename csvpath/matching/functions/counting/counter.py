@@ -2,6 +2,7 @@
 from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.exceptions import MatchException
 from ..args import Args
 
 
@@ -35,7 +36,15 @@ class Counter(ValueProducer):
             counter += 1
         else:
             if not isinstance(v, int):
-                v = ExpressionUtility.to_int(v)
+                v2 = ExpressionUtility.to_int(v)
+                if not isinstance(v2, int):
+                    msg = f"Cannot convert {v} to an int"
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
+                    )
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
+                    v = v2
             counter += v
         self.matcher.set_variable(name, value=counter)
         self.value = counter

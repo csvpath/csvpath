@@ -42,11 +42,15 @@ class TestFunctionsLast(unittest.TestCase):
 
     def test_function_last4(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["raise"]
+        path.config.csvpath_errors_policy = ["raise", "print"]
         path.parse(
             f"""${PATH}[*]
                             [
-                                tally(#lastname) no()
+                            ~ the point of this test is that: tally works even when no()
+                              and that manually replacing a tally var with a string blows up because
+                              it needs to be a number. hmmm and ohhh are a sideshow. ~
+                                no()
+                                tally(#lastname)
                                 @hmmm = @lastname.Bat
                                 @ohhh = @hmmm.fish
                                 @tally_lastname.Bat = "fred"
@@ -55,9 +59,6 @@ class TestFunctionsLast(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.collect()
-            assert path.variables["tally_lastname"]["Bat"] == "fred"
-            assert path.variables["hmmm"] == 7
-            assert path.variables["ohhh"] is None
 
     def test_function_last5(self):
         # must run last even though line is blank

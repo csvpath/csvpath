@@ -1,6 +1,8 @@
 ---- CSVPATH ----
 
-~ collect metadata fields from comments ID: metadata-extraction ~
+~ collect metadata fields from comments ID: metadata-extraction
+    validation-mode:raise, print
+ ~
 $[*][
     starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
     starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )

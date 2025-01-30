@@ -4,16 +4,19 @@ from uuid import UUID
 import uuid
 from datetime import datetime
 from typing import Any
-from csvpath.util.error import Error, ErrorCollector
+from csvpath import CsvPath
+from csvpath.managers.errors.error import Error
+from csvpath.managers.errors.error_collector import ErrorCollector
+from csvpath.managers.listener import Listener
+from csvpath.managers.metadata import Metadata
 from csvpath.util.printer import Printer
 from csvpath.util.exceptions import CsvPathsException
-from csvpath import CsvPath
 from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
 from .readers.readers import ResultReadersFacade
 
 
-class Result(ErrorCollector, Printer):  # pylint: disable=R0902
+class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     """This class handles the results for a single CsvPath in the
     context of a CsvPaths run that may apply any number of CsvPath
     instances against the same file.
@@ -55,8 +58,15 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         # data_file_path is the path to data.csv of this result
         #
         self._data_file_path = None
-        # use the properties so error_collector, etc. is set correctly
+        #
+        # are set here:
+        #   - error listener / error_collector
+        #   - printer
+        #
         self.csvpath = csvpath
+        #
+        #
+        #
         if (
             csvpath
             and csvpath.metadata is None
@@ -185,7 +195,12 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         return self._last_line
 
     #
-    # ======= LOADING ISSUES HERE DOWN ========
+    # =============== LISTENING ===============
+    #
+    def metadata_update(self, mdata: Metadata) -> None:
+        if isinstance(mdata, Error):
+            self.collect_error(mdata)
+
     #
     # =============== CSVPATH =================
     #
@@ -199,7 +214,7 @@ class Result(ErrorCollector, Printer):  # pylint: disable=R0902
         # during testing or for some other reason we may receive None
         # let's assume the dev knows what they're doing and just go with it.
         if path is not None:
-            path.error_collector = self
+            path.error_manager.add_listener(self)
             path.add_printer(self)
         self._csvpath = path
 

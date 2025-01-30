@@ -3,7 +3,7 @@ import pytest
 from csvpath.matching.productions import Term, Equality, Header
 
 from csvpath import CsvPath, CsvPaths
-from csvpath.util.error import OnError
+from csvpath.util.config import OnError
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.exceptions import CsvPathsException
 

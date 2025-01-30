@@ -80,16 +80,16 @@ class TestValidLine(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["print", "collect"]
         path.parse(
-            f"""~
-            validation-mode: print, no-raise, no-stop
-            ~${FOOD}[1*][
+            f"""~ validation-mode: print, no-raise, no-stop ~
+            ${FOOD}[1*][
                 line(
                     string(#food),
                     string(#type),
                     nonspecific(#units),
-                    integer(#year),
+                    integer.notnone(#year),
                     boolean(#healthy)
                 )
+                print.onmatch("$.csvpath.line_number")
             ]"""
         )
         lines = path.collect()

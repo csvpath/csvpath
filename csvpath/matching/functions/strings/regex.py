@@ -61,7 +61,10 @@ class Regex(MatchDecider):
             return theregex, thevalue, group
         else:
             # correct structure / children exception
-            self.raise_children_exception("No regular expression available")
+            msg = "No regular expression available"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]

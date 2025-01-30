@@ -1,7 +1,7 @@
 import os
 import json
 from abc import ABC, abstractmethod
-from csvpath.util.error import Error
+from csvpath.managers.errors.error import Error
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 from .readers import ErrorsReader

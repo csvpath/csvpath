@@ -3,7 +3,7 @@
 
 `reset_headers()` swaps the current row values in for the headers. The original headers are just the 0th line values. In many CSVs there is other data at the top or multiple sets of headers at different points in the file. Calling `reset_headers()` when you recognize a change in the data gives you a way to adjust for those breaks.
 
-This function is experimental. It seems to work fine and logically it should. But headers are a core part of CsvPath and it is possible a corner case might be affected by a header reset. Use caution and test your csvpaths well!
+Headers are a difficult part of CSV. It is possible there are unforeseen corner cases. Use caution and test your csvpaths well!
 
 
 ## Example

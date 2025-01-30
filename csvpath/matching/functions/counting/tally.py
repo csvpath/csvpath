@@ -3,6 +3,7 @@ from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Equality
 from csvpath.matching.productions import Variable, Header
+from csvpath.matching.util.exceptions import MatchException
 from ..function import Function
 from ..args import Args
 
@@ -45,6 +46,14 @@ class Tally(ValueProducer):
         count = self.matcher.get_variable(name, tracking=value)
         if count is None:
             count = 0
+        if not isinstance(count, int):
+            msg = "Variable {name}"
+            if value is not None:
+                msg = f"{msg}.{value}"
+            msg = f"{msg} must be a number, not {count}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         count += 1
         self.matcher.set_variable(
             name,

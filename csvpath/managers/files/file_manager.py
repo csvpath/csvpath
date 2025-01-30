@@ -2,7 +2,6 @@ import os
 import json
 import csv
 from json import JSONDecodeError
-from csvpath.util.error import ErrorHandler
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.reference_parser import ReferenceParser
@@ -133,7 +132,9 @@ class FileManager:
                 j = json.load(f)
                 self.set_named_files(j)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            ErrorHandler(csvpaths=self._csvpaths).handle_error(ex)
+            self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+            if self.csvpaths.ecoms.do_i_raise():
+                raise
 
     def add_named_files_from_dir(self, dirname: str):
         dlist = Nos(dirname).listdir()

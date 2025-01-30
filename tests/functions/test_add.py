@@ -1,12 +1,23 @@
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import MatchException
+from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsAdd(unittest.TestCase):
+    def test_function_add0(self):
+        path = (
+            CsvPath()
+            .parse(
+                f"""~ validation-mode:raise, print ~ ${PATH}[1] [ @l = add( 1, 1 ) ]"""
+            )
+            .fast_forward()
+        )
+        print(f"path.vars: {path.variables}")
+        assert path.variables["l"] == 2
+
     def test_function_add1(self):
         path = CsvPath()
         path.parse(
@@ -53,6 +64,6 @@ class TestFunctionsAdd(unittest.TestCase):
 
     def test_function_add_error1(self):
         path = CsvPath().parse(f""" ${PATH}[1][ @l = add( count() ) ]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
-        with pytest.raises(MatchException):
+        path.config.add_to_config("errors", "csvpath", "raise, print")
+        with pytest.raises(ChildrenException):
             path.fast_forward()

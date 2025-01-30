@@ -27,15 +27,30 @@ class TestReferences(unittest.TestCase):
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] is None
 
+    #
+    # not a workable test under the new error handling. the scenario does work, but the setup does not
+    #
     def test_reference_for_wrong_parts(self):
-        reference = Reference(matcher=None, name="zipcodes.variables.zipcodes.Boston")
-        nameparts = ["zipcodes", "metadata", "zipcodes", "Boston"]
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.fast_forward_paths(filename="zipcodes", pathsname="zips")
+
+        paths = CsvPaths()
+        paths.file_manager.add_named_files_from_dir(
+            dirname="tests/test_resources/named_files"
+        )
+        paths.paths_manager.add_named_paths(
+            name="t",
+            paths=[
+                "~validation-mode:raise,print~$[*][@a = $zips.variables.zipcodes.Boston]"
+            ],
+        )
+        #
+        # fails because 'variables' is wrong
+        #
         with pytest.raises(MatchException):
-            ref = reference._get_reference_for_parts(nameparts)
-            assert ref["paths_name"] == "zipcodes"
-            assert ref["data_type"] == "variables"
-            assert ref["name"] == "zipcodes"
-            assert ref["tracking"] == "Boston"
+            paths.fast_forward_paths(pathsname="t", filename="food")
 
     def test_reference_csvpaths_data_type(self):
         path = CsvPath()

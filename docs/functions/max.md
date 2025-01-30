@@ -1,7 +1,7 @@
 
 # Max and Min
 
-These functions compare the values of a header across rows. Values are compared as numbers or bools, when possible; otherwise, lexicographically.
+These functions compare the values of a header across rows. Values are compared as numbers.
 
 The comparisons are to scanned or matched rows or to all rows. The choice is indicated by a second argument of "scan", "match", or "line". If no second argument is provided, all rows are compared.
 

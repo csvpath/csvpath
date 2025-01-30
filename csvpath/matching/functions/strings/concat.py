@@ -13,11 +13,11 @@ class Concat(ValueProducer):
         a = self.args.argset()
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, self.args.EMPTY_STRING],
+            actuals=[str, int, float, bool, self.args.EMPTY_STRING],
         )
         a.arg(
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, self.args.EMPTY_STRING],
+            actuals=[str, int, float, bool, self.args.EMPTY_STRING],
         )
         self.args.validate(self.siblings())
         super().check_valid()
