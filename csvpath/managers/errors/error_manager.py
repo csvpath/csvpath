@@ -1,7 +1,10 @@
+import os
 from typing import Any
+from datetime import datetime, timezone
 from csvpath.util.config import OnError
 from csvpath.matching.productions import Matchable
 from csvpath.matching.util.exceptions import MatchException
+from csvpath.modes.error_mode import ErrorMode
 from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
@@ -71,11 +74,60 @@ class ErrorManager(Registrar, Listener):
 
             error.match = self.csvpath.match
         error.message = msg
+        error.expanded_message = self.decorate_error(source=source, msg=msg)
         if isinstance(source, Matchable):
             error.source = source.my_chain
         else:
             error.source = type(source)
         self.distribute_update(error)
+
+    def decorate_error(self, *, source, msg: str) -> str:
+        #
+        # at some point we may want this to be configurable. for now:
+        #
+        # time:file-name:paths-name:instance-name:source-chain: msg
+        #
+        t = datetime.now(timezone.utc)
+        t = t.strftime("%Y-%m-%d %H:%M:%S.%f")
+        file = ""
+        paths = ""
+        instance = ""
+        chain = ""
+        try:
+            if isinstance(source, Matchable):
+                file = source.matcher.csvpath.named_file_name
+                if file is None:
+                    file = source.matcher.csvpath.scanner.filename
+                    i = file.rfind(os.sep)
+                    if i > -1:
+                        file = file[i + 1 :]
+                paths = source.matcher.csvpath.named_paths_name
+                if paths is None:
+                    paths = ""
+                instance = source.matcher.csvpath.identity
+                if instance is None:
+                    instance = ""
+                chain = source.my_chain
+            if hasattr(source, "named_file_name"):
+                file = (
+                    source.named_file_name
+                    if source.named_file_name is not None
+                    else file
+                )
+            if hasattr(source, "named_paths_name"):
+                paths = (
+                    source.named_paths_name
+                    if source.named_paths_name is not None
+                    else paths
+                )
+            if instance == "" and hasattr(source, "identity"):
+                instance = source.identity if source.identity is not None else ""
+            if chain is None or chain == "":
+                chain = f"{type(source)}".rstrip("'>")
+                chain = chain[chain.rfind("'") :]
+        except Exception as e:
+            print(e)
+        return f"{t}:{file}:{paths}:{instance}:{chain}: {msg}"
 
     # listeners must include:
     #   - self on behalf of CsvPath
@@ -83,7 +135,6 @@ class ErrorManager(Registrar, Listener):
     #   - Result, if there is a CsvPaths
     #
     # ==========================================
-
     #
     # we add all Matcher's Expressions (match components) using this method.
     # they listen to maintain their own error count.
@@ -139,4 +190,7 @@ class ErrorManager(Registrar, Listener):
                 self.csvpath.is_valid = False
         if ecoms.do_i_print() is True:
             if self.csvpath:
-                self.csvpath.print(f"{mdata.message}")
+                msg = mdata.message
+                if self.csvpath.error_mode == ErrorMode.FULL or not self.csvpath:
+                    msg = mdata.expanded_message
+                self.csvpath.print(f"{msg}")

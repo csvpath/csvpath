@@ -9,7 +9,64 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestFunctionsError(unittest.TestCase):
-    def test_function_error_file(self):
+    def test_function_error_1(self):
+        paths = CsvPaths()
+        paths.paths_manager.add_named_paths(
+            name="errors",
+            paths=[
+                f""" ~
+            validation-mode:print, no-raise, no-stop
+            error-mode:full
+            ~
+            ${PATH}[1*]
+            [
+                error("This is line: $.csvpath.line_number")
+            ]"""
+            ],
+        )
+        paths.file_manager.add_named_file(name="test_errors", path=PATH)
+        paths.collect_paths(pathsname="errors", filename="test_errors")
+        results = paths.results_manager.get_named_results("errors")
+        assert results
+        assert len(results) == 1
+        result = results[0]
+        assert result.has_errors()
+        ps = result.printouts
+        assert "default" in ps
+        lst = ps["default"]
+        assert len(lst) > 0
+        assert lst[0].find("This is line:") > -1
+        assert lst[0].find("test_errors:errors:0") > -1
+
+    def test_function_error_2(self):
+        paths = CsvPaths()
+        paths.paths_manager.add_named_paths(
+            name="errors",
+            paths=[
+                f"""~
+            validation-mode:print, no-raise, no-stop
+            error-mode:bare
+            ~
+            ${PATH}[1*] [
+                error("This is line: $.csvpath.line_number")
+            ]"""
+            ],
+        )
+        paths.file_manager.add_named_file(name="test_errors", path=PATH)
+        paths.collect_paths(pathsname="errors", filename="test_errors")
+        results = paths.results_manager.get_named_results("errors")
+        assert results
+        assert len(results) == 1
+        result = results[0]
+        assert result.has_errors()
+        ps = result.printouts
+        assert "default" in ps
+        lst = ps["default"]
+        assert len(lst) > 0
+        assert lst[0].find("This is line:") > -1
+        assert lst[0].find("test_errors:errors:0") == -1
+
+    def test_error_file(self):
         paths = CsvPaths()
         paths.paths_manager.add_named_paths(
             name="errors",

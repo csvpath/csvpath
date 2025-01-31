@@ -246,7 +246,7 @@ class FunctionFactory:
             f = Tally(matcher, name, child)
         elif name == "every":
             f = Every(matcher, name, child)
-        elif name == "print":
+        elif name in ["print", "error"]:
             f = Print(matcher, name, child)
         elif name == "increment":
             f = Increment(matcher, name, child)

@@ -134,7 +134,7 @@ class Line(MatchDecider):
     def _get_advance(self, skip, i, s, sibs) -> int:
         advance = 0
         v = s._value_one(skip=skip)
-        if f"{v}".strip() == "*":
+        if v is None or f"{v}".strip() == "*":
             advance = self._find_next_specified_header(skip, i, sibs)
             if advance == 0:
                 advance = len(self.matcher.csvpath.headers) - i

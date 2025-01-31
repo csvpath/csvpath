@@ -221,7 +221,7 @@ class TestValidLine(unittest.TestCase):
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
-                  validation-mode: print, no-raise, no-stop ~
+                  validation-mode: print, raise, no-stop ~
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(

@@ -665,6 +665,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self.metadata.get("source-mode")
 
     @property
+    def error_mode(self) -> str:
+        return self.metadata.get("error-mode")
+
+    @property
     def files_mode(self) -> str:
         return self.metadata.get("files-mode")
 
