@@ -22,6 +22,7 @@ class TestFunctionsInt(unittest.TestCase):
             """
         )
         path.collect()
+        print(f"path.var: {path.variables}")
         assert path.variables["st"] == 3
         assert path.variables["no"] == 3
         assert path.variables["bo"] == 0

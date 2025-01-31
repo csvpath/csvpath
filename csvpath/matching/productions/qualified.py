@@ -35,6 +35,18 @@ class Qualities(Enum):
     #
     # indicates that the value being set must be unique in its context
     DISTINCT = "distinct"
+    #
+    # indicates that the value must conform to some maximally restrictive
+    # interpretation of its type. e.g. a decimal that must include a
+    # decimal point, even if the fraction is 0.
+    #
+    STRICT = "strict"
+    #
+    # opposite of strict (not including middle ground, if any). indicates
+    # that a type should be interpreted as openly as possible without losing
+    # its type-ness. e.g. a weak decimal may not have a decimal point.
+    #
+    WEAK = "weak"
 
 
 class Qualified:  # pylint: disable=R0904
@@ -56,6 +68,8 @@ class Qualified:  # pylint: disable=R0904
         Qualities.NOTNONE.value,
         Qualities.DISTINCT.value,
         Qualities.ONCE.value,
+        Qualities.WEAK.value,
+        Qualities.STRICT.value,
     ]
 
     def __init__(self, *, name: str = None):

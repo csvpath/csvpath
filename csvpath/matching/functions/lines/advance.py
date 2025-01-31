@@ -30,11 +30,14 @@ class Advance(SideEffect):
         child = self.children[0]
         v = child.to_value(skip=skip)
         v2 = ExpressionUtility.to_int(v)
+        # would a non-int ever get past Args?
+        """
         if not isinstance(v2, int):
             msg = f"Cannot convert {v} to an int"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
+        """
         self.matcher.csvpath.advance_count = v2
         self.match = self.default_match()
 

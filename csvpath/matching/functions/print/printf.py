@@ -2,6 +2,7 @@
 from typing import Any
 from csvpath.matching.productions import Equality, Term
 from csvpath.matching.util.print_parser import PrintParser
+from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import SideEffect
 from ..function import Function
 from ..args import Args
@@ -34,6 +35,13 @@ class Print(SideEffect):
             actuals=[None, Any],
         )
         self.args.validate(self.siblings_or_equality())
+        if self.name == "error":
+            c = self._child_two()
+            if isinstance(c, Term):
+                msg = "error() only takes one string argument"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -60,8 +68,14 @@ class Print(SideEffect):
                 if file is not None:
                     self.matcher.csvpath.print_to(file, f"{v}")
                 else:
-                    self.matcher.csvpath.print(f"{v}")
+                    if self.name == "error":
+                        self.matcher.csvpath.error_manager.handle_error(
+                            source=self, msg=f"{v}"
+                        )
+                    else:
+                        self.matcher.csvpath.print(f"{v}")
                     if right is not None:
                         right.matches(skip=skip)
-                self._set_has_happened()
+                if self.once:
+                    self._set_has_happened()
         self.match = self.default_match()

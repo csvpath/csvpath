@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 from lark import Lark
+from lark.exceptions import UnexpectedCharacters
 
 
 class LarkParser:  # pylint: disable=R0903
@@ -59,5 +60,9 @@ class LarkParser:  # pylint: disable=R0903
         self.tree = None
 
     def parse(self, matchpart):  # pylint: disable=C0116
-        self.tree = self.parser.parse(f"{matchpart}")
+        try:
+            self.tree = self.parser.parse(f"{matchpart}")
+        except UnexpectedCharacters as e:
+            print(f"Parsing problem: {e}")
+            raise
         return self.tree

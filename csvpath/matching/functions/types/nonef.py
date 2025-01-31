@@ -75,6 +75,11 @@ class Wildcard(ValueProducer):
         #
         # should check for int or * here
         #
+        if ExpressionUtility.get_ancestor(self, "Line") is None:
+            msg = "Wildcard can only be used within line()"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

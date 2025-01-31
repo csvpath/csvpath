@@ -22,8 +22,8 @@ class Int(ValueProducer):
         if i is None:
             self.value = None
         else:
-            ci = self.value = ExpressionUtility.to_int(i)
-            if not isinstance(ci, int):
+            self.value = ExpressionUtility.to_int(i)
+            if not isinstance(self.value, int):
                 msg = f"Cannot convert {i} to int"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():

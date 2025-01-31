@@ -50,7 +50,7 @@ class PathsManager:
         for name in np:
             if not isinstance(np[name], list):
                 msg = f"{name} does not key a list of csvpaths"
-                self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise InputException(msg)
                 return
@@ -63,7 +63,7 @@ class PathsManager:
     ) -> None:
         if directory is None:
             msg = "Named paths collection name needed"
-            self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
         if not Nos(directory).isfile():
@@ -84,7 +84,7 @@ class PathsManager:
                 self.add_named_paths_from_file(name=aname, file_path=path)
         else:
             msg = "Dirname must point to a directory"
-            self.csvpaths.error_handler.handle_error(source=self, msg=msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
 

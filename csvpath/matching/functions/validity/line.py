@@ -28,23 +28,40 @@ class Line(MatchDecider):
     def check_valid(self) -> None:  # pragma: no cover
         self.args = Args(matchable=self)
         a = self.args.argset()
+        types = [
+            None,
+            Wildcard,
+            String,
+            Boolean,
+            Decimal,
+            Date,
+            Nonef,
+            Blank,
+            Email,
+            Url,
+        ]
         a.arg(
             name="Header value types",
-            types=[
-                None,
-                Wildcard,
-                String,
-                Boolean,
-                Decimal,
-                Date,
-                Nonef,
-                Blank,
-                Email,
-                Url,
-            ],
+            types=types,
             actuals=[None, Any],
         )
         sibs = self.siblings()
+
+        error_types = []
+        for s in sibs:
+            isin = isinstance(s, tuple(types))
+            if not isin:
+                error_types.append(s.name)
+
+        if len(error_types) > 0:
+            et = f"{error_types}"
+            et = et.replace("[", "")
+            et = et.replace("]", "")
+            et = et.replace("'", "")
+            msg = f"Incorrect types in line definition: {et}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise:
+                raise ChildrenException(msg)
         self.args.validate(sibs)
         super().check_valid()
 
@@ -96,7 +113,6 @@ class Line(MatchDecider):
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
             self.match = False
-
         elif self._distinct_if(skip=skip):
             pass
         else:
@@ -131,13 +147,16 @@ class Line(MatchDecider):
         elif isinstance(v, int):
             advance = v
         else:
-            v2 = ExpressionUtility.to_int(v, should_i_raise=False)
+            v2 = ExpressionUtility.to_int(v)  # , should_i_raise=False
             if not isinstance(v2, int):
-                msg = f"Cannot convert {v} to int"
+                msg = f"Wildcard cannot convert {v} to an int"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
             advance = v2
+        if not isinstance(advance, int):
+            # just returning 0 because we should have already reported this problem.
+            return 0
         # minus 1 for the wildcard itself
         advance -= 1
         return advance
@@ -168,7 +187,7 @@ class Line(MatchDecider):
         if not isinstance(s, (String, Decimal, Date, Boolean)):
             return False
         t = s._child_one()
-        if t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
+        if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
             msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
             errors.append(msg)

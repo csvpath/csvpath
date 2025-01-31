@@ -31,6 +31,7 @@ class Error(Metadata):
         self.match_count: int = -1
         self.scan_count: int = -1
         self.message: str = msg
+        self.expanded_message: str = None
         self.filename: str = None
         self.load(csvpath)
 

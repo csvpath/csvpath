@@ -23,7 +23,8 @@ class TestValidBasicTypesInteger(unittest.TestCase):
                 ]"""
         )
         lines = path.collect()
-        assert len(lines) == 5
+        # the int, None pair is acceptable because not notnone
+        assert len(lines) == 6
 
     def test_function_integer5(self):
         path = CsvPath()

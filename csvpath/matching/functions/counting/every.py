@@ -32,7 +32,9 @@ class Every(ValueProducer):
         )
         cnt += 1
         self.matcher.set_variable(self.me(), tracking=tracked_value, value=cnt)
-
+        #
+        # TODO: this conversion error should be caught by Args
+        #
         every = child.right.to_value(skip=skip)
         i = ExpressionUtility.to_int(every)
         if not isinstance(i, int):

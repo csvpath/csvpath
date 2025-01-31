@@ -42,7 +42,8 @@ class Date(ValueProducer, Type):
         if inaline:
             v = self._from_header_if(skip=skip)
         else:
-            v = self._from_header_if(skip=skip, quiet=True)
+            quiet = not isheader
+            v = self._from_header_if(skip=skip, quiet=quiet)
             if not v and not isheader and len(sibs) == 1:
                 v = self._from_one()
             if not v and not isheader and len(sibs) == 2:
@@ -87,12 +88,14 @@ class Date(ValueProducer, Type):
         r = self._date_from_strings(v, fmt)
         return r
 
-    def _date_from_strings(self, adate, aformat):
+    def _date_from_strings(self, adate, aformat, quiet=False):
         try:
             aformat = f"{aformat}".strip()
             return datetime.datetime.strptime(adate, aformat)
         except ValueError:
             if adate == "" and not self.notnone:
+                return None
+            if quiet is True:
                 return None
             msg = f"Cannot parse date '{adate}' using '{aformat}'"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
@@ -107,7 +110,7 @@ class Date(ValueProducer, Type):
         fmt = self._value_two(skip=skip)
         ret = None
         if fmt:
-            ret = self._date_from_strings(v, fmt)
+            ret = self._date_from_strings(v, fmt, quiet)
         else:
             ret = ExpressionUtility.to_datetime(v)
         return ret
