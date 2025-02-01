@@ -35,6 +35,9 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         runtime_data: dict = None,
         by_line: bool = False,
     ):
+        ErrorCollector.__init__(self)
+        Printer.__init__(self)
+        Listener.__init__(self, csvpath.config if csvpath is not None else None)
         self._csvpath = None
         self._uuid = None
         self._runtime_data = runtime_data
@@ -214,7 +217,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         # during testing or for some other reason we may receive None
         # let's assume the dev knows what they're doing and just go with it.
         if path is not None:
-            path.error_manager.add_listener(self)
+            path.error_manager.add_internal_listener(self)
             path.add_printer(self)
         self._csvpath = path
 

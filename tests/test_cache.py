@@ -17,6 +17,7 @@ class TestCache(unittest.TestCase):
         cs = CsvPaths()
         v = cs.config.get(section="cache", name="use_cache")
         cs.config.add_to_config("cache", "use_cache", "yes")
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cachedir = cs.file_manager.cacher.cache._cachedir()
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
@@ -31,6 +32,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_dir(self):
         csvpaths = CsvPaths()
+        csvpaths.add_to_config("errors", "csvpath", "raise, collect, print")
         v = csvpaths.config.get(section="cache", name="use_cache")
         csvpaths.config.add_to_config("cache", "use_cache", "yes")
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
@@ -45,6 +47,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_csv(self):
         csvpaths = CsvPaths()
+        csvpaths.add_to_config("errors", "csvpath", "raise, collect, print")
         v = csvpaths.config.get(section="cache", name="use_cache")
         csvpaths.config.add_to_config("cache", "use_cache", "yes")
         cache = csvpaths.file_manager.cacher.cache
@@ -60,6 +63,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_line_mon1(self):
         csvpaths = CsvPaths()
+        csvpaths.add_to_config("errors", "csvpath", "raise, collect, print")
         v = csvpaths.config.get(section="cache", name="use_cache")
         csvpaths.config.add_to_config("cache", "use_cache", "yes")
         cache = csvpaths.file_manager.cacher.cache
@@ -84,6 +88,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_line_mon2(self):
         csvpaths = CsvPaths()
+        csvpaths.add_to_config("errors", "csvpath", "raise, collect, print")
         v = csvpaths.config.get(section="cache", name="use_cache")
         csvpaths.config.add_to_config("cache", "use_cache", "yes")
         cache = csvpaths.file_manager.cacher.cache

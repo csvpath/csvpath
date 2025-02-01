@@ -23,11 +23,13 @@ class ResultsRegistrar(Registrar, Listener):
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
-        super().__init__(csvpaths=csvpaths)
+        # super().__init__(csvpaths=csvpaths)
+        Registrar.__init__(self, csvpaths)
+        Listener.__init__(self, csvpaths.config)
         self.pathsname = pathsname
         self.run_dir = run_dir
         self.results = results
-        self.type = "results"
+        self.type_name = "results"
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = "start"

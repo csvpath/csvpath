@@ -27,6 +27,7 @@ class TestS3(unittest.TestCase):
             )
             return
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         path = '$[*][ print("$.headers.0 full name: $.headers.2")]'
         d = {"tz": [f"{path}"]}

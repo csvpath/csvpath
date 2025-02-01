@@ -23,24 +23,25 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
 
     def test_function_decimal2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${NUMBERS}[1] [
                 ~ too high 3.52 ~
-                push("a", decimal(#numbers31, 1, 1) )
+                push("a", decimal.one(#numbers31, 1, 1) )
                 ~ too high 3.52 ~
-                push("a", decimal(0, 1, 0) )
+                push("a", decimal.two(#0, 1, 0) )
                 ~ fits 3.52 ~
-                push("a", decimal(#numbers31, 20) )
+                push("a", decimal.three(#numbers31, 20) )
                 ~ fits 3.52 ~
-                push("a", decimal(#0, 20, 2) )
+                push("a", decimal.four(#0, 20, 2) )
                 ~ too low 3.52 ~
-                push("a", decimal(#numbers31, none(), 18.60) )
+                push("a", decimal.five(#numbers31, none(), 18.60) )
                 ~ too high 3.52 ~
-                push("a", decimal(#0, -1, -50) )
+                push("a", decimal.six(#0, -1, -50) )
                 ~ too high 3.52 ~
-                push("a", decimal(#numbers31, -20) )
+                push("a", decimal.seven(#numbers31, -20) )
                 ~ fits: 3.52 ~
-                push("a", decimal(#0, none(), -10) )
+                push("a", decimal.eight(#0, none(), -10) )
             ]
             """
         )
@@ -51,7 +52,9 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
         assert a == expected
 
     def test_function_decimal3(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
             f"""
                 ~ return-mode: matches
                   validation-mode: no-raise, no-stop
@@ -67,9 +70,11 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
         assert len(lines) == 2
 
     def test_function_decimal4(self):
+        # why use the alt ini here?
         testini = "tests/test_resources/deleteme/config.ini"
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
         path = CsvPath()
+        # path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
                 ~ return-mode: matches

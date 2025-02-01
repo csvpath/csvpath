@@ -284,6 +284,7 @@ class TestNewValidation(unittest.TestCase):
     def test_new_args_zero_args(self):
         # this should be fine as-is, no assert needed, if we fail we raise
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse("$tests/test_resources/test.csv[*][yes()]")
         path.fast_forward()
         no = All(path.matcher, name="no")

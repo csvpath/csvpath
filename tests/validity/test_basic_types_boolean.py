@@ -13,7 +13,7 @@ NUMBERS = "tests/test_resources/numbers3.csv"
 class TestValidBasicTypesBoolean(unittest.TestCase):
     def test_validity_boolean1(self):
         path = CsvPath()
-
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[*][
                 boolean(yes())
@@ -24,7 +24,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean2(self):
         path = CsvPath()
-
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ~ None is acceptable if not notnone but it is not
                    a boolean value so we get nothing here ~
@@ -37,7 +37,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean3(self):
         path = CsvPath()
-
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ~ 1 is the 2nd column. it doesn't have booleans.
                    validation-mode: no-raise, no-stop
@@ -71,7 +71,9 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
             path.collect()
 
     def test_validity_boolean7(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
             f""" ~ note that @b standing alone is an existance test.
                    that means it's not yes()'s boolean or the boolean()'s
                    validation that yes() is a boolean. it is the
@@ -86,6 +88,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean8(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[*][
                 ~ yes, it's a bool ~
@@ -101,6 +104,7 @@ class TestValidBasicTypesBoolean(unittest.TestCase):
 
     def test_validity_boolean9(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[*][
                 @b.asbool = boolean(false())

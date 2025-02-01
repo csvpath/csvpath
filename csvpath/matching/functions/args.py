@@ -209,7 +209,7 @@ class ArgSet:
             t = tuple(self._args[i].types)
             if not isinstance(s, t):
                 ii = i + 1
-                return f"type mismatch at arg {ii}"
+                return f"arg {ii} is an unexpected type"
         return None
 
     # ----------------------------
@@ -429,7 +429,21 @@ class Args:
             return
         msg = None
         if self.matchable.notnone and self._has_none(actuals):
-            msg = f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
+            #
+            # this test allows any subclass of .types.Type to have a None value as long as it is not
+            # in the 0th index. effectively, the notnone qualifier only applies to the first arg for
+            # this class of object. this allows us to have, for e.g., an integer(#age, none(), 0)
+            #
+            if (
+                hasattr(self.matchable, "my_type")
+                and len(actuals) >= 1
+                and not ExpressionUtility.is_none(actuals[0])
+            ):
+                self.matchable.matcher.csvpath.logger.debug(
+                    f"{self.matchable.my_type} at {self.matchable.my_chain} is notnone but has a non-0-index None. Allowing it since it is a type."
+                )
+            else:
+                msg = f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"
         else:
             #
             # if we have an equality testing equals as the matchable's child, we have the wrong

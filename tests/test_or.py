@@ -10,6 +10,7 @@ T = "tests/test_resources/trivial.csv"
 class TestCsvPath(unittest.TestCase):
     def test_csvpath_logical_or1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.AND = False
         c = f"""
             ${PATH}[*][
@@ -21,6 +22,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_logical_or2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.AND = False
         lines = path.collect(
             f"""${PATH}[*][
@@ -32,6 +34,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_logical_or3(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.AND = False
         path.parse(
             f"""${T}[*][

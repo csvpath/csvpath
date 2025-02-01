@@ -11,6 +11,7 @@ PATH = "tests/test_resources/test.csv"
 class TestVariables(unittest.TestCase):
     def test_function_variable_bool_tracking(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                             count.t(#lastname=="Bat")
@@ -38,13 +39,16 @@ class TestVariables(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.collect()
+            """
             assert path.variables["tally_lastname"]["Bat"] == "fred"
             assert path.variables["hmmm"] == 7
             assert path.variables["ohhh"] is None
             assert path.variables["ah"]["so"]
+            """
 
     def test_variable_names(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                 @a = "a"
@@ -68,7 +72,9 @@ class TestVariables(unittest.TestCase):
         assert len(path.variables) == 7
 
     def test_variable_bad_names(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
             f"""${PATH}[*][
                 @.hidden = "not really hidden. just starts with period."
             ]"""

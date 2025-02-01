@@ -11,6 +11,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsError(unittest.TestCase):
     def test_function_error_1(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[
@@ -40,6 +41,7 @@ class TestFunctionsError(unittest.TestCase):
 
     def test_function_error_2(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[
@@ -68,6 +70,7 @@ class TestFunctionsError(unittest.TestCase):
 
     def test_error_file(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[

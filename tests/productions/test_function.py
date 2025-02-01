@@ -24,6 +24,7 @@ class TestFunction(unittest.TestCase):
             FunctionFactory.add_function(name="count", function=count)
 
         c = CsvPath()
+        c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse("$tests/test_resources/test.csv[*][yes()]")
         c.fast_forward()
         FunctionFactory.add_function("iamaname", count)

@@ -15,10 +15,12 @@ class FileRegistrar(Registrar, Listener):
     server, JSON file, or database"""
 
     def __init__(self, csvpaths):
-        super().__init__(csvpaths)
+        # super().__init__(csvpaths)
+        Registrar.__init__(self, csvpaths)
+        Listener.__init__(self, csvpaths.config)
         self.csvpaths = csvpaths
         self.config = csvpaths.config
-        self.type = "file"
+        self.type_name = "file"
 
     def get_fingerprint(self, home) -> str:
         mpath = self.manifest_path(home)

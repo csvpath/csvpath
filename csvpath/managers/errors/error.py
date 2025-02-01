@@ -1,3 +1,5 @@
+import __main__
+import os
 from typing import Any, List
 import dateutil.parser
 from datetime import datetime, timezone
@@ -10,8 +12,14 @@ class Error(Metadata):
 
     def __init__(self, *, source=None, msg=None, error_manager=None):
         config = None
+        #
+        # should this also check for csvpaths? our error_mgr can
+        # exist w/o a csvpath when csvpaths is doing file loads.
+        #
         csvpath = None
         if error_manager:
+            if error_manager.csvpath is None and error_manager.csvpaths is None:
+                raise ValueError("ErrorManager must hold a CsvPath and/or a CsvPaths")
             config = (
                 error_manager.csvpath.config
                 if error_manager.csvpath
@@ -23,16 +31,22 @@ class Error(Metadata):
             self.identity: str = csvpath.identity if error_manager.csvpath else None
         super().__init__(config)
         self.expression_index: int = -1
-        self.source: Any = source
+        self.source: str = None
         if source and isinstance(source, Matchable):
             self.expression_index = source.my_expression.index
-            self.source = self.source.my_chain
+            self.source = source.my_chain
+        else:
+            self.source = f"{source}"
         self.line_count: int = -1
         self.match_count: int = -1
         self.scan_count: int = -1
         self.message: str = msg
         self.expanded_message: str = None
         self.filename: str = None
+        self.code = os.path.basename(__main__.__file__)
+        self.cwd = os.getcwd()
+        self.pid = os.getpid()
+
         self.load(csvpath)
 
     def load(self, csvpath) -> None:
@@ -50,7 +64,7 @@ class Error(Metadata):
             and self.scan_count == e.scan_count
             and self.named_paths_name == e.named_paths_name
             and self.named_file_name == e.named_file_name
-            and f"{self.source}".strip() == f"{e.source}".strip()
+            and self.source == e.source
             and self.message == e.message
             and self.identity == e.identity
             and self.filename == e.filename
@@ -86,7 +100,7 @@ class Error(Metadata):
             "line_count": self.line_count,
             "match_count": self.match_count,
             "scan_count": self.scan_count,
-            "source": f"{self.source}",
+            "source": self.source,
             "message": self.message,
             "named_paths_name": self.named_paths_name,
             "named_file_name": self.named_file_name,
@@ -123,19 +137,15 @@ class Error(Metadata):
         #
         #
         #
-        import __main__
-        import os
-
-        loc = os.path.basename(__main__.__file__)
-        cwd = os.getcwd()
         #
         #
         #
         string = f"""Error
 time: {self.time_string},
 uuid: {self.uuid_string},
-code: {loc},
-cwd: {cwd},
+code: {self.code},
+cwd: {self.cwd},
+pid: {self.pid},
 archive: {self.archive_name},
 archive path: {self.archive_path},
 named_files_root: {self.named_files_root},

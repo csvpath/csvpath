@@ -118,7 +118,7 @@ class Matcher:  # pylint: disable=R0902
                 # a determination.
                 #
                 if self.csvpath:
-                    self.csvpath.error_manager.add_listener(e)
+                    self.csvpath.error_manager.add_internal_listener(e)
             self.expressions = expressions
             self.check_valid()
         if self.csvpath:

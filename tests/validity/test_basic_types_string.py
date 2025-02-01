@@ -20,6 +20,7 @@ class TestValidBasicTypesString(unittest.TestCase):
 
     def test_validity_string2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[1*][
                 string(#lastname, 25, 0)
@@ -36,6 +37,7 @@ class TestValidBasicTypesString(unittest.TestCase):
 
     def test_validity_string4(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[*][
                 string(#lastname, 2)
@@ -51,7 +53,9 @@ class TestValidBasicTypesString(unittest.TestCase):
             path.collect()
 
     def test_validity_string6(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
             f""" ${PATH}[1*][
                 string(#lastname, 100, 4)
             ]"""
@@ -67,6 +71,7 @@ class TestValidBasicTypesString(unittest.TestCase):
 
     def test_validity_string8(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
             f"""
             ~ explain-mode:explain~
@@ -76,7 +81,10 @@ class TestValidBasicTypesString(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 0
+
+    def test_validity_string9(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
             f"""
             ~ explain-mode:explain~

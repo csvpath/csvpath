@@ -9,6 +9,7 @@ PATH = "tests/test_resources/test.csv"
 class TestFunctionsAdvance(unittest.TestCase):
     def test_function_advance1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -40,6 +41,7 @@ class TestFunctionsAdvance(unittest.TestCase):
 
     def test_function_advance_all1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${PATH}[1*][
                 push.onmatch("cnt", count_lines())
@@ -51,7 +53,8 @@ class TestFunctionsAdvance(unittest.TestCase):
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
     def test_function_advance_all2(self):
-        path = CsvPath().parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
+        path = CsvPath()
+        path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()

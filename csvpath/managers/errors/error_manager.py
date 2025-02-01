@@ -15,12 +15,47 @@ class ErrorManager(Registrar, Listener):
     """creates errors uses the csvpaths's or csvpath's error policy to handle them."""
 
     def __init__(self, *, csvpaths=None, csvpath=None, error_collector=None):
-        super().__init__(csvpaths=csvpaths)
         self.csvpath = csvpath
-        # self.csvpaths = csvpaths
+        self._csvpaths = None
+        if csvpaths is not None:
+            self.csvpaths = csvpaths
+        elif csvpath and csvpath.csvpaths is not None:
+            self.csvpaths = csvpath.csvpaths
+        if self.csvpath is None and self.csvpaths is None:
+            raise ValueError("CsvPaths and/or CsvPath must be provided")
         self._collector = csvpath if csvpath else csvpaths
-        self.type = "error"
+        #
+        #
+        #
+        Registrar.__init__(self, csvpaths=csvpaths)
+        Listener.__init__(self, csvpath.config if csvpath else csvpaths.config)
+        #
+        #
+        #
+        self.ecoms = None
+        if self.csvpath:
+            self.ecoms = self.csvpath.ecoms
+        elif self.csvpaths:
+            self.ecoms = self.csvpaths.ecoms
+        else:
+            raise Exception("No csvpaths or csvpath available")
+        self.type_name = "error"
         self.vetos = {}
+        self.error_metrics = None
+
+    @property
+    def csvpaths(self):
+        return self._csvpaths
+
+    @csvpaths.setter
+    def csvpaths(self, paths):
+        #
+        # added to debug. there shouldn't be a time when we're setting None, but
+        # this None test could go away.
+        #
+        if paths is None:
+            raise ValueError("CsvPaths cannot be None")
+        self._csvpaths = paths
 
     #
     # a matchable can request that all handle_error() calls for a list of
@@ -54,8 +89,6 @@ class ErrorManager(Registrar, Listener):
                 found = True
         if found is True:
             return
-
-        # c = self.csvpath.config if self.csvpath else self.csvpaths.config
         error = Error(source=source, msg=msg, error_manager=self)
         if self.csvpath:
             if self.csvpath.line_monitor:
@@ -71,14 +104,9 @@ class ErrorManager(Registrar, Listener):
                 if self.csvpath and self.csvpath.scanner
                 else None
             )
-
             error.match = self.csvpath.match
         error.message = msg
         error.expanded_message = self.decorate_error(source=source, msg=msg)
-        if isinstance(source, Matchable):
-            error.source = source.my_chain
-        else:
-            error.source = type(source)
         self.distribute_update(error)
 
     def decorate_error(self, *, source, msg: str) -> str:
@@ -126,7 +154,10 @@ class ErrorManager(Registrar, Listener):
                 chain = f"{type(source)}".rstrip("'>")
                 chain = chain[chain.rfind("'") :]
         except Exception as e:
-            print(e)
+            #
+            #
+            #
+            self._collector.logger.error(e)
         return f"{t}:{file}:{paths}:{instance}:{chain}: {msg}"
 
     # listeners must include:
@@ -138,21 +169,20 @@ class ErrorManager(Registrar, Listener):
     #
     # we add all Matcher's Expressions (match components) using this method.
     # they listen to maintain their own error count.
+    # update: now using add_internal_listener() on Registrar parent
     #
-    def add_listener(self, lst: Listener) -> None:
-        self.internal_listeners.append(lst)
+    # self.add_listeners(lst)
 
     #
     # this method listens onbehalf of the CsvPath. it logs, stops, fails,
     # prints, and collects
     #
     def metadata_update(self, mdata: Metadata) -> None:
-        ecoms = self.csvpath.ecoms if self.csvpath is not None else self.csvpaths.ecoms
         #
         # you cannot turn off logging complete. you can turn off collection in config.ini
         # but not in the csvpath modes. both of these things could change.
         #
-        if ecoms.do_i_quiet():
+        if self.ecoms.do_i_quiet():
             self._collector.logger.error(
                 f"Qt {mdata.uuid_string}: message: {mdata.message}"
             )
@@ -176,19 +206,19 @@ class ErrorManager(Registrar, Listener):
         #
         #
         #
-        if ecoms.in_policy(OnError.COLLECT.value):
+        if self.ecoms.do_i_collect():
             #
             # if we are held by a CsvPath we are the CsvPath's error listener so we're
             # pushing the error back to our parent's public access interface.
             #
             self._collector.collect_error(mdata)
-        if ecoms.do_i_stop() is True:
+        if self.ecoms.do_i_stop() is True:
             if self.csvpath:
                 self.csvpath.stopped = True
-        if ecoms.do_i_fail() is True:
+        if self.ecoms.do_i_fail() is True:
             if self.csvpath:
                 self.csvpath.is_valid = False
-        if ecoms.do_i_print() is True:
+        if self.ecoms.do_i_print() is True:
             if self.csvpath:
                 msg = mdata.message
                 if self.csvpath.error_mode == ErrorMode.FULL or not self.csvpath:

@@ -6,7 +6,7 @@ PATH = "tests/test_resources/test.csv"
 
 
 class TestPandas(unittest.TestCase):
-    def test_csvpaths_pandas_1(self):
+    def test_csvpath_pandas_1(self):
         try:
             import pandas as pd
         except ImportError:

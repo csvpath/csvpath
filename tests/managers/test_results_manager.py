@@ -13,6 +13,7 @@ class TestResultsManager(unittest.TestCase):
         filename = "food"
         pathsname = "many"
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         # get a csvpath. the csvpaths is not 100% configured but we don't need it.
         path = paths.csvpath()
         run_dir = os.path.join(paths.config.archive_name, pathsname)
@@ -67,6 +68,8 @@ class TestResultsManager(unittest.TestCase):
 
     def test_results_print_to_printouts(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths(
             name="print_test",
@@ -120,6 +123,8 @@ class TestResultsManager(unittest.TestCase):
 
     def test_results_save_error(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths(
             name="print_test",

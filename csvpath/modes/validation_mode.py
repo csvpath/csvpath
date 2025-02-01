@@ -1,4 +1,6 @@
 class ValidationMode:
+    COLLECT = "collect"
+    NO_COLLECT = "no-collect"
     PRINT = "print"
     NO_PRINT = "no-print"
     RAISE = "raise"
@@ -34,6 +36,7 @@ class ValidationMode:
         self._match_validation_errors = None
         self._stop_on_validation_errors = None
         self._fail_on_validation_errors = None
+        self._collect_validation_errors = None
 
     def update(self) -> None:
         self._validation_mode = None
@@ -76,6 +79,7 @@ class ValidationMode:
         self.set_stop_validation_errors(veh)
         self.set_fail_validation_errors(veh)
         self.set_log_validation_errors(veh)
+        self.set_collect_validation_errors(veh)
 
     # ===========================
     # the setters are not really setters because the arg
@@ -128,6 +132,14 @@ class ValidationMode:
         else:
             self._fail_on_validation_errors = None
 
+    def set_collect_validation_errors(self, veh: str) -> None:
+        if veh and veh.find(ValidationMode.NO_COLLECT) > -1:
+            self._collect_validation_errors = False
+        elif veh and veh.find(ValidationMode.COLLECT) > -1:
+            self._collect_validation_errors = True
+        else:
+            self._collect_validation_errors = None
+
     def set_log_validation_errors(self, veh: str) -> None:
         if veh and veh.find(ValidationMode.NO_LOG) > -1:
             self._log_on_validation_errors = False
@@ -147,6 +159,10 @@ class ValidationMode:
     @property
     def fail_on_validation_errors(self) -> bool:
         return self._fail_on_validation_errors
+
+    @property
+    def collect_validation_errors(self) -> bool:
+        return self._collect_validation_errors
 
     @property
     def print_validation_errors(self) -> bool:

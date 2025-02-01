@@ -11,15 +11,15 @@ class OpenTelemetryResultsListener(OtlpListener):
         self.csvpaths = None
 
     def metadata_update(self, mdata: Metadata) -> None:
-
-        if self.csvpaths and self.csvpaths.metrics is None:
+        if not self.csvpaths:
+            raise RuntimeError(
+                "OTLP listener cannot continue without a CsvPaths instance"
+            )
+        if self.csvpaths.metrics is None:
             self.csvpaths.metrics = Metrics(self)
-
         if mdata.status == ResultsRegistrar.COMPLETE:
-            print("completing!")
             self.csvpaths.metrics.runs_completed.add(1, self.core_meta(mdata))
         else:
-            print("starting")
             self.csvpaths.metrics.runs_started.add(1, self.core_meta(mdata))
         size = mdata.named_file_size
         if size:

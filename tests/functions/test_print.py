@@ -45,7 +45,7 @@ class TestPrint(unittest.TestCase):
 
     def test_print_get_runtime_data_from_results(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpath", "raise")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"
@@ -105,6 +105,7 @@ class TestPrint(unittest.TestCase):
 
     def test_print_header_ref(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(
             directory="tests/test_resources/named_paths"
@@ -404,6 +405,7 @@ class TestPrint(unittest.TestCase):
 
     def test_print_parser_named_paths_data(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         LogUtility.logger(paths, "debug")
         paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
         paths.paths_manager.add_named_paths_from_dir(

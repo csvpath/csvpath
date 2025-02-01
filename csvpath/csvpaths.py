@@ -142,13 +142,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
         self.results_manager = ResultsManager(csvpaths=self)
-        self.error_manager = ErrorManager(csvpaths=self)
+        self.ecoms = ErrorCommunications(csvpaths=self)
+        self._error_manager = ErrorManager(csvpaths=self)
         #
         # TODO:
         # self.print_manager = ... <<<=== should we do this?
         #
         #
-        self.ecoms = ErrorCommunications(csvpaths=self)
         self.print_default = print_default
         self.delimiter = delimiter
         self.quotechar = quotechar
@@ -177,6 +177,16 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         #
         self.metrics = None
         self.logger.info("initialized CsvPaths")
+
+    @property
+    def error_manager(self) -> ErrorManager:
+        return self._error_manager
+
+    @error_manager.setter
+    def error_manager(self, em: ErrorManager) -> None:
+        if em.csvpaths is None:
+            raise Exception("CsvPaths cannot be None")
+        self._error_manager = em
 
     def run_time_str(self, pathsname=None) -> str:
         """adds the stringified current run time to the named-paths
@@ -253,6 +263,19 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         if not self._config:
             self._config = Config()  # pragma: no cover
         return self._config
+
+    #
+    # this is the preferred way to update config. it is preferred because
+    # csvpath and csvpaths work off the same config file, even though they,
+    # in some cases, have separate keys. if you update the config directly
+    # before a run starts using the CsvPaths's Config you have to remember
+    # to save and reload for it to effect both CsvPaths and CsvPath. this
+    # method does the save and reload every time.
+    #
+    def add_to_config(self, section, key, value) -> None:
+        self.config.add_to_config(section=section, key=key, value=value)
+        self.config.save_config()
+        self.config.reload()
 
     def clean(self, *, paths) -> None:
         """at this time we do not recommend reusing CsvPaths, but it is doable
@@ -335,6 +358,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
             except Exception as ex:  # pylint: disable=W0718
                 # ex.trace = traceback.format_exc()
                 # ex.source = self
+                if self.error_manager.csvpaths is None:
+                    raise Exception("ErrorManager's CsvPaths cannot be None")
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
                 if self.ecoms.do_i_raise():
                     self.results_manager.save(result)

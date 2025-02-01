@@ -13,8 +13,10 @@ from ..metadata import Metadata
 
 class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
-        super().__init__(csvpaths)
-        self.type = "run"
+        # super().__init__(csvpaths)
+        Registrar.__init__(self, csvpaths)
+        Listener.__init__(self, csvpaths.config)
+        self.type_name = "run"
         self.archive = self.csvpaths.config.archive_path
 
     @property
@@ -29,6 +31,7 @@ class RunRegistrar(Registrar, Listener):
             with DataFileWriter(path=self.manifest_path) as file:
                 json.dump([], file.sink, indent=2)
         with DataFileReader(self.manifest_path) as file:
+            print(f"run_erg: mani path: {self.manifest_path}")
             return json.load(file.source)
 
     def metadata_update(self, mdata: Metadata) -> None:

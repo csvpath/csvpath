@@ -22,7 +22,7 @@ class Metrics:
             metrics.set_meter_provider(self.provider)
 
         self.meter = metrics.get_meter("csvpath")
-        # Create metrics
+
         self.runs_started = self.meter.create_counter(
             "runs_started", description="Number of named-files started"
         )

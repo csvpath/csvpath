@@ -12,9 +12,11 @@ from .result_metadata import ResultMetadata
 
 class ResultRegistrar(Registrar, Listener):
     def __init__(self, *, csvpaths, result, result_serializer=None):
-        super().__init__(csvpaths, result)
+        # super().__init__(csvpaths, result)
+        Registrar.__init__(self, csvpaths, result)
+        Listener.__init__(self, csvpaths.config)
         self.result_serializer = result_serializer
-        self.type = "result"
+        self.type_name = "result"
 
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest

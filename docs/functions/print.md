@@ -1,9 +1,9 @@
 
-# Print
+# Print and Error
 
-Prints to std.out and/or to a <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/util/printer.py'>Printer object</a>.
+`print()` sends text to the console and/or to other <a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/util/printer.py'>Printer object</a>.
 
-`print()` is helpful for debugging and validation. Print can also be a quick way to create an output CSV file or in another way capture the data generated during a run.
+`print()` is helpful for debugging and validation. It can also be a quick way to create an output CSV file or in another way capture the data generated during a run.
 
 Print takes two arguments:
 - A string to print
@@ -32,35 +32,61 @@ You can retrieve individual printout sets from `Result` objects like this:
 
 ## Variables
 
-Print strings can include the following variables.
+You can reference any of your own variables using a reference to the `variables` namespace. A variable named @cat would be referenced as:
+
+```
+    $.variables.cat
+```
+
+As well as user-defined variables, `print()` accepts csvpath runtime data and header values.
+
+Headers are accessed in the same way as variables, but using the `headers` namespace. You may use indexes or names. If you need to quote a header name use single-quotes.
+
+The built-in runtime values are as follows. You can reference them in the `csvpath` namespace.
 
 | Variable name     | Description                                                           |
 |-------------------|-----------------------------------------------------------------------|
-|name               | The name of the file. E.g. for `$file.csv[*][no()]` it is `file`.     |
-|delimiter          | The file's delimiter                                                  |
-|quotechar          | The quote character the file uses to quote columns                    |
-|count_matches      | The current number of matches                                         |
-|count_lines        | The current line being processed                                      |
-|count_scans        | The current number of lines scanned                                   |
-|headers            | The list of header values                                             |
-|headers.headername | The value of the named header                                         |
-|scan_part          | The scan pattern                                                      |
-|match_part         | The match pattern                                                     |
-|variables          | The value of variables                                                |
-|variables.varname  | The value of the named variable                                       |
-|match_json         | A JSON dump of the match part parse tree                              |
-|line               | The list of values that is the current line being processed           |
-|last_row_time      | Time taken for the last row processed                                 |
-|rows_time          | Time taken for all rows processed so far                              |
+| count_lines       | The total lines up to that point                                      |
+| count_matches     | The matches seen to that point                                        |
+| count_scans       | The lines scanned                                                     |
+| delimiter         | The delimiter, most often a comma                                     |
+| file_name         | The name of the file being processed                                  |
+| headers           | The headers that are currently in-effect                              |
+| identity          | The ID or name set in metadata to identify the csvpath being run      |
+| last_line_time    | The number of milliseconds the last line took                         |
+| line_number       | The currently processing line                                         |
+| lines_collected   | The number of matched or unmatched lines collected                    |
+| lines_time        | Cumulative processing time                                          |
+| match_part        | The part of a csvpath that includes all the match components          |
+| quotechar         | The character used to create a single from strings with spaces        |
+| scan_part         | The first part of a csvpath that tells what file and lines to scan    |
+| total_lines       | The total lines in the file                                           |
+| valid             | True if the file is valid to that point                               |
+|-------------------|-----------------------------------------------------------------------|
+| explain-mode      | Prints the setting value                                              |
+| logic-mode        | Prints the setting value                                              |
+| print-mode        | Prints the setting value                                              |
+| return-mode       | Prints the setting value                                              |
+| run-mode          | Prints the setting value                                              |
+| source-mode       | Prints the setting value                                              |
+| unmatched-mode    | Prints the setting value                                              |
+| validation-mode   | Prints the setting value                                              |
 
-A variable is indicated as a qualifier off the root. The root is `$`, so the `delimiter` variable is referred to like this:
+Again, a runtime value is indicated as a reference to the `csvpath` namespace. The root is `$`, so the `delimiter` variable is referred to like this:
+```
+    $.csvpath.delimiter
+```
 
-    $.delimiter
+## Error
+
+`error()` is very similar to `print()`. It sends its output to a printer and can run a match or equality in the same way. The differences are:
+- `error()` wraps your text with the standard error metadata, if you configure your error messages to be decorated with IDs and a timestamp.
+- The text you send using `error()` is logged and alerted with other errors and ends up in the `errors.json` file with all collected errors.
+
 
 ## Examples
 
-    "$.name's delimiter is $.delimiter."
+    print("$.csvpath.identity's delimiter is $.csvpath.delimiter.")
 
-    "The match part JSON was parsed into this tree:\n
-        $.match_json"
+    print("The file has $.csvpath.total_lines. There are two headers: $.headers.firstname, $headers.lastname")
 

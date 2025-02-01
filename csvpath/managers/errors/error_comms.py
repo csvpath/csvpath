@@ -34,6 +34,11 @@ class ErrorCommunications:
             return self._csvpath.raise_validation_errors
         return self.in_policy(OnError.RAISE.value)
 
+    def do_i_collect(self) -> bool:
+        if self._csvpath and self._csvpath.collect_validation_errors is not None:
+            return self._csvpath.collect_validation_errors
+        return self.in_policy(OnError.COLLECT.value)
+
     def do_i_print(self) -> bool:
         if self._csvpath and self._csvpath.print_validation_errors is not None:
             return self._csvpath.print_validation_errors

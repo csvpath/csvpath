@@ -15,6 +15,7 @@ class TestComments(unittest.TestCase):
         assert path.collect_when_not_matched is False
         assert path.has_default_printer is True
         assert path.print_validation_errors is True
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ logic-mode: OR
@@ -40,6 +41,7 @@ class TestComments(unittest.TestCase):
 
     def test_update_settings_from_metadata2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.add_printer(LogPrinter(path.logger))
         assert path.print_validation_errors is True
         path.parse(
@@ -62,6 +64,7 @@ class TestComments(unittest.TestCase):
 
     def test_update_settings_from_metadata3(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise, collect")
         assert path.raise_validation_errors is None
         path.parse(
             f"""
@@ -72,7 +75,6 @@ class TestComments(unittest.TestCase):
                 print("$.variables.a")
             ] """
         )
-        path.config.add_to_config("errors", "csvpath", "raise, collect")
         assert "validation-mode" in path.metadata
         assert path.log_validation_errors is True
         assert path.print_validation_errors is True
@@ -85,13 +87,14 @@ class TestComments(unittest.TestCase):
 
     def test_update_settings_from_metadata_match_error_1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         assert path.raise_validation_errors is None
         path.parse(
             f"""
             ~
             id:match :
             because we have match we will ignore the four errors and collect 8 lines.
-            validation-mode: print, match, no-raise, no-stop
+            validation-mode: print, match, no-raise, no-stop, collect
             ~
             ${PATH}[1*][
                 mod.nocontrib(line_number(), 2) == 1 -> @a = 5
@@ -103,11 +106,12 @@ class TestComments(unittest.TestCase):
             """
         )
         lines = path.collect()
-        assert path.has_errors() is True
         assert len(lines) == 8
+        assert path.has_errors() is True
 
     def test_update_settings_from_metadata_match_error_2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~
             because we don't have validation-mode match we will only match on non-error lines == 4
@@ -124,6 +128,7 @@ class TestComments(unittest.TestCase):
 
     def test_comment_settings_affecting_multiple_paths(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         """~ 3 paths:
                 - AND no matches all returned
                 - OR all match all returned
@@ -158,6 +163,7 @@ class TestComments(unittest.TestCase):
 
     def test_comments_below(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ checking collection of metadata,
@@ -180,6 +186,7 @@ class TestComments(unittest.TestCase):
 
     def test_comments1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${PATH}[1*]
             [
@@ -193,6 +200,7 @@ class TestComments(unittest.TestCase):
 
     def test_comments2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${PATH}[1*]
             [
@@ -208,6 +216,7 @@ class TestComments(unittest.TestCase):
 
     def test_comments_everything_except_tilde_and_right_bracket(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             """$tests/test_resources/test.csv[1*]
             [
@@ -222,6 +231,7 @@ class TestComments(unittest.TestCase):
 
     def test_comments_back_to_back_and_empty(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             """$tests/test_resources/test.csv[1*]
             [

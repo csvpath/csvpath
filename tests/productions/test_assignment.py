@@ -12,24 +12,24 @@ NUMBERS = "tests/test_resources/numbers.csv"
 
 class TestAssignment(unittest.TestCase):
     def test_equal_rhs_1(self):
-        path = (
-            CsvPath()
-            .parse(
-                f"""${PATH}[*][
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""${PATH}[*][
                 @a == none() -> @a = 1
                 ~ @c = 1 == 0 will throw an exception so we have to use the equals function ~
                 @b = eq(1,0)
             ]"""
-            )
-            .fast_forward()
-        )
+        ).fast_forward()
         v = path.variables
         print(f"vars: {v}")
         assert v["a"] == 1
         assert v["b"] is False
 
     def test_equal_rhs_2(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
             f"""${PATH}[*][
                 @a == none() -> @a = 1
                 ~ the current version of the Lark parser grammar does not allow for
@@ -46,6 +46,7 @@ class TestAssignment(unittest.TestCase):
 
     def test_qualifier_increment1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should work ~
@@ -58,6 +59,7 @@ class TestAssignment(unittest.TestCase):
 
     def test_qualifier_increment2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should not decrease @up ~
@@ -70,6 +72,7 @@ class TestAssignment(unittest.TestCase):
 
     def test_qualifier_decrement1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should work ~
@@ -82,6 +85,7 @@ class TestAssignment(unittest.TestCase):
 
     def test_qualifier_decrement2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should not increase @up ~
@@ -94,10 +98,10 @@ class TestAssignment(unittest.TestCase):
 
     def test_qualifier_assignment(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         matcher = Matcher(csvpath=path, data="[yes()]")
         eq = Equality(matcher=matcher)
         eq.matcher = matcher
-
         name = "a"
         tracking = None
         args = {

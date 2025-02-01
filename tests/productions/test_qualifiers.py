@@ -30,6 +30,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         # baseline
         #
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                     ~ this should set and match ~
@@ -41,6 +42,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_notnone2(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                     ~ this should not set and not match ~
@@ -52,6 +54,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_notnone3(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                     ~ this should set ~
@@ -64,6 +67,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_notnone4(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                     ~ this should match and not set ~
@@ -76,6 +80,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}
                         [*]
@@ -108,6 +113,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_latch(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
             ~ explain-mode: no-explain ~
@@ -123,6 +129,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_function_every_qualifier1(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}
                         [*]
@@ -145,6 +152,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_every_qualifier2(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}
                         [*]
@@ -166,6 +174,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_first_and_second_non_term(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${BOOL}
                 [*]
@@ -187,6 +196,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualifier_header(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${BOOL}
                 [*]
@@ -206,6 +216,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
 
     def test_qualified_properties(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         matcher = Matcher(csvpath=path, data="[]")
         stop = Stop(matcher, name="stop")
         assert not stop.asbool

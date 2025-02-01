@@ -26,6 +26,7 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_json_named_paths(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
@@ -50,6 +51,7 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_result_manifest(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # setup
         #
@@ -98,6 +100,7 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_transfer_mode(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         try:
             os.remove("transfers/transfer.txt")
         except FileNotFoundError:

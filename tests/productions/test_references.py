@@ -32,11 +32,14 @@ class TestReferences(unittest.TestCase):
     #
     def test_reference_for_wrong_parts(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.fast_forward_paths(filename="zipcodes", pathsname="zips")
 
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(
             dirname="tests/test_resources/named_files"
         )
@@ -89,6 +92,8 @@ class TestReferences(unittest.TestCase):
         # setup the city->zip variable
         #
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
@@ -106,6 +111,7 @@ class TestReferences(unittest.TestCase):
         # now use the tracked variable by reference
         #
         path = cs.csvpath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
             ${PATH}[1*]
@@ -121,6 +127,8 @@ class TestReferences(unittest.TestCase):
 
     def test_reference2(self):
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
@@ -137,6 +145,7 @@ class TestReferences(unittest.TestCase):
         # now test if the header `points` has any values
         #
         path = cs.csvpath()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
             ${PATH}[1]
@@ -160,6 +169,8 @@ class TestReferences(unittest.TestCase):
 
     def test_reference3(self):
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="zipcodes", pathsname="zips")
@@ -229,6 +240,8 @@ class TestReferences(unittest.TestCase):
     #
     def test_reference_specific_header_lookup(self):
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="select")
