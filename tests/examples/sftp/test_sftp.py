@@ -13,6 +13,7 @@ class TestSftp(unittest.TestCase):
             return
         self._clear()
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftp", save_load=False)
         paths.config.add_to_config(
             "listeners",
@@ -78,6 +79,7 @@ class TestSftp(unittest.TestCase):
 
     def test_sftp_var_values(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/sftp/csvs")
         paths.paths_manager.add_named_paths_from_json("tests/examples/sftp/group.json")
         paths.collect_paths(filename="March-2024", pathsname="sftptest")

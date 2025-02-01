@@ -8,6 +8,7 @@ DATES = "tests/test_resources/dates.csv"
 class TestFunctionsBefore(unittest.TestCase):
     def test_function_before_dates1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ date < unconverted string == False ~
@@ -19,6 +20,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_before_dates2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ date < date == True ~
@@ -30,6 +32,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_dates1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ date > unconverted string == False ~
@@ -41,6 +44,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_dates2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ date > date == True ~
@@ -62,6 +66,7 @@ class TestFunctionsBefore(unittest.TestCase):
     #
     def test_function_before_int1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ int < unconverted string == True ~
@@ -73,6 +78,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_before_int2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ int < int == True ~
@@ -84,6 +90,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_int1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ int > unconverted string == False ~
@@ -95,6 +102,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_int2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ int > int == True ~
@@ -109,6 +117,7 @@ class TestFunctionsBefore(unittest.TestCase):
     #
     def test_function_before_string1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ string < unconverted float == True ~
@@ -120,6 +129,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_before_string2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ string < string == True ~
@@ -143,6 +153,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_string2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ string > string == True ~
@@ -154,6 +165,7 @@ class TestFunctionsBefore(unittest.TestCase):
 
     def test_function_after_int_float(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ~ string > string == True ~

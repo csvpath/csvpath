@@ -9,6 +9,7 @@ from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 class TestCkan(unittest.TestCase):
     def test_ckan_visibility(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"
@@ -25,6 +26,7 @@ class TestCkan(unittest.TestCase):
 
     def test_ckan_group(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"
@@ -58,6 +60,7 @@ class TestCkan(unittest.TestCase):
 
     def test_ckan_publish(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"
@@ -105,6 +108,7 @@ class TestCkan(unittest.TestCase):
 
     def test_ckan_dataset_name(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"
@@ -134,6 +138,7 @@ class TestCkan(unittest.TestCase):
 
     def test_ckan_tags(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"
@@ -162,6 +167,7 @@ class TestCkan(unittest.TestCase):
 
     def test_ckan_fields(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
         paths.paths_manager.add_named_paths_from_dir(
             name="ckantest", directory="tests/examples/ckan/csvpaths"

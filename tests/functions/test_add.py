@@ -8,18 +8,17 @@ PATH = "tests/test_resources/test.csv"
 
 class TestFunctionsAdd(unittest.TestCase):
     def test_function_add0(self):
-        path = (
-            CsvPath()
-            .parse(
-                f"""~ validation-mode:raise, print ~ ${PATH}[1] [ @l = add( 1, 1 ) ]"""
-            )
-            .fast_forward()
-        )
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""~ validation-mode:raise, print ~ ${PATH}[1] [ @l = add( 1, 1 ) ]"""
+        ).fast_forward()
         print(f"path.vars: {path.variables}")
         assert path.variables["l"] == 2
 
     def test_function_add1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ${PATH}[1]
@@ -31,6 +30,7 @@ class TestFunctionsAdd(unittest.TestCase):
 
     def test_function_add2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ${PATH}[1]
@@ -42,6 +42,7 @@ class TestFunctionsAdd(unittest.TestCase):
 
     def test_function_add3(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ${PATH}[1]
@@ -53,6 +54,7 @@ class TestFunctionsAdd(unittest.TestCase):
 
     def test_function_add4(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""
             ${PATH}[1]
@@ -63,7 +65,8 @@ class TestFunctionsAdd(unittest.TestCase):
         assert path.variables["l"] == 15
 
     def test_function_add_error1(self):
-        path = CsvPath().parse(f""" ${PATH}[1][ @l = add( count() ) ]""")
+        path = CsvPath()
+        path.parse(f""" ${PATH}[1][ @l = add( count() ) ]""")
         path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(ChildrenException):
             path.fast_forward()

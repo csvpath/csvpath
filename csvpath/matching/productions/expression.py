@@ -19,7 +19,8 @@ class Expression(Matchable, Listener):
     """
 
     def __init__(self, matcher, *, value: Any = None, name: str = None):
-        super().__init__(matcher, name=name, value=value)
+        Matchable.__init__(self, matcher, name=name, value=value)
+        Listener.__init__(self, matcher.csvpath.config)
         self.error_count = 0
         self._index = -1
 

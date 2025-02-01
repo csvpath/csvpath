@@ -5,12 +5,13 @@ from ..util.config import Config
 
 class Listener(ABC):
     def __init__(self, config=None) -> None:
+        self._config = None
         super().__init__()
-        self._config = config
+        self.config = config
 
     @property
     def config(self):
-        if not self._config:
+        if self._config is None:
             #
             # this really should never happen. but perhaps in testing?
             #

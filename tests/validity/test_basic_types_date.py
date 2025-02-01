@@ -27,6 +27,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date3(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~id:validity_date3~ ${PATH}[*][
                 date("2024-01-01")
@@ -36,16 +37,14 @@ class TestValidBasicTypesDate(unittest.TestCase):
         assert len(lines) == 9
 
     def test_validity_date4(self):
-        lines = (
-            CsvPath()
-            .parse(
-                f"""~id:validity_date4~ ${PATH}[*][
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""~id:validity_date4~ ${PATH}[*][
                 @d = date("2024-01-01")
-                date(@d)
-            ]"""
-            )
-            .collect()
+                date(@d)]"""
         )
+        lines = path.collect()
         assert len(lines) == 9
 
     def test_validity_date5(self):
@@ -70,6 +69,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date7(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~id:validity_date7~
             ${DATES}[1][
@@ -81,6 +81,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date8(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~id:validity_date7~
             ${DATES}[1][
@@ -92,6 +93,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_date9(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~
                     id:validity_date7
@@ -106,6 +108,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""~id:validity_now1~ ${PATH}[*][
                 now("%Y")
@@ -122,6 +125,7 @@ class TestValidBasicTypesDate(unittest.TestCase):
 
     def test_validity_now3(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"""~id:validity_now3~ ${PATH}[*][ now() ]""")
         lines = path.collect()
         assert len(lines) == 9

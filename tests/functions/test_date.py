@@ -19,7 +19,7 @@ class TestFunctionsDate(unittest.TestCase):
         with pytest.raises(MatchException):
             path.fast_forward()
 
-    def test_function_date10(self):
+    def test_function_date1(self):
         path = CsvPath().parse(
             f"""
             ${TEST}[4] [
@@ -28,7 +28,7 @@ class TestFunctionsDate(unittest.TestCase):
         )
         path.fast_forward()
 
-    def test_function_date1(self):
+    def test_function_date2(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -44,7 +44,7 @@ class TestFunctionsDate(unittest.TestCase):
         for i, _ in enumerate(path.variables["dates"]):
             assert isinstance(_, date)
 
-    def test_function_date2(self):
+    def test_function_date3(self):
         path = CsvPath()
         path.parse(
             f"""

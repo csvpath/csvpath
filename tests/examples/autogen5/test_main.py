@@ -5,6 +5,7 @@ from csvpath import CsvPaths
 class TestCache(unittest.TestCase):
     def test_autogen5_example_run(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_file(
             name="autogen5",
             file_path="tests/examples/autogen5/assets/accountants.csvpath",

@@ -1,11 +1,14 @@
 import unittest
+import pytest
 import os
 from csvpath import CsvPaths
+from csvpath.matching.util.exceptions import MatchException
 
 
 class TestTitleFix(unittest.TestCase):
     def test_title_fix_1(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="title_fix", path="tests/examples/title_fix/assets/checkouts.csv"
         )
@@ -25,7 +28,7 @@ class TestTitleFix(unittest.TestCase):
     def test_title_fix_2(self):
         print("")
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="title_fix", path="tests/examples/title_fix/assets/checkouts.csv"
         )
@@ -33,6 +36,8 @@ class TestTitleFix(unittest.TestCase):
             name="title_fix_schema",
             file_path="tests/examples/title_fix/assets/title_fix_schema.csvpaths",
         )
-        paths.collect_paths(filename="title_fix", pathsname="title_fix_schema")
-        results = paths.results_manager.get_named_results("title_fix_schema")
-        assert len(results) == 1
+        #
+        # blows up because [2019] is not an integer()
+        #
+        with pytest.raises(MatchException):
+            paths.collect_paths(filename="title_fix", pathsname="title_fix_schema")

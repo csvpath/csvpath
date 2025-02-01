@@ -12,9 +12,12 @@ class OpenTelemetryResultListener(OtlpListener):
         self.result = None
 
     def metadata_update(self, mdata: Metadata) -> None:
-        if self.csvpaths and self.csvpaths.metrics is None:
+        if not self.csvpaths:
+            raise RuntimeError(
+                "OTLP listener cannot continue without a CsvPaths instance"
+            )
+        if self.csvpaths.metrics is None:
             self.csvpaths.metrics = Metrics(self)
-        self.csvpaths.metrics.errors.add(mdata.error_count, self.core_meta(mdata))
         if mdata.error_count:
             self.csvpaths.metrics.errors.add(mdata.error_count, self.core_meta(mdata))
         if mdata.valid:
@@ -24,10 +27,9 @@ class OpenTelemetryResultListener(OtlpListener):
             self.csvpaths.metrics.valid.add(v, self.core_meta(mdata))
         if mdata.file_count:
             self.csvpaths.metrics.files.add(mdata.file_count, self.core_meta(mdata))
-
         yn = mdata.files_expected
         if yn and not isinstance(yn, bool):
-            raise ValueError("you must convert")
+            raise ValueError("Files expected must convert to bool")
         if yn is True:
             yn = 1
         else:

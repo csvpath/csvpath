@@ -10,6 +10,7 @@ PATH = "tests/test_resources/test.csv"
 class TestCsvPath(unittest.TestCase):
     def test_matcher_get_header(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse("$tests/test_resources/test.csv[3][ yes() ]")
         path.fast_forward()
         v1 = path.matcher.get_header_value(None, 2)
@@ -19,6 +20,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_matcher_get_header2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             """
                     ~ this test checks that a quoted field behaves correctly.
@@ -45,6 +47,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_stop_when_last(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             """$tests/test_resources/test.csv[0-5][
                 push.onmatch("line", line_number())
@@ -55,12 +58,14 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_total_lines_check(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[*][yes()]")
         path.fast_forward()
         assert path.line_monitor.data_line_count == 9
 
     def test_csvpath_has_errors(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.config.csvpath_errors_policy = [OnError.COLLECT.value]
         path.parse(
             """$tests/test_resources/test.csv[1][
@@ -72,6 +77,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_vars_frozen(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             """$tests/test_resources/empty2.csv[*][
                             @c = count()
@@ -132,6 +138,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_collect_when_not_matched1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f"""${PATH}[1*][
             #lastname == "Bat"
@@ -141,6 +148,7 @@ class TestCsvPath(unittest.TestCase):
         assert len(lines) == 7
 
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.collect_when_not_matched = True
         path.parse(
             f"""${PATH}[1*][
@@ -152,17 +160,20 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_variables(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[2-4][@me = count()]")
         for i, ln in enumerate(path.next()):
             assert path.get_variable("me") == i + 1
 
     def test_csvpath_header_counting(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[2-4][@me = count()]")
         assert path.header_index("lastname") == 1
 
     def test_csvpath_header_index1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[1][yes()]")
         path.fast_forward()
         assert path.matcher.header_index("lastname") == 1
@@ -172,6 +183,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_collect_line_numbers(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[2-4][@me = count()]")
         lns = path.collect_line_numbers()
         assert lns == [2, 3, 4]
@@ -193,6 +205,7 @@ class TestCsvPath(unittest.TestCase):
 
     def test_csvpath_ff(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[*][@me = count()]")
 
         assert path.advance_count == 0
@@ -219,6 +232,7 @@ class TestCsvPath(unittest.TestCase):
             assert path.advance_count == 8
 
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[*][@me = count()]")
         i = 0
         for _ in path.next():

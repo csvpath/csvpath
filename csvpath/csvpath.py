@@ -109,6 +109,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         error_manager=None,
     ):
         # re: R0913: all reasonable pass-ins with sensible defaults
+        #
+        # the config.ini file loaded as a ConfigParser instance
+        #
+        # definitely do not want this coming from CsvPaths because
+        # we want to be able to override config.ini specifically for
+        # this instance, if needed; however, we do want to be able
+        # to pass in a config object that has been configured in some
+        # way.
+        self._config = config
         self.scanner = None
         self.matcher = None
         #
@@ -120,6 +129,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         #
         self.csvpaths = csvpaths
         #
+        # there are two logger components one for CsvPath and one for CsvPaths.
+        # the default levels are set in config.ini. to change the levels pass LogUtility
+        # your component instance and the logging level. e.g.:
+        # LogUtility.logger(csvpath, "debug")
+        #
+        self.logger = LogUtility.logger(self)
+        self.logger.info("initialized CsvPath")
+        #
         # if we don't have a csvpaths these will both be None
         #
         self.named_paths_name = None
@@ -129,11 +146,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # the CsvPaths manager if possible. Otherwise, we just make our own that
         # only knows how to collect errors, not distribute them.
         #
+        self.ecoms = ErrorCommunications(csvpath=self)
         self.error_manager = ErrorManager(csvpath=self)
         if csvpaths is not None:
-            self.error_manager.add_listener(csvpaths.error_manager)
-        elif error_manager is None:
-            ...
+            self.error_manager.add_internal_listener(csvpaths.error_manager)
         #
         # modes are set in external comments
         #
@@ -264,24 +280,6 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         if print_default:
             self.printers.append(StdOutPrinter())
         #
-        # the config.ini file loaded as a ConfigParser instance
-        #
-        # definitely do not want this coming from CsvPaths because
-        # we want to be able to override config.ini specifically for
-        # this instance, if needed; however, we do want to be able
-        # to pass in a config object that has been configured in some
-        # way.
-        self._config = config
-        #
-        # there are two logger components one for CsvPath and one for CsvPaths.
-        # the default levels are set in config.ini. to change the levels pass LogUtility
-        # your component instance and the logging level. e.g.:
-        # LogUtility.logger(csvpath, "debug")
-        #
-        self.logger = LogUtility.logger(self)
-        self.logger.info("initialized CsvPath")
-        self.ecoms = ErrorCommunications(csvpath=self)
-        #
         # _function_times_match collects the time a function spends doing its matches()
         #
         self._function_times_match = {}
@@ -298,6 +296,15 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # by collect(), but is the lines not returned by collect().
         #
         self._unmatched = None
+
+    #
+    # this method saves and reloads the config. if you don't want that use
+    # CsvPath.config.save_to_config().
+    #
+    def add_to_config(self, section, key, value) -> None:
+        self.config.add_to_config(section=section, key=key, value=value)
+        self.config.save_config()
+        self.config.reload()
 
     @property
     def data_from_preceding(self) -> bool:
@@ -512,6 +519,10 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     @property
     def match_validation_errors(self) -> bool:
         return self.modes.validation_mode.match_validation_errors
+
+    @property
+    def collect_validation_errors(self) -> bool:
+        return self.modes.validation_mode.collect_validation_errors
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         if printer not in self.printers:

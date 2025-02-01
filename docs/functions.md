@@ -178,6 +178,7 @@ There are lots more simple examples on the individual function pages.
 ## Misc
 <table>
 <tr><th>Function   <a name="misc">  </th><th> What it does                                              </th></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/print.md'>error()</a> </td><td> Sends error messages to the error manager </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/fingerprint.md'>line_fingerprint()</a>, store_fingerprint(), file_fingerprint()</td><td> Functions for creating digests. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/import.md'>import()</a></td><td> Injects another csvpath into the current csvpath. </td></tr>
 <tr><td><a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/random.md'>random(starting, ending)</a></td><td> Generates a random int from starting to ending.</td>

@@ -40,6 +40,8 @@ class ErrorCollector(ABC):
 
 class Collector(ErrorCollector, Listener):
     def __init__(self) -> None:
+        ErrorCollector.__init__(self)
+        Listener.__init__(self)
         self.errors = []
 
     def metadata_update(self, mdata: Metadata) -> None:

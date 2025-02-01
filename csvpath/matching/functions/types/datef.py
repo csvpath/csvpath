@@ -28,7 +28,7 @@ class Date(ValueProducer, Type):
         )
         a.arg(
             name="format",
-            types=[None, Term],
+            types=[None, Term, Header, Function, Reference],
             actuals=[str],
         )
         self.args.explain = "It must be a date object or a date string with a format."

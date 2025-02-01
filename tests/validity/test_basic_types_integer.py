@@ -13,6 +13,7 @@ NUMBERS = "tests/test_resources/numbers3.csv"
 class TestValidBasicTypesInteger(unittest.TestCase):
     def test_function_integer4(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
                 ~ return-mode: matches
@@ -28,6 +29,7 @@ class TestValidBasicTypesInteger(unittest.TestCase):
 
     def test_function_integer5(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
                 ~ return-mode: matches

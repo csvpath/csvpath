@@ -12,6 +12,7 @@ PEOPLE3 = "tests/test_resources/people3.csv"
 class TestValidLine(unittest.TestCase):
     def test_valid_line1(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                 line(
@@ -33,6 +34,7 @@ class TestValidLine(unittest.TestCase):
 
     def test_valid_line3(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                 line(
@@ -47,7 +49,9 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 9
 
     def test_valid_line4(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
             f"""${PATH}[*][
                 line(
                     string(#firstname),
@@ -56,7 +60,6 @@ class TestValidLine(unittest.TestCase):
                 )
             ]"""
         )
-        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
@@ -310,6 +313,7 @@ class TestValidLine(unittest.TestCase):
         # or think of it as saying: wildcard takes 4 places,
         # including the one where it is declared.
         #
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""
             ${PEOPLE}[*][
@@ -332,7 +336,9 @@ class TestValidLine(unittest.TestCase):
         assert len(lines) == 3
 
     def test_valid_line_wildcard6(self):
-        path = CsvPath().parse(
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
             f"""
             ~ id:fails distinct ~
             ${PEOPLE3}[*][
@@ -352,6 +358,5 @@ class TestValidLine(unittest.TestCase):
             ]
             """
         )
-        path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()

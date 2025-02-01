@@ -5,6 +5,7 @@ from csvpath import CsvPaths
 class TestSingleFromGroup(unittest.TestCase):
     def test_single_from_group(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="food", path="tests/test_resources/named_files/food.csv"
         )

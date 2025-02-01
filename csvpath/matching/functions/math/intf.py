@@ -49,7 +49,7 @@ class Float(ValueProducer):
             self.value = None
         else:
             self.value = ExpressionUtility.to_float(i)
-            if not isinstance(i, int):
+            if not isinstance(self.value, float):
                 msg = f"Cannot convert {i} to float"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():

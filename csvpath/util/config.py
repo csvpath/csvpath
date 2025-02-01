@@ -193,6 +193,7 @@ groups =
 # add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint
 otlp.result = from csvpath.managers.integrations.otlp.otlp_result_listener import OpenTelemetryResultListener
 otlp.results = from csvpath.managers.integrations.otlp.otlp_results_listener import OpenTelemetryResultsListener
+otlp.errors = from csvpath.managers.integrations.otlp.otlp_error_listener import OpenTelemetryErrorListener
 
 # add sftp to the list of groups above to push content and metadata to an SFTP account
 sftp.results = from csvpath.managers.integrations.sftp.sftp_listener import SftpListener

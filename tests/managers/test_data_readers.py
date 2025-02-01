@@ -23,6 +23,7 @@ class TestDataReaders(unittest.TestCase):
 
     def test_data_readers_1(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
@@ -36,6 +37,7 @@ class TestDataReaders(unittest.TestCase):
     def test_data_readers_2(self):
         self._clean()
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
@@ -56,6 +58,7 @@ class TestDataReaders(unittest.TestCase):
     def test_data_readers_3(self):
         self._clean()
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         mgr = paths.file_manager
         if mgr.name_exists("xlsx"):
             mgr.remove_named_file("xlsx")

@@ -13,7 +13,6 @@ $[1*][
         string(#Publisher),
         integer.year_published(#PublicationYear)
     )
-
     in(#UsageClass, "Digital|Physical")
     in(#CheckoutType, "Horizon|OverDrive")
     in(#MaterialType, "BOOK|EBOOK|AUDIOBOOK")

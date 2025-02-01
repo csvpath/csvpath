@@ -11,6 +11,7 @@ PATH = "tests/test_resources/test.csv"
 class TestHeaders(unittest.TestCase):
     def test_header_names0(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.OR = True
         path.parse(
             """$tests/test_resources/March-2024.csv[*][
@@ -44,6 +45,7 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names11(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(f"""${PATH}[*][ #"a.b" ]""")
         # the parser removes the '#' before instantiating the header
         h = Header(None, value="fruitbat", name='"a.b"')
@@ -54,6 +56,7 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names1(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                 #a
@@ -66,6 +69,7 @@ class TestHeaders(unittest.TestCase):
 
     def test_header_names2(self):
         path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
             f"""${PATH}[*][
                 #_hmm
@@ -80,35 +84,45 @@ class TestHeaders(unittest.TestCase):
         path.fast_forward()
 
     def test_header_names3(self):
-        path = CsvPath().parse(f"""${PATH}[*][#no-spaces #"I have spaces" #nothing ]""")
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(f"""${PATH}[*][#no-spaces #"I have spaces" #nothing ]""")
         path.fast_forward()
 
     def test_header_bad_names1(self):
-        path = CsvPath().parse(f"""${PATH}[*][ #.hidden ]""")
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(f"""${PATH}[*][ #.hidden ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(VisitError):
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names2(self):
-        path = CsvPath().parse(f"""${PATH}[*][#!not allowed]""")
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(f"""${PATH}[*][#!not allowed]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names3(self):
-        path = CsvPath().parse(f"""${PATH}[*][#'not allowed']""")
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(f"""${PATH}[*][#'not allowed']""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names4(self):
-        path = CsvPath().parse(f"""${PATH}[*][ #$$ ]""")
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(f"""${PATH}[*][ #$$ ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names5(self):
         path = CsvPath().parse(f"""${PATH}[*][ #`no good` ]""")
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover

@@ -6,6 +6,7 @@ from csvpath.util.metadata_parser import MetadataParser
 class TestMetadataParser(unittest.TestCase):
     def test_metadata_parser1(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         csvpath = """
                 ~ Check the file length ~
 
@@ -25,6 +26,7 @@ class TestMetadataParser(unittest.TestCase):
 
     def test_metadata_parser2(self):
         path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
         csvpath = """
                 ~ Check the file length
                     name: hey

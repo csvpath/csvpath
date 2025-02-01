@@ -28,6 +28,7 @@ class TestFunctionsMetaphone(unittest.TestCase):
     def test_function_metaphone2(self):
         # load the lookup table
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="lookups", path="tests/test_resources/named_files/lookup_names.csv"
         )
