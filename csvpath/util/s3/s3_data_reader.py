@@ -8,11 +8,13 @@ from ..file_readers import CsvDataReader
 from .s3_utils import S3Utils
 from .s3_fingerprinter import S3Fingerprinter
 from csvpath.util.box import Box
-
+from csvpath.util.hasher import Hasher
 
 #
 # TODO: next only works with CSV atm. need Excel.
 #
+
+
 class S3DataReader(CsvDataReader):
     def load_if(self) -> None:
         if self.source is None:
@@ -45,7 +47,7 @@ class S3DataReader(CsvDataReader):
     def fingerprint(self) -> str:
         self.load_if()
         h = S3Fingerprinter().fingerprint(self._path)
-        h = self.percent_encode(h)
+        h = Hasher.percent_encode(h)
         self.close()
         return h
 

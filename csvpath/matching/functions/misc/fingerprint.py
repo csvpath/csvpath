@@ -1,8 +1,9 @@
 # pylint: disable=C0114
 import hashlib
+from csvpath.util.hasher import Hasher
 from csvpath.matching.util.exceptions import DataException
-from ..function_focus import SideEffect
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from ..function_focus import SideEffect
 from ..function import Function
 from ..args import Args
 
@@ -42,10 +43,9 @@ class FileFingerprint(SideEffect):
 
     def _decide_match(self, skip=None) -> None:
         n = self.first_non_term_qualifier("file_fingerprint")
-        with open(self.matcher.csvpath.scanner.filename, "rb") as f:
-            h = hashlib.file_digest(f, hashlib.sha256)
-            self.matcher.csvpath.metadata[n] = h.hexdigest()
-            self.matcher.csvpath.metadata["hash_algorithm"] = "sha256"
+        h = Hasher().hash(self.matcher.csvpath.scanner.filename, encode=False)
+        self.matcher.csvpath.metadata[n] = h
+        self.matcher.csvpath.metadata["hash_algorithm"] = "sha256"
         self.match = self.default_match()
 
 

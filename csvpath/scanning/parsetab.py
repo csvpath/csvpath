@@ -176,7 +176,7 @@ _lr_productions = [
         4,
         "p_path",
         "scanner.py",
-        163,
+        157,
     ),
     (
         "expression -> expression PLUS term",
@@ -184,7 +184,7 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        173,
+        167,
     ),
     (
         "expression -> expression MINUS term",
@@ -192,10 +192,10 @@ _lr_productions = [
         3,
         "p_expression",
         "scanner.py",
-        174,
+        168,
     ),
-    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 175),
-    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 186),
-    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 187),
-    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 188),
+    ("expression -> term", "expression", 1, "p_expression", "scanner.py", 169),
+    ("term -> NUMBER", "term", 1, "p_term", "scanner.py", 180),
+    ("term -> NUMBER ALL_LINES", "term", 2, "p_term", "scanner.py", 181),
+    ("term -> ALL_LINES", "term", 1, "p_term", "scanner.py", 182),
 ]
