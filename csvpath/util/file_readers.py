@@ -8,6 +8,7 @@ import pylightxl as xl
 from .exceptions import InputException
 from .file_info import FileInfo
 from .class_loader import ClassLoader
+from .hasher import Hasher
 
 
 class DataFileReader(ABC):
@@ -41,25 +42,8 @@ class DataFileReader(ABC):
         """non-local file-like situations -- e.g. smart-open -- must
         implement their own fingerprint method
         """
-        with open(self._path, "rb") as source:
-            h = hashlib.file_digest(source, hashlib.sha256)
-            h = h.hexdigest()
-            #
-            # we use fingerprints as names in some cases. that means that ':' and
-            # '/' and '\' are problemmatic. all fingerprints come from this or any
-            # subclasses' override, so if we hack on the fingerprint here it should
-            # be fine. the exception would be that a forensic view would also
-            # require the same escape, if checking for file mods. for matching not
-            # a problem.
-            #
-            h = self.percent_encode(h)
+        h = Hasher().hash(self._path)
         return h
-
-    def percent_encode(self, fingerprint: str) -> str:
-        fingerprint = fingerprint.replace(":", "%3A")
-        fingerprint = fingerprint.replace("/", "%2F")
-        fingerprint = fingerprint.replace("\\", "%5C")
-        return fingerprint
 
     def load_if(self) -> None:
         if self.source is None:

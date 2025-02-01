@@ -5,7 +5,7 @@ import time
 import os
 import hashlib
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Self
+from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from .util.config import Config
@@ -76,7 +76,7 @@ class CsvPathPublic(ABC):
         """Advances the iteration by ff rows. -1 means to the end of the file."""
 
     @abstractmethod
-    def fast_forward(self, csvpath: str = None) -> Self:  # pragma: no cover
+    def fast_forward(self, csvpath: str = None):  # pragma: no cover
         """Scans to the end of the CSV file. All scanned rows will be
         considered for match and variables and side effects will happen,
         but no rows will be returned or stored. -1 means to the end of
@@ -992,7 +992,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self.lines = None
         return lines
 
-    def fast_forward(self, csvpath=None) -> Self:
+    def fast_forward(self, csvpath=None):
         """Runs the path for all rows of the file. Variables are collected
         and side effects like print happen. No lines are collected.
         """

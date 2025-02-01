@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from typing import Type, List, Any, Self
+from typing import Type, List, Any
 from csvpath.matching.productions.matchable import Matchable
 from csvpath.matching.productions.term import Term
 from csvpath.matching.productions.variable import Variable
@@ -138,7 +138,7 @@ class ArgSet:
         self._min_length = ml
 
     # just for fluency
-    def length(self, maxlength=-1) -> Self:
+    def length(self, maxlength=-1):
         self.max_length = maxlength
         return self
 

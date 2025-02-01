@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 import traceback
-from typing import Any, Self
+from typing import Any
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
 from ..util.exceptions import ChildrenException, MatchException
@@ -112,16 +112,16 @@ class Matchable(Qualified):  # pylint: disable=R0904
     def index_of_child(self, o) -> int:  # pylint: disable=C0116
         return self.children.index(o)
 
-    def set_parent(self, parent: Self) -> None:  # pylint: disable=C0116
+    def set_parent(self, parent) -> None:  # pylint: disable=C0116
         self.parent = parent
 
-    def add_child(self, child: Self) -> None:  # pylint: disable=C0116
+    def add_child(self, child) -> None:  # pylint: disable=C0116
         if child:
             child.set_parent(self)
             if child not in self.children:
                 self.children.append(child)
 
-    def get_id(self, child: Self = None) -> str:  # pylint: disable=C0116
+    def get_id(self, child=None) -> str:  # pylint: disable=C0116
         self.matcher.csvpath.logger.debug(
             f"Matchable.get_id: for child: {child} or self: {self}"
         )

@@ -55,7 +55,6 @@ validators = "^0.34.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
-#smartopen = ["smart-open"]
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.0"

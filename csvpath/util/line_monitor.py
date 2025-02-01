@@ -1,4 +1,4 @@
-from typing import List, Any, Self
+from typing import List, Any
 import json
 from .last_line_stats import LastLineStats
 
@@ -36,7 +36,7 @@ class LineMonitor:
         self._data_line_number: int = None
         self._last_line_stats = None
 
-    def copy(self) -> Self:
+    def copy(self):
         lm = LineMonitor()
         lm._physical_end_line_count = self.physical_end_line_count
         lm._physical_end_line_number = self.physical_end_line_number
