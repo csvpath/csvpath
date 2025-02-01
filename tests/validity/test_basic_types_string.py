@@ -71,7 +71,7 @@ class TestValidBasicTypesString(unittest.TestCase):
 
     def test_validity_string8(self):
         path = CsvPath()
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
             f"""
             ~ explain-mode:explain~
@@ -81,8 +81,10 @@ class TestValidBasicTypesString(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 0
+
+    def test_validity_string9(self):
         path = CsvPath()
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
             f"""
             ~ explain-mode:explain~

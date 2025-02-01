@@ -437,10 +437,10 @@ class Args:
             if (
                 hasattr(self.matchable, "my_type")
                 and len(actuals) >= 1
-                and actuals[0] is not None
+                and not ExpressionUtility.is_none(actuals[0])
             ):
                 self.matchable.matcher.csvpath.logger.debug(
-                    "{self.matchable.my_type} at {self.matchable.my_chain} is notnone but has a non-0-index None. Allowing it since it is a type."
+                    f"{self.matchable.my_type} at {self.matchable.my_chain} is notnone but has a non-0-index None. Allowing it since it is a type."
                 )
             else:
                 msg = f"Cannot have None in {self.matchable.my_chain} because it has the notnone qualifier"

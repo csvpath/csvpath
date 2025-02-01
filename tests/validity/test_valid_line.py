@@ -313,7 +313,7 @@ class TestValidLine(unittest.TestCase):
         # or think of it as saying: wildcard takes 4 places,
         # including the one where it is declared.
         #
-        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.add_to_config("errors", "csvpath", "collect, print")
         path.parse(
             f"""
             ${PEOPLE}[*][
@@ -326,8 +326,8 @@ class TestValidLine(unittest.TestCase):
                )
                line.distinct.address(
                    wildcard(6),
-                   string.notnone(#country),
-                   string.notnone(#email)
+                   string.notnone.country(#country),
+                   string.notnone.email(#email)
                )
             ]
             """
