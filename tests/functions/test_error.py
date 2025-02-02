@@ -5,7 +5,7 @@ from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsError(unittest.TestCase):

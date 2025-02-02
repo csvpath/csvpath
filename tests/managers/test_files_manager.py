@@ -55,36 +55,6 @@ class TestFilesManager(unittest.TestCase):
         p = f"{paths.config.inputs_files_path}{os.sep}mytest"
         Nos(p).remove()
 
-    """
-    # this test would need to be converted to use FileMetadata. not
-    # sure if it adds enough value or not.
-    def test_manifest_path(self):
-        paths = CsvPaths()
-        m = paths.file_manager
-        m.add_named_file(name="aname", path="tests/test_resources/test.csv")
-        reg = m.registrar
-        d = m.named_file_home("aname")
-        assert d is not None
-        assert d == "inputs/named_files/aname"
-        mpath = reg.manifest_path(d)
-        assert mpath == os.path.join(d, "manifest.json")
-        reg.update_manifest(
-            manifestpath=mpath,
-            regpath="regpath",
-            sourcepath="origpath",
-            fingerprint="fingerprint",
-        )
-        m = reg.get_manifest(mpath)
-        assert "file" in m[len(m) - 1]
-        assert m[len(m) - 1]["file"] == "regpath"
-        assert "from" in m[len(m) - 1]
-        assert m[len(m) - 1]["from"] == "origpath"
-        assert "time" in m[len(m) - 1]
-        r = reg.registered_file(d)
-        assert r == "regpath"
-        shutil.rmtree("inputs/named_files/aname")
-    """
-
     def test_rereg(self):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise")

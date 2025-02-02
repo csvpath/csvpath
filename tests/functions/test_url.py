@@ -1,9 +1,10 @@
+import os
 import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/urls.csv"
+URLS = f"tests{os.sep}test_resources{os.sep}urls.csv"
 
 
 class TestFunctionsUrl(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestFunctionsUrl(unittest.TestCase):
         path = (
             CsvPath()
             .parse(
-                f"""${PATH}[1*][
+                f"""${URLS}[1*][
                 @v = url( #url )
                 push( "u", @v )
             ]"""
@@ -28,7 +29,7 @@ class TestFunctionsUrl(unittest.TestCase):
     def test_function_url_2(self):
         path = (
             CsvPath()
-            .parse(f"""${PATH}[13*][ @v = url( #url ) push( "u", @v ) ]""")
+            .parse(f"""${URLS}[13*][ @v = url( #url ) push( "u", @v ) ]""")
             .fast_forward()
         )
         u = path.variables["u"]
@@ -36,7 +37,7 @@ class TestFunctionsUrl(unittest.TestCase):
 
     def test_function_url_3(self):
         path = CsvPath().parse(
-            f"""${PATH}[1*][
+            f"""${URLS}[1*][
                 @v2 = url.notnone( none() )
             ]"""
         )
@@ -45,5 +46,5 @@ class TestFunctionsUrl(unittest.TestCase):
             path.fast_forward()
 
     def test_function_url_4(self):
-        path = CsvPath().parse(f"""${PATH}[1*][ @v = url( none() ) ]""").fast_forward()
+        path = CsvPath().parse(f"""${URLS}[1*][ @v = url( none() ) ]""").fast_forward()
         assert path.variables["v"] is False

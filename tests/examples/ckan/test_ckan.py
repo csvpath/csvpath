@@ -10,9 +10,12 @@ class TestCkan(unittest.TestCase):
     def test_ckan_visibility(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")
@@ -27,13 +30,15 @@ class TestCkan(unittest.TestCase):
     def test_ckan_group(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")
-        # Dataset(listener=None, manifest=None, metadata=None)
         lst = CkanListener()
         #
         # group name
@@ -61,13 +66,15 @@ class TestCkan(unittest.TestCase):
     def test_ckan_publish(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")
-        # Dataset(listener=None, manifest=None, metadata=None)
         lst = CkanListener()
         #
         # publish
@@ -109,16 +116,19 @@ class TestCkan(unittest.TestCase):
     def test_ckan_dataset_name(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")
         dataset = Dataset(listener=None, manifest=None, metadata=None)
         lst = CkanListener()
         #
-        # dataset name/title
+        # dataset name and title
         #
         mdata = ResultsMetadata(r.csvpath.csvpaths.config)
         mdata.named_results_name = "is-nr-name"
@@ -139,9 +149,12 @@ class TestCkan(unittest.TestCase):
     def test_ckan_tags(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")
@@ -168,9 +181,12 @@ class TestCkan(unittest.TestCase):
     def test_ckan_fields(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/ckan/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            name="ckantest", directory="tests/examples/ckan/csvpaths"
+            name="ckantest",
+            directory=f"tests{os.sep}examples{os.sep}ckan{os.sep}csvpaths",
         )
         paths.collect_paths(filename="March-2024", pathsname="ckantest")
         r = paths.results_manager.get_specific_named_result("ckantest", "upc-sku")

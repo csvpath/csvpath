@@ -1,9 +1,10 @@
 import unittest
+import os
 from csvpath.matching.functions.function_factory import FunctionFactory
 from csvpath.csvpath import CsvPath
 
-PATH = "tests/test_resources/test.csv"
-EMPTY = "tests/test_resources/count_physical_lines.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+PHYSICAL = f"tests{os.sep}test_resources{os.sep}count_physical_lines.csv"
 
 
 class TestFunctionsCount(unittest.TestCase):
@@ -127,7 +128,7 @@ class TestFunctionsCount(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${EMPTY}[*][
+            ${PHYSICAL}[*][
                 push( "physical", line_number() )
                 push( "data", count_lines())
             ]

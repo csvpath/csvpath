@@ -16,14 +16,14 @@ class TestListeners(unittest.TestCase):
         assert len(listeners) == 2
 
     def test_additional_listeners3(self):
-        testini = "tests/test_resources/deleteme/config.ini"
+        testini = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
         if os.path.exists(testini):
             os.remove(testini)
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
         paths = CsvPaths()
         config = paths.config
         assert os.path.exists(testini)
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"
         config.add_to_config("listeners", "groups", "foo, bar, baz")
         config.add_to_config(
             "listeners",

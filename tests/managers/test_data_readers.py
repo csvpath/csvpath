@@ -9,14 +9,14 @@ from csvpath.util.file_readers import (
 )
 from csvpath import CsvPaths
 
-PATH_CSV = "tests/test_resources/test.csv"
-PATH_XLSX = "tests/test_resources/test.xlsx"
-PATH_XLSX2 = "tests/test_resources/test.xlsx#again"
+PATH_CSV = f"tests{os.sep}test_resources{os.sep}test.csv"
+PATH_XLSX = f"tests{os.sep}test_resources{os.sep}test.xlsx"
+PATH_XLSX2 = f"tests{os.sep}test_resources{os.sep}test.xlsx#again"
 
 
 class TestDataReaders(unittest.TestCase):
     def _clean(self) -> None:
-        path = "inputs/named_files/xlsx"
+        path = f"inputs{os.sep}named_files{os.sep}xlsx"
         b = os.path.exists(path)
         if b:
             shutil.rmtree(path)

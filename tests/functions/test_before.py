@@ -1,8 +1,9 @@
 import unittest
+import os
 from csvpath.csvpath import CsvPath
 from datetime import date, datetime
 
-DATES = "tests/test_resources/dates.csv"
+DATES = f"tests{os.sep}test_resources{os.sep}dates.csv"
 
 
 class TestFunctionsBefore(unittest.TestCase):

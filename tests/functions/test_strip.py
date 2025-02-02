@@ -1,8 +1,9 @@
 import unittest
+import os
 from csvpath.csvpath import CsvPath
 
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsStrip(unittest.TestCase):

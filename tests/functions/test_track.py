@@ -1,7 +1,8 @@
+import os
 import unittest
 from csvpath import CsvPath
 
-PATH = "tests/test_resources/food.csv"
+FOOD = f"tests{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestFunctionsTrack(unittest.TestCase):
@@ -9,7 +10,7 @@ class TestFunctionsTrack(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*][
+            ${FOOD}[1*][
                 track(#type, #food)
             ]"""
         )
@@ -22,7 +23,7 @@ class TestFunctionsTrack(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*][
+            ${FOOD}[1*][
                 track.food(#food, #type)
             ]"""
         )
@@ -35,7 +36,7 @@ class TestFunctionsTrack(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*][
+            ${FOOD}[1*][
                 #food == "Apple"
                 track.food.onmatch(#food, #type)
             ]"""

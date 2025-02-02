@@ -1,3 +1,4 @@
+import os
 import unittest
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.productions.expression import Expression
@@ -9,8 +10,8 @@ from csvpath import CsvPath
 
 HEADERS = ["abc", "aheader", "crows", "d"]
 LINE = ["fish", 10, "alert", "fum"]
-PATH = "tests/test_resources/test.csv"
-PATH3 = "tests/test_resources/test-3.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+PATH3 = f"tests{os.sep}test_resources{os.sep}test-3.csv"
 
 
 class TestMatcher(unittest.TestCase):

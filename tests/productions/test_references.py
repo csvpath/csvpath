@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from lark.exceptions import VisitError
@@ -5,9 +6,9 @@ from csvpath import CsvPaths, CsvPath
 from csvpath.matching.productions import Reference
 from csvpath.matching.util.exceptions import MatchException
 
-NAMED_FILES_DIR = "tests/test_resources/named_files"
-NAMED_PATHS_DIR = "tests/test_resources/named_paths"
-PATH = "tests/test_resources/food.csv"
+NAMED_FILES_DIR = f"tests{os.sep}test_resources{os.sep}named_files"
+NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
+PATH = f"tests{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestReferences(unittest.TestCase):
@@ -41,7 +42,7 @@ class TestReferences(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(
-            dirname="tests/test_resources/named_files"
+            dirname=f"tests{os.sep}test_resources{os.sep}named_files"
         )
         paths.paths_manager.add_named_paths(
             name="t",
@@ -246,7 +247,7 @@ class TestReferences(unittest.TestCase):
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="select")
         #
-        # now test if we can see both paths by their name/id
+        # now test if we can see both paths by their name & id
         #
         path = cs.csvpath()
         path.parse(

@@ -1,10 +1,11 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
-FOOD = "tests/test_resources/food.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+FOOD = f"tests{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestFunctionsIn(unittest.TestCase):
@@ -161,11 +162,9 @@ class TestFunctionsIn(unittest.TestCase):
     def test_function_new_in5(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
-        )
+        paths.file_manager.add_named_file(name="food", path=FOOD)
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
 
         paths.fast_forward_paths(pathsname="food_lookup", filename="food")
@@ -198,11 +197,9 @@ class TestFunctionsIn(unittest.TestCase):
     def test_function_new_in7(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
-        )
+        paths.file_manager.add_named_file(name="food", path=FOOD)
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         paths.collect_paths(pathsname="food_lookup", filename="food")
 

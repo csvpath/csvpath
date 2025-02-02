@@ -1,10 +1,11 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
-EMPTY = "tests/test_resources/empty.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+EMPTY = f"tests{os.sep}test_resources{os.sep}empty.csv"
 
 
 class TestFunctionsFirstLine(unittest.TestCase):

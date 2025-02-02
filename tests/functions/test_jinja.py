@@ -1,10 +1,12 @@
 import unittest
+import os
 from csvpath import CsvPath, CsvPaths
 from csvpath.matching.functions.print.jinjaf import Jinjaf
 
-PATH = "tests/test_resources/test.csv"
-NAMED_FILES_DIR = "tests/test_resources/named_files"
-NAMED_PATHS_DIR = "tests/test_resources/named_paths"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+
+NAMED_FILES_DIR = f"tests{os.sep}test_resources{os.sep}named_files"
+NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
 
 
 class TestJinja(unittest.TestCase):
@@ -57,8 +59,8 @@ class TestJinja(unittest.TestCase):
     def test_function_jinja1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        out = "tests/test_resources/out.txt"
-        inf = "tests/test_resources/in.txt"
+        out = f"tests{os.sep}test_resources{os.sep}out.txt"
+        inf = f"tests{os.sep}test_resources{os.sep}in.txt"
         path = paths.csvpath()
         path.parse(
             f""" ~name:jinja~ ${PATH}[*][ yes()

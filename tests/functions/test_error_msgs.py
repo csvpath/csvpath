@@ -1,10 +1,11 @@
 import unittest
+import os
 from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.functions.boolean.any import Any
 from csvpath.matching.productions import Expression
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsErrorMsgs(unittest.TestCase):

@@ -12,21 +12,23 @@ def setup_module(module):
     print("\n **** setting up module ****")
     paths = CsvPaths()
     paths.paths_manager.add_named_paths(
-        name="food", from_file="tests/test_resources/named_paths/food.csvpaths"
+        name="food",
+        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
     )
     paths.paths_manager.add_named_paths(
         name="arrivals",
-        from_file="tests/test_resources/named_paths/people.csvpaths",
+        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
     )
     paths.file_manager.add_named_file(
-        name="food", path="tests/test_resources/named_files/food.csv"
+        name="food",
+        path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
     )
     paths.file_manager.add_named_file(
-        name="people", path="tests/test_resources/test.csv"
+        name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
     )
     paths.paths_manager.add_named_paths(
         name="error_reload",
-        from_file="tests/test_resources/named_paths/error_reload.csvpath",
+        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
     )
 
 
@@ -96,7 +98,7 @@ class TestResultReaders(unittest.TestCase):
             assert info["created"] is not None
 
     def test_reload_result_reader_helpers_2(self):
-        p = "tests/test_resources/deleteme"
+        p = f"tests{os.sep}test_resources{os.sep}deleteme"
         if not os.path.exists(p):
             os.makedirs(p)
         f = os.path.join(p, "meta.json")

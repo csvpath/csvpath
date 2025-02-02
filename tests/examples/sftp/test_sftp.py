@@ -21,14 +21,18 @@ class TestSftp(unittest.TestCase):
             "from csvpath.managers.integrations.sftp.sftp_sender import SftpSender",
             save_load=False,
         )
-        paths.file_manager.add_named_files_from_dir("tests/examples/sftp/csvs")
-        paths.paths_manager.add_named_paths_from_json("tests/examples/sftp/group.json")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
+        )
+        paths.paths_manager.add_named_paths_from_json(
+            f"tests{os.sep}examples{os.sep}sftp{os.sep}group.json"
+        )
         paths.collect_paths(filename="March-2024", pathsname="sftptest")
         #
         # how to check arrival?
         #
         time.sleep(1)
-        self._check_arrival(["dirname/data.csv", "dirname/foo.json"])
+        self._check_arrival([f"dirname{os.sep}data.csv", f"dirname{os.sep}foo.json"])
 
     def _clear(self):
         client = paramiko.SSHClient()
@@ -36,10 +40,10 @@ class TestSftp(unittest.TestCase):
         try:
             client.connect("localhost", 10022, "test_user", os.getenv("SFTP_PASSWORD"))
             sftp = client.open_sftp()
-            for entry in sftp.listdir_attr("./dirname"):
+            for entry in sftp.listdir_attr(f".{os.sep}dirname"):
                 print(f"\nfound a file or dir: {entry.filename}")
                 if not stat.S_ISDIR(entry.st_mode):  # Changed to use stat module
-                    sftp.remove(f"./dirname/{entry.filename}")
+                    sftp.remove(f".{os.sep}dirname{os.sep}{entry.filename}")
             sftp.close()
         except Exception:
             ...
@@ -80,8 +84,12 @@ class TestSftp(unittest.TestCase):
     def test_sftp_var_values(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/sftp/csvs")
-        paths.paths_manager.add_named_paths_from_json("tests/examples/sftp/group.json")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
+        )
+        paths.paths_manager.add_named_paths_from_json(
+            f"tests{os.sep}examples{os.sep}sftp{os.sep}group.json"
+        )
         paths.collect_paths(filename="March-2024", pathsname="sftptest")
         r = paths.results_manager.get_specific_named_result("sftptest", "upc-sku")
         assert r

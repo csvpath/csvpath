@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from lark.exceptions import UnexpectedCharacters
@@ -5,9 +6,9 @@ from csvpath.csvpath import CsvPath
 from csvpath.matching.productions.equality import Equality
 from csvpath.matching.matcher import Matcher
 
-PATH = "tests/test_resources/test.csv"
-BOOL = "tests/test_resources/bool.csv"
-NUMBERS = "tests/test_resources/numbers.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+BOOL = f"tests{os.sep}test_resources{os.sep}bool.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers.csv"
 
 
 class TestAssignment(unittest.TestCase):

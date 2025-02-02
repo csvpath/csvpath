@@ -1,17 +1,18 @@
 import unittest
+import os
 import pytest
 from csvpath import CsvPath
 from datetime import date, datetime
 from csvpath.matching.util.exceptions import MatchException, ChildrenValidationException
 
-DATES = "tests/test_resources/dates.csv"
-TEST = "tests/test_resources/test.csv"
+DATES = f"tests{os.sep}test_resources{os.sep}dates.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsDate(unittest.TestCase):
     def test_function_date0(self):
         path = CsvPath().parse(
-            f""" ~ validation-mode: raise ~ ${TEST}[4] [
+            f""" ~ validation-mode: raise ~ ${PATH}[4] [
                 push( "dates", date( #firstname ) )
             ]"""
         )
@@ -22,7 +23,7 @@ class TestFunctionsDate(unittest.TestCase):
     def test_function_date1(self):
         path = CsvPath().parse(
             f"""
-            ${TEST}[4] [
+            ${PATH}[4] [
                 push( "dates", date( "2024-01-01" ) )
             ]"""
         )

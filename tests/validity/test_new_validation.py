@@ -1,5 +1,6 @@
 import unittest
 import pytest
+import os
 from typing import Any
 import datetime
 from csvpath import CsvPath
@@ -223,7 +224,7 @@ class TestNewValidation(unittest.TestCase):
         assert v is None
 
     def test_new_args_argset_valid2(self):
-        # 2 args defined, w/2 max vis-a-vis 3 sibs == False
+        # 2 args defined, with 2 max vis-a-vis 3 sibs == False
         a = ArgSet(2)
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[None, Function, Term], actuals=[None, str, int])
@@ -232,7 +233,7 @@ class TestNewValidation(unittest.TestCase):
         assert msg is not None
 
     def test_new_args_argset_valid3(self):
-        # 2 args defined, w/o max vis-a-vis 3 sibs with 1 non-match == False
+        # 2 args defined, without max vis-a-vis 3 sibs with 1 non-match == False
         a = ArgSet()
         a.arg(types=[Function, Term], actuals=[None, str, int])
         a.arg(types=[Variable], actuals=[Variable])
@@ -285,7 +286,7 @@ class TestNewValidation(unittest.TestCase):
         # this should be fine as-is, no assert needed, if we fail we raise
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise, collect, print")
-        path.parse("$tests/test_resources/test.csv[*][yes()]")
+        path.parse(f"$tests{os.sep}test_resources{os.sep}test.csv[*][yes()]")
         path.fast_forward()
         no = All(path.matcher, name="no")
         no.args = Args(matchable=no)

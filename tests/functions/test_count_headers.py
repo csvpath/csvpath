@@ -1,7 +1,8 @@
 import unittest
+import os
 from csvpath import CsvPath
 
-PATH = "tests/test_resources/header_mismatch.csv"
+MISMATCH = f"tests{os.sep}test_resources{os.sep}header_mismatch.csv"
 
 
 class TestFunctionsCountHeaders(unittest.TestCase):
@@ -9,7 +10,7 @@ class TestFunctionsCountHeaders(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[*]
+            ${MISMATCH}[*]
             [
                 gt(count_headers_in_line(),  count_headers()) -> @toomany = yes()
                 lt(count_headers_in_line(),  count_headers()) -> @toofew = yes()
@@ -23,7 +24,7 @@ class TestFunctionsCountHeaders(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[*]
+            ${MISMATCH}[*]
             [
                 gt(count_headers_in_line(),  count_headers()) -> @toomany = count_lines()
                 lt(count_headers_in_line(),  count_headers()) -> @toofew = count_lines()

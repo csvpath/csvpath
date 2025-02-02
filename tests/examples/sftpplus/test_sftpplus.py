@@ -24,7 +24,8 @@ class TestSftpPlus(unittest.TestCase):
             save_load=False,
         )
         paths.paths_manager.add_named_paths_from_dir(
-            name="sftpplus", directory="tests/examples/sftpplus/csvpaths"
+            name="sftpplus",
+            directory=f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvpaths",
         )
         #
         # no way to determine automatically if this succeeds yet
@@ -37,7 +38,10 @@ class TestSftpPlus(unittest.TestCase):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect("localhost", 10022, "tinpenny", "tinpenny")
         sftp = client.open_sftp()
-        sftp.put("tests/examples/sftpplus/csvs/March-2024.csv", "orders/March-2024.csv")
+        sftp.put(
+            f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvs{os.sep}March-2024.csv",
+            "orders{os.sep}March-2024.csv",
+        )
         #
         # no way to determine automatically if this succeeds yet
         #
@@ -56,17 +60,19 @@ class TestSftpPlus(unittest.TestCase):
             save_load=False,
         )
         paths.file_manager.add_named_file(
-            name="sftpplus-orders", path="tests/examples/sftpplus/csvs/March-2024.csv"
+            name="sftpplus-orders",
+            path=f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvs{os.sep}March-2024.csv",
         )
         paths.paths_manager.add_named_paths_from_dir(
-            name="sftpplus", directory="tests/examples/sftpplus/csvpaths"
+            name="sftpplus",
+            directory=f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvpaths",
         )
         paths.collect_paths(filename="sftpplus-orders", pathsname="sftpplus")
         #
         # how to check arrival?
         #
         # time.sleep(3)
-        # self._check_arrival(["dirname/data.csv", "dirname/foo.json"])
+        # self._check_arrival(["dirname{os.sep}data.csv", "dirname{os.sep}foo.json"])
 
     def _clear(self):
         client = paramiko.SSHClient()
@@ -74,14 +80,14 @@ class TestSftpPlus(unittest.TestCase):
         try:
             client.connect("localhost", 10022, "mailbox", "mailbox")
             sftp = client.open_sftp()
-            for entry in sftp.listdir_attr("./"):
+            for entry in sftp.listdir_attr(f".{os.sep}"):
                 print(f"\nfound a file or dir: {entry.filename}")
                 if not stat.S_ISDIR(entry.st_mode):
-                    sftp.remove(f"./{entry.filename}")
-            for entry in sftp.listdir_attr("./csvpath_messages/handled"):
+                    sftp.remove(f".{os.sep}{entry.filename}")
+            for entry in sftp.listdir_attr(f".{os.sep}csvpath_messages{os.sep}handled"):
                 print(f"\nfound a file or dir: {entry.filename}")
                 if not stat.S_ISDIR(entry.st_mode):
-                    sftp.remove(f"./handled/{entry.filename}")
+                    sftp.remove(f".{os.sep}handled{os.sep}{entry.filename}")
             sftp.close()
         except Exception:
             ...

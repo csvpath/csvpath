@@ -1,8 +1,9 @@
 import unittest
+import os
 from csvpath import CsvPath
 
-NUMBERS = "tests/test_resources/numbers.csv"
-PATH = "tests/test_resources/test.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsHasDups(unittest.TestCase):
