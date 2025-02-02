@@ -296,6 +296,8 @@ class FileManager:
         #
         # this version should work local and minimize traffic when in S3
         #
+        hpath = None
+        remove_fpath = False
         with DataFileReader(fpath) as f:
             h = f.fingerprint()
             #
@@ -309,12 +311,18 @@ class FileManager:
             # another copy of it. re-adds are fine.
             #
             # need an s3 way to do this
-            b = Nos(hpath).exists()
+            remove_fpath = Nos(hpath).exists()
+            """
             if b:
                 Nos(fpath).remove()
                 return hpath, h
+            """
             #
             # if a first add, rename the file to the fingerprint + ext
             #
+        if remove_fpath:
+            Nos(fpath).remove()
+            return hpath, h
+        if hpath:
             Nos(fpath).rename(hpath)
         return hpath, h

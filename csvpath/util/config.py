@@ -66,7 +66,7 @@ class Config:
     properties programmatically.
     """
 
-    CONFIG: str = "config/config.ini"
+    CONFIG: str = f"config{os.sep}config.ini"
     CSVPATH_CONFIG_FILE_ENV: str = "CSVPATH_CONFIG_PATH"
 
     def __init__(self, *, load=True):
@@ -164,7 +164,7 @@ class Config:
             if not path.exists(directory):
                 os.makedirs(directory)
         with open(self._configpath, "w", encoding="utf-8") as file:
-            c = """
+            c = f"""
 [csvpath_files]
 extensions = txt, csvpath, csvpaths
 [csv_files]
@@ -175,7 +175,7 @@ csvpaths = raise, collect
 [logging]
 csvpath = info
 csvpaths = info
-log_file = logs/csvpath.log
+log_file = logs{os.sep}csvpath.log
 log_files_to_keep = 100
 log_file_size = 52428800
 [config]
@@ -240,8 +240,8 @@ webhook_url =
 archive = archive
 transfers = transfers
 [inputs]
-files = inputs/named_files
-csvpaths = inputs/named_paths
+files = inputs{os.sep}named_files
+csvpaths = inputs{os.sep}named_paths
 on_unmatched_file_fingerprints = halt
             """
             file.write(c)
@@ -253,7 +253,7 @@ on_unmatched_file_fingerprints = halt
         if self.load:
             filepath = self.log_file
             if not filepath or filepath.strip() == "":
-                filepath = "logs/csvpath.log"
+                filepath = f"logs{os.sep}csvpath.log"
                 self.log_file = filepath
             dirpath = self._get_dir_path(filepath)
             if dirpath and not path.exists(dirpath):
@@ -284,7 +284,7 @@ on_unmatched_file_fingerprints = halt
     def _assure_inputs_files_path(self) -> None:
         if self.load:
             if self.inputs_files_path is None or self.inputs_files_path.strip() == "":
-                self.inputs_files_path = "inputs/named_files"
+                self.inputs_files_path = f"inputs{os.sep}named_files"
             if self.inputs_files_path.strip().lower().startswith("s3://"):
                 return
             if not path.exists(self.inputs_files_path):
@@ -296,7 +296,7 @@ on_unmatched_file_fingerprints = halt
                 self.inputs_csvpaths_path is None
                 or self.inputs_csvpaths_path.strip() == ""
             ):
-                self.inputs_csvpaths_path = "inputs/named_paths"
+                self.inputs_csvpaths_path = f"inputs{os.sep}named_paths"
             if self.inputs_csvpaths_path.strip().lower().startswith("s3://"):
                 return
             if not path.exists(self.inputs_csvpaths_path):
@@ -549,7 +549,7 @@ on_unmatched_file_fingerprints = halt
             self._inputs_files_path = self._get("inputs", "files")
             if self._inputs_files_path is None:
                 self._inputs_files_path = "inputs"
-                self.add_to_config("inputs", "files", "inputs/named_files")
+                self.add_to_config("inputs", "files", f"inputs{os.sep}named_files")
         return self._inputs_files_path
 
     @inputs_files_path.setter
@@ -562,7 +562,7 @@ on_unmatched_file_fingerprints = halt
             self._inputs_csvpaths_path = self._get("inputs", "csvpaths")
             if self._inputs_csvpaths_path is None:
                 self._inputs_csvpaths_path = "inputs"
-                self.add_to_config("inputs", "csvpaths", "inputs/named_paths")
+                self.add_to_config("inputs", "csvpaths", f"inputs{os.sep}named_paths")
         return self._inputs_csvpaths_path
 
     @inputs_csvpaths_path.setter

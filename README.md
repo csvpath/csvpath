@@ -80,7 +80,7 @@ CsvPath's goal is to make simple validations almost trivial and more complex sit
 <a name="install"></a>
 # Install
 
-<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. Install with
+<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13. Install with
 ```
     pip install csvpath
 ```
