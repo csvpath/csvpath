@@ -1,10 +1,13 @@
 import math
 import pytest
 import unittest
+import os
 import datetime
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.functions.print.printf import Print
+
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestExpressionUtil(unittest.TestCase):
@@ -241,7 +244,7 @@ class TestExpressionUtil(unittest.TestCase):
     def test_exp_util_chain(self):
         path = CsvPath()
         path.parse(
-            f"""${"tests/test_resources/test.csv"}[*][
+            f"""${PATH}[*][
                 any( length( concat("a", "b")))
             ]"""
         )
@@ -255,7 +258,7 @@ class TestExpressionUtil(unittest.TestCase):
     def test_exp_util_descendents(self):
         path = CsvPath()
         path.parse(
-            f"""${"tests/test_resources/test.csv"}[*][
+            f"""${PATH}[*][
                 or( length( concat("a", "b") ), boolean(none()) )
             ]"""
         )

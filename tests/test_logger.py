@@ -1,5 +1,6 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
 from csvpath.util.log_utility import LogUtility, LogException
@@ -25,4 +26,4 @@ class TestLogger(unittest.TestCase):
     def test_logger_brief_stack_trace(self):
         path = CsvPath()
         string = LogUtility.log_brief_trace(logger=path.logger)
-        assert string.find("/util/log_utility.py") > -1
+        assert string.find(f"{os.sep}util{os.sep}log_utility.py") > -1

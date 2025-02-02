@@ -1,13 +1,14 @@
 import unittest
+import os
 from csvpath import CsvPath
 from csvpath.scanning.scanner import Scanner
 from csvpath.util.config import OnError
 
-PATH = "tests/test_resources/test.csv"
-T = "tests/test_resources/trivial.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+T = f"tests{os.sep}test_resources{os.sep}trivial.csv"
 
 
-class TestCsvPath(unittest.TestCase):
+class TestOr(unittest.TestCase):
     def test_csvpath_logical_or1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")

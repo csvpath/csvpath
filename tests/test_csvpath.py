@@ -1,17 +1,20 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.scanning.scanner import Scanner
 from csvpath.util.config import OnError
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+PEOPLE = f"tests{os.sep}test_resources{os.sep}people2.csv"
+EMPTY = f"tests{os.sep}test_resources{os.sep}empty2.csv"
 
 
 class TestCsvPath(unittest.TestCase):
     def test_matcher_get_header(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
-        path.parse("$tests/test_resources/test.csv[3][ yes() ]")
+        path.parse(f"${PATH}[3][ yes() ]")
         path.fast_forward()
         v1 = path.matcher.get_header_value(None, 2)
         v2 = path.matcher.get_header_value(None, "say")
@@ -22,7 +25,7 @@ class TestCsvPath(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            """
+            f"""
                     ~ this test checks that a quoted field behaves correctly.
                       it is essentially a test of the csv lib, but worth keeping.
                       atm, CsvPath will not adjust a header that is incorrectly
@@ -32,7 +35,7 @@ class TestCsvPath(unittest.TestCase):
                       quotechar and before a delimiter does not have the same
                       effect -- the field just as the whitespace as part of the
                       value. ~
-                    $tests/test_resources/people2.csv[3][
+                    ${PEOPLE}[3][
                         #date_of_birth == "May 12, 1962"
                         @dob = #date_of_birth
                         @hc = count_headers()
@@ -49,7 +52,7 @@ class TestCsvPath(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            """$tests/test_resources/test.csv[0-5][
+            f"""${PATH}[0-5][
                 push.onmatch("line", line_number())
             ]"""
         )
@@ -79,7 +82,7 @@ class TestCsvPath(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            """$tests/test_resources/empty2.csv[*][
+            f"""${EMPTY}[*][
                             @c = count()
                             push.onmatch("line", line_number())
                             last.nocontrib() -> push("chk", "True")

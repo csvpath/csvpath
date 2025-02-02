@@ -184,12 +184,6 @@ class SftpPlusListener(Listener, threading.Thread):
                 # create the remote dir, in the messages account, if needed.
                 #
                 sftp = client.open_sftp()
-                """
-                try:
-                    sftp.stat(self._account_name)
-                except FileNotFoundError:
-                    sftp.mkdir(self._account_name)
-                """
                 #
                 # land the file at the UUID so that if anything weird we'll only ever
                 # interfere with ourselves.

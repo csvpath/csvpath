@@ -4,8 +4,8 @@ from uuid import uuid4
 from csvpath import CsvPaths
 from csvpath.managers.paths.paths_manager import PathsManager
 
-DIR = "tests/test_resources/named_paths"
-JSON = "tests/test_resources/named_paths.json"
+DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
+JSON = f"tests{os.sep}test_resources{os.sep}named_paths.json"
 
 
 class TestPathsManager(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestPathsManager(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
-            name="test", path="tests/test_resources/test.csv"
+            name="test", path=f"tests{os.sep}test_resources{os.sep}test.csv"
         )
         settings = {}
         settings["settings"] = [

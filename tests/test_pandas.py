@@ -1,8 +1,9 @@
 import unittest
+import os
 from csvpath import CsvPath
 from csvpath.util.file_readers import DataFileReader
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestPandas(unittest.TestCase):
@@ -10,6 +11,7 @@ class TestPandas(unittest.TestCase):
         try:
             import pandas as pd
         except ImportError:
+            print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
         DataFileReader.register_data(path="pandastest", filelike=df)
@@ -25,7 +27,6 @@ class TestPandas(unittest.TestCase):
                     string("say")
                 )
                 #lastname == "Bat"
-            ]
-        """
+            ] """
         lines = CsvPath().collect(c)
         assert len(lines) == 7
