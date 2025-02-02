@@ -1,10 +1,11 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
-FOOD = "tests/test_resources/food.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+FOOD = f"tests{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestPop(unittest.TestCase):

@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from csvpath.matching.functions.function_factory import (
@@ -25,7 +26,7 @@ class TestFunction(unittest.TestCase):
 
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
-        c.parse("$tests/test_resources/test.csv[*][yes()]")
+        c.parse(f"$tests{os.sep}test_resources{os.sep}test.csv[*][yes()]")
         c.fast_forward()
         FunctionFactory.add_function("iamaname", count)
         f = FunctionFactory.get_function(matcher=c.matcher, name="iamaname")

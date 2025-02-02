@@ -1,9 +1,10 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-COR = "tests/test_resources/correlation.csv"
+COR = f"tests{os.sep}test_resources{os.sep}correlation.csv"
 
 
 class TestFunctionsStdev(unittest.TestCase):

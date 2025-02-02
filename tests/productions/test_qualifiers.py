@@ -1,3 +1,4 @@
+import os
 import unittest
 from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
@@ -5,8 +6,8 @@ from csvpath.matching.productions import Variable
 from csvpath.matching.functions.lines.stop import Stop
 from csvpath.matching.util.expression_utility import ExpressionUtility
 
-PATH = "tests/test_resources/test.csv"
-BOOL = "tests/test_resources/bool.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+BOOL = f"tests{os.sep}test_resources{os.sep}bool.csv"
 
 
 class TestFunctionsQualifiers(unittest.TestCase):

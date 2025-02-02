@@ -272,7 +272,7 @@ class ResultsManager:  # pylint: disable=C0115
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
         if not Nos(rd).exists():
-            Nos(rd).mkdir()
+            Nos(rd).makedir()
         return rp
 
     def _path_to_result(self, result, t) -> str:

@@ -75,7 +75,6 @@ class CsvLineSpooler(LineSpooler):
         if self.path is None:
             self._instance_data_file_path()
         if Nos(self.path).exists() is False:
-            # if os.path.exists(self.path) is False:
             self.result.csvpath.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
@@ -96,11 +95,8 @@ class CsvLineSpooler(LineSpooler):
             if self.result is not None and self.result.instance_dir:
                 d = os.path.join(self.result.instance_dir, "meta.json")
                 if Nos(d).exists() is True:
-                    # if os.path.exists(d):
                     with DataFileReader(d) as file:
-                        # with open(d, "r", encoding="utf-8") as file:
                         j = json.load(file.source)
-                        # j = json.load(file)
                         n = j["runtime_data"]["count_matches"]
                         self._count = n
         return self._count
@@ -109,7 +105,6 @@ class CsvLineSpooler(LineSpooler):
         p = self._instance_data_file_path()
         if p is not None:
             self.sink = self._open_file(p)
-            # self.sink = open(p, "a")
             self.writer = csv.writer(self.sink)
 
     def _open_file(self, path: str):
@@ -186,7 +181,6 @@ class CsvLineSpooler(LineSpooler):
                 return i["bytes"]
             else:
                 return -1
-            # return os.stat(p).st_size
         except FileNotFoundError:
             return 0
 

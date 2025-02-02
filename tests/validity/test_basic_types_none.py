@@ -6,8 +6,8 @@ from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
 
-PATH = "tests/test_resources/test.csv"
-NUMBERS = "tests/test_resources/numbers3.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers3.csv"
 
 
 class TestValidBasicTypesNone(unittest.TestCase):
@@ -74,12 +74,11 @@ class TestValidBasicTypesNone(unittest.TestCase):
 
     def test_validity_none5(self):
         path = CsvPath().parse(
-            """
-                ~
+            f""" ~
                     id:validity_none5
                     validation-mode:no-raise, no-stop
                 ~
-                $tests/test_resources/food.csv[10][
+                $tests{os.sep}test_resources{os.sep}food.csv[10][
                 none(#3)
             ]"""
         )
@@ -89,11 +88,11 @@ class TestValidBasicTypesNone(unittest.TestCase):
 
     def test_validity_none6(self):
         path = CsvPath().parse(
-            """ ~
+            f""" ~
                     id:validity_none5
                     validation-mode:no-raise, no-stop
                 ~
-                $tests/test_resources/food.csv[9-10][
+                $tests{os.sep}test_resources{os.sep}food.csv[9-10][
                 none(#year)
             ]"""
         )

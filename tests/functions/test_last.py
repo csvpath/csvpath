@@ -1,16 +1,17 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
-EMPTY = "tests/test_resources/empty2.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+EMPTY = f"tests{os.sep}test_resources{os.sep}empty.csv"
 
 
 class TestFunctionsLast(unittest.TestCase):
     def test_function_last1(self):
-        csvpath = """$tests/test_resources/March-2024.csv[*][
+        csvpath = f"""$tests{os.sep}test_resources{os.sep}March-2024.csv[*][
             ~ Capture metadata from comments ~
                 skip( lt(count_headers_in_line(), 9) )
                 @header_change = mismatch("signed")

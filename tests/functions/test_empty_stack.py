@@ -1,9 +1,10 @@
 import unittest
+import os
 import pytest
 from csvpath import CsvPath
 
-EMPTY = "tests/test_resources/empty3.csv"
-FOOD = "tests/test_resources/food.csv"
+EMPTY = f"tests{os.sep}test_resources{os.sep}empty3.csv"
+FOOD = f"tests{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestFunctionsEmptyStack(unittest.TestCase):

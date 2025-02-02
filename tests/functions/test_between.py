@@ -1,10 +1,11 @@
 import unittest
+import os
 import pytest
 from datetime import date, datetime
 from csvpath.csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-DATES = "tests/test_resources/dates.csv"
+DATES = f"tests{os.sep}test_resources{os.sep}dates.csv"
 
 
 class TestFunctionsBetween(unittest.TestCase):

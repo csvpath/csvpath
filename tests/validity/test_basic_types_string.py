@@ -6,9 +6,9 @@ from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
 
-PATH = "tests/test_resources/test.csv"
-NUMBERS = "tests/test_resources/numbers3.csv"
-PEOPLE2 = "tests/test_resources/people2.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers3.csv"
+PEOPLE2 = f"tests{os.sep}test_resources{os.sep}people2.csv"
 
 
 class TestValidBasicTypesString(unittest.TestCase):

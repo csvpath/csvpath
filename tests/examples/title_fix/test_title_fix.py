@@ -10,11 +10,12 @@ class TestTitleFix(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
-            name="title_fix", path="tests/examples/title_fix/assets/checkouts.csv"
+            name="title_fix",
+            path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}checkouts.csv",
         )
         paths.paths_manager.add_named_paths_from_file(
             name="title_fix",
-            file_path="tests/examples/title_fix/assets/title_fix.csvpaths",
+            file_path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}title_fix.csvpaths",
         )
         paths.collect_paths(filename="title_fix", pathsname="title_fix")
         results = paths.results_manager.get_named_results("title_fix")
@@ -23,18 +24,19 @@ class TestTitleFix(unittest.TestCase):
         d = result.data_file_path
         with open(d, "r", encoding="utf-8") as file:
             s = file.read()
-            assert s.find("Great circle : a novel / Maggie Shipstead") == -1
+            assert s.find("Great circle : a novel {os.sep} Maggie Shipstead") == -1
 
     def test_title_fix_2(self):
         print("")
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
-            name="title_fix", path="tests/examples/title_fix/assets/checkouts.csv"
+            name="title_fix",
+            path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}checkouts.csv",
         )
         paths.paths_manager.add_named_paths_from_file(
             name="title_fix_schema",
-            file_path="tests/examples/title_fix/assets/title_fix_schema.csvpaths",
+            file_path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}title_fix_schema.csvpaths",
         )
         #
         # blows up because [2019] is not an integer()

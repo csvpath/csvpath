@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from lark.exceptions import VisitError
@@ -5,7 +6,7 @@ from csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestVariables(unittest.TestCase):

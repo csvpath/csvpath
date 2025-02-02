@@ -1,34 +1,34 @@
 import unittest
+import os
 from csvpath import CsvPaths
 
+PATH = f"tests{os.sep}test_resources{os.sep}named_files{os.sep}test.csv"
 FILES = {
-    "food": "tests/test_resources/named_files/food.csv",
-    "test": "tests/test_resources/named_files/test.csv",
+    "food": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+    "test": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}test.csv",
 }
-NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
+NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}"
+SOURCE_MODE = (
+    f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}source_mode.csvpaths"
+)
 
 
 def setup_module(module):
-    print("\n **** setting up module ****")
     paths = CsvPaths()
     paths.add_to_config("errors", "csvpath", "raise, collect, print")
     paths.paths_manager.add_named_paths_from_file(
         name="sourcemode",
-        file_path="tests/test_resources/named_paths/source_mode.csvpaths",
+        file_path=SOURCE_MODE,
     )
     paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
     paths.file_manager.set_named_files(FILES)
-    paths.file_manager.add_named_file(
-        name="sourcemode", path="tests/test_resources/named_files/test.csv"
-    )
+    paths.file_manager.add_named_file(name="sourcemode", path=PATH)
 
 
 class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_next_paths(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cnt = 0
         for line in cs.next_paths(filename="food", pathsname="food"):
             cnt += 1
@@ -37,8 +37,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_fast_forward_paths(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_paths(filename="food", pathsname="food")
         n = cs.results_manager.get_number_of_results("food")
         valid = cs.results_manager.is_valid("food")
@@ -52,8 +50,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_collect_paths_1(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="food")
         valid = cs.results_manager.is_valid("food")
         assert not valid
@@ -66,8 +62,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_collect_paths_2(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.collect_paths(filename="food", pathsname="food")
         valid = cs.results_manager.is_valid("food")
         assert not valid
@@ -82,8 +76,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_next_by_line(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cnt = 0
         for line in cs.next_by_line(filename="food", pathsname="many", collect=True):
             cnt += 1
@@ -99,8 +91,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_metadata1(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
         assert meta is not None
@@ -125,8 +115,6 @@ class TestNewCsvPaths(unittest.TestCase):
         #
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
         assert meta is not None
@@ -134,8 +122,6 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.collect_by_line(filename="food", pathsname="many")
         meta2 = cs.results_manager.get_metadata("many")
         assert meta2 is not None
-
-        # cs.path_results_manager.remove_named_results("many")
 
         cs.collect_by_line(filename="food", pathsname="many")
         meta2 = cs.results_manager.get_metadata("many")
@@ -147,8 +133,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_import_function(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         cs.fast_forward_by_line(filename="food", pathsname="import")
         cs.results_manager.get_named_results("import")
         vs = cs.results_manager.get_variables("import")
@@ -158,8 +142,6 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_stopping(self):
         cs = CsvPaths()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        # cs.file_manager.set_named_files(FILES)
-        # cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping"):
             print(f"***: {i}")
@@ -228,15 +210,6 @@ class TestNewCsvPaths(unittest.TestCase):
         print("")
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        """
-        paths.file_manager.add_named_file(
-            name="sourcemode", path="tests/test_resources/named_files/test.csv"
-        )
-        paths.paths_manager.add_named_paths_from_file(
-            name="sourcemode",
-            file_path="tests/test_resources/named_paths/source_mode.csvpaths",
-        )
-        """
         paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
         results = paths.results_manager.get_named_results("sourcemode")
         for i, r in enumerate(results):
@@ -249,13 +222,6 @@ class TestNewCsvPaths(unittest.TestCase):
         #
         # do a run
         #
-        paths.file_manager.add_named_file(
-            name="sourcemode", path="tests/test_resources/named_files/test.csv"
-        )
-        paths.paths_manager.add_named_paths_from_file(
-            name="sourcemode",
-            file_path="tests/test_resources/named_paths/source_mode.csvpaths",
-        )
         paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
         #
         # replay:

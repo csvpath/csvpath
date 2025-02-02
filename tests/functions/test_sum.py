@@ -1,8 +1,9 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 
-PATH = "tests/test_resources/numbers.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers.csv"
 
 
 class TestFunctionsSum(unittest.TestCase):
@@ -10,7 +11,7 @@ class TestFunctionsSum(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*]
+            ${NUMBERS}[1*]
             [ @l = sum(#0) ]"""
         )
         path.collect()
@@ -20,7 +21,7 @@ class TestFunctionsSum(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*]
+            ${NUMBERS}[1*]
             [
                 @l = sum.onmatch(#0)
                 lt(count_lines(),3)
@@ -33,7 +34,7 @@ class TestFunctionsSum(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*]
+            ${NUMBERS}[1*]
             [
                 @notsum = add( @notsum, #0)
                 sum(#0)
@@ -47,7 +48,7 @@ class TestFunctionsSum(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*]
+            ${NUMBERS}[1*]
             [
                 sum(#0)
             ]"""

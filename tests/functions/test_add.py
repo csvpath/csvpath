@@ -1,9 +1,10 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import ChildrenException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsAdd(unittest.TestCase):

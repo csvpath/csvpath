@@ -1,6 +1,7 @@
 import unittest
 import pytest
 import logging
+import os
 from io import StringIO as buffer
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.log_utility import LogUtility
@@ -13,9 +14,9 @@ from csvpath.matching.util.lark_print_parser import (
 )
 from csvpath.matching.util.exceptions import PrintParserException
 
-PATH = "tests/test_resources/test.csv"
-PATH2 = "tests/test_resources/test-3.csv"
-MISMATCH = "tests/test_resources/header_mismatch.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+PATH2 = f"tests{os.sep}test_resources{os.sep}test-3.csv"
+MISMATCH = f"tests{os.sep}test_resources{os.sep}header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
@@ -46,9 +47,11 @@ class TestPrint(unittest.TestCase):
     def test_print_get_runtime_data_from_results(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise")
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         paths.collect_paths(filename="food", pathsname="food")
         results = paths.results_manager.get_named_results("food")
@@ -106,9 +109,11 @@ class TestPrint(unittest.TestCase):
     def test_print_header_ref(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         paths.collect_paths(filename="food", pathsname="food")
 
@@ -407,9 +412,11 @@ class TestPrint(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         LogUtility.logger(paths, "debug")
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         paths.fast_forward_paths(pathsname="food", filename="food")
         path = paths.csvpath()

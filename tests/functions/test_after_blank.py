@@ -1,8 +1,9 @@
 import unittest
+import os
 from csvpath.csvpath import CsvPath
 
-PATH = "tests/test_resources/count_physical_lines.csv"
-EMPTY = "tests/test_resources/empty3.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}count_physical_lines.csv"
+EMPTY = f"tests{os.sep}test_resources{os.sep}empty3.csv"
 
 
 class TestFunctionsAfterBlank(unittest.TestCase):

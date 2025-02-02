@@ -4,12 +4,12 @@ import shutil
 from csvpath import CsvPaths
 from csvpath.util.line_monitor import LineMonitor
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 FILES = {
-    "food": "tests/test_resources/named_files/food.csv",
-    "test": "tests/test_resources/named_files/test.csv",
+    "food": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+    "test": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}test.csv",
 }
-NAMED_PATHS_DIR = "tests/test_resources/named_paths/"
+NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}"
 
 
 class TestCache(unittest.TestCase):

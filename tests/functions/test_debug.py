@@ -1,11 +1,12 @@
 import unittest
 import pytest
 import logging
+import os
 from io import StringIO as buffer
 from csvpath import CsvPath
 from csvpath.util.log_utility import LogUtility
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsDebug(unittest.TestCase):

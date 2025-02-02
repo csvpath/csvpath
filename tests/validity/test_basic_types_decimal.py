@@ -6,8 +6,8 @@ from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
 
-PATH = "tests/test_resources/test.csv"
-NUMBERS = "tests/test_resources/numbers3.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers3.csv"
 
 
 class TestValidBasicTypesDecimal(unittest.TestCase):
@@ -71,7 +71,7 @@ class TestValidBasicTypesDecimal(unittest.TestCase):
 
     def test_function_decimal4(self):
         # why use the alt ini here?
-        testini = "tests/test_resources/deleteme/config.ini"
+        testini = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
         path = CsvPath()
         # path.config.add_to_config("errors", "csvpath", "raise")

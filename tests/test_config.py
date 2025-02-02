@@ -5,47 +5,50 @@ from csvpath import CsvPath
 from csvpath.util.config import Config
 from csvpath.util.config_exception import ConfigurationException
 
+TEST_INI = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
+
 
 class TestConfig(unittest.TestCase):
     def test_config_no_load(self):
-        testini = "tests/test_resources/deleteme/config.ini"
         config = Config(load=False)
         assert config.csvpaths_log_level is None
         config.csvpaths_log_level = "debug"
         assert config.csvpaths_log_level == "debug"
-        if os.path.exists(testini):
-            os.remove(testini)
-        config.configpath = testini
+        if os.path.exists(TEST_INI):
+            os.remove(TEST_INI)
+        config.configpath = TEST_INI
         config._create_default_config
         config.reload()
         assert config.csvpaths_log_level == "info"
-        assert os.path.exists(testini)
+        assert os.path.exists(TEST_INI)
 
     def test_config_default_file_by_path(self):
-        testini = "tests/test_resources/deleteme/config.ini"
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
-        if os.path.exists(testini):
-            os.remove(testini)
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = TEST_INI
+        if os.path.exists(TEST_INI):
+            os.remove(TEST_INI)
         Config()
-        assert os.path.exists(testini)
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
+        assert os.path.exists(TEST_INI)
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config{os.sep}config.ini"
 
     def test_config_assure_log_dir(self):
+        cfg = f"tests{os.sep}test_resources{os.sep}config-1"
         path = CsvPath()
         config = path.config
-        dirpath = config._get_dir_path("tests/test_resources/config-1/config-1.ini")
-        assert dirpath == "tests/test_resources/config-1"
+        dirpath = config._get_dir_path(f"{cfg}{os.sep}config-1.ini")
+        assert dirpath == cfg
 
     def test_config1(self):
         path = CsvPath()
         config = path.config
         assert config is not None
-        assert config.CONFIG == "config/config.ini"
+        assert config.CONFIG == f"config{os.sep}config.ini"
         assert config.csv_file_extensions
         assert len(config.csv_file_extensions) == 7
         assert "csv" in config.csv_file_extensions
-        config.set_config_path_and_reload("tests/test_resources/config.ini")
-        assert config.config_path == "tests/test_resources/config.ini"
+        config.set_config_path_and_reload(
+            f"tests{os.sep}test_resources{os.sep}config.ini"
+        )
+        assert config.config_path == f"tests{os.sep}test_resources{os.sep}config.ini"
         assert config.csv_file_extensions
         assert len(config.csv_file_extensions) == 3
         assert "before" in config.csv_file_extensions
@@ -53,7 +56,9 @@ class TestConfig(unittest.TestCase):
         assert len(config.csvpath_errors_policy) == 1
         assert config is path.config
         with pytest.raises(ConfigurationException):
-            config.set_config_path_and_reload("tests/test_resources/bad_config.ini")
+            config.set_config_path_and_reload(
+                f"tests{os.sep}test_resources{os.sep}bad_config.ini"
+            )
 
     def test_config2(self):
         path = CsvPath()
@@ -197,7 +202,7 @@ class TestConfig(unittest.TestCase):
         with pytest.raises(ConfigurationException):
             config.log_file = 1
             config.validate_config()
-        config.log_file = "/log"
+        config.log_file = ".{os.sep}log"
 
         #
         # LOG FILES TO KEEP

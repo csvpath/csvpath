@@ -1,9 +1,10 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsInt(unittest.TestCase):
@@ -170,7 +171,7 @@ class TestFunctionsInt(unittest.TestCase):
 
     def test_validity_int2(self):
         path = CsvPath().parse(
-            f""" ~id:int2~ ${"tests/test_resources/test.csv"}[*][any(length(concat("a", int(random(0)))))]"""
+            f""" ~id:int2~ ${PATH}[*][any(length(concat("a", int(random(0)))))]"""
         )
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):

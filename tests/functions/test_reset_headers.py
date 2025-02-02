@@ -1,4 +1,5 @@
 import unittest
+import os
 from csvpath import CsvPath
 
 PATH = "tests/test_resources/header_mismatch.csv"

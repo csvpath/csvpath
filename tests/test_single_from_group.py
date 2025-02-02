@@ -1,4 +1,5 @@
 import unittest
+import os
 from csvpath import CsvPaths
 
 
@@ -7,10 +8,11 @@ class TestSingleFromGroup(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
-            name="food", path="tests/test_resources/named_files/food.csv"
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
         )
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         paths.fast_forward_paths(pathsname="many#many_two", filename="food")
         vars = paths.results_manager.get_variables("many#many_two")

@@ -1,11 +1,12 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH1 = "tests/test_resources/emails1.csv"
-PATH2 = "tests/test_resources/emails2.csv"
-PATH3 = "tests/test_resources/emails3.csv"
+EMAIL1 = f"tests{os.sep}test_resources{os.sep}emails1.csv"
+EMAIL2 = f"tests{os.sep}test_resources{os.sep}emails2.csv"
+EMAIL3 = f"tests{os.sep}test_resources{os.sep}emails3.csv"
 
 
 class TestFunctionsEmail(unittest.TestCase):
@@ -13,7 +14,7 @@ class TestFunctionsEmail(unittest.TestCase):
         path = (
             CsvPath()
             .parse(
-                f"""${PATH1}[1*][
+                f"""${EMAIL1}[1*][
                 @v = email( #email )
                 push( "e", @v )
             ]"""
@@ -31,7 +32,7 @@ class TestFunctionsEmail(unittest.TestCase):
         path = (
             CsvPath()
             .parse(
-                f"""${PATH2}[1*][
+                f"""${EMAIL2}[1*][
                 @v = email( #email )
                 push( "e", @v )
             ]"""
@@ -44,7 +45,7 @@ class TestFunctionsEmail(unittest.TestCase):
         path = (
             CsvPath()
             .parse(
-                f"""${PATH3}[1*][
+                f"""${EMAIL3}[1*][
                 @v = email( #email )
                 push( "e", @v )
             ]"""
@@ -54,7 +55,7 @@ class TestFunctionsEmail(unittest.TestCase):
         assert path.variables["e"] == [False, False, False, False]
 
     def test_function_email_4(self):
-        path = CsvPath().parse(f"""${PATH1}[1*][ @v2 = email.notnone( none() ) ]""")
+        path = CsvPath().parse(f"""${EMAIL1}[1*][ @v2 = email.notnone( none() ) ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.fast_forward()
@@ -63,7 +64,7 @@ class TestFunctionsEmail(unittest.TestCase):
         path = (
             CsvPath()
             .parse(
-                f"""${PATH1}[1*][
+                f"""${EMAIL1}[1*][
                 @v = email( none() )
             ]"""
             )

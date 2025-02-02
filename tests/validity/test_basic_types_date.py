@@ -6,10 +6,10 @@ from csvpath.util.config import Config
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.exceptions import ChildrenException
 
-PATH = "tests/test_resources/test.csv"
-NUMBERS = "tests/test_resources/numbers3.csv"
-DATES = "tests/test_resources/dates.csv"
-DATES2 = "tests/test_resources/dates2.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers3.csv"
+DATES = f"tests{os.sep}test_resources{os.sep}dates.csv"
+DATES2 = f"tests{os.sep}test_resources{os.sep}dates2.csv"
 
 
 class TestValidBasicTypesDate(unittest.TestCase):

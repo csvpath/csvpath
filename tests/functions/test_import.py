@@ -1,13 +1,13 @@
 import unittest
 import pytest
+import os
 from csvpath.matching.productions import Term, Equality, Header
-
 from csvpath import CsvPath, CsvPaths
 from csvpath.util.config import OnError
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.exceptions import CsvPathsException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsImport(unittest.TestCase):
@@ -27,9 +27,11 @@ class TestFunctionsImport(unittest.TestCase):
         paths = CsvPaths()
         paths.config.csvpath_errors_policy = [OnError.RAISE.value]
 
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths_from_dir(
-            directory="tests/test_resources/named_paths"
+            directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
         # food has 3 match components so we'll have 5 total after import
         paths.collect_paths(filename="food", pathsname="food")
@@ -62,7 +64,7 @@ class TestFunctionsImport(unittest.TestCase):
         paths.file_manager.add_named_file(name="test", path=PATH)
         paths.paths_manager.add_named_paths_from_file(
             name="paths",
-            file_path="tests/test_resources/named_paths/import_internal.csvpath",
+            file_path=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}import_internal.csvpath",
         )
 
         paths.collect_paths(filename="test", pathsname="paths")

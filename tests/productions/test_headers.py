@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from lark.exceptions import VisitError, UnexpectedCharacters
@@ -5,7 +6,8 @@ from csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Header
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+FILE = f"tests{os.sep}test_resources{os.sep}March-2024.csv"
 
 
 class TestHeaders(unittest.TestCase):
@@ -14,7 +16,7 @@ class TestHeaders(unittest.TestCase):
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.OR = True
         path.parse(
-            """$tests/test_resources/March-2024.csv[*][
+            f"""${FILE}[*][
                 starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
                 starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
 
@@ -26,17 +28,17 @@ class TestHeaders(unittest.TestCase):
                         print("\nResetting headers to: $.csvpath.headers"))
 
                 print.onchange.once(
-                    "\nNumber of headers changed by $.variables.header_change",
+                    "Number of headers changed by $.variables.header_change",
                         print("See line $.csvpath.line_number", skip()))
 
                 not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
-                    print( "\nBad category $.headers.category at line $.csvpath.count_lines ", fail())
+                    print( "Bad category $.headers.category at line $.csvpath.count_lines ", fail())
 
-                not( exact( end(), /\\$?(\\d*\\.\\d{0,2})/ ) ) ->
-                    print("\nBad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
+                not( exact( end(), /\\$?(\\d*\\.\\d{0, 2})/ ) ) ->
+                    print("Bad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
 
-                not( #SKU ) -> print("\nNo SKU at line $.csvpath.count_lines in $.csvpath.headers", fail())
-                not( #UPC ) -> print("\nNo UPC at line $.csvpath.count_lines", fail())
+                not( #SKU ) -> print("No SKU at line $.csvpath.count_lines in $.csvpath.headers", fail())
+                not( #UPC ) -> print("No UPC at line $.csvpath.count_lines", fail())
 
             ]"""
         )

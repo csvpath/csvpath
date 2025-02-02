@@ -1,9 +1,10 @@
 import unittest
+import os
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/numbers2.csv"
+NUMBERS = f"tests{os.sep}test_resources{os.sep}numbers2.csv"
 
 
 class TestFunctionsSubtotal(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
         path = CsvPath()
         path.parse(
             f"""
-            ${PATH}[1*]
+            ${NUMBERS}[1*]
             [
                 subtotal.areas(#area, #count1)
                 last() -> print("$.variables.areas")
@@ -27,7 +28,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
 
     def test_function_subtotal2(self):
         path = CsvPath().parse(
-            f"""${PATH}[1*][
+            f"""${NUMBERS}[1*][
                 subtotal.areas(#count1, #area)
                 last() -> print("$.variables.areas")
             ]"""
@@ -38,7 +39,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
 
     def test_function_subtotal3(self):
         path = CsvPath().parse(
-            f"""${PATH}[1*][
+            f"""${NUMBERS}[1*][
                 subtotal.areas(#area)
                 last() -> print("$.variables.areas")
             ]"""
@@ -49,7 +50,7 @@ class TestFunctionsSubtotal(unittest.TestCase):
 
     def test_function_subtotal4(self):
         path = CsvPath().parse(
-            f"""${PATH}[1*][
+            f"""${NUMBERS}[1*][
                 subtotal.areas(#area, #count1, #count2)
                 last() -> print("$.variables.areas")
             ]"""

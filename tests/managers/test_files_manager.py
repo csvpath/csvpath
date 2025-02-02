@@ -6,8 +6,8 @@ from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.matching.util.exceptions import MatchException
 
-DIR = "tests/test_resources/named_files"
-JSON = "tests/test_resources/named_files.json"
+DIR = f"tests{os.sep}test_resources{os.sep}named_files"
+JSON = f"tests{os.sep}test_resources{os.sep}named_files.json"
 
 
 class TestFilesManager(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestFilesManager(unittest.TestCase):
         m = paths.file_manager
         d = m.named_files_dir
         assert d is not None
-        assert d.endswith("inputs/named_files")
+        assert d.endswith(f"inputs{os.sep}named_files")
 
     def test_named_file_home(self):
         paths = CsvPaths()
@@ -25,63 +25,35 @@ class TestFilesManager(unittest.TestCase):
         m = paths.file_manager
         d = m.named_file_home("aname")
         assert d is not None
-        assert d.endswith("inputs/named_files/aname")
+        assert d.endswith(f"inputs{os.sep}named_files{os.sep}aname")
 
     def test_copy_in(self):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise")
         m = paths.file_manager
-        tf = "tests/test_resources/test.csv"
+        tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
         assert d is not None
-        assert d.endswith("inputs/named_files/mytest/test.csv/test.csv")
-        p = f"{paths.config.inputs_files_path}/mytest"
+        assert d.endswith(
+            f"inputs{os.sep}named_files{os.sep}mytest{os.sep}test.csv{os.sep}test.csv"
+        )
+        p = f"{paths.config.inputs_files_path}{os.sep}mytest"
         Nos(p).remove()
 
     def test_reg_fingerprint(self):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise")
         m = paths.file_manager
-        tf = "tests/test_resources/test.csv"
+        tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
         assert Nos(d).exists()
         rpath = m._fingerprint(home)
         assert d != rpath
         assert not Nos(d).exists()
-        p = f"{paths.config.inputs_files_path}/mytest"
+        p = f"{paths.config.inputs_files_path}{os.sep}mytest"
         Nos(p).remove()
-
-    """
-    # this test would need to be converted to use FileMetadata. not
-    # sure if it adds enough value or not.
-    def test_manifest_path(self):
-        paths = CsvPaths()
-        m = paths.file_manager
-        m.add_named_file(name="aname", path="tests/test_resources/test.csv")
-        reg = m.registrar
-        d = m.named_file_home("aname")
-        assert d is not None
-        assert d == "inputs/named_files/aname"
-        mpath = reg.manifest_path(d)
-        assert mpath == os.path.join(d, "manifest.json")
-        reg.update_manifest(
-            manifestpath=mpath,
-            regpath="regpath",
-            sourcepath="origpath",
-            fingerprint="fingerprint",
-        )
-        m = reg.get_manifest(mpath)
-        assert "file" in m[len(m) - 1]
-        assert m[len(m) - 1]["file"] == "regpath"
-        assert "from" in m[len(m) - 1]
-        assert m[len(m) - 1]["from"] == "origpath"
-        assert "time" in m[len(m) - 1]
-        r = reg.registered_file(d)
-        assert r == "regpath"
-        shutil.rmtree("inputs/named_files/aname")
-    """
 
     def test_rereg(self):
         paths = CsvPaths()
@@ -89,12 +61,18 @@ class TestFilesManager(unittest.TestCase):
         m = paths.file_manager
         reg = m.registrar
         try:
-            shutil.rmtree("inputs/named_files/testx")
+            shutil.rmtree(f"inputs{os.sep}named_files{os.sep}testx")
         except Exception:
             pass
-        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
-        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
-        m.add_named_file(name="testx", path="tests/test_resources/test.csv")
+        m.add_named_file(
+            name="testx", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        m.add_named_file(
+            name="testx", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        m.add_named_file(
+            name="testx", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
         mpath = reg.manifest_path(m.named_file_home("testx"))
         m = reg.get_manifest(mpath)
         #
@@ -133,16 +111,16 @@ class TestFilesManager(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpath", "raise")
         fm = paths.file_manager
         nf = {
-            "wonderful": "tests/test_resources/food.csv",
-            "amazing": "tests/test_resources/lookup_names.csv",
+            "wonderful": f"tests{os.sep}test_resources{os.sep}food.csv",
+            "amazing": f"tests{os.sep}test_resources{os.sep}lookup_names.csv",
         }
         fm.set_named_files(nf)
         assert fm.named_files_count >= 2
         assert fm.name_exists("wonderful")
         assert fm.name_exists("amazing")
-        p = f"{paths.config.inputs_files_path}/wonderful"
+        p = f"{paths.config.inputs_files_path}{os.sep}wonderful"
         Nos(p).remove()
-        p = f"{paths.config.inputs_files_path}/amazing"
+        p = f"{paths.config.inputs_files_path}{os.sep}amazing"
         Nos(p).remove()
 
     def test_file_mgr_dict2(self):
@@ -155,19 +133,21 @@ class TestFilesManager(unittest.TestCase):
         except FileNotFoundError:
             pass
         nf = {
-            "wonderful": "tests/test_resources/food.csv",
-            "amazing": "tests/test_resources/lookup_names.csv",
+            "wonderful": f"tests{os.sep}test_resources{os.sep}food.csv",
+            "amazing": f"tests{os.sep}test_resources{os.sep}lookup_names.csv",
         }
         fm.set_named_files(nf)
         c = fm.named_files_count
-        fm.add_named_file(name="outstanding", path="tests/test_resources/test.csv")
+        fm.add_named_file(
+            name="outstanding", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
         c2 = fm.named_files_count
         assert c2 == (c + 1)
         afile = fm.get_named_file("wonderful")
         assert afile is not None
         fm.remove_named_file("wonderful")
         assert fm.named_files_count == c
-        p = f"{paths.config.inputs_files_path}/outstanding"
+        p = f"{paths.config.inputs_files_path}{os.sep}outstanding"
         Nos(p).remove()
-        p = f"{paths.config.inputs_files_path}/amazing"
+        p = f"{paths.config.inputs_files_path}{os.sep}amazing"
         Nos(p).remove()

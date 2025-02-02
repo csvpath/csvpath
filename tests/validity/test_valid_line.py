@@ -1,12 +1,13 @@
+import os
 import unittest
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
-FOOD = "tests/test_resources/food.csv"
-PEOPLE = "tests/test_resources/people.csv"
-PEOPLE3 = "tests/test_resources/people3.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+FOOD = f"tests{os.sep}test_resources{os.sep}food.csv"
+PEOPLE = f"tests{os.sep}test_resources{os.sep}people.csv"
+PEOPLE3 = f"tests{os.sep}test_resources{os.sep}people3.csv"
 
 
 class TestValidLine(unittest.TestCase):

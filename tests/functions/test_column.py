@@ -1,7 +1,9 @@
 import unittest
+import os
 from csvpath.csvpath import CsvPath
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
+TRIVIAL = f"tests{os.sep}test_resources{os.sep}trivial.csv"
 
 
 class TestFunctionsColumn(unittest.TestCase):
@@ -119,7 +121,7 @@ class TestFunctionsColumn(unittest.TestCase):
 
         path.OR = True
         path.parse(
-            """$tests/test_resources/trivial.csv[*][
+            f"""${TRIVIAL}[*][
                 ~ Apply three rules to check if a CSV file is invalid ~
                 missing(headers())
                 too_long(#lastname, 30)
@@ -140,7 +142,7 @@ class TestFunctionsColumn(unittest.TestCase):
         path = CsvPath()
         path.OR = True
         path.parse(
-            """$tests/test_resources/trivial.csv[*][
+            f"""${TRIVIAL}[*][
                 ~ Apply three rules to check if a CSV file is invalid ~
                 missing(headers())
                 too_long(#lastname, 30)

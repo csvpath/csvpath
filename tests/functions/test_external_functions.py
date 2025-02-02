@@ -1,9 +1,10 @@
 import unittest
+import os
 from csvpath import CsvPath
 from csvpath.matching.functions.function_finder import FunctionFinder
 from csvpath.matching.functions.function_factory import FunctionFactory
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsExternals(unittest.TestCase):
@@ -29,7 +30,10 @@ class TestFunctionsExternals(unittest.TestCase):
 
     def test_function_externals2(self):
         path = CsvPath()
-        path.config.configpath = "tests/test_resources/config.ini"
+        path.config.configpath = f"tests{os.sep}test_resources{os.sep}config.ini"
         path.config.reload()
         assert path.config.function_imports is not None
-        assert path.config.function_imports == "tests/test_resources/function.imports"
+        assert (
+            path.config.function_imports
+            == f"tests{os.sep}test_resources{os.sep}function.imports"
+        )

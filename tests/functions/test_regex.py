@@ -1,9 +1,10 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestFunctionsRegex(unittest.TestCase):
@@ -122,7 +123,7 @@ class TestFunctionsRegex(unittest.TestCase):
         $[*][regex("(?i)a\\(*b", #0)]
         $[*][regex("(?<!\\?)"(.*?)(?<!\\?)"", #0)]
         """
-        with open("tests/test_resources/regexes.txt") as file:
+        with open(f"tests{os.sep}test_resources{os.sep}regexes.txt") as file:
             for i, line in enumerate(file):
                 line = line.strip()
                 path = CsvPath()

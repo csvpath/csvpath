@@ -1,11 +1,12 @@
 import unittest
 import pytest
+import os
 from csvpath import CsvPath
 from csvpath import CsvPaths
 from csvpath.util.printer import LogPrinter
 from csvpath.matching.util.exceptions import MatchException
 
-PATH = "tests/test_resources/test.csv"
+PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestComments(unittest.TestCase):
@@ -218,10 +219,10 @@ class TestComments(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            """$tests/test_resources/test.csv[1*]
+            f"""${PATH}[1*]
             [
                 ~
-                    [$#@"()!%^&*`@-/_=+{}#|  \\;:',.<>?()/"$[
+                    [$#@"()!%^&*`@-/_=+{{}}#|  \\;:',.<>?()/"$[
                 ~
                 push("d", line_number())
             ]"""
@@ -233,10 +234,10 @@ class TestComments(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            """$tests/test_resources/test.csv[1*]
+            f"""${PATH}[1*]
             [
                 ~I have a lot to say ~ ~
-                    [$#@"()!%^&*`@-/_=+{}#|\\;:',.<>?()/"$[
+                    [$#@"()!%^&*`@-/_=+{{}}#|\\;:',.<>?()/"$[
                 ~~~
                 push.onmatch("cnt", count_lines())
                 count.nocontrib() == 3 -> advance(2)

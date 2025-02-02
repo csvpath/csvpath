@@ -12,7 +12,7 @@ class TestJsonNamedPaths(unittest.TestCase):
         # the source test files and dirs could change.
         #
         paths.paths_manager.add_named_paths_from_json(
-            "tests/examples/example_2_2/orders.json"
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}orders.json"
         )
 
     def test_json_named_file_load_only(self):
@@ -22,7 +22,9 @@ class TestJsonNamedPaths(unittest.TestCase):
         # adding files and paths more than 1x is optional, but a good idea for tests because
         # the source test files and dirs could change.
         #
-        paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
+        )
 
     def test_json_named_paths(self):
         paths = CsvPaths()
@@ -31,22 +33,24 @@ class TestJsonNamedPaths(unittest.TestCase):
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
         #
-        paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_json(
-            "tests/examples/example_2_2/orders.json"
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}orders.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="orders")
         result = paths.results_manager.get_specific_named_result("orders", "prices")
         valid = paths.results_manager.is_valid("orders")
         assert not valid
 
-        a = f"{paths.config.archive_path}/orders"
+        a = f"{paths.config.archive_path}{os.sep}orders"
         assert Nos(a).dir_exists()
         dirs = Nos(a).listdir()
         dirs = [
             os.path.join(a, d) for d in dirs if not Nos(os.path.join(a, d)).isfile()
         ]
-        file = f"{result.run_dir}/prices/unmatched.csv"
+        file = f"{result.run_dir}{os.sep}prices{os.sep}unmatched.csv"
         assert Nos(file).exists()
 
     def test_result_manifest(self):
@@ -56,9 +60,11 @@ class TestJsonNamedPaths(unittest.TestCase):
         # setup
         #
         paths.config.add_to_config("errors", "csvpath", "raise, print")
-        paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_json(
-            "tests/examples/example_2_2/expected_files.json"
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}expected_files.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="expected_files")
         #
@@ -102,13 +108,15 @@ class TestJsonNamedPaths(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         try:
-            os.remove("transfers/transfer.txt")
+            os.remove(f"transfers{os.sep}transfer.txt")
         except FileNotFoundError:
             pass
 
-        paths.file_manager.add_named_files_from_dir("tests/examples/example_2_2/csvs")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
+        )
         paths.paths_manager.add_named_paths_from_json(
-            "tests/examples/example_2_2/transfer.json"
+            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}transfer.json"
         )
         paths.collect_paths(filename="March-2024", pathsname="transfer")
-        assert os.path.exists("transfers/transfer.txt")
+        assert os.path.exists(f"transfers{os.sep}transfer.txt")

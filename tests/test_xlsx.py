@@ -1,11 +1,12 @@
 import unittest
+import os
 from csvpath import CsvPaths
 
 FILES = {
-    "energy": "tests/test_resources/xlsx/2023-reported-energy-and-water-metrics.xlsx",
-    "primary": "tests/test_resources/xlsx/Table_1.1_Primary_Energy_Overview.xlsx",
+    "energy": f"tests{os.sep}test_resources{os.sep}xlsx{os.sep}2023-reported-energy-and-water-metrics.xlsx",
+    "primary": f"tests{os.sep}test_resources{os.sep}xlsx{os.sep}Table_1.1_Primary_Energy_Overview.xlsx",
 }
-NAMED_PATHS_DIR = "tests/test_resources/xlsx/named_paths"
+NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}xlsx{os.sep}named_paths"
 
 
 class TestXlsx(unittest.TestCase):

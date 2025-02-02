@@ -70,7 +70,9 @@ class TestResultsManager(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths(
             name="print_test",
             paths=[
@@ -125,7 +127,9 @@ class TestResultsManager(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir("tests/test_resources/named_files")
+        paths.file_manager.add_named_files_from_dir(
+            f"tests{os.sep}test_resources{os.sep}named_files"
+        )
         paths.paths_manager.add_named_paths(
             name="print_test",
             paths=[
