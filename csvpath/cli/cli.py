@@ -2,7 +2,6 @@ import sys
 import os
 import time
 import traceback
-from bullet import Bullet
 from csvpath import CsvPaths
 from .drill_down import DrillDown
 from .select import Select
@@ -55,18 +54,12 @@ class Cli:
 
     def ask(self, choices: list[str]) -> str:
         self.clear()
-        try:
-            raise Exception("remove this !!!")
-            b = Bullet(bullet=" > ", choices=choices)
-            t = b.launch()
-        except Exception:
-            if choices[len(choices) - 1] == Cli.CANCEL:
-                choices[len(choices) - 1] = Cli.CANCEL2
-            if choices[len(choices) - 2] == Cli.STOP_HERE:
-                choices[len(choices) - 2] = Cli.STOP_HERE2
-
-            cs = [(s, s) for s in choices]
-            t = Select().ask(title="", values=cs, cancel_value="CANCEL")
+        if choices[len(choices) - 1] == Cli.CANCEL:
+            choices[len(choices) - 1] = Cli.CANCEL2
+        if choices[len(choices) - 2] == Cli.STOP_HERE:
+            choices[len(choices) - 2] = Cli.STOP_HERE2
+        cs = [(s, s) for s in choices]
+        t = Select().ask(title="", values=cs, cancel_value="CANCEL")
         self.clear()
         return t
 

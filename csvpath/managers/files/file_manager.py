@@ -285,6 +285,8 @@ class FileManager:
         i = fname.find(".")
         if i > -1:
             t = fname[i + 1 :]
+        else:
+            t = fname
         i = t.find("#")
         if i > -1:
             t = t[0:i]

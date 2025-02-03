@@ -159,17 +159,6 @@ urllib3 = [
 crt = ["awscrt (==0.22.0)"]
 
 [[package]]
-name = "bullet"
-version = "2.2.0"
-description = "Beautiful Python prompts made simple."
-optional = false
-python-versions = "*"
-files = [
-    {file = "bullet-2.2.0-py3-none-any.whl", hash = "sha256:d22528deb914ce3ff20a4a000fa5ba37179697f384a0748f90691de8a74cf006"},
-    {file = "bullet-2.2.0.tar.gz", hash = "sha256:dfa0fa81810ad1a9e688815ca04f24af87ff5cdbe803b42fa634b1f50fc9d887"},
-]
-
-[[package]]
 name = "certifi"
 version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -2194,4 +2183,4 @@ pandas = []
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ee799154518b95ec923f5ccaaec63f324b2bf5a7bef3e15deafead8a7d123b5f"
+content-hash = "c8ebec69191f2461cfc619ef3f0253b436fcb50861715cdb38cd0e484809f78e"
