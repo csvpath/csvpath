@@ -52,8 +52,6 @@ class OpenTelemetryErrorListener(OtlpListener):
             emeta["hostname"] = mdata.hostname
         if mdata.cwd:
             emeta["cwd"] = mdata.cwd
-        if mdata.code:
-            emeta["code"] = mdata.code
         if mdata.pid:
             emeta["pid"] = mdata.pid
         if mdata.username:

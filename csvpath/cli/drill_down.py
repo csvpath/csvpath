@@ -1,5 +1,6 @@
 import os
-from bullet import Bullet
+import traceback
+from .error import Error
 
 
 class DrillDown:
@@ -29,14 +30,30 @@ class DrillDown:
         self._cli.clear()
         self._cli.action(f"Adding: {p}\n")
         self._cli.pause()
-        if t == "file":
-            self._cli.csvpaths.file_manager.add_named_file(name=name, path=p)
-        elif t == "dir":
-            self._cli.csvpaths.file_manager.add_named_files_from_dir(dirname=p)
-        else:
-            self._cli.csvpaths.file_manager.set_named_files_from_json(
-                name=name, filename=p
-            )
+        try:
+            if t == "file":
+                self._cli.csvpaths.file_manager.add_named_file(name=name, path=p)
+            elif t == "dir":
+                self._cli.csvpaths.file_manager.add_named_files_from_dir(dirname=p)
+            else:
+                self._cli.csvpaths.file_manager.set_named_files_from_json(filename=p)
+        except Exception:
+            cfg = None
+            while cfg in [None, "c", "e"]:
+                print("There was an error.")
+                print("Click 'e' and return to print the stack trace. ")
+                print("Click 'c' and return to change config options. ")
+                print("Click return to continue. ")
+                cfg = input("")
+                if cfg == "c":
+                    Error(self).show()
+                elif cfg == "e":
+                    self._cli.clear()
+                    print(traceback.format_exc())
+                    input("\n\nClick return to continue")
+                else:
+                    return
+                self._cli.clear()
 
     # ============================
     # Paths
@@ -62,12 +79,34 @@ class DrillDown:
         self._cli.clear()
         self._cli.action(f"Adding: {p}\n")
         self._cli.pause()
-        if t == "file":
-            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_file=p)
-        elif t == "dir":
-            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_dir=p)
-        else:
-            self._cli.csvpaths.paths_manager.add_named_paths(name=name, from_json=p)
+        try:
+            if t == "file":
+                self._cli.csvpaths.paths_manager.add_named_paths_from_file(
+                    name=name, file_path=p
+                )
+            elif t == "dir":
+                self._cli.csvpaths.paths_manager.add_named_paths_from_dir(
+                    name=name, directory=p
+                )
+            else:
+                self._cli.csvpaths.paths_manager.add_named_paths_from_json(file_path=p)
+        except Exception:
+            cfg = None
+            while cfg in [None, "c", "e"]:
+                print("There was an error.")
+                print("Click 'e' and return to print the stack trace. ")
+                print("Click 'c' and return to change config options. ")
+                print("Click return to continue. ")
+                cfg = input("")
+                if cfg == "c":
+                    Error(self).show()
+                elif cfg == "e":
+                    self._cli.clear()
+                    print(traceback.format_exc())
+                    input("\n\nClick return to continue")
+                else:
+                    return
+                self._cli.clear()
 
     # ============================
     # Utilities
@@ -100,9 +139,9 @@ class DrillDown:
 
     def _get_add_type(self) -> str:
         self._cli.clear()
+        choices = ["dir", "file", "json"]
         t = None
-        cli = Bullet(bullet=" > ", choices=["dir", "file", "json"])
-        t = cli.launch()
+        t = self._cli.ask(choices)
         return t
 
     def _drill_down(self, *, path, extensions, json=False, dir_only=False) -> str:
@@ -115,11 +154,10 @@ class DrillDown:
             names = self._filter_extensions(path, names, extensions)
             names.sort()
         names = self._decorate(path, names, select_dir=dir_only)
-        cli = Bullet(bullet=" > ", choices=names)
-        t = cli.launch()
-        if t == self._cli.STOP_HERE:
+        t = self._cli.ask(names)
+        if t in [self._cli.STOP_HERE, self._cli.STOP_HERE2]:
             return (path, True)
-        if t == self._cli.CANCEL:
+        if t in [self._cli.CANCEL, self._cli.CANCEL2]:
             return (path, False)
         if t.startswith("📂 ") or t.startswith("📄 "):
             t = t[2:]
@@ -128,7 +166,7 @@ class DrillDown:
     def _decorate(self, path, names, select_dir=False) -> list[str]:
         ns = []
         for n in names:
-            if n == self._cli.STOP_HERE:
+            if n in [self._cli.STOP_HERE, self._cli.STOP_HERE2]:
                 pass
             elif os.path.isfile(os.path.join(path, n)):
                 n = f"📄 {n}"

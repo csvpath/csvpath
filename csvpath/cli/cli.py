@@ -5,6 +5,8 @@ import traceback
 from bullet import Bullet
 from csvpath import CsvPaths
 from .drill_down import DrillDown
+from .select import Select
+from .error import Error
 
 
 class Cli:
@@ -24,7 +26,9 @@ class Cli:
     SIDEBAR_COLOR = "\033[36m"
     REVERT = "\033[0m"
     STOP_HERE = f"{SIDEBAR_COLOR}{ITALIC}... done picking dir{REVERT}"
+    STOP_HERE2 = "👍 pick this dir"
     CANCEL = f"{SIDEBAR_COLOR}{ITALIC}... cancel{REVERT}"
+    CANCEL2 = "← cancel"
 
     def _return_to_cont(self):
         print(
@@ -51,26 +55,34 @@ class Cli:
 
     def ask(self, choices: list[str]) -> str:
         self.clear()
-        b = Bullet(bullet=" > ", choices=choices)
-        t = b.launch()
+        try:
+            raise Exception("remove this !!!")
+            b = Bullet(bullet=" > ", choices=choices)
+            t = b.launch()
+        except Exception:
+            if choices[len(choices) - 1] == Cli.CANCEL:
+                choices[len(choices) - 1] = Cli.CANCEL2
+            if choices[len(choices) - 2] == Cli.STOP_HERE:
+                choices[len(choices) - 2] = Cli.STOP_HERE2
+
+            cs = [(s, s) for s in choices]
+            t = Select().ask(title="", values=cs, cancel_value="CANCEL")
+        self.clear()
         return t
 
     def loop(self):
         while True:
             t = None
             try:
-                self.clear()
-                b = Bullet(
-                    bullet=" > ",
-                    choices=[
-                        "named-files",
-                        "named-paths",
-                        "named-results",
-                        "run",
-                        "quit",
-                    ],
-                )
-                t = b.launch()
+                choices = [
+                    "named-files",
+                    "named-paths",
+                    "named-results",
+                    "run",
+                    "config",
+                    "quit",
+                ]
+                t = self.ask(choices)
             except KeyboardInterrupt:
                 self.end()
                 return
@@ -91,11 +103,16 @@ class Cli:
                 self._paths()
             if t == "named-results":
                 self._results()
+            if t == "config":
+                self._config()
         except KeyboardInterrupt:
             return "quit"
         except Exception:
             print(traceback.format_exc())
             self._return_to_cont()
+
+    def _config(self) -> None:
+        Error(self).show()
 
     def _files(self) -> None:
         choices = ["add named-file", "list named-files", "cancel"]
@@ -135,8 +152,7 @@ class Cli:
             names = self.csvpaths.results_manager.list_named_results()
             print(f"{len(names)} named-results names:")
             names.append(self.CANCEL)
-            cli = Bullet(bullet=" > ", choices=names)
-            t = cli.launch()
+            t = self.ask(names)
             if t == self.CANCEL:
                 return
             t = f"{self.csvpaths.config.archive_path}{os.sep}{t}"
@@ -169,17 +185,15 @@ class Cli:
         self.clear()
         print("What named-file? ")
         files = self.csvpaths.file_manager.named_file_names
-        cli = Bullet(bullet=" > ", choices=files)
-        file = cli.launch()
+        file = self.ask(files)
         self.clear()
         print("What named-paths? ")
         allpaths = self.csvpaths.paths_manager.named_paths_names
-        cli = Bullet(bullet=" > ", choices=allpaths)
-        paths = cli.launch()
+        paths = self.ask(allpaths)
         self.clear()
+        choices = ["collect", "fast-forward"]
         print("What method? ")
-        cli = Bullet(bullet=" > ", choices=["collect", "fast-forward"])
-        method = cli.launch()
+        method = self.ask(choices)
         self.clear()
         self.action(f"Running {paths} against {file} using {method}\n")
         self.pause()

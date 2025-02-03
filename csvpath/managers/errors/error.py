@@ -43,7 +43,6 @@ class Error(Metadata):
         self.message: str = msg
         self.expanded_message: str = None
         self.filename: str = None
-        self.code = os.path.basename(__main__.__file__)
         self.cwd = os.getcwd()
         self.pid = os.getpid()
 
@@ -85,7 +84,6 @@ class Error(Metadata):
         print(f"named_paths_name: {b}: {self.named_paths_name} == {e.named_paths_name}")
         b = self.named_file_name == e.named_file_name
         print(f"named_file_name: {b}: {self.named_file_name} == {e.named_file_name}")
-
         b = self.identity == e.identity
         print(f"identity: {b}: {self.identity} == {e.identity}")
         b = f"{self.source}".strip() == f"{e.source}".strip()
@@ -143,7 +141,6 @@ class Error(Metadata):
         string = f"""Error
 time: {self.time_string},
 uuid: {self.uuid_string},
-code: {self.code},
 cwd: {self.cwd},
 pid: {self.pid},
 archive: {self.archive_name},
