@@ -28,7 +28,7 @@ class TestConfig(unittest.TestCase):
             os.remove(TEST_INI)
         Config()
         assert os.path.exists(TEST_INI)
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config{os.sep}config.ini"
+        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"
 
     def test_config_assure_log_dir(self):
         cfg = f"tests{os.sep}test_resources{os.sep}config-1"
