@@ -2,7 +2,7 @@
 
 ~ description: Check for SKUs and UPCs
   id: upc-sku
-  validation-mode: no-raise, no-stop
+  validation-mode: raise, print, no-stop
   unmatched-mode: keep
 
   ckan-publish: never
@@ -23,10 +23,12 @@
 ~
 $[*][
     import($ckantest.csvpaths.top_matter_import)
-    print("Line $.csvpath.line_number: $.csvpath.headers", "Headers by line")
+    @headers = count_headers()
+    print("Linex $.csvpath.line_number: $.csvpath.headers: $.variables.headers", "Headers by line")
     @name = "this is a var value"
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
     not.nocontrib( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())
     not(#SKU)
+    push("lines", line_number())
 ]
 

@@ -1,0 +1,13 @@
+{
+    "ckantest": [
+        "tests/examples/ckan/csvpaths/top_matter_import.csvpath"
+    ],
+    "orders": [
+        "tests/examples/ckan/csvpaths/metadata.csvpath",
+        "tests/examples/ckan/csvpaths/file_length.csvpath",
+        "tests/examples/ckan/csvpaths/reset.csvpath",
+        "tests/examples/ckan/csvpaths/categories.csvpath",
+        "tests/examples/ckan/csvpaths/prices.csvpath",
+        "tests/examples/ckan/csvpaths/sku_upc.csvpath"
+    ]
+}

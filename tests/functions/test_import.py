@@ -60,6 +60,7 @@ class TestFunctionsImport(unittest.TestCase):
     def test_function_import3(self):
         paths = CsvPaths()
         paths.config.csvpath_errors_policy = [OnError.RAISE.value]
+        paths.config.csvpaths_errors_policy = [OnError.RAISE.value]
 
         paths.file_manager.add_named_file(name="test", path=PATH)
         paths.paths_manager.add_named_paths_from_file(

@@ -1,7 +1,9 @@
 # pylint: disable=C0114
 from typing import Any
+import traceback
 from csvpath.matching.productions import Term, Reference
 from csvpath.matching.util.exceptions import MatchComponentException
+from csvpath.util.exceptions import InputException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.expression_encoder import ExpressionEncoder
 from ..function_focus import SideEffect
@@ -49,20 +51,32 @@ class Import(SideEffect):
                 name = name[0 : name.find("#")]
 
             self.matcher.csvpath.logger.info("Starting import from %s", name)
-
+            #
+            #
+            #
             e = ExpressionUtility.get_my_expression(self)
             if e is None:
                 raise MatchComponentException("Cannot find my expression: {self}")
-
-            amatcher = self.matcher.csvpath.parse_named_path(
-                name=name, disposably=True, specific=specific
-            )
+            #
+            #
+            #
+            amatcher = None
+            try:
+                amatcher = self.matcher.csvpath.parse_named_path(
+                    name=name, disposably=True, specific=specific
+                )
+            except InputException as e:
+                self.matcher.csvpath.logger.error(
+                    f"Cannot import {name}#{specific}: {e}"
+                )
             if (
                 amatcher is None
                 or not amatcher.expressions
                 or len(amatcher.expressions) == 0
             ):
-                raise MatchComponentException("Parse named path failed: {name}")
+                raise MatchComponentException(
+                    f"Inject failed: Could not parse named paths. Named-paths name: {name}. Csvpath name: {specific}."
+                )
             #
             # find where we do injection of the imported expressions
             #

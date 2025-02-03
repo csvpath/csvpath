@@ -58,6 +58,11 @@ class PathsManager:
             self.add_named_paths(name=k, paths=v)
         self.csvpaths.logger.info("Set named-paths to %s groups", len(np))
 
+    """
+    #
+    # orig. passing in name doesn't make sense because the load is unordered and
+    # the last file loaded wins.
+    #
     def add_named_paths_from_dir(
         self, *, directory: str, name: NamedPathsName = None
     ) -> None:
@@ -82,6 +87,60 @@ class PathsManager:
                 if aname is None:
                     aname = self._name_from_name_part(p)
                 self.add_named_paths_from_file(name=aname, file_path=path)
+        else:
+            msg = "Dirname must point to a directory"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise InputException(msg)
+    """
+
+    def add_named_paths_from_dir(
+        self, *, directory: str, name: NamedPathsName = None
+    ) -> None:
+        if directory is None:
+            msg = "Named paths collection name needed"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise InputException(msg)
+        if not Nos(directory).isfile():
+            dlist = Nos(directory).listdir()
+            base = directory
+            agg = []
+            for p in dlist:
+                if p[0] == ".":
+                    continue
+                if p.find(".") == -1:
+                    continue
+                ext = p[p.rfind(".") + 1 :].strip().lower()
+                if ext not in self.csvpaths.config.csvpath_file_extensions:
+                    continue
+                path = os.path.join(base, p)
+                if name is None:
+                    #
+                    # add files one by one under their own names
+                    #
+                    aname = self._name_from_name_part(p)
+                    self.add_named_paths_from_file(name=aname, file_path=path)
+                else:
+                    #
+                    # if a name, aggregate all the files
+                    #
+                    _ = self._get_csvpaths_from_file(path)
+
+                    #
+                    # try to find a run-index: N metadata and use it
+                    # to try to impose order? we could do this, but it would
+                    # be messy and a work-around to avoid making people
+                    # use the ordered ways of creating named-paths that
+                    # already exist: JSON and all-in-ones
+                    #
+                    """
+                    c = self.csvpaths.csvpath()
+                    MetadataParser(c).extract_metadata(instance=c, csvpath=path)
+                    """
+                    agg += _
+            if len(agg) > 0:
+                self.add_named_paths(name=name, paths=agg)
         else:
             msg = "Dirname must point to a directory"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -327,6 +386,9 @@ class PathsManager:
             paths = self.get_named_paths(nps)
         idps = []
         for path in paths:
+            #
+            # we can get this from our self.csvpath, should we?
+            #
             c = CsvPath()
             MetadataParser(c).extract_metadata(instance=c, csvpath=path)
             idps.append((c.identity, path))
