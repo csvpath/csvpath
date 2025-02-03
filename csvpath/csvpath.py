@@ -615,8 +615,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.update_settings_from_metadata()
         #
         #
+        # exp!
+        if disposably is False:
+            csvpath = self._update_file_path(csvpath)
         #
-        csvpath = self._update_file_path(csvpath)
+        #
+        #
         s, mat = self._find_scan_and_match_parts(csvpath)
         #
         # a disposable matcher still needs the match part
@@ -745,7 +749,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         for p in np:
             # this ends up being redundant to the caller. we do it 1x so it's not
             # a big lift and is consistent.
-            c = CsvPath()
+            c = CsvPath(csvpaths=self.csvpaths)
             MetadataParser(c).extract_metadata(instance=c, csvpath=p)
             if c.identity == specific:
                 return p
@@ -765,9 +769,13 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             raise CsvPathsException("No CsvPaths object available")
 
         path = self._pick_named_path(name, specific=specific)
-        c = CsvPath()
+        c = CsvPath(csvpaths=self.csvpaths)
         path = MetadataParser(c).extract_metadata(instance=c, csvpath=path)
-        path = c._update_file_path(path)
+        #
+        # exp. oddly this seems to be superfluous
+        # if disposably is False:
+        #    path = c._update_file_path(path)
+        #
         dis = c.parse(path, disposably=disposably)
         if disposably is True:
             return dis

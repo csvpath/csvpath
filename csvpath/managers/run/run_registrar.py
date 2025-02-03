@@ -31,7 +31,6 @@ class RunRegistrar(Registrar, Listener):
             with DataFileWriter(path=self.manifest_path) as file:
                 json.dump([], file.sink, indent=2)
         with DataFileReader(self.manifest_path) as file:
-            print(f"run_erg: mani path: {self.manifest_path}")
             return json.load(file.source)
 
     def metadata_update(self, mdata: Metadata) -> None:
