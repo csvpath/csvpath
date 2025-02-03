@@ -139,11 +139,14 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         # must be available in CsvPath too. The others are CsvPaths
         # only.
         #
+        self._set_managers()
+        """
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
         self.results_manager = ResultsManager(csvpaths=self)
         self.ecoms = ErrorCommunications(csvpaths=self)
         self._error_manager = ErrorManager(csvpaths=self)
+        """
         #
         # TODO:
         # self.print_manager = ... <<<=== should we do this?
@@ -177,6 +180,13 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         #
         self.metrics = None
         self.logger.info("initialized CsvPaths")
+
+    def _set_managers(self) -> None:
+        self.paths_manager = PathsManager(csvpaths=self)
+        self.file_manager = FileManager(csvpaths=self)
+        self.results_manager = ResultsManager(csvpaths=self)
+        self.ecoms = ErrorCommunications(csvpaths=self)
+        self._error_manager = ErrorManager(csvpaths=self)
 
     @property
     def error_manager(self) -> ErrorManager:
@@ -276,6 +286,7 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         self.config.add_to_config(section=section, key=key, value=value)
         self.config.save_config()
         self.config.reload()
+        self._set_managers()
 
     def clean(self, *, paths) -> None:
         """at this time we do not recommend reusing CsvPaths, but it is doable
