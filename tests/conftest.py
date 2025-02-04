@@ -19,3 +19,6 @@ def clear_files(request):
         if os.path.exists(p):
             print(f"deleting from {p}")
             shutil.rmtree(p)
+
+    print("cleaning complete.")
+    print("\nREMEMBER TO CHECK THAT YOUR CONFIG.INI PATHS MATCH SYSTEM SEPARATORS\n\n")
