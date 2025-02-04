@@ -161,6 +161,7 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_new_in5(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(name="food", path=FOOD)
         paths.paths_manager.add_named_paths_from_dir(
@@ -196,6 +197,7 @@ class TestFunctionsIn(unittest.TestCase):
 
     def test_function_new_in7(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(name="food", path=FOOD)
         paths.paths_manager.add_named_paths_from_dir(

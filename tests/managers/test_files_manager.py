@@ -13,7 +13,8 @@ JSON = f"tests{os.sep}test_resources{os.sep}named_files.json"
 class TestFilesManager(unittest.TestCase):
     def test_named_files_home(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         d = m.named_files_dir
         assert d is not None
@@ -21,7 +22,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_named_file_home(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         d = m.named_file_home("aname")
         assert d is not None
@@ -29,7 +31,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_copy_in(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
@@ -43,7 +46,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_reg_fingerprint(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
@@ -57,7 +61,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_rereg(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         reg = m.registrar
         try:
@@ -83,7 +88,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_file_mgr_dir1(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
         fm.remove_all_named_files()
         fm.add_named_files_from_dir(DIR)
@@ -91,7 +97,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_file_mgr_json1(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
         fm.remove_all_named_files()
         assert fm.named_files_count == 0
@@ -101,14 +108,16 @@ class TestFilesManager(unittest.TestCase):
     def test_file_mgr_json2(self):
         paths = CsvPaths()
         # setting this config shouldn't be needed here, right?
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
         with pytest.raises(FileNotFoundError):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
         nf = {
             "wonderful": f"tests{os.sep}test_resources{os.sep}food.csv",
@@ -125,7 +134,8 @@ class TestFilesManager(unittest.TestCase):
 
     def test_file_mgr_dict2(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
         try:
             fm.remove_named_file("wonderful")

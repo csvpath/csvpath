@@ -13,7 +13,8 @@ class TestPathsManager(unittest.TestCase):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpaths", "raise")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths(name=name, paths=[apath])
         lst = CsvPaths().paths_manager.get_named_paths(name)
         assert lst
@@ -26,6 +27,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_set_named_paths1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="test", path=f"tests{os.sep}test_resources{os.sep}test.csv"
         )
@@ -48,6 +50,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_json1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         pm = paths.paths_manager
         pm.remove_all_named_paths()
         pm.add_named_paths_from_json(file_path=JSON)
@@ -60,6 +63,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_dict1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         pm = paths.paths_manager
         np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         i = pm.total_named_paths()
@@ -76,6 +80,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_dict2(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         pm = paths.paths_manager
         np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         pm.remove_named_paths("numbers")
@@ -91,6 +96,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_from_and_to_1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         pm = paths.paths_manager
         np = [
             "~id:wonderful~ $[*][#1 yes()]",
@@ -132,6 +138,7 @@ class TestPathsManager(unittest.TestCase):
     def test_named_paths_dir(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         pm = paths.paths_manager
         pm.remove_all_named_paths()
         assert pm.total_named_paths() == 0

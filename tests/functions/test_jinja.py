@@ -12,6 +12,7 @@ NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
 class TestJinja(unittest.TestCase):
     def test_function_jinja_get_tokens(self):
         cs = CsvPaths()
+        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
@@ -58,6 +59,7 @@ class TestJinja(unittest.TestCase):
 
     def test_function_jinja1(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         out = f"tests{os.sep}test_resources{os.sep}out.txt"
         inf = f"tests{os.sep}test_resources{os.sep}in.txt"

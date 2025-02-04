@@ -72,6 +72,7 @@ class TestResultReaders(unittest.TestCase):
     def test_reload_result_reader_helpers(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
 
@@ -123,6 +124,7 @@ class TestResultReaders(unittest.TestCase):
 
     def test_reload_result_file_lines_reader(self):
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
@@ -173,7 +175,7 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.collect_paths(pathsname="arrivals", filename="test")
+        paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
@@ -204,7 +206,8 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.collect_paths(pathsname="arrivals", filename="test")
+
+        paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
@@ -215,6 +218,7 @@ class TestResultReaders(unittest.TestCase):
         #
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
@@ -232,7 +236,7 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.collect_paths(pathsname="arrivals", filename="test")
+        paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
@@ -241,6 +245,7 @@ class TestResultReaders(unittest.TestCase):
         #
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
