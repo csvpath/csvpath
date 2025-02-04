@@ -25,7 +25,8 @@ class TestFunctionsImport(unittest.TestCase):
 
     def test_function_import2(self):
         paths = CsvPaths()
-        paths.config.csvpath_errors_policy = [OnError.RAISE.value]
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
 
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}test_resources{os.sep}named_files"

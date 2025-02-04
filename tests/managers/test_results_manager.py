@@ -14,6 +14,7 @@ class TestResultsManager(unittest.TestCase):
         pathsname = "many"
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         # get a csvpath. the csvpaths is not 100% configured but we don't need it.
         path = paths.csvpath()
         run_dir = os.path.join(paths.config.archive_name, pathsname)

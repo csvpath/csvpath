@@ -9,7 +9,10 @@ from csvpath.util.config import Config
 class TestListeners(unittest.TestCase):
     def test_additional_listeners1(self):
         stmt = "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
-        r = Registrar(csvpaths=CsvPaths())
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        r = Registrar(csvpaths=paths)
         listeners = [r]
         assert len(listeners) == 1
         r.load_additional_listener(stmt, listeners)
@@ -21,6 +24,8 @@ class TestListeners(unittest.TestCase):
             os.remove(testini)
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
         paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         config = paths.config
         assert os.path.exists(testini)
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"

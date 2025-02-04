@@ -14,6 +14,7 @@ class TestSftp(unittest.TestCase):
         self._clear()
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftp", save_load=False)
         paths.config.add_to_config(
             "listeners",
@@ -84,6 +85,7 @@ class TestSftp(unittest.TestCase):
     def test_sftp_var_values(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
         )
