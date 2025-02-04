@@ -81,7 +81,7 @@ class GeneralDataWriter(DataFileWriter):
         if self.sink is None:
             mode = "w" if self._mode is None else self._mode
             if mode != "wb":
-                self.sink = open(self._path, mode, encoding="utf-8")
+                self.sink = open(self._path, mode, encoding="utf-8", newline="")
             else:
                 self.sink = open(self._path, mode)
 
@@ -90,7 +90,7 @@ class GeneralDataWriter(DataFileWriter):
         as a context manager for this method. for multiple write
         calls to the same file handle use append().
         """
-        with open(self._path, "w", encoding="utf-8") as file:
+        with open(self._path, "w", encoding="utf-8", newline="") as file:
             file.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:
