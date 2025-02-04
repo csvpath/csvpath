@@ -113,7 +113,7 @@ class CsvLineSpooler(LineSpooler):
             dw = DataFileWriter(path=path, mode="w")
             dw.load_if()
             return dw.sink
-        file = open(path, "a", newline="")
+        file = open(path, "a", newline="", encoding="utf-8")
         return file
 
     def next(self):
