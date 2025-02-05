@@ -222,6 +222,7 @@ class PathsManager:
     # which is equiv to: many#food
     #
     def get_named_paths(self, name: NamedPathsName) -> list[Csvpath]:
+        self.csvpaths.logger.info("Getting named-paths for %s", name)
         ret = None
         npn = None
         identity = None
@@ -253,6 +254,12 @@ class PathsManager:
             elif directive == ":from":
                 ret = self._get_from(npn, identity)
             else:
+                self.csvpaths.logger.error(
+                    "Incorrect reference directive: name: %s, paths-name: %, identity: %",
+                    name,
+                    npn,
+                    identity,
+                )
                 raise InputException(
                     f"Reference directive must be :to or :from, not {directive}"
                 )

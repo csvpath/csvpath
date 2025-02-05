@@ -94,7 +94,10 @@ class SftpPlusTransferCreator:
     @property
     def _execute_before_script(self) -> str:
         scripts = self.csvpaths.config.get(section="sftpplus", name="scripts_dir")
-        path = f"{scripts}{os.sep}{SftpPlusTransferCreator.HANDLE_AUTO_ARRIVAL}.sh"
+        if os.name == "nt":
+            path = f"{scripts}{os.sep}{SftpPlusTransferCreator.HANDLE_AUTO_ARRIVAL}.bat"
+        else:
+            path = f"{scripts}{os.sep}{SftpPlusTransferCreator.HANDLE_AUTO_ARRIVAL}.sh"
         return path
 
     @property
@@ -114,7 +117,7 @@ class SftpPlusTransferCreator:
             "named-file": nfn,
             "account": account_dir,
         }
-        print(f"transctr: _paths: paths: {paths}")
+        self.csvpaths.logger.debug("created paths dict: %s", paths)
         return paths
 
     @property
@@ -161,6 +164,9 @@ class SftpPlusTransferCreator:
         print(f"TransferCreator.process_msg: processing: path: {self.message_path}")
         print(f"TransferCreator.process_msg: processing: msg: {msg}")
         print("******************************************************\n")
+        self.csvpaths.logger.debug(
+            "Transfer creator processing %s: %s", self.message_path, msg
+        )
         #
         # if tuuid exists we update the existing transfer
         # otherwise we create a new transfer.
@@ -172,30 +178,60 @@ class SftpPlusTransferCreator:
             self._update_existing_transfer(uuid)
 
     def _create_new_transfer(self) -> str:
-        print("_create_new_transfer: starting to create a transfer")
+        self.csvpaths.logger.debug("Creating a new transfer")
         msg = self.message
         #
         # make the dirs the transfer needs. the account dir must already exist
         #
         paths = self._paths
         nfn = paths["named-file"]
-        os.mkdir(nfn)
-        print(f"_create_new_transfer: created: {nfn}")
+        if not os.path.exists(nfn):
+            os.mkdir(nfn)
+            self.csvpaths.logger.debug(
+                f"_create_new_transfer: created named file dir: {nfn}"
+            )
+        else:
+            self.csvpaths.logger.debug(
+                f"_create_new_transfer: named file dir already exists: {nfn}"
+            )
 
         handled = paths["handled"]
-        os.mkdir(handled)
-        print(f"_create_new_transfer: created: {handled}")
+        if not os.path.exists(handled):
+            os.mkdir(handled)
+            self.csvpaths.logger.debug(
+                f"_create_new_transfer: created handled dir: {handled}"
+            )
+        else:
+            self.csvpaths.logger.debug(
+                f"_create_new_transfer: handled dir already exists: {handled}"
+            )
 
         meta = paths["meta"]
-        os.mkdir(meta)
-        print(f"_create_new_transfer: created: {meta}")
+        if not os.path.exists(meta):
+            os.mkdir(meta)
+            self.csvpaths.logger.debug(
+                f"_create_new_transfer: created meta dir: {meta}"
+            )
+        else:
+            self.csvpaths.logger.debug(f"_create_new_transfer: meta dir exists: {meta}")
 
         msg["source"] = paths["named-file"]
         msg["destination"] = paths["handled"]
         #
         # copy the message file to the meta dir for the transfer script to use
         #
-        shutil.copy(self.message_path, paths["meta"])
+        mfn = self.message_path
+        self.csvpaths.logger.debug(
+            "_create_new_transfer: message_path is %s", self.message_path
+        )
+        if mfn.find(os.sep) > -1:
+            i = mfn.rfind(os.sep)
+            mfn = mfn[i + 1 :]
+        mfnp = os.path.join(paths["meta"], mfn)
+        self.csvpaths.logger.debug(
+            "_create_new_transfer: copying meta file to %s", mfnp
+        )
+        shutil.copy(self.message_path, mfnp)
         #
         # create sftpplus transfer
         #
@@ -215,7 +251,7 @@ class SftpPlusTransferCreator:
         ts.create_transfer(values["name"], values)
 
     def _update_existing_transfer(self, tuuid: str) -> None:
-        print(f"_update_existing_transfer: tuuid: {tuuid}")
+        self.csvpaths.logger.debug(f"Updating an existing transfer: tuuid: {tuuid}")
         msg = self.message
         ts = Transfers()
         active = msg.get("active")

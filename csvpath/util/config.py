@@ -198,6 +198,9 @@ otlp.errors = from csvpath.managers.integrations.otlp.otlp_error_listener import
 # add sftp to the list of groups above to push content and metadata to an SFTP account
 sftp.results = from csvpath.managers.integrations.sftp.sftp_listener import SftpListener
 
+# add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
+sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener
+
 # add ckan to the list of groups above to push content and metadata to CKAN
 ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 
@@ -214,10 +217,19 @@ slack.result = from csvpath.managers.integrations.slack.sender import SlackSende
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
 
 [sftpplus]
-admin_user = SFTPPLUS_ADMIN_USERNAME
+# these are only needed on the server
+admin_username = SFTPPLUS_ADMIN_USERNAME
 admin_password = SFTPPLUS_ADMIN_PASSWORD
+api_url = https://localhost:10020/json
+scripts_dir =
+execute_timeout = 300
+
+# these are only needed by the csvpath writer
+mailbox_user = mailbox
+mailbox_password = SFTPPLUS_MAILBOX_PASSWORD
 server = SFTPPLUS_SERVER
 port = SFTPPLUS_PORT
+
 
 [ckan]
 server = http://localhost:80

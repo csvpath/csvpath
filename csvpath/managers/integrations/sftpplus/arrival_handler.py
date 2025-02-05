@@ -14,8 +14,10 @@ class SftpPlusArrivalHandler:
         self._path = path
         file_home = path[0 : path.rfind(os.sep)]
         self.named_file_name = file_home[file_home.rfind(os.sep) + 1 :]
-        print(
-            f"Handler: init: file_home: {file_home}, named_file_name: {self.named_file_name}"
+        self.csvpaths.logger.debug(
+            "Handler: init: file_home: %s, named_file_name: %s",
+            file_home,
+            self.named_file_name,
         )
 
     @property
@@ -35,13 +37,21 @@ class SftpPlusArrivalHandler:
         # register the file
         #
         f = self.named_file_name
-        print(f"Handler: process_arrival: name: {f}, path: {self.path}")
+        self.csvpaths.logger.debug(
+            "Handler: process_arrival: name: %s, path: %s", f, self.path
+        )
         self.csvpaths.file_manager.add_named_file(name=f, path=self.path)
         #
-        # do work per set of instructions found in the meta dir
+        # do work per sets of instructions found in the meta dir
         #
         p = self.path
+        #
+        # this is a file name. we need the path to it.
+        #
         p = p[0 : p.rfind(os.sep)]
+        #
+        # add the meta dir name
+        #
         meta = os.path.join(p, "meta")
         #
         # loop on all files in meta. not expecting meta ever won't
@@ -52,7 +62,9 @@ class SftpPlusArrivalHandler:
             ms = os.listdir(meta)
             for m in ms:
                 instructions = os.path.join(meta, m)
-                print(f"process_arrival: found instructions at: {instructions}")
+                self.csvpaths.logger.debug(
+                    "Handler: process_arrival: found instructions at: %s", instructions
+                )
                 try:
                     with open(instructions, "r", encoding="utf-8") as file:
                         j = json.load(file)
@@ -60,6 +72,9 @@ class SftpPlusArrivalHandler:
                 except Exception as e:
                     self.csvpaths.logger.error(e)
                     print(f"Error: {e}")
+        else:
+            self.csvpaths.logger.warning("No meta dir at %s. Creating it.", meta)
+            os.makedirs(meta)
 
     def _process_meta_file(self, meta: dict) -> None:
         #
@@ -72,8 +87,8 @@ class SftpPlusArrivalHandler:
         if archive is not None:
             orig_archive = self.csvpath.config.get(section="results", name="archive")
             self.csvpath.config.add_to_config("results", "archive", archive)
-        print(
-            f"_process_meta_file: method: {m}, named_paths_name: {p}, archive: {archive}"
+        self.csvpaths.logger.debug(
+            f"Handler: process_arrival: method: {m}, named_paths_name: {p}, archive: {archive}"
         )
         if m is None or m == "collect_paths":
             self.csvpaths.collect_paths(filename=self.named_file_name, pathsname=p)
@@ -86,6 +101,8 @@ class SftpPlusArrivalHandler:
                 filename=self.named_file_name, pathsname=p
             )
         else:
-            self.csvpaths.config.error("Run method is incorrect: {m}")
+            self.csvpaths.config.error(
+                "Handler: process_arrival: run method is incorrect: {m}"
+            )
         if orig_archive is not None:
             self.csvpath.config.add_to_config("results", "archive", orig_archive)

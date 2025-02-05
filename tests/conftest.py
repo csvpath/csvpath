@@ -21,4 +21,6 @@ def clear_files(request):
             shutil.rmtree(p)
 
     print("cleaning complete.")
-    print("\nREMEMBER TO CHECK THAT YOUR CONFIG.INI PATHS MATCH SYSTEM SEPARATORS\n\n")
+    print(
+        "\nREMEMBER TO CHECK THAT YOUR CONFIG.INI PATHS (IN ./CONFIG/ AND ./TEST/) MATCH SYSTEM SEPARATORS\n\n"
+    )

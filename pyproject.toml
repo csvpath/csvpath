@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.512"
+version = "0.0.514"
 description = "An edge governance framework for managing and validating CSV, Excel, and other tabular data files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
@@ -30,7 +30,7 @@ include = ["config", "logs", "docs"]
 cli = "csvpath.cli.cli:run"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">3.10"
 pytest = "^8.3.3"
 marquez-python = "^0.50.0"
 requests = "^2.32.3"

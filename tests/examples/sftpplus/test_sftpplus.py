@@ -17,12 +17,11 @@ class TestSftpPlus(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.config.add_to_config("listeners", "groups", "sftpplus", save_load=False)
+        paths.config.add_to_config("listeners", "groups", "sftpplus")
         paths.config.add_to_config(
             "listeners",
             "sftpplus.paths",
             "from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener",
-            save_load=False,
         )
         paths.paths_manager.add_named_paths_from_dir(
             name="sftpplus",
@@ -54,12 +53,11 @@ class TestSftpPlus(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.config.add_to_config("listeners", "groups", "sftpplus", save_load=False)
+        paths.config.add_to_config("listeners", "groups", "sftpplus")
         paths.config.add_to_config(
             "listeners",
             "sftpplus.paths",
             "from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener",
-            save_load=False,
         )
         paths.file_manager.add_named_file(
             name="sftpplus-orders",
