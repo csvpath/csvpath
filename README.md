@@ -107,8 +107,8 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 
 CsvPath Language is for creating "paths" that walk line-by-line through tabular data. They have three parts:
 - a "root" file name
-- a scanning part
-- a matching part
+- a scanning part that says what lines to validate
+- a matching part that decides if a line is valid
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
@@ -118,7 +118,10 @@ A very simple csvpath might look like this:
     $filename[*][yes()]
 ```
 
-This csvpath says open the file named `filename`, scan all the lines, and match every line scanned.
+This csvpath says:
+- Open the file named `filename`
+- Scan all the lines (`*`)
+- And match every line scanned (`yes()`)
 
 A slightly more functional csvpath could look like this:
 
