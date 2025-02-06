@@ -95,17 +95,17 @@ The CsvPath Framework project uses Poetry. You can also install it with:
     pip install csvpath
 ```
 
-CsvPath has an optional dependency on Pandas. Pandas data frames can be used as a data source, much like Excel or CSV files. Install CsvPath with the Pandas option:
+CsvPath has an optional dependency on Pandas. Pandas data frames can be used as a data source, much like Excel or CSV files. To install CsvPath with the Pandas option do:
 ```
     pip install csvpath[pandas]
 ```
 
-Pandas can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capability, though, it is easy to install.
+Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capability, though, it is easy to install.
 
 # Description
 <a name="description"></a>
 
-CsvPath Language paths have three parts:
+CsvPath Language is for creating "paths" that walk line-by-line through tabular data. They have three parts:
 - a "root" file name
 - a scanning part
 - a matching part
