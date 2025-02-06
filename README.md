@@ -4,11 +4,11 @@
 The CsvPath language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
 The CsvPath library's goal is to make it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
-- Registers files for clear and durable identity
-- Validates that the data matches expectations
-- Reports on content validity and other metadata
-- Shapes files with copy-on-write canonicalization
-- And stages the results for consistent loading to a data lake or applications
+- Registers files for **clear and durable identity**
+- **Validates the data** against expectations
+- Provides **operations and validity reports**
+- Shapes files with **copy-on-write canonicalization**
+- And **stages data for consistent loading** to a data lake or applications
 
 And does it all in an automation-friendly way.
 
