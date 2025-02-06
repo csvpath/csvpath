@@ -74,9 +74,13 @@ CSV files are everywhere!
 
 The majority of companies depend on file processing for significant revenue operations. Research organizations and archives are awash in CSVs. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use spits out CSV or Excel files for sharing. Delimited and tabular files are the lowest of common dominators. Many are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
 
-CsvPath is first and foremost a validation language. It describes tabular data in simple declarative rules that define what valid means for that data. CsvPath can also extract and shape data and create reports.
+This project tackles two needs:
+- A more robust validation language for delimited and tabular data
+- A systems integration framework for flat-file landing and staging
 
-The CsvPath library implements the CsvPath language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
+CsvPath Language is first and foremost a validation language. It supports both schema definitions and rules-based validation. CsvPath Language describes data so you can easily tell if a file is valid. CsvPath can also extract and shape data and create reports. Overall the goal is to automate human judgement out of the processing loop and instead move it to the process definition stage.
+
+The CsvPath Framework implements CsvPath Language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
 
 CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library and framework, not a system, so it relies on being easy to integrate with other DataOps tools.
 
@@ -84,33 +88,24 @@ CsvPath's goal is to make simple validations almost trivial and more complex sit
 <a name="install"></a>
 # Install
 
-<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13. Install with
+<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13.
+
+The CsvPath Framework project uses Poetry. You can also install it with:
 ```
     pip install csvpath
 ```
 
-CsvPath has two optional dependencies:
-
-- <a target='_blank' href='https://pypi.org/project/pandas/'>Pandas</a>
-- <a target='_blank' href='https://pypi.org/project/smart-open/'>Smart-open</a>
-
-Pandas data frames can be used as a data source, much like Excel or CSV files. Install CsvPath with the Pandas option:
+CsvPath has an optional dependency on Pandas. Pandas data frames can be used as a data source, much like Excel or CSV files. Install CsvPath with the Pandas option:
 ```
     pip install csvpath[pandas]
 ```
 
-Smart-open is an option for loading data files directly from S3. Install the Smart Open extra with:
-```
-    pip install csvpath[smart-open]
-```
-
-Both of these optional dependencies can make it harder to use CsvPath in certain specific use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capabilities, they are easy to install, but if you don't CsvPath is lighter weight without.
-
+Pandas can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capability, though, it is easy to install.
 
 # Description
 <a name="description"></a>
 
-CsvPath paths have three parts:
+CsvPath Language paths have three parts:
 - a "root" file name
 - a scanning part
 - a matching part
