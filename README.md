@@ -268,7 +268,7 @@ CsvPaths have file scanning instructions, match components, and comments. Commen
 
 As well as documentation, comments outside the csvpath can:
 - Contribute to a collection of metadata fields associated with a csvpath
-- Switch on/off certain validation settings
+- Switch on/off certain validation and DataOps tool integration settings
 - Set the identity of a csvpath within a group of csvpaths
 
 A comment starts and ends with a `~` character. Within the comment, any word that has a colon after it is considered a metadata key. The metadata value is anything following the key up till a new metadata key word is seen or the comment ends.
