@@ -119,9 +119,11 @@ A very simple csvpath might look like this:
 ```
 
 This csvpath says:
-- Open the file named `filename`
-- Scan all the lines (`*`)
-- And match every line scanned (`yes()`)
+- Open the file: `filename`
+- Scan all the lines: `*`
+- And match every line scanned: `yes()`
+
+In this case a match is considered a valid line. Treating matches as valid is a simple approach. There are <a href='https://www.csvpath.org/topics/validation' target='_blank'>many possible validation strategies</a> when its time to be more ambitious in your validation.
 
 A slightly more functional csvpath could look like this:
 
