@@ -1,9 +1,9 @@
 
 # <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/logo-wordmark-4.svg'/></a>
 
-The CsvPath language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
+The CsvPath Language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
-The CsvPath library's goal is to make it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
+The CsvPath Framework makes it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
 - Registers files for **clear and durable identity**
 - **Validates the data** against expectations
 - Provides **operations and validity reports**
@@ -12,11 +12,11 @@ The CsvPath library's goal is to make it easy to setup a <a href='https://www.at
 
 And does it all in an automation-friendly way.
 
-CsvPath's validation is inspired by:
+CsvPath Language validation is inspired by:
 - XPath for XML files
 - The ISO standard <a href='https://schematron.com/'>Schematron validation</a>
 
-CsvPath is intended to fit tightly with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions and listeners are easy to create.
+The CsvPath Framework is intended to fit tightly with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions and listeners are easy to create.
 
 CsvPath can stream lineage events to an OpenLineage server, such as the open source Marquez server. Read about <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-openlineage" target="_blank">CsvPath and OpenLineage here</a>.
 <br/><a href='https://openlineage.io' >
