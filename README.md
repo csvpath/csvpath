@@ -230,14 +230,14 @@ There are a small number of configuration options. Read <a href='https://github.
 
 Before we get into the details of scanning and matching, let's look at what CsvPath can print. The `print` function has several important uses, including:
 
-- Validating CSV files
+- Validating CSV and Excel files
 - Debugging csvpaths
 - Creating new CSV files based on an existing file
 
 You can <a href='https://github.com/dk107dk/csvpath/blob/main/docs/printing.md'>read more about the mechanics of printing here</a>.
 
 <a name="validating"></a>
-### Validating CSV
+### Validating CSV and Excel
 
 CsvPath paths can be used for rules based validation. Rules based validation checks a file against content and structure rules but does not validate the file's structure against a schema. This validation approach is similar to XML's Schematron validation, where XPath rules are applied to XML.
 
