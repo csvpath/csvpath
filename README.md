@@ -28,7 +28,7 @@ DataOps demands observability! Pipe CsvPath events through OpenTelemetry to your
 <br/><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/opentelemetry.png" alt="OpenTelemetry Logo"/>
 
 CsvPath has multiple MFT options including SFTPPlus. <a href="https://www.csvpath.org/getting-started/dataops-integrations/getting-started-with-csvpath-+-sftpplus" target="_blank">See how SFTPPlus + CsvPath improves data onboarding</a>.
-<a href="https://sftpplus.com/" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/sftpplus-logo.png" alt="MFT with SFTPPlus"/></a>
+<a href="https://sftpplus.com/" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/sftpplus-logo2.png" alt="MFT with SFTPPlus"/></a>
 
 
 Need to publish validated datasets to a CKAN data portal? <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank">Read about how CsvPath is integrated with CKAN</a>.
