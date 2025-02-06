@@ -38,7 +38,7 @@ class TestTitleFix(unittest.TestCase):
         )
         paths.paths_manager.add_named_paths_from_file(
             name="title_fix_schema",
-            file_path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}title_fix_schema.csvpaths",
+            file_path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}title_fix_schema_2.csvpaths",
         )
         #
         # blows up because [2019] is not an integer()

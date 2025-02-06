@@ -40,7 +40,7 @@ class DrillDown:
         except Exception:
             cfg = None
             while cfg in [None, "c", "e"]:
-                print("There was an error.")
+                print("\nThere was an error.")
                 print("Click 'e' and return to print the stack trace. ")
                 print("Click 'c' and return to change config options. ")
                 print("Click return to continue. ")
@@ -93,7 +93,7 @@ class DrillDown:
         except Exception:
             cfg = None
             while cfg in [None, "c", "e"]:
-                print("There was an error.")
+                print("\nThere was an error.")
                 print("Click 'e' and return to print the stack trace. ")
                 print("Click 'c' and return to change config options. ")
                 print("Click return to continue. ")

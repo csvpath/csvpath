@@ -1,5 +1,3 @@
-~
-~
 $[1*][
     line.checkouts(
         string.usage.notnone(#UsageClass),
@@ -18,6 +16,5 @@ $[1*][
     in(#UsageClass, "Digital|Physical")
     in(#CheckoutType, "Horizon|OverDrive")
     in(#MaterialType, "BOOK|EBOOK|AUDIOBOOK")
-    error("this is an error")
 
 ]

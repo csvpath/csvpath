@@ -13,6 +13,11 @@ class TestFunctionsError(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config(
+            "errors",
+            "pattern",
+            "{time}:{file}:{line}:{paths}:{instance}:{chain}:  {message}",
+        )
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[
@@ -38,7 +43,7 @@ class TestFunctionsError(unittest.TestCase):
         lst = ps["default"]
         assert len(lst) > 0
         assert lst[0].find("This is line:") > -1
-        assert lst[0].find("test_errors:errors:0") > -1
+        assert lst[0].find("errors:1:errors:") > -1
 
     def test_function_error_2(self):
         paths = CsvPaths()

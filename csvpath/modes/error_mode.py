@@ -3,6 +3,7 @@ class ErrorMode:
     FULL = "full"
     DEFAULT = BARE
     MODE = "error-mode"
+    CONFIG_KEY = "use_format"
 
     def __init__(self, controller):
         self.controller = controller

@@ -58,12 +58,11 @@ class TestJsonNamedPaths(unittest.TestCase):
 
     def test_result_manifest(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # setup
         #
-        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, print")
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
         )

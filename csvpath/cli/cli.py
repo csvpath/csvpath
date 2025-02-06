@@ -52,8 +52,12 @@ class Cli:
     def end(self) -> None:
         print(chr(27) + "[2J")
 
-    def ask(self, choices: list[str]) -> str:
+    def ask(self, choices: list[str], q=None) -> str:
         self.clear()
+        if len(choices) == 0:
+            return
+        if q is not None:
+            print(q)
         if choices[len(choices) - 1] == Cli.CANCEL:
             choices[len(choices) - 1] = Cli.CANCEL2
         if choices[len(choices) - 2] == Cli.STOP_HERE:
@@ -136,6 +140,8 @@ class Cli:
         names = self.csvpaths.results_manager.list_named_results()
         print(f"{len(names)} named-results names:")
         for n in names:
+            if n.find(".") > -1:
+                continue
             self._response(f"   {n}")
         self._return_to_cont()
 
@@ -143,6 +149,7 @@ class Cli:
         self.clear()
         try:
             names = self.csvpaths.results_manager.list_named_results()
+            names = [n for n in names if n.find(".") == -1]
             print(f"{len(names)} named-results names:")
             names.append(self.CANCEL)
             t = self.ask(names)
@@ -176,17 +183,20 @@ class Cli:
 
     def run(self):
         self.clear()
-        print("What named-file? ")
         files = self.csvpaths.file_manager.named_file_names
-        file = self.ask(files)
+        if len(files) == 0:
+            input("You must add a named-file. Press any key to continue.")
+            return
+        file = self.ask(files, q="What named-file? ")
         self.clear()
-        print("What named-paths? ")
         allpaths = self.csvpaths.paths_manager.named_paths_names
-        paths = self.ask(allpaths)
+        if len(allpaths) == 0:
+            input("You must add a named-paths file. Press any key to continue.")
+            return
+        paths = self.ask(allpaths, q="What named-paths? ")
         self.clear()
         choices = ["collect", "fast-forward"]
-        print("What method? ")
-        method = self.ask(choices)
+        method = self.ask(choices, q="What method? ")
         self.clear()
         self.action(f"Running {paths} against {file} using {method}\n")
         self.pause()
@@ -196,7 +206,22 @@ class Cli:
             else:
                 self.csvpaths.fast_forward_paths(filename=file, pathsname=paths)
         except Exception:
-            print(traceback.format_exc())
+            cfg = None
+            while cfg in [None, "c", "e"]:
+                print("\nThere was an error.")
+                print("Click 'e' and return to print the stack trace. ")
+                print("Click 'c' and return to change config options. ")
+                print("Click return to continue. ")
+                cfg = input("")
+                if cfg == "c":
+                    Error(self).show()
+                elif cfg == "e":
+                    self.clear()
+                    print(traceback.format_exc())
+                    input("\n\nClick return to continue")
+                else:
+                    return
+                self.clear()
         self._return_to_cont()
 
 

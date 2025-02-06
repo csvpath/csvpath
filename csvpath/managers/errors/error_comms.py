@@ -1,5 +1,6 @@
 from typing import Any, List
 from csvpath.util.config import OnError
+from csvpath.modes.error_mode import ErrorMode
 
 
 class ErrorCommunications:
@@ -44,10 +45,26 @@ class ErrorCommunications:
             return self._csvpath.print_validation_errors
         return self.in_policy(OnError.PRINT.value)
 
+    def do_i_print_expanded(self) -> bool:
+        ret = False
+        c = self._csvpath if self._csvpath is not None else self._csvpaths
+        if c is not None:
+            ret = (
+                c.config.get(
+                    section="errors", name=ErrorMode.CONFIG_KEY, default=ErrorMode.BARE
+                )
+                == ErrorMode.FULL
+            )
+        if self._csvpath and self._csvpath.error_mode == ErrorMode.FULL:
+            ret = True
+        return ret
+
     def do_i_stop(self) -> bool:
+        mode = None
         if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
-            return self._csvpath.stop_on_validation_errors
-        return self.in_policy(OnError.STOP.value)
+            mode = self._csvpath.stop_on_validation_errors
+        policy = self.in_policy(OnError.STOP.value)
+        return mode is True or policy is True
 
     def do_i_fail(self) -> bool:
         if self._csvpath and self._csvpath.fail_on_validation_errors is not None:

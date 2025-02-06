@@ -9,9 +9,25 @@ from prompt_toolkit.widgets import RadioList, Label
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.formatted_text import AnyFormattedText
 from prompt_toolkit.styles import BaseStyle
-
+from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
+from prompt_toolkit.formatted_text.base import StyleAndTextTuples, to_formatted_text
 
 T = TypeVar("T")
+
+
+class CRadioList(RadioList):
+    def _get_text_fragments(self) -> StyleAndTextTuples:
+        result = super()._get_text_fragments()
+        for i, _ in enumerate(result):
+            if _[0].find("SetCursorPosition") > -1:
+                _ = list(result[i + 1])
+                _[1] = " "
+                result[i + 1] = tuple(_)
+            elif _[1].find("*") > -1:
+                _ = list(result[i])
+                _[1] = " "
+                result[i] = tuple(_)
+        return result
 
 
 class Select:
@@ -27,7 +43,11 @@ class Select:
         #
         # this class sourced from https://github.com/prompt-toolkit/python-prompt-toolkit/issues/756
         #
-        radio_list = RadioList(values, default)
+        radio_list = CRadioList(values, default)
+        radio_list.open_character = " "
+        radio_list.close_character = " "
+        radio_list.selected_style = " "
+
         #
         # Remove the enter key binding so that we can augment it
         #

@@ -167,21 +167,29 @@ class Config:
             c = f"""
 [csvpath_files]
 extensions = txt, csvpath, csvpaths
+
 [csv_files]
 extensions = txt, csv, tsv, dat, tab, psv, ssv
+
 [errors]
 csvpath = collect, fail, print
 csvpaths = raise, collect
+use_format = full
+pattern = {{time}}:{{file}}:{{line}}:{{paths}}:{{instance}}:{{chain}}:  {{message}}
+
 [logging]
 csvpath = info
 csvpaths = info
 log_file = logs{os.sep}csvpath.log
 log_files_to_keep = 100
 log_file_size = 52428800
+
 [config]
 path =
+
 [functions]
 imports =
+
 [cache]
 path =
 

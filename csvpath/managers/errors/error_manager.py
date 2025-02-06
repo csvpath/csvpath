@@ -42,6 +42,7 @@ class ErrorManager(Registrar, Listener):
         self.type_name = "error"
         self.vetos = {}
         self.error_metrics = None
+        self.full_format = None
 
     @property
     def csvpaths(self):
@@ -116,11 +117,16 @@ class ErrorManager(Registrar, Listener):
         # time:file-name:paths-name:instance-name:source-chain: msg
         #
         t = datetime.now(timezone.utc)
-        t = t.strftime("%Y-%m-%d %H:%M:%S.%f")
+        t = t.strftime("%Y-%m-%d %Hh%Mm%Ss-%f")
         file = ""
         paths = ""
         instance = ""
         chain = ""
+        line = (
+            self.csvpath.line_monitor.physical_line_number
+            if self.csvpath is not None
+            else -1
+        )
         try:
             if isinstance(source, Matchable):
                 file = source.matcher.csvpath.named_file_name
@@ -158,7 +164,37 @@ class ErrorManager(Registrar, Listener):
             #
             #
             self._collector.logger.error(e)
-        return f"{t}:{file}:{paths}:{instance}:{chain}: {msg}"
+        if self.full_format is None:
+            self.full_format = (
+                "{time}:{file}:{line}:{paths}:{instance}:{chain}: {message}"
+            )
+            if self.csvpath is not None:
+                f = self.csvpath.config.get(
+                    section="errors", name="pattern", default=self.full_format
+                )
+                if f is not None and f.strip() != "":
+                    self.full_format = f
+        return self.format(
+            time=t,
+            file=file,
+            paths=paths,
+            instance=instance,
+            chain=chain,
+            line=line,
+            message=msg,
+        )
+
+    def format(self, *, time, file="", paths="", instance="", chain="", line, message):
+        # TODO: a better solution that doesn't use exec
+        f = self.full_format
+        f = f.replace("{time}", time)
+        f = f.replace("{file}", file)
+        f = f.replace("{paths}", paths)
+        f = f.replace("{instance}", instance)
+        f = f.replace("{chain}", chain)
+        f = f.replace("{line}", f"{line}")
+        f = f.replace("{message}", message)
+        return f
 
     # listeners must include:
     #   - self on behalf of CsvPath
@@ -221,6 +257,7 @@ class ErrorManager(Registrar, Listener):
         if self.ecoms.do_i_print() is True:
             if self.csvpath:
                 msg = mdata.message
-                if self.csvpath.error_mode == ErrorMode.FULL or not self.csvpath:
+                if self.ecoms.do_i_print_expanded():
+                    # if self.csvpath.error_mode == ErrorMode.FULL or not self.csvpath:
                     msg = mdata.expanded_message
                 self.csvpath.print(f"{msg}")
