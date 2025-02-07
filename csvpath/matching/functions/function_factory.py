@@ -40,6 +40,7 @@ from .math.subtract import Subtract
 from .math.multiply import Multiply
 from .math.divide import Divide
 from .math.intf import Int, Float  # , Num
+from .math.odd import Odd
 from .math.sum import Sum
 from .math.subtotal import Subtotal
 from .math.equals import Equals
@@ -346,6 +347,8 @@ class FunctionFactory:
             f = Track(matcher, name, child)
         elif name == "sum":
             f = Sum(matcher, name, child)
+        elif name in ["odd", "even"]:
+            f = Odd(matcher, name, child)
         elif name == "email":
             f = Email(matcher, name, child)
         elif name == "url":
