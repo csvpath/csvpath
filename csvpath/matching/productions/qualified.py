@@ -43,10 +43,17 @@ class Qualities(Enum):
     STRICT = "strict"
     #
     # opposite of strict (not including middle ground, if any). indicates
-    # that a type should be interpreted as openly as possible without losing
-    # its type-ness. e.g. a weak decimal may not have a decimal point.
+    # that a type should be interpreted as openly as possible without
+    # losing its type-ness. e.g. a weak decimal may not have a decimal
+    # point.
     #
     WEAK = "weak"
+    #
+    # this is on variables to say that they should fully reset the
+    # underlying variable on a line-by-line basis. we cannot use "renew"
+    # because that would compete with the existing renew() function.
+    #
+    RENEW = "renew"
 
 
 class Qualified:  # pylint: disable=R0904
@@ -70,6 +77,7 @@ class Qualified:  # pylint: disable=R0904
         Qualities.ONCE.value,
         Qualities.WEAK.value,
         Qualities.STRICT.value,
+        Qualities.RENEW.value,
     ]
 
     def __init__(self, *, name: str = None):
@@ -206,6 +214,16 @@ class Qualified:  # pylint: disable=R0904
     @notnone.setter
     def notnone(self, nn: bool) -> None:
         self._set(Qualities.NOTNONE.value, nn)
+
+    @property
+    def renew(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.RENEW.value in self.qualifiers
+        return False
+
+    @renew.setter
+    def renew(self, nn: bool) -> None:
+        self._set(Qualities.RENEW.value, nn)
 
     @property
     def latch(self) -> bool:  # pylint: disable=C0116

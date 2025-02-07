@@ -144,6 +144,11 @@ class Config:
     def add_to_config(self, section, key, value) -> None:
         if not self._config.has_section(section):
             self._config.add_section(section)
+        #
+        # values must be strings
+        #
+        if value is None:
+            value = ""
         self._config[section][key] = value
         self.refresh()
 

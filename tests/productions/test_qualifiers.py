@@ -26,6 +26,29 @@ class TestFunctionsQualifiers(unittest.TestCase):
         var = Variable(None, name="a", value="v")
         assert not var.has_known_qualifiers()
 
+    def test_qualifier_renew_1(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""${PATH}[*][
+                    print("")
+                    @m = eq( mod(line_number(), 2), 0)
+                    print("line: $.csvpath.line_number m: $.variables.m")
+
+                    @m.asbool -> @t = yes()
+                    @t.asbool -> counter.ts(1)
+
+                    @m.asbool -> @x.renew = yes()
+                    @x.asbool -> counter.xs(1)
+            ]"""
+        )
+        path.fast_forward()
+        print(f"vars: {path.variables}")
+        assert "ts" in path.variables
+        assert "xs" in path.variables
+        assert path.variables["ts"] == 9
+        assert path.variables["xs"] == 5
+
     def test_qualifier_notnone1(self):
         #
         # baseline

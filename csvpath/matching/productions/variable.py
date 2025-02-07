@@ -31,6 +31,13 @@ class Variable(Matchable):
     def reset(self) -> None:
         self.value = None
         self.match = None
+        #
+        # clearing self.value is obviously not the same as resetting
+        # the underlying variable value. if we have a reset qualifier
+        # we reset the variable in self.matcher.csvpath at each line.
+        #
+        if self.renew:
+            self.matcher.csvpath.set_variable(self.name, value=None)
         super().reset()
 
     def matches(self, *, skip=None) -> bool:

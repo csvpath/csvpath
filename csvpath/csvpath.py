@@ -1251,6 +1251,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
                 self.identity,
             )
+            # exp
+            return
+            # end exp
         #
         # there are times, e.g. when using Lambda, when it may be better to
         # not use a cache. in the case of Lambda the reason is to avoid working

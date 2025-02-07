@@ -142,6 +142,10 @@ class FileRegistrar(Registrar, Listener):
             if mdata is None or len(mdata) == 0:
                 raise InputException(f"Manifest for {home} at {mpath} is empty")
             m = mdata[len(mdata) - 1]
+            if "file" not in m:
+                raise ValueError(
+                    "File path cannot be None. Check your config file and named-files."
+                )
             path = m["file"]
             mark = None
             if "mark" in m:

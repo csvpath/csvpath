@@ -21,7 +21,7 @@ Qualifiers are relatively new and are being added opportunistically. Not all fun
 
 
 ## Well-known Qualifiers
-At the moment there are only a few "official" qualifiers that are broadly available.
+At the moment there are quite a few qualifiers that are broadly available. There are a few more for specific functions. You can read about those on the individual function pages.
 
 - `asbool`
 - `decrease`
@@ -32,6 +32,7 @@ At the moment there are only a few "official" qualifiers that are broadly availa
 - `once`
 - `onchange`
 - `onmatch`
+- `renew`
 
 ### asbool
 When `asbool` is set on a variable or header its value is interpreted as a bool rather than just a simple `is not None` test
@@ -98,6 +99,13 @@ Add `onchange` to a variable to indicate that a row should only match when the v
 |Functions | Headers | Variables |
 |----------|---------|-----------|
 | Yes      | No      | Yes       |
+
+### renew
+`renew` resets variables at each line. The variable is set to None. If the variable has `latch` it latches only during each line, which can be a valuable distinction in certain cases.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
 
 ## Arbitrary Names
 You can also add an arbitrary string to a function name or a variable.
