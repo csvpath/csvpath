@@ -6,6 +6,7 @@ from .dates.now import Now
 from .strings.lower import Lower
 from .strings.contains import Contains
 from .strings.upper import Upper
+from .strings.caps import Capitalize
 from .strings.substring import Substring
 from .strings.starts_with import StartsWith
 from .strings.strip import Strip
@@ -186,6 +187,8 @@ class FunctionFactory:
             f = Lower(matcher, name, child)
         elif name == "upper":
             f = Upper(matcher, name, child)
+        elif name == "caps":
+            f = Capitalize(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
         elif name in ["below", "lt", "before", "lte"]:

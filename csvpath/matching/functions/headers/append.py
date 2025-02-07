@@ -16,7 +16,7 @@ class Append(SideEffect):
         a.arg(types=[Term], actuals=[str])
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
         a.arg(
-            name="append header name to data",
+            name="append header name to header row data",
             types=[None, Term, Function],
             actuals=[bool],
         )

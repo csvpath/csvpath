@@ -86,6 +86,8 @@ class PathsRegistrar(Registrar, Listener):
             m["named_paths_name"] = mdata.named_paths_name
             m["named_paths_home"] = mdata.named_paths_home
             m["group_file_path"] = mdata.group_file_path
+            if mdata.source_path is not None:
+                m["source_path"] = mdata.source_path
             m["named_paths"] = mdata.named_paths
             m["named_paths_identities"] = mdata.named_paths_identities
             m["named_paths_count"] = mdata.named_paths_count

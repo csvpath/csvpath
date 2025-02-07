@@ -1,7 +1,11 @@
 
 # String Functions
 
-The string handling functions behave much like their Python equivalents.
+The string handling functions operate on strings. Many have Python equivalents and behave similarly.
+
+### caps(value, value)
+
+Uppercases the initial character of a string. If the optional second argument evaluates to True (e.g. `yes()`) the string is split on a space (`" "`) and each substring's initial char is uppercased.
 
 ### concat(value, value, ...)
 

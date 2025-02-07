@@ -58,42 +58,6 @@ class PathsManager:
             self.add_named_paths(name=k, paths=v)
         self.csvpaths.logger.info("Set named-paths to %s groups", len(np))
 
-    """
-    #
-    # orig. passing in name doesn't make sense because the load is unordered and
-    # the last file loaded wins.
-    #
-    def add_named_paths_from_dir(
-        self, *, directory: str, name: NamedPathsName = None
-    ) -> None:
-        if directory is None:
-            msg = "Named paths collection name needed"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-            if self.csvpaths.ecoms.do_i_raise():
-                raise InputException(msg)
-        if not Nos(directory).isfile():
-            dlist = Nos(directory).listdir()
-            base = directory
-            for p in dlist:
-                if p[0] == ".":
-                    continue
-                if p.find(".") == -1:
-                    continue
-                ext = p[p.rfind(".") + 1 :].strip().lower()
-                if ext not in self.csvpaths.config.csvpath_file_extensions:
-                    continue
-                path = os.path.join(base, p)
-                aname = name
-                if aname is None:
-                    aname = self._name_from_name_part(p)
-                self.add_named_paths_from_file(name=aname, file_path=path)
-        else:
-            msg = "Dirname must point to a directory"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-            if self.csvpaths.ecoms.do_i_raise():
-                raise InputException(msg)
-    """
-
     def add_named_paths_from_dir(
         self, *, directory: str, name: NamedPathsName = None
     ) -> None:
@@ -140,7 +104,7 @@ class PathsManager:
                     """
                     agg += _
             if len(agg) > 0:
-                self.add_named_paths(name=name, paths=agg)
+                self.add_named_paths(name=name, paths=agg, source_path=directory)
         else:
             msg = "Dirname must point to a directory"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -152,7 +116,7 @@ class PathsManager:
     ) -> None:
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
         _ = self._get_csvpaths_from_file(file_path)
-        self.add_named_paths(name=name, paths=_)
+        self.add_named_paths(name=name, paths=_, source_path=file_path)
 
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -167,7 +131,7 @@ class PathsManager:
                     for f in v:
                         _ = self._get_csvpaths_from_file(f)
                         paths += _
-                    self.add_named_paths(name=k, paths=paths)
+                    self.add_named_paths(name=k, paths=paths, source_path=file_path)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
@@ -181,6 +145,7 @@ class PathsManager:
         from_file: str = None,
         from_dir: str = None,
         from_json: str = None,
+        source_path: str = None,
     ) -> None:
         if from_file is not None:
             return self.add_named_paths_from_file(name=name, file_path=from_file)
@@ -215,6 +180,8 @@ class PathsManager:
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
+        if source_path is not None:
+            mdata.source_path = source_path
         self.registrar.register_complete(mdata)
 
     #
