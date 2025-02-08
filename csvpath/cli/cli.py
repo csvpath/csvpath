@@ -4,13 +4,29 @@ import time
 import traceback
 from csvpath import CsvPaths
 from .drill_down import DrillDown
-from .select import Select
-from .error import Error
+from .selecter import Selecter
+from .debug_config import DebugConfig
 
 
 class Cli:
     def __init__(self):
         self.csvpaths = CsvPaths()
+        self.clear()
+        splash = """
+          *** *            ******        **  **
+        ***  **   *        **  **      **** **
+       **        ** **  * ** *** ***** **  *****
+       **    * **** **** ***** *** ** **  ** **
+       **   **** ****** **     ** ** *** ** ** **
+         ***   **** *  **      *** ** ****   **
+***************************
+CsvPath Command Line Interface
+Try tab completion and menu-by-key.
+For help see https://www.csvpath.org
+"""
+        print(splash)
+        self._return_to_cont()
+        self.clear()
 
     def clear(self):
         print(chr(27) + "[2J")
@@ -28,6 +44,7 @@ class Cli:
     STOP_HERE2 = "👍 pick this dir"
     CANCEL = f"{SIDEBAR_COLOR}{ITALIC}... cancel{REVERT}"
     CANCEL2 = "← cancel"
+    QUIT = "← quit"
 
     def _return_to_cont(self):
         print(
@@ -63,7 +80,7 @@ class Cli:
         if choices[len(choices) - 2] == Cli.STOP_HERE:
             choices[len(choices) - 2] = Cli.STOP_HERE2
         cs = [(s, s) for s in choices]
-        t = Select().ask(title="", values=cs, cancel_value="CANCEL")
+        t = Selecter().ask(title="", values=cs, cancel_value="CANCEL")
         self.clear()
         return t
 
@@ -74,22 +91,22 @@ class Cli:
                 choices = [
                     "named-files",
                     "named-paths",
-                    "named-results",
+                    "archive",
                     "run",
                     "config",
-                    "quit",
+                    self.QUIT,
                 ]
                 t = self.ask(choices)
             except KeyboardInterrupt:
                 self.end()
                 return
             t = self._do(t)
-            if t == "quit":
+            if t == Cli.QUIT:
                 self.end()
                 return
 
     def _do(self, t: str) -> str | None:
-        if t == "quit":
+        if t == Cli.QUIT:
             return t
         try:
             if t == "run":
@@ -98,21 +115,21 @@ class Cli:
                 self._files()
             if t == "named-paths":
                 self._paths()
-            if t == "named-results":
+            if t == "archive":
                 self._results()
             if t == "config":
                 self._config()
         except KeyboardInterrupt:
-            return "quit"
+            return Cli.QUIT
         except Exception:
             print(traceback.format_exc())
             self._return_to_cont()
 
     def _config(self) -> None:
-        Error(self).show()
+        DebugConfig(self).show()
 
     def _files(self) -> None:
-        choices = ["add named-file", "list named-files", "cancel"]
+        choices = ["add named-file", "list named-files", self.CANCEL2]
         t = self.ask(choices)
         if t == "add named-file":
             DrillDown(self).name_file()
@@ -120,7 +137,7 @@ class Cli:
             self.list_named_files()
 
     def _paths(self) -> None:
-        choices = ["add named-paths", "list named-paths", "cancel"]
+        choices = ["add named-paths", "list named-paths", self.CANCEL2]
         t = self.ask(choices)
         if t == "add named-paths":
             DrillDown(self).name_paths()
@@ -128,7 +145,7 @@ class Cli:
             self.list_named_paths()
 
     def _results(self) -> None:
-        choices = ["open named-result", "list named-results", "cancel"]
+        choices = ["open named-result", "list named-results", self.CANCEL2]
         t = self.ask(choices)
         if t == "open named-result":
             self.open_named_result()
@@ -187,17 +204,21 @@ class Cli:
         if len(files) == 0:
             input("You must add a named-file. Press any key to continue.")
             return
+        files.sort()
         file = self.ask(files, q="What named-file? ")
         self.clear()
         allpaths = self.csvpaths.paths_manager.named_paths_names
         if len(allpaths) == 0:
             input("You must add a named-paths file. Press any key to continue.")
             return
+        allpaths.sort()
         paths = self.ask(allpaths, q="What named-paths? ")
         self.clear()
-        choices = ["collect", "fast-forward"]
+        choices = ["collect", "fast-forward", Cli.CANCEL2]
         method = self.ask(choices, q="What method? ")
         self.clear()
+        if method == Cli.CANCEL2:
+            return
         self.action(f"Running {paths} against {file} using {method}\n")
         self.pause()
         try:
@@ -214,7 +235,7 @@ class Cli:
                 print("Click return to continue. ")
                 cfg = input("")
                 if cfg == "c":
-                    Error(self).show()
+                    DebugConfig(self).show()
                 elif cfg == "e":
                     self.clear()
                     print(traceback.format_exc())

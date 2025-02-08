@@ -1,6 +1,7 @@
 import os
 import traceback
-from .error import Error
+from .debug_config import DebugConfig
+from .asker import Asker
 
 
 class DrillDown:
@@ -16,11 +17,13 @@ class DrillDown:
         # get name
         #
         self._cli.clear()
-        name = self._cli._input("Named-file name? ")
+        name = Asker(self._cli, name_type="files").ask()
         #
         # get path
         #
         t = self._get_add_type()
+        if t == self._cli.CANCEL2:
+            return
         p = self._get_path(t, self._cli.csvpaths.config.csv_file_extensions)
         if p is False:
             return
@@ -46,7 +49,7 @@ class DrillDown:
                 print("Click return to continue. ")
                 cfg = input("")
                 if cfg == "c":
-                    Error(self).show()
+                    DebugConfig(self).show()
                 elif cfg == "e":
                     self._cli.clear()
                     print(traceback.format_exc())
@@ -64,11 +67,13 @@ class DrillDown:
         # get name
         #
         self._cli.clear()
-        name = self._cli._input("Named-paths name? ")
+        name = Asker(self._cli, name_type="files").ask()
         #
         # get path
         #
         t = self._get_add_type()
+        if t == self._cli.CANCEL2:
+            return
         exts = self._cli.csvpaths.config.csvpath_file_extensions
         p = self._get_path(t, exts)
         if p is False:
@@ -99,7 +104,7 @@ class DrillDown:
                 print("Click return to continue. ")
                 cfg = input("")
                 if cfg == "c":
-                    Error(self).show()
+                    DebugConfig(self).show()
                 elif cfg == "e":
                     self._cli.clear()
                     print(traceback.format_exc())
@@ -139,7 +144,7 @@ class DrillDown:
 
     def _get_add_type(self) -> str:
         self._cli.clear()
-        choices = ["dir", "file", "json"]
+        choices = ["dir", "file", "json", self._cli.CANCEL2]
         t = None
         t = self._cli.ask(choices)
         return t
@@ -149,10 +154,9 @@ class DrillDown:
         names = self._filter_hidden(names)
         if dir_only:
             names = self._filter_dirs_only(path, names)
-            names.sort()
         else:
             names = self._filter_extensions(path, names, extensions)
-            names.sort()
+        names.sort()
         names = self._decorate(path, names, select_dir=dir_only)
         t = self._cli.ask(names)
         if t in [self._cli.STOP_HERE, self._cli.STOP_HERE2]:

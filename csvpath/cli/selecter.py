@@ -30,7 +30,7 @@ class CRadioList(RadioList):
         return result
 
 
-class Select:
+class Selecter:
     def ask(
         self,
         title: str = "",
@@ -38,7 +38,6 @@ class Select:
         default: Optional[T] = None,
         cancel_value: Optional[T] = None,
         style: Optional[BaseStyle] = None,
-        async_: bool = False,
     ) -> T:
         #
         # this class sourced from https://github.com/prompt-toolkit/python-prompt-toolkit/issues/756
@@ -82,7 +81,4 @@ class Select:
             style=style,
             full_screen=False,
         )
-        if async_:
-            return application.run_async()
-        else:
-            return application.run()
+        return application.run()

@@ -2,7 +2,7 @@ from prompt_toolkit.shortcuts import message_dialog
 from prompt_toolkit.shortcuts import checkboxlist_dialog
 
 
-class Error:
+class DebugConfig:
     def __init__(self, holder):
         self._holder = holder
         if hasattr(holder, "_cli"):

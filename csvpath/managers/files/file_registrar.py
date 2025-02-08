@@ -64,6 +64,9 @@ class FileRegistrar(Registrar, Listener):
         jdata.append(mani)
         with DataFileWriter(path=manifest_path, mode="w") as writer:
             json.dump(jdata, writer.sink, indent=2)
+        #
+        # drop update into an all-inputs/files record here?
+        #
 
     def register_complete(self, mdata: Metadata) -> None:
         path = mdata.origin_path
