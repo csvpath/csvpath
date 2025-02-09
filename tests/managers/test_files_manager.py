@@ -4,6 +4,8 @@ import shutil
 import os
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
+from csvpath.managers.files.files_listener import FilesListener
+from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.matching.util.exceptions import MatchException
 
 DIR = f"tests{os.sep}test_resources{os.sep}named_files"
@@ -11,6 +13,59 @@ JSON = f"tests{os.sep}test_resources{os.sep}named_files.json"
 
 
 class TestFilesManager(unittest.TestCase):
+    def test_files_listener_1(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        reg = FilesListener(paths)
+        mdata = FileMetadata(paths.config)
+        mdata.named_file_name = None
+        mdata.fingerprint = "123"
+        mdata.origin_path = "p/d/q"
+        mdata.manifest_path = "root/name/manifest.json"
+        mdata.name_home = "root/name"
+        mdata.file_home = "root/name/filename"
+        mdata.file_path = "root/name/filename/version"
+        mdata.file_name = "version"
+        mdata.mark = "#"
+        mdata.type = "files"
+        #
+        # check mdata to mani transfer
+        #
+        mani = reg._prep_update(mdata)
+        #
+        # this will have been reset from the file home to the root of files
+        #
+        assert mani["manifest_path"] != "root/manifest.json"
+        assert mani["manifest_path"] == os.path.join(
+            paths.config.get(section="inputs", name="files"), "manifest.json"
+        )
+        #
+        #
+        #
+        assert mani["uuid"] is not None
+        assert mani["time"] is not None
+        assert mani["type"] == "files"
+        assert mani["file_manifest"] == "root/name/manifest.json"
+        assert mani["name_home"] == "root/name"
+        assert mani["file_home"] == "root/name/filename"
+        assert mani["file_path"] == "root/name/filename/version"
+        assert mani["file_name"] == "version"
+        assert mani["fingerprint"] == "123"
+        assert mani["origin_path"] == "p/d/q"
+
+    def test_files_listener_2(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        grps = paths.config.get(section="listeners", name="groups")
+        paths.add_to_config("listeners", "groups", "default")
+        mani = paths.file_manager.files_root_manifest
+        paths.file_manager.add_named_file(
+            name="testx", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        mani2 = paths.file_manager.files_root_manifest
+        assert len(mani) + 1 == len(mani2)
+        paths.add_to_config("listeners", "groups", grps)
+
     def test_named_files_home(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")

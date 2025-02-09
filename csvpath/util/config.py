@@ -200,8 +200,13 @@ path =
 
 [listeners]
 # add listener group names to send events to the channel they represent
-groups =
+groups = default
 #slack, marquez, ckan, sftp, sftpplus, otlp
+
+# add to capture a history of all named-file stagings and all named-paths loads in
+# an [inputs] files and an[inputs] paths root manifest.json
+default.file = from csvpath.managers.files.files_listener import FilesListener
+default.paths = from csvpath.managers.paths.paths_listener import PathsListener
 
 # add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint
 otlp.result = from csvpath.managers.integrations.otlp.otlp_result_listener import OpenTelemetryResultListener

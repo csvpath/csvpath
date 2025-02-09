@@ -15,7 +15,6 @@ class FileRegistrar(Registrar, Listener):
     server, JSON file, or database"""
 
     def __init__(self, csvpaths):
-        # super().__init__(csvpaths)
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
         self.csvpaths = csvpaths

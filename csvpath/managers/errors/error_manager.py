@@ -208,7 +208,6 @@ class ErrorManager(Registrar, Listener):
     # update: now using add_internal_listener() on Registrar parent
     #
     # self.add_listeners(lst)
-
     #
     # this method listens onbehalf of the CsvPath. it logs, stops, fails,
     # prints, and collects

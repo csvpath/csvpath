@@ -29,6 +29,22 @@ class PathsManager:
     #
     # ================== publics =====================
     #
+    @property
+    def paths_root_manifest_path(self) -> str:
+        r = self.csvpaths.config.get(section="inputs", name="csvpaths")
+        p = os.path.join(r, "manifest.json")
+        if not Nos(r).dir_exists():
+            Nos(r).makedirs()
+        if not Nos(p).exists():
+            with DataFileWriter(path=p) as writer:
+                writer.write("[]")
+        return p
+
+    @property
+    def paths_root_manifest(self) -> str:
+        p = self.paths_root_manifest_path
+        with DataFileReader(p) as reader:
+            return json.load(reader.source)
 
     @property
     def registrar(self) -> PathsRegistrar:
@@ -180,8 +196,7 @@ class PathsManager:
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
-        if source_path is not None:
-            mdata.source_path = source_path
+        mdata.source_path = source_path
         self.registrar.register_complete(mdata)
 
     #
@@ -244,7 +259,10 @@ class PathsManager:
     @property
     def named_paths_names(self) -> list[str]:
         path = self.named_paths_dir
-        names = [n for n in Nos(path).listdir() if not n.startswith(".")]
+        # names = [n for n in Nos(path).listdir() if (not n.startswith(".") and not n == "manifest.json")]
+        names = [
+            n for n in Nos(path).listdir() if not Nos(os.path.join(path, n)).isfile()
+        ]
         return names
 
     def remove_named_paths(self, name: NamedPathsName, strict: bool = False) -> None:

@@ -3,12 +3,58 @@ import os
 from uuid import uuid4
 from csvpath import CsvPaths
 from csvpath.managers.paths.paths_manager import PathsManager
+from csvpath.managers.paths.paths_listener import PathsListener
+from csvpath.managers.paths.paths_metadata import PathsMetadata
 
 DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
 JSON = f"tests{os.sep}test_resources{os.sep}named_paths.json"
 
 
 class TestPathsManager(unittest.TestCase):
+    def test_paths_listener_1(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        reg = PathsListener(paths)
+        mdata = PathsMetadata(paths.config)
+        mdata.named_paths_name = "aname"
+        mdata.named_paths_home = "root/aname"
+        mdata.group_file_path = "root/aname/group.csvpaths"
+        mdata.source_path = "a/b/c"
+        mdata.fingerprint = "123"
+        mdata.manifest_path = "root/aname/manifest.json"
+        #
+        # check mdata to mani transfer
+        #
+        mani = reg._prep_update(mdata)
+        assert mani["paths_manifest"] == "root/aname/manifest.json"
+        assert mani["manifest_path"] == os.path.join(
+            paths.config.get(section="inputs", name="csvpaths"), "manifest.json"
+        )
+        assert mani["uuid"] is not None
+        assert mani["time"] is not None
+        assert mani["paths_manifest"] == "root/aname/manifest.json"
+        assert mani["fingerprint"] == "123"
+        assert mani["named_paths_name"] == "aname"
+        assert mani["named_paths_home"] == "root/aname"
+        assert mani["group_file_path"] == "root/aname/group.csvpaths"
+        assert mani["source_path"] == "a/b/c"
+        assert mani["fingerprint"] == "123"
+
+    def test_paths_listener_2(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        grps = paths.config.get(section="listeners", name="groups")
+        paths.add_to_config("listeners", "groups", "default")
+        mani = paths.paths_manager.paths_root_manifest
+        paths.paths_manager.add_named_paths(
+            name="aname", paths=["$[*][yes()]"], source_path="a/b/c"
+        )
+        mani2 = paths.paths_manager.paths_root_manifest
+        print(f"mani: {mani}")
+        print(f"mani2: {mani2}")
+        assert len(mani) + 1 == len(mani2)
+        paths.add_to_config("listeners", "groups", grps)
+
     def test_named_paths_adda(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
