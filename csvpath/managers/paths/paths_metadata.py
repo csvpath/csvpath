@@ -6,9 +6,8 @@ class PathsMetadata(Metadata):
         super().__init__(config)
         self.named_paths_name: str = None
         self.named_paths_home: str = None
-        self.named_paths_file: str = None
+        self.group_file_path: str = None
         self.named_paths_count: int = -1
         self.named_paths_identities: list[str] = None
         self.named_paths: list[str] = None
-        self.group_file_path: str = None
         self.source_path: str = None

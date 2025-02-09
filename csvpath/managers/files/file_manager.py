@@ -32,6 +32,23 @@ class FileManager:
         return self._csvpaths.config.inputs_files_path
 
     #
+    # the root manifest file tracking all name-file stagings. note that
+    # this is created by an optional listener. it is possible to run without
+    # creating the root manifest or capturing the data with another listener.
+    #
+    @property
+    def files_root_manifest(self) -> dict:
+        p = self.files_root_manifest_path
+        if Nos(p).exists():
+            with DataFileReader(p) as reader:
+                return json.load(reader.source)
+        return None
+
+    @property
+    def files_root_manifest_path(self) -> dict:
+        return os.path.join(self.named_files_dir, "manifest.json")
+
+    #
     # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: str) -> str:
@@ -314,11 +331,6 @@ class FileManager:
             #
             # need an s3 way to do this
             remove_fpath = Nos(hpath).exists()
-            """
-            if b:
-                Nos(fpath).remove()
-                return hpath, h
-            """
             #
             # if a first add, rename the file to the fingerprint + ext
             #
