@@ -3,6 +3,15 @@
 
 The string handling functions operate on strings. Many have Python equivalents and behave similarly.
 
+### alter(value, value, value)
+
+Alters the first string by substituting the third string for every instance of the second string.
+
+```bash
+    @altered = alter("the quick brown dog", "dog", "fox")
+    @altered == "the quick brown fox" -> print("Yes, that's right")
+```
+
 ### caps(value, value)
 
 Uppercases the initial character of a string. If the optional second argument evaluates to True (e.g. `yes()`) the string is split on a space (`" "`) and each substring's initial char is uppercased.

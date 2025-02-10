@@ -220,6 +220,7 @@ There are lots more simple examples on the individual function pages.
 ## Strings
 <table>
 <tr><th>Function   <a name="strings">  </th><th> What it does                                              </th></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>alter(value, value, value)</a> </td><td> Changes a string by replacing substrings  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>caps(value, value)</a> </td><td> Uppercases initial chars.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>concat(value, value, ...)</a> </td><td> Joins any number of values.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/contains.md'>contains(value, value)</a> </td><td> True if the second string is contained in the first.  </td></tr>
