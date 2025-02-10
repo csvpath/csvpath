@@ -13,6 +13,7 @@ from .strings.strip import Strip
 from .strings.length import Length, MinMaxLength
 from .strings.regex import Regex
 from .strings.concat import Concat
+from .strings.alter import Alter
 from .strings.metaphone import Metaphone
 from .counting.count import Count
 from .counting.count_bytes import CountBytes
@@ -189,6 +190,8 @@ class FunctionFactory:
             f = Upper(matcher, name, child)
         elif name == "caps":
             f = Capitalize(matcher, name, child)
+        elif name == "alter":
+            f = Alter(matcher, name, child)
         elif name == "percent":
             f = Percent(matcher, name, child)
         elif name in ["below", "lt", "before", "lte"]:

@@ -45,6 +45,9 @@ For help see https://www.csvpath.org
     CANCEL = f"{SIDEBAR_COLOR}{ITALIC}... cancel{REVERT}"
     CANCEL2 = "← cancel"
     QUIT = "← quit"
+    NAMED_FILES = "register data"
+    NAMED_PATHS = "load csvpaths"
+    ARCHIVE = "access the archive"
 
     def _return_to_cont(self):
         print(
@@ -89,9 +92,9 @@ For help see https://www.csvpath.org
             t = None
             try:
                 choices = [
-                    "named-files",
-                    "named-paths",
-                    "archive",
+                    Cli.NAMED_FILES,
+                    Cli.NAMED_PATHS,
+                    Cli.ARCHIVE,
                     "run",
                     "config",
                     self.QUIT,
@@ -111,11 +114,11 @@ For help see https://www.csvpath.org
         try:
             if t == "run":
                 self.run()
-            if t == "named-files":
+            if t == Cli.NAMED_FILES:
                 self._files()
-            if t == "named-paths":
+            if t == Cli.NAMED_PATHS:
                 self._paths()
-            if t == "archive":
+            if t == Cli.ARCHIVE:
                 self._results()
             if t == "config":
                 self._config()

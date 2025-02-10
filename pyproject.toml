@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.515"
+version = "0.0.516"
 description = "An edge governance framework for managing and validating CSV, Excel, and other tabular data files"
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
