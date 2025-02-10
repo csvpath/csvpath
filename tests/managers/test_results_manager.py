@@ -8,6 +8,17 @@ from csvpath.managers.results.result_serializer import ResultSerializer
 
 
 class TestResultsManager(unittest.TestCase):
+    def test_results_mgr1(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("results", "archive", "this doesn't exist")
+        #
+        # this method must return an empty list and write a log warning. it cannot blowup.
+        #
+        paths.results_manager.list_named_results()
+        paths.add_to_config("results", "archive", "archive")
+
     def test_results_mgr2(self):
         # set up a csvpaths that will have 1 file and 1 set of paths
         filename = "food"

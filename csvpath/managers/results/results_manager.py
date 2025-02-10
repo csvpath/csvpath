@@ -224,9 +224,16 @@ class ResultsManager:  # pylint: disable=C0115
 
     def list_named_results(self) -> list[str]:
         path = self._csvpaths.config.archive_path
-        names = Nos(path).listdir()
-        names = [n for n in names if not n.startswith(".")]
-        names.sort()
+        if Nos(path).dir_exists():
+            names = Nos(path).listdir()
+            names = [n for n in names if not n.startswith(".")]
+            names.sort()
+        else:
+            self._csvpaths.logger.warning(
+                "Archive %s does not exist. If no runs have been attempted yet this is fine.",
+                path,
+            )
+            names = []
         return names
 
     def do_transfers_if(self, result) -> None:
