@@ -229,7 +229,8 @@ For help see https://www.csvpath.org
                 self.csvpaths.collect_paths(filename=file, pathsname=paths)
             else:
                 self.csvpaths.fast_forward_paths(filename=file, pathsname=paths)
-        except Exception:
+        except Exception as e:
+            self.csvpaths.logger.error(e)
             cfg = None
             while cfg in [None, "c", "e"]:
                 print("\nThere was an error.")

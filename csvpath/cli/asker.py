@@ -17,21 +17,27 @@ class Asker:
     def __init__(self, cli, *, name_type) -> None:
         self._cli = cli
         names = None
+        self.name_type = name_type
         if name_type == "files":
             names = self._cli.csvpaths.file_manager.named_file_names
             names.sort()
         elif name_type == "paths":
-            names = self._cli.csvpaths.file_manager.named_file_names
+            names = self._cli.csvpaths.paths_manager.named_paths_names
             names.sort()
         else:
             raise ValueError("Name type must be files or paths")
         self.completer = WordCompleter(names, ignore_case=True)
         self.result = None
 
-    def create_prompt_application(self, prompt_text="Named-file name? "):
+    def create_prompt_application(self, prompt_text=None):
+        if prompt_text is None:
+            prompt_text = (
+                "Named-file name? "
+                if self.name_type == "files"
+                else "Named-paths name? "
+            )
         # Create a buffer to store input
         buffer = Buffer(completer=self.completer, complete_while_typing=True)
-
         # Create key bindings
         kb = KeyBindings()
 
@@ -83,7 +89,7 @@ class Asker:
             app.run()
             return self.result
         except Exception as e:
-            print(f"Error: {e}")
+            self._cli.csvpaths.logger.error(e)
             import traceback
 
             print(traceback.format_exc())

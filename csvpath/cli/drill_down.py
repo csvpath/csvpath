@@ -67,7 +67,7 @@ class DrillDown:
         # get name
         #
         self._cli.clear()
-        name = Asker(self._cli, name_type="files").ask()
+        name = Asker(self._cli, name_type="paths").ask()
         #
         # get path
         #
@@ -95,7 +95,8 @@ class DrillDown:
                 )
             else:
                 self._cli.csvpaths.paths_manager.add_named_paths_from_json(file_path=p)
-        except Exception:
+        except Exception as e:
+            self._cli.csvpaths.logger.error(e)
             cfg = None
             while cfg in [None, "c", "e"]:
                 print("\nThere was an error.")

@@ -45,19 +45,10 @@ class Decimal(ValueProducer, Type):
         h = self._value_one(skip=skip)
         if h is None:
             #
-            # Matcher via Type will take care of mismatches and Nones
+            # Matcher via Type will take care of mismatches and Nones. Args handles nonnone
             #
             if self.notnone is True:
                 self.match = False
-                #
-                # should be caught by Args
-                #
-                """ """
-                msg = f"'{self._value_one(skip=skip)}' cannot be empty"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-                if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
-                """ """
                 return
             self.match = True
             return
@@ -65,6 +56,9 @@ class Decimal(ValueProducer, Type):
             #
             # we know this value is a number because Args checked it.
             # but would a user know from looking at it that it was a float?
+            # if strict, we require the fractional part. if not strict any
+            # whole number can be a decimal with an unwritten .0 so we
+            # allow it.
             #
             if self.has_qualifier("strict"):
                 if f"{h}".strip().find(".") == -1:
@@ -76,19 +70,34 @@ class Decimal(ValueProducer, Type):
                     )
                     if self.matcher.csvpath.do_i_raise():
                         raise MatchException(msg)
+                    self.match = False
                     return
-                self.match = True
-            elif self.has_qualifier("weak"):
-                self.match = True
-            elif f"{h}".strip().find(".") == -1:
-                self.match = False
-                return
-            else:
-                self.match = True
+            self.match = True
         else:
             if f"{h}".find(".") > -1:
-                self.match = False
-                return
+                msg = "Integers cannot have a fractional part"
+                if self.has_qualifier("strict"):
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
+                    )
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
+                    self.match = False
+                    return
+                i = ExpressionUtility.to_int(h)
+                f = ExpressionUtility.to_float(h)
+                if i == f:
+                    # the fractional part is 0, so we'll allow it
+                    self.match = True
+                else:
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
+                    )
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
+                    self.match = False
+                    return
+            self.match = True
         #
         # validate min and max
         #
