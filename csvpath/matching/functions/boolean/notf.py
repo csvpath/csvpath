@@ -11,10 +11,11 @@ class Not(MatchDecider):
 
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
-        a = self.args.argset(1)
+        a = self.args.argset(2)
         a.arg(
             types=[Variable, Header, Function, Reference, Equality], actuals=[None, Any]
         )
+        a.arg(types=[None, Function], actuals=[None, Any])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
@@ -22,6 +23,20 @@ class Not(MatchDecider):
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        m = self.children[0].matches(skip=skip)
+        c = None
+        eq = isinstance(self.children[0], Equality) and self.children[0].op == "=="
+        if eq:
+            c = self.children[0]
+        else:
+            c = self._child_one()
+
+        t = self._child_two()
+        m = c.matches(skip=skip)
+
         m = not m
+        if m is True:
+            if eq is False:
+                t = self._child_two()
+                if t is not None:
+                    t.matches(skip=skip)
         self.match = m

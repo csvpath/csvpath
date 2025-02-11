@@ -13,6 +13,24 @@ class TestFunctionsNot(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 2
 
+    def test_function_not_2(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""
+            ${PATH}[*]
+            [
+                @a = odd(line_number())
+                print("line $.csvpath.line_number: $.variables.a")
+                not(@a.asbool, push("notchk", line_number()))
+
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 5
+        assert "notchk" in path.variables
+        assert path.variables["notchk"] == [0, 2, 4, 6, 8]
+
     def test_function_any_function4(self):
         path = CsvPath()
         path.parse(

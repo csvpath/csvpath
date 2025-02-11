@@ -1,0 +1,29 @@
+~
+    validation-mode:raise, no-stop, print
+~
+    ${PATH}[*]
+    [
+        odd.nocontrib(line_number()) -> @day = "sunny"
+        even.nocontrib(line_number()) -> @day = "cloudy"
+        insert(1, "weather", @day)
+    ]
+
+---- CSVPATH ----
+
+
+~
+    validation-mode:raise, no-stop, print
+    source-mode:preceding
+~
+    ${PATH}[1*]
+    [
+
+        odd.nocontrib(line_number()) -> not(#weather == "sunny", error("day $.csvpath.line_number must be sunny, not $.headers.weather"))
+
+        and.nocontrib(
+            even(line_number()),
+            #weather == "sunny"
+        ) -> error("Day $.csvpath.line_number must be sunny, not $.headers.weather")
+
+    ]
+

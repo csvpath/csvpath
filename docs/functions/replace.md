@@ -1,13 +1,22 @@
 
-# Replace and Append
+# Replace, Insert, and Append
 
+### Replace
 `replace()` replaces a header value with another value. It takes two arguments:
 - The header or the name or index of the header whose value will be replaced
 - The replacement value
 
 The replaced values will be seen in the lines iteration from either CsvPaths or CsvPath. It will also be seen in the named-results collected by the results manager, if you are running CsvPaths and are collecting lines. That means your transformed results would then be accessible by reference from other csvpaths.
 
+### Insert
+`insert()` inserts a new header at an index and inserts the values of that header for every line. Arguments are:
+- The index the header should be inserted. 2 would mean the new header would be the 3rd header -- remember that header indexes are 0-based.
+- The name of the header. The header's name does not have to appear in the results. But it does need to exist to help the function track if it has been inserted or not.
+- The value that should be inserted in the header's position on every line. This can be a variable, header, function, or reference.
+
+### Append
 `append()` attaches a new value under a new header to the end of the line. Like with `replace()`, the new value will be visible to any siblings below a `CsvPaths` instance if the run is by-line; a.k.a. breadth-first or parallel.
+
 
 ## Examples
 

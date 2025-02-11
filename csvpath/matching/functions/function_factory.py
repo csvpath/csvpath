@@ -32,6 +32,7 @@ from .headers.header_names_mismatch import HeaderNamesMismatch
 from .headers.collect import Collect
 from .headers.replace import Replace
 from .headers.append import Append
+from .headers.insert import Insert
 from .headers.headers import Headers
 from .headers.empty_stack import EmptyStack
 from .headers.mismatch import Mismatch
@@ -343,6 +344,8 @@ class FunctionFactory:
             f = Replace(matcher, name, child)
         elif name == "append":
             f = Append(matcher, name, child)
+        elif name == "insert":
+            f = Insert(matcher, name, child)
         elif name == "int":
             f = Int(matcher, name, child)
         elif name == "float":

@@ -13,6 +13,8 @@ Not is evaluated as a Python bool in most respects. In addition to that, it trea
 
 The <a href='https://github.com/dk107dk/csvpath/blob/main/docs/asbool.md'>rules for the `asbool` qualifier</a> are naturally also taken into account.
 
+`not()` can have a second argument that is a function. When `not()` evaluates to True the function is evaluated.
+
 ## Examples
 
     $logs[*][ not(#exception) ]
