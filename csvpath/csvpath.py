@@ -519,10 +519,12 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         return self.modes.validation_mode.collect_validation_errors
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
+        """@private"""
         if printer not in self.printers:
             self.printers.append(printer)
 
     def set_printers(self, printers: List) -> None:  # pylint: disable=C0116
+        """@private"""
         self.printers = printers
 
     @property
