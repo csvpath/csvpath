@@ -106,7 +106,8 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 
 <a name="pdocs"></a>
 # Python Interface Docs
-<a href='https://csvpath.github.io/csvpath/' target='_blank'>Code docs are here</a>. The CsvPath Framework public interface is streamlined. Docs for deeper levels will be added over time.
+<a href='https://csvpath.github.io/csvpath/' target='_blank'>Code docs are here</a>.
+The CsvPath Framework's public interface is streamlined. csvpath.CsvPath and csvpath.CsvPaths are where most of the magic happens. Docs for deeper levels will be added over time.
 
 # Description
 <a name="description"></a>
