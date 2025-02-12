@@ -35,62 +35,7 @@ from .util.exceptions import (
 from .matching.util.exceptions import MatchException
 
 
-class CsvPathPublic(ABC):
-    """this abstract class is the public interface for CsvPath"""
-
-    @abstractmethod
-    def parse(self, csvpath):  # pragma: no cover
-        """Reads a csvpath prepares to match against CSV file lines. This
-        method is an alternative to simply passing the csvpath string to the
-        collect, next, or fast_forward methods. You don't do both.
-        """
-
-    @abstractmethod
-    def parse_named_path(
-        self, name, *, disposably=False, specific=None
-    ):  # pragma: no cover
-        """Parses a csvpath found in this CsvPath's CsvPaths parent's
-        collection of named csvpaths"""
-
-    @property
-    @abstractmethod
-    def is_valid(self) -> bool:  # pragma: no cover
-        """Csvpaths can flag a CSV file as invalid using the fail() function"""
-
-    @abstractmethod
-    def stop(self) -> None:  # pragma: no cover
-        """Csvpaths can call for the CsvPath to stop processing lines
-        using the stop() function"""
-
-    @abstractmethod
-    def collect(
-        self, csvpath: str = None, *, nexts: int = -1
-    ) -> List[List[Any]]:  # pragma: no cover
-        """Returns the lines of a CSV file that match the csvpath. Pass
-        nexts to limit a run to collecting only N lines; the default
-        is -1 for collecting all. If you do not pass the csvpath
-        string here you must first use the parse method."""
-
-    @abstractmethod
-    def advance(self, ff: int = -1) -> None:  # pragma: no cover
-        """Advances the iteration by ff rows. -1 means to the end of the file."""
-
-    @abstractmethod
-    def fast_forward(self, csvpath: str = None):  # pragma: no cover
-        """Scans to the end of the CSV file. All scanned rows will be
-        considered for match and variables and side effects will happen,
-        but no rows will be returned or stored. -1 means to the end of
-        the file. If you do not pass the csvpath string here you must first
-        use the parse method."""
-
-    @abstractmethod
-    def next(self, csvpath: str = None):  # pragma: no cover
-        """A generator function that steps through the CSV file returning
-        matching rows. If you do not pass the csvpath string here you must
-        first use the parse method."""
-
-
-class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902, R0904
+class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     """CsvPath represents a csvpath string that contains a reference to
     a file, scanning instructions, and rules for matching lines.
     """
@@ -119,7 +64,9 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # way.
         self._config = config
         self.scanner = None
+        """ @private """
         self.matcher = None
+        """ @private """
         #
         # a parent CsvPaths may manage a CsvPath instance. if so, it will enable
         # the use of named files and named paths, print capture, error handling,
@@ -128,6 +75,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # have some of those capabilities.
         #
         self.csvpaths = csvpaths
+        """ @private """
         #
         # there are two logger components one for CsvPath and one for CsvPaths.
         # the default levels are set in config.ini. to change the levels pass LogUtility
@@ -135,18 +83,22 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # LogUtility.logger(csvpath, "debug")
         #
         self.logger = LogUtility.logger(self)
+        """ @private """
         self.logger.info("initialized CsvPath")
         #
         # if we don't have a csvpaths these will both be None
         #
         self.named_paths_name = None
+        """ @private """
         self.named_file_name = None
+        """ @private """
         #
         # all errors come to our manager if they occur during matching. we use
         # the CsvPaths manager if possible. Otherwise, we just make our own that
         # only knows how to collect errors, not distribute them.
         #
         self.ecoms = ErrorCommunications(csvpath=self)
+        """ @private """
         self.error_manager = ErrorManager(csvpath=self)
         if csvpaths is not None:
             self.error_manager.add_internal_listener(csvpaths.error_manager)
@@ -154,6 +106,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # modes are set in external comments
         #
         self.modes = ModeController(self)
+        """ @private """
         #
         # captures the number of lines up front and tracks line stats as the
         # run progresses
@@ -163,10 +116,12 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # the scanning part of the csvpath. e.g. $test.csv[*]
         #
         self.scan = None
+        """ @private """
         #
         # the matching part of the csvpath. e.g. [yes()]
         #
         self.match = None
+        """ @private """
         #
         # when True the lines that do not match are returned from next()
         # and collect(). this effectively switches CsvPath from being an
@@ -223,6 +178,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # disk, at least atm.
         #
         self.lines = None
+        """ @private """
         #
         # set by fail()
         #
@@ -233,8 +189,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # CsvPath instances.
         #
         self.last_row_time = -1
+        """ @private """
         self.rows_time = -1
+        """ @private """
         self.total_iteration_time = -1
+        """ @private """
         #
         # limiting collection means returning fewer headers (values in the
         # line, a.k.a columns) then are available. limiting headers returned
@@ -277,6 +236,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         # the default printer.
         #
         self.printers = []
+        """ @private """
         if print_default:
             self.printers.append(StdOutPrinter())
         #
@@ -302,62 +262,76 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     # CsvPath.config.save_to_config().
     #
     def add_to_config(self, section, key, value) -> None:
+        """@private"""
         self.config.add_to_config(section=section, key=key, value=value)
         self.config.save_config()
         self.config.reload()
 
     @property
     def data_from_preceding(self) -> bool:
+        """@private"""
         return self.modes.source_mode.value
 
     @data_from_preceding.setter
     def data_from_preceding(self, dfp: bool) -> None:
+        """@private"""
         self.modes.source_mode.value = dfp
 
     @property
     def unmatched(self) -> list[list[Any]]:
+        """@private"""
         return self._unmatched
 
     @unmatched.setter
     def unmatched(self, lines: list[list[Any]]) -> None:
+        """@private"""
         self._unmatched = lines
 
     @property
     def collecting(self) -> bool:
+        """@private"""
         return self._collecting
 
     @collecting.setter
     def collecting(self, c: bool) -> None:
+        """@private"""
         self._collecting = c
 
     @property
     def unmatched_available(self) -> bool:
+        """@private"""
         return self.modes.unmatched_mode.value
 
     @unmatched_available.setter
     def unmatched_available(self, ua: bool) -> None:
+        """@private"""
         self.modes.unmatched_mode.value = ua
 
     @property
     def created_at(self) -> datetime:
+        """@private"""
         return self._created_at
 
     @property
     def run_started_at(self) -> datetime:
+        """@private"""
         return self._run_started_at
 
     @property
     def will_run(self) -> bool:
+        """@private"""
         return self.modes.run_mode.value
 
     @will_run.setter
     def will_run(self, mode) -> None:
+        """@private"""
         self.modes.run_mode.value = mode
 
     #
     # increases the total accumulated time spent doing c.matches() by t
     #
     def up_function_time_match(self, c, t) -> None:
+        """@private"""
         if c not in self.function_times_match:
             self.function_times_match[c] = 0
         st = self.function_times_match[c]
@@ -366,12 +340,14 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def function_times_match(self) -> int:
+        """@private"""
         return self._function_times_match
 
     #
     # increases the total accumulated time spent doing c.to_value() by t
     #
     def up_function_time_value(self, c, t) -> None:
+        """@private"""
         if c not in self.function_times_value:
             self.function_times_value[c] = 0
         st = self.function_times_value[c]
@@ -380,37 +356,45 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def function_times_value(self) -> int:
+        """@private"""
         return self._function_times_value
 
     def do_i_raise(self) -> bool:
+        """@private"""
         return self.ecoms.do_i_raise()
 
     @property
     def advance_count(self) -> int:  # pragma: no cover
+        """@private"""
         return self._advance
 
     @advance_count.setter
     def advance_count(self, lines: int) -> None:
+        """@private"""
         self._advance = lines
 
     @property
     def headers(self) -> List[str]:
+        """@private"""
         if self._headers is None:
             self.get_total_lines_and_headers()
         return self._headers
 
     @headers.setter
     def headers(self, headers: List[str]) -> None:
+        """@private"""
         self._headers = headers
 
     @property
     def line_monitor(self) -> LineMonitor:
+        """@private"""
         if self._line_monitor is None:
             self.get_total_lines_and_headers()
         return self._line_monitor
 
     @line_monitor.setter
     def line_monitor(self, lm) -> None:
+        """@private"""
         self._line_monitor = lm
 
     @property
@@ -467,6 +451,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def config(self) -> Config:  # pylint: disable=C0116
+        """@private"""
         if not self._config:
             self._config = Config()
         return self._config
@@ -479,6 +464,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     # just be adding pointers, not dup the original error data.
     #
     def metadata_update(self, mdata: Metadata) -> None:
+        """@private"""
         if isinstance(mdata, Error):
             self.collect_error(mdata)
 
@@ -491,6 +477,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return len(self.errors)
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
+        """@private"""
         self.errors.append(error)
 
     def has_errors(self) -> bool:
@@ -498,30 +485,37 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def stop_on_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.stop_on_validation_errors
 
     @property
     def fail_on_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.fail_on_validation_errors
 
     @property
     def print_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.print_validation_errors
 
     @property
     def log_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.log_validation_errors
 
     @property
     def raise_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.raise_validation_errors
 
     @property
     def match_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.match_validation_errors
 
     @property
     def collect_validation_errors(self) -> bool:
+        """@private"""
         return self.modes.validation_mode.collect_validation_errors
 
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
@@ -533,6 +527,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def has_default_printer(self) -> bool:
+        """@private"""
         if not self.printers:
             self.printers = []
         for p in self.printers:
@@ -541,41 +536,48 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return False
 
     def print(self, string: str) -> None:  # pylint: disable=C0116
+        """@private"""
         for p in self.printers:
             p.print(string)
 
     def print_to(self, name: str, string: str) -> None:
+        """@private"""
         for p in self.printers:
             p.print_to(name, string)
 
     @property
     def last_line(self):
-        """this method only returns the default printer's last_line"""
+        """@private
+        this method only returns the default printer's last_line"""
         if not self.printers or len(self.printers) == 0:
             return None
         return self.printers[0].last_line
 
     @property
     def lines_printed(self) -> int:
-        """this method only returns the default printer's lines printed"""
+        """@private
+        this method only returns the default printer's lines printed"""
         if not self.printers or len(self.printers) == 0:
             return -1
         return self.printers[0].lines_printed
 
     @property
     def is_frozen(self) -> bool:
-        """True if the instance is matching on its last row only to
+        """@private
+        True if the instance is matching on its last row only to
         allow last()s to run; in which case, no variable updates
         are allowed, along with other limitations."""
         return self._freeze_path
 
     @is_frozen.setter
     def is_frozen(self, freeze: bool) -> None:
+        """@private"""
         self._freeze_path = freeze
 
     @property
     def explain(self) -> bool:
-        """when this property is True CsvPath dumps a match explaination
+        """@private
+        when this property is True CsvPath dumps a match explaination
         to INFO. this can be expensive. a 25% performance hit wouldn't
         be unexpected.
         """
@@ -583,23 +585,27 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @explain.setter
     def explain(self, yesno: bool) -> None:
+        """@private"""
         self.modes.explain_mode.value = yesno
 
     @property
     def collect_when_not_matched(self) -> bool:
-        """when this property is True CsvPath returns the lines that do not
+        """@private
+        when this property is True CsvPath returns the lines that do not
         match the matchers match components"""
         return self.modes.return_mode.collect_when_not_matched
 
     @collect_when_not_matched.setter
     def collect_when_not_matched(self, yesno: bool) -> None:
-        """when c ollect_when_not_matched is True we return the lines that failed
+        """@private
+        when c ollect_when_not_matched is True we return the lines that failed
         to match, rather than the default behavior of returning the matches.
         """
         self.modes.return_mode.collect_when_not_matched = yesno
 
     def parse(self, csvpath, disposably=False):
-        """displosably is True when a Matcher is needed for some purpose other than
+        """@private
+        displosably is True when a Matcher is needed for some purpose other than
         the run we were created to do. could be that a match component wanted a
         parsed csvpath for its own purposes. when True, we create and return the
         Matcher, but then forget it ever existed.
@@ -653,6 +659,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self
 
     def update_settings_from_metadata(self) -> None:
+        """@private"""
         #
         # settings:
         #   - logic-mode: AND | OR
@@ -673,63 +680,78 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     #
     @property
     def transfer_mode(self) -> str:
+        """@private"""
         return self.metadata.get("transfer-mode")
 
     @property
     def source_mode(self) -> str:
+        """@private"""
         return self.metadata.get("source-mode")
 
     @property
     def error_mode(self) -> str:
+        """@private"""
         return self.metadata.get("error-mode")
 
     @property
     def files_mode(self) -> str:
+        """@private"""
         return self.metadata.get("files-mode")
 
     @property
     def validation_mode(self) -> str:
+        """@private"""
         return self.metadata.get("validation-mode")
 
     @property
     def run_mode(self) -> str:
+        """@private"""
         return self.metadata.get("run-mode")
 
     @property
     def logic_mode(self) -> str:
+        """@private"""
         return self.metadata.get("logic-mode")
 
     @property
     def return_mode(self) -> str:
+        """@private"""
         return self.modes.get("return-mode")
 
     @property
     def explain_mode(self) -> str:
+        """@private"""
         return self.metadata.get("explain-mode")
 
     @property
     def print_mode(self) -> str:
+        """@private"""
         return self.metadata.get("print-mode")
 
     @property
     def unmatched_mode(self) -> str:
+        """@private"""
         return self.metadata.get("unmatched-mode")
 
     # =====================
 
     @property
     def transfers(self) -> list[tuple[str, str]]:
+        """@private"""
         return self.modes.transfer_mode.transfers
 
     @property
     def all_expected_files(self) -> list[str]:
+        """@private"""
         return self.modes.files_mode.all_expected_files
 
     @all_expected_files.setter
     def all_expected_files(self, efs: list[str]) -> None:
+        """@private"""
         self.modes.files_mode.all_expected_files = efs
 
     def _pick_named_path(self, name, *, specific=None) -> str:
+        """@private"""
         if not self.csvpaths:
             raise CsvPathsException("No CsvPaths object available")
         np = self.csvpaths.paths_manager.get_named_paths(name)
@@ -759,7 +781,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         raise ParsingException(f"Cannot find path '{specific}' in named-paths '{name}'")
 
     def parse_named_path(self, name, *, disposably=False, specific=None):
-        """disposably is True when a Matcher is needed for some purpose other than
+        """@private
+        disposably is True when a Matcher is needed for some purpose other than
         the run we were created to do. could be that a match component wanted a
         parsed csvpath for its own purposes. import() uses this method.
         when True, we create and return the Matcher, but then forget it ever existed.
@@ -782,7 +805,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return None
 
     def _update_file_path(self, data: str):
-        """this method replaces a name (i.e. name in: $name[*[][yes()]) with
+        """@private
+        this method replaces a name (i.e. name in: $name[*[][yes()]) with
         a file system path, if that name is registered with csvpaths's file
         manager. if there is no csvpaths no replace happens. if there is a
         csvpaths but the file manager doesn't know the name, no replace
@@ -874,6 +898,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def is_valid(self) -> bool:  # pragma: no cover
+        """Csvpaths can flag a CSV file as invalid using the fail() function"""
         return self._is_valid
 
     @is_valid.setter
@@ -890,47 +915,55 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def from_line(self):  # pragma: no cover pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.from_line
 
     @property
     def to_line(self):  # pragma: no cover pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.to_line
 
     @property
     def all_lines(self):  # pragma: no cover pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.all_lines
 
     @property
     def path(self):  # pragma: no cover pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.path
 
     @property
     def these(self):  # pragma: no cover pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         return self.scanner.these
 
     @property
     def limit_collection_to(self) -> List[int]:
-        """returns the list of headers to collect when a line matches. by default
+        """@private
+        returns the list of headers to collect when a line matches. by default
         this list is empty and all headers are collected.
         """
         return self._limit_collection_to
 
     @limit_collection_to.setter
     def limit_collection_to(self, indexes: List[int]) -> None:
+        """@private"""
         self._limit_collection_to = indexes
         self.logger.warning("Setting a limit on headers collected: %s", indexes)
 
     def stop(self) -> None:
+        """@private"""
         self.stopped = True
 
     #
@@ -1001,9 +1034,11 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return lines
 
     def fast_forward(self, csvpath=None):
-        """Runs the path for all rows of the file. Variables are collected
-        and side effects like print happen. No lines are collected.
-        """
+        """Scans to the end of the CSV file. All scanned rows will be
+        considered for match and variables and side effects will happen,
+        but no rows will be returned or stored. -1 means to the end of
+        the file. If you do not pass the csvpath string here you must first
+        use the parse method."""
         if self.scanner is None and csvpath is not None:
             self.parse(csvpath)
         for _ in self.next():
@@ -1015,9 +1050,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     # may want to handle raising errors themselves.
     #
     def next(self, csvpath=None):
-        """Iterates over the lines in the CSV file returning those that match
-        the csvpath. collect() and fast_forward() call next() behind the scenes.
-        """
+        """A generator function that steps through the CSV file returning
+        matching rows."""
         try:
             if self.scanner is None and csvpath is not None:
                 self.parse(csvpath)
@@ -1074,6 +1108,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 raise
 
     def _next_line(self) -> List[Any]:
+        """@private"""
         self.logger.info("beginning to scan file: %s", self.scanner.filename)
         #
         # this exception will blow up a standalone CsvPath but should be
@@ -1098,7 +1133,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         self.finalize()
 
     def finalize(self) -> None:
-        """clears caches, etc. this is an internal method, but not _ because
+        """@private
+        clears caches, etc. this is an internal method, but not _ because
         it is part of the lifecycle and we might find a reason to call it
         from higher up.
         """
@@ -1109,7 +1145,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self.matcher.clear_caches()
 
     def track_line(self, line) -> None:
-        """csvpaths needs to handle some of the iteration logic, and we don't want
+        """@private
+        csvpaths needs to handle some of the iteration logic, and we don't want
         to lose track of line number monitoring or repeat the code up there,
         so we need this method to give csvpaths a way to tap in.
         """
@@ -1121,6 +1158,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self._run_started_at = datetime.now(timezone.utc)
 
     def _consider_line(self, line):  # pylint: disable=R0912, R0911
+        """@private"""
         # re: R0912: this method has already been refactored but maybe
         # there is more we can do?
         #
@@ -1192,7 +1230,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return False
 
     def raise_match_count_if(self):
-        """if the match count has already been raised earlier in the matching
+        """@private
+        if the match count has already been raised earlier in the matching
         process than the caller we don't raise it; otherwise, we raise."""
         if self._current_match_count == self.match_count:
             self.match_count += 1
@@ -1200,7 +1239,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
             self.logger.debug("Match count was already raised, so not doing it again")
 
     def limit_collection(self, line: List[Any]) -> List[Any]:
-        """this method creates a line based on the given line that holds only the headers
+        """@private
+        this method creates a line based on the given line that holds only the headers
         that the csvpath says to collect. headers for collection are indicated using
         the collect() function.
         """
@@ -1216,7 +1256,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return ls
 
     def advance(self, ff: int = -1) -> None:
-        """Advances the iteration by ff rows. The rows will be seen but not matched."""
+        """@private
+        Advances the iteration by ff rows. The rows will be seen but not matched."""
         if ff is None:
             raise InputException("Input to advance must not be None")
         if self.line_monitor.physical_end_line_number is None:
@@ -1238,6 +1279,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         )
 
     def get_total_lines(self) -> int:  # pylint: disable=C0116
+        """@private"""
         if (
             self.line_monitor.physical_end_line_number is None
             or self.line_monitor.physical_end_line_number == 0
@@ -1246,6 +1288,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return self.line_monitor.physical_end_line_number
 
     def get_total_lines_and_headers(self) -> None:  # pylint: disable=C0116
+        """@private"""
         if not self.scanner or not self.scanner.filename:
             self.logger.error(
                 "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
@@ -1278,13 +1321,16 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
 
     @property
     def current_scan_count(self) -> int:  # pylint: disable=C0116
+        """@private"""
         return self.scan_count
 
     @property
     def current_match_count(self) -> int:  # pylint: disable=C0116
+        """@private"""
         return self.match_count
 
     def matches(self, line) -> bool:  # pylint: disable=C0116
+        """@private"""
         if not self.match:
             return True
         #
@@ -1323,7 +1369,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return matched
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
-        """sets a variable and the tracking variable as a key within
+        """@private
+        sets a variable and the tracking variable as a key within
         it, if a tracking value is provided."""
         if self._freeze_path:
             self.logger.warning(
@@ -1355,7 +1402,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
     def get_variable(  # pylint: disable=R0912
         self, name: str, *, tracking: Any = None, set_if_none: Any = None
     ) -> Any:
-        """gets a variable by name. uses the tracking value as a key to get
+        """@private
+        gets a variable by name. uses the tracking value as a key to get
         the value if the variable is a dictionary."""
         #
         # re: R0912: totally true. this is a scary method. plan to refactor.
@@ -1405,7 +1453,8 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return thevalue
 
     def line_numbers(self) -> Iterator[int | str]:
-        """returns all the line numbers the scanner will scan during
+        """@private
+        returns all the line numbers the scanner will scan during
         the run of a csvpath"""
         these = self.scanner.these
         from_line = self.scanner.from_line
@@ -1423,6 +1472,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         to_line: int = None,
         all_lines: bool = None,
     ) -> Iterator[int | str]:
+        """@private"""
         if these is None:
             these = []
         if len(these) > 0:
@@ -1441,6 +1491,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
                 yield f"0..{to_line}"
 
     def collect_line_numbers(self) -> List[int | str]:  # pylint: disable=C0116
+        """@private"""
         if self.scanner is None:
             raise ParsingException("No scanner available. Have you parsed a csvpath?")
         these = self.scanner.these
@@ -1459,6 +1510,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         to_line: int = None,
         all_lines: bool = None,
     ) -> List[int | str]:
+        """@private"""
         collect = []
         if these is None:
             these = []
@@ -1469,6 +1521,7 @@ class CsvPath(CsvPathPublic, ErrorCollector, Printer):  # pylint: disable=R0902,
         return collect
 
     def header_index(self, name: str) -> int:  # pylint: disable=C0116
+        """@private"""
         if not self.headers:
             return None
         for i, n in enumerate(self.headers):
