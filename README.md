@@ -45,6 +45,7 @@ If you need help, use the <a href='https://www.csvpath.org/getting-started/get-h
 
 - [Motivation](#motivation)
 - [Install](#install)
+- [Python Interface Docs (pdocs)](#pdocs)
 - [High-level Description](#description)
 - [Running CsvPath](#running)
    - [Validation](#validating)
@@ -101,6 +102,11 @@ CsvPath has an optional dependency on Pandas. Pandas data frames can be used as 
 ```
 
 Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capability, though, it is easy to install.
+
+
+<a name="pdocs"></a>
+# Python Interface Docs
+<a href='https://csvpath.github.io/csvpath/'>Code docs are here</a>. The CsvPath Framework public interface is streamlined. Docs for deeper levels will be added over time.
 
 # Description
 <a name="description"></a>
