@@ -24,20 +24,26 @@ from .result_file_reader import ResultFileReader
 
 class ResultsManager:  # pylint: disable=C0115
     def __init__(self, *, csvpaths=None):
+        """@private"""
         self.named_results = {}
+        """@private"""
         self._csvpaths = None
         # use property
         self.csvpaths = csvpaths
+        """@private"""
 
     @property
     def csvpaths(self):
+        """@private"""
         return self._csvpaths
 
     @csvpaths.setter
     def csvpaths(self, cs) -> None:  # noqa: F821
+        """@private"""
         self._csvpaths = cs
 
     def complete_run(self, *, run_dir, pathsname, results) -> None:
+        """@private"""
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
             run_dir=run_dir,
@@ -62,6 +68,7 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_complete(mdata)
 
     def start_run(self, *, run_dir, pathsname, filename) -> None:
+        """@private"""
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
             run_dir=run_dir,
@@ -76,7 +83,8 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_start(mdata)
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
-        """gets the run metadata. will include the metadata complete from
+        """@private
+        gets the run metadata. will include the metadata complete from
         the first results. however, the metadata for individual results must
         come direct from them in order to not overwrite"""
         results = self.get_named_results(name)
@@ -133,6 +141,7 @@ class ResultsManager:  # pylint: disable=C0115
         return vs
 
     def has_lines(self, name: str) -> bool:
+        """@private"""
         results = self.get_named_results(name)
         for r in results:
             if r.lines and len(r.lines) > 0:
@@ -160,6 +169,7 @@ class ResultsManager:  # pylint: disable=C0115
         return errors
 
     def add_named_result(self, result: Result) -> None:
+        """@private"""
         if result.file_name is None:
             raise InputException("Results must have a named-file name")
         if result.paths_name is None:
@@ -214,11 +224,13 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_start(mdata)
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:
+        """@private"""
         self.named_results = {}
         for value in results.values():
             self.add_named_results(value)
 
     def add_named_results(self, results: List[Result]) -> None:
+        """@private"""
         for r in results:
             self.add_named_result(r)
 
@@ -237,6 +249,7 @@ class ResultsManager:  # pylint: disable=C0115
         return names
 
     def do_transfers_if(self, result) -> None:
+        """@private"""
         transfers = result.csvpath.transfers
         if transfers is None:
             return
@@ -244,6 +257,7 @@ class ResultsManager:  # pylint: disable=C0115
         self._do_transfers(tpaths)
 
     def transfer_paths(self, result) -> list[tuple[str, str, str, str]]:
+        """@private"""
         #
         # 1: filename, no extension needed: data | unmatched
         # 2: variable name containing the path to write to
@@ -261,6 +275,7 @@ class ResultsManager:  # pylint: disable=C0115
         return tpaths
 
     def _do_transfers(self, tpaths) -> None:
+        """@private"""
         for t in tpaths:
             pathfrom = t[2]
             pathto = t[3]
@@ -269,6 +284,7 @@ class ResultsManager:  # pylint: disable=C0115
                     pt.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
+        """@private"""
         p = result.csvpath.config.transfer_root
         if t not in result.csvpath.variables:
             raise InputException(f"Variable {t} not found in variables")
@@ -283,6 +299,7 @@ class ResultsManager:  # pylint: disable=C0115
         return rp
 
     def _path_to_result(self, result, t) -> str:
+        """@private"""
         d = result.instance_dir
         o = os.path.join(d, t)
         sep = Nos(o).sep
@@ -293,6 +310,7 @@ class ResultsManager:  # pylint: disable=C0115
         return o
 
     def save(self, result: Result) -> None:
+        """@private"""
         #
         # at this time we're not holding on to the result.
         # we have a place for that, but for now not holding
@@ -321,6 +339,7 @@ class ResultsManager:  # pylint: disable=C0115
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr, not_name: str = None) -> str:
+        """@private"""
         ref = ReferenceParser(refstr)
         if ref.datatype != ReferenceParser.RESULTS:
             raise InputException(
@@ -365,7 +384,8 @@ class ResultsManager:  # pylint: disable=C0115
     def _find_instance(
         self, filename, instance, not_name: str = None, name_three: str = None
     ) -> str:
-        """remember that you cannot replay a replay using :last. the reason is that both
+        """@private
+        remember that you cannot replay a replay using :last. the reason is that both
         runs will be looking for the same assets but the last replay run will not have
         the asset needed. in principle, we could fix this, but in practice, any magic
         we do to make it always work is going to make the lineage more mysterious.
@@ -394,6 +414,7 @@ class ResultsManager:  # pylint: disable=C0115
     def _find_last(
         self, filename, instance, not_name: str = None, name_three: str = None
     ) -> str:
+        """@private"""
         last = True
         return self._find(
             filename, instance, last, not_name=not_name, name_three=name_three
@@ -402,6 +423,7 @@ class ResultsManager:  # pylint: disable=C0115
     def _find_first(
         self, filename, instance, not_name: str = None, name_three: str = None
     ) -> str:
+        """@private"""
         first = False
         return self._find(
             filename, instance, first, not_name=not_name, name_three=name_three
@@ -415,6 +437,7 @@ class ResultsManager:  # pylint: disable=C0115
         not_name: str = None,
         name_three: str = None,
     ) -> str:
+        """@private"""
         names = Nos(filename).listdir()
         ns = []
         for n in names:
@@ -439,6 +462,7 @@ class ResultsManager:  # pylint: disable=C0115
         return self._find_in_dir_names(instance, ns, last)
 
     def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
+        """@private"""
         ms = "%Y-%m-%d_%H-%M-%S.%f"
         s = "%Y-%m-%d_%H-%M-%S"
         names = [n for n in names if n.startswith(instance)]
@@ -471,11 +495,13 @@ class ResultsManager:  # pylint: disable=C0115
         return ret
 
     def get_run_time_str(self, name, run_time) -> str:
+        """@private"""
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         t = rs.get_run_dir(paths_name=name, run_time=run_time)
         return t
 
     def remove_named_results(self, name: str) -> None:
+        """@private"""
         #
         # does not get rid of results on disk
         #
@@ -495,6 +521,7 @@ class ResultsManager:  # pylint: disable=C0115
             raise InputException(f"Results '{name}' not found")
 
     def clean_named_results(self, name: str) -> None:
+        """@private"""
         if name in self.named_results:
             self.remove_named_results(name)
             #

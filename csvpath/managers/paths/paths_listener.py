@@ -10,6 +10,8 @@ from ..metadata import Metadata
 
 
 class PathsListener(Listener):
+    """@private"""
+
     #
     # PathsRegistrar is the primary listener. this listener
     # tracks all named-paths groups loaded to inputs/named_paths

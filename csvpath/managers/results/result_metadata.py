@@ -3,6 +3,8 @@ from csvpath.managers.metadata import Metadata
 
 
 class ResultMetadata(Metadata):
+    """@private"""
+
     def __init__(self, config):
         super().__init__(config)
         # these we know right away

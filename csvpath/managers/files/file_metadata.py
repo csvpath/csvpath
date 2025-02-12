@@ -2,6 +2,8 @@ from csvpath.managers.metadata import Metadata
 
 
 class FileMetadata(Metadata):
+    """@private"""
+
     def __init__(self, config):
         super().__init__(config)
         # like aname

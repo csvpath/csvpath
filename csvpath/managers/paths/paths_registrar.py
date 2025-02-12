@@ -11,6 +11,8 @@ from ..registrar import Registrar
 
 
 class PathsRegistrar(Registrar, Listener):
+    """@private"""
+
     def __init__(self, csvpaths):
         # super().__init__(csvpaths)
         Registrar.__init__(self, csvpaths)

@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 class ResultsMetadata(Metadata):
+    """@private"""
+
     def __init__(self, config):
         super().__init__(config)
         self.time_completed: datetime = None

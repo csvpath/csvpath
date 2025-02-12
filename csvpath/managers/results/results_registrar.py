@@ -18,6 +18,8 @@ from ..metadata import Metadata
 
 
 class ResultsRegistrar(Registrar, Listener):
+    """@private"""
+
     COMPLETE = "complete"
 
     def __init__(

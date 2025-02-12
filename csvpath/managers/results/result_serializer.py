@@ -10,12 +10,18 @@ from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
 Simpledata = NewType("Simpledata", Union[None | str | int | float | bool])
+"""@private"""
 Listdata = NewType("Listdata", list[None | str | int | float | bool])
+"""@private"""
 Csvdata = NewType("Csvdata", list[List[str]])
+"""@private"""
 Metadata = NewType("Metadata", Dict[str, Simpledata])
+"""@private"""
 
 
 class ResultSerializer:
+    """@private"""
+
     def __init__(self, base_dir: str):
         # base is the archive dir from config.ini
         self.base_dir = base_dir

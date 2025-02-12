@@ -15,15 +15,20 @@ from .paths_metadata import PathsMetadata
 
 # types added just for clarity
 NamedPathsName = NewType("NamedPathsName", str)
+"""@private"""
 Csvpath = NewType("Csvpath", str)
+"""@private"""
 Identity = NewType("Identity", str)
+"""@private"""
 
 
 class PathsManager:
     MARKER: str = "---- CSVPATH ----"
 
     def __init__(self, *, csvpaths, named_paths=None):
+        """@private"""
         self.csvpaths = csvpaths
+        """@private"""
         self._registrar = None
 
     #
@@ -31,6 +36,7 @@ class PathsManager:
     #
     @property
     def paths_root_manifest_path(self) -> str:
+        """@private"""
         r = self.csvpaths.config.get(section="inputs", name="csvpaths")
         p = os.path.join(r, "manifest.json")
         if not Nos(r).dir_exists():
@@ -42,17 +48,20 @@ class PathsManager:
 
     @property
     def paths_root_manifest(self) -> str:
+        """@private"""
         p = self.paths_root_manifest_path
         with DataFileReader(p) as reader:
             return json.load(reader.source)
 
     @property
     def registrar(self) -> PathsRegistrar:
+        """@private"""
         if self._registrar is None:
             self._registrar = PathsRegistrar(self.csvpaths)
         return self._registrar
 
     def named_paths_home(self, name: NamedPathsName) -> str:
+        """@private"""
         home = os.path.join(self.named_paths_dir, name)
         if not Nos(home).dir_exists():
             Nos(home).makedirs()
@@ -60,6 +69,7 @@ class PathsManager:
 
     @property
     def named_paths_dir(self) -> str:
+        """@private"""
         return self.csvpaths.config.inputs_csvpaths_path
 
     def set_named_paths(self, np: dict[NamedPathsName, list[Csvpath]]) -> None:
@@ -248,6 +258,7 @@ class PathsManager:
         return ret
 
     def store_json_paths_file(self, name: str, jsonpath: str) -> None:
+        """@private"""
         home = self.named_paths_home(name)
         j = ""
         with DataFileReader(jsonpath) as file:
@@ -258,6 +269,7 @@ class PathsManager:
 
     @property
     def named_paths_names(self) -> list[str]:
+        """@private"""
         path = self.named_paths_dir
         # names = [n for n in Nos(path).listdir() if (not n.startswith(".") and not n == "manifest.json")]
         names = [
@@ -266,6 +278,7 @@ class PathsManager:
         return names
 
     def remove_named_paths(self, name: NamedPathsName, strict: bool = False) -> None:
+        """@private"""
         if not self.has_named_paths(name) and strict is True:
             raise InputException(f"Named-paths name {name} not found")
         if not self.has_named_paths(name):
@@ -274,18 +287,22 @@ class PathsManager:
         Nos(home).remove()
 
     def remove_all_named_paths(self) -> None:
+        """@private"""
         names = self.named_paths_names
         for name in names:
             self.remove_named_paths(name)
 
     def has_named_paths(self, name: NamedPathsName) -> bool:
+        """@private"""
         path = os.path.join(self.named_paths_dir, name)
         return Nos(path).dir_exists()
 
     def number_of_named_paths(self, name: NamedPathsName) -> int:
+        """@private"""
         return len(self._get_named_paths(name))
 
     def total_named_paths(self) -> bool:
+        """@private"""
         return len(self.named_paths_names)  # pragma: no cover
 
     #
@@ -312,6 +329,7 @@ class PathsManager:
         return cs
 
     def _str_from_list(self, paths: list[Csvpath]) -> str:
+        """@private"""
         f = ""
         for _ in paths:
             f = f"{f}\n\n---- CSVPATH ----\n\n{_}"
@@ -373,6 +391,7 @@ class PathsManager:
     def get_identified_paths_in(
         self, nps: NamedPathsName, paths: list[Csvpath] = None
     ) -> list[tuple[Identity, Csvpath]]:
+        """@private"""
         # used by PathsRegistrar
         if paths is None:
             paths = self.get_named_paths(nps)

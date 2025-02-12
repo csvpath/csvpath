@@ -6,6 +6,8 @@ from csvpath.util.file_writers import DataFileWriter
 
 
 class ResultFileReader:
+    """@private"""
+
     @classmethod
     def json_file(self, path: str) -> dict | None:
         if not Nos(path).exists():

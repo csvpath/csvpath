@@ -14,14 +14,18 @@ from .file_metadata import FileMetadata
 
 class FileManager:
     def __init__(self, *, named_files: dict[str, str] = None, csvpaths=None):
+        """@private"""
         if named_files is None:
             named_files = {}
         self._csvpaths = csvpaths
         self.registrar = FileRegistrar(csvpaths)
+        """@private"""
         self.cacher = FileCacher(csvpaths)
+        """@private"""
 
     @property
     def csvpaths(self):
+        """@private"""
         return self._csvpaths
 
     #
@@ -29,6 +33,7 @@ class FileManager:
     #
     @property
     def named_files_dir(self) -> str:
+        """@private"""
         return self._csvpaths.config.inputs_files_path
 
     #
@@ -38,6 +43,7 @@ class FileManager:
     #
     @property
     def files_root_manifest(self) -> dict:
+        """@private"""
         p = self.files_root_manifest_path
         if Nos(p).exists():
             with DataFileReader(p) as reader:
@@ -46,12 +52,14 @@ class FileManager:
 
     @property
     def files_root_manifest_path(self) -> dict:
+        """@private"""
         return os.path.join(self.named_files_dir, "manifest.json")
 
     #
     # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: str) -> str:
+        """@private"""
         #
         # not a named-file name
         #
@@ -86,6 +94,7 @@ class FileManager:
         return home
 
     def assure_named_file_home(self, name: str) -> str:
+        """@private"""
         home = self.named_file_home(name)
         if not os.path.exists(home):
             Nos(home).makedirs()
@@ -99,6 +108,7 @@ class FileManager:
     # once the files have been fingerprinted
     #
     def assure_file_home(self, name: str, path: str) -> str:
+        """@private"""
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
         sep = Nos(path).sep
@@ -111,29 +121,35 @@ class FileManager:
 
     @property
     def named_files_count(self) -> int:
+        """@private"""
         return len(self.named_file_names)
 
     @property
     def named_file_names(self) -> list:
+        """@private"""
         b = self.named_files_dir
         ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
         return ns
 
     def name_exists(self, name: str) -> bool:
+        """@private"""
         p = self.named_file_home(name)
         b = Nos(p).dir_exists()
         return b
 
     def remove_named_file(self, name: str) -> None:
+        """@private"""
         p = os.path.join(self.named_files_dir, name)
         Nos(p).remove()
 
     def remove_all_named_files(self) -> None:
+        """@private"""
         names = self.named_file_names
         for name in names:
             self.remove_named_file(name)
 
     def set_named_files(self, nf: dict[str, str]) -> None:
+        """@private"""
         for k, v in nf.items():
             self.add_named_file(name=k, path=v)
 
@@ -216,6 +232,7 @@ class FileManager:
         self.registrar.register_complete(mdata)
 
     def _copy_in(self, path, home) -> None:
+        """@private"""
         sep = Nos(path).sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         # creates
@@ -241,6 +258,7 @@ class FileManager:
         return temp
 
     def _copy_down(self, path, temp, mode="wb") -> None:
+        """@private"""
         with DataFileReader(path) as reader:
             with DataFileWriter(path=temp, mode=mode) as writer:
                 for line in reader.next_raw():
@@ -271,6 +289,7 @@ class FileManager:
         return ret
 
     def get_fingerprint_for_name(self, name) -> str:
+        """@private"""
         if name.startswith("$"):
             # atm, we don't give fingerprints for references doing rewind/replay
             return ""
@@ -283,6 +302,7 @@ class FileManager:
     # -------------------------------------
     #
     def get_named_file_reader(self, name: str) -> DataFileReader:
+        """@private"""
         path = self.get_named_file(name)
         t = self.registrar.type_of_file(self.named_file_home(name))
         return FileManager.get_reader(path, filetype=t)
@@ -291,11 +311,13 @@ class FileManager:
     def get_reader(
         cls, path: str, *, filetype: str = None, delimiter=None, quotechar=None
     ) -> DataFileReader:
+        """@private"""
         return DataFileReader(
             path, filetype=filetype, delimiter=delimiter, quotechar=quotechar
         )
 
     def _fingerprint(self, path) -> str:
+        """@private"""
         sep = Nos(path).sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         t = None

@@ -35,6 +35,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         runtime_data: dict = None,
         by_line: bool = False,
     ):
+        """@private"""
         ErrorCollector.__init__(self)
         Printer.__init__(self)
         Listener.__init__(self, csvpath.config if csvpath is not None else None)
@@ -195,12 +196,14 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @property
     def last_line(self):  # pylint: disable=C0116
+        """@private"""
         return self._last_line
 
     #
     # =============== LISTENING ===============
     #
     def metadata_update(self, mdata: Metadata) -> None:
+        """@private"""
         if isinstance(mdata, Error):
             self.collect_error(mdata)
 
@@ -214,6 +217,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @csvpath.setter
     def csvpath(self, path: CsvPath) -> None:
+        """@private"""
         # during testing or for some other reason we may receive None
         # let's assume the dev knows what they're doing and just go with it.
         if path is not None:
@@ -265,6 +269,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         return 0
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
+        """@private"""
         if self.errors is not None:
             self.errors.append(error)
 
@@ -290,6 +295,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         return []
 
     def set_printouts(self, name: str, lines: list[str]) -> None:
+        """@private"""
         self.printouts[name] = lines
 
     def has_printouts(self) -> bool:  # pylint: disable=C0116
@@ -301,12 +307,15 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @property
     def lines_printed(self) -> int:  # pylint: disable=C0116
+        """@private"""
         return self._print_count
 
     def print(self, string: str) -> None:  # pylint: disable=C0116
+        """@private"""
         self.print_to("default", string)
 
     def print_to(self, name: str, string: str) -> None:  # pylint: disable=C0116
+        """@private"""
         self._print_count += 1
         if name not in self.printouts:
             self.printouts[name] = []
@@ -314,12 +323,14 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         self._last_line = string
 
     def dump_printing(self) -> None:  # pylint: disable=C0116
+        """@private"""
         for k, v in self.printouts.items():
             for line in v:
                 print(f"{k}: {line}")
             print("")
 
     def print_statements_count(self) -> int:  # pylint: disable=C0116
+        """@private"""
         i = 0
         for name in self.printouts:
             i += len(self.printouts[name]) if self.printouts[name] else 0
@@ -345,11 +356,13 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @lines.setter
     def lines(self, ls: list[list[Any]]) -> None:
+        """@private"""
         if self._lines and isinstance(self._lines, LineSpooler):
             self._lines.close()
         self._lines = ls
 
     def append(self, line: list[Any]) -> None:
+        """@private"""
         self.lines.append(line)
 
     def __len__(self) -> int:
@@ -382,6 +395,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @unmatched.setter
     def unmatched(self, lines: list[list[Any]]) -> None:
+        """@private"""
         self._unmatched = lines
 
     #

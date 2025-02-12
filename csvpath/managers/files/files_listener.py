@@ -5,14 +5,13 @@ from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
-
-# from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 
 
 class FilesListener(Listener):  # Registrar,
-    """this listener tracks all named-file arrivals"""
+    """@private
+    this listener tracks all named-file arrivals"""
 
     def __init__(self, csvpaths=None):
         #

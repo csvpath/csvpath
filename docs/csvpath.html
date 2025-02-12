@@ -18,6 +18,8 @@
         <input id="togglestate" type="checkbox" aria-hidden="true" tabindex="-1">
         <div>
 
+            <input type="search" placeholder="Search..." role="searchbox" aria-label="search"
+                   pattern=".+" required>
 
 
 
@@ -150,19 +152,43 @@
                     <h1 class="modulename">
 csvpath    </h1>
 
-                        <div class="docstring"><p>this is the main entry point for the CsvPath library</p>
+                        <div class="docstring"><p>The CsvPath Framework makes it easy to pre-board external data files. It sits between Managed File Transfer and the data lake or applications. CsvPath provides durable dataset identification, validation and canonicalization, and stages data for internal use as a known-good raw data source. The goal is to automate the pre-boarding process.</p>
+
+<p>CsvPath Language is the core validation and canonicalization engine of the Framework. The validation files can be developed without coding using the CLI. When you are ready to automate pre-boarding you will use the classes documented here, in particular <a href="#CsvPath">csvpath.CsvPath</a>, <a href="#CsvPaths">csvpath.CsvPaths</a>, and the managers in csvpath.managers:</p>
+
+<ul>
+<li><a href="csvpath/managers/files/file_manager.html">csvpath.managers.files.file_manager</a></li>
+<li><a href="csvpath/managers/paths/paths_manager.html">csvpath.managers.paths.paths_manager</a></li>
+<li><a href="csvpath/managers/results/results_manager.html">csvpath.managers.results.results_manager</a></li>
+</ul>
+
+<p>You access the managers from a <a href="#CsvPaths">csvpath.CsvPaths</a> instance. You should not construct your own.</p>
+
+<p>There are many other classes you could potentially use in some specific and narrow cases, such as building a new integration, a new function, or a new type of printer. But for 99% of automation use cases these classes are all you need.</p>
 </div>
 
                         <input id="mod-csvpath-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-csvpath-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="sd">&quot;&quot;&quot; this is the main entry point for the CsvPath library &quot;&quot;&quot;</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">csvpath.csvpath</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvPath</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">csvpath.csvpaths</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvPaths</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CsvPath&quot;</span><span class="p">,</span> <span class="s2">&quot;CsvPaths&quot;</span><span class="p">]</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="sd">    The CsvPath Framework makes it easy to pre-board external data files. It sits between Managed File Transfer and the data lake or applications. CsvPath provides durable dataset identification, validation and canonicalization, and stages data for internal use as a known-good raw data source. The goal is to automate the pre-boarding process.</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="sd">CsvPath Language is the core validation and canonicalization engine of the Framework. The validation files can be developed without coding using the CLI. When you are ready to automate pre-boarding you will use the classes documented here, in particular csvpath.CsvPath, csvpath.CsvPaths, and the managers in csvpath.managers:</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">- csvpath.managers.files.file_manager</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="sd">- csvpath.managers.paths.paths_manager</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">- csvpath.managers.results.results_manager</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">You access the managers from a csvpath.CsvPaths instance. You should not construct your own.</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="sd">There are many other classes you could potentially use in some specific and narrow cases, such as building a new integration, a new function, or a new type of printer. But for 99% of automation use cases these classes are all you need.</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">csvpath.csvpath</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvPath</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">csvpath.csvpaths</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvPaths</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CsvPath&quot;</span><span class="p">,</span> <span class="s2">&quot;CsvPaths&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -3469,7 +3495,7 @@ create multiple CsvPaths instances.</p>
                             <div id="CsvPaths.file_manager" class="classattr">
                                         <input id="CsvPaths.file_manager-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">file_manager</span><span class="annotation">: csvpath.managers.files.file_manager.FileManager</span>
+            <span class="name">file_manager</span><span class="annotation">: <a href="csvpath/managers/files/file_manager.html#FileManager">csvpath.managers.files.file_manager.FileManager</a></span>
 
                 <label class="view-source-button" for="CsvPaths.file_manager-view-source"><span>View Source</span></label>
 
@@ -3487,7 +3513,7 @@ create multiple CsvPaths instances.</p>
                             <div id="CsvPaths.results_manager" class="classattr">
                                         <input id="CsvPaths.results_manager-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">results_manager</span><span class="annotation">: csvpath.managers.results.results_manager.ResultsManager</span>
+            <span class="name">results_manager</span><span class="annotation">: <a href="csvpath/managers/results/results_manager.html#ResultsManager">csvpath.managers.results.results_manager.ResultsManager</a></span>
 
                 <label class="view-source-button" for="CsvPaths.results_manager-view-source"><span>View Source</span></label>
 
@@ -3505,7 +3531,7 @@ create multiple CsvPaths instances.</p>
                             <div id="CsvPaths.paths_manager" class="classattr">
                                         <input id="CsvPaths.paths_manager-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">paths_manager</span><span class="annotation">: csvpath.managers.paths.paths_manager.PathsManager</span>
+            <span class="name">paths_manager</span><span class="annotation">: <a href="csvpath/managers/paths/paths_manager.html#PathsManager">csvpath.managers.paths.paths_manager.PathsManager</a></span>
 
                 <label class="view-source-button" for="CsvPaths.paths_manager-view-source"><span>View Source</span></label>
 
@@ -4232,5 +4258,186 @@ which did not match are returned, rather than the default behavior.</p>
                             </div>
                 </section>
     </main>
-</body>
+<script>
+    function escapeHTML(html) {
+        return document.createElement('div').appendChild(document.createTextNode(html)).parentNode.innerHTML;
+    }
+
+    const originalContent = document.querySelector("main.pdoc");
+    let currentContent = originalContent;
+
+    function setContent(innerHTML) {
+        let elem;
+        if (innerHTML) {
+            elem = document.createElement("main");
+            elem.classList.add("pdoc");
+            elem.innerHTML = innerHTML;
+        } else {
+            elem = originalContent;
+        }
+        if (currentContent !== elem) {
+            currentContent.replaceWith(elem);
+            currentContent = elem;
+        }
+    }
+
+    function getSearchTerm() {
+        return (new URL(window.location)).searchParams.get("search");
+    }
+
+    const searchBox = document.querySelector(".pdoc input[type=search]");
+    searchBox.addEventListener("input", function () {
+        let url = new URL(window.location);
+        if (searchBox.value.trim()) {
+            url.hash = "";
+            url.searchParams.set("search", searchBox.value);
+        } else {
+            url.searchParams.delete("search");
+        }
+        history.replaceState("", "", url.toString());
+        onInput();
+    });
+    window.addEventListener("popstate", onInput);
+
+
+    let search, searchErr;
+
+    async function initialize() {
+        try {
+            search = await new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.type = "text/javascript";
+                script.async = true;
+                script.onload = () => resolve(window.pdocSearch);
+                script.onerror = (e) => reject(e);
+                script.src = "search.js";
+                document.getElementsByTagName("head")[0].appendChild(script);
+            });
+        } catch (e) {
+            console.error("Cannot fetch pdoc search index");
+            searchErr = "Cannot fetch search index.";
+        }
+        onInput();
+
+        document.querySelector("nav.pdoc").addEventListener("click", e => {
+            if (e.target.hash) {
+                searchBox.value = "";
+                searchBox.dispatchEvent(new Event("input"));
+            }
+        });
+    }
+
+    function onInput() {
+        setContent((() => {
+            const term = getSearchTerm();
+            if (!term) {
+                return null
+            }
+            if (searchErr) {
+                return `<h3>Error: ${searchErr}</h3>`
+            }
+            if (!search) {
+                return "<h3>Searching...</h3>"
+            }
+
+            window.scrollTo({top: 0, left: 0, behavior: 'auto'});
+
+            const results = search(term);
+
+            let html;
+            if (results.length === 0) {
+                html = `No search results for '${escapeHTML(term)}'.`
+            } else {
+                html = `<h4>${results.length} search result${results.length > 1 ? "s" : ""} for '${escapeHTML(term)}'.</h4>`;
+            }
+            for (let result of results.slice(0, 10)) {
+                let doc = result.doc;
+                let url = `${doc.modulename.replaceAll(".", "/")}.html`;
+                if (doc.qualname) {
+                    url += `#${doc.qualname}`;
+                }
+
+                let heading;
+                switch (result.doc.kind) {
+                    case "function":
+                        if (doc.fullname.endsWith(".__init__")) {
+                            heading = `<span class="name">${doc.fullname.replace(/\.__init__$/, "")}</span>${doc.signature}`;
+                        } else {
+                            heading = `<span class="def">${doc.funcdef}</span> <span class="name">${doc.fullname}</span>${doc.signature}`;
+                        }
+                        break;
+                    case "class":
+                        heading = `<span class="def">class</span> <span class="name">${doc.fullname}</span>`;
+                        if (doc.bases)
+                            heading += `<wbr>(<span class="base">${doc.bases}</span>)`;
+                        heading += `:`;
+                        break;
+                    case "variable":
+                        heading = `<span class="name">${doc.fullname}</span>`;
+                        if (doc.annotation)
+                            heading += `<span class="annotation">${doc.annotation}</span>`;
+                        if (doc.default_value)
+                            heading += `<span class="default_value"> = ${doc.default_value}</span>`;
+                        break;
+                    default:
+                        heading = `<span class="name">${doc.fullname}</span>`;
+                        break;
+                }
+                html += `
+                        <section class="search-result">
+                        <a href="${url}" class="attr ${doc.kind}">${heading}</a>
+                        <div class="docstring">${doc.doc}</div>
+                        </section>
+                    `;
+
+            }
+            return html;
+        })());
+    }
+
+    if (getSearchTerm()) {
+        initialize();
+        searchBox.value = getSearchTerm();
+        onInput();
+    } else {
+        searchBox.addEventListener("focus", initialize, {once: true});
+    }
+
+    searchBox.addEventListener("keydown", e => {
+        if (["ArrowDown", "ArrowUp", "Enter"].includes(e.key)) {
+            let focused = currentContent.querySelector(".search-result.focused");
+            if (!focused) {
+                currentContent.querySelector(".search-result").classList.add("focused");
+            } else if (
+                e.key === "ArrowDown"
+                && focused.nextElementSibling
+                && focused.nextElementSibling.classList.contains("search-result")
+            ) {
+                focused.classList.remove("focused");
+                focused.nextElementSibling.classList.add("focused");
+                focused.nextElementSibling.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "nearest"
+                });
+            } else if (
+                e.key === "ArrowUp"
+                && focused.previousElementSibling
+                && focused.previousElementSibling.classList.contains("search-result")
+            ) {
+                focused.classList.remove("focused");
+                focused.previousElementSibling.classList.add("focused");
+                focused.previousElementSibling.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "nearest"
+                });
+            } else if (
+                e.key === "Enter"
+            ) {
+                focused.querySelector("a").click();
+            }
+        }
+    });
+</script></body>
 </html>

@@ -11,6 +11,8 @@ from .result_metadata import ResultMetadata
 
 
 class ResultRegistrar(Registrar, Listener):
+    """@private"""
+
     def __init__(self, *, csvpaths, result, result_serializer=None):
         # super().__init__(csvpaths, result)
         Registrar.__init__(self, csvpaths, result)
