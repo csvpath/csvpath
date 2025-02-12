@@ -38,7 +38,8 @@ class CsvPathsPublic(ABC):
 
     @abstractmethod
     def collect_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
-        """Sequentially does a CsvPath.collect() on filename for every named path. lines are collected into results."""
+        """
+        Sequentially does a CsvPath.collect() on filename for every named path. lines are collected into results."""
 
     @abstractmethod
     def fast_forward_paths(self, *, pathsname, filename) -> None:  # pragma: no cover
@@ -92,7 +93,9 @@ class CsvPathsPublic(ABC):
 
 
 class CsvPathsCoordinator(ABC):
-    """This abstract class defines callbacks for CsvPath instances to
+    """
+        @private
+    This abstract class defines callbacks for CsvPath instances to
     broadcast state to their siblings through CsvPaths. A CsvPath
     instance might stop the entire run, rather than each CsvPath
     instance needing to contain the same logic that stops their
@@ -101,19 +104,27 @@ class CsvPathsCoordinator(ABC):
 
     @abstractmethod
     def stop_all(self) -> None:  # pragma: no cover
-        """Stops every CsvPath instance in a run"""
+        """
+        @private
+        Stops every CsvPath instance in a run"""
 
     @abstractmethod
     def fail_all(self) -> None:  # pragma: no cover
-        """Fails every CsvPath instance in a run"""
+        """
+        @private
+        Fails every CsvPath instance in a run"""
 
     @abstractmethod
     def skip_all(self) -> None:  # pragma: no cover
-        """skips the line for every CsvPath instance in a run"""
+        """
+        @private
+        skips the line for every CsvPath instance in a run"""
 
     @abstractmethod
     def advance_all(self, lines: int) -> None:  # pragma: no cover
-        """advances every CsvPath instance in a run"""
+        """
+        @private
+        advances every CsvPath instance in a run"""
 
 
 class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
