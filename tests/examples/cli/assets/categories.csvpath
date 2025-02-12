@@ -1,0 +1,17 @@
+---- CSVPATH ----
+
+~
+    This csvpath creates a lookup variable named "categories" that can be used
+    by other csvpaths by reference. A reference to this lookup var would look like
+    $categories.variables.categories, assuming you loaded this csvpath the
+    named-paths name categories. If you named the named-paths group myvars the
+    reference would look like: $myvars.variables.categories.
+
+    id: categories
+~
+$[1*] [
+    print("$.csvpath.line_number: ($.csvpath.headers) $.headers.item: $.headers.category")
+    put("categories", #item, #category)
+]
+
+

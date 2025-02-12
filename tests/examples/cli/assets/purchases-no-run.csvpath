@@ -1,0 +1,57 @@
+~
+    This example validates and canonicalizes two files of purchase
+    data from a hardware store. the data files are: january-2025.csv
+    and february-2025.csv.
+
+    The three csvpaths do the following:
+     - schema: validate the purchase files against a schema (no rules, just structure)
+     - capitalization: upgrade the data to have the correct capitalization of the product names
+     - lookup: insert a category for each product purchased :
+
+    The lookup csvpath takes its values from another data file, categories.csv.
+    The file categories.csvpath has one csvpath that loads a data structure from the
+    CSV data into a lookup variable. The csvpath named lookup (below) then uses a reference
+    to access the variable from the categories csvpath.
+
+    You must run categories.csvpath before running purchases.csvpath because the lookup needs to
+    exist.
+
+    You can turn any of the csvpaths in this file off by setting the run mode to no-run. Breaking
+    down the problem by running first 1, then 2, then all 3 may be helpful when you are
+    developing.
+
+    run-mode:run
+    id: schema
+~
+$[1*][
+    line(
+        date.purchased_on(#date),
+        string(#customer),
+        string(#product),
+        integer.strict.notnone.units_purchased(#quantity),
+        decimal.strict.price(#price_per)
+    )
+]
+
+---- CSVPATH ----
+~
+    id: capitalization
+    run-mode:no-run
+~
+$[1*][
+    replace( #2, caps(#2) )
+]
+
+---- CSVPATH ----
+~
+    id: lookup
+    source-mode:preceding
+    run-mode: no-run
+~
+$[1*][
+    insert( 2, "category", get($categories.variables.categories, #2) )
+]
+
+
+
+

@@ -521,12 +521,13 @@ class ResultsManager:  # pylint: disable=C0115
         self.csvpaths.logger.debug(
             "Attempting to load results for %s from %s", name, path
         )
-        runs = Nos(path).listdir()
-        runs.sort()
-        run = runs[len(runs) - 1]
-        rs = self.get_named_results_for_run(name=name, run=run)
-        if rs is not None:
-            return rs
+        if Nos(path).dir_exists():
+            runs = Nos(path).listdir()
+            runs.sort()
+            run = runs[len(runs) - 1]
+            rs = self.get_named_results_for_run(name=name, run=run)
+            if rs is not None:
+                return rs
         #
         # we treat this as a recoverable error because typically the user
         # has complete control of the csvpaths environment, making the
@@ -535,9 +536,12 @@ class ResultsManager:  # pylint: disable=C0115
         # if reached by a reference this error should be trapped at an
         # expression and handled according to the error policy.
         #
-        raise InputException(
-            f"Results '{name}' not found. Named-results are: {self.named_results}"
+        msg = (
+            f"Results '{name}' does not exist. Has has that named-paths group been run?"
         )
+        self.csvpaths.logger.error(msg)
+        if self.csvpaths.ecoms.do_i_raise():
+            raise InputException(msg)
 
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
         path = os.path.join(self.csvpaths.config.archive_path, name)
@@ -579,6 +583,9 @@ class ResultsManager:  # pylint: disable=C0115
             csvpath.match = meta["runtime_data"]["match_part"]
             csvpath.delimiter = meta["runtime_data"]["delimiter"]
             csvpath.quotechar = meta["runtime_data"]["quotechar"]
+        vars = ResultFileReader.vars(instance_dir)
+        if vars:
+            csvpath.variables = vars
         #
         # this may not be complete. let's see if it works or needs more.
         #

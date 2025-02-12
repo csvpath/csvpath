@@ -13,7 +13,7 @@ $[*][
 
 ~ id: importer ~
 $[*][
-    print("Did import!")
+    print("Doing import!")
     import($paths.csvpaths.importable)
     yes()
 ]

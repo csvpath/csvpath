@@ -253,8 +253,8 @@ There are lots more simple examples on the individual function pages.
 ## Types
 <table>
 <tr><th>Function            <a name="types"> </th><th> What it does                                              </th></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>blank(value)</a></td><td> Expects a blank header value  </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>boolean(value)</a></td><td> Declares a boolean value  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>blank(value)</a></td><td> Expects a specific header with any value.  </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>boolean(value)</a></td><td> Declares a boolean value.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>date(value, format)</a></td><td> Declares a date parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/date.md'>datetime(value, format)</a></td><td> Declares a datetime parsed according to a format string.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>decimal(value, value, value)</a>    </td><td> Declares a decimal. </td></tr>
@@ -263,7 +263,7 @@ There are lots more simple examples on the individual function pages.
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/no.md'>none()</a>                    </td><td> Expects a None. </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/string_functions.md'>string(value, max, min)</a> </td><td> Declares a string, optionally with max and min lengths.  </td></tr>
 <tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/email.md'>url(value)</a>    </td><td> Declares a string as a standard url. </td></tr>
-<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>wildcard(value)</a>    </td><td> Declares a string as a standard url. </td></tr>
+<tr><td> <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions/types.md'>wildcard(value)</a>    </td><td> Expects one or more headers that are unspecified. </td></tr>
 </table>
 
 

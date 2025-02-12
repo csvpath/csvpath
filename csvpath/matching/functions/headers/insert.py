@@ -35,9 +35,20 @@ class Insert(SideEffect):
         # the header exists.
         #
         if self.matcher.header_name(index) != name:
+            # find out if we are in the header row
+            h = True
+            for i, v in enumerate(self.matcher.csvpath.headers):
+                if self.matcher.line[i] != v:
+                    h = False
+            # do the insert
             self.matcher.csvpath.headers.insert(index, name)
             self.matcher.csvpath.logger.debug("Inserted %s at index %s ", name, index)
-            self.matcher.line.insert(index, name)
+            # if we're in the header row the data needs the header name
+            # otherwise we'll add the value to the data
+            if h is True:
+                self.matcher.line.insert(index, name)
+            else:
+                self.matcher.line.insert(index, data)
         else:
             self.matcher.line.insert(index, data)
 

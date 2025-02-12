@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Header, Variable, Term
+from csvpath.matching.productions import Header, Variable, Term, Reference
 from ..function_focus import ValueProducer
 from ..function import Function
 from ..args import Args
@@ -11,10 +11,10 @@ class Get(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Header, Term, Function, Variable], actuals=[str])
+        a.arg(types=[Header, Term, Function, Variable, Reference], actuals=[str, dict])
         a.arg(
             types=[None, Header, Term, Function, Variable],
-            actuals=[str, int, float, bool, Args.EMPTY_STRING],
+            actuals=[None, str, int, float, bool, Args.EMPTY_STRING],
         )
         self.args.validate(self.siblings())
         super().check_valid()
@@ -23,7 +23,11 @@ class Get(ValueProducer):
         varname = None
         varname = self._value_one(skip=skip)
         c2 = self._child_two()
-        v = self.matcher.get_variable(varname)
+        v = None
+        if isinstance(varname, dict):
+            v = varname
+        else:
+            v = self.matcher.get_variable(f"{varname}")
         if v is None:
             self.value = None
         elif c2 is None:

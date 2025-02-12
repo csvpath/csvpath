@@ -329,6 +329,8 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
         #
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
+            if not csvpath.will_run:
+                continue
             result = Result(
                 csvpath=csvpath,
                 file_name=filename,
@@ -348,6 +350,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     filename=filename,
                     crt=crt,
                 )
+                #
+                # if run-mode: no-run we skip ahead without saving results
+                #
+                if not csvpath.will_run:
+                    continue
                 #
                 # the add has to come after _load_csvpath because we need the identity or index
                 # to be stable and the identity is found in load, if it exists.
@@ -536,6 +543,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     crt=crt,
                 )
                 #
+                # if run-mode: no-run we skip ahead without saving results
+                #
+                if not csvpath.will_run:
+                    continue
+                #
                 # the add has to come after _load_csvpath because we need the identity or index
                 # to be stable and the identity is found in load, if it exists.
                 #
@@ -632,6 +644,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                     filename=filename,
                     crt=crt,
                 )
+                #
+                # if run-mode: no-run we skip ahead without saving results
+                #
+                if not csvpath.will_run:
+                    continue
                 #
                 # the add has to come after _load_csvpath because we need the identity or index
                 # to be stable and the identity is found in load, if it exists.
@@ -780,6 +797,11 @@ class CsvPaths(CsvPathsPublic, CsvPathsCoordinator, ErrorCollector):
                 # p is a (CsvPath, List[List[str]]) where the second item is
                 # the line-by-line results of the first item's matching
                 for p in csvpath_objects:
+                    #
+                    # if run-mode: no-run we skip ahead without saving results
+                    #
+                    if not p[0].will_run:
+                        continue
                     self.current_matcher = p[0]
                     if self._fail_all:
                         self.logger.warning(

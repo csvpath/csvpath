@@ -28,10 +28,7 @@ class TestReferences(unittest.TestCase):
         assert ref["name"] == "zipcodes"
         assert ref["tracking"] is None
 
-    #
-    # not a workable test under the new error handling. the scenario does work, but the setup does not
-    #
-    def test_reference_for_wrong_parts(self):
+    def test_reference_for_var(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
@@ -50,11 +47,10 @@ class TestReferences(unittest.TestCase):
                 "~validation-mode:raise,print~$[*][@a = $zips.variables.zipcodes.Boston]"
             ],
         )
-        #
-        # fails because 'variables' is wrong
-        #
-        with pytest.raises(MatchException):
-            paths.fast_forward_paths(pathsname="t", filename="food")
+        paths.fast_forward_paths(pathsname="t", filename="food")
+        results = paths.results_manager.get_named_results("t")
+        assert len(results) == 1
+        assert results[0].csvpath.variables["a"] == "01915"
 
     def test_reference_csvpaths_data_type(self):
         path = CsvPath()

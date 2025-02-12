@@ -209,7 +209,7 @@ class ArgSet:
             t = tuple(self._args[i].types)
             if not isinstance(s, t):
                 ii = i + 1
-                return f"arg {ii} is an unexpected type"
+                return f"arg {ii} is an unexpected type: {type(s)}"
         return None
 
     # ----------------------------
