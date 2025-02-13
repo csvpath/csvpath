@@ -3,7 +3,7 @@
 
 The CsvPath Language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
-The CsvPath Framework makes it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
+The CsvPath Framework makes it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
 - Registers files for **clear and durable identity**
 - **Validates the data** against expectations
 - Provides **operations and validity reports**
@@ -81,7 +81,7 @@ This project tackles two needs:
 
 CsvPath Language is first and foremost a validation language. It supports both schema definitions and rules-based validation. CsvPath Language describes data so you can easily tell if a file is valid. CsvPath can also extract and shape data and create reports. Overall the goal is to automate human judgement out of the processing loop and instead move it to the process definition stage.
 
-The CsvPath Framework implements CsvPath Language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
+The CsvPath Framework implements CsvPath Language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
 
 CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library and framework, not a system, so it relies on being easy to integrate with other DataOps tools.
 
@@ -106,7 +106,7 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 
 <a name="pdocs"></a>
 # Python Interface Docs
-<a href='https://csvpath.github.io/csvpath/' target='_blank'>Code docs are here</a>.
+<a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
 The CsvPath Framework's public interface is streamlined. csvpath.CsvPath and csvpath.CsvPaths are where most of the magic happens. Docs for deeper levels will be added over time.
 
 # Description

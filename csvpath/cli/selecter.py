@@ -40,8 +40,9 @@ class Selecter:
         style: Optional[BaseStyle] = None,
     ) -> T:
         #
-        # this class sourced from https://github.com/prompt-toolkit/python-prompt-toolkit/issues/756
+        # based on https://github.com/prompt-toolkit/python-prompt-toolkit/issues/756
         #
+        self.ref = False
         radio_list = CRadioList(values, default)
         radio_list.open_character = " "
         radio_list.close_character = " "
@@ -62,7 +63,10 @@ class Selecter:
             # enter exits the select, returning the highlighted value
             #
             radio_list._handle_enter()
-            event.app.exit(result=radio_list.current_value)
+            v = radio_list.current_value
+            if self.ref is True:
+                v = f"${v}"
+            event.app.exit(result=v)
 
         @bindings.add("c-c")
         def backup_exit_with_value(event):
@@ -70,6 +74,18 @@ class Selecter:
             # ctrl-c exits the user interface with the cancel_value
             #
             event.app.exit(result=cancel_value)
+
+        @bindings.add("$")
+        def ref_indicator(event):
+            #
+            # $ indicates a reference
+            #
+            if self.ref and self.ref is True:
+                print("", end="")
+                self.ref = False
+            else:
+                print("$", end="")
+                self.ref = True
 
         #
         # Create and run the mini inline application

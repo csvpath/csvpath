@@ -6,6 +6,8 @@ from csvpath import CsvPaths
 from .drill_down import DrillDown
 from .selecter import Selecter
 from .debug_config import DebugConfig
+from csvpath.util.nos import Nos
+from .asker import Asker
 
 
 class Cli:
@@ -178,7 +180,10 @@ For help see https://www.csvpath.org
             t = f"{self.csvpaths.config.archive_path}{os.sep}{t}"
             self.action(f"Opening results at {t}...")
             self.short_pause()
-            c = f"open {t}"
+            #
+            # not sure if this works for the linux desktop user
+            #
+            c = f"open {t}" if os.sep == "/" else f"explorer {t}"
             os.system(c)
         except Exception:
             print(traceback.format_exc())
@@ -208,14 +213,37 @@ For help see https://www.csvpath.org
             input("You must add a named-file. Press any key to continue.")
             return
         files.sort()
-        file = self.ask(files, q="What named-file? ")
+        file = self.ask(
+            files, q="What named-file? \n(enter $ on any line to build a reference) "
+        )
+        #
+        # if '$' user wants to use a reference, possibly for replay
+        #
+        if file.startswith("$"):
+            # find the run and instance
+            file = self.complete_file_reference()
+            if file is None:
+                input(
+                    "Could not build the reference. Check if all files are present. Press any key to continue."
+                )
+                return
+
         self.clear()
         allpaths = self.csvpaths.paths_manager.named_paths_names
         if len(allpaths) == 0:
             input("You must add a named-paths file. Press any key to continue.")
             return
         allpaths.sort()
-        paths = self.ask(allpaths, q="What named-paths? ")
+        paths = self.ask(
+            allpaths,
+            q="What named-paths? \n(enter $ on any line to build a reference) ",
+        )
+        #
+        # if '$' user wants to use a reference to rewind
+        #
+        if paths.startswith("$"):
+            paths = self.complete_paths_reference(paths)
+
         self.clear()
         choices = ["collect", "fast-forward", Cli.CANCEL2]
         method = self.ask(choices, q="What method? ")
@@ -248,6 +276,48 @@ For help see https://www.csvpath.org
                     return
                 self.clear()
         self._return_to_cont()
+
+    def complete_file_reference(self) -> str:
+        allpaths = self.csvpaths.paths_manager.named_paths_names
+        allpaths.sort()
+        file = self.ask(allpaths, q="Building a reference. Use what results? ")
+        file = file.lstrip("$")
+        results = self.csvpaths.config.get(section="results", name="archive")
+        results = f"{results}{os.sep}{file}"
+        if not Nos(results).dir_exists():
+            return None
+        runs = Nos(results).listdir()
+        runs.sort()
+        run = self.ask(runs, q="Which run? ")
+        run = run.lstrip("$")
+        results = f"{results}{os.sep}{run}"
+        instances = Nos(results).listdir()
+        instances = [i for i in instances if i.find(".json") == -1]
+        instance = self.ask(instances, q="Which csvpath? ")
+        instance = instance.lstrip("$")
+        return f"${file}.results.{run}.{instance}"
+
+    def complete_paths_reference(self, paths) -> str:
+        allpaths = self.csvpaths.paths_manager.named_paths_names
+        allpaths.sort()
+        path = self.ask(allpaths, q="Building a reference. Use what paths? ")
+        path = path.lstrip("$")
+        instances = self.csvpaths.paths_manager.get_identified_paths_in(path)
+        ids = [i[0] for i in instances]
+        run = self.ask(ids, q="Which csvpath? ")
+        run = run.lstrip("$")
+        # ft = Asker(self, name_type="none").ask("from:, to:, or neither? ")
+        ft = self.ask(
+            ["from", "to", "neither"], q=f"Limit csvpaths in group relative to {run}? "
+        )
+        ft = ft.lstrip("$")
+        ft = ft.replace(":", "")
+        ft = ft.strip()
+        if ft in ["from", "to"]:
+            ft = f":{ft}"
+        else:
+            ft = ""
+        return f"${path}.csvpaths.{run}{ft}"
 
 
 def run():

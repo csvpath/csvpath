@@ -364,7 +364,15 @@ class ResultsManager:  # pylint: disable=C0115
         instance = self._find_instance(
             filename, instance, not_name=not_name, name_three=name_three
         )
-        filename = os.path.join(filename, instance)
+        #
+        # this doubled base showed up as a problem in Cli during replay. it likely stems
+        # from a difference between a :last/:first ref vs. just a plan run name. would
+        # be nice to try buffing it out, but atm it's fine.
+        #
+        if not instance.startswith(filename):
+            filename = os.path.join(filename, instance)
+        else:
+            filename = instance
         if not Nos(filename).dir_exists():
             raise InputException(
                 f"Reference {refstr} does not point to a valid named-paths run file at {filename}"

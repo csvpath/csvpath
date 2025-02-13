@@ -14,7 +14,7 @@ from prompt_toolkit.completion import WordCompleter
 
 
 class Asker:
-    def __init__(self, cli, *, name_type) -> None:
+    def __init__(self, cli, *, name_type, prompt=None) -> None:
         self._cli = cli
         names = None
         self.name_type = name_type
@@ -24,18 +24,24 @@ class Asker:
         elif name_type == "paths":
             names = self._cli.csvpaths.paths_manager.named_paths_names
             names.sort()
+        elif name_type == "none":
+            names = []
         else:
             raise ValueError("Name type must be files or paths")
         self.completer = WordCompleter(names, ignore_case=True)
         self.result = None
+        self.prompt = prompt
 
     def create_prompt_application(self, prompt_text=None):
         if prompt_text is None:
-            prompt_text = (
-                "Named-file name? "
-                if self.name_type == "files"
-                else "Named-paths name? "
-            )
+            if self.prompt is None:
+                prompt_text = (
+                    "Named-file name? "
+                    if self.name_type == "files"
+                    else "Named-paths name? "
+                )
+            else:
+                prompt_text = self.prompt
         # Create a buffer to store input
         buffer = Buffer(completer=self.completer, complete_while_typing=True)
         # Create key bindings
@@ -83,8 +89,9 @@ class Asker:
             # complete_while_typing=True
         )
 
-    def ask(self) -> str:
+    def ask(self, prompt=None) -> str:
         try:
+            self.prompt = prompt
             app = self.create_prompt_application()
             app.run()
             return self.result
