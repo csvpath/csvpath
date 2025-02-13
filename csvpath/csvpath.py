@@ -1252,7 +1252,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         for k in self.limit_collection_to:
             if k is None or k >= len(line):
                 raise InputException(
-                    f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k}"
+                    f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k} of {self.limit_collection_to} in headers {self.headers}"
                 )
             ls.append(line[k])
         return ls

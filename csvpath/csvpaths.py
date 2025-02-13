@@ -290,9 +290,12 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """@private
         at this time we do not recommend reusing CsvPaths, but it is doable
         you should clean before reuse unless you want to accumulate results."""
-        self.results_manager.clean_named_results(paths)
+        self._set_managers()
         self.clear_run_coordination()
-        # self.error_manager.reset()
+        self._errors = []
+        self.named_paths_name = None
+        self.named_file_name = None
+        self.current_matcher = None
         self._errors = []
         self.named_paths_name = None
         self.named_file_name = None

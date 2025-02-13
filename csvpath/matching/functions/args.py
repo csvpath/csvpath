@@ -410,7 +410,7 @@ class Args:
         if not good:
             msg = None
             if self.matchable:
-                msg = f"Problem in {self.matchable.my_chain}: {_m}"
+                msg = f"Csvpath language problem in {self.matchable.my_chain}: {_m}"
             else:
                 msg = "CsvPath Language syntax problem"
             self._matchable.matcher.csvpath.error_manager.handle_error(

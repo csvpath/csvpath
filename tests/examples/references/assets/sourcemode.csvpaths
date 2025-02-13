@@ -1,0 +1,26 @@
+~ name: source1 ~
+$[*][
+    firstline.nocontrib() -> print("this is $.csvpath.identity at line $.csvpath.line_number working on data from $.csvpath.file_name with headers $.csvpath.headers")
+    #firstname #lastname
+    append("count", count(), yes())
+    collect("firstname", "lastname", "count")
+]
+
+---- CSVPATH ----
+~ id: source2
+  source-mode: preceding ~
+$[*][
+    firstline.nocontrib() -> print("this is $.csvpath.identity working on data from $.csvpath.file_name with headers: $.csvpath.headers")
+    gt(#count, 4)
+    append("working", random(0,5), yes() )
+    collect("firstname", "lastname", "working", "count")
+]
+
+---- CSVPATH ----
+~ id: source3
+  source-mode: preceding ~
+$[*][
+    firstline.nocontrib() -> print("this is $.csvpath.identity working on data from $.csvpath.file_name")
+    print("$.headers.firstname, $.headers.lastname, $.headers.working")
+    collect("firstname", "lastname", "working")
+]

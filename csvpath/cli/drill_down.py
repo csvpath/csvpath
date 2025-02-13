@@ -16,14 +16,16 @@ class DrillDown:
         #
         # get name
         #
-        self._cli.clear()
-        name = Asker(self._cli, name_type="files").ask()
-        #
-        # get path
-        #
         t = self._get_add_type()
         if t == self._cli.CANCEL2:
             return
+        self._cli.clear()
+        name = None
+        if t == "file":
+            name = Asker(self._cli, name_type="files").ask()
+        #
+        # get path
+        #
         p = self._get_path(t, self._cli.csvpaths.config.csv_file_extensions)
         if p is False:
             return
@@ -63,17 +65,19 @@ class DrillDown:
     # ============================
 
     def name_paths(self):
+        t = self._get_add_type()
+        if t == self._cli.CANCEL2:
+            return
         #
         # get name
         #
         self._cli.clear()
-        name = Asker(self._cli, name_type="paths").ask()
+        name = None
+        if t == "file":
+            name = Asker(self._cli, name_type="paths").ask()
         #
         # get path
         #
-        t = self._get_add_type()
-        if t == self._cli.CANCEL2:
-            return
         exts = self._cli.csvpaths.config.csvpath_file_extensions
         p = self._get_path(t, exts)
         if p is False:

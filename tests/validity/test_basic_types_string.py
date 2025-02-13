@@ -94,3 +94,24 @@ class TestValidBasicTypesString(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 4
+
+    def test_validity_string_line(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "print, collect")
+        path.parse(
+            f""" ${PATH}[1][
+                line(
+                    string(),
+                    string(#lastname),
+                    string(#say)
+                )
+            ]"""
+        )
+        path.fast_forward()
+        assert path.has_errors()
+        #
+        # since we're not raising or stopping we'll have 2 errors. one from validating the csvpath language and
+        # one from validating the runtime data. both will complain about the number of arguments to the first
+        # string.
+        #
+        assert path.errors_count == 2

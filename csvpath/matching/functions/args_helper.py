@@ -12,8 +12,15 @@ class ArgumentValidationHelper:
         valid_argsets = self._find_valid_argsets(args_definition, actual_values)
         if len(valid_argsets) == 0:
             if len(args_definition.argsets) == 1:
+                i = 0
+                for a in args_definition.argsets[0].args:
+                    if not a.is_noneable:
+                        i += 1
                 expected = len(args_definition.argsets[0].args)
-                return f"{function_name} requires {expected} argument{'s' if expected != 1 else ''}"
+                if i < expected:
+                    return f"{function_name}() requires {i} to {expected} argument{'s' if expected != 1 else ''}"
+                else:
+                    return f"{function_name}() requires {expected} argument{'s' if expected != 1 else ''}"
             return self._get_argument_count_error(function_name, args_definition)
         #
         # Validate each argument against the argset.
