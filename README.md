@@ -1,7 +1,7 @@
 
 # <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/logo-wordmark-4.svg'/></a>
 
-The CsvPath Language defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
+The CsvPath Framework helps you close the gap between Managed File Transfer and your data lake and/or applications. CsvPath Language is the core of the Framework. It defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
 
 The CsvPath Framework makes it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
 - Registers files for **clear and durable identity**
@@ -79,7 +79,7 @@ This project tackles two needs:
 - A more robust validation language for delimited and tabular data
 - A systems integration framework for flat-file landing and staging
 
-CsvPath Language is first and foremost a validation language. It supports both schema definitions and rules-based validation. CsvPath Language describes data so you can easily tell if a file is valid. CsvPath can also extract and shape data and create reports. Overall the goal is to automate human judgement out of the processing loop and instead move it to the process definition stage.
+CsvPath Language is the core of the CsvPath Framework. It is a simple validation language for delimited data. It supports both schema definitions and rules-based validation. CsvPath Language describes data so you can easily tell if a file is valid. CsvPath can also extract and shape data and create reports. Overall the goal is to automate human judgement out of the processing loop and instead move it to the process definition stage.
 
 The CsvPath Framework implements CsvPath Language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
 
