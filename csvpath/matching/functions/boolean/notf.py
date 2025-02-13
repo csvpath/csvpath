@@ -13,9 +13,15 @@ class Not(MatchDecider):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(
-            types=[Variable, Header, Function, Reference, Equality], actuals=[None, Any]
+            name="value applied to",
+            types=[Variable, Header, Function, Reference, Equality],
+            actuals=[None, Any],
         )
-        a.arg(types=[None, Function], actuals=[None, Any])
+        a.arg(
+            name="A function to invoke if not() is True",
+            types=[None, Function],
+            actuals=[None, Any],
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

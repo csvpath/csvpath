@@ -294,8 +294,6 @@ class FunctionFactory:
             f = Strip(matcher, name, child)
         elif name == "jinja":
             f = Jinjaf(matcher, name, child)
-        #        elif name == "correlate":
-        #            f = Correlate(matcher, name, child)
         elif name in ["count_headers", "count_headers_in_line"]:
             f = CountHeaders(matcher, name, child)
         elif name == "percent_unique":
