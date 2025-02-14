@@ -11,6 +11,9 @@ class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
+        self.match_qualifiers.append("distinct")
+        self.match_qualifiers.append("notnone")
+
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
@@ -31,7 +34,9 @@ class Push(SideEffect):
                 "Push cannot add to the stack. The run may be ending."
             )
         elif (
-            self.has_qualifier("distinct") or self.name == "push_distinct"
+            self.distinct
+            or self.name == "push_distinct"
+            # self.has_qualifier("distinct") or self.name == "push_distinct"
         ) and v in stack:
             pass
         elif self.notnone and ExpressionUtility.is_empty(v):
@@ -57,6 +62,7 @@ class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
+        self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[None, str])
@@ -107,6 +113,7 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
+        self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

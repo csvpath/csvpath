@@ -64,6 +64,7 @@ class StopAll(Stopper):
 
 class Skipper(SideEffect):
     def check_valid(self) -> None:
+        self.match_qualifiers.append("once")
         self.args = Args(matchable=self)
         self.args.argset(0)
         self.args.argset(1).arg(types=[Function, Equality], actuals=[None, Any])

@@ -8,13 +8,16 @@ from .selecter import Selecter
 from .debug_config import DebugConfig
 from csvpath.util.nos import Nos
 from .asker import Asker
+from .function_lister import FunctionLister
+from .const import Const
 
 
 class Cli:
     def __init__(self):
         self.csvpaths = CsvPaths()
         self.clear()
-        splash = """
+        """
+        splash = ""
           *** *            ******        **  **
         ***  **   *        **  **      **** **
        **        ** **  * ** *** ***** **  *****
@@ -26,7 +29,7 @@ CsvPath Command Line Interface
 Try tab completion and menu-by-key.
 For help see https://www.csvpath.org
 """
-        print(splash)
+        print(Const.SPLASH)
         self._return_to_cont()
         self.clear()
 
@@ -40,33 +43,33 @@ For help see https://www.csvpath.org
         time.sleep(0.5)
 
     ITALIC = "\033[3m"
-    SIDEBAR_COLOR = "\033[36m"
-    REVERT = "\033[0m"
-    STOP_HERE = f"{SIDEBAR_COLOR}{ITALIC}... done picking dir{REVERT}"
-    STOP_HERE2 = "👍 pick this dir"
-    CANCEL = f"{SIDEBAR_COLOR}{ITALIC}... cancel{REVERT}"
-    CANCEL2 = "← cancel"
-    QUIT = "← quit"
-    NAMED_FILES = "register data"
-    NAMED_PATHS = "load csvpaths"
-    ARCHIVE = "access the archive"
+    # SIDEBAR_COLOR = "\033[36m"
+    # REVERT = "\033[0m"
+    # STOP_HERE = f"{Const.SIDEBAR_COLOR}{ITALIC}... done picking dir{Const.REVERT}"
+    # STOP_HERE2 = "👍 pick this dir"
+    # CANCEL = f"{Const.SIDEBAR_COLOR}{ITALIC}... cancel{Const.REVERT}"
+    # CANCEL2 = "← cancel"
+    # QUIT = "← quit"
+    # NAMED_FILES = "register data"
+    # NAMED_PATHS = "load csvpaths"
+    # ARCHIVE = "access the archive"
 
     def _return_to_cont(self):
         print(
-            f"\n{Cli.SIDEBAR_COLOR}{Cli.ITALIC}... Hit return to continue{Cli.REVERT}\n"
+            f"\n{Const.SIDEBAR_COLOR}{Cli.ITALIC}... Hit return to continue{Const.REVERT}\n"
         )
         self._input("")
 
     def _response(self, text: str) -> None:
-        sys.stdout.write(f"\u001b[30;1m{text}{Cli.REVERT}\n")
+        sys.stdout.write(f"\u001b[30;1m{text}{Const.REVERT}\n")
 
     def action(self, text: str) -> None:
-        sys.stdout.write(f"\033[36m{text}{Cli.REVERT}\n")
+        sys.stdout.write(f"\033[36m{text}{Const.REVERT}\n")
 
     def _input(self, prompt: str) -> str:
         try:
             response = input(f"{prompt}\033[93m")
-            sys.stdout.write(Cli.REVERT)
+            sys.stdout.write(Const.REVERT)
             return response.strip()
         except KeyboardInterrupt:
             return "cancel"
@@ -80,12 +83,12 @@ For help see https://www.csvpath.org
             return
         if q is not None:
             print(q)
-        if choices[len(choices) - 1] == Cli.CANCEL:
-            choices[len(choices) - 1] = Cli.CANCEL2
-        if choices[len(choices) - 2] == Cli.STOP_HERE:
-            choices[len(choices) - 2] = Cli.STOP_HERE2
+        if choices[len(choices) - 1] == Const.CANCEL:
+            choices[len(choices) - 1] = Const.CANCEL2
+        if choices[len(choices) - 2] == Const.STOP_HERE:
+            choices[len(choices) - 2] = Const.STOP_HERE2
         cs = [(s, s) for s in choices]
-        t = Selecter().ask(title="", values=cs, cancel_value="CANCEL")
+        t = Selecter().ask(title="", values=cs, cancel_value=Const.CANCEL)
         self.clear()
         return t
 
@@ -94,47 +97,53 @@ For help see https://www.csvpath.org
             t = None
             try:
                 choices = [
-                    Cli.NAMED_FILES,
-                    Cli.NAMED_PATHS,
-                    Cli.ARCHIVE,
+                    Const.NAMED_FILES,
+                    Const.NAMED_PATHS,
+                    Const.ARCHIVE,
                     "run",
                     "config",
-                    self.QUIT,
+                    "functions",
+                    Const.QUIT,
                 ]
                 t = self.ask(choices)
             except KeyboardInterrupt:
                 self.end()
                 return
             t = self._do(t)
-            if t == Cli.QUIT:
+            if t == Const.QUIT:
                 self.end()
                 return
 
     def _do(self, t: str) -> str | None:
-        if t == Cli.QUIT:
+        if t == Const.QUIT:
             return t
         try:
             if t == "run":
                 self.run()
-            if t == Cli.NAMED_FILES:
+            if t == Const.NAMED_FILES:
                 self._files()
-            if t == Cli.NAMED_PATHS:
+            if t == Const.NAMED_PATHS:
                 self._paths()
-            if t == Cli.ARCHIVE:
+            if t == Const.ARCHIVE:
                 self._results()
             if t == "config":
                 self._config()
+            if t == "functions":
+                self._functions()
         except KeyboardInterrupt:
-            return Cli.QUIT
+            return Const.QUIT
         except Exception:
             print(traceback.format_exc())
             self._return_to_cont()
+
+    def _functions(self) -> None:
+        FunctionLister(self).list_functions()
 
     def _config(self) -> None:
         DebugConfig(self).show()
 
     def _files(self) -> None:
-        choices = ["add named-file", "list named-files", self.CANCEL2]
+        choices = ["add named-file", "list named-files", Const.CANCEL2]
         t = self.ask(choices)
         if t == "add named-file":
             DrillDown(self).name_file()
@@ -142,7 +151,7 @@ For help see https://www.csvpath.org
             self.list_named_files()
 
     def _paths(self) -> None:
-        choices = ["add named-paths", "list named-paths", self.CANCEL2]
+        choices = ["add named-paths", "list named-paths", Const.CANCEL2]
         t = self.ask(choices)
         if t == "add named-paths":
             DrillDown(self).name_paths()
@@ -150,7 +159,7 @@ For help see https://www.csvpath.org
             self.list_named_paths()
 
     def _results(self) -> None:
-        choices = ["open named-result", "list named-results", self.CANCEL2]
+        choices = ["open named-result", "list named-results", Const.CANCEL2]
         t = self.ask(choices)
         if t == "open named-result":
             self.open_named_result()
@@ -173,9 +182,9 @@ For help see https://www.csvpath.org
             names = self.csvpaths.results_manager.list_named_results()
             names = [n for n in names if n.find(".") == -1]
             print(f"{len(names)} named-results names:")
-            names.append(self.CANCEL)
+            names.append(Const.CANCEL)
             t = self.ask(names)
-            if t == self.CANCEL:
+            if t == Const.CANCEL:
                 return
             t = f"{self.csvpaths.config.archive_path}{os.sep}{t}"
             self.action(f"Opening results at {t}...")
@@ -245,10 +254,10 @@ For help see https://www.csvpath.org
             paths = self.complete_paths_reference(paths)
 
         self.clear()
-        choices = ["collect", "fast-forward", Cli.CANCEL2]
+        choices = ["collect", "fast-forward", Const.CANCEL2]
         method = self.ask(choices, q="What method? ")
         self.clear()
-        if method == Cli.CANCEL2:
+        if method == Const.CANCEL2:
             return
         self.action(f"Running {paths} against {file} using {method}\n")
         self.pause()

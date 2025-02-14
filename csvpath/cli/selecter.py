@@ -11,6 +11,7 @@ from prompt_toolkit.formatted_text import AnyFormattedText
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.formatted_text.base import StyleAndTextTuples, to_formatted_text
+from .const import Const
 
 T = TypeVar("T")
 

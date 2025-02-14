@@ -26,6 +26,15 @@ class Line(MatchDecider):
     """checks that a line contains certain fields"""
 
     def check_valid(self) -> None:  # pragma: no cover
+        self.name_qualifier = True
+        self.match_qualifiers.append("distinct")
+        self.value_qualifiers = []
+        self.description = [
+            self._cap_name(),
+            "line() creates structural schema definitions.",
+            "Each line() function represents an entire line of the data file. Using wildcards and blanks allows a line() to specify just certain headers, rather than explicitly defining the entire line, header-by-header. This also allows for other line() functions to specify other structures within the same lines. You could, for e.g., define a person line() and an address line() that live side by side in the same rows.",
+        ]
+
         self.args = Args(matchable=self)
         a = self.args.argset()
         types = [
@@ -41,7 +50,7 @@ class Line(MatchDecider):
             Url,
         ]
         a.arg(
-            name="Header value types",
+            name="type function",
             types=types,
             actuals=[None, Any],
         )

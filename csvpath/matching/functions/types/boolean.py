@@ -5,13 +5,24 @@ from csvpath.matching.productions import Term, Variable, Header
 from ..function import Function, CheckedUnset
 from ..function_focus import ValueProducer
 from ..args import Args
+from .type import Type
 
 
-class Boolean(ValueProducer):
+class Boolean(ValueProducer, Type):
     def check_valid(self) -> None:
+        self.value_qualifiers.append("notnone")
+        self.description = [
+            self._cap_name(),
+            f"{self.name}() is a line() schema type representing a bool value.",
+            "To generate a particular bool value use yes() or no().",
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[None, bool, str])
+        a.arg(
+            name="value",
+            types=[Term, Variable, Header, Function],
+            actuals=[None, bool, str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

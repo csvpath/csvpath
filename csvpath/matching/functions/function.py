@@ -25,6 +25,10 @@ class Function(Matchable):
         self.checked = None
         if child:
             self.add_child(child)
+        self.description = []
+        self.match_qualifiers = ["onmatch"]
+        self.value_qualifiers = ["onmatch"]
+        self.name_qualifier = False
 
     def __str__(self) -> str:
         scn = self._simple_class_name()

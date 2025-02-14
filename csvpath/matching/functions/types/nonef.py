@@ -11,11 +11,15 @@ class Nonef(ValueProducer):
     """returns None"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            "A value producer and line() schema type representing a None value.",
+        ]
         self.args = Args(matchable=self)
         self.args.argset(0)
         a = self.args.argset(1)
         a.arg(
-            name="null check",
+            name="nullable",
             types=[Variable, Header, Function, Reference],
             actuals=[None],
         )
@@ -47,6 +51,11 @@ class Blank(ValueProducer):
     """returns True to match, returns its child's value or None. represents any value"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            "A line() schema type representing an incompletely specified header.",
+            "It can take a string naming its positional header.",
+        ]
         self.args = Args(matchable=self)
         self.args.argset(0)
         a = self.args.argset(1)
@@ -68,6 +77,11 @@ class Wildcard(ValueProducer):
     represents any number of headers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            f"A {self.name}() schema type represents one or more headers that are otherwise unspecified.",
+            "It may take an int indicating the number of headers or a * to indicate any number of headers.",
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(types=[None, Term], actuals=[int, str])

@@ -61,7 +61,7 @@ from .boolean.any import Any
 from .boolean.all import All
 from .boolean.exists import Exists
 from .stats.percent import Percent
-from .stats.minf import Min, Max, Average
+from .stats.minf import Min, Max, Average, Median
 from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
 from .print.printf import Print
@@ -115,6 +115,7 @@ class FunctionFactory:
     name is used in a csvpath"""
 
     NOT_MY_FUNCTION = {}
+    MY_FUNCTIONS = {}
 
     @classmethod
     def add_function(cls, name: str, function: Function) -> None:
@@ -159,282 +160,32 @@ class FunctionFactory:
         child: Matchable = None,
         find_external_functions: bool = True,
     ) -> Function:
+
         #
         # matcher must be Noneable for add_function
         #
+        if name is None or name.strip() == "":
+            raise ValueError("Name cannot be None or empty")
         if child and not isinstance(child, Matchable):
             raise InvalidChildException(f"{child} is not a valid child")
         f = None
         qname = name
         name, qualifier = cls.get_name_and_qualifier(name)
-        if name == "count":
-            f = Count(matcher, name, child)
-        elif name == "has_matches":
-            f = HasMatches(matcher, name, child)
-        elif name == "length":
-            f = Length(matcher, name, child)
-        elif name in ["regex", "exact"]:
-            f = Regex(matcher, name, child)
-        elif name == "not":
-            f = Not(matcher, name, child)
-        elif name in ["now", "thisyear", "thismonth", "today"]:
-            f = Now(matcher, name, child)
-        elif name == "in":
-            f = In(matcher, name, child)
-        elif name == "concat":
-            f = Concat(matcher, name, child)
-        elif name in ["contains", "find"]:
-            f = Contains(matcher, name, child)
-        elif name == "lower":
-            f = Lower(matcher, name, child)
-        elif name == "upper":
-            f = Upper(matcher, name, child)
-        elif name == "caps":
-            f = Capitalize(matcher, name, child)
-        elif name == "alter":
-            f = Alter(matcher, name, child)
-        elif name == "percent":
-            f = Percent(matcher, name, child)
-        elif name in ["below", "lt", "before", "lte"]:
-            f = AboveBelow(matcher, name, child)
-        elif name in ["above", "gt", "after", "gte"]:
-            f = AboveBelow(matcher, name, child)
-        elif name == "first":
-            f = First(matcher, name, child)
-        elif name in [
-            "firstline",
-            "firstmatch",
-            "firstscan",
-            "first_line",
-            "first_scan",
-            "first_match",
-        ]:
-            f = FirstLine(matcher, name, child)
-        elif name == "count_lines":
-            f = CountLines(matcher, name, child)
-        elif name == "count_scans":
-            f = CountScans(matcher, name, child)
-        elif name == "or":
-            f = Or(matcher, name, child)
-        elif name in ["no", "false"]:
-            f = No(matcher, name, child)
-        elif name in ["yes", "true"]:
-            f = Yes(matcher, name, child)
-        elif name == "max":
-            f = Max(matcher, name, child)
-        elif name == "min":
-            f = Min(matcher, name, child)
-        elif name == "average":
-            f = Average(matcher, name, child, "average")
-        elif name == "median":
-            f = Average(matcher, name, child, "median")
-        elif name == "random":
-            f = Random(matcher, name, child)
-        elif name == "shuffle":
-            f = Shuffle(matcher, name, child)
-        elif name in ["decimal", "integer"]:
-            f = Decimal(matcher, name, child)
-        elif name == "end":
-            f = End(matcher, name, child)
-        elif name == "length":
-            f = Length(matcher, name, child)
-        elif name == "add":
-            f = Add(matcher, name, child)
-        elif name == "string":
-            f = String(matcher, name, child)
-        elif name == "boolean":
-            f = Boolean(matcher, name, child)
-        elif name in ["subtract", "minus"]:
-            f = Subtract(matcher, name, child)
-        elif name == "multiply":
-            f = Multiply(matcher, name, child)
-        elif name == "divide":
-            f = Divide(matcher, name, child)
-        elif name == "tally":
-            f = Tally(matcher, name, child)
-        elif name == "every":
-            f = Every(matcher, name, child)
-        elif name in ["print", "error"]:
-            f = Print(matcher, name, child)
-        elif name == "increment":
-            f = Increment(matcher, name, child)
-        elif name in ["header_name", "header_index"]:
-            f = HeaderName(matcher, name, child)
-        elif name == "header_names_mismatch":
-            f = HeaderNamesMismatch(matcher, name, child)
-        elif name == "substring":
-            f = Substring(matcher, name, child)
-        elif name in ["stop", "fail_and_stop"]:
-            f = Stop(matcher, name, child)
-        elif name == "stop_all":
-            f = StopAll(matcher, name, child)
-        elif name == "variables":
-            f = Variables(matcher, name, child)
-        elif name == "headers":
-            f = Headers(matcher, name, child)
-        elif name == "any":
-            f = Any(matcher, name, child)
-        elif name == "none":
-            f = Nonef(matcher, name, child)
-        elif name in ["blank", "nonspecific"]:
-            f = Blank(matcher, name, child)
-        elif name == "wildcard":
-            f = Wildcard(matcher, name, child)
-        elif name == "line":
-            f = Line(matcher, name, child)
-        elif name == "last":
-            f = Last(matcher, name, child)
-        elif name == "exists":
-            f = Exists(matcher, name, child)
-        elif name == "mod":
-            f = Mod(matcher, name, child)
-        elif name in ["equals", "equal", "eq", "not_equal_to", "neq"]:
-            f = Equals(matcher, name, child)
-        elif name == "strip":
-            f = Strip(matcher, name, child)
-        elif name == "jinja":
-            f = Jinjaf(matcher, name, child)
-        elif name in ["count_headers", "count_headers_in_line"]:
-            f = CountHeaders(matcher, name, child)
-        elif name == "percent_unique":
-            f = PercentUnique(matcher, name, child)
-        elif name in ["missing", "all"]:
-            f = All(matcher, name, child)
-        elif name == "total_lines":
-            f = TotalLines(matcher, name, child)
-        elif name == "push":
-            f = Push(matcher, name, child)
-        elif name == "push_distinct":
-            f = PushDistinct(matcher, name, child)
-        elif name == "pop":
-            f = Pop(matcher, name, child)
-        elif name == "peek":
-            f = Peek(matcher, name, child)
-        elif name in ["peek_size", "size"]:
-            f = PeekSize(matcher, name, child)
-        elif name in ["date", "datetime"]:
-            f = Date(matcher, name, child)
-        elif name == "fail":
-            f = Fail(matcher, name, child)
-        elif name == "fail_all":
-            f = FailAll(matcher, name, child)
-        elif name in ["failed", "valid"]:
-            f = Failed(matcher, name, child)
-        elif name == "stack":
-            f = Stack(matcher, name, child)
-        elif name in ["stdev", "pstdev"]:
-            f = Stdev(matcher, name, child)
-        elif name == "has_dups":
-            f = HasDups(matcher, name, child)
-        elif name == "count_dups":
-            f = CountDups(matcher, name, child)
-        elif name == "dup_lines":
-            f = DupLines(matcher, name, child)
-        elif name == "empty":
-            f = Empty(matcher, name, child)
-        elif name == "advance":
-            f = Advance(matcher, name, child)
-        elif name == "advance_all":
-            f = AdvanceAll(matcher, name, child)
-        elif name == "collect":
-            f = Collect(matcher, name, child)
-        elif name == "replace":
-            f = Replace(matcher, name, child)
-        elif name == "append":
-            f = Append(matcher, name, child)
-        elif name == "insert":
-            f = Insert(matcher, name, child)
-        elif name == "int":
-            f = Int(matcher, name, child)
-        elif name == "float":
-            f = Float(matcher, name, child)
-        elif name == "and":
-            f = And(matcher, name, child)
-        elif name == "track":
-            f = Track(matcher, name, child)
-        elif name == "sum":
-            f = Sum(matcher, name, child)
-        elif name in ["odd", "even"]:
-            f = Odd(matcher, name, child)
-        elif name == "email":
-            f = Email(matcher, name, child)
-        elif name == "url":
-            f = Url(matcher, name, child)
-        elif name == "subtotal":
-            f = Subtotal(matcher, name, child)
-        elif name == "reset_headers":
-            f = ResetHeaders(matcher, name, child)
-        elif name in ["starts_with", "startswith", "ends_with", "endswith"]:
-            f = StartsWith(matcher, name, child)
-        elif name in ["skip", "take"]:
-            f = Skip(matcher, name, child)
-        elif name == "skip_all":
-            f = SkipAll(matcher, name, child)
-        elif name == "mismatch":
-            f = Mismatch(matcher, name, child)
-        elif name == "line_number":
-            f = LineNumber(matcher, name, child)
-        elif name == "after_blank":
-            f = AfterBlank(matcher, name, child)
-        elif name == "round":
-            f = Round(matcher, name, child)
-        elif name == "import":
-            f = Import(matcher, name, child)
-        elif name == "print_line":
-            f = PrintLine(matcher, name, child)
-        elif name == "print_queue":
-            f = PrintQueue(matcher, name, child)
-        elif name in ["min_length", "max_length", "too_long", "too_short"]:
-            f = MinMaxLength(matcher, name, child)
-        elif name in ["between", "inside", "beyond", "outside", "from_to", "range"]:
-            f = Between(matcher, name, child)
-        elif name == "get":
-            f = Get(matcher, name, child)
-        elif name == "put":
-            f = Put(matcher, name, child)
-        elif name == "debug":
-            f = Debug(matcher, name, child)
-        elif name == "log":
-            f = Log(matcher, name, child)
-        elif name == "brief_stack_trace":
-            f = BriefStackTrace(matcher, name, child)
-        elif name == "vote_stack":
-            f = VoteStack(matcher, name, child)
-        elif name == "do_when_stack":
-            f = DoWhenStack(matcher, name, child)
-        elif name == "metaphone":
-            f = Metaphone(matcher, name, child)
-        elif name == "header_table":
-            f = HeaderTable(matcher, name, child)
-        elif name == "row_table":
-            f = RowTable(matcher, name, child)
-        elif name == "var_table":
-            f = VarTable(matcher, name, child)
-        elif name == "run_table":
-            f = RunTable(matcher, name, child)
-        elif name == "empty_stack":
-            f = EmptyStack(matcher, name, child)
-        elif name == "line_fingerprint":
-            f = LineFingerprint(matcher, name, child)
-        elif name == "file_fingerprint":
-            f = FileFingerprint(matcher, name, child)
-        elif name == "store_line_fingerprint":
-            f = StoreFingerprint(matcher, name, child)
-        elif name == "count_bytes":
-            f = CountBytes(matcher, name, child)
-        elif name == "counter":
-            f = Counter(matcher, name, child)
-        else:
-            if f is None and find_external_functions:
-                if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
-                    FunctionFinder().load(matcher, cls)
-                if name in FunctionFactory.NOT_MY_FUNCTION:
-                    f = cls.NOT_MY_FUNCTION[name]
-                    f = f(matcher, name, child)
-            if not find_external_functions:
-                return None
-            if f is None:
-                raise UnknownFunctionException(f"{name}")
+        if len(cls.MY_FUNCTIONS) == 0:
+            cls.load()
+        if name in cls.MY_FUNCTIONS:
+            c = cls.MY_FUNCTIONS.get(name)
+            f = c(matcher, name, child)
+        if f is None and find_external_functions:
+            if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
+                FunctionFinder().load(matcher, cls)
+            if name in FunctionFactory.NOT_MY_FUNCTION:
+                f = cls.NOT_MY_FUNCTION[name]
+                f = f(matcher, name, child)
+        if f is None and not find_external_functions:
+            return None
+        if f is None:
+            raise UnknownFunctionException(f"{name}")
         if child:
             child.parent = f
         if qualifier:
@@ -443,3 +194,180 @@ class FunctionFactory:
         if f.matcher is None:
             f.matcher = matcher
         return f
+
+    @classmethod
+    def load(cls) -> None:
+        fs = {}
+        fs["count"] = Count
+        fs["has_matches"] = HasMatches
+        fs["length"] = Length
+        fs["regex"] = Regex
+        fs["exact"] = Regex
+        fs["not"] = Not
+        fs["now"] = Now
+        fs["thisyear"] = Now
+        fs["thismonth"] = Now
+        fs["today"] = Now
+        fs["in"] = In
+        fs["concat"] = Concat
+        fs["contains"] = Contains
+        fs["find"] = Contains
+        fs["lower"] = Lower
+        fs["upper"] = Upper
+        fs["caps"] = Capitalize
+        fs["alter"] = Alter
+        fs["percent"] = Percent
+        fs["below"] = AboveBelow
+        fs["lt"] = AboveBelow
+        fs["before"] = AboveBelow
+        fs["lte"] = AboveBelow
+        fs["above"] = AboveBelow
+        fs["gt"] = AboveBelow
+        fs["after"] = AboveBelow
+        fs["gte"] = AboveBelow
+        fs["first"] = First
+        fs["firstline"] = FirstLine
+        fs["firstmatch"] = FirstLine
+        fs["firstscan"] = FirstLine
+        fs["first_line"] = FirstLine
+        fs["first_scan"] = FirstLine
+        fs["first_match"] = FirstLine
+        fs["count_lines"] = CountLines
+        fs["count_scans"] = CountScans
+        fs["or"] = Or
+        fs["no"] = No
+        fs["false"] = No
+        fs["yes"] = Yes
+        fs["true"] = Yes
+        fs["max"] = Max
+        fs["min"] = Min
+        fs["average"] = Average
+        fs["median"] = Median
+        fs["random"] = Random
+        fs["shuffle"] = Shuffle
+        fs["decimal"] = Decimal
+        fs["integer"] = Decimal
+        fs["end"] = End
+        fs["length"] = Length
+        fs["add"] = Add
+        fs["string"] = String
+        fs["boolean"] = Boolean
+        fs["subtract"] = Subtract
+        fs["minus"] = Subtract
+        fs["multiply"] = Multiply
+        fs["divide"] = Divide
+        fs["tally"] = Tally
+        fs["every"] = Every
+        fs["print"] = Print
+        fs["error"] = Print
+        fs["increment"] = Increment
+        fs["header_name"] = HeaderName
+        fs["header_index"] = HeaderName
+        fs["header_names_mismatch"] = HeaderNamesMismatch
+        fs["substring"] = Substring
+        fs["stop"] = Stop
+        fs["fail_and_stop"] = Stop
+        fs["stop_all"] = StopAll
+        fs["variables"] = Variables
+        fs["headers"] = Headers
+        fs["any"] = Any
+        fs["none"] = Nonef
+        fs["blank"] = Blank
+        fs["nonspecific"] = Blank
+        fs["wildcard"] = Wildcard
+        fs["line"] = Line
+        fs["last"] = Last
+        fs["exists"] = Exists
+        fs["mod"] = Mod
+        fs["equals"] = Equals
+        fs["equal"] = Equals
+        fs["eq"] = Equals
+        fs["not_equal_to"] = Equals
+        fs["neq"] = Equals
+        fs["strip"] = Strip
+        fs["jinja"] = Jinjaf
+        fs["count_headers"] = CountHeaders
+        fs["count_headers_in_line"] = CountHeaders
+        fs["percent_unique"] = PercentUnique
+        fs["missing"] = All
+        fs["all"] = All
+        fs["total_lines"] = TotalLines
+        fs["push"] = Push
+        fs["push_distinct"] = PushDistinct
+        fs["pop"] = Pop
+        fs["peek"] = Peek
+        fs["peek_size"] = PeekSize
+        fs["size"] = PeekSize
+        fs["date"] = Date
+        fs["datetime"] = Date
+        fs["fail"] = Fail
+        fs["fail_all"] = FailAll
+        fs["failed"] = Failed
+        fs["valid"] = Failed
+        fs["stack"] = Stack
+        fs["stdev"] = Stdev
+        fs["pstdev"] = Stdev
+        fs["has_dups"] = HasDups
+        fs["count_dups"] = CountDups
+        fs["dup_lines"] = DupLines
+        fs["empty"] = Empty
+        fs["advance"] = Advance
+        fs["advance_all"] = AdvanceAll
+        fs["collect"] = Collect
+        fs["replace"] = Replace
+        fs["append"] = Append
+        fs["insert"] = Insert
+        fs["int"] = Int
+        fs["float"] = Float
+        fs["and"] = And
+        fs["track"] = Track
+        fs["sum"] = Sum
+        fs["odd"] = Odd
+        fs["even"] = Odd
+        fs["email"] = Email
+        fs["url"] = Url
+        fs["subtotal"] = Subtotal
+        fs["reset_headers"] = ResetHeaders
+        fs["starts_with"] = StartsWith
+        fs["startswith"] = StartsWith
+        fs["ends_with"] = StartsWith
+        fs["endswith"] = StartsWith
+        fs["skip"] = Skip
+        fs["take"] = Skip
+        fs["skip_all"] = SkipAll
+        fs["mismatch"] = Mismatch
+        fs["line_number"] = LineNumber
+        fs["after_blank"] = AfterBlank
+        fs["round"] = Round
+        fs["import"] = Import
+        fs["print_line"] = PrintLine
+        fs["print_queue"] = PrintQueue
+        fs["min_length"] = MinMaxLength
+        fs["max_length"] = MinMaxLength
+        fs["too_long"] = MinMaxLength
+        fs["too_short"] = MinMaxLength
+        fs["between"] = Between
+        fs["inside"] = Between
+        fs["beyond"] = Between
+        fs["outside"] = Between
+        fs["from_to"] = Between
+        fs["range"] = Between
+        fs["get"] = Get
+        fs["put"] = Put
+        fs["debug"] = Debug
+        fs["log"] = Log
+        fs["brief_stack_trace"] = BriefStackTrace
+        fs["vote_stack"] = VoteStack
+        fs["do_when_stack"] = DoWhenStack
+        fs["metaphone"] = Metaphone
+        fs["header_table"] = HeaderTable
+        fs["row_table"] = RowTable
+        fs["var_table"] = VarTable
+        fs["run_table"] = RunTable
+        fs["empty_stack"] = EmptyStack
+        fs["line_fingerprint"] = LineFingerprint
+        fs["file_fingerprint"] = FileFingerprint
+        fs["store_line_fingerprint"] = StoreFingerprint
+        fs["count_bytes"] = CountBytes
+        fs["counter"] = Counter
+        cls.MY_FUNCTIONS = fs

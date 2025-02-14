@@ -28,6 +28,12 @@ class Matchable(Qualified):  # pylint: disable=R0904
         self.match = None
         self._id: str = None
 
+    def _cap_name(self) -> str:
+        return f"{self.name[0].upper()}{self.name[1:]}"
+
+    def _a_an(self) -> str:
+        return "an" if self.name[0] in ["a", "e", "i", "o", "u"] else "a"
+
     def __str__(self) -> str:
         return f"""{self._simple_class_name()}"""
 

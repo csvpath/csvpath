@@ -11,6 +11,7 @@ class Track(SideEffect):
     value, from another match component, on a variable."""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

@@ -15,6 +15,17 @@ class Print(SideEffect):
         - if a function or equality, a matches() to call after the print"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            f"{self.name}() prints to one or more default or designated Printer instances.",
+            "Print can have a function or equality argument that is evaluated after printing completes.",
+        ]
+        if self.name == "error":
+            self.description.append(
+                "Errors are also handled in the same way as built-in errors. They are collected to errors.json, printed with metadata, etc."
+            )
+        self.match_qualifiers.append("once")
+        self.match_qualifiers.append("onchange")
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(name="print this", types=[Term], actuals=[str, self.args.EMPTY_STRING])
@@ -30,7 +41,7 @@ class Print(SideEffect):
         # this may need a rethink.
         #
         a.arg(
-            name="run matches",
+            name="eval",
             types=[None, Function, Equality],
             actuals=[None, Any],
         )

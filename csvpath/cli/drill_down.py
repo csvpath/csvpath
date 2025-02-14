@@ -2,6 +2,7 @@ import os
 import traceback
 from .debug_config import DebugConfig
 from .asker import Asker
+from .const import Const
 
 
 class DrillDown:
@@ -17,7 +18,7 @@ class DrillDown:
         # get name
         #
         t = self._get_add_type()
-        if t == self._cli.CANCEL2:
+        if t == Const.CANCEL2:
             return
         self._cli.clear()
         name = None
@@ -66,7 +67,7 @@ class DrillDown:
 
     def name_paths(self):
         t = self._get_add_type()
-        if t == self._cli.CANCEL2:
+        if t == Const.CANCEL2:
             return
         #
         # get name
@@ -149,7 +150,7 @@ class DrillDown:
 
     def _get_add_type(self) -> str:
         self._cli.clear()
-        choices = ["dir", "file", "json", self._cli.CANCEL2]
+        choices = ["dir", "file", "json", Const.CANCEL2]
         t = None
         t = self._cli.ask(choices)
         return t
@@ -164,9 +165,9 @@ class DrillDown:
         names.sort()
         names = self._decorate(path, names, select_dir=dir_only)
         t = self._cli.ask(names)
-        if t in [self._cli.STOP_HERE, self._cli.STOP_HERE2]:
+        if t in [Const.STOP_HERE, Const.STOP_HERE2]:
             return (path, True)
-        if t in [self._cli.CANCEL, self._cli.CANCEL2]:
+        if t in [Const.CANCEL, Const.CANCEL2]:
             return (path, False)
         if t.startswith("📂 ") or t.startswith("📄 "):
             t = t[2:]
@@ -175,7 +176,7 @@ class DrillDown:
     def _decorate(self, path, names, select_dir=False) -> list[str]:
         ns = []
         for n in names:
-            if n in [self._cli.STOP_HERE, self._cli.STOP_HERE2]:
+            if n in [Const.STOP_HERE, Const.STOP_HERE2]:
                 pass
             elif os.path.isfile(os.path.join(path, n)):
                 n = f"📄 {n}"
@@ -183,8 +184,8 @@ class DrillDown:
                 n = f"📂 {n}"
             ns.append(n)
         if select_dir is True:
-            ns.append(self._cli.STOP_HERE)
-        ns.append(self._cli.CANCEL)
+            ns.append(Const.STOP_HERE)
+        ns.append(Const.CANCEL)
         return ns
 
     def _filter_hidden(self, names) -> list[str]:

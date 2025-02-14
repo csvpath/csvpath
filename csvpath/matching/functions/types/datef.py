@@ -13,6 +13,15 @@ class Date(ValueProducer, Type):
     """parses a date from a string"""
 
     def check_valid(self) -> None:
+        self.value_qualifiers.append("notnone")
+        self.match_qualifiers.append("notnone")
+        self.description = [
+            "Date",
+            "date() has two purposes.",
+            "First, it may indicate that a value must be a string to be valid. To do this, it must be an argument to a line() and have a header argument.",
+            "Alternatively, it may generate a date from a string.",
+        ]
+
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
@@ -33,6 +42,9 @@ class Date(ValueProducer, Type):
         )
         self.args.explain = "It must be a date object or a date string with a format."
         self.args.validate(self.siblings())
+        #
+        #
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

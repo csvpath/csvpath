@@ -14,6 +14,7 @@ class Counter(ValueProducer):
     """
 
     def check_valid(self) -> None:  # pylint: disable=W0246
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         self.args.argset(1).arg(types=[None, Any], actuals=[int])
         self.args.validate(self.siblings())

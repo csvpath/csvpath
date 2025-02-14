@@ -9,8 +9,14 @@ class ResetHeaders(SideEffect):
     """resets the headers to be the values in the current row, rather then the 0th row"""
 
     def check_valid(self) -> None:
+        self.description = [
+            "Reset Headers",
+            "reset_headers() sets the headers to the values of the current row.",
+            "This may mean that the number of headers changes. It may be that the header names are completely different after the reset.",
+            "Resetting headers has no effect on the lines that have already been passed.",
+        ]
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Function], actuals=[])
+        self.args.argset(1).arg(name="exec", types=[None, Function], actuals=[])
         self.args.validate(self.siblings())
         super().check_valid()
 

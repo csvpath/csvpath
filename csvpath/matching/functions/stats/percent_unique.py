@@ -8,6 +8,7 @@ class PercentUnique(ValueProducer):
     """return the % of a value that is unique over lines so far seen"""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(types=[Header], actuals=[str])

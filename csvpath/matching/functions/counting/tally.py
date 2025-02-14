@@ -12,6 +12,7 @@ class Tally(ValueProducer):
     """collects the number of times values are seen"""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(types=[Header, Variable, Function], actuals=[Any])
