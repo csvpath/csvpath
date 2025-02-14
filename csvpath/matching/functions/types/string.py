@@ -9,16 +9,27 @@ from .type import Type
 
 class String(Type):
     def check_valid(self) -> None:
+        self.match_qualifiers.append("notnone")
+        self.description = [
+            "String",
+            "string() is used to indicate that a value must be a string to be valid.",
+        ]
+        #
+        #
+        #
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(
-            name="header",
+            name="value",
             types=[Header, Variable, Function, Reference],
             actuals=[str, None, self.args.EMPTY_STRING],
         )
-        a.arg(name="max value", types=[None, Term], actuals=[int])
-        a.arg(name="min value", types=[None, Term], actuals=[int])
+        a.arg(name="max len", types=[None, Term], actuals=[int])
+        a.arg(name="min len", types=[None, Term], actuals=[int])
         self.args.validate(self.siblings())
+        #
+        #
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:

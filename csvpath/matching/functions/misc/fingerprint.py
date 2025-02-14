@@ -51,6 +51,7 @@ class FileFingerprint(SideEffect):
 
 class StoreFingerprint(SideEffect):
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         self.args.argset(0)
         self.args.validate(self.siblings())

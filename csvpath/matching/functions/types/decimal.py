@@ -9,8 +9,20 @@ from ..args import Args
 from .type import Type
 
 
-class Decimal(ValueProducer, Type):
+class Decimal(Type):
     def check_valid(self) -> None:
+        self.match_qualifiers.append("notnone")
+        self.value_qualifiers.append("notnone")
+        self.match_qualifiers.append("strict")
+        self.value_qualifiers.append("strict")
+        self.description = [
+            self._cap_name(),
+            f"{self.name}() is a type function often used as an argument to line().",
+            f"It indicates that the value it receives must be {self._a_an()} {self.name}.",
+        ]
+        #
+        #
+        #
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(

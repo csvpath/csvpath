@@ -18,8 +18,13 @@ class CountDups(ValueProducer):
     """returns a count of duplicates."""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
+        self.description = [
+            "Count Dups",
+            "count_dups() returns the number of duplicate lines or the number of lines where there are duplicate sets of header values.",
+        ]
         self.args = Args(matchable=self)
-        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
+        self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -39,9 +44,13 @@ class HasDups(MatchDecider):
     """returns True if there are duplicates."""
 
     def check_valid(self) -> None:
-        # self.validate_zero_or_more_args(types=[Header])
+        self.name_qualifier = True
+        self.description = [
+            "Has Dups",
+            "has_dups() returns True if there are duplicate lines or lines with duplicate sets of header values.",
+        ]
         self.args = Args(matchable=self)
-        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
+        self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -58,9 +67,13 @@ class DupLines(ValueProducer):
     """returns a list of duplicate lines seen so far."""
 
     def check_valid(self) -> None:
-        # self.validate_zero_or_more_args(types=[Header])
+        self.name_qualifier = True
+        self.description = [
+            "Dups Lines",
+            "dups_lines() returns a list of the numbers of duplicate lines or lines with duplicate sets of header values.",
+        ]
         self.args = Args(matchable=self)
-        self.args.argset().arg(types=[None, Header], actuals=[None, Any])
+        self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -68,9 +81,10 @@ class DupLines(ValueProducer):
         name = self.first_non_term_qualifier(self.name)
         fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
         lines = lines[:]
-        pln = self.matcher.csvpath.line_monitor.physical_line_number
-        lines.remove(pln)
-        self.value = lines
+        if len(lines) == 1:
+            self.value = []
+        else:
+            self.value = lines
 
     def _decide_match(self, skip=None) -> None:
         self.match = len(self.to_value(skip=skip)) > 0

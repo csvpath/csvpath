@@ -45,7 +45,7 @@ class Qualities(Enum):
     # opposite of strict (not including middle ground, if any). indicates
     # that a type should be interpreted as openly as possible without
     # losing its type-ness. e.g. a weak decimal may not have a decimal
-    # point.
+    # point. this is depreciated but may return.
     #
     WEAK = "weak"
     #

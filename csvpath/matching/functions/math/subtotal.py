@@ -11,6 +11,7 @@ class Subtotal(ValueProducer):
     """returns the running sum of values aggregated by another value"""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Variable, Function, Header], actuals=[None, Any])

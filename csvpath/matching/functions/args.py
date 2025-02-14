@@ -39,6 +39,10 @@ class Arg:
         self._noneable = n
 
     @property
+    def name(self) -> str:
+        return self._name
+
+    @property
     def types(self) -> list[Type]:
         return self._types
 

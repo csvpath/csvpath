@@ -12,6 +12,7 @@ class Regex(MatchDecider):
     """does a regex match on a value"""
 
     def check_valid(self) -> None:
+        self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(

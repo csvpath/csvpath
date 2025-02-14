@@ -131,6 +131,7 @@ class Average(MinMax):
     """returns the running average"""
 
     def check_valid(self) -> None:
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
@@ -178,3 +179,8 @@ class Average(MinMax):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_value()
+
+
+class Median(Average):
+    def __init__(self, matcher, name: str, child: Matchable = None) -> None:
+        super().__init__(matcher, name, child, "median")

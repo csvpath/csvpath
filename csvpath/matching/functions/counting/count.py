@@ -13,10 +13,11 @@ class Count(ValueProducer):
     def check_valid(self) -> None:  # pylint: disable=W0246
         # note to self: no specific validity checks from way back
         # these args may need work
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(0)
         a = self.args.argset()
-        a.arg(types=[None, Matchable], actuals=[None, Any])
+        a.arg(name="eval", types=[None, Matchable], actuals=[None, Any])
         self.args.validate(self.siblings())
         #
         super().check_valid()  # pylint: disable=W0246
