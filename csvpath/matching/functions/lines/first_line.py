@@ -11,6 +11,12 @@ class FirstLine(MatchDecider):
     """True when on the first line, scan, or match"""
 
     def check_valid(self) -> None:
+        if self.name in ["firstline", "first_line"]:
+            self.aliases = ["firstline", "first_line"]
+        elif self.name in ["firstscan", "first_scan"]:
+            self.aliases = ["firstscan", "first_scan"]
+        elif self.name in ["firstmatch", "first_match"]:
+            self.aliases = ["firstmatch", "first_match"]
         self.args = Args(matchable=self)
         self.args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
         self.args.validate(self.siblings())

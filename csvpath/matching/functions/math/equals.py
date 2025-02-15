@@ -13,6 +13,10 @@ class Equals(MatchDecider):
     better another way."""
 
     def check_valid(self) -> None:
+        if self.name in ["equal", "equals", "eq"]:
+            self.aliases = ["equal", "equals", "eq"]
+        elif self.name in ["neq", "not_equal_to"]:
+            self.aliases = ["neq", "not_equal_to"]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
@@ -38,7 +42,7 @@ class Equals(MatchDecider):
             ret = True
         else:
             ret = False
-        if self.name == "neq":
+        if self.name in ["neq", "not_equal_to"]:
             ret = not ret
         self.match = ret
 

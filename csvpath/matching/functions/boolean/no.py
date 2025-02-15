@@ -8,6 +8,7 @@ class No(MatchDecider):
     """returns False"""
 
     def check_valid(self) -> None:
+        self.aliases = ["no", "false"]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

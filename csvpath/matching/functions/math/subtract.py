@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference, Equality
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
 
@@ -9,9 +10,19 @@ class Subtract(ValueProducer):
     """subtracts numbers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            f"{self.name}() subtracts two or more numbers.",
+            "When there is only one argument, the number is made flipped from positive to negative or negative to positive.",
+        ]
+        self.aliases = ["subtract", "minus"]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Header, Reference, Variable, Function], actuals=[int])
+        a.arg(
+            name="term",
+            types=[Term, Header, Reference, Variable, Function],
+            actuals=[int, float],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -19,7 +30,10 @@ class Subtract(ValueProducer):
         child = self.children[0]
         if isinstance(child, Term):
             v = child.to_value()
-            v = int(v)
+            #
+            # this will not fail. args already checked.
+            #
+            v = ExpressionUtility.to_float(v)
             self.value = v * -1
         elif isinstance(child, Equality):
             self.value = self._do_sub(child, skip=skip)

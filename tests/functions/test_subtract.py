@@ -1,6 +1,8 @@
 import unittest
+import pytest
 import os
 from csvpath import CsvPath
+from csvpath.matching.util.exceptions import MatchException
 
 PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
@@ -38,3 +40,26 @@ class TestFunctionsSubtract(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
         assert path.variables["l"] == 0
+
+    def test_function_subtract4(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [ @l = subtract(1) @l2 = minus(1) ]"""
+        )
+        path.fast_forward()
+        assert path.variables["l"] == -1
+        assert path.variables["l2"] == -1
+
+    def test_function_subtract5(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [ @l = subtract("five") ]"""
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()

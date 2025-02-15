@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.matching.util.exceptions import DataException
 from csvpath.matching.productions import Term, Variable
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..function_focus import ValueProducer
 from ..args import Args
@@ -58,6 +59,7 @@ class HeaderName(ValueProducer):
 
     def _look_up_header(self, v):
         ret = None
+        v = ExpressionUtility.to_int(v)
         if isinstance(v, int) or f"{v}".strip().lower().isdigit():
             ret = self._header_for_int(v)
         else:

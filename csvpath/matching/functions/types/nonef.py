@@ -51,6 +51,7 @@ class Blank(ValueProducer):
     """returns True to match, returns its child's value or None. represents any value"""
 
     def check_valid(self) -> None:
+        self.aliases = ["blank", "nonspecific", "unspecified"]
         self.description = [
             self._cap_name(),
             "A line() schema type representing an incompletely specified header.",

@@ -181,11 +181,19 @@ class ResultSerializer:
         # overwrite each other. this prevents that.
         if Nos(run_dir).dir_exists():
             i = 0
-            adir = f"{run_dir}.{i}"
+            adir = f"{run_dir}_{i}"
             while Nos(adir).dir_exists():
                 i += 1
-                adir = f"{run_dir}.{i}"
+                adir = f"{run_dir}_{i}"
             run_dir = adir
+            #
+            # exp. we need to nail down the run_dir so it isn't claimed by another process.
+            # this still leaves a race condition to be addressed.
+            #
+            Nos(run_dir).makedirs()
+            #
+            # end exp
+            #
         return run_dir
 
     def get_instance_dir(self, run_dir, identity) -> str:

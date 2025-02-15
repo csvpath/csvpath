@@ -117,6 +117,13 @@ class FunctionDescriber:
         return stmts
 
     @classmethod
+    def aliases_stmt(cls, function):
+        stmts = []
+        if len(function.aliases) > 0:
+            stmts.append(", ".join(function.aliases))
+        return stmts
+
+    @classmethod
     def print_tables(cls, function):
         #
         # data sigs
@@ -153,6 +160,10 @@ class FunctionDescriber:
         for v in stmts:
             v = str(v)
             rows.append(["Type", v])
+        stmts = cls.aliases_stmt(function)
+        for v in stmts:
+            v = str(v)
+            rows.append(["Aliases", v])
         if len(rows) > 0:
             print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
         #

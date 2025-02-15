@@ -142,6 +142,7 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
+        self.aliases = ["peek_size", "size"]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])

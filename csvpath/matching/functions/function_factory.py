@@ -201,15 +201,24 @@ class FunctionFactory:
         fs["count"] = Count
         fs["has_matches"] = HasMatches
         fs["length"] = Length
+        #
+        # not aliases
+        #
         fs["regex"] = Regex
         fs["exact"] = Regex
         fs["not"] = Not
+        #
+        # not aliases
+        #
         fs["now"] = Now
         fs["thisyear"] = Now
         fs["thismonth"] = Now
         fs["today"] = Now
         fs["in"] = In
         fs["concat"] = Concat
+        #
+        # not aliases
+        #
         fs["contains"] = Contains
         fs["find"] = Contains
         fs["lower"] = Lower
@@ -217,15 +226,24 @@ class FunctionFactory:
         fs["caps"] = Capitalize
         fs["alter"] = Alter
         fs["percent"] = Percent
+        #
+        # aliases
+        #
         fs["below"] = AboveBelow
         fs["lt"] = AboveBelow
         fs["before"] = AboveBelow
         fs["lte"] = AboveBelow
+        fs["le"] = AboveBelow
         fs["above"] = AboveBelow
         fs["gt"] = AboveBelow
         fs["after"] = AboveBelow
         fs["gte"] = AboveBelow
+        fs["ge"] = AboveBelow
+        #
         fs["first"] = First
+        #
+        # aliases
+        #
         fs["firstline"] = FirstLine
         fs["firstmatch"] = FirstLine
         fs["firstscan"] = FirstLine
@@ -235,16 +253,23 @@ class FunctionFactory:
         fs["count_lines"] = CountLines
         fs["count_scans"] = CountScans
         fs["or"] = Or
+        #
+        # aliases
+        #
         fs["no"] = No
         fs["false"] = No
         fs["yes"] = Yes
         fs["true"] = Yes
+        #
         fs["max"] = Max
         fs["min"] = Min
         fs["average"] = Average
         fs["median"] = Median
         fs["random"] = Random
         fs["shuffle"] = Shuffle
+        #
+        # not aliases
+        #
         fs["decimal"] = Decimal
         fs["integer"] = Decimal
         fs["end"] = End
@@ -252,19 +277,31 @@ class FunctionFactory:
         fs["add"] = Add
         fs["string"] = String
         fs["boolean"] = Boolean
+        #
+        # aliases
+        #
         fs["subtract"] = Subtract
         fs["minus"] = Subtract
         fs["multiply"] = Multiply
         fs["divide"] = Divide
         fs["tally"] = Tally
         fs["every"] = Every
+        #
+        # not aliases
+        #
         fs["print"] = Print
         fs["error"] = Print
         fs["increment"] = Increment
+        #
+        # not aliases
+        #
         fs["header_name"] = HeaderName
         fs["header_index"] = HeaderName
         fs["header_names_mismatch"] = HeaderNamesMismatch
         fs["substring"] = Substring
+        #
+        # not aliases
+        #
         fs["stop"] = Stop
         fs["fail_and_stop"] = Stop
         fs["stop_all"] = StopAll
@@ -272,20 +309,31 @@ class FunctionFactory:
         fs["headers"] = Headers
         fs["any"] = Any
         fs["none"] = Nonef
+        #
+        # aliases
+        #
         fs["blank"] = Blank
         fs["nonspecific"] = Blank
+        fs["unspecified"] = Blank
         fs["wildcard"] = Wildcard
         fs["line"] = Line
         fs["last"] = Last
         fs["exists"] = Exists
         fs["mod"] = Mod
+        #
+        # aliases
+        #
         fs["equals"] = Equals
         fs["equal"] = Equals
         fs["eq"] = Equals
         fs["not_equal_to"] = Equals
         fs["neq"] = Equals
+        #
         fs["strip"] = Strip
         fs["jinja"] = Jinjaf
+        #
+        # not aliases
+        #
         fs["count_headers"] = CountHeaders
         fs["count_headers_in_line"] = CountHeaders
         fs["percent_unique"] = PercentUnique
@@ -296,15 +344,30 @@ class FunctionFactory:
         fs["push_distinct"] = PushDistinct
         fs["pop"] = Pop
         fs["peek"] = Peek
+        #
+        # aliases
+        #
         fs["peek_size"] = PeekSize
         fs["size"] = PeekSize
+        #
+        # not aliases
+        #
         fs["date"] = Date
         fs["datetime"] = Date
+        #
+        # not aliases
+        #
         fs["fail"] = Fail
         fs["fail_all"] = FailAll
+        #
+        # not aliases
+        #
         fs["failed"] = Failed
         fs["valid"] = Failed
         fs["stack"] = Stack
+        #
+        # not aliases
+        #
         fs["stdev"] = Stdev
         fs["pstdev"] = Stdev
         fs["has_dups"] = HasDups
@@ -322,16 +385,25 @@ class FunctionFactory:
         fs["and"] = And
         fs["track"] = Track
         fs["sum"] = Sum
+        #
+        # not aliases
+        #
         fs["odd"] = Odd
         fs["even"] = Odd
         fs["email"] = Email
         fs["url"] = Url
         fs["subtotal"] = Subtotal
         fs["reset_headers"] = ResetHeaders
+        #
+        # aliases
+        #
         fs["starts_with"] = StartsWith
         fs["startswith"] = StartsWith
         fs["ends_with"] = StartsWith
         fs["endswith"] = StartsWith
+        #
+        # not aliases
+        #
         fs["skip"] = Skip
         fs["take"] = Skip
         fs["skip_all"] = SkipAll
@@ -342,16 +414,27 @@ class FunctionFactory:
         fs["import"] = Import
         fs["print_line"] = PrintLine
         fs["print_queue"] = PrintQueue
+        #
+        # not aliases
+        #
         fs["min_length"] = MinMaxLength
         fs["max_length"] = MinMaxLength
+        #
+        # not aliases
+        #
         fs["too_long"] = MinMaxLength
         fs["too_short"] = MinMaxLength
+        #
+        # aliases
+        #
         fs["between"] = Between
         fs["inside"] = Between
-        fs["beyond"] = Between
-        fs["outside"] = Between
         fs["from_to"] = Between
         fs["range"] = Between
+        fs["beyond"] = Between
+        fs["outside"] = Between
+        fs["before_after"] = Between
+        #
         fs["get"] = Get
         fs["put"] = Put
         fs["debug"] = Debug

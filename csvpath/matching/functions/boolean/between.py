@@ -13,6 +13,10 @@ class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:
+        if self.name in ["between", "inside", "from_to", "range"]:
+            self.aliases = ["between", "inside", "from_to", "range"]
+        elif self.name in ["beyond", "outside", "before_after"]:
+            self.aliases = ["beyond", "outside", "before_after"]
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(

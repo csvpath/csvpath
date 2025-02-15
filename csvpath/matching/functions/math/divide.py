@@ -12,8 +12,16 @@ class Divide(ValueProducer):
     def check_valid(self) -> None:
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(
+            name="dividend",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[int, float],
+        )
+        a.arg(
+            name="divisor",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[int, float],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

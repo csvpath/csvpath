@@ -10,6 +10,10 @@ class StartsWith(ValueProducer):
     """checks if a string begins with another string"""
 
     def check_valid(self) -> None:
+        if self.name in ["startswith", "starts_with"]:
+            self.aliases = ["startswith", "starts_with"]
+        elif self.name in ["endswith", "ends_with"]:
+            self.aliases = ["endswith", "ends_with"]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(
