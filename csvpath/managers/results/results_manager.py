@@ -81,6 +81,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_paths_name = pathsname
         mdata.named_results_name = pathsname
         rr.register_start(mdata)
+        return mdata
 
     def get_metadata(self, name: str) -> Dict[str, Any]:
         """@private

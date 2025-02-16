@@ -130,6 +130,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self.metrics = None
         """ @private """
+        #
+        # this metadata is generated at the run start. it is
+        # the coordinating metadata for the run in the sense
+        # that its UUID is the correlation ID all metadata
+        # objects from the same run use to understand their
+        # relationship.
+        #
+        self.run_metadata = None
+        """ @private """
         self.logger.info("initialized CsvPaths")
 
     def _set_managers(self) -> None:
@@ -299,6 +308,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._errors = []
         self.named_paths_name = None
         self.named_file_name = None
+        self.run_metadata = None
 
     def collect_paths(self, *, pathsname, filename) -> None:
         """
@@ -325,7 +335,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # run starts here
         #
-        self.results_manager.start_run(
+        self.run_metadata = self.results_manager.start_run(
             run_dir=crt, pathsname=pathsname, filename=filename
         )
         #
@@ -520,7 +530,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # run starts here
         #
-        self.results_manager.start_run(
+        self.run_metadata = self.results_manager.start_run(
             run_dir=crt, pathsname=pathsname, filename=filename
         )
         #
@@ -599,7 +609,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # run starts here
         #
-        self.results_manager.start_run(
+        self.run_metadata = self.results_manager.start_run(
             run_dir=crt, pathsname=pathsname, filename=filename
         )
         #
@@ -978,7 +988,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # run starts here
         #
-        self.results_manager.start_run(
+        self.run_metadata = self.results_manager.start_run(
             run_dir=crt, pathsname=pathsname, filename=filename
         )
         #
