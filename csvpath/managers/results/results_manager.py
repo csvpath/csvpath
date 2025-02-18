@@ -65,6 +65,9 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
         mdata.named_results_name = pathsname
+        mdata.number_of_files_expected = -1
+        mdata.number_of_files_generated = -1
+
         rr.register_complete(mdata)
 
     def start_run(self, *, run_dir, pathsname, filename) -> None:
@@ -74,11 +77,27 @@ class ResultsManager:  # pylint: disable=C0115
             run_dir=run_dir,
             pathsname=pathsname,
         )
+        #
+        # collect the named-paths and named-file uuids. these may
+        # need to come from a different source at some point but
+        # pulling them from the managers insulates us a bit.
+        #
+        np_uuid = self.csvpaths.paths_manager.get_named_paths_uuid(pathsname)
+        if np_uuid is None:
+            raise ValueError("named_paths_uuid cannot be None")
+        f_uuid = self.csvpaths.file_manager.get_named_file_uuid(filename)
+        if f_uuid is None:
+            raise ValueError("named_file_uuid cannot be None")
+        #
+        #
+        #
         mdata = ResultsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
-        mdata.named_file_name = filename
         mdata.run_home = run_dir
+        mdata.named_file_name = filename
+        mdata.named_file_uuid = f"{f_uuid}"
         mdata.named_paths_name = pathsname
+        mdata.named_paths_uuid = f"{np_uuid}"
         mdata.named_results_name = pathsname
         rr.register_start(mdata)
         return mdata
@@ -206,7 +225,6 @@ class ResultsManager:  # pylint: disable=C0115
         # we use the same UUID for both metadata updates because the
         # UUID represents the run, not the metadata object
         #
-
         mdata = ResultMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name
@@ -337,6 +355,20 @@ class ResultsManager:  # pylint: disable=C0115
         ResultRegistrar(
             csvpaths=self.csvpaths, result=result, result_serializer=rs
         ).register_complete()
+
+    def get_run_dir_for_reference(self, ref: str) -> str:
+        ref = ReferenceParser(ref)
+        if ref.datatype != ReferenceParser.RESULTS:
+            raise InputException(f"Datatype must be {ReferenceParser.RESULTS}")
+        instance = ref.name_one
+        name_three = ref.name_three
+        rname = self.get_named_results_home(ref.root_major)
+        run_dir = self._find_instance(
+            rname, instance, not_name=None, name_three=name_three
+        )
+        if not run_dir.startswith(rname):
+            run_dir = os.path.join(rname, run_dir)
+        return run_dir
 
     # in this form: $group.results.2024-01-01_10-15-20.mypath
     def data_file_for_reference(self, refstr, not_name: str = None) -> str:
@@ -578,6 +610,10 @@ class ResultsManager:  # pylint: disable=C0115
         self.csvpaths.logger.error(msg)
         if self.csvpaths.ecoms.do_i_raise():
             raise InputException(msg)
+
+    def get_named_results_home(self, name: str) -> str:
+        path = os.path.join(self.csvpaths.config.archive_path, name)
+        return path
 
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
         path = os.path.join(self.csvpaths.config.archive_path, name)

@@ -1,7 +1,9 @@
 ~ id: title fix
+  unmatched-mode: keep
 ~
 $[*][
     @title = regex(/([^\/]*)\/(.*)/, #Title, 1 )
     @title.nocontrib -> replace( "Title", @title )
+    print("test")
 ]
 

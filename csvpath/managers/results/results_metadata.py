@@ -10,13 +10,16 @@ class ResultsMetadata(Metadata):
         self.time_completed: datetime = None
         self.run_home: str = None
         self.named_paths_name: str = None
+        self.named_paths_uuid: str = None
         self.named_results_name: str = None
+        self.named_file_uuid: str = None
         self.named_file_name: str = None
         self.named_file_path: str = None
         self.named_file_fingerprint: str = None
         self.named_file_fingerprint_on_file: str = None
         self.named_file_size: str = None
         self.named_file_last_change: str = None
+        self.status: str = None
         self.all_completed: bool = None
         self.all_valid: bool = None
         self.error_count: int = None
@@ -29,7 +32,9 @@ class ResultsMetadata(Metadata):
         super().from_manifest(m)
         self.run_home = m["run_home"]
         self.named_paths_name = m.get("named_paths_name")
+        self.named_paths_uuid = m.get("named_paths_uuid")
         self.named_file_name = m.get("named_file_name")
+        self.named_file_uuid = m.get("named_file_uuid")
         self.named_file_path = m.get("named_file_path")
         self.named_file_fingerprint = m.get("named_file_fingerprint")
         self.named_file_fingerprint_on_file = m.get("")

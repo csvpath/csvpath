@@ -176,6 +176,9 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     def paths_name(self, paths_name: str) -> None:
         self._paths_name = paths_name  # pragma: no cover
 
+    #
+    # this is the named-file name, not a physical file name
+    #
     @property
     def file_name(self) -> str:  # pylint: disable=C0116
         return self._file_name

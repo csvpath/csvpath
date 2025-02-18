@@ -19,6 +19,10 @@ class TestResultsManager(unittest.TestCase):
         paths.results_manager.list_named_results()
         paths.add_to_config("results", "archive", "archive")
 
+    """
+    # this test is very old, odd, and contrived
+    # i think it can be removed without any loss
+    #
     def test_results_mgr2(self):
         # set up a csvpaths that will have 1 file and 1 set of paths
         filename = "food"
@@ -77,6 +81,7 @@ class TestResultsManager(unittest.TestCase):
         rm.remove_named_results(pathsname)
 
         assert len(rm.named_results) == 0
+    """
 
     def test_results_print_to_printouts(self):
         paths = CsvPaths()

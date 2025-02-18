@@ -56,28 +56,38 @@ class ResultRegistrar(Registrar, Listener):
         mdata.from_manifest(m)
         mdata.archive_name = self.archive_name
         mdata.named_results_name = self.result.paths_name
-        mdata.run = self.result_serializer.get_run_dir_name_from_datetime(
+        mdata.named_paths_name = self.result.paths_name
+        mdata.named_paths_uuid_string = self.csvpaths.run_metadata.named_paths_uuid
+        mdata.named_file_name = self.result.file_name
+        mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid
+        mdata.run_dir = self.result_serializer.get_run_dir_name_from_datetime(
             self.result.run_time
         )
-        mdata.by_line = self.result.by_line
         mdata.source_mode_preceding = self.result.source_mode_preceding
         mdata.run_home = self.result.run_dir
+        mdata.group_run_uuid = self.csvpaths.run_metadata.uuid_string
         mdata.instance_home = self.result.instance_dir
         mdata.instance_identity = self.result.identity_or_index
         mdata.instance_index = self.result.run_index
-        mdata.named_file_name = self.result.file_name
-        mdata.input_data_file = self.result.file_name
         mdata.file_fingerprints = self.file_fingerprints
-        mdata.file_count = len(mdata.file_fingerprints)
         mdata.error_count = self.result.errors_count
         mdata.valid = self.result.csvpath.is_valid
         mdata.completed = self.completed
         mdata.files_expected = self.all_expected_files
+        mdata.number_of_files_expected = len(self.result.csvpath.all_expected_files)
+        mdata.number_of_files_generated = self.number_of_files_generated()
+        mdata.lines_total = self.result.csvpath.line_monitor.physical_line_count
+        mdata.lines_scanned = self.result.csvpath.scan_count
+        mdata.lines_matched = self.result.csvpath.match_count
         if self.result.csvpath.transfers:
             tpaths = self.result.csvpath.csvpaths.results_manager.transfer_paths(
                 self.result
             )
             mdata.transfers = tpaths
+        #
+        # input_data_file is deprecated in favor of named_file_name. but atm still used.
+        #
+        mdata.input_data_file = self.result.file_name
         mdata.actual_data_file = self.result.actual_data_file
         mdata.origin_data_file = self.result.origin_data_file
         ri = int(self.result.run_index) if self.result.run_index else 0
@@ -106,7 +116,8 @@ class ResultRegistrar(Registrar, Listener):
         m["instance_home"] = mdata.instance_home
         m["file_fingerprints"] = mdata.file_fingerprints
         m["files_expected"] = mdata.files_expected
-        m["file_count"] = mdata.file_count
+        m["number_of_files_expected"] = mdata.number_of_files_expected
+        m["number_of_files_generated"] = mdata.number_of_files_generated
         m["valid"] = mdata.valid
         m["completed"] = mdata.completed
         m["source_mode_preceding"] = mdata.source_mode_preceding
@@ -181,6 +192,9 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def all_expected_files(self) -> bool:
         #
+        # True if the files in files-mode are all present. we can have more than those
+        # listed files, but if we're missing any that are listed we return False.
+        #
         # we can not have any/all of data.csv, unmatched.csv, and printouts.txt without
         # it necessarily being a failure mode. but we can require them as a matter of
         # content validation.
@@ -223,6 +237,16 @@ class ResultRegistrar(Registrar, Listener):
             if not self.has_file("vars.json"):
                 return False
         return True
+
+    def number_of_files_generated(self) -> int:
+        n = 0
+        n += 1 if self.has_file("meta.json") else 0
+        n += 1 if self.has_file("errors.json") else 0
+        n += 1 if self.has_file("vars.json") else 0
+        n += 1 if self.has_file("data.csv") else 0
+        n += 1 if self.has_file("unmatched.csv") else 0
+        n += 1 if self.has_file("printouts.txt") else 0
+        return n
 
     def has_file(self, t: str) -> bool:
         r = self.result_path

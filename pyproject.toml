@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Text Processing",
     "Topic :: Utilities"
 ]
-include = ["config", "logs", "docs"]
+include = ["config","assets"]
 
 [tool.pytest.ini_options]
 #testpaths = ["tests"]

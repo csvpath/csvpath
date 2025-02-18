@@ -20,7 +20,10 @@ class FilesMode:
 
     @property
     def value(self) -> str:
-        return self.controller.get(FilesMode.MODE)
+        v = self.controller.get(FilesMode.MODE)
+        if v is None:
+            v = FilesMode.ALL
+        return v
 
     @value.setter
     def value(self, fm: str) -> None:
