@@ -40,6 +40,7 @@
                 actual_data_file varchar(500),
                 number_of_files_expected int default -1,
                 number_of_files_generated int default -1,
+                files_expected varchar(1) default 'Y',
                 valid varchar(1) default 'N',
                 completed varchar(1) default 'N',
                 lines_scanned int default 0,

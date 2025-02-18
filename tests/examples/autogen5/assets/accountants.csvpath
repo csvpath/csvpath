@@ -4,8 +4,6 @@
      validation-mode: no-raise, print ~
 $[1*][
 
-~ LATENCY ABOVE HERE ~
-
     ~ Check for unique license numbers ~
 ~
     @license_numbers.onmatch = #"License Number"

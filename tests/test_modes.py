@@ -33,14 +33,7 @@ class TestCsvPath(unittest.TestCase):
         ]"""
         )
         path.fast_forward()
-        assert path.all_expected_files == [
-            "vars",
-            "errors",
-            "meta",
-            "data",
-            "unmatched",
-            "printouts",
-        ]
+        assert path.all_expected_files == ["errors", "meta", "vars"]
 
     def test_file_mode_3(self):
         path = CsvPath()

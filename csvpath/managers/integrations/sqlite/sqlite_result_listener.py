@@ -32,6 +32,7 @@ class SqliteResultListener(Listener):
                 "error_count": mdata.error_count if mdata.error_count else 0,
                 "number_of_files_expected": mdata.number_of_files_expected,
                 "number_of_files_generated": mdata.number_of_files_generated,
+                "files_expected": "Y" if mdata.files_expected else "N",
                 "lines_scanned": mdata.lines_scanned,
                 "lines_total": mdata.lines_total,
                 "lines_matched": mdata.lines_matched,
@@ -55,6 +56,7 @@ class SqliteResultListener(Listener):
                         error_count,
                         number_of_files_expected,
                         number_of_files_generated,
+                        files_expected,
                         lines_scanned,
                         lines_total,
                         lines_matched,
@@ -62,7 +64,7 @@ class SqliteResultListener(Listener):
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?
                     )
                     ON CONFLICT(uuid) DO UPDATE SET
                         valid='{instance_run_data.get("valid")}',
@@ -70,13 +72,12 @@ class SqliteResultListener(Listener):
                         error_count='{mdata.error_count}',
                         number_of_files_expected='{instance_run_data.get("number_of_files_expected")}',
                         number_of_files_generated='{instance_run_data.get("number_of_files_generated")}',
+                        files_expected='{instance_run_data.get("files_expected")}',
                         lines_scanned='{mdata.lines_scanned}',
                         lines_total='{mdata.lines_total}',
                         lines_matched='{mdata.lines_matched}'
                 """,
-                (
-                    *instance_run_data.values(),
-                ),  # unpack dictionary into positional arguments
+                (*instance_run_data.values(),),
             )
             conn.commit()
             cursor.close()

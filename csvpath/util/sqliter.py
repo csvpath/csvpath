@@ -1,6 +1,6 @@
 import os
 from typing import Type, Any
-from sqlite3 import connect, Connection
+from sqlite3 import connect, Connection, Row
 from .code import Code
 from .config import Config
 
@@ -45,6 +45,8 @@ class Sqliter:
 
     def __enter__(self):
         self._conn = self.connection
+        self._conn.row_factory = Row  # sqlite3.Row
+
         return self._conn
 
     def __exit__(self, exc_type, exc_value, exc_traceback):

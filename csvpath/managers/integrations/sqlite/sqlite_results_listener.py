@@ -22,6 +22,7 @@ class SqliteResultsListener(Listener):
             group_run_data = {
                 "uuid": mdata.uuid_string,
                 "at": mdata.time_string,
+                "time_completed": mdata.time_completed_string,
                 "status": mdata.status,
                 "by_line_run": "Y" if mdata.by_line else "N",
                 "all_completed": "Y" if mdata.all_completed else "N",
@@ -67,6 +68,7 @@ class SqliteResultsListener(Listener):
                     INSERT INTO named_paths_group_run (
                         uuid,
                         at,
+                        time_completed,
                         status,
                         by_line_run,
                         all_completed,
@@ -94,19 +96,19 @@ class SqliteResultsListener(Listener):
                         ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?,
+                        ?, ?
                     )
                     ON CONFLICT(uuid) DO UPDATE SET
                         status='{mdata.status}',
+                        time_completed='{mdata.time_completed}',
                         all_completed='{group_run_data.get("all_completed")}',
                         all_valid='{group_run_data.get("all_valid")}',
                         error_count='{mdata.error_count}',
                         all_expected_files='{group_run_data.get("all_expected_files")}'
 
                 """,
-                (
-                    *group_run_data.values(),
-                ),  # unpack dictionary into positional arguments
+                (*group_run_data.values(),),
             )
             conn.commit()
             cursor.close()
