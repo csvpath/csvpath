@@ -21,6 +21,7 @@ class ResultsRegistrar(Registrar, Listener):
     """@private"""
 
     COMPLETE = "complete"
+    STARTED = "started"
 
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
@@ -34,7 +35,7 @@ class ResultsRegistrar(Registrar, Listener):
         self.type_name = "results"
 
     def register_start(self, mdata: ResultsMetadata) -> None:
-        mdata.status = "start"
+        mdata.status = ResultsRegistrar.STARTED
         mdata.manifest_path = self.manifest_path
         filename = mdata.named_file_name
         fingerprint = self.csvpaths.file_manager.get_fingerprint_for_name(filename)
@@ -103,8 +104,12 @@ class ResultsRegistrar(Registrar, Listener):
         m["status"] = mdata.status
         m["run_home"] = mdata.run_home
         m["named_results_name"] = mdata.named_results_name
+        #
         m["named_paths_name"] = mdata.named_paths_name
+        m["named_paths_uuid"] = mdata.named_paths_uuid
+        #
         m["named_file_name"] = mdata.named_file_name
+        m["named_file_uuid"] = mdata.named_file_uuid
         m["named_file_path"] = mdata.named_file_path
         m["named_file_size"] = mdata.named_file_size
         m["named_file_last_change"] = mdata.named_file_last_change

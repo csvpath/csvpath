@@ -198,10 +198,22 @@ imports =
 [cache]
 path =
 
+[results]
+archive = archive
+transfers = transfers
+
+[inputs]
+files = inputs{os.sep}named_files
+csvpaths = inputs{os.sep}named_paths
+on_unmatched_file_fingerprints = halt
+
 [listeners]
 # add listener group names to send events to the channel they represent
 groups = default
-#slack, marquez, ckan, sftp, sftpplus, otlp
+#slack, marquez, ckan, sftp, sftpplus, otlp, sqlite
+
+# add sqlite to capture staging, loads, and results in a local sqlite db
+sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
 
 # add to capture a history of all named-file stagings and all named-paths loads in
 # an [inputs] files and an[inputs] paths root manifest.json
@@ -234,6 +246,9 @@ slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
 
+[sqlite]
+db = archive/csvpath.db
+
 [sftpplus]
 # these are only needed on the server
 admin_username = SFTPPLUS_ADMIN_USERNAME
@@ -247,7 +262,6 @@ mailbox_user = mailbox
 mailbox_password = SFTPPLUS_MAILBOX_PASSWORD
 server = SFTPPLUS_SERVER
 port = SFTPPLUS_PORT
-
 
 [ckan]
 server = http://localhost:80
@@ -265,14 +279,6 @@ verify = False
 # on-valid-slack: webhook-minus-'https://' and/or
 # on-invalid-slack: webhook-minus-'https://'
 webhook_url =
-
-[results]
-archive = archive
-transfers = transfers
-[inputs]
-files = inputs{os.sep}named_files
-csvpaths = inputs{os.sep}named_paths
-on_unmatched_file_fingerprints = halt
             """
             file.write(c)
             print(f"Created a default config file at {directory} with name {name}.")

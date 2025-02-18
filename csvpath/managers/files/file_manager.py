@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
@@ -10,6 +11,9 @@ from csvpath.util.nos import Nos
 from .file_registrar import FileRegistrar
 from .file_cacher import FileCacher
 from .file_metadata import FileMetadata
+
+NamedFileName = NewType("NamedFileName", str)
+"""@private"""
 
 
 class FileManager:
@@ -55,10 +59,35 @@ class FileManager:
         """@private"""
         return os.path.join(self.named_files_dir, "manifest.json")
 
+    def get_named_file_uuid(self, name: NamedFileName) -> str:
+        if name is None:
+            raise ValueError("Paths name cannot be None")
+        if name.startswith("$"):
+            """
+            ref = ReferenceParser(name)
+            if ref.datatype != ReferenceParser.RESULTS:
+                raise ValueError("Must be a reference of type {ReferenceParser.RESULTS}")
+            name = ref.root_major
+            """
+            path = self.csvpaths.results_manager.get_run_dir_for_reference(name)
+            path = os.path.join(path, "manifest.json")
+            if Nos(path).exists():
+                with DataFileReader(path) as reader:
+                    m = json.load(reader.source)
+                    return m["uuid"]
+        else:
+            path = self.named_file_home(name)
+            path = os.path.join(path, "manifest.json")
+            if Nos(path).exists():
+                with DataFileReader(path) as reader:
+                    m = json.load(reader.source)
+                    return m[len(m) - 1]["uuid"]
+        raise ValueError(f"No manifest for file named {name}")
+
     #
     # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
-    def named_file_home(self, name: str) -> str:
+    def named_file_home(self, name: NamedFileName) -> str:
         """@private"""
         #
         # not a named-file name
@@ -131,7 +160,7 @@ class FileManager:
         ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
         return ns
 
-    def name_exists(self, name: str) -> bool:
+    def name_exists(self, name: NamedFileName) -> bool:
         """@private"""
         p = self.named_file_home(name)
         b = Nos(p).dir_exists()

@@ -4,7 +4,7 @@ from ..util.exceptions import InputException
 class FilesMode:
     MODE = "files-mode"
     ALL = "all"
-
+    MINIMUM = "errors, meta, vars"
     DATA = "data"
     UNMATCHED = "unmatched"
     PRINTOUTS = "printouts"
@@ -20,7 +20,10 @@ class FilesMode:
 
     @property
     def value(self) -> str:
-        return self.controller.get(FilesMode.MODE)
+        v = self.controller.get(FilesMode.MODE)
+        if v is None:
+            v = FilesMode.MINIMUM
+        return v
 
     @value.setter
     def value(self, fm: str) -> None:

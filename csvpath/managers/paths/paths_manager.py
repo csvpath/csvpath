@@ -67,6 +67,27 @@ class PathsManager:
             Nos(home).makedirs()
         return home
 
+    def get_named_paths_uuid(self, name: NamedPathsName) -> str:
+        if name is None:
+            raise ValueError("Paths name cannot be None")
+        if name.find("#") > -1:
+            name = name[0 : name.find("#")]
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            if ref.datatype != ReferenceParser.CSVPATHS:
+                raise ValueError(
+                    "Must be a reference of type {ReferenceParser.CSVPATHS}"
+                )
+            name = ref.root_major
+
+        path = self.named_paths_home(name)
+        path = os.path.join(path, "manifest.json")
+        if Nos(path).exists():
+            with DataFileReader(path) as reader:
+                m = json.load(reader.source)
+                return m[len(m) - 1]["uuid"]
+        raise ValueError(f"No manifest for path named {name}")
+
     @property
     def named_paths_dir(self) -> str:
         """@private"""

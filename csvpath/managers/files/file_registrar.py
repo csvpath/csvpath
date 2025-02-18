@@ -56,6 +56,7 @@ class FileRegistrar(Registrar, Listener):
         mani["file"] = rpath
         mani["file_home"] = mdata.file_home
         mani["fingerprint"] = h
+        mani["uuid"] = mdata.uuid_string
         mani["time"] = mdata.time_string
         mani["from"] = path
         if mark is not None:

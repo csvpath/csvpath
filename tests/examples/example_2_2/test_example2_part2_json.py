@@ -91,7 +91,6 @@ class TestJsonNamedPaths(unittest.TestCase):
             "expected_files", "prices_b"
         )
         assert r.is_valid is False
-        print(f"test_result_manifest: get_specific_named_result_manifest: m: {m}")
         assert m["files_expected"] is True
         assert "file_fingerprints" in m
         assert len(m["file_fingerprints"]) == 6
