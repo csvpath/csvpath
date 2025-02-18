@@ -57,14 +57,18 @@ class TestFilesManager(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         grps = paths.config.get(section="listeners", name="groups")
-        paths.add_to_config("listeners", "groups", "default")
-        mani = paths.file_manager.files_root_manifest
+        paths.config.add_to_config("listeners", "groups", "default")
         paths.file_manager.add_named_file(
             name="testx", path=f"tests{os.sep}test_resources{os.sep}test.csv"
         )
+        mani = paths.file_manager.files_root_manifest
+        paths.file_manager.add_named_file(
+            name="testy", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
         mani2 = paths.file_manager.files_root_manifest
+        print(f"mani: {mani} !! {mani2}")
         assert len(mani) + 1 == len(mani2)
-        paths.add_to_config("listeners", "groups", grps)
+        paths.config.add_to_config("listeners", "groups", grps)
 
     def test_named_files_home(self):
         paths = CsvPaths()

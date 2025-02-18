@@ -177,6 +177,9 @@ class SftpPlusListener(Listener, threading.Thread):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             try:
+                print(
+                    f"sftplus lst: {self._server}, {self._port}, {self._mailbox_user}, {self._mailbox_password}"
+                )
                 client.connect(
                     self._server, self._port, self._mailbox_user, self._mailbox_password
                 )
