@@ -214,6 +214,7 @@ groups = default
 
 # add sqlite to capture staging, loads, and results in a local sqlite db
 sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
+sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener import SqliteResultListener
 
 # add to capture a history of all named-file stagings and all named-paths loads in
 # an [inputs] files and an[inputs] paths root manifest.json
