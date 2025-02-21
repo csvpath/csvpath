@@ -36,7 +36,7 @@ class SftpFingerprinter:
                         }
                     },
                 ) as file:
-                    with tempfile.NamedTemporaryFile(delete_on_close=False) as to:
+                    with tempfile.NamedTemporaryFile() as to:
                         s = file.read()
                         to.write(s)
                         h = Hasher().hash(to.name)

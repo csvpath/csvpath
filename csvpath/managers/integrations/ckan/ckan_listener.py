@@ -258,7 +258,7 @@ class CkanListener(Listener):
         body = body.strip()
         if body == "":
             return
-        with NamedTemporaryFile(delete_on_close=False) as file:
+        with NamedTemporaryFile() as file:
             file.write(body.encode("utf-8"))
             file.close()
             datafile = Datafile(

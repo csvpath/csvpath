@@ -171,7 +171,7 @@ class SftpPlusListener(Listener, threading.Thread):
         #
         # write instructions message into a temp file
         #
-        with NamedTemporaryFile(mode="w+t", delete_on_close=False) as file:
+        with NamedTemporaryFile(mode="w+t") as file:
             json.dump(msg, file, indent=2)
             file.seek(0)
             client = paramiko.SSHClient()
