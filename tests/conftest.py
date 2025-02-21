@@ -2,6 +2,7 @@ import pytest
 import os
 import shutil
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -12,13 +13,32 @@ def clear_files(request):
     files = config.inputs_files_path
     paths = config.inputs_csvpaths_path
     cache = config.cache_dir_path
-    paths = [archive, paths, files, cache]
+    local_paths = []
+    sftp_paths = []
+    s3_paths = []
+    for p in [archive, paths, files, cache]:
+        if p.startswith("sftp://"):
+            sftp_paths.append(p)
+        elif p.startswith("s3://"):
+            s3_paths.append(p)
+        else:
+            local_paths.append(p)
 
-    print("cleaning up ahead of the run")
-    for p in paths:
+    print("cleaning up local ahead of the run")
+    for p in local_paths:
         if os.path.exists(p):
             print(f"deleting from {p}")
             shutil.rmtree(p)
+
+    print("cleaning up local ahead of the run")
+    for p in sftp_paths:
+        nos = Nos(p)
+        nos.remove()
+
+    print("cleaning up local ahead of the run")
+    for p in s3_paths:
+        nos = Nos(p)
+        nos.remove()
 
     print("cleaning complete.")
     print(
