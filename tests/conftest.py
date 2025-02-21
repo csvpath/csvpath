@@ -26,6 +26,7 @@ def clear_files(request):
 
     print("cleaning up local ahead of the run")
     for p in local_paths:
+        print(f"checking {p} for old test run files")
         if os.path.exists(p):
             print(f"deleting from {p}")
             shutil.rmtree(p)
@@ -33,12 +34,18 @@ def clear_files(request):
     print("cleaning up local ahead of the run")
     for p in sftp_paths:
         nos = Nos(p)
-        nos.remove()
+        print(f"checking {p} for old test run files")
+        if nos.exists():
+            print(f"deleting from {p}")
+            nos.remove()
 
     print("cleaning up local ahead of the run")
     for p in s3_paths:
         nos = Nos(p)
-        nos.remove()
+        print(f"checking {p} for old test run files")
+        if nos.exists():
+            print(f"deleting from {p}")
+            nos.remove()
 
     print("cleaning complete.")
     print(
