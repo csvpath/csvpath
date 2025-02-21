@@ -17,6 +17,9 @@ def clear_files(request):
     sftp_paths = []
     s3_paths = []
     for p in [archive, paths, files, cache]:
+        if p is None:
+            continue
+        p = p.strip()
         if p.startswith("sftp://"):
             sftp_paths.append(p)
         elif p.startswith("s3://"):
@@ -32,7 +35,6 @@ def clear_files(request):
         if nos.exists():
             print(f"deleting from {p}")
             nos.remove()
-
         #   print(f"deleting from {p}")
         #   shutil.rmtree(p)
 
