@@ -179,7 +179,7 @@ class TestResultReaders(unittest.TestCase):
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
-        printouts = results[0].get_printouts("name tags")
+        printouts = results[0].get_printouts("name_tags")
         assert printouts
         assert len(printouts) == 7
         assert results[0].has_printouts()
@@ -195,7 +195,7 @@ class TestResultReaders(unittest.TestCase):
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
-        printouts = results2[0].get_printouts("name tags")
+        printouts = results2[0].get_printouts("name_tags")
         assert printouts
         assert len(printouts) == 7
         printouts = results2[1].get_printouts("remarks")

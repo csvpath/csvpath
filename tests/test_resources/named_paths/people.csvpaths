@@ -1,8 +1,8 @@
-~ id:nametags and checklist
+~ id:nametags_and_checklist
   unmatched-mode:keep
 ~
 $[*][
-    #lastname.nocontrib == "Bat" -> print("My name is: $.headers.lastname", "name tags")
+    #lastname.nocontrib == "Bat" -> print("My name is: $.headers.lastname", "name_tags")
 
     tally(#lastname)
     in(#lastname, "Bat|Kermit") -> print("$.headers.firstname, $.headers.lastname, $.headers.say", "checklist")
@@ -10,7 +10,7 @@ $[*][
 
 ---- CSVPATH ----
 
-~ id:remarks and notes
+~ id:remarks_and_notes
   unmatched-mode:keep
 ~
 $[*][
