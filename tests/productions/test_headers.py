@@ -110,7 +110,12 @@ class TestHeaders(unittest.TestCase):
     def test_header_bad_names3(self):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise, collect, print")
-        path.parse(f"""${PATH}[*][#'not allowed']""")
+        path.parse(
+            f"""
+                   ${PATH}[*][
+                   #'not allowed'
+                ]"""
+        )
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover

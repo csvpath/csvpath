@@ -5,8 +5,8 @@
   validation-mode: no-raise, no-stop
   unmatched-mode: keep
 
-    sftp-user:SFTP_USER
-    sftp-password:SFTP_PASSWORD
+    sftp-user:tinpenny
+    sftp-password:tinpenny
     sftp-server: localhost
     sftp-port: 10022
     sftp-target-path: var|name
@@ -15,8 +15,6 @@
 
 ~
 $[*][
-    ~print("Line $.csvpath.line_number: $.csvpath.headers", "Headers by line")
-    ~
     @name = "dirname"
     not.nocontrib( #SKU ) -> print("Line $.csvpath.count_lines: No SKU", fail())
     not.nocontrib( #UPC ) -> print("Line $.csvpath.count_lines: No UPC", fail())

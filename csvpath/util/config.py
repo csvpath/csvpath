@@ -250,6 +250,12 @@ slack.results = from csvpath.managers.integrations.slack.sender import SlackSend
 [sqlite]
 db = archive/csvpath.db
 
+[sftp]
+server = localhost
+port = 22
+username =
+password =
+
 [sftpplus]
 # these are only needed on the server
 admin_username = SFTPPLUS_ADMIN_USERNAME
@@ -308,6 +314,8 @@ webhook_url =
                 self.archive_path = "archive"
             if self.archive_path.strip().lower().startswith("s3://"):
                 return
+            if self.archive_path.strip().lower().startswith("sftp://"):
+                return
             if not path.exists(self.archive_path):
                 os.makedirs(self.archive_path)
 
@@ -324,6 +332,8 @@ webhook_url =
                 self.inputs_files_path = f"inputs{os.sep}named_files"
             if self.inputs_files_path.strip().lower().startswith("s3://"):
                 return
+            if self.inputs_files_path.strip().lower().startswith("sftp://"):
+                return
             if not path.exists(self.inputs_files_path):
                 os.makedirs(self.inputs_files_path)
 
@@ -335,6 +345,8 @@ webhook_url =
             ):
                 self.inputs_csvpaths_path = f"inputs{os.sep}named_paths"
             if self.inputs_csvpaths_path.strip().lower().startswith("s3://"):
+                return
+            if self.inputs_csvpaths_path.strip().lower().startswith("sftp://"):
                 return
             if not path.exists(self.inputs_csvpaths_path):
                 os.makedirs(self.inputs_csvpaths_path)

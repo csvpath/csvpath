@@ -4,6 +4,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Any
 import traceback
+
+# import atexit
 from datetime import datetime, timezone
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
@@ -17,6 +19,7 @@ from .managers.paths.paths_manager import PathsManager
 from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
+from .util.box import Box
 from . import CsvPath
 
 
@@ -67,17 +70,36 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     """
 
     # pylint: disable=too-many-instance-attributes
-
     def __init__(
         self,
         *,
         delimiter=",",
         quotechar='"',
         skip_blank_lines=True,
-        print_default=True,
-        config: Config = None,
+        print_default=True
+        # config: Config = None,
     ):
-        self._config = Config() if config is None else config
+        #
+        # we gain nothing by allowing the config to be passed in. and it adds complexity.
+        #
+        self._config = Config()  # if config is None else config
+        #
+        # in a few cases, mainly s3 and sftp connection or config sharing
+        # we need to pass some state around. it's ugly, but logically not
+        # terrible and better than other options bar major refactoring.
+        #
+        # careful of Box. if used as a ctx mgr it is risky till we refactor
+        # it to protect different users
+        """
+        a = self._config.get(section="results", name="archive")
+        f = self._config.get(section="inputs", name="files")
+        p = self._config.get(section="inputs", name="paths")
+        if a.startswith("sftp") or f.startswith("sftp") or p.startswith("sftp"):
+            Box().add(Box.CSVPATHS_CONFIG, self._config)
+        """
+        Box().add(Box.CSVPATHS_CONFIG, self._config)
+        # atexit.register(self.on_exit)
+
         #
         # managers centralize activities, offer async potential, and
         # are where integrations hook in. ErrorManager functionality
@@ -214,18 +236,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             self._current_run_time = datetime.now(timezone.utc)
         return self._current_run_time
 
-    def clear_run_coordination(self) -> None:
-        """@private
-        run coordination is the set of signals that csvpaths send to affect
-        one another through the CsvPaths instance"""
-        self._stop_all = False
-        self._fail_all = False
-        self._skip_all = False
-        self._advance_all = 0
-        self._current_run_time = None
-        self._run_time_str = None
-        self.logger.debug("Cleared run coordination")
-
     def csvpath(self) -> CsvPath:
         """Gets a CsvPath object primed with a reference to this CsvPaths"""
         path = CsvPath(
@@ -238,7 +248,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             # to share the same config. sharing doesn't offer much. the flexibility
             # of having separate configs is valuable.
             #
-            config=None,
+            # config=None,
             print_default=self.print_default,
             error_manager=self.error_manager,
         )
@@ -295,6 +305,22 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.config.reload()
         self._set_managers()
 
+    # =========================
+    # cleanup, wrapup calls
+    # =========================
+
+    def clear_run_coordination(self) -> None:
+        """@private
+        run coordination is the set of signals that csvpaths send to affect
+        one another through the CsvPaths instance"""
+        self._stop_all = False
+        self._fail_all = False
+        self._skip_all = False
+        self._advance_all = 0
+        self._current_run_time = None
+        self._run_time_str = None
+        self.logger.debug("Cleared run coordination")
+
     def clean(self, *, paths) -> None:
         """@private
         at this time we do not recommend reusing CsvPaths, but it is doable
@@ -309,6 +335,133 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.named_paths_name = None
         self.named_file_name = None
         self.run_metadata = None
+
+    def wrap_up(self) -> None:
+        #
+        # leave clean() and clear_run_coordination() in case there
+        # is some reason we might need to see the residual. those are
+        # called at top of run.
+        #
+        # cleanup shared connections, etc.
+        #
+        box = Box()
+        ds = []
+        for k, v in box.STUFF.items():
+            self.logger.debug(f"csvpaths.wrapping up: {k}: {v}")
+            if hasattr(v, "close"):
+                try:
+                    v.close()
+                    ds.append(k)
+                except Exception:
+                    ...
+        for k in ds:
+            del box.STUFF[k]
+
+    # =========================
+    # prep csvpath children
+    # =========================
+
+    def _load_csvpath(
+        self,
+        *,
+        csvpath: CsvPath,
+        path: str,
+        file: str,
+        pathsname: str = None,
+        filename,
+        by_line: bool = False,
+        crt: str,
+    ) -> None:
+        """@private"""
+        # file is the physical file (+/- if preceding mode) filename is the named-file name
+        self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
+        csvpath.named_paths_name = pathsname
+        self.named_paths_name = pathsname
+        csvpath.named_file_name = filename
+        self.named_file_name = filename
+        #
+        # by_line==True means we are starting a run that is breadth-first ultimately using
+        # next_by_line(). by_line runs cannot be source-mode preceding and have different
+        # semantics around csvpaths influencing one another.
+        #
+        # we strip comments from above the path so we need to extract them first
+        path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
+        identity = csvpath.identity
+        self.logger.debug("Csvpath %s after metadata extract: %s", identity, path)
+        # update the settings using the metadata fields we just collected
+        csvpath.update_settings_from_metadata()
+        #
+        # if we have a reference, resolve it. we may not actually use the file
+        # if we're in source-mode: preceding, but that doesn't matter from the
+        # pov of the reference.
+        #
+        if filename.startswith("$"):
+            self.logger.debug(
+                "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
+                filename,
+            )
+            file = self.results_manager.data_file_for_reference(filename, not_name=crt)
+        #
+        #
+        #
+        if csvpath.data_from_preceding is True:
+            if by_line is True:
+                raise CsvPathsException(
+                    "Breadth-first runs do not support source-mode preceding because each line of data flows through each csvpath in order already"
+                )
+            #
+            # we are in source-mode: preceding
+            # that means we ignore the original data file path and
+            # instead use the data.csv from the preceding csvpath. that is,
+            # assuming there is a preceding csvpath and it created and
+            # saved data.
+            #
+            # find the preceding csvpath in the named-paths
+            #
+            # we may be in a file reference like: $sourcemode.csvpaths.source2:from. if so
+            # we just need the named-paths name.
+            #
+            if pathsname.startswith("$"):
+                self.logger.debug(
+                    "Named-paths name is a reference: %s. Stripping it down to just the actual named-paths name.",
+                    pathsname,
+                )
+                pathsname = pathsname[1 : pathsname.find(".")]
+            result = self.results_manager.get_last_named_result(
+                name=pathsname, before=csvpath.identity
+            )
+            if result is not None:
+                # get its data.csv path for this present run
+                # swap in that path for the regular origin path
+                file = result.data_file_path
+                csvpath.metadata["source-mode-source"] = file
+                self.logger.info(
+                    "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
+                    csvpath.identity,
+                    file,
+                )
+            else:
+                self.logger.warning(
+                    "Cannot find a preceding data file to use for csvpath identified as %s running in source-mode",
+                    csvpath.identity,
+                )
+        f = path.find("[")
+        self.logger.debug("Csvpath matching part starts at char # %s", f)
+        apath = f"${file}{path[f:]}"
+        self.logger.info("Parsing csvpath %s", apath)
+        csvpath.parse(apath)
+        #
+        # ready to run. time to register the run. this is separate from
+        # the run_register.py (ResultsRegister) event
+        #
+        # crt = self.run_time_str(pathsname)
+        # fingerprint = self.file_manager.get_fingerprint_for_name(filename)
+        #
+        self.logger.debug("Done loading csvpath")
+
+    # =========================
+    # main functions
+    # =========================
 
     def collect_paths(self, *, pathsname, filename) -> None:
         """
@@ -415,104 +568,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
-
-    def _load_csvpath(
-        self,
-        *,
-        csvpath: CsvPath,
-        path: str,
-        file: str,
-        pathsname: str = None,
-        filename,
-        by_line: bool = False,
-        crt: str,
-    ) -> None:
-        """@private"""
-        # file is the physical file (+/- if preceding mode) filename is the named-file name
-        self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
-        csvpath.named_paths_name = pathsname
-        self.named_paths_name = pathsname
-        csvpath.named_file_name = filename
-        self.named_file_name = filename
-        #
-        # by_line==True means we are starting a run that is breadth-first ultimately using
-        # next_by_line(). by_line runs cannot be source-mode preceding and have different
-        # semantics around csvpaths influencing one another.
-        #
-        # we strip comments from above the path so we need to extract them first
-        path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
-        identity = csvpath.identity
-        self.logger.debug("Csvpath %s after metadata extract: %s", identity, path)
-        # update the settings using the metadata fields we just collected
-        csvpath.update_settings_from_metadata()
-        #
-        # if we have a reference, resolve it. we may not actually use the file
-        # if we're in source-mode: preceding, but that doesn't matter from the
-        # pov of the reference.
-        #
-        if filename.startswith("$"):
-            self.logger.debug(
-                "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
-                filename,
-            )
-            file = self.results_manager.data_file_for_reference(filename, not_name=crt)
-        #
-        #
-        #
-        if csvpath.data_from_preceding is True:
-            if by_line is True:
-                raise CsvPathsException(
-                    "Breadth-first runs do not support source-mode preceding because each line of data flows through each csvpath in order already"
-                )
-            #
-            # we are in source-mode: preceding
-            # that means we ignore the original data file path and
-            # instead use the data.csv from the preceding csvpath. that is,
-            # assuming there is a preceding csvpath and it created and
-            # saved data.
-            #
-            # find the preceding csvpath in the named-paths
-            #
-            # we may be in a file reference like: $sourcemode.csvpaths.source2:from. if so
-            # we just need the named-paths name.
-            #
-            if pathsname.startswith("$"):
-                self.logger.debug(
-                    "Named-paths name is a reference: %s. Stripping it down to just the actual named-paths name.",
-                    pathsname,
-                )
-                pathsname = pathsname[1 : pathsname.find(".")]
-            result = self.results_manager.get_last_named_result(
-                name=pathsname, before=csvpath.identity
-            )
-            if result is not None:
-                # get its data.csv path for this present run
-                # swap in that path for the regular origin path
-                file = result.data_file_path
-                csvpath.metadata["source-mode-source"] = file
-                self.logger.info(
-                    "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
-                    csvpath.identity,
-                    file,
-                )
-            else:
-                self.logger.warning(
-                    "Cannot find a preceding data file to use for csvpath identified as %s running in source-mode",
-                    csvpath.identity,
-                )
-        f = path.find("[")
-        self.logger.debug("Csvpath matching part starts at char # %s", f)
-        apath = f"${file}{path[f:]}"
-        self.logger.info("Parsing csvpath %s", apath)
-        csvpath.parse(apath)
-        #
-        # ready to run. time to register the run. this is separate from
-        # the run_register.py (ResultsRegister) event
-        #
-        # crt = self.run_time_str(pathsname)
-        # fingerprint = self.file_manager.get_fingerprint_for_name(filename)
-        #
-        self.logger.debug("Done loading csvpath")
+        self.wrap_up()
 
     def fast_forward_paths(self, *, pathsname, filename):
         """Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected."""
@@ -595,6 +651,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
+        self.wrap_up()
 
     def next_paths(
         self, *, pathsname, filename, collect: bool = False
@@ -691,6 +748,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             run_dir=crt, pathsname=pathsname, results=results
         )
         self.clear_run_coordination()
+        self.wrap_up()
 
     # =============== breadth first processing ================
 
@@ -942,6 +1000,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             run_dir=results[0].run_dir, pathsname=pathsname, results=results
         )
         self.clear_run_coordination()
+        self.wrap_up()
 
     def _load_csvpath_objects(
         self,

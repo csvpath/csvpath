@@ -59,6 +59,12 @@ class DataFileWriter(ABC):
                     kwargs={"path": path, "mode": mode},
                 )
                 return instance
+            if path.startswith("sftp://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.sftp.sftp_data_writer import SftpDataWriter",
+                    kwargs={"path": path, "mode": mode},
+                )
+                return instance
             return GeneralDataWriter(path=path, mode=mode)
         else:
             instance = super().__new__(cls)

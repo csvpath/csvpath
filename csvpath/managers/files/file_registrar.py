@@ -32,17 +32,22 @@ class FileRegistrar(Registrar, Listener):
         return man[len(man) - 1]["fingerprint"]
 
     def manifest_path(self, home) -> str:
-        if not Nos(home).dir_exists():
+        nos = Nos(home)
+        if not nos.dir_exists():
             raise InputException(f"Named file home does not exist: {home}")
         mf = os.path.join(home, "manifest.json")
-        if not Nos(mf).exists():
+        nos.path = mf
+        if not nos.exists():
             with DataFileWriter(path=mf, mode="w") as writer:
                 writer.append("[]")
         return mf
 
     def get_manifest(self, mpath) -> list:
-        with DataFileReader(mpath) as reader:
-            return json.load(reader.source)
+        try:
+            with DataFileReader(mpath) as reader:
+                return json.load(reader.source)
+        except FileNotFoundError:
+            return []
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path

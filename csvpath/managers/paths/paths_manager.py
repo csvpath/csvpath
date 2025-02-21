@@ -63,8 +63,10 @@ class PathsManager:
     def named_paths_home(self, name: NamedPathsName) -> str:
         """@private"""
         home = os.path.join(self.named_paths_dir, name)
-        if not Nos(home).dir_exists():
-            Nos(home).makedirs()
+        nos = Nos(home)
+        b = nos.dir_exists()
+        if not b:
+            nos.makedirs()
         return home
 
     def get_named_paths_uuid(self, name: NamedPathsName) -> str:
@@ -359,7 +361,7 @@ class PathsManager:
     def _copy_in(self, name, csvpathstr) -> None:
         temp = self._group_file_path(name)
         #
-        # TODO: use a DataFileWriter that supports S3 and local to write.
+        # TODO: use a DataFileWriter that supports S3, local, etc. to write.
         #
         with DataFileWriter(path=temp, mode="w") as writer:
             writer.append(csvpathstr)

@@ -103,11 +103,27 @@ class DataFileReader(ABC):
                 class_ = getattr(module, "PandasDataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
+            #
+            # not a dataframe
+            #
             if path.find("s3://") > -1 and (
                 (filetype is not None and filetype == "xlsx") or path.endswith("xlsx")
             ):
                 instance = ClassLoader.load(
                     "from csvpath.util.s3.s3_xlsx_data_reader import S3XlsxDataReader",
+                    args=[path],
+                    kwargs={
+                        "sheet": sheet if sheet != path else None,
+                        "delimiter": delimiter,
+                        "quotechar": quotechar,
+                    },
+                )
+                return instance
+            if path.find("sftp://") > -1 and (
+                (filetype is not None and filetype == "xlsx") or path.endswith("xlsx")
+            ):
+                instance = ClassLoader.load(
+                    "from csvpath.util.sftp.sftp_xlsx_data_reader import SftpXlsxDataReader",
                     args=[path],
                     kwargs={
                         "sheet": sheet if sheet != path else None,
@@ -123,12 +139,19 @@ class DataFileReader(ABC):
                     delimiter=delimiter,
                     quotechar=quotechar,
                 )
+            #
+            # not an XSLT
+            #
             if path.startswith("s3://"):
-                #
-                # e.g. s3://csvpath-example-1/timezones.csv
-                #
                 instance = ClassLoader.load(
                     "from csvpath.util.s3.s3_data_reader import S3DataReader",
+                    args=[path],
+                    kwargs={"delimiter": delimiter, "quotechar": quotechar},
+                )
+                return instance
+            if path.startswith("sftp://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.sftp.sftp_data_reader import SftpDataReader",
                     args=[path],
                     kwargs={"delimiter": delimiter, "quotechar": quotechar},
                 )
