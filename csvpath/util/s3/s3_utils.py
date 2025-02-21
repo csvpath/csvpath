@@ -2,7 +2,6 @@ import os
 import boto3
 import uuid
 from botocore.exceptions import ClientError
-from csvpath.util.box import Box
 
 
 class S3Utils:

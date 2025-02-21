@@ -1,7 +1,5 @@
 import os
 from os import environ
-from csvpath import CsvPaths
-from csvpath.managers.results.result import Result
 from .config import Config
 
 
@@ -35,11 +33,11 @@ class VarUtility:
         # check config
         if section and name:
             if config is None:
-                config = CsvPaths().config
+                config = Config()
             v = config.get(section=section, name=name)
         elif section or name:
             if config is None:
-                config = CsvPaths().config
+                config = Config()
             config.logger.warn(
                 "Get var with section or name but not both will not work: %s, %s",
                 section,

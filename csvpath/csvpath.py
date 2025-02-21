@@ -50,19 +50,24 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         quotechar='"',
         skip_blank_lines=True,
         print_default=True,
-        config=None,
+        # config=None,
         error_manager=None,
     ):
         # re: R0913: all reasonable pass-ins with sensible defaults
         #
         # the config.ini file loaded as a ConfigParser instance
         #
-        # definitely do not want this coming from CsvPaths because
+
+        """
+        #
+        # passing in the config actually nets us nothing but a little unnecessary complexity that we don't use.
+        #
         # we want to be able to override config.ini specifically for
         # this instance, if needed; however, we do want to be able
         # to pass in a config object that has been configured in some
         # way.
-        self._config = config
+        """
+        self._config = Config()  # config
         self.scanner = None
         """ @private """
         self.matcher = None

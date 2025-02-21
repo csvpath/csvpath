@@ -2,21 +2,34 @@
 import os
 import shutil
 import boto3
+from pathlib import Path
 from botocore.exceptions import ClientError
 from .s3.s3_utils import S3Utils
-from pathlib import Path
+from .s3.s3_nos import S3Do
+from .sftp.sftp_nos import SftpDo
+from .config import Config
 
 
 class Nos:
-    def __init__(self, path):
+    def __init__(self, path, config: Config = None):
         self.path = path
         self._do = None
+        self._config = config
+
+    #
+    # removes ftps://hostname:port if found, or any similar
+    # protocol. s3:// does not need this.
+    #
+    def strip_protocol(self, path: str) -> str:
+        return path
 
     @property
     def do(self):
         if self.path is not None and self._do is None:
             if self.path.startswith("s3://"):
                 self._do = S3Do(self.path)
+            elif self.path.startswith("sftp://"):
+                self._do = SftpDo(self.path)
             else:
                 self._do = FileDo(self.path)
         return self._do
@@ -55,102 +68,6 @@ class Nos:
 
     def isfile(self) -> bool:
         return self.do.isfile()
-
-
-class S3Do:
-    def __init__(self, path):
-        self.path = path
-
-    def remove(self) -> None:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        lst = self.listdir()
-        for item in lst:
-            Nos(f"s3://{bucket}/{key}/{item}").remove()
-        S3Utils.remove(bucket, key)
-
-    def exists(self) -> bool:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        ret = S3Utils.exists(bucket, key)
-        return ret
-
-    def dir_exists(self) -> bool:
-        lst = self.listdir()
-        if lst and len(lst) > 0:
-            return True
-        return False
-
-    def rename(self, new_path: str) -> None:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        same_bucket, new_key = S3Utils.path_to_parts(new_path)
-        if bucket != same_bucket:
-            raise ValueError(
-                "The old path and the new location must have the same bucket"
-            )
-        return S3Utils.rename(bucket, key, new_key)
-
-    def copy(self, new_path) -> None:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        new_bucket, new_key = S3Utils.path_to_parts(new_path)
-        return S3Utils.copy(bucket, key, new_bucket, new_key)
-
-    def makedirs(self) -> None:
-        # may not be needed?
-        ...
-
-    def makedir(self) -> None:
-        # may not be needed?
-        ...
-
-    def listdir(self) -> list[str]:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        if not key.endswith("/"):
-            key = f"{key}/"
-        prefix = key
-        client = boto3.client("s3")
-
-        #
-        # boto3 uses a deprecated feature. pytest doesn't like it. this is a quick fix.
-        #
-        import warnings
-
-        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
-
-        result = client.list_objects(Bucket=bucket, Prefix=prefix, Delimiter="/")
-        names = []
-        # if result has direct children they are in contents
-        lst = result.get("Contents")
-        if lst is not None:
-            for o in lst:
-                nkey = o["Key"]
-                name = nkey[nkey.rfind("/") + 1 :]
-                names.append(name)
-        # if result is for an intermediate dir with or without direct children
-        # the notional child directories are in common prefixes.
-        lst = result.get("CommonPrefixes")
-        if lst is not None:
-            for o in lst:
-                nkey = o["Prefix"]
-                nkey = nkey[0 : len(nkey) - 1] if len(nkey) > 0 else nkey
-                name = nkey[nkey.rfind("/") + 1 :]
-                if name.strip() != "":
-                    names.append(name)
-        return names
-
-    def isfile(self) -> bool:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        client = boto3.client("s3")
-        #
-        # boto3 uses a deprecated feature. pytest doesn't like it. this is a quick fix.
-        #
-        import warnings
-
-        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
-        try:
-            client.head_object(Bucket=bucket, Key=key)
-        except ClientError as e:
-            assert str(e).find("404") > -1
-            return False
-        return True
 
 
 class FileDo:

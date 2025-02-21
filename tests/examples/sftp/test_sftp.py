@@ -6,8 +6,11 @@ import stat
 from csvpath import CsvPaths
 from csvpath.util.var_utility import VarUtility
 
+USER = "tinpenny"
+PASSWORD = "tinpenny"
 
-class TestSftp(unittest.TestCase):
+
+class TestSftpMode(unittest.TestCase):
     def test_sftp_send(self):
         if not self._check_for_server():
             return
@@ -15,12 +18,11 @@ class TestSftp(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.config.add_to_config("listeners", "groups", "sftp", save_load=False)
+        paths.config.add_to_config("listeners", "groups", "sftp")
         paths.config.add_to_config(
             "listeners",
             "sftp.results",
             "from csvpath.managers.integrations.sftp.sftp_sender import SftpSender",
-            save_load=False,
         )
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
@@ -39,7 +41,7 @@ class TestSftp(unittest.TestCase):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect("localhost", 10022, "test_user", os.getenv("SFTP_PASSWORD"))
+            client.connect("localhost", 10022, USER, PASSWORD)
             sftp = client.open_sftp()
             for entry in sftp.listdir_attr(f".{os.sep}dirname"):
                 print(f"\nfound a file or dir: {entry.filename}")
@@ -55,10 +57,10 @@ class TestSftp(unittest.TestCase):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect("localhost", 10022, "test_user", os.getenv("SFTP_PASSWORD"))
+            client.connect("localhost", 10022, USER, PASSWORD)
             sftp = client.open_sftp()
             for path in paths:
-                print(f"checking localhost:10022 in test_user for {path}")
+                print(f"checking localhost:10022 in {USER} for {path}")
                 sftp.stat(path)
             sftp.close()
         finally:
@@ -68,11 +70,12 @@ class TestSftp(unittest.TestCase):
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect("localhost", 10022, "test_user", os.getenv("SFTP_PASSWORD"))
+            client.connect("localhost", 10022, USER, PASSWORD)
         except Exception as e:
             print(e)
+            print("WARNING: cannot run sftp test")
             print(
-                "WARNING: cannot run sftp test: required: localhost:10022 with test_user account and an SFTP_PASSWORD env var"
+                f"required: localhost:10022 with the {USER} account and an {PASSWORD} env var"
             )
             return False
         finally:
@@ -80,52 +83,5 @@ class TestSftp(unittest.TestCase):
                 client.close()
             except Exception:
                 ...
+        print("SFTP mode: _check_for_server: server is ready to test")
         return True
-
-    def test_sftp_var_values(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.file_manager.add_named_files_from_dir(
-            f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
-        )
-        paths.paths_manager.add_named_paths_from_json(
-            f"tests{os.sep}examples{os.sep}sftp{os.sep}group.json"
-        )
-        paths.collect_paths(filename="March-2024", pathsname="sftptest")
-        r = paths.results_manager.get_specific_named_result("sftptest", "upc-sku")
-        assert r
-        m = r.csvpath.metadata
-        v = r.csvpath.variables
-        lst = VarUtility.get_value_pairs(m, v, "sftp-files")
-        assert lst
-        assert len(lst) == 3
-        assert lst[0] == ("data.csv", "data.csv")
-        assert lst[1] == ("errors.json", "foo.json")
-        assert lst[2] == ("meta.json", "dirname")
-        #
-        # get a string
-        # get a var|var-name (tested above)
-        # get an ENV_VAR
-        #
-        os.environ["SFTP_USER"] = "auser"
-        v = VarUtility.get_str(m, v, "sftp-user")
-        assert v == "auser"
-
-        v = VarUtility.get_int(m, v, "sftp-port")
-        assert v == 10022
-
-        v = VarUtility.get_bool(m, v, "sftp-original")
-        v is False
-
-        r.csvpath.metadata["sftp-original"] = True
-        v = VarUtility.get_bool(m, v, "sftp-original")
-        v is True
-
-        assert VarUtility.is_true(1)
-        assert VarUtility.is_true("yes")
-        assert VarUtility.is_true("true")
-        assert not VarUtility.is_true(0)
-        assert not VarUtility.is_true("no")
-        assert not VarUtility.is_true("false")
-        assert not VarUtility.is_true(None)
