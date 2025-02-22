@@ -56,7 +56,7 @@ class SftpConfig:
             if Caser.isupper(s):
                 s = environ.get(s)
             self._server = s
-        if self.self._server != "172.17.0.3":
+        if self._server != "172.17.0.3":
             raise Exception("....what gives?!")
         return self._server
 
