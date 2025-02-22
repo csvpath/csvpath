@@ -619,14 +619,14 @@ class ResultsManager:  # pylint: disable=C0115
         path = os.path.join(self.csvpaths.config.archive_path, name)
         path = os.path.join(path, run)
         instances = Nos(path).listdir()
-        rs = []
+        rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
             if inst == "manifest.json":
                 continue
             r = self.get_named_result_for_instance(
                 name=name, run_dir=path, run=run, instance=inst
             )
-            rs.append(r)
+            rs[r.index] = r
         return rs
 
     def get_named_result_for_instance(

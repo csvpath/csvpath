@@ -14,6 +14,7 @@ from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
 from .readers.readers import ResultReadersFacade
+from csvpath.matching.util.expression_utility import ExpressionUtility
 
 
 class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
@@ -167,6 +168,15 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         if f"{s}".strip() == "":
             s = self.run_index
         return s
+
+    @property
+    def index(self) -> int:
+        ri = self.run_index
+        if ri is None:
+            return None
+        ri = ri.strip()
+        ri = ExpressionUtility.to_int(ri)
+        return ri
 
     @property
     def paths_name(self) -> str:  # pylint: disable=C0116
@@ -420,6 +430,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
                    name of paths:{self.paths_name};
                    name of file:{self.file_name};
                    run results dir:{self.run_dir};
+                   index: {self.index};
+                   identity: {self.identity_or_index};
                    valid:{self.csvpath.is_valid};
                    stopped:{self.csvpath.stopped};
                    last line processed:{lastline};
