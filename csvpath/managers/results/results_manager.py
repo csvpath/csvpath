@@ -509,9 +509,12 @@ class ResultsManager:  # pylint: disable=C0115
         names = [n for n in names if n.startswith(instance)]
         if len(names) == 0:
             return None
+        #
+        # change from . to _ requires change from find to count
+        #
         names = sorted(
             names,
-            key=lambda x: datetime.datetime.strptime(x, ms if x.find(".") > -1 else s),
+            key=lambda x: datetime.datetime.strptime(x, ms if x.count("_") > 1 else s),
         )
         if last is True:
             i = len(names)
