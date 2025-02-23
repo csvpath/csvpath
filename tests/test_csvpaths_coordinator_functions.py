@@ -13,7 +13,7 @@ NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}"
 class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
     def test_csvpaths_line_numbers_and_headers(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.fast_forward_paths(filename="food", pathsname="food")
@@ -35,7 +35,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_stop_all_by_line(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -49,7 +49,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_stop_all_paths(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -62,7 +62,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_fail_all_by_line(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -76,7 +76,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_fail_all_paths(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -93,7 +93,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         # this test is the proof of the expected behavior without skip_all()
         #
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -113,7 +113,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_skip_all_by_line(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -136,7 +136,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         # it does the same as skip()
         #
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -156,7 +156,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_advance_all_by_line(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -172,7 +172,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_advance_all_paths(self):
         cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
