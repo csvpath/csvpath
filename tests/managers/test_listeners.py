@@ -27,8 +27,9 @@ class TestListeners(unittest.TestCase):
             if os.path.exists(testini):
                 os.remove(testini)
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
-            config.add_to_config("errors", "csvpaths", "raise, collect, print")
-            config.add_to_config("errors", "csvpath", "raise, collect, print")
+            paths = CsvPaths()
+            paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+            paths.add_to_config("errors", "csvpath", "raise, collect, print")
             print(f"cwd: {os.getcwd()}")
             assert os.path.exists(testini)
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"
