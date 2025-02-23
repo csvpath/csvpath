@@ -19,8 +19,6 @@ class TestListeners(unittest.TestCase):
         assert len(listeners) == 2
 
     def test_additional_listeners3(self):
-        paths = CsvPaths()
-        config = paths.config
         iii = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
         try:
             testini = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
@@ -30,7 +28,7 @@ class TestListeners(unittest.TestCase):
             paths = CsvPaths()
             paths.add_to_config("errors", "csvpaths", "raise, collect, print")
             paths.add_to_config("errors", "csvpath", "raise, collect, print")
-            print(f"cwd: {os.getcwd()}")
+            config = paths.config
             assert os.path.exists(testini)
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"
             config.add_to_config("listeners", "groups", "foo, bar, baz")
