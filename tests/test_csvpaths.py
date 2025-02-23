@@ -28,7 +28,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_next_paths(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cnt = 0
         for line in cs.next_paths(filename="food", pathsname="food"):
             cnt += 1
@@ -37,7 +37,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_fast_forward_paths(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.fast_forward_paths(filename="food", pathsname="food")
         n = cs.results_manager.get_number_of_results("food")
         valid = cs.results_manager.is_valid("food")
@@ -51,7 +51,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_collect_paths_1(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.collect_paths(filename="food", pathsname="food")
         valid = cs.results_manager.is_valid("food")
         assert not valid
@@ -64,7 +64,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_collect_paths_2(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.collect_paths(filename="food", pathsname="food")
         valid = cs.results_manager.is_valid("food")
         assert not valid
@@ -79,7 +79,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_next_by_line(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cnt = 0
         for line in cs.next_by_line(filename="food", pathsname="many", collect=True):
             cnt += 1
@@ -95,7 +95,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_metadata1(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
         assert meta is not None
@@ -120,7 +120,7 @@ class TestNewCsvPaths(unittest.TestCase):
         #
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
         assert meta is not None
@@ -139,7 +139,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_import_function(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.fast_forward_by_line(filename="food", pathsname="import")
         cs.results_manager.get_named_results("import")
         vs = cs.results_manager.get_variables("import")
@@ -149,7 +149,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_stopping(self):
         cs = CsvPaths()
         self.load(cs)
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping"):
             print(f"***: {i}")
@@ -163,7 +163,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_correct_lines_returned1(self):
         paths = CsvPaths()
         self.load(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         # paths.file_manager.set_named_files(FILES)
         # paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         #
@@ -184,7 +184,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_correct_lines_returned2(self):
         paths = CsvPaths()
         self.load(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         # paths.file_manager.set_named_files(FILES)
         # paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         #
@@ -219,7 +219,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_source_mode(self):
         paths = CsvPaths()
         self.load(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
         results = paths.results_manager.get_named_results("sourcemode")
         for i, r in enumerate(results):
@@ -229,7 +229,7 @@ class TestNewCsvPaths(unittest.TestCase):
     def test_csvpaths_replay(self):
         paths = CsvPaths()
         self.load(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # do a run
         #
