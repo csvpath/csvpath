@@ -12,7 +12,7 @@ NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}xlsx{os.sep}named_paths"
 class TestXlsx(unittest.TestCase):
     def test_csvpaths_xlsx_primary_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.collect_paths(filename="primary", pathsname="primary")
@@ -26,7 +26,7 @@ class TestXlsx(unittest.TestCase):
 
     def test_csvpaths_bytes_written_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.collect_paths(filename="energy", pathsname="bytes")
