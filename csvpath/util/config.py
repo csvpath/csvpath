@@ -364,6 +364,8 @@ webhook_url =
                 )
             if not path.exists(self.cache_dir_path):
                 os.makedirs(self.cache_dir_path)
+        else:
+            print("configx: not loaded!")
 
     def _assure_config_file_path(self) -> None:
         if self.load:
