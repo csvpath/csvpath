@@ -358,6 +358,10 @@ webhook_url =
         if self.load:
             if self.cache_dir_path is None or self.cache_dir_path.strip() == "":
                 self.cache_dir_path = "cache"
+            if self.cache_dir_path.find("://") > -1:
+                raise ConfigurationException(
+                    f"Cache dir must be on the local drive, not {self.cache_dir_path}"
+                )
             if not path.exists(self.cache_dir_path):
                 os.makedirs(self.cache_dir_path)
 
