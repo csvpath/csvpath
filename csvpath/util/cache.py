@@ -16,6 +16,7 @@ class Cache:
         return h
 
     def _cachedir(self) -> str:
+        print("cacheir: assuring cp")
         self.csvpaths.config._assure_cache_path()
         return self.csvpaths.config.cache_dir_path
 
