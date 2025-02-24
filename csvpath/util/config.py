@@ -354,6 +354,7 @@ webhook_url =
     def _assure_cache_path(self) -> None:
         uc = self.get(section="cache", name="use_cache")
         if uc and uc.strip().lower() == "no":
+            print("configx: NO!")
             return
         if self.load:
             if self.cache_dir_path is None or self.cache_dir_path.strip() == "":
@@ -362,7 +363,10 @@ webhook_url =
                 raise ConfigurationException(
                     f"Cache dir must be on the local drive, not {self.cache_dir_path}"
                 )
-            if not path.exists(self.cache_dir_path):
+            exists = path.exists(self.cache_dir_path)
+            print(f"configx: exists: {exists}: {self.cache_dir_path}")
+            if not exists:
+                print("making!")
                 os.makedirs(self.cache_dir_path)
         else:
             print("configx: not loaded!")
