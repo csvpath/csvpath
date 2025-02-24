@@ -63,12 +63,6 @@ class FileManager:
         if name is None:
             raise ValueError("Paths name cannot be None")
         if name.startswith("$"):
-            """
-            ref = ReferenceParser(name)
-            if ref.datatype != ReferenceParser.RESULTS:
-                raise ValueError("Must be a reference of type {ReferenceParser.RESULTS}")
-            name = ref.root_major
-            """
             path = self.csvpaths.results_manager.get_run_dir_for_reference(name)
             path = os.path.join(path, "manifest.json")
             if Nos(path).exists():

@@ -41,6 +41,7 @@ class S3Utils:
             return False
         except DeprecationWarning:
             ...
+
         return True
 
     @classmethod

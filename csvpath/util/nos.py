@@ -12,9 +12,18 @@ from .config import Config
 
 class Nos:
     def __init__(self, path, config: Config = None):
-        self.path = path
+        self._path = path
         self._do = None
         self._config = config
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @path.setter
+    def path(self, p: str) -> None:
+        self._path = p
+        self._do.path = p
 
     #
     # removes ftps://hostname:port if found, or any similar
