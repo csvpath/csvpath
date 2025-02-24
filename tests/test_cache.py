@@ -36,12 +36,14 @@ class TestCache(unittest.TestCase):
         v = csvpaths.config.get(section="cache", name="use_cache")
         csvpaths.config.add_to_config("cache", "use_cache", "yes")
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
+        print(f"cachedir 1: {cachedir}")
         assert cachedir
         assert os.path.exists(cachedir)
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         csvpaths = CsvPaths()
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
+        print(f"cachedir 2: {cachedir}")
         assert os.path.exists(cachedir)
         csvpaths.config.add_to_config("cache", "use_cache", v)
 
