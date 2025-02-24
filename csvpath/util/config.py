@@ -153,6 +153,7 @@ class Config:
         self.refresh()
 
     def save_config(self) -> None:
+        print(f"Configx: save_config: self.configpath: {self.configpath}")
         with open(self.configpath, "w") as f:
             self._config.write(f)
 
@@ -378,6 +379,7 @@ webhook_url =
         #
         #
         #
+        print(f"Configx: reloading from self._configpath: {self._configpath}")
         self._config.read(self._configpath)
         self.refresh()
 

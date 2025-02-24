@@ -4,6 +4,7 @@ import time
 import paramiko
 import stat
 from csvpath import CsvPaths
+from csvpath.util.config import Config
 from csvpath.managers.integrations.sftpplus.transfer_creator import (
     SftpPlusTransferCreator,
 )
@@ -13,8 +14,8 @@ class TestSftpPlus(unittest.TestCase):
     def test_sftpplus_load_paths(self):
         if not self._check_for_server():
             return
-        self._clear()
         paths = CsvPaths()
+        self._clear(paths)
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftpplus")
@@ -36,7 +37,13 @@ class TestSftpPlus(unittest.TestCase):
             return
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect("localhost", 10022, "tinpenny", "tinpenny")
+        config = Config()
+        client.connect(
+            config.get(section="sftpplus", name="server"),
+            10022,
+            "tinpenny",
+            "tinpenny",
+        )
         sftp = client.open_sftp()
         sftp.put(
             f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvs{os.sep}March-2024.csv",
@@ -49,8 +56,8 @@ class TestSftpPlus(unittest.TestCase):
     def test_sftpplus_basic(self):
         if not self._check_for_server():
             return
-        self._clear()
         paths = CsvPaths()
+        self._clear(paths)
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftpplus")
@@ -74,11 +81,16 @@ class TestSftpPlus(unittest.TestCase):
         # time.sleep(3)
         # self._check_arrival(["dirname{os.sep}data.csv", "dirname{os.sep}foo.json"])
 
-    def _clear(self):
+    def _clear(self, paths: CsvPaths):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect("localhost", 10022, "mailbox", "mailbox")
+            client.connect(
+                paths.config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
             sftp = client.open_sftp()
             for entry in sftp.listdir_attr(f".{os.sep}"):
                 print(f"\nfound a file or dir: {entry.filename}")
@@ -98,10 +110,15 @@ class TestSftpPlus(unittest.TestCase):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect("localhost", 10022, "mailbox", "mailbox")
+            client.connect(
+                paths.config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
             sftp = client.open_sftp()
             for path in paths:
-                print(f"checking localhost:10022 in test_user for {path}")
+                print(f"checking server @ 10022 in test_user for {path}")
                 sftp.stat(path)
             sftp.close()
         finally:
@@ -111,11 +128,18 @@ class TestSftpPlus(unittest.TestCase):
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect("localhost", 10022, "mailbox", "mailbox")
+            config = Config()
+            client.connect(
+                config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
         except Exception as e:
             print(e)
             print(
-                "WARNING: cannot run sftp test: required: localhost:10022 with test_user account and an SFTP_PASSWORD env var"
+                """WARNING: cannot run sftp test:
+                required: server on port 10022 with test_user account and an SFTP_PASSWORD env var"""
             )
             return False
         finally:
