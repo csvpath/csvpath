@@ -42,6 +42,8 @@ class TestCache(unittest.TestCase):
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         csvpaths = CsvPaths()
+        csvpaths.config.add_to_config("cache", "use_cache", "yes")
+        print("test cassd: {csvpaths.config.get(section='cache', name='use_cache')}")
         cachedir = csvpaths.file_manager.cacher.cache._cachedir()
         print(f"cachedir 2: {cachedir}")
         assert os.path.exists(cachedir)
