@@ -15,10 +15,17 @@ from .sftp_nos import SftpDo
 
 
 class SftpDataReader(CsvDataReader):
+    # LOAD = 0
+
     def load_if(self) -> None:
         if self.source is None:
             config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
+            # SftpDataReader.LOAD += 1
+            # print(f"SftpDataReader: load_if: loding: {SftpDataReader.LOAD}")
+            # from csvpath.util.log_utility import LogUtility
+            # LogUtility.log_brief_trace()
+
             self.source = open(
                 self._path,
                 "r",
