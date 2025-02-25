@@ -4,6 +4,7 @@ from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
+from csvpath.util.box import Box
 from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
@@ -19,6 +20,16 @@ class ResultRegistrar(Registrar, Listener):
         Listener.__init__(self, csvpaths.config)
         self.result_serializer = result_serializer
         self.type_name = "result"
+        self._nos = None
+
+    @property
+    def nos(self) -> Nos:
+        if self._nos is None:
+            self._nos = Box.STUFF.get("boto_s3_nos")
+            if self._nos is None:
+                self._nos = Nos(None)
+                Box().add("boto_s3_nos", self._nos)
+        return self._nos
 
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
@@ -136,7 +147,9 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def archive_name(self) -> str:
         ap = self.result.csvpath.config.archive_path
-        sep = Nos(ap).sep
+        nos = self.nos
+        nos.path = ap
+        sep = nos.sep
         i = ap.rfind(sep)
         if i > 0:
             return ap[i + 1 :]
@@ -145,7 +158,9 @@ class ResultRegistrar(Registrar, Listener):
     # gets the manifest for the named_paths as a whole
     @property
     def named_paths_manifest(self) -> dict | None:
-        if Nos(self.named_paths_manifest_path).exists():
+        nos = self.nos
+        nos.path = self.named_paths_manifest_path
+        if nos.exists():
             with DataFileReader(self.named_paths_manifest_path) as file:
                 d = json.load(file.source)
                 return d
@@ -162,7 +177,9 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def manifest(self) -> dict | None:
         mp = self.manifest_path
-        if not Nos(mp).exists():
+        nos = self.nos
+        nos.path = mp
+        if not nos.exists():
             with DataFileWriter(path=self.manifest_path) as file:
                 json.dump({}, file.sink, indent=2)
                 return {}
@@ -181,8 +198,10 @@ class ResultRegistrar(Registrar, Listener):
         rdir = self.result_serializer.get_instance_dir(
             run_dir=self.result.run_dir, identity=self.result.identity_or_index
         )
-        if not Nos(rdir).exists():
-            Nos(rdir).makedir()
+        nos = self.nos
+        nos.path = rdir
+        if not nos.exists():
+            nos.makedir()
         return rdir
 
     @property
@@ -250,7 +269,9 @@ class ResultRegistrar(Registrar, Listener):
 
     def has_file(self, t: str) -> bool:
         r = self.result_path
-        return Nos(os.path.join(r, t)).exists()
+        nos = self.nos
+        nos.path = os.path.join(r, t)
+        return nos.exists()
 
     @property
     def file_fingerprints(self) -> dict[str]:
@@ -273,7 +294,9 @@ class ResultRegistrar(Registrar, Listener):
     def _fingerprint(self, path) -> str:
         if path.find("://") == -1 and not path.startswith("/"):
             path = f"{os.getcwd()}/{path}"
-        if Nos(path).exists():
+        nos = self.nos
+        nos.path = path
+        if nos.exists():
             with DataFileReader(path) as f:
                 h = f.fingerprint()
                 return h

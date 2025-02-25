@@ -9,6 +9,7 @@ from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.box import Box
 from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
@@ -30,6 +31,16 @@ class PathsManager:
         self.csvpaths = csvpaths
         """@private"""
         self._registrar = None
+        self._nos = None
+
+    @property
+    def nos(self) -> Nos:
+        if self._nos is None:
+            self._nos = Box.STUFF.get("boto_s3_nos")
+            if self._nos is None:
+                self._nos = Nos(None)
+                Box().add("boto_s3_nos", self._nos)
+        return self._nos
 
     #
     # ================== publics =====================
@@ -39,9 +50,12 @@ class PathsManager:
         """@private"""
         r = self.csvpaths.config.get(section="inputs", name="csvpaths")
         p = os.path.join(r, "manifest.json")
-        if not Nos(r).dir_exists():
-            Nos(r).makedirs()
-        if not Nos(p).exists():
+        nos = self.nos
+        nos.path = r
+        if not nos.dir_exists():
+            nos.makedirs()
+        nos.path = p
+        if not nos.exists():
             with DataFileWriter(path=p) as writer:
                 writer.write("[]")
         return p
@@ -63,7 +77,9 @@ class PathsManager:
     def named_paths_home(self, name: NamedPathsName) -> str:
         """@private"""
         home = os.path.join(self.named_paths_dir, name)
-        nos = Nos(home)
+        nos = self.nos
+        # nos = Nos(home)
+        nos.path = home
         b = nos.dir_exists()
         if not b:
             nos.makedirs()
@@ -84,7 +100,9 @@ class PathsManager:
 
         path = self.named_paths_home(name)
         path = os.path.join(path, "manifest.json")
-        if Nos(path).exists():
+        nos = self.nos
+        nos.path = path
+        if nos.exists():
             with DataFileReader(path) as reader:
                 m = json.load(reader.source)
                 return m[len(m) - 1]["uuid"]
@@ -115,8 +133,10 @@ class PathsManager:
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
-        if not Nos(directory).isfile():
-            dlist = Nos(directory).listdir()
+        nos = self.nos
+        nos.path = directory
+        if not nos.isfile():
+            dlist = nos.listdir()
             base = directory
             agg = []
             for p in dlist:
@@ -223,7 +243,9 @@ class PathsManager:
         mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
-        sep = Nos(mdata.named_paths_root).sep
+        nos = self.nos
+        nos.path = mdata.named_paths_root
+        sep = nos.sep
         mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
         mdata.group_file_path = f"{mdata.named_paths_home}{sep}group.csvpaths"
         mdata.named_paths = paths
@@ -294,10 +316,14 @@ class PathsManager:
     def named_paths_names(self) -> list[str]:
         """@private"""
         path = self.named_paths_dir
-        # names = [n for n in Nos(path).listdir() if (not n.startswith(".") and not n == "manifest.json")]
-        names = [
-            n for n in Nos(path).listdir() if not Nos(os.path.join(path, n)).isfile()
-        ]
+        names = []
+        nos = self.nos
+        nos.path = path
+        lst = nos.listdir()
+        for n in lst:
+            nos.path = os.path.join(path, n)
+            if not nos.isfile():
+                names.append(n)
         return names
 
     def remove_named_paths(self, name: NamedPathsName, strict: bool = False) -> None:
@@ -307,7 +333,9 @@ class PathsManager:
         if not self.has_named_paths(name):
             return
         home = self.named_paths_home(name)
-        Nos(home).remove()
+        nos = self.nos
+        nos.path = home
+        nos.remove()
 
     def remove_all_named_paths(self) -> None:
         """@private"""
@@ -318,7 +346,9 @@ class PathsManager:
     def has_named_paths(self, name: NamedPathsName) -> bool:
         """@private"""
         path = os.path.join(self.named_paths_dir, name)
-        return Nos(path).dir_exists()
+        nos = self.nos
+        nos.path = path
+        return nos.dir_exists()
 
     def number_of_named_paths(self, name: NamedPathsName) -> int:
         """@private"""
@@ -338,7 +368,9 @@ class PathsManager:
         s = ""
         path = self.named_paths_home(name)
         grp = os.path.join(path, "group.csvpaths")
-        if Nos(grp).exists():
+        nos = self.nos
+        nos.path = grp
+        if nos.exists():
             with DataFileReader(grp) as reader:
                 s = reader.read()
         cs = s.split("---- CSVPATH ----")

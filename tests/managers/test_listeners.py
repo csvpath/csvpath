@@ -19,7 +19,9 @@ class TestListeners(unittest.TestCase):
         assert len(listeners) == 2
 
     def test_additional_listeners3(self):
-        iii = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
+        iii = None
+        if Config.CSVPATH_CONFIG_FILE_ENV in os.environ:
+            iii = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
         try:
             testini = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
             if os.path.exists(testini):
@@ -57,6 +59,7 @@ class TestListeners(unittest.TestCase):
             r.load_additional_listeners("file", listeners)
             assert len(listeners) == 3
         finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = iii
-            config = Config()
-            assert config.config_path == iii
+            if iii is not None:
+                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = iii
+                config = Config()
+                assert config.config_path == iii

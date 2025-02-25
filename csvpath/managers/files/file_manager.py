@@ -8,6 +8,7 @@ from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.reference_parser import ReferenceParser
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
+from csvpath.util.box import Box
 from .file_registrar import FileRegistrar
 from .file_cacher import FileCacher
 from .file_metadata import FileMetadata
@@ -26,6 +27,16 @@ class FileManager:
         """@private"""
         self.cacher = FileCacher(csvpaths)
         """@private"""
+        self._nos = None
+
+    @property
+    def nos(self) -> Nos:
+        if self._nos is None:
+            self._nos = Box.STUFF.get("boto_s3_nos")
+            if self._nos is None:
+                self._nos = Nos(None)
+                Box().add("boto_s3_nos", self._nos)
+        return self._nos
 
     @property
     def csvpaths(self):
@@ -49,7 +60,9 @@ class FileManager:
     def files_root_manifest(self) -> dict:
         """@private"""
         p = self.files_root_manifest_path
-        if Nos(p).exists():
+        nos = self.nos
+        nos.path = p
+        if nos.exists():
             with DataFileReader(p) as reader:
                 return json.load(reader.source)
         return None
@@ -65,14 +78,18 @@ class FileManager:
         if name.startswith("$"):
             path = self.csvpaths.results_manager.get_run_dir_for_reference(name)
             path = os.path.join(path, "manifest.json")
-            if Nos(path).exists():
+            nos = self.nos
+            nos.path = path
+            if nos.exists():
                 with DataFileReader(path) as reader:
                     m = json.load(reader.source)
                     return m["uuid"]
         else:
             path = self.named_file_home(name)
             path = os.path.join(path, "manifest.json")
-            if Nos(path).exists():
+            nos = self.nos
+            nos.path = path
+            if nos.exists():
                 with DataFileReader(path) as reader:
                     m = json.load(reader.source)
                     return m[len(m) - 1]["uuid"]
@@ -86,6 +103,8 @@ class FileManager:
         #
         # not a named-file name
         #
+        if name.find("://") > -1:
+            return name
         if name.find("/") > -1:
             #
             # this is definitely not what we should be returning. but it is what
@@ -99,6 +118,10 @@ class FileManager:
         # added
         #
         home = None
+        #
+        # this will never happen with the addition of the / test above. :/
+        #
+        """
         if name.startswith("/"):
             home = name
         else:
@@ -106,11 +129,16 @@ class FileManager:
             # done add
             #
             home = os.path.join(self.named_files_dir, name)
+        """
+        home = os.path.join(self.named_files_dir, name)
         #
         # added
         #
-        if Nos(home).isfile():
-            home = home[0 : home.rfind(Nos(home).sep)]
+        # nos = Nos(home)
+        nos = self.nos
+        nos.path = home
+        if nos.isfile():
+            home = home[0 : home.rfind(nos.sep)]
         #
         # done add
         #
@@ -119,8 +147,12 @@ class FileManager:
     def assure_named_file_home(self, name: str) -> str:
         """@private"""
         home = self.named_file_home(name)
-        if not os.path.exists(home):
-            Nos(home).makedirs()
+        nos = self.nos
+        nos.path = home
+        # nos = Nos(home)
+        if not nos.exists():
+            # if not os.path.exists(home):
+            nos.makedirs()
         return home
 
     #
@@ -134,12 +166,15 @@ class FileManager:
         """@private"""
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
-        sep = Nos(path).sep
+        nos = self.nos
+        nos.path = path
+        sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         home = self.named_file_home(name)
         home = os.path.join(home, fname)
-        if not Nos(home).exists():
-            Nos(home).makedirs()
+        nos.path = home
+        if not nos.exists():
+            nos.makedirs()
         return home
 
     @property
@@ -150,20 +185,33 @@ class FileManager:
     @property
     def named_file_names(self) -> list:
         """@private"""
+        nos = self.nos
         b = self.named_files_dir
-        ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
+        ns = []
+        nos.path = b
+        lst = nos.listdir()
+        for n in lst:
+            nos.path = os.path.join(b, n)
+            if not nos.isfile():
+                ns.append(n)
+
+        # ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
         return ns
 
     def name_exists(self, name: NamedFileName) -> bool:
         """@private"""
         p = self.named_file_home(name)
-        b = Nos(p).dir_exists()
+        nos = self.nos
+        nos.path = p
+        b = nos.dir_exists()
         return b
 
     def remove_named_file(self, name: str) -> None:
         """@private"""
         p = os.path.join(self.named_files_dir, name)
-        Nos(p).remove()
+        nos = self.nos
+        nos.path = p
+        nos.remove()
 
     def remove_all_named_files(self) -> None:
         """@private"""
@@ -193,7 +241,9 @@ class FileManager:
                 raise
 
     def add_named_files_from_dir(self, dirname: str):
-        dlist = Nos(dirname).listdir()
+        nos = self.nos
+        nos.path = dirname
+        dlist = nos.listdir()
         base = dirname
         for p in dlist:
             _ = p.lower()
@@ -249,14 +299,18 @@ class FileManager:
         mdata.fingerprint = h
         mdata.file_path = rpath
         mdata.file_home = file_home
-        mdata.file_name = file_home[file_home.rfind(Nos(file_home).sep) + 1 :]
+        nos = self.nos
+        nos.path = file_home
+        mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
         self.registrar.register_complete(mdata)
 
     def _copy_in(self, path, home) -> None:
         """@private"""
-        sep = Nos(path).sep
+        nos = self.nos
+        nos.path = path
+        sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         # creates
         #   a/file.csv -> named_files/name/file.csv/file.csv
@@ -271,7 +325,8 @@ class FileManager:
         if path.startswith("s3:") and not home.startswith("s3"):
             self._copy_down(path, temp, mode="wb")
         elif path.startswith("s3:") and home.startswith("s3"):
-            Nos(path).copy(temp)
+            nos.path = path
+            nos.copy(temp)
         elif not path.startswith("s3:") and not home.startswith("s3"):
             self._copy_down(path, temp, mode="wb")
         elif not path.startswith("s3:") and home.startswith("s3"):
@@ -341,7 +396,9 @@ class FileManager:
 
     def _fingerprint(self, path) -> str:
         """@private"""
-        sep = Nos(path).sep
+        nos = self.nos
+        nos.path = path
+        sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         t = None
         i = fname.find(".")
@@ -375,13 +432,16 @@ class FileManager:
             # another copy of it. re-adds are fine.
             #
             # need an s3 way to do this
-            remove_fpath = Nos(hpath).exists()
+            nos.path = hpath
+            remove_fpath = nos.exists()
             #
             # if a first add, rename the file to the fingerprint + ext
             #
         if remove_fpath:
-            Nos(fpath).remove()
+            nos.path = fpath
+            nos.remove()
             return hpath, h
         if hpath:
-            Nos(fpath).rename(hpath)
+            nos.path = fpath
+            nos.rename(hpath)
         return hpath, h

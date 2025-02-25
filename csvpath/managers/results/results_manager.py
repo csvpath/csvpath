@@ -504,7 +504,7 @@ class ResultsManager:  # pylint: disable=C0115
 
     def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
         """@private"""
-        ms = "%Y-%m-%d_%H-%M-%S.%f"
+        ms = "%Y-%m-%d_%H-%M-%S_%f"
         s = "%Y-%m-%d_%H-%M-%S"
         names = [n for n in names if n.startswith(instance)]
         if len(names) == 0:

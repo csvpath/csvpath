@@ -3,6 +3,7 @@ import pytest
 import os
 from csvpath import CsvPaths
 from csvpath.matching.util.exceptions import MatchException
+from csvpath.util.file_readers import DataFileReader
 
 
 class TestTitleFix(unittest.TestCase):
@@ -23,8 +24,8 @@ class TestTitleFix(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         d = result.data_file_path
-        with open(d, "r", encoding="utf-8") as file:
-            s = file.read()
+        with DataFileReader(d) as f:
+            s = f.read()
             assert s.find("Great circle : a novel {os.sep} Maggie Shipstead") == -1
 
     def test_title_fix_2(self):

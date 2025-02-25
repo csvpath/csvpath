@@ -14,21 +14,22 @@ def clear_files(request):
     paths = config.inputs_csvpaths_path
     cache = config.cache_dir_path
 
-    print("cleaning up local ahead of the run")
+    print("Cleaning up ahead of the run")
+    nos = Nos(None)
     for p in [archive, paths, files, cache]:
         if p is None:
             continue
         p = p.strip()
-        nos = Nos(p)
-        print(f"checking {p} for old test run files")
-        if nos.exists():
-            print(f"deleting from {p}")
+        nos.path = p
+        print(f"Checking {p} ")
+        if nos.dir_exists():
+            print(f"Deleting from {p}")
             try:
                 nos.remove()
             except Exception as e:
-                print(f"Error in cleaning: {type(e)}: {e}")
+                print(f"Error in cleaning {p}: {type(e)}: {e}")
 
-    print("cleaning complete.")
+    print("Clean-up complete.")
     print(
-        "\nREMEMBER TO CHECK THAT YOUR CONFIG.INI PATHS (IN ./CONFIG/ AND ./TEST/) MATCH SYSTEM SEPARATORS\n\n"
+        "\nREMEMBER TO CHECK THAT CONFIG.INI PATHS (IN ./CONFIG/ AND ./TEST/) MATCH SYSTEM SEPARATORS\n\n"
     )

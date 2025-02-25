@@ -26,6 +26,13 @@ class ResultSerializer:
         # base is the archive dir from config.ini
         self.base_dir = base_dir
         self.result = None
+        self._nos = None
+
+    @property
+    def nos(self) -> Nos:
+        if self._nos is None:
+            self._nos = Nos(None)
+        return self._nos
 
     def save_result(self, result) -> None:
         self.result = result
@@ -168,8 +175,10 @@ class ResultSerializer:
     def get_run_dir(self, *, paths_name, run_time):
         paths_name = self._deref_paths_name(paths_name)
         run_dir = os.path.join(self.base_dir, paths_name)
-        if not Nos(run_dir).dir_exists():
-            Nos(run_dir).makedirs()
+        nos = self.nos
+        nos.path = run_dir
+        if not nos.dir_exists():
+            nos.makedirs()
         if not isinstance(run_time, str):
             run_time = self.get_run_dir_name_from_datetime(run_time)
         run_dir = os.path.join(run_dir, f"{run_time}")
@@ -179,18 +188,25 @@ class ResultSerializer:
         # atm. a server process would namespace each CsvPaths instance
         # to prevent conflicts. if there is a conflict the two runs would
         # overwrite each other. this prevents that.
-        if Nos(run_dir).dir_exists():
+        nos.path = run_dir
+        if nos.dir_exists():
             i = 0
             adir = f"{run_dir}_{i}"
-            while Nos(adir).dir_exists():
-                i += 1
-                adir = f"{run_dir}_{i}"
+            nos.path = adir
+            while True:
+                nos.path = adir
+                if nos.dir_exists():
+                    i += 1
+                    adir = f"{run_dir}_{i}"
+                else:
+                    break
             run_dir = adir
             #
             # exp. we need to nail down the run_dir so it isn't claimed by another process.
             # this still leaves a race condition to be addressed.
             #
-            Nos(run_dir).makedirs()
+            nos.path = run_dir
+            nos.makedirs()
             #
             # end exp
             #
@@ -198,6 +214,8 @@ class ResultSerializer:
 
     def get_instance_dir(self, run_dir, identity) -> str:
         run_dir = os.path.join(run_dir, identity)
-        if not Nos(run_dir).exists():
-            Nos(run_dir).makedirs()
+        nos = self.nos
+        nos.path = run_dir
+        if not nos.exists():
+            nos.makedirs()
         return run_dir

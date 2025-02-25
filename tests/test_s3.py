@@ -57,16 +57,17 @@ class TestS3(unittest.TestCase):
             return
         text = "this is the text"
         path = f"s3://{BUCKET}/{TEMP_FILE_NAME}"
-        S3Utils.remove(BUCKET, TEMP_FILE_NAME)
+        c = S3Utils.make_client()
+        S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
         with DataFileWriter(path=path) as writer:
             writer.append(text)
         reader = DataFileReader(path)
         for s in reader.next_raw():
             assert s == text.encode("utf-8")
             break
-        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME)
-        S3Utils.remove(BUCKET, TEMP_FILE_NAME)
-        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME) is False
+        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c)
+        S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
+        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c) is False
 
     def test_s3_generate_fingerprint(self):
         if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
@@ -82,15 +83,16 @@ class TestS3(unittest.TestCase):
             return
         text = "this is the text"
         path = f"s3://{BUCKET}/{TEMP_FILE_NAME}"
-        S3Utils.remove(BUCKET, TEMP_FILE_NAME)
+        c = S3Utils.make_client()
+        S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
         with DataFileWriter(path=path) as writer:
             writer.append(text)
         fp = S3Fingerprinter()
         h = fp.fingerprint(path)
         assert h == "463tg/4lGkYJ9mEOm8kJOxUew5rVWQvkb0DGsygsZbw="
-        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME)
-        S3Utils.remove(BUCKET, TEMP_FILE_NAME)
-        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME) is False
+        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c)
+        S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
+        assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c) is False
 
     def test_s3_list_dir(self):
         if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
@@ -108,9 +110,14 @@ class TestS3(unittest.TestCase):
         a = f"s3://{BUCKET}/inputs/named_files/x/a"
         b = f"s3://{BUCKET}/inputs/named_files/x/b"
         c = f"s3://{BUCKET}/inputs/named_files/x/c"
-        Nos(a).remove()
-        Nos(b).remove()
-        Nos(c).remove()
+        nos = Nos(None)
+
+        nos.path = a
+        nos.remove()
+        nos.path = b
+        nos.remove()
+        nos.path = c
+        nos.remove()
         with DataFileWriter(path=a) as writer:
             writer.append(text)
         # check that we're actually writing Ok. this is extra.
@@ -123,15 +130,19 @@ class TestS3(unittest.TestCase):
         with DataFileWriter(path=c) as writer:
             writer.append(text)
         x = f"s3://{BUCKET}/inputs/named_files/x"
-        s = Nos(x).listdir()
+        nos.path = x
+        s = nos.listdir()
         assert s
         assert len(s) == 3
         assert "a" in s
         assert "b" in s
         assert "c" in s
-        Nos(a).remove()
-        Nos(b).remove()
-        Nos(c).remove()
+        nos.path = a
+        nos.remove()
+        nos.path = b
+        nos.remove()
+        nos.path = c
+        nos.remove()
 
     def test_s3_file_exists(self):
         if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
@@ -182,17 +193,28 @@ class TestS3(unittest.TestCase):
         b = f"s3://{BUCKET}/inputs/named_files/x/a/b"
         c = f"s3://{BUCKET}/inputs/named_files/x/a/c"
         c2 = f"s3://{BUCKET}/inputs/named_files/x/d/c"
-        Nos(x).remove()
-        Nos(a).remove()
-        Nos(b).remove()
-        Nos(c).remove()
-        bb = Nos(x).exists()
+        nos = Nos(None)
+        nos.path = x
+        nos.remove()
+
+        nos.path = a
+        nos.remove()
+        nos.path = b
+        nos.remove()
+        nos.path = c
+        nos.remove()
+
+        nos.path = x
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(a).exists()
+        nos.path = a
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(b).exists()
+        nos.path = b
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(c).exists()
+        nos.path = c
+        bb = nos.exists()
         assert bb is False
 
         with DataFileWriter(path=x) as writer:
@@ -204,48 +226,63 @@ class TestS3(unittest.TestCase):
         with DataFileWriter(path=c) as writer:
             writer.append(text)
 
-        bb = Nos(a).isfile()
+        nos.path = a
+        bb = nos.isfile()
         assert bb is True
 
+        nos.path = x
+        bb = nos.exists()
+        assert bb is True
+        nos.path = a
+        bb = nos.exists()
+        assert bb is True
+        nos.path = b
+        bb = nos.exists()
+        assert bb is True
+        nos.path = c
+        bb = nos.exists()
+        assert bb is True
+
+        nos.path = x
+        nos.remove()
         bb = Nos(x).exists()
-        assert bb is True
-        bb = Nos(a).exists()
-        assert bb is True
-        bb = Nos(b).exists()
-        assert bb is True
-        bb = Nos(c).exists()
-        assert bb is True
-
-        Nos(x).remove()
-        bb = Nos(x).exists()
         assert bb is False
-        bb = Nos(a).exists()
-
+        nos.path = a
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(b).exists()
+        nos.path = b
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(c).exists()
+        nos.path = c
+        bb = nos.exists()
         assert bb is False
 
         with DataFileWriter(path=c) as writer:
             writer.append(text)
         with DataFileWriter(path=c2) as writer:
             writer.append(text)
-        bb = Nos(x).dir_exists()
+        nos.path = x
+        bb = nos.dir_exists()
         assert bb is True
-        bb = Nos(x).isfile()
+        nos.path = x
+        bb = nos.isfile()
         assert bb is False
-        bb = Nos(c).exists()
+        nos.path = c
+        bb = nos.exists()
         assert bb is True
-        bb = Nos(c2).exists()
+        nos.path = c2
+        bb = nos.exists()
         assert bb is True
 
+        nos.path = x
         Nos(x).remove()
-        bb = Nos(x).exists()
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(c).exists()
+        nos.path = c
+        bb = nos.exists()
         assert bb is False
-        bb = Nos(c2).exists()
+        nos.path = c2
+        bb = nos.exists()
         assert bb is False
 
     def test_s3_add_named_file(self):

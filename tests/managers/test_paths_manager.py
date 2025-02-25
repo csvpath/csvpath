@@ -113,7 +113,7 @@ class TestPathsManager(unittest.TestCase):
         pm = paths.paths_manager
         np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         i = pm.total_named_paths()
-        if i > 0:
+        if i > 0 and pm.has_named_paths("many"):
             pm.remove_named_paths("many")
             j = pm.total_named_paths()
             assert j == i - 1

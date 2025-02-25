@@ -22,8 +22,23 @@ class Nos:
 
     @path.setter
     def path(self, p: str) -> None:
+        if self._protocol_mismatch(p):
+            self._do = None
         self._path = p
-        self._do.path = p
+        self.do.path = p
+
+    def _protocol_mismatch(self, path) -> bool:
+        if path is None:
+            return True
+        if self._path is None:
+            return True
+        i = path.find("://")
+        j = self._path.find("://")
+        if i == j == -1:
+            return False
+        if path[0:i] == self._path[0:j]:
+            return False
+        return True
 
     #
     # removes ftps://hostname:port if found, or any similar
@@ -54,7 +69,6 @@ class Nos:
         self.do.remove()
 
     def exists(self) -> bool:
-        self.do
         return self.do.exists()
 
     def dir_exists(self) -> bool:
@@ -84,7 +98,8 @@ class FileDo:
         self.path = path
 
     def remove(self) -> None:
-        if os.path.isfile(self.path):
+        isf = os.path.isfile(self.path)
+        if isf:
             os.remove(self.path)
         else:
             shutil.rmtree(self.path)
@@ -96,7 +111,8 @@ class FileDo:
         return os.path.exists(self.path)
 
     def dir_exists(self) -> bool:
-        return os.path.exists(self.path)
+        ret = os.path.exists(self.path)
+        return ret
 
     def rename(self, new_path: str) -> None:
         os.rename(self.path, new_path)

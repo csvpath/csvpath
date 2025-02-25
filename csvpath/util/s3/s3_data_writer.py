@@ -14,17 +14,7 @@ class S3DataWriter(DataFileWriter):
             client = Box.STUFF.get("boto_s3_client")
             if client is None:
                 client = S3Utils.make_client()
-                """
-                session = boto3.Session(
-                    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-                    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-                )
-                import warnings
-                warnings.filterwarnings(
-                    action="ignore", message=r"datetime.datetime.utcnow"
-                )
-                client = session.client("s3")
-                """
+                Box().add("boto_s3_client", client)
             self.sink = open(
                 self._path,
                 self._mode,
@@ -39,13 +29,6 @@ class S3DataWriter(DataFileWriter):
         client = Box.STUFF.get("boto_s3_client")
         if client is None:
             client = S3Utils.make_client()
-            """
-            session = boto3.Session(
-                aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-                aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-            )
-            client = session.client("s3")
-            """
         with open(self._path, "wb", transport_params={"client": client}) as file:
             file.write(data.encode("utf-8"))
 

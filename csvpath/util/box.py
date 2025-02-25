@@ -11,6 +11,7 @@ from typing import Any
 
 
 class Box:
+    BOTO_S3_NOS = "boto_s3_nos"
     BOTO_S3_CLIENT = "boto_s3_client"
     CSVPATHS_CONFIG = "csvpaths_config"
     SSH_CLIENT = "ssh_client"

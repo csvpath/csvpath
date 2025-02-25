@@ -5,8 +5,18 @@ from botocore.exceptions import ClientError
 
 
 class S3Utils:
+    client_count = 0
+
     @classmethod
     def make_client(cls):
+        cls.client_count += 1
+        """
+        if cls.client_count in [19,20,21]:
+            from csvpath.util.log_utility import LogUtility
+            LogUtility.log_brief_trace()
+        """
+        print(f"S3Utils.make_client: making new client: {cls.client_count}")
+
         import warnings
 
         warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
@@ -27,8 +37,9 @@ class S3Utils:
         return (bucket, key)
 
     @classmethod
-    def exists(self, bucket: str, key: str) -> bool:
-        client = boto3.client("s3")
+    def exists(self, bucket: str, key: str, client) -> bool:
+        if client is None:
+            raise ValueError("Client cannot be None")
         try:
             import warnings
 
@@ -45,18 +56,22 @@ class S3Utils:
         return True
 
     @classmethod
-    def remove(self, bucket: str, key: str) -> None:
+    def remove(self, bucket: str, key: str, client) -> None:
         #
         # see csvpath.util.Nos.remove() for a remove that deletes all children.
         # s3 children are essentially completely independent of their
         # notionally containing parents.
         #
-        client = boto3.client("s3")
+        if client is None:
+            raise ValueError("Client cannot be None")
         client.delete_object(Bucket=bucket, Key=key)
 
     @classmethod
-    def copy(self, bucket: str, key: str, new_bucket: str, new_key: str) -> None:
-        client = boto3.client("s3")
+    def copy(
+        self, bucket: str, key: str, new_bucket: str, new_key: str, client
+    ) -> None:
+        if client is None:
+            raise ValueError("Client cannot be None")
         client.copy_object(
             Bucket=new_bucket,
             CopySource={"Bucket": bucket, "Key": key},
@@ -65,6 +80,8 @@ class S3Utils:
         )
 
     @classmethod
-    def rename(self, bucket: str, key: str, new_key: str) -> None:
-        S3Utils.copy(bucket, key, bucket, new_key)
-        S3Utils.remove(bucket, key)
+    def rename(self, bucket: str, key: str, new_key: str, client) -> None:
+        if client is None:
+            raise ValueError("Client cannot be None")
+        S3Utils.copy(bucket, key, bucket, new_key, client=client)
+        S3Utils.remove(bucket, key, client=client)
