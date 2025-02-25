@@ -10,7 +10,7 @@ from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
 from .file_registrar import FileRegistrar
-from .file_cacher import FileCacher
+from .lines_and_headers_cacher import LinesAndHeadersCacher
 from .file_metadata import FileMetadata
 
 NamedFileName = NewType("NamedFileName", str)
@@ -25,7 +25,10 @@ class FileManager:
         self._csvpaths = csvpaths
         self.registrar = FileRegistrar(csvpaths)
         """@private"""
-        self.cacher = FileCacher(csvpaths)
+        #
+        # used by csvpath direct access
+        #
+        self.lines_and_headers_cacher = LinesAndHeadersCacher(csvpaths)
         """@private"""
         self._nos = None
 
@@ -81,18 +84,27 @@ class FileManager:
             nos = self.nos
             nos.path = path
             if nos.exists():
+                m = self.registrar.get_manifest(path)
+                return m["uuid"]
+                """
                 with DataFileReader(path) as reader:
                     m = json.load(reader.source)
                     return m["uuid"]
+                """
         else:
             path = self.named_file_home(name)
             path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
             if nos.exists():
+                m = self.registrar.get_manifest(path)
+                return m[len(m) - 1]["uuid"]
+
+                """
                 with DataFileReader(path) as reader:
                     m = json.load(reader.source)
                     return m[len(m) - 1]["uuid"]
+                """
         raise ValueError(f"No manifest for file named {name}")
 
     #
@@ -114,34 +126,11 @@ class FileManager:
             # up in multiple ways.
             #
             return ""
-        #
-        # added
-        #
-        home = None
-        #
-        # this will never happen with the addition of the / test above. :/
-        #
-        """
-        if name.startswith("/"):
-            home = name
-        else:
-            #
-            # done add
-            #
-            home = os.path.join(self.named_files_dir, name)
-        """
         home = os.path.join(self.named_files_dir, name)
-        #
-        # added
-        #
-        # nos = Nos(home)
         nos = self.nos
         nos.path = home
         if nos.isfile():
             home = home[0 : home.rfind(nos.sep)]
-        #
-        # done add
-        #
         return home
 
     def assure_named_file_home(self, name: str) -> str:
@@ -149,9 +138,7 @@ class FileManager:
         home = self.named_file_home(name)
         nos = self.nos
         nos.path = home
-        # nos = Nos(home)
         if not nos.exists():
-            # if not os.path.exists(home):
             nos.makedirs()
         return home
 
@@ -194,8 +181,6 @@ class FileManager:
             nos.path = os.path.join(b, n)
             if not nos.isfile():
                 ns.append(n)
-
-        # ns = [n for n in Nos(b).listdir() if not Nos(os.path.join(b, n)).isfile()]
         return ns
 
     def name_exists(self, name: NamedFileName) -> bool:

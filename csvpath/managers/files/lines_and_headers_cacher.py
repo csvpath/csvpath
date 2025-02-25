@@ -6,7 +6,7 @@ from csvpath.util.cache import Cache
 from csvpath.util.exceptions import InputException, FileException
 
 
-class FileCacher:
+class LinesAndHeadersCacher:
     """@private"""
 
     def __init__(self, csvpaths=None):

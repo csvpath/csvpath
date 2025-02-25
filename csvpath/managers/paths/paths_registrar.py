@@ -2,12 +2,14 @@ import os
 import json
 from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
-from csvpath.util.file_writers import DataFileWriter
+
+# from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from .paths_metadata import PathsMetadata
 from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
+from csvpath.util.intermediary import Intermediary
 
 
 class PathsRegistrar(Registrar, Listener):
@@ -19,6 +21,7 @@ class PathsRegistrar(Registrar, Listener):
         Listener.__init__(self, csvpaths.config)
         self._manager = None
         self.type_name = "paths"
+        self.intermediary = Intermediary(csvpaths)
 
     @property
     def manager(self):
@@ -27,9 +30,13 @@ class PathsRegistrar(Registrar, Listener):
         return self._manager
 
     def get_manifest(self, mpath) -> list:
+        j = self.intermediary.get_json(mpath)
+        return j
+        """
         with DataFileReader(mpath) as file:
             j = json.load(file.source)
             return j
+        """
 
     def register_complete(self, mdata: Metadata) -> None:
         mdata.manifest_path = self.manifest_path(name=mdata.named_paths_name)
@@ -102,8 +109,11 @@ class PathsRegistrar(Registrar, Listener):
             m["uuid"] = mdata.uuid_string
             m["manifest_path"] = mdata.manifest_path
             jdata.append(m)
+            self.intermediary.put_json(mdata.manifest_path, jdata)
+            """
             with DataFileWriter(path=mdata.manifest_path) as file:
                 json.dump(jdata, file.sink, indent=2)
+            """
         else:
             #
             # leave as info so nobody has to dig to see why no update
@@ -117,8 +127,11 @@ class PathsRegistrar(Registrar, Listener):
         nhome = self.manager.named_paths_home(name)
         mf = os.path.join(nhome, "manifest.json")
         if not Nos(mf).exists():
+            self.intermediary.put_json(mf, [])
+            """
             with DataFileWriter(path=mf) as file:
                 file.append("[]")
+            """
         return mf
 
     def _most_recent_fingerprint(self, manifest_path: str) -> str:

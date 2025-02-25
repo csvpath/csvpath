@@ -8,6 +8,10 @@ from csvpath.util.nos import Nos
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 
+#
+# TODO: not using intermediary
+#
+
 
 class FilesListener(Listener):  # Registrar,
     """@private
