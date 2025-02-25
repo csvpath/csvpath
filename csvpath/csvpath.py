@@ -1314,10 +1314,10 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             uc = self.csvpaths.config.get(section="cache", name="use_cache")
             use_cache = uc is None or uc.strip().lower() != "no"
         if self.csvpaths and use_cache is True:
-            self.line_monitor = self.csvpaths.file_manager.cacher.get_new_line_monitor(
+            self.line_monitor = self.csvpaths.file_manager.lines_and_headers_cacher.get_new_line_monitor(
                 self.scanner.filename
             )
-            self.headers = self.csvpaths.file_manager.cacher.get_original_headers(
+            self.headers = self.csvpaths.file_manager.lines_and_headers_cacher.get_original_headers(
                 self.scanner.filename
             )
         else:

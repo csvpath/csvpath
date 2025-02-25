@@ -2,12 +2,14 @@ import os
 import json
 from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
-from csvpath.util.file_readers import DataFileReader
-from csvpath.util.file_writers import DataFileWriter
+
+# from csvpath.util.file_readers import DataFileReader
+# from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
+from csvpath.util.intermediary import Intermediary
 
 
 class FileRegistrar(Registrar, Listener):
@@ -21,6 +23,7 @@ class FileRegistrar(Registrar, Listener):
         self.csvpaths = csvpaths
         self.config = csvpaths.config
         self.type_name = "file"
+        self.intermediary = Intermediary(csvpaths)
 
     def get_fingerprint(self, home) -> str:
         mpath = self.manifest_path(home)
@@ -38,16 +41,26 @@ class FileRegistrar(Registrar, Listener):
         mf = os.path.join(home, "manifest.json")
         nos.path = mf
         if not nos.exists():
+            self.intermediary.put_json(mf, [])
+            """
             with DataFileWriter(path=mf, mode="w") as writer:
                 writer.append("[]")
+            """
         return mf
 
     def get_manifest(self, mpath) -> list:
+        j = self.intermediary.get_json(mpath)
+        if j is None:
+            j = []
+            self.intermediary.put_json(mpath, j)
+        return j
+        """
         try:
             with DataFileReader(mpath) as reader:
                 return json.load(reader.source)
         except FileNotFoundError:
             return []
+        """
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -68,8 +81,12 @@ class FileRegistrar(Registrar, Listener):
             mani["mark"] = mark
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
+        # self.intermediary.clear(manifest_path)
+        self.intermediary.put_json(manifest_path, jdata)
+        """
         with DataFileWriter(path=manifest_path, mode="w") as writer:
             json.dump(jdata, writer.sink, indent=2)
+        """
         #
         # drop update into an all-inputs/files record here?
         #
@@ -146,6 +163,22 @@ class FileRegistrar(Registrar, Listener):
 
     def registered_file(self, home: str) -> str:
         mpath = self.manifest_path(home)
+        mdata = self.get_manifest(mpath)
+        if mdata is None or len(mdata) == 0:
+            raise InputException(f"Manifest for {home} at {mpath} is empty")
+        m = mdata[len(mdata) - 1]
+        if "file" not in m:
+            raise ValueError(
+                "File path cannot be None. Check your config file and named-files."
+            )
+        path = m["file"]
+        mark = None
+        if "mark" in m:
+            mark = m["mark"]
+        if mark is not None:
+            path = f"{path}#{mark}"
+        return path
+        """
         with DataFileReader(mpath) as reader:
             mdata = json.load(reader.source)
             if mdata is None or len(mdata) == 0:
@@ -162,3 +195,4 @@ class FileRegistrar(Registrar, Listener):
             if mark is not None:
                 path = f"{path}#{mark}"
             return path
+        """
