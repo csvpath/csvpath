@@ -395,12 +395,34 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # if we're in source-mode: preceding, but that doesn't matter from the
         # pov of the reference.
         #
+        """
         if filename.startswith("$"):
+            #
+            # this should already have been done in FileManager. get_named_file looks for '$' and
+            # delegates references to results manager, same as below. that value comes in here as
+            # the local file var, same as we set below.
+            #
+            # verifying and cleaning up
+            #
             self.logger.debug(
                 "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
                 filename,
             )
-            file = self.results_manager.data_file_for_reference(filename, not_name=crt)
+            #
+            # find file from two types of references: file and results
+            # -- results ref is to a sourcemode preceding output or a reference to a result from some run:
+            #      $sourcemode.results.202:last.source1
+            # -- file reference is to a prior version of a file
+            #      $myfilename.files.3
+            #      $myfilename.files.yesterday:last
+            #      $myfilename.files.today:last
+            #      $myfilename.files.[today|yesterday|yyyy-mm-dd_hh-mm-ss|number|fingerprint]:[last|first|number]
+            #
+            #
+
+            file2 = self.results_manager.data_file_for_reference(filename, not_name=crt)
+            assert file == file2
+        """
         #
         #
         #
@@ -541,8 +563,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 #
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
-                # ex.trace = traceback.format_exc()
-                # ex.source = self
                 if self.error_manager.csvpaths is None:
                     raise Exception("ErrorManager's CsvPaths cannot be None")
                 self.error_manager.handle_error(source=self, msg=f"{ex}")

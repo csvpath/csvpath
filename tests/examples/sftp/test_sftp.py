@@ -11,6 +11,32 @@ PASSWORD = "tinpenny"
 
 
 class TestSftpMode(unittest.TestCase):
+    def test_load_named_file_from_sftp(self):
+        if not self._check_for_server():
+            return
+        #
+        # tests if the sftp backend let's us use sftp:// to do add_named_file.
+        # this may not be the best place for this test, but it's good enough.
+        #
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        #
+        # requires user tinpenny with an orders.csv at their root
+        #
+        server = paths.config.get(section="sftp", name="server")
+        port = paths.config.get(section="sftp", name="port")
+        paths.file_manager.add_named_file(
+            name="orders", path=f"sftp://{server}:{port}/orders.csv"
+        )
+        path = '$[*][ print("0: $.headers.0, 2: $.headers.2")]'
+        d = {"process": [f"{path}"]}
+        paths.paths_manager.set_named_paths(d)
+        paths.collect_paths(filename="orders", pathsname="process")
+        results = paths.results_manager.get_named_results("process")
+        assert len(results) == 1
+        assert paths.results_manager.is_valid("process")
+
     def test_sftp_send(self):
         if not self._check_for_server():
             return

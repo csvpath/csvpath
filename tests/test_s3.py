@@ -14,6 +14,36 @@ TEMP_FILE_NAME = "abc.txt"
 
 
 class TestS3(unittest.TestCase):
+    def test_s3_add_bucket_file(self):
+        if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
+            "AWS_SECRET_ACCESS_KEY"
+        ):
+            print(
+                """
+                  the test_s3_read_1 test requires AWS SK and AK env
+                  vars with permission to read the file at
+                  s3://csvpath-example-1/timezones.csv
+                """
+            )
+            return
+        #
+        # tests that we can load a file from s3 into named_files
+        #
+        cs = CsvPaths()
+        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs.file_manager.add_named_file(
+            name="timezones", path="s3://csvpath-example-1/timezones.csv"
+        )
+        path = '$[*][ print("$.headers.0 full name: $.headers.2")]'
+        d = {"tz": [f"{path}"]}
+        cs.paths_manager.set_named_paths(d)
+        cs.collect_paths(filename="timezones", pathsname="tz")
+        pathresults = cs.results_manager.get_named_results("tz")
+        results = pathresults[0]
+        valid = cs.results_manager.is_valid("tz")
+        assert len(results) > 100
+        assert valid
+
     def test_s3_read_1(self):
         if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
             "AWS_SECRET_ACCESS_KEY"
@@ -31,9 +61,6 @@ class TestS3(unittest.TestCase):
         cs.file_manager.set_named_files(FILES)
         path = '$[*][ print("$.headers.0 full name: $.headers.2")]'
         d = {"tz": [f"{path}"]}
-        #
-        # collect_paths is creating a wrong inputs dir directory
-        #
         cs.paths_manager.set_named_paths(d)
         cs.collect_paths(filename="timezones", pathsname="tz")
         pathresults = cs.results_manager.get_named_results("tz")

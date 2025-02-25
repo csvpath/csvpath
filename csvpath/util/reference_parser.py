@@ -26,6 +26,7 @@ class ReferenceParser:
     CSVPATH = "csvpath"
     METADATA = "metadata"
     RESULTS = "results"
+    FILES = "files"
 
     def __init__(self, string: str = None) -> None:
         self._root_major = None

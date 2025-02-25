@@ -336,14 +336,24 @@ class FileManager:
     #
     def get_named_file(self, name: str) -> str:
         ret = None
+        #
+        # references can be to results, but also to prior versions of a file
+        #      $myfilename.files.3
+        #      $myfilename.files.yesterday:last
+        #      $myfilename.files.today:last
+        #      $myfilename.files.[today|yesterday|yyyy-mm-dd_hh-mm-ss|number|fingerprint]:[last|first|number]
+        #
         if name.startswith("$"):
             ref = ReferenceParser(name)
-            if ref.datatype != ReferenceParser.RESULTS:
+            if ref.datatype == ReferenceParser.FILES:
+                ...
+            elif ref.datatype == ReferenceParser.RESULTS:
+                reman = self._csvpaths.results_manager
+                ret = reman.data_file_for_reference(name)
+            else:
                 raise InputException(
-                    f"Reference datatype must be {ReferenceParser.RESULTS}"
+                    f"Reference datatype must be in [{ReferenceParser.RESULTS}, {ReferenceParser.FILES}]"
                 )
-            reman = self._csvpaths.results_manager
-            ret = reman.data_file_for_reference(name)
         else:
             if not self.name_exists(name):
                 return None
