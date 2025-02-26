@@ -107,6 +107,7 @@ class ReferenceParser:
             ReferenceParser.RESULTS,
             ReferenceParser.CSVPATHS,
             ReferenceParser.CSVPATH,
+            ReferenceParser.FILES,
             ReferenceParser.METADATA,
         ]:
             raise ReferenceException(f"Unknown datatype {t} in {self}")

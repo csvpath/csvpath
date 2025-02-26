@@ -6,6 +6,7 @@ from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.reference_finder import ReferenceFinder
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
@@ -86,11 +87,6 @@ class FileManager:
             if nos.exists():
                 m = self.registrar.get_manifest(path)
                 return m["uuid"]
-                """
-                with DataFileReader(path) as reader:
-                    m = json.load(reader.source)
-                    return m["uuid"]
-                """
         else:
             path = self.named_file_home(name)
             path = os.path.join(path, "manifest.json")
@@ -99,12 +95,6 @@ class FileManager:
             if nos.exists():
                 m = self.registrar.get_manifest(path)
                 return m[len(m) - 1]["uuid"]
-
-                """
-                with DataFileReader(path) as reader:
-                    m = json.load(reader.source)
-                    return m[len(m) - 1]["uuid"]
-                """
         raise ValueError(f"No manifest for file named {name}")
 
     #
@@ -337,23 +327,16 @@ class FileManager:
     def get_named_file(self, name: str) -> str:
         ret = None
         #
-        # references can be to results, but also to prior versions of a file
-        #      $myfilename.files.3
-        #      $myfilename.files.yesterday:last
-        #      $myfilename.files.today:last
-        #      $myfilename.files.[today|yesterday|yyyy-mm-dd_hh-mm-ss|number|fingerprint]:[last|first|number]
+        # references can be to results or to prior versions of a file. in
+        # prior file version references we can do:
+        #      $myfilename.files.index
+        #      $myfilename.files.[yesterday|today]:[last|first|index]
+        #      $myfilename.files.fingerprint
+        #      $myfilename.files.[yyyy-mm-dd_hh-mm-ss]:[before|after|None]
         #
         if name.startswith("$"):
-            ref = ReferenceParser(name)
-            if ref.datatype == ReferenceParser.FILES:
-                ...
-            elif ref.datatype == ReferenceParser.RESULTS:
-                reman = self._csvpaths.results_manager
-                ret = reman.data_file_for_reference(name)
-            else:
-                raise InputException(
-                    f"Reference datatype must be in [{ReferenceParser.RESULTS}, {ReferenceParser.FILES}]"
-                )
+            reff = ReferenceFinder(self._csvpaths, name)
+            ret = reff.resolve()
         else:
             if not self.name_exists(name):
                 return None

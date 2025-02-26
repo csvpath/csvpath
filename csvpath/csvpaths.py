@@ -402,7 +402,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             # delegates references to results manager, same as below. that value comes in here as
             # the local file var, same as we set below.
             #
-            # verifying and cleaning up
+            # verified and cleaned up. delete when ready!
             #
             self.logger.debug(
                 "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
