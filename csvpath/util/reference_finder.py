@@ -1,7 +1,6 @@
 # pylint: disable=C0114
-from datetime import timedelta
+from datetime import timedelta, timezone
 import datetime
-
 from csvpath.util.reference_parser import ReferenceParser
 
 # TODO: probably we should hoist up expr utility, but for now leaving it in matching
@@ -98,10 +97,13 @@ class FilesReferenceFinder:
             pointer = self._pointer(n, "last")
             dat = None
             if day == "today":
-                dat = datetime.date.today()
+                dat = datetime.datetime.now()
             if day == "yesterday":
-                dat = datetime.date.today() - timedelta(days=1)
+                dat = datetime.datetime.now() - timedelta(days=1)
             ds = self._list_of_records_by_date(dat)
+            #
+            #
+            #
             if pointer == "last":
                 return ds[len(ds) - 1]["file"]
             if pointer == "first":
@@ -122,6 +124,7 @@ class FilesReferenceFinder:
     def _list_of_records_by_date(self, adate=None) -> list:
         mani = self.manifest
         lst = []
+        adate = adate.astimezone(timezone.utc) if adate is not None else None
         for _ in mani:
             t = _["time"]
             td = ExpressionUtility.to_datetime(t)

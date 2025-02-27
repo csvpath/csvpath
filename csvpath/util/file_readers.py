@@ -156,6 +156,13 @@ class DataFileReader(ABC):
                     kwargs={"delimiter": delimiter, "quotechar": quotechar},
                 )
                 return instance
+            if path.startswith("http://") or path.startswith("https://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.http.http_data_reader import HttpDataReader",
+                    args=[path],
+                    kwargs={"delimiter": delimiter, "quotechar": quotechar},
+                )
+                return instance
             return CsvDataReader(path, delimiter=delimiter, quotechar=quotechar)
         else:
             instance = super().__new__(cls)

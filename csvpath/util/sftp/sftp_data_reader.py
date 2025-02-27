@@ -2,7 +2,6 @@
 import csv
 from smart_open import open
 from csvpath.util.box import Box
-from csvpath.util.hasher import Hasher
 from csvpath.util.nos import Nos
 from ..file_readers import CsvDataReader
 from .sftp_fingerprinter import SftpFingerprinter

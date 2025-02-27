@@ -19,10 +19,8 @@ NamedFileName = NewType("NamedFileName", str)
 
 
 class FileManager:
-    def __init__(self, *, named_files: dict[str, str] = None, csvpaths=None):
+    def __init__(self, *, csvpaths=None):
         """@private"""
-        if named_files is None:
-            named_files = {}
         self._csvpaths = csvpaths
         self.registrar = FileRegistrar(csvpaths)
         """@private"""

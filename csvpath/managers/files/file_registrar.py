@@ -2,9 +2,6 @@ import os
 import json
 from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
-
-# from csvpath.util.file_readers import DataFileReader
-# from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
@@ -42,10 +39,6 @@ class FileRegistrar(Registrar, Listener):
         nos.path = mf
         if not nos.exists():
             self.intermediary.put_json(mf, [])
-            """
-            with DataFileWriter(path=mf, mode="w") as writer:
-                writer.append("[]")
-            """
         return mf
 
     def get_manifest(self, mpath) -> list:
@@ -54,6 +47,38 @@ class FileRegistrar(Registrar, Listener):
             j = []
             self.intermediary.put_json(mpath, j)
         return j
+
+    def patch_named_file(self, *, name, patch, index=-1) -> None:
+        home = self.csvpaths.file_manager.named_file_home(name)
+        mp = self.manifest_path(home)
+        mani = self.get_manifest(mp)
+        index = len(mani) - 1 if index == -1 else index
+        if "type" in patch:
+            mani[index]["type"] = patch["type"]
+        if "file_name" in patch:
+            sep = "\\" if home.find("\\") > -1 else "/"
+            #
+            # we can assume that if we're setting the file name the type may have changed
+            # and could be a problem. so we rename to fingerprint + type based on current info.
+            # then we rename the file home to the new file name we've been given.
+            #
+            # 1. move file to fingerprint.type
+            # 2. move file home to home/new_file_name
+            #
+            old_file = mani[index]["file"]
+            new_file = f"{mani[index]['file_home']}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+            nos = Nos(None)
+            nos.path = old_file
+            nos.rename(new_file)
+            old_home = mani[index]["file_home"]
+            new_home = f"{home}{sep}{patch['file_name']}"
+            nos.path = old_home
+            nos.rename(new_home)
+            mani[index]["file_home"] = new_home
+            mani[index][
+                "file"
+            ] = f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+        self.intermediary.put_json(mp, mani)
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -91,7 +116,12 @@ class FileRegistrar(Registrar, Listener):
             raise InputException(
                 f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
             )
-        if not path.startswith("s3:") and not Nos(path).exists():
+        if (
+            not path.startswith("s3:")
+            and not path.startswith("http:")
+            and not path.startswith("https:")
+            and not Nos(path).exists()
+        ):
             # if not path.startswith("s3:") and not os.path.exists(path):
             #
             # try for a data reader in case we're smart-opening
