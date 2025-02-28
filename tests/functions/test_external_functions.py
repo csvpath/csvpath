@@ -3,6 +3,7 @@ import os
 from csvpath import CsvPath
 from csvpath.matching.functions.function_finder import FunctionFinder
 from csvpath.matching.functions.function_factory import FunctionFactory
+from csvpath.util.path_util import PathUtility as pathu
 
 PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
@@ -33,7 +34,7 @@ class TestFunctionsExternals(unittest.TestCase):
         path.config.configpath = f"tests{os.sep}test_resources{os.sep}config.ini"
         path.config.reload()
         assert path.config.function_imports is not None
-        assert (
-            path.config.function_imports
-            == f"tests{os.sep}test_resources{os.sep}function.imports"
+        assert pathu.equals(
+            path.config.function_imports,
+            f"tests{os.sep}test_resources{os.sep}function.imports",
         )
