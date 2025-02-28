@@ -90,13 +90,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # careful of Box. if used as a ctx mgr it is risky till we refactor
         # it to protect different users
-        """
-        a = self._config.get(section="results", name="archive")
-        f = self._config.get(section="inputs", name="files")
-        p = self._config.get(section="inputs", name="paths")
-        if a.startswith("sftp") or f.startswith("sftp") or p.startswith("sftp"):
-            Box().add(Box.CSVPATHS_CONFIG, self._config)
-        """
         Box().add(Box.CSVPATHS_CONFIG, self._config)
         # atexit.register(self.on_exit)
 
@@ -162,6 +155,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self.run_metadata = None
         """ @private """
+        from .util.log_utility import LogUtility
+
+        LogUtility.log_brief_trace()
         self.logger.info("initialized CsvPaths")
 
     def _set_managers(self) -> None:

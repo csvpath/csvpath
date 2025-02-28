@@ -68,7 +68,9 @@ class TestReferenceFinder(unittest.TestCase):
         assert file == finder.manifest[0]["file"]
 
     def test_ref_finder_index(self):
+        print("init csvpaths")
         paths = self.setup()
+        print("starting ref finding")
         ref = "$food.files.today:first"
         finder = ReferenceFinder(paths, ref)
         assert finder.manifest is not None
