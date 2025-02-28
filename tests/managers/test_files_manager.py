@@ -87,6 +87,7 @@ class TestFilesManager(unittest.TestCase):
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         d = m.named_file_home("aname")
+        d = pathu.norm(d)
         assert d is not None
         assert d.endswith(f"inputs{os.sep}named_files{os.sep}aname")
 
@@ -98,6 +99,7 @@ class TestFilesManager(unittest.TestCase):
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
+        d = pathu.norm(d)
         assert d is not None
         assert d.endswith(
             f"inputs{os.sep}named_files{os.sep}mytest{os.sep}test.csv{os.sep}test.csv"
@@ -113,6 +115,7 @@ class TestFilesManager(unittest.TestCase):
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
+        d = pathu.norm(d)
         assert Nos(d).exists()
         rpath = m._fingerprint(home)
         assert d != rpath

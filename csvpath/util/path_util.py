@@ -4,6 +4,8 @@ import os
 class PathUtility:
     @classmethod
     def norm(cls, apath: str) -> str:
+        if apath is None:
+            return None
         return os.path.normpath(os.path.normcase(apath))
 
     @classmethod
