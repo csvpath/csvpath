@@ -7,6 +7,7 @@ from csvpath.util.nos import Nos
 from csvpath.managers.files.files_listener import FilesListener
 from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.matching.util.exceptions import MatchException
+from csvpath.util.path_util import PathUtility as pathu
 
 DIR = f"tests{os.sep}test_resources{os.sep}named_files"
 JSON = f"tests{os.sep}test_resources{os.sep}named_files.json"
@@ -76,6 +77,7 @@ class TestFilesManager(unittest.TestCase):
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         m = paths.file_manager
         d = m.named_files_dir
+        d = pathu.norm(d)
         assert d is not None
         assert d.endswith(f"inputs{os.sep}named_files")
 
