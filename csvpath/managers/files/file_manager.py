@@ -145,6 +145,7 @@ class FileManager:
         nos.path = path
         sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
+        fname = self._clean_file_name(fname)
         home = self.named_file_home(name)
         home = os.path.join(home, fname)
         nos.path = home
@@ -286,6 +287,10 @@ class FileManager:
         mdata.mark = mark
         self.registrar.register_complete(mdata)
 
+    def _clean_file_name(self, fname: str) -> str:
+        fname = fname.replace("?", "_")
+        return fname
+
     def _copy_in(self, path, home) -> None:
         """@private"""
         nos = self.nos
@@ -297,7 +302,7 @@ class FileManager:
         # the dir name matching the resulting file name is correct
         # once the file is landed and fingerprinted, the file
         # name is changed.
-        fname = fname.replace("?", "_")
+        fname = self._clean_file_name(fname)
         temp = os.path.join(home, fname)
         #
         # this is another place that is too s3 vs. local. we'll have
