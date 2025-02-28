@@ -305,10 +305,14 @@ webhook_url =
                 os.makedirs(dirpath)
 
     def _get_dir_path(self, filepath):
+        p = os.path.dirname(filepath)
+        return p if not p == "" else None
+        """
         if filepath.find(os.sep) > -1:
             dirpath = filepath[0 : filepath.rfind(os.sep)]
             return dirpath
         return None
+        """
 
     def _assure_archive_path(self) -> None:
         if self.load:
