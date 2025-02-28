@@ -127,6 +127,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """ @private """
         self.current_matcher: CsvPath = None
         """ @private """
+        self._config._assure_logs_path()
         self.logger = LogUtility.logger(self)
         """ @private """
         self._errors = []
