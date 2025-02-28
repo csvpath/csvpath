@@ -10,6 +10,7 @@ from csvpath.util.reference_finder import (
     FilesReferenceFinder,
     ResultsReferenceFinder,
 )
+from csvpath.util.path_util import PathUtility as pathu
 
 FILES = {
     "food": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
@@ -81,9 +82,9 @@ class TestReferenceFinder(unittest.TestCase):
         finder = ReferenceFinder(paths, ref)
         file = finder._path_for_index_if()
         assert file is not None
-        assert (
-            file
-            == f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv"
+        assert pathu.equal(
+            file,
+            f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv",
         )
 
     def test_ref_finder_for_day(self):
