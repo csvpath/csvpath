@@ -235,6 +235,13 @@ class FileManager:
     #
     def add_named_file(self, *, name: str, path: str) -> None:
         #
+        # path must end up with only legal filesystem chars.
+        # the read-only http backend will have ? and possibly other
+        # chars that are not legal in some contexts. we have to
+        # convert those, but obviously only after obtaining the
+        # bytes.
+        #
+        #
         # create folder tree in inputs/named_files/name/filename
         #
         home = self.assure_file_home(name, path)
@@ -290,6 +297,7 @@ class FileManager:
         # the dir name matching the resulting file name is correct
         # once the file is landed and fingerprinted, the file
         # name is changed.
+        fname = fname.replace("?", "_")
         temp = os.path.join(home, fname)
         #
         # this is another place that is too s3 vs. local. we'll have
