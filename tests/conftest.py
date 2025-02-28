@@ -7,6 +7,11 @@ from csvpath.util.nos import Nos
 
 @pytest.fixture(scope="session", autouse=True)
 def clear_files(request):
+    if os.sep == "\\":
+        os.environ[
+            "CSVPATH_CONFIG_PATH"
+        ] = "assets{os.sep}config{os.sep}jenkins-local-windows.ini"
+
     paths = CsvPaths()
     config = paths.config
     archive = config.archive_path
