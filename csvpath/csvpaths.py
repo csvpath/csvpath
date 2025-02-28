@@ -155,9 +155,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self.run_metadata = None
         """ @private """
-        from .util.log_utility import LogUtility
 
         LogUtility.log_brief_trace()
+
         self.logger.info("initialized CsvPaths")
 
     def _set_managers(self) -> None:
