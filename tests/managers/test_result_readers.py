@@ -98,30 +98,6 @@ class TestResultReaders(unittest.TestCase):
             assert "created" in info
             assert info["created"] is not None
 
-    def test_reload_result_reader_helpers_2(self):
-        p = f"tests{os.sep}test_resources{os.sep}deleteme"
-        if not os.path.exists(p):
-            os.makedirs(p)
-        f = os.path.join(p, "meta.json")
-        if os.path.exists(f):
-            os.remove(f)
-        m = ResultFileReader.meta(p)
-        assert m is not None
-        assert len(m) == 0
-        assert os.path.exists(f)
-        os.remove(f)
-        assert not os.path.exists(f)
-        #
-        #
-        #
-        f = os.path.join(p, "manifest.json")
-        m = ResultFileReader.manifest(p)
-        assert m is not None
-        assert len(m) == 0
-        assert os.path.exists(f)
-        os.remove(f)
-        assert not os.path.exists(f)
-
     def test_reload_result_file_lines_reader(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
@@ -263,3 +239,27 @@ class TestResultReaders(unittest.TestCase):
         assert len(lst1) == len(lst2)
         for i, _ in enumerate(lst1):
             assert lst1[i] == lst2[i]
+
+    def test_reload_result_reader_helpers_2(self):
+        p = f"tests{os.sep}test_resources{os.sep}deleteme"
+        if not os.path.exists(p):
+            os.makedirs(p)
+        f = os.path.join(p, "meta.json")
+        if os.path.exists(f):
+            os.remove(f)
+        m = ResultFileReader.meta(p)
+        assert m is not None
+        assert len(m) == 0
+        assert os.path.exists(f)
+        os.remove(f)
+        assert not os.path.exists(f)
+        #
+        #
+        #
+        f = os.path.join(p, "manifest.json")
+        m = ResultFileReader.manifest(p)
+        assert m is not None
+        assert len(m) == 0
+        assert os.path.exists(f)
+        os.remove(f)
+        assert not os.path.exists(f)
