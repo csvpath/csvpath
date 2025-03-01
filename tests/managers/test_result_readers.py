@@ -240,7 +240,7 @@ class TestResultReaders(unittest.TestCase):
 
         assert results2[0].is_valid
 
-        self._teardown(paths, "people", "arrivals")
+        # self._teardown(paths, "people", "arrivals")
 
     def test_reload_unmatched(self):
         paths = CsvPaths()
