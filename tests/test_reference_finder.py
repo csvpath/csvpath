@@ -114,6 +114,8 @@ class TestReferenceFinder(unittest.TestCase):
         finder = ReferenceFinder(paths, ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 3
+        for _ in finder.manifest:
+            print(f".... _ : {_}")
         f = finder.manifest[2]["fingerprint"]
 
         file = finder._path_for_day_if()
