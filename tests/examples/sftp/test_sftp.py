@@ -32,9 +32,9 @@ class TestSftpMode(unittest.TestCase):
         #
         server = paths.config.get(section="sftp", name="server")
         port = paths.config.get(section="sftp", name="port")
-        paths.file_manager.add_named_file(
-            name="orders", path=f"sftp://{server}:{port}/orders.csv"
-        )
+        fp = f"sftp://{server}:{port}/orders.csv"
+        print(f"ftp path: {fp}")
+        paths.file_manager.add_named_file(name="orders", path=fp)
         path = '$[*][ print("0: $.headers.0, 2: $.headers.2")]'
         d = {"process": [f"{path}"]}
         paths.paths_manager.set_named_paths(d)
