@@ -172,6 +172,15 @@ class FileManager:
                 ns.append(n)
         return ns
 
+    #
+    # this feels like the better sig.
+    #
+    def has_named_file(self, name: NamedFileName) -> bool:
+        return self.name_exists(name)
+
+    #
+    # deprecated but stable
+    #
     def name_exists(self, name: NamedFileName) -> bool:
         """@private"""
         p = self.named_file_home(name)

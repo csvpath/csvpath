@@ -106,16 +106,23 @@ class SftpDo:
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
 
     def makedirs(self) -> None:
-        self._mkdirs(self.path)
+        lst = self.path.split("/")
+        path = ""
+        for p in lst:
+            path = f"{p}" if path == "" else f"{path}/{p}"
+            self._mkdirs(path)
 
     def _mkdirs(self, path):
-        if path == ".":
-            return
         try:
-            self.sftp.listdir(path)
-        except IOError:
-            self._mkdirs(os.path.dirname(path))
             self.sftp.mkdir(path)
+        except OSError:
+            ...
+            # TODO: should log
+            # print(f"sftp_nos._mkdirs: OSError: {ose}: {path}")
+        except IOError:
+            ...
+            # TODO: should log
+            # print(f"sftp_nos._mkdirs: IOError: {ioe}: {path}")
 
     def makedir(self) -> None:
         self.makedirs()

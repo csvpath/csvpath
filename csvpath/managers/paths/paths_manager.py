@@ -78,7 +78,6 @@ class PathsManager:
         """@private"""
         home = os.path.join(self.named_paths_dir, name)
         nos = self.nos
-        # nos = Nos(home)
         nos.path = home
         b = nos.dir_exists()
         if not b:

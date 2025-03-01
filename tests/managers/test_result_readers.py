@@ -35,8 +35,10 @@ class TestResultReaders(unittest.TestCase):
         )
 
     def _teardown(self, paths: CsvPaths, filename, pathsname) -> None:
-        paths.file_manager.remove_named_file(filename)
-        paths.paths_manager.remove_named_paths(pathsname)
+        if paths.file_manager.has_named_file(filename):
+            paths.file_manager.remove_named_file(filename)
+        if paths.paths_manager.has_named_paths(pathsname):
+            paths.paths_manager.remove_named_paths(pathsname)
 
     def test_result_readers(self):
         f = ResultReadersFacade(None)
@@ -246,9 +248,8 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.collect_paths(pathsname="arrivals", filename="people")
-
         self._setup(paths)
+        paths.collect_paths(pathsname="arrivals", filename="people")
 
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
