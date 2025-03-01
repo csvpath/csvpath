@@ -7,17 +7,23 @@ from .sftp_config import SftpConfig
 
 class SftpDo:
     def __init__(self, path):
+        self._path = None
+        self.setup(path)
+
+    def setup(self, path: str = None) -> None:
         box = Box()
         config = box.get(Box.CSVPATHS_CONFIG)
         self._config = SftpConfig(config)
         #
         #
         #
-        self._path = None
-        self.path = path
+        if path:
+            self.path = path
         #
         # save the client itself in box because we clean up
-        # the box and need to see a closable thing
+        # the box and need to see a closable thing.
+        #
+        # are we ^^^^^ or not?
         #
         self.sftp = self._config.sftp_client
 
@@ -77,6 +83,14 @@ class SftpDo:
         try:
             self.sftp.stat(self.path)
             return True
+        except OSError:
+            # unclear why we're getting socket closed. for now we work around.
+            try:
+                self.setup()
+                self.sftp.stat(self.path)
+                return True
+            except Exception:
+                return False
         except FileNotFoundError:
             return False
 

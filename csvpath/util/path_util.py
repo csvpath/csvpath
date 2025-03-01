@@ -4,6 +4,7 @@ import os
 class PathUtility:
     @classmethod
     def norm(cls, apath: str, stripp=False) -> str:
+        # if stripp is True we remove the protocol and server name
         if apath is None:
             return None
         apath = os.path.normpath(os.path.normcase(apath))
