@@ -10,29 +10,34 @@ from csvpath.util.line_spooler import CsvLineSpooler
 
 def setup_module(module):
     print("\n **** setting up module ****")
-    paths = CsvPaths()
-    paths.paths_manager.add_named_paths(
-        name="food",
-        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-    )
-    paths.paths_manager.add_named_paths(
-        name="arrivals",
-        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-    )
-    paths.file_manager.add_named_file(
-        name="food",
-        path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-    )
-    paths.file_manager.add_named_file(
-        name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-    )
-    paths.paths_manager.add_named_paths(
-        name="error_reload",
-        from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-    )
 
 
 class TestResultReaders(unittest.TestCase):
+    def _setup(self, paths: CsvPaths) -> None:
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
+    def _teardown(self, paths: CsvPaths, filename, pathsname) -> None:
+        paths.file_manager.remove_named_file(filename)
+        paths.paths_manager.remove_named_paths(pathsname)
+
     def test_result_readers(self):
         f = ResultReadersFacade(None)
         f.load_readers()
@@ -45,6 +50,9 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+
+        self._setup(paths)
+
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
 
@@ -69,10 +77,15 @@ class TestResultReaders(unittest.TestCase):
         assert dpath is not None
         assert dpath == cs._instance_data_file_path()
 
+        self._teardown(paths, "food", "food")
+
     def test_reload_result_reader_helpers(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+
+        self._setup(paths)
+
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
 
@@ -98,30 +111,14 @@ class TestResultReaders(unittest.TestCase):
             assert "created" in info
             assert info["created"] is not None
 
+        self._teardown(paths, "food", "food")
+
     def test_reload_result_file_lines_reader(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
 
-        paths.paths_manager.add_named_paths(
-            name="food",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-        )
-        paths.file_manager.add_named_file(
-            name="food",
-            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-        )
-        paths.file_manager.add_named_file(
-            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-        )
+        self._setup(paths)
 
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
@@ -139,30 +136,14 @@ class TestResultReaders(unittest.TestCase):
         assert len(lines2) == 1
         assert len(lines) == len(lines2)
 
+        self._teardown(paths, "food", "food")
+
     def test_reload_errors(self):
         paths = CsvPaths()
         paths.add_to_config(section="errors", key="csvpath", value="raise, print")
         paths.add_to_config(section="errors", key="csvpaths", value="raise, print")
 
-        paths.paths_manager.add_named_paths(
-            name="food",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-        )
-        paths.file_manager.add_named_file(
-            name="food",
-            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-        )
-        paths.file_manager.add_named_file(
-            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-        )
+        self._setup(paths)
 
         paths.collect_paths(pathsname="error_reload", filename="people")
         results = paths.results_manager.get_named_results("error_reload")
@@ -189,30 +170,14 @@ class TestResultReaders(unittest.TestCase):
 
         assert errors[0] == errors2[0]
 
+        self._teardown(paths, "people", "error_reload")
+
     def test_reload_printouts(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
 
-        paths.paths_manager.add_named_paths(
-            name="food",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-        )
-        paths.file_manager.add_named_file(
-            name="food",
-            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-        )
-        paths.file_manager.add_named_file(
-            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-        )
+        self._setup(paths)
 
         paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
@@ -241,30 +206,14 @@ class TestResultReaders(unittest.TestCase):
         assert printouts
         assert len(printouts) == 3
 
+        self._teardown(paths, "people", "arrivals")
+
     def test_reload_lines(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
 
-        paths.paths_manager.add_named_paths(
-            name="food",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-        )
-        paths.file_manager.add_named_file(
-            name="food",
-            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-        )
-        paths.file_manager.add_named_file(
-            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-        )
+        self._setup(paths)
 
         paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
@@ -291,31 +240,15 @@ class TestResultReaders(unittest.TestCase):
 
         assert results2[0].is_valid
 
+        self._teardown(paths, "people", "arrivals")
+
     def test_reload_unmatched(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.collect_paths(pathsname="arrivals", filename="people")
 
-        paths.paths_manager.add_named_paths(
-            name="food",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
-        )
-        paths.paths_manager.add_named_paths(
-            name="arrivals",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
-        )
-        paths.file_manager.add_named_file(
-            name="food",
-            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
-        )
-        paths.file_manager.add_named_file(
-            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
-        )
-        paths.paths_manager.add_named_paths(
-            name="error_reload",
-            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
-        )
+        self._setup(paths)
 
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
@@ -343,6 +276,8 @@ class TestResultReaders(unittest.TestCase):
         assert len(lst1) == len(lst2)
         for i, _ in enumerate(lst1):
             assert lst1[i] == lst2[i]
+
+        self._teardown(paths, "people", "arrivals")
 
     def test_reload_result_reader_helpers_2(self):
         p = f"tests{os.sep}test_resources{os.sep}deleteme"
