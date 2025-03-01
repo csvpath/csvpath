@@ -115,7 +115,10 @@ class TestFilesManager(unittest.TestCase):
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
-        d = pathu.norm(d)
+        print(f"test_reg_fingerprint: d1: {d}")
+        if d.find("://") == -1:
+            d = pathu.norm(d)
+        print(f"test_reg_fingerprint: d2: {d}")
         assert Nos(d).exists()
         rpath = m._fingerprint(home)
         assert d != rpath
