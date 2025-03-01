@@ -102,6 +102,27 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
         assert len(results) == 2
@@ -122,6 +143,27 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config(section="errors", key="csvpath", value="raise, print")
         paths.add_to_config(section="errors", key="csvpaths", value="raise, print")
+
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
         paths.collect_paths(pathsname="error_reload", filename="people")
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
@@ -151,6 +193,27 @@ class TestResultReaders(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
         paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
@@ -183,6 +246,26 @@ class TestResultReaders(unittest.TestCase):
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
 
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
         paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
@@ -213,6 +296,27 @@ class TestResultReaders(unittest.TestCase):
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.collect_paths(pathsname="arrivals", filename="people")
+
+        paths.paths_manager.add_named_paths(
+            name="food",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.paths_manager.add_named_paths(
+            name="arrivals",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        paths.file_manager.add_named_file(
+            name="people", path=f"tests{os.sep}test_resources{os.sep}test.csv"
+        )
+        paths.paths_manager.add_named_paths(
+            name="error_reload",
+            from_file=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}error_reload.csvpath",
+        )
+
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
