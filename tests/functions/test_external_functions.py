@@ -34,7 +34,7 @@ class TestFunctionsExternals(unittest.TestCase):
         path.config.configpath = f"tests{os.sep}test_resources{os.sep}config.ini"
         path.config.reload()
         assert path.config.function_imports is not None
-        assert pathu.equals(
+        assert pathu.equal(
             path.config.function_imports,
             f"tests{os.sep}test_resources{os.sep}function.imports",
         )
