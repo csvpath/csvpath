@@ -19,8 +19,14 @@ class TestSftpMode(unittest.TestCase):
         # this may not be the best place for this test, but it's good enough.
         #
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+
+        print(f"paths.config from: {paths.config._configpath}")
+        print(
+            f"paths.config: env: {os.environ.get(paths.config.CSVPATH_CONFIG_FILE_ENV)}"
+        )
+
         #
         # requires user tinpenny with an orders.csv at their root
         #
