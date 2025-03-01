@@ -26,8 +26,29 @@ class SftpConfig:
 
     @property
     def sftp_client(self) -> paramiko.SSHClient:
-        if self._sftp_client is None:
+        #
+        # this and load_clients over protects because we have a
+        # socket closed problem. its not clear where it is, but
+        # no doubt our problem. however, the additional defensiveness
+        # is good and long term a better defense against mistakes
+        # if there is a bug closing clients early we'll probably
+        # find it before or during or before refactoring the client
+        # caching in all the network backends.
+        #
+        if self._sftp_client is None or self._ssh_client is None:
             self._load_clients()
+        else:
+            t = self._ssh_client.get_transport()
+            if not t or not t.is_active():
+                try:
+                    self._ssh_client.close()
+                    self._sftp_client = None
+                    self._ssh_client = None
+                    del Box().STUFF[Box.SSH_CLIENT]
+                    del Box().STUFF[Box.SFTP_CLIENT]
+                except Exception:
+                    ...
+                self._load_clients()
         return self._sftp_client
 
     @property
@@ -40,7 +61,7 @@ class SftpConfig:
         if self._sftp_client is None:
             self._ssh_client = Box().get(Box.SSH_CLIENT)
             self._sftp_client = Box().get(Box.SFTP_CLIENT)
-        if self._sftp_client is None:
+        if self._sftp_client is None or self._ssh_client is None:
             c = paramiko.SSHClient()
             c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             c.connect(self.server, self.port, self.username, self.password)

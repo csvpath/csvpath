@@ -35,14 +35,11 @@ class TestRefs(unittest.TestCase):
             pathsname="$sourcemode.csvpaths.source2:from",
         )
         results = paths.results_manager.get_named_results("sourcemode")
-        # for i, r in enumerate(results):
-        #    print(f"test_rewind: r[{i}].{r.csvpath.identity}: {r}")
         assert len(results) == 2
         assert results[1].csvpath.identity == "source3"
         #
         # the headers didn't change internally, we do the changes at each line
         #
-        # print(f"test_refs: results[1].csvpath.headers: {results[1].csvpath.headers}")
         assert results[1].csvpath.headers == [
             "firstname",
             "lastname",

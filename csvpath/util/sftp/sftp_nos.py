@@ -14,18 +14,8 @@ class SftpDo:
         box = Box()
         config = box.get(Box.CSVPATHS_CONFIG)
         self._config = SftpConfig(config)
-        #
-        #
-        #
         if path:
             self.path = path
-        #
-        # save the client itself in box because we clean up
-        # the box and need to see a closable thing.
-        #
-        # are we ^^^^^ or not?
-        #
-        self.sftp = self._config.sftp_client
 
     @classmethod
     def strip_protocol(self, path: str) -> str:
@@ -46,7 +36,7 @@ class SftpDo:
 
     def remove(self) -> None:
         if self.isfile():
-            self.sftp.remove(self.path)
+            self._config.sftp_client.remove(self.path)
         else:
             self._rmdir(self.path)
 
@@ -56,9 +46,9 @@ class SftpDo:
         lst.reverse()
         for p in lst:
             if self._isfile(p):
-                self.sftp.remove(p)
+                self._config.sftp_client.remove(p)
             else:
-                self.sftp.rmdir(p)
+                self._config.sftp_client.rmdir(p)
 
     def _descendents(self, lst, path) -> list[str]:
         for n in self._listdir(path, default=[]):
@@ -81,16 +71,8 @@ class SftpDo:
 
     def exists(self) -> bool:
         try:
-            self.sftp.stat(self.path)
+            self._config.sftp_client.stat(self.path)
             return True
-        except OSError:
-            # unclear why we're getting socket closed. for now we work around.
-            try:
-                self.setup()
-                self.sftp.stat(self.path)
-                return True
-            except Exception:
-                return False
         except FileNotFoundError:
             return False
 
@@ -106,7 +88,7 @@ class SftpDo:
 
     def _isfile(self, path) -> bool:
         try:
-            self.sftp.open(path, "r")
+            self._config.sftp_client.open(path, "r")
             r = True
         except (FileNotFoundError, OSError):
             r = False
@@ -115,7 +97,7 @@ class SftpDo:
     def rename(self, new_path: str) -> None:
         try:
             np = SftpDo.strip_protocol(new_path)
-            self.sftp.rename(self.path, np)
+            self._config.sftp_client.rename(self.path, np)
         except (IOError, PermissionError):
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
 
@@ -128,7 +110,7 @@ class SftpDo:
 
     def _mkdirs(self, path):
         try:
-            self.sftp.mkdir(path)
+            self._config.sftp_client.mkdir(path)
         except OSError:
             ...
             # TODO: should log
@@ -146,6 +128,6 @@ class SftpDo:
 
     def _listdir(self, path, default=None) -> list[str]:
         try:
-            return self.sftp.listdir(path)
+            return self._config.sftp_client.listdir(path)
         except OSError:
             return default

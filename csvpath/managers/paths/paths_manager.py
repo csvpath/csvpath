@@ -299,6 +299,8 @@ class PathsManager:
                 raise InputException(
                     f"Reference directive must be :to or :from, not {directive}"
                 )
+        else:
+            ...
         return ret
 
     def store_json_paths_file(self, name: str, jsonpath: str) -> None:
