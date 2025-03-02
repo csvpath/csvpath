@@ -56,6 +56,7 @@ class Nos:
                 self._do = SftpDo(self.path)
             else:
                 self._do = FileDo(self.path)
+        print(f"nos.dox: {self._do}")
         return self._do
 
     @property
