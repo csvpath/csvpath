@@ -8,9 +8,15 @@ from csvpath.util.nos import Nos
 @pytest.fixture(scope="session", autouse=True)
 def clear_files(request):
     if os.sep == "\\":
-        os.environ[
-            "CSVPATH_CONFIG_PATH"
-        ] = f"assets{os.sep}config{os.sep}jenkins-local-windows.ini"
+        e = ""
+        if os.path.exists("conf.env"):
+            with open("conf.env", "r", encoding="utf-8") as file:
+                e = file.read()
+                e = e.strip()
+        else:
+            e = f"assets{os.sep}config{os.sep}jenkins-local-windows.ini"
+        print(f"clear_files.env setup: e: {e}")
+        os.environ["CSVPATH_CONFIG_PATH"] = e
 
     paths = CsvPaths()
     config = paths.config
