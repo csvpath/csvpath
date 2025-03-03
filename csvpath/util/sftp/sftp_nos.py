@@ -96,7 +96,8 @@ class SftpDo:
 
     def rename(self, new_path: str) -> None:
         try:
-            np = pathu.stripp(new_path)
+            np = pathu.resep(new_path)
+            np = pathu.stripp(np)
             # np = SftpDo.strip_protocol(new_path)
             print(f"sftpnos: rename: paht: {self.path}, np: {np}")
             self._config.sftp_client.rename(self.path, np)
