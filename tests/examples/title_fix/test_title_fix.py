@@ -9,8 +9,6 @@ from csvpath.util.file_readers import DataFileReader
 class TestTitleFix(unittest.TestCase):
     def test_title_fix_1(self):
         paths = CsvPaths()
-        print(f"confx: {paths.config}")
-        print(f"confx: {paths.config.configpath}")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(

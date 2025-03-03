@@ -259,7 +259,6 @@ class FileManager:
         # create folder tree in inputs/named_files/name/filename
         #
         home = self.assure_file_home(name, path)
-        print(f"fileman.add_named_file: home: {home}")
         file_home = home
         mark = None
         #
@@ -422,10 +421,6 @@ class FileManager:
         #
         hpath = None
         remove_fpath = False
-        print(f"filman: _fingerprint: fpath: {fpath}")
-        print(f"filman: _fingerprint: path: {path}")
-        print(f"filman: _fingerprint: sep: {sep}")
-        print(f"filman: _fingerprint: t: {t}")
         with DataFileReader(fpath) as f:
             h = f.fingerprint()
             #

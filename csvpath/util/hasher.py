@@ -3,14 +3,18 @@ import hashlib
 
 
 class Hasher:
-    def hash(self, path, *, encode=True) -> str:
-        h = self._file_if(path)
+    def hash(self, file_or_path, *, encode=True) -> str:
+        #
+        # some callers pass in a temp file object -- e.g. sftp.
+        # we'll try for that first and fall back to the expected
+        # string.
+        #
+        h = self._file_if(file_or_path)
         if h is None:
             try:
-                h = self._post(path)
-            except (IOError, AttributeError) as e:
-                print(f"Hasher.kihash: ee: {e}")
-                h = self._pre(path)
+                h = self._post(file_or_path)
+            except (IOError, AttributeError):
+                h = self._pre(file_or_path)
             if h is None:
                 raise RuntimeError("Cannot generate hashcode")
         #
@@ -33,14 +37,12 @@ class Hasher:
         return fingerprint
 
     def _post(self, path):
-        print(f"hasher_paost: path: {path}")
         with open(path, "rb", buffering=0) as source:
             h = hashlib.file_digest(source, hashlib.sha256)
             h = h.hexdigest()
             return h
 
     def _file_if(self, f):
-        print(f"hasher_paost: file: {f}")
         if isinstance(f, str):
             return None
         f.seek(0)

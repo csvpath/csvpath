@@ -8,7 +8,6 @@ from .sftp_config import SftpConfig
 
 class SftpFingerprinter:
     def fingerprint(self, path: str) -> str:
-        print(f"SftpFingerprinter: path: {path}")
         box = Box()
         config = box.get(Box.CSVPATHS_CONFIG)
         #
@@ -40,14 +39,7 @@ class SftpFingerprinter:
                     with tempfile.NamedTemporaryFile() as to:
                         s = file.read()
                         to.write(s)
-                        # to.close()
-                        print(f"ssftpfingerprinn: s: {s}")
-                        print(f"ssftpfingerprinn: to: {to}")
-                        print(f"ssftpfingerprinn: to.name: {to.name}")
                         h = Hasher().hash(to)
             except Exception as e:
-                import traceback
-
-                print(traceback.format_exc())
                 print(f"SftpFingerprinter: second chance failed with {type(e)}: {e}")
         return h
