@@ -383,6 +383,10 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
             if isinstance(self.lines, list):
                 return len(self.lines)
             i = 0
+            #
+            # file reader?
+            #
+            print(f"resultx: self.lines: {self.lines}")
             for _ in self.lines.next():
                 i += 1
             return i

@@ -450,7 +450,5 @@ class FileManager:
             print(f"fileman: 448: fpath: {fpath}")
             print(f"fileman: 448: nso.path: {nos.path}")
             print(f"fileman: 448: hpath1: {hpath}")
-            hpath = pathu.resep(hpath)
-            print(f"fileman: 448: hpath2: {hpath}")
             nos.rename(hpath)
         return hpath, h
