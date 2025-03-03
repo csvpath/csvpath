@@ -9,6 +9,7 @@ from .file_readers import DataFileReader
 from .file_writers import DataFileWriter
 from .file_info import FileInfo
 from .nos import Nos
+from .path_util import PathUtility as pathu
 
 
 class LineSpooler(ABC):
@@ -61,8 +62,17 @@ class ListLineSpooler(LineSpooler):
 class CsvLineSpooler(LineSpooler):
     def __init__(self, myresult) -> None:
         super().__init__(myresult)
-        self.path = None
+        self._path = None
         self.writer = None
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @path.setter
+    def path(self, p: str) -> None:
+        p = pathu.resep(p)
+        self._path = p
 
     def __iter__(self):
         return self
