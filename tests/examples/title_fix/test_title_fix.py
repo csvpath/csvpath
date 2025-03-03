@@ -24,6 +24,7 @@ class TestTitleFix(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         d = result.data_file_path
+        print(f"paths.config.archive: {paths.config.archive_path}")
         print(f"test_title_fix_1: d: {d}")
         with DataFileReader(d) as f:
             s = f.read()
