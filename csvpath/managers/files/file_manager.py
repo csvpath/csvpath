@@ -255,6 +255,7 @@ class FileManager:
         # create folder tree in inputs/named_files/name/filename
         #
         home = self.assure_file_home(name, path)
+        print(f"fileman.add_named_file: home: {home}")
         file_home = home
         mark = None
         #
