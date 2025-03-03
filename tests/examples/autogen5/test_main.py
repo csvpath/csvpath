@@ -5,6 +5,7 @@ from csvpath.util.sqliter import Sqliter
 from csvpath.managers.integrations.sqlite.sqlite_result_listener import (
     SqliteResultListener,
 )
+from csvpath.util.path_util import PathUtility as pathu
 
 
 class TestCache(unittest.TestCase):
@@ -98,9 +99,9 @@ class TestCache(unittest.TestCase):
             assert rows[0]["by_line_run"] == "N"
             assert rows[0]["named_paths_name"] == rows[0]["named_results_name"]
             assert rows[0]["named_file_name"] == "accounts"
-            assert (
-                rows[0]["named_file_home"]
-                == f"{paths.config.get(section='inputs', name='files')}{os.sep}accounts"
+            assert pathu.equal(
+                rows[0]["named_file_home"],
+                f"{paths.config.get(section='inputs', name='files')}{os.sep}accounts",
             )
 
             rows = cursor.execute(
