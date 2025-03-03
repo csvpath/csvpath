@@ -31,6 +31,7 @@ class Hasher:
         return fingerprint
 
     def _post(self, path):
+        print(f"hasher_paost: path: {path}")
         with open(path, "rb", buffering=0) as source:
             h = hashlib.file_digest(source, hashlib.sha256)
             h = h.hexdigest()
