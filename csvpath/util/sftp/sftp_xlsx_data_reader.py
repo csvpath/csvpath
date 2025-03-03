@@ -23,7 +23,7 @@ class SftpXlsxDataReader(XlsxDataReader):
             config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
             self.source = open(
-                self._path,
+                self.path,
                 "rb",
                 transport_params={
                     "connect_kwargs": {"username": c.username, "password": c.password}
@@ -32,7 +32,7 @@ class SftpXlsxDataReader(XlsxDataReader):
 
     def fingerprint(self) -> str:
         self.load_if()
-        h = SftpFingerprinter().fingerprint(self._path)
+        h = SftpFingerprinter().fingerprint(self.path)
         h = Hasher.percent_encode(h)
         self.close()
         return h

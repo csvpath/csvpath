@@ -9,6 +9,7 @@ from .exceptions import InputException
 from .file_info import FileInfo
 from .class_loader import ClassLoader
 from .hasher import Hasher
+from .path_util import PathUtility as pathu
 
 
 class DataFileReader(ABC):
@@ -42,12 +43,12 @@ class DataFileReader(ABC):
         """non-local file-like situations -- e.g. smart-open -- must
         implement their own fingerprint method
         """
-        h = Hasher().hash(self._path)
+        h = Hasher().hash(self.path)
         return h
 
     def load_if(self) -> None:
         if self.source is None:
-            p = self._path
+            p = self.path
             self.source = open(p, "r", encoding="utf-8")
 
     def read(self) -> str:
@@ -77,6 +78,11 @@ class DataFileReader(ABC):
     @property
     def path(self) -> str:
         return self._path
+
+    @path.setter
+    def path(self, path) -> None:
+        path = pathu.resep(path)
+        self._path = path
 
     def __new__(
         cls,
@@ -178,11 +184,11 @@ class DataFileReader(ABC):
 
     def next_raw(self, mode: str = "r") -> list[str]:
         try:
-            with open(self._path, mode=mode, encoding="utf-8") as file:
+            with open(self.path, mode=mode, encoding="utf-8") as file:
                 for line in file:
                     yield line
         except UnicodeDecodeError:
-            with open(self._path, mode="rb") as file:
+            with open(self.path, mode="rb") as file:
                 for line in file:
                     yield line
 
@@ -198,7 +204,7 @@ class CsvDataReader(DataFileReader):
         quotechar=None,
     ) -> None:
         super().__init__()
-        self._path = path
+        self.path = path
         if sheet is not None or path.find("#") > -1:
             raise InputException(
                 f"Received unexpected # char or sheet argument '{sheet}'. CSV files do not have worksheets."
@@ -207,7 +213,7 @@ class CsvDataReader(DataFileReader):
         self._quotechar = quotechar if quotechar is not None else '"'
 
     def next(self) -> list[str]:
-        with open(self._path, "r", encoding="utf-8") as file:
+        with open(self.path, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
@@ -215,7 +221,7 @@ class CsvDataReader(DataFileReader):
                 yield line
 
     def file_info(self) -> dict[str, str | int | float]:
-        return FileInfo.info(self._path)
+        return FileInfo.info(self.path)
 
 
 class XlsxDataReader(DataFileReader):
@@ -230,20 +236,20 @@ class XlsxDataReader(DataFileReader):
     ) -> None:
         super().__init__()
         self._sheet = sheet
-        self._path = path
+        self.path = path
         #
         # path should have already been trimmed in __new__ above.
         #
         if path.find("#") > -1:
             self._sheet = path[path.find("#") + 1 :]
-            self._path = path[0 : path.find("#")]
+            self.path = path[0 : path.find("#")]
 
     def next(self) -> list[str]:
-        db = xl.readxl(fn=self._path)
+        db = xl.readxl(fn=self.path)
         if not self._sheet:
             self._sheet = db.ws_names[0]
         for row in db.ws(ws=self._sheet).rows:
             yield [f"{datum}" for datum in row]
 
     def file_info(self) -> dict[str, str | int | float]:
-        return FileInfo.info(self._path)
+        return FileInfo.info(self.path)

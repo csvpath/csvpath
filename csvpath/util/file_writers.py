@@ -7,6 +7,7 @@ import pylightxl as xl
 from .exceptions import InputException
 from .file_info import FileInfo
 from .class_loader import ClassLoader
+from .path_util import PathUtility as pathu
 
 
 class DataFileWriter(ABC):
@@ -15,10 +16,11 @@ class DataFileWriter(ABC):
     """
 
     def __init__(self, *, path: str, mode="w") -> None:
-        self._path = path
-        self.sink = None
         self._count = 0
         self._mode = mode
+        self._path = None
+        self.path = path
+        self.sink = None
 
     def __enter__(self):
         self.load_if()
@@ -49,6 +51,7 @@ class DataFileWriter(ABC):
 
     @path.setter
     def path(self, path: str) -> None:
+        path = pathu.resep(path)
         self._path = path
 
     def __new__(cls, *, path: str, mode: str = "w"):

@@ -26,7 +26,7 @@ class SftpDataReader(CsvDataReader):
             # LogUtility.log_brief_trace()
 
             self.source = open(
-                self._path,
+                self.path,
                 "r",
                 transport_params={
                     "connect_kwargs": {"username": c.username, "password": c.password}
@@ -37,7 +37,7 @@ class SftpDataReader(CsvDataReader):
         config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
         c = SftpConfig(config)
         with open(
-            self._path,
+            self.path,
             "r",
             transport_params={
                 "connect_kwargs": {"username": c.username, "password": c.password}
@@ -51,7 +51,7 @@ class SftpDataReader(CsvDataReader):
 
     def fingerprint(self) -> str:
         self.load_if()
-        h = SftpFingerprinter().fingerprint(self._path)
+        h = SftpFingerprinter().fingerprint(self.path)
         self.close()
         return h
 

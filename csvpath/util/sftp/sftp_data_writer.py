@@ -13,7 +13,7 @@ class SftpDataWriter(DataFileWriter):
             config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
             self.sink = open(
-                self._path,
+                self.path,
                 self._mode,
                 transport_params={
                     "connect_kwargs": {"username": c.username, "password": c.password}
@@ -24,7 +24,7 @@ class SftpDataWriter(DataFileWriter):
         config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
         c = SftpConfig(config)
         with open(
-            self._path,
+            self.path,
             self._mode,
             transport_params={
                 "connect_kwargs": {"username": c.username, "password": c.password}
