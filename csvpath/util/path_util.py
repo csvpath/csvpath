@@ -14,6 +14,20 @@ class PathUtility:
         apath = os.path.normpath(os.path.normcase(apath))
         return apath
 
+    @classmethod
+    def resep(cls, path) -> str:
+        #
+        # in principle we can use '/' in most cases with windows
+        # but we didn't start that way and there are at least a
+        # couple of corner cases. for now this method doesn't cost
+        # us much.
+        #
+        if path.find("://"):
+            path = path.replace("\\", "/")
+        if path.startswith("c:"):
+            path = path.replace("/", "\\")
+        return path
+
     """
     # splits https://aserver/my/file/is/here into ["https","aserver","my/file/is/here"]
     # add test before using. not needed today.

@@ -3,6 +3,7 @@ import os
 import paramiko
 from csvpath.util.box import Box
 from .sftp_config import SftpConfig
+from ..path_utility import PathUtility as pathu
 
 
 class SftpDo:
@@ -19,11 +20,14 @@ class SftpDo:
 
     @classmethod
     def strip_protocol(self, path: str) -> str:
+        return pathu.stripp(path)
+        """
         p2 = path.lstrip("sftp://")
         if p2 != path:
             # take off the server name
             p2 = p2[p2.find("/") + 1 :]
         return p2
+        """
 
     @property
     def path(self) -> str:
@@ -31,6 +35,7 @@ class SftpDo:
 
     @path.setter
     def path(self, p) -> None:
+        p = pathu.resep(p)
         p = SftpDo.strip_protocol(p)
         self._path = p
 
