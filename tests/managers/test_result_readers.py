@@ -78,7 +78,7 @@ class TestResultReaders(unittest.TestCase):
 
         dpath = result.data_file_path
         assert dpath is not None
-        assert dpath == cs._instance_data_file_path()
+        assert pathu.equal(dpath, cs._instance_data_file_path())
 
         self._teardown(paths, "food", "food")
 
