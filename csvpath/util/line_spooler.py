@@ -129,7 +129,6 @@ class CsvLineSpooler(LineSpooler):
     def next(self):
         if self.path is None:
             self._instance_data_file_path()
-        print(f"LineSpoolerx: self.path: {self.path}")
         if Nos(self.path).exists() is False:
             # if os.path.exists(self.path) is False:
             self.result.csvpath.logger.debug(
@@ -143,7 +142,6 @@ class CsvLineSpooler(LineSpooler):
             delimiter=self.result.csvpath.delimiter,
             quotechar=self.result.csvpath.quotechar,
         ).next():
-            print(f"yielding a line: {line}")
             yield line
 
     def _warn_if(self) -> None:

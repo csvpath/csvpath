@@ -24,14 +24,11 @@ class TestTitleFix(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         d = result.data_file_path
-        print(f"paths.config.archive: {paths.config.archive_path}")
-        print(f"test_title_fix_1: d: {d}")
         with DataFileReader(d) as f:
             s = f.read()
             assert s.find("Great circle : a novel {os.sep} Maggie Shipstead") == -1
 
     def test_title_fix_2(self):
-        print("")
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")

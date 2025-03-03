@@ -98,8 +98,6 @@ class SftpDo:
         try:
             np = pathu.resep(new_path)
             np = pathu.stripp(np)
-            # np = SftpDo.strip_protocol(new_path)
-            print(f"sftpnos: rename: paht: {self.path}, np: {np}")
             self._config.sftp_client.rename(self.path, np)
         except (IOError, PermissionError):
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
@@ -117,11 +115,9 @@ class SftpDo:
         except OSError:
             ...
             # TODO: should log
-            # print(f"sftp_nos._mkdirs: OSError: {ose}: {path}")
         except IOError:
             ...
             # TODO: should log
-            # print(f"sftp_nos._mkdirs: IOError: {ioe}: {path}")
 
     def makedir(self) -> None:
         self.makedirs()

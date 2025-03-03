@@ -20,11 +20,6 @@ class SftpDataReader(CsvDataReader):
         if self.source is None:
             config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
-            # SftpDataReader.LOAD += 1
-            # print(f"SftpDataReader: load_if: loding: {SftpDataReader.LOAD}")
-            # from csvpath.util.log_utility import LogUtility
-            # LogUtility.log_brief_trace()
-
             self.source = open(
                 self.path,
                 "r",
@@ -84,7 +79,6 @@ class SftpDataReader(CsvDataReader):
     def read(self) -> str:
         config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
         c = SftpConfig(config)
-        print(f"sftpdatafileareader: self.path: {self.path}")
         with open(
             self.path,
             "rb",
@@ -99,10 +93,6 @@ class SftpDataReader(CsvDataReader):
                 s = bs.decode("latin-1")
                 s.encode("utf-8")
                 return s
-        """
-        with open(uri=self.path, mode="r", encoding="utf-8") as file:
-            return file.read()
-        """
 
     #
     # this is not using smart-open. same in the s3. is anything using it?
