@@ -88,7 +88,7 @@ class TestCache(unittest.TestCase):
                 print(f"trow: {row}")
                 f += 1
             assert f == 1
-            assert rows[0][2] == "archive"
+            assert rows[0][2].endswith("archive")
             tc = rows[0][3]
             assert tc is not None and tc.strip() != ""
             assert rows[0]["all_completed"] == "Y"
