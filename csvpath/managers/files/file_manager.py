@@ -444,6 +444,11 @@ class FileManager:
             nos.remove()
             return hpath, h
         if hpath:
+            p = nos.path
             nos.path = fpath
+            print(f"fileman: 448: p: {p}")
+            print(f"fileman: 448: p: fpath: {fpath}")
+            print(f"fileman: 448: p: nso.path: {nos.path}")
+            print(f"fileman: 448: p: hpath: {hpath}")
             nos.rename(hpath)
         return hpath, h
