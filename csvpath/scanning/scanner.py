@@ -4,6 +4,7 @@ from ply import yacc
 from ply.yacc import YaccProduction
 from .exceptions import ScanException, UnexpectedProductionException
 from .scanning_lexer import ScanningLexer
+from csvpath.util.path_util import PathUtility as pathu
 
 
 class Scanner:  # pylint: disable=R0902
@@ -14,12 +15,12 @@ class Scanner:  # pylint: disable=R0902
     tokens = ScanningLexer.tokens
 
     def __init__(self, csvpath=None):
+        self._filename = None
         self.csvpath = csvpath
         self.lexer = ScanningLexer()
         self.parser = yacc.yacc(module=self, start="path")
         self.these: List = []
         self.all_lines = False
-        self.filename = None
         self.from_line = None
         self.to_line = None
         self.path = None
@@ -38,6 +39,18 @@ class Scanner:  # pylint: disable=R0902
             all_lines: {self.all_lines}
             these: {self.these}
         """
+
+    @property
+    def filename(self) -> str:
+        return self._filename
+
+    @filename.setter
+    def filename(self, path: str) -> None:
+        #
+        # network URI + windows don't always agree.
+        #
+        path = pathu.resep(path)
+        self._filename = path
 
     def is_last(  # pylint: disable=R0913
         self,
