@@ -383,7 +383,6 @@ webhook_url =
         #
         #
         #
-        print(f"configx.load: {self._configpath}")
         self._config.read(self._configpath)
         self.refresh()
 

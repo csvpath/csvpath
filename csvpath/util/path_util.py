@@ -4,12 +4,14 @@ import os
 class PathUtility:
     @classmethod
     def norm(cls, apath: str, stripp=False) -> str:
+        #
         # if stripp is True we remove the protocol and server name
+        #
         if apath is None:
             return None
-        apath = os.path.normpath(os.path.normcase(apath))
-        if stripp:
+        if stripp is True:
             apath = cls.stripp(apath)
+        apath = os.path.normpath(os.path.normcase(apath))
         return apath
 
     """
@@ -30,13 +32,19 @@ class PathUtility:
     @classmethod
     def stripp(cls, apath: str) -> str:
         i = apath.find("://")
+        j = -1
         if i > -1:
             apath = apath[i + 3 :]
-            i = apath.find("/")
-            if i > -1:
-                apath = apath[i + 1 :]
+            j = apath.find("/")
+            if j > -1:
+                apath = apath[j + 1 :]
         return apath
 
     @classmethod
-    def equal(cls, pathone: str, pathtwo: str) -> bool:
-        return cls.norm(pathone) == cls.norm(pathtwo)
+    def equal(cls, pathone: str, pathtwo: str, stripp=False) -> bool:
+        #
+        # if stripp is True we remove the protocol and server name
+        #
+        p1 = cls.norm(pathone, stripp)
+        p2 = cls.norm(pathtwo, stripp)
+        return p1 == p2

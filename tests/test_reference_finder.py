@@ -85,6 +85,7 @@ class TestReferenceFinder(unittest.TestCase):
         assert pathu.equal(
             file,
             f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv",
+            True,
         )
 
     def test_ref_finder_for_day(self):
@@ -106,7 +107,7 @@ class TestReferenceFinder(unittest.TestCase):
 
         file = finder._path_for_day_if()
         assert file is not None
-        assert pathu.equal(file, f"inputs/named_files/food/food.csv/{f}.csv")
+        assert pathu.equal(file, f"inputs/named_files/food/food.csv/{f}.csv", True)
         #
         #
         #
@@ -120,7 +121,7 @@ class TestReferenceFinder(unittest.TestCase):
 
         file = finder._path_for_day_if()
         assert file is not None
-        assert pathu.equal(file, f"inputs/named_files/food/people2.csv/{f}.csv")
+        assert pathu.equal(file, f"inputs/named_files/food/people2.csv/{f}.csv", True)
 
     def test_ref_finder_pointer(self):
         paths = self.setup()
