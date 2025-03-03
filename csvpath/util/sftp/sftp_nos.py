@@ -18,9 +18,11 @@ class SftpDo:
         if path:
             self.path = path
 
+    """
     @classmethod
     def strip_protocol(self, path: str) -> str:
         return pathu.stripp(path)
+    """
 
     @property
     def path(self) -> str:
@@ -29,7 +31,7 @@ class SftpDo:
     @path.setter
     def path(self, p) -> None:
         p = pathu.resep(p)
-        p = SftpDo.strip_protocol(p)
+        p = pathu.stripp(p)
         self._path = p
 
     def remove(self) -> None:
@@ -94,7 +96,9 @@ class SftpDo:
 
     def rename(self, new_path: str) -> None:
         try:
-            np = SftpDo.strip_protocol(new_path)
+            np = pathu.stripp(new_path)
+            # np = SftpDo.strip_protocol(new_path)
+            print(f"sftpnos: rename: paht: {self.path}, np: {np}")
             self._config.sftp_client.rename(self.path, np)
         except (IOError, PermissionError):
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
