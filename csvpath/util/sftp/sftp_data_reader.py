@@ -83,6 +83,7 @@ class SftpDataReader(CsvDataReader):
     #
     def read(self) -> str:
         with open(uri=self.path, mode="r", encoding="utf-8") as file:
+            print(f"sftpdatafileareader: self.path: {self.path}")
             return file.read()
 
     #
@@ -90,7 +91,6 @@ class SftpDataReader(CsvDataReader):
     #
     def next_raw(self) -> str:
         with open(uri=self.path, mode="rb") as file:
-            print(f"sftpdatafileareader: self.path: {self.path}")
             for line in file:
                 yield line
 
