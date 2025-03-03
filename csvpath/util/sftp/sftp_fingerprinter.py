@@ -44,7 +44,7 @@ class SftpFingerprinter:
                         print(f"ssftpfingerprinn: s: {s}")
                         print(f"ssftpfingerprinn: to: {to}")
                         print(f"ssftpfingerprinn: to.name: {to.name}")
-                        h = Hasher().hash(to.name)
+                        h = Hasher().hash(to)
             except Exception as e:
                 import traceback
 
