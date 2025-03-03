@@ -40,6 +40,7 @@ class SftpFingerprinter:
                     with tempfile.NamedTemporaryFile() as to:
                         s = file.read()
                         to.write(s)
+                        # to.close()
                         print(f"ssftpfingerprinn: s: {s}")
                         print(f"ssftpfingerprinn: to: {to}")
                         print(f"ssftpfingerprinn: to.name: {to.name}")

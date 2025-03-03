@@ -4,14 +4,15 @@ import hashlib
 
 class Hasher:
     def hash(self, path, *, encode=True) -> str:
-        h = None
-        try:
-            h = self._post(path)
-        except (IOError, AttributeError) as e:
-            print(f"Hasher.kihash: ee: {e}")
-            h = self._pre(path)
+        h = self._file_if(path)
         if h is None:
-            raise RuntimeError("Cannot generate hashcode")
+            try:
+                h = self._post(path)
+            except (IOError, AttributeError) as e:
+                print(f"Hasher.kihash: ee: {e}")
+                h = self._pre(path)
+            if h is None:
+                raise RuntimeError("Cannot generate hashcode")
         #
         # we use fingerprints as names in some cases. that means that ':' and
         # '/' and '\' are problemmatic. all fingerprints come from this or any
@@ -37,6 +38,15 @@ class Hasher:
             h = hashlib.file_digest(source, hashlib.sha256)
             h = h.hexdigest()
             return h
+
+    def _file_if(self, f):
+        print(f"hasher_paost: file: {f}")
+        if isinstance(f, str):
+            return None
+        f.seek(0)
+        h = hashlib.file_digest(f, hashlib.sha256)
+        h = h.hexdigest()
+        return h
 
     def _pre(self, path):
         h = None
