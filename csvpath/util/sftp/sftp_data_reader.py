@@ -40,6 +40,7 @@ class SftpDataReader(CsvDataReader):
         with open(
             self.path,
             "r",
+            encoding="utf-8",
             transport_params={
                 "connect_kwargs": {"username": c.username, "password": c.password}
             },
