@@ -92,7 +92,13 @@ class SftpDataReader(CsvDataReader):
                 "connect_kwargs": {"username": c.username, "password": c.password}
             },
         ) as file:
-            return file.read().decode("utf-8")
+            bs = file.read()
+            try:
+                return bs.decode("utf-8")
+            except UnicodeDecodeError:
+                s = bs.decode("latin-1")
+                s.encode("utf-8")
+                return s
         """
         with open(uri=self.path, mode="r", encoding="utf-8") as file:
             return file.read()
