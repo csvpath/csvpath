@@ -10,6 +10,7 @@ from csvpath.util.reference_finder import ReferenceFinder
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
+from csvpath.util.path_util import PathUtility as pathu
 from .file_registrar import FileRegistrar
 from .lines_and_headers_cacher import LinesAndHeadersCacher
 from .file_metadata import FileMetadata
@@ -119,6 +120,7 @@ class FileManager:
         nos.path = home
         if nos.isfile():
             home = home[0 : home.rfind(nos.sep)]
+        home = pathu.resep(home)
         return home
 
     def assure_named_file_home(self, name: str) -> str:
@@ -128,6 +130,7 @@ class FileManager:
         nos.path = home
         if not nos.exists():
             nos.makedirs()
+        home = pathu.resep(home)
         return home
 
     #
@@ -151,6 +154,7 @@ class FileManager:
         nos.path = home
         if not nos.exists():
             nos.makedirs()
+        home = pathu.resep(home)
         return home
 
     @property
