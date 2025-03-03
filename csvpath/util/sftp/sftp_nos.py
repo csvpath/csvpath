@@ -3,7 +3,7 @@ import os
 import paramiko
 from csvpath.util.box import Box
 from .sftp_config import SftpConfig
-from ..path_utility import PathUtility as pathu
+from ..path_util import PathUtility as pathu
 
 
 class SftpDo:
