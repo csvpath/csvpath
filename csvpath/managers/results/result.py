@@ -150,6 +150,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @property
     def data_file_path(self) -> str:
+        print(f"resutl.data_file_path: {self.instance_dir} + 'data.csv'")
         return os.path.join(self.instance_dir, "data.csv")
 
     @property
@@ -157,6 +158,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         #
         # would we ever need self.csvpath before it is set? seems unlikely.
         #
+        print(f"result: instadir: {self.csvpath.config.archive_path}")
+        print(f"result: rundir: {self.run_dir}")
         i_dir = ResultSerializer(self.csvpath.config.archive_path).get_instance_dir(
             run_dir=self.run_dir, identity=self.identity_or_index
         )

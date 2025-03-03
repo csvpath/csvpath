@@ -79,7 +79,7 @@ class SftpDataReader(CsvDataReader):
             raise ValueError(f"Path {path} is not a file")
 
     #
-    # this is not using smart-open. same in the s3. is anything using it?
+    # now using smart-open. the test_title_fix test uses it. other than that?
     #
     def read(self) -> str:
         config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
