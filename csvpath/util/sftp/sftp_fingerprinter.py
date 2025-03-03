@@ -42,5 +42,8 @@ class SftpFingerprinter:
                         to.write(s)
                         h = Hasher().hash(to.name)
             except Exception as e:
+                import traceback
+
+                print(traceback.format_exc())
                 print(f"SftpFingerprinter: second chance failed with {type(e)}: {e}")
         return h
