@@ -7,7 +7,8 @@ class Hasher:
         h = None
         try:
             h = self._post(path)
-        except AttributeError:
+        except (IOError, AttributeError) as e:
+            print(f"Hasher.kihash: ee: {e}")
             h = self._pre(path)
         if h is None:
             raise RuntimeError("Cannot generate hashcode")
