@@ -418,6 +418,10 @@ class FileManager:
         #
         hpath = None
         remove_fpath = False
+        print(f"filman: _fingerprint: fpath: {fpath}")
+        print(f"filman: _fingerprint: path: {path}")
+        print(f"filman: _fingerprint: sep: {sep}")
+        print(f"filman: _fingerprint: t: {t}")
         with DataFileReader(fpath) as f:
             h = f.fingerprint()
             #
