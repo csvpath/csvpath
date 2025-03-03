@@ -8,6 +8,7 @@ from .sftp_config import SftpConfig
 
 class SftpFingerprinter:
     def fingerprint(self, path: str) -> str:
+        print(f"SftpFingerprinter: path: {path}")
         box = Box()
         config = box.get(Box.CSVPATHS_CONFIG)
         #
