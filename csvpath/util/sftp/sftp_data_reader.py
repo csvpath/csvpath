@@ -87,13 +87,12 @@ class SftpDataReader(CsvDataReader):
         print(f"sftpdatafileareader: self.path: {self.path}")
         with open(
             self.path,
-            "r",
-            encoding="utf-8",
+            "rb",
             transport_params={
                 "connect_kwargs": {"username": c.username, "password": c.password}
             },
         ) as file:
-            return file.read()
+            return file.read().decode("utf-8")
         """
         with open(uri=self.path, mode="r", encoding="utf-8") as file:
             return file.read()
