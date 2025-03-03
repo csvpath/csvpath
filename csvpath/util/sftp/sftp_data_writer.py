@@ -15,6 +15,7 @@ class SftpDataWriter(DataFileWriter):
             self.sink = open(
                 self.path,
                 self._mode,
+                newline="",
                 transport_params={
                     "connect_kwargs": {"username": c.username, "password": c.password}
                 },
@@ -26,6 +27,7 @@ class SftpDataWriter(DataFileWriter):
         with open(
             self.path,
             self._mode,
+            newline="",
             transport_params={
                 "connect_kwargs": {"username": c.username, "password": c.password}
             },
