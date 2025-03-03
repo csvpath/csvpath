@@ -90,6 +90,7 @@ class SftpDataReader(CsvDataReader):
     #
     def next_raw(self) -> str:
         with open(uri=self.path, mode="rb") as file:
+            print(f"sftpdatafileareader: self.path: {self.path}")
             for line in file:
                 yield line
 

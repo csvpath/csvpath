@@ -2,6 +2,7 @@ import unittest
 import os
 from csvpath import CsvPath, CsvPaths
 from csvpath.matching.functions.print.jinjaf import Jinjaf
+from csvpath.util.path_util import PathUtility as pathu
 
 PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
@@ -47,7 +48,7 @@ class TestJinja(unittest.TestCase):
         assert isinstance(tokens["zips"]["variables"]["zipcodes"], dict)
         assert tokens["zips"]["variables"]["zipcodes"]["Boston"] == "01915"
 
-        assert tokens["local"]["csvpath"]["file_name"] == PATH
+        assert pathu.equal(tokens["local"]["csvpath"]["file_name"], PATH)
         assert isinstance(tokens["zips"]["headers"], dict)
         #
         # zip's last line is blank. atm we don't offer a way to roll

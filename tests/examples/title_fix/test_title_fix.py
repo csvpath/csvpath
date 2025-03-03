@@ -24,6 +24,7 @@ class TestTitleFix(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         d = result.data_file_path
+        print(f"test_title_fix_1: d: {d}")
         with DataFileReader(d) as f:
             s = f.read()
             assert s.find("Great circle : a novel {os.sep} Maggie Shipstead") == -1

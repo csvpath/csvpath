@@ -6,6 +6,7 @@ from csvpath.managers.results.readers.readers import ResultReadersFacade
 from csvpath.managers.results.result_file_reader import ResultFileReader
 from csvpath.util.file_readers import FileInfo
 from csvpath.util.line_spooler import CsvLineSpooler
+from csvpath.util.path_util import PathUtility as pathu
 
 
 def setup_module(module):
@@ -73,7 +74,7 @@ class TestResultReaders(unittest.TestCase):
 
         dpath = result.data_file_path
         assert dpath is not None
-        assert dpath == cs._instance_data_file_path()
+        assert pathu.equal(dpath, cs._instance_data_file_path())
 
         dpath = result.data_file_path
         assert dpath is not None
