@@ -82,9 +82,22 @@ class SftpDataReader(CsvDataReader):
     # this is not using smart-open. same in the s3. is anything using it?
     #
     def read(self) -> str:
+        config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
+        c = SftpConfig(config)
+        with open(
+            self.path,
+            "r",
+            encoding="utf-8",
+            transport_params={
+                "connect_kwargs": {"username": c.username, "password": c.password}
+            },
+        ) as file:
+            return file.read()
+        """
         with open(uri=self.path, mode="r", encoding="utf-8") as file:
             print(f"sftpdatafileareader: self.path: {self.path}")
             return file.read()
+        """
 
     #
     # this is not using smart-open. same in the s3. is anything using it?
