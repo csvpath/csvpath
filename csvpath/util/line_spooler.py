@@ -143,6 +143,7 @@ class CsvLineSpooler(LineSpooler):
             delimiter=self.result.csvpath.delimiter,
             quotechar=self.result.csvpath.quotechar,
         ).next():
+            print(f"yielding a line: {line}")
             yield line
 
     def _warn_if(self) -> None:

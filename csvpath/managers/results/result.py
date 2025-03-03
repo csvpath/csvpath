@@ -384,9 +384,10 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
                 return len(self.lines)
             i = 0
             #
-            # file reader?
+            # is a LineSpooler
             #
             print(f"resultx: self.lines: {self.lines}")
+            print(f"resultx: self.lines.path: {self.lines.path}")
             for _ in self.lines.next():
                 i += 1
             return i
