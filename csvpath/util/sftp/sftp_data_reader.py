@@ -84,6 +84,7 @@ class SftpDataReader(CsvDataReader):
     def read(self) -> str:
         config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
         c = SftpConfig(config)
+        print(f"sftpdatafileareader: self.path: {self.path}")
         with open(
             self.path,
             "r",
@@ -95,7 +96,6 @@ class SftpDataReader(CsvDataReader):
             return file.read()
         """
         with open(uri=self.path, mode="r", encoding="utf-8") as file:
-            print(f"sftpdatafileareader: self.path: {self.path}")
             return file.read()
         """
 
