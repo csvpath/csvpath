@@ -40,6 +40,9 @@ class SftpFingerprinter:
                     with tempfile.NamedTemporaryFile() as to:
                         s = file.read()
                         to.write(s)
+                        print(f"ssftpfingerprinn: s: {s}")
+                        print(f"ssftpfingerprinn: to: {to}")
+                        print(f"ssftpfingerprinn: to.name: {to.name}")
                         h = Hasher().hash(to.name)
             except Exception as e:
                 import traceback
