@@ -1,29 +1,30 @@
 # pylint: disable=C0114
 
 import os
-import boto3
 from smart_open import open
 from ..file_writers import DataFileWriter
-from csvpath.util.box import Box
-from csvpath.util.s3.s3_utils import S3Utils
+from csvpath.util.azure.azure_utils import AzureUtility
 
 
-class S3DataWriter(DataFileWriter):
+class AzureDataWriter(DataFileWriter):
+    _write_file_count = 0
+
     def load_if(self) -> None:
         if self.sink is None:
-            client = S3Utils.make_client()
+            client = AzureUtility.make_client()
             self.sink = open(
                 self.path,
                 self._mode,
                 transport_params={"client": client},
             )
+            AzureDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
         """this is a one-and-done write in mode 'w'. you don't use the data writer
-        as a context manager for this method. for multiple write
-        calls to the same file handle use append().
+        as a context manager for this method. for multiple write calls to the same
+        file handle use append().
         """
-        client = S3Utils.make_client()
+        client = AzureUtility.make_client()
         with open(self.path, "wb", transport_params={"client": client}) as file:
             file.write(data.encode("utf-8"))
 

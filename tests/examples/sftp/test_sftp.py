@@ -22,20 +22,14 @@ class TestSftpMode(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
 
-        print(f"paths.config from: {paths.config._configpath}")
-        print(
-            f"paths.config: env: {os.environ.get(paths.config.CSVPATH_CONFIG_FILE_ENV)}"
-        )
-
         #
         # requires user tinpenny with an orders.csv at their root
         #
         server = paths.config.get(section="sftp", name="server")
         port = paths.config.get(section="sftp", name="port")
         fp = f"sftp://{server}:{port}/orders.csv"
-        print(f"ftp path: {fp}")
         paths.file_manager.add_named_file(name="orders", path=fp)
-        path = '$[*][ print("0: $.headers.0, 2: $.headers.2")]'
+        path = '$[*][ print("#0: $.headers.0, #2: $.headers.2")]'
         d = {"process": [f"{path}"]}
         paths.paths_manager.set_named_paths(d)
         paths.collect_paths(filename="orders", pathsname="process")

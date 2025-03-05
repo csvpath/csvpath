@@ -16,6 +16,7 @@ class Box:
     CSVPATHS_CONFIG = "csvpaths_config"
     SSH_CLIENT = "ssh_client"
     SFTP_CLIENT = "sftp_client"
+    AZURE_BLOB_CLIENT = "azure_blob_client"
 
     STUFF = {}
 

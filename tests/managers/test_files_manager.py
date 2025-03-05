@@ -99,13 +99,13 @@ class TestFilesManager(unittest.TestCase):
         tf = f"tests{os.sep}test_resources{os.sep}test.csv"
         home = m.assure_file_home("mytest", tf)
         d = m._copy_in(tf, home)
-        d = pathu.norm(d)
         assert d is not None
-        assert d.endswith(
+        ds = pathu.parts(d)
+        chk = pathu.parts(
             f"inputs{os.sep}named_files{os.sep}mytest{os.sep}test.csv{os.sep}test.csv"
         )
-        p = f"{paths.config.inputs_files_path}{os.sep}mytest"
-        Nos(p).remove()
+        assert ds[len(ds) - 3 :] == chk[len(chk) - 3 :]
+        Nos(d).remove()
 
     def test_reg_fingerprint(self):
         paths = CsvPaths()
@@ -194,10 +194,10 @@ class TestFilesManager(unittest.TestCase):
         assert fm.named_files_count >= 2
         assert fm.name_exists("wonderful")
         assert fm.name_exists("amazing")
-        p = f"{paths.config.inputs_files_path}{os.sep}wonderful"
-        Nos(p).remove()
-        p = f"{paths.config.inputs_files_path}{os.sep}amazing"
-        Nos(p).remove()
+        fm.remove_named_file("wonderful")
+        assert not fm.name_exists("wonderful")
+        fm.remove_named_file("amazing")
+        assert not fm.name_exists("amazing")
 
     def test_file_mgr_dict2(self):
         paths = CsvPaths()

@@ -1,13 +1,11 @@
 # pylint: disable=C0114
 import os
 import shutil
-import boto3
 from pathlib import Path
-from botocore.exceptions import ClientError
-from .s3.s3_utils import S3Utils
-from .s3.s3_nos import S3Do
-from .sftp.sftp_nos import SftpDo
 from .config import Config
+from .s3.s3_nos import S3Do
+from .azure.azure_nos import AzureDo
+from .sftp.sftp_nos import SftpDo
 
 
 class Nos:
@@ -41,7 +39,7 @@ class Nos:
         return True
 
     #
-    # removes ftps://hostname:port if found, or any similar
+    # subclass removes ftps://hostname:port if found, or any similar
     # protocol. s3:// does not need this.
     #
     def strip_protocol(self, path: str) -> str:
@@ -54,6 +52,8 @@ class Nos:
                 self._do = S3Do(self.path)
             elif self.path.startswith("sftp://"):
                 self._do = SftpDo(self.path)
+            elif self.path.startswith("azure://"):
+                self._do = AzureDo(self.path)
             else:
                 self._do = FileDo(self.path)
         return self._do

@@ -68,6 +68,12 @@ class DataFileWriter(ABC):
                     kwargs={"path": path, "mode": mode},
                 )
                 return instance
+            if path.startswith("azure://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.azure.azure_data_writer import AzureDataWriter",
+                    kwargs={"path": path, "mode": mode},
+                )
+                return instance
             return GeneralDataWriter(path=path, mode=mode)
         else:
             instance = super().__new__(cls)
@@ -90,16 +96,16 @@ class GeneralDataWriter(DataFileWriter):
         if self.sink is None:
             mode = "w" if self._mode is None else self._mode
             if mode != "wb":
-                self.sink = open(self._path, mode, encoding="utf-8", newline="")
+                self.sink = open(self.path, mode, encoding="utf-8", newline="")
             else:
-                self.sink = open(self._path, mode)
+                self.sink = open(self.path, mode)
 
     def write(self, data) -> None:
         """this is a one-and-done write. you don't use the data writer
         as a context manager for this method. for multiple write
         calls to the same file handle use append().
         """
-        with open(self._path, "w", encoding="utf-8", newline="") as file:
+        with open(self.path, "w", encoding="utf-8", newline="") as file:
             file.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:

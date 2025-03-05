@@ -9,7 +9,7 @@ from csvpath.util.file_readers import DataFileReader
 class TestTitleFix(unittest.TestCase):
     def test_title_fix_1(self):
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="title_fix",
@@ -20,7 +20,9 @@ class TestTitleFix(unittest.TestCase):
             file_path=f"tests{os.sep}examples{os.sep}title_fix{os.sep}assets{os.sep}title_fix.csvpaths",
         )
         paths.collect_paths(filename="title_fix", pathsname="title_fix")
+        print("test_title_fix_1: collected paths")
         results = paths.results_manager.get_named_results("title_fix")
+        print("test_title_fix_1: loaded results")
         assert len(results) == 1
         result = results[0]
         d = result.data_file_path
