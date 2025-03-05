@@ -1,4 +1,5 @@
 ~
+validation-mode:print,raise
 ~
 $[1*][
     line.checkouts(

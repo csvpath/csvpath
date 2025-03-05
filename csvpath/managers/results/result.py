@@ -368,7 +368,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         return self._lines
 
     @lines.setter
-    def lines(self, ls: list[list[Any]]) -> None:
+    def lines(self, ls: list[list[Any]] | LineSpooler) -> None:
         """@private"""
         if self._lines and isinstance(self._lines, LineSpooler):
             self._lines.close()

@@ -99,7 +99,7 @@ class DataFileReader(ABC):
                 sheet = path[path.find("#") + 1 :]
                 path = path[0 : path.find("#")]
             #
-            # do we have a file-like thing pre-registered?
+            # do we have a file-like / dataframe thing pre-registered?
             #
             thing = DataFileReader.DATA.get(path)
             if thing is not None and thing.__class__.__name__.endswith("DataFrame"):
@@ -110,35 +110,42 @@ class DataFileReader(ABC):
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
             #
-            # not a dataframe
+            # how about XLSX?
             #
-            if path.find("s3://") > -1 and (
-                (filetype is not None and filetype == "xlsx") or path.endswith("xlsx")
-            ):
-                instance = ClassLoader.load(
-                    "from csvpath.util.s3.s3_xlsx_data_reader import S3XlsxDataReader",
-                    args=[path],
-                    kwargs={
-                        "sheet": sheet if sheet != path else None,
-                        "delimiter": delimiter,
-                        "quotechar": quotechar,
-                    },
-                )
-                return instance
-            if path.find("sftp://") > -1 and (
-                (filetype is not None and filetype == "xlsx") or path.endswith("xlsx")
-            ):
-                instance = ClassLoader.load(
-                    "from csvpath.util.sftp.sftp_xlsx_data_reader import SftpXlsxDataReader",
-                    args=[path],
-                    kwargs={
-                        "sheet": sheet if sheet != path else None,
-                        "delimiter": delimiter,
-                        "quotechar": quotechar,
-                    },
-                )
-                return instance
             if (filetype is not None and filetype == "xlsx") or path.endswith("xlsx"):
+                if path.find("s3://") > -1:
+                    instance = ClassLoader.load(
+                        "from csvpath.util.s3.s3_xlsx_data_reader import S3XlsxDataReader",
+                        args=[path],
+                        kwargs={
+                            "sheet": sheet if sheet != path else None,
+                            "delimiter": delimiter,
+                            "quotechar": quotechar,
+                        },
+                    )
+                    return instance
+                if path.find("sftp://") > -1:
+                    instance = ClassLoader.load(
+                        "from csvpath.util.sftp.sftp_xlsx_data_reader import SftpXlsxDataReader",
+                        args=[path],
+                        kwargs={
+                            "sheet": sheet if sheet != path else None,
+                            "delimiter": delimiter,
+                            "quotechar": quotechar,
+                        },
+                    )
+                    return instance
+                if path.find("azure://") > -1:
+                    instance = ClassLoader.load(
+                        "from csvpath.util.azure.azure_xlsx_data_reader import AzureXlsxDataReader",
+                        args=[path],
+                        kwargs={
+                            "sheet": sheet if sheet != path else None,
+                            "delimiter": delimiter,
+                            "quotechar": quotechar,
+                        },
+                    )
+                    return instance
                 return XlsxDataReader(
                     path,
                     sheet=sheet if sheet != path else None,
@@ -158,6 +165,13 @@ class DataFileReader(ABC):
             if path.startswith("sftp://"):
                 instance = ClassLoader.load(
                     "from csvpath.util.sftp.sftp_data_reader import SftpDataReader",
+                    args=[path],
+                    kwargs={"delimiter": delimiter, "quotechar": quotechar},
+                )
+                return instance
+            if path.startswith("azure://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.azure.azure_data_reader import AzureDataReader",
                     args=[path],
                     kwargs={"delimiter": delimiter, "quotechar": quotechar},
                 )

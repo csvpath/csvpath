@@ -54,31 +54,54 @@ class FileRegistrar(Registrar, Listener):
         mani = self.get_manifest(mp)
         index = len(mani) - 1 if index == -1 else index
         if "type" in patch:
+            #
+            # obviously without a change in file_name the type is set in metadata only.
+            #
             mani[index]["type"] = patch["type"]
         if "file_name" in patch:
-            sep = "\\" if home.find("\\") > -1 else "/"
             #
-            # we can assume that if we're setting the file name the type may have changed
-            # and could be a problem. so we rename to fingerprint + type based on current info.
-            # then we rename the file home to the new file name we've been given.
+            # blob stores handle directories differently from filesystems.
             #
-            # 1. move file to fingerprint.type
-            # 2. move file home to home/new_file_name
-            #
-            old_file = mani[index]["file"]
-            new_file = f"{mani[index]['file_home']}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
-            nos = Nos(None)
-            nos.path = old_file
-            nos.rename(new_file)
-            old_home = mani[index]["file_home"]
-            new_home = f"{home}{sep}{patch['file_name']}"
-            nos.path = old_home
-            nos.rename(new_home)
-            mani[index]["file_home"] = new_home
-            mani[index][
-                "file"
-            ] = f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+            if mani[index]["file"].find("://") > -1:
+                self._patch_blob(mani, index, patch)
+            else:
+                self._patch_filesystem(mani, home=home, index=index, patch=patch)
         self.intermediary.put_json(mp, mani)
+
+    def _patch_blob(self, mani: dict, index: int, patch: dict) -> None:
+        old = mani[index]["file"]
+        newhome = f"{os.path.dirname(mani[index]['file_home'])}/{patch['file_name']}"
+        new = f"{newhome}/{mani[index]['fingerprint']}.{mani[index]['type']}"
+        nos = Nos(old)
+        nos.rename(new)
+        mani[index]["file"] = new
+        mani[index]["file_home"] = newhome
+
+    def _patch_filesystem(
+        self, mani: dict, *, home: str, index: int, patch: dict
+    ) -> None:
+        sep = os.sep
+        #
+        # we can assume that if we're setting the file name the type may have changed
+        # and could be a problem. so we rename to fingerprint + type based on current info.
+        # then we rename the file home to the new file name we've been given.
+        #
+        # 1. move file to fingerprint.type
+        # 2. move file home to home/new_file_name
+        #
+        old_file = mani[index]["file"]
+        new_file = f"{mani[index]['file_home']}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+        nos = Nos(None)
+        nos.path = old_file
+        nos.rename(new_file)
+        old_home = mani[index]["file_home"]
+        new_home = f"{home}{sep}{patch['file_name']}"
+        nos.path = old_home
+        nos.rename(new_home)
+        mani[index]["file_home"] = new_home
+        mani[index][
+            "file"
+        ] = f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -120,6 +143,7 @@ class FileRegistrar(Registrar, Listener):
             not path.startswith("s3:")
             and not path.startswith("http:")
             and not path.startswith("https:")
+            # and not azure?
             and not Nos(path).exists()
         ):
             # if not path.startswith("s3:") and not os.path.exists(path):

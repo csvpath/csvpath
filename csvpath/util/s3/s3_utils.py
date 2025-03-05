@@ -2,29 +2,31 @@ import os
 import boto3
 import uuid
 from botocore.exceptions import ClientError
+from csvpath.util.box import Box
 
 
 class S3Utils:
-    client_count = 0
+    AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
+    AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"
+    _client_count = 0
 
     @classmethod
     def make_client(cls):
-        cls.client_count += 1
-        """
-        if cls.client_count in [19,20,21]:
-            from csvpath.util.log_utility import LogUtility
-            LogUtility.log_brief_trace()
-        """
-        print(f"S3Utils.make_client: making new client: {cls.client_count}")
+        box = Box()
+        client = box.get(Box.BOTO_S3_CLIENT)
+        if client is None:
+            cls._client_count += 1
+            import warnings
 
-        import warnings
-
-        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
-        session = boto3.Session(
-            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-        )
-        client = session.client("s3")
+            warnings.filterwarnings(
+                action="ignore", message=r"datetime.datetime.utcnow"
+            )
+            session = boto3.Session(
+                aws_access_key_id=os.environ[cls.AWS_ACCESS_KEY_ID],
+                aws_secret_access_key=os.environ[cls.AWS_SECRET_ACCESS_KEY],
+            )
+            client = session.client("s3")
+            box.add(Box.BOTO_S3_CLIENT, client)
         return client
 
     @classmethod
@@ -52,7 +54,6 @@ class S3Utils:
             return False
         except DeprecationWarning:
             ...
-
         return True
 
     @classmethod

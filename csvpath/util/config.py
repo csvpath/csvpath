@@ -314,6 +314,8 @@ webhook_url =
                 self.archive_path = "archive"
             if self.archive_path.strip().lower().startswith("s3://"):
                 return
+            if self.archive_path.strip().lower().startswith("azure://"):
+                return
             if self.archive_path.strip().lower().startswith("sftp://"):
                 return
             if not path.exists(self.archive_path):
@@ -332,6 +334,8 @@ webhook_url =
                 self.inputs_files_path = f"inputs{os.sep}named_files"
             if self.inputs_files_path.strip().lower().startswith("s3://"):
                 return
+            if self.inputs_files_path.strip().lower().startswith("azure://"):
+                return
             if self.inputs_files_path.strip().lower().startswith("sftp://"):
                 return
             if not path.exists(self.inputs_files_path):
@@ -345,6 +349,8 @@ webhook_url =
             ):
                 self.inputs_csvpaths_path = f"inputs{os.sep}named_paths"
             if self.inputs_csvpaths_path.strip().lower().startswith("s3://"):
+                return
+            if self.inputs_csvpaths_path.strip().lower().startswith("azure://"):
                 return
             if self.inputs_csvpaths_path.strip().lower().startswith("sftp://"):
                 return

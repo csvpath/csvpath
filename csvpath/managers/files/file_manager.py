@@ -140,6 +140,10 @@ class FileManager:
     #   inputs/named_files/March-2024/March-2024.csv/12467d811d1589ede586e3a42c41046641bedc1c73941f4c21e2fd2966f188b4.csv
     # once the files have been fingerprinted
     #
+    # remember that blob stores do not handle directories in the same way.
+    # this method won't create a directory in a blob store because that's not
+    # possible.
+    #
     def assure_file_home(self, name: str, path: str) -> str:
         """@private"""
         if path.find("#") > -1:
@@ -302,6 +306,8 @@ class FileManager:
 
     def _clean_file_name(self, fname: str) -> str:
         fname = fname.replace("?", "_")
+        fname = fname.replace("&", "_")
+        fname = fname.replace("=", "_")
         return fname
 
     def _copy_in(self, path, home) -> None:
@@ -317,21 +323,11 @@ class FileManager:
         # name is changed.
         fname = self._clean_file_name(fname)
         temp = os.path.join(home, fname)
-        #
-        # this is another place that is too s3 vs. local. we'll have
-        # other source/sinks to support.
-        #
-        if path.startswith("s3:") and not home.startswith("s3"):
-            self._copy_down(path, temp, mode="wb")
-        elif path.startswith("s3:") and home.startswith("s3"):
+        if pathu.parts(path)[0] == pathu.parts(home)[0]:
             nos.path = path
             nos.copy(temp)
-        elif not path.startswith("s3:") and not home.startswith("s3"):
-            self._copy_down(path, temp, mode="wb")
-        elif not path.startswith("s3:") and home.startswith("s3"):
-            self._copy_down(path, temp, mode="wb")
         else:
-            ...  # not possible. just being explicit for the moment.
+            self._copy_down(path, temp, mode="wb")
         return temp
 
     def _copy_down(self, path, temp, mode="wb") -> None:
