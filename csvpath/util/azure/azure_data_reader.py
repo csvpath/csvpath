@@ -47,20 +47,6 @@ class AzureDataReader(CsvDataReader):
         dest_container, dest_blob = self.path_to_parts(new_path)
         AzureUtility.rename(source_container, source_blob, dest_container, dest_blob)
 
-    """
-    #
-    # these may happen, but S3 and this code isn't right, so let's see who needs it.
-    #
-    def read(self) -> str:
-        with open(uri=self._path, mode="r", encoding="utf-8") as file:
-            return file.read()
-
-    def next_raw(self) -> str:
-        with open(uri=self._path, mode="rb") as file:
-            for line in file:
-                yield line
-    """
-
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here for cloud services? Can leave for now.
         return {}
