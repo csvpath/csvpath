@@ -17,6 +17,7 @@ class Box:
     SSH_CLIENT = "ssh_client"
     SFTP_CLIENT = "sftp_client"
     AZURE_BLOB_CLIENT = "azure_blob_client"
+    GCS_STORAGE_CLIENT = "gcs_storage_client"
 
     STUFF = {}
 

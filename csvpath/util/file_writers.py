@@ -74,6 +74,12 @@ class DataFileWriter(ABC):
                     kwargs={"path": path, "mode": mode},
                 )
                 return instance
+            if path.startswith("gs://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.gcs.gcs_data_writer import GcsDataWriter",
+                    kwargs={"path": path, "mode": mode},
+                )
+                return instance
             return GeneralDataWriter(path=path, mode=mode)
         else:
             instance = super().__new__(cls)

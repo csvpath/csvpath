@@ -33,7 +33,7 @@ class FileRegistrar(Registrar, Listener):
 
     def manifest_path(self, home) -> str:
         nos = Nos(home)
-        if not nos.dir_exists():
+        if nos.physical_dirs() and not nos.dir_exists():
             raise InputException(f"Named file home does not exist: {home}")
         mf = os.path.join(home, "manifest.json")
         nos.path = mf

@@ -1,0 +1,16 @@
+
+---- CSVPATH ----
+
+~ name: candy check
+  description: invalid if there is more than one candy item
+  expected: this example will always fail
+~
+
+$[*][
+    #type == "candy" -> push( "candy", count_lines() )
+    above(size("candy"), 1) -> print("$.csvpath.count_lines: too much candy at: $.variables.candy ")
+    above(size("candy"), 1) -> fail_and_stop()
+]
+
+
+

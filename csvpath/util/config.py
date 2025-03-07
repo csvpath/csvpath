@@ -338,6 +338,8 @@ webhook_url =
                 return
             if self.inputs_files_path.strip().lower().startswith("sftp://"):
                 return
+            if self.inputs_files_path.strip().lower().startswith("gs://"):
+                return
             if not path.exists(self.inputs_files_path):
                 os.makedirs(self.inputs_files_path)
 
@@ -353,6 +355,8 @@ webhook_url =
             if self.inputs_csvpaths_path.strip().lower().startswith("azure://"):
                 return
             if self.inputs_csvpaths_path.strip().lower().startswith("sftp://"):
+                return
+            if self.inputs_csvpaths_path.strip().lower().startswith("gs://"):
                 return
             if not path.exists(self.inputs_csvpaths_path):
                 os.makedirs(self.inputs_csvpaths_path)

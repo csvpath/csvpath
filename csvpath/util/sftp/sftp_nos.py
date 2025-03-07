@@ -83,6 +83,9 @@ class SftpDo:
         except FileNotFoundError:
             return False
 
+    def physical_dirs(self) -> bool:
+        return True
+
     def isfile(self) -> bool:
         return self._isfile(self.path)
 

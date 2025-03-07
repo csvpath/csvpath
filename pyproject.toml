@@ -54,6 +54,7 @@ validators = "^0.34.0"
 prompt-toolkit = "^3.0.50"
 pdoc = "^15.0.1"
 azure-storage-blob = "^12.24.1"
+google-cloud-storage = "^3.1.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

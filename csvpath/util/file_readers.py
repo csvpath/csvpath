@@ -146,6 +146,17 @@ class DataFileReader(ABC):
                         },
                     )
                     return instance
+                if path.find("gs://") > -1:
+                    instance = ClassLoader.load(
+                        "from csvpath.util.gcs.gcs_xlsx_data_reader import GcsXlsxDataReader",
+                        args=[path],
+                        kwargs={
+                            "sheet": sheet if sheet != path else None,
+                            "delimiter": delimiter,
+                            "quotechar": quotechar,
+                        },
+                    )
+                    return instance
                 return XlsxDataReader(
                     path,
                     sheet=sheet if sheet != path else None,
@@ -179,6 +190,13 @@ class DataFileReader(ABC):
             if path.startswith("http://") or path.startswith("https://"):
                 instance = ClassLoader.load(
                     "from csvpath.util.http.http_data_reader import HttpDataReader",
+                    args=[path],
+                    kwargs={"delimiter": delimiter, "quotechar": quotechar},
+                )
+                return instance
+            if path.startswith("gs://"):
+                instance = ClassLoader.load(
+                    "from csvpath.util.gcs.gcs_data_reader import GcsDataReader",
                     args=[path],
                     kwargs={"delimiter": delimiter, "quotechar": quotechar},
                 )

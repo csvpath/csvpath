@@ -39,6 +39,9 @@ class AzureDo:
         #
         return bool(lst)
 
+    def physical_dirs(self) -> bool:
+        return False
+
     def rename(self, new_path: str) -> None:
         container, blob = AzureUtility.path_to_parts(self.path)
         new_container, new_blob = AzureUtility.path_to_parts(new_path)

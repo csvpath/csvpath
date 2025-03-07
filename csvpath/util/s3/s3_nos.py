@@ -42,6 +42,9 @@ class S3Do:
         if lst and len(lst) > 0:
             return True
 
+    def physical_dirs(self) -> bool:
+        return False
+
     def rename(self, new_path: str) -> None:
         bucket, key = S3Utils.path_to_parts(self.path)
         same_bucket, new_key = S3Utils.path_to_parts(new_path)
