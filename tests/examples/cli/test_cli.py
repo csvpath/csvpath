@@ -54,8 +54,8 @@ class TestCliExample(unittest.TestCase):
 
     def test_cli_example_3(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "collect, print")
-        paths.add_to_config("errors", "csvpaths", "collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="categories",
             path=f"tests{os.sep}examples{os.sep}cli{os.sep}assets{os.sep}categories.csv",

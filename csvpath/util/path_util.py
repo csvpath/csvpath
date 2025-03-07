@@ -28,10 +28,9 @@ class PathUtility:
             path = path.replace("/", "\\")
         return path
 
-    # splits https://aserver/my/file/is/here into ["https","aserver","my/file/is/here"]
-    # add test before using. not needed today.
     @classmethod
     def parts(cls, apath: str) -> list[str]:
+        # splits https://aserver/my/file/is/here into ["https","aserver","my", "file", "is","here"]
         parts = []
         i = apath.find("://")
         if i > -1:

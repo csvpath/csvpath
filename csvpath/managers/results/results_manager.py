@@ -592,13 +592,19 @@ class ResultsManager:  # pylint: disable=C0115
         self.csvpaths.logger.debug(
             "Attempting to load results for %s from %s", name, path
         )
-        if Nos(path).dir_exists():
-            runs = Nos(path).listdir()
-            runs.sort()
-            run = runs[len(runs) - 1]
-            rs = self.get_named_results_for_run(name=name, run=run)
-            if rs is not None:
-                return rs
+        nos = Nos(path)
+        exists = nos.dir_exists()
+        nonphy = nos.physical_dirs()
+        # is not nonphy needed?
+        if exists or not nonphy:
+            runs = nos.listdir()
+            if len(runs) > 0:
+                runs.sort()
+                run = runs[len(runs) - 1]
+                rs = self.get_named_results_for_run(name=name, run=run)
+                if rs is not None:
+                    return rs
+
         #
         # we treat this as a recoverable error because typically the user
         # has complete control of the csvpaths environment, making the

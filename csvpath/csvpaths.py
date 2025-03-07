@@ -672,6 +672,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     ):  # pylint: disable=R0914
         """Does a CsvPath.next() on filename for every line against every named path in sequence"""
         paths = self.paths_manager.get_named_paths(pathsname)
+        if paths is None:
+            print(
+                f"PathsManager.get_named_paths for {pathsname} must return a set of named-paths"
+            )
         file = self.file_manager.get_named_file(filename)
         self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)

@@ -25,14 +25,64 @@ class TestNewCsvPaths(unittest.TestCase):
         paths.file_manager.set_named_files(FILES)
         paths.file_manager.add_named_file(name="sourcemode", path=PATH)
 
-    def test_csvpaths_next_paths(self):
-        cs = CsvPaths()
-        self.load(cs)
-        cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
+    def test_csvpaths_next_paths_1(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.paths_manager.add_named_paths_from_file(
+            name="food",
+            file_path=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
         cnt = 0
-        for line in cs.next_paths(filename="food", pathsname="food"):
+        for line in paths.next_paths(filename="food", pathsname="food"):
             cnt += 1
         assert cnt == 4
+
+    def test_csvpaths_nothing(self):
+        CsvPaths()
+
+    def test_csvpaths_next_paths_2(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.paths_manager.add_named_paths_from_file(
+            name="food",
+            file_path=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}food_lite.csvpaths",
+        )
+        paths.file_manager.add_named_file(
+            name="food",
+            path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+        )
+        cnt = 0
+        for line in paths.next_paths(filename="food", pathsname="food"):
+            cnt += 1
+        assert cnt == 1
+        results = paths.results_manager.get_named_results("food")
+        paths = None
+        assert results
+        assert len(results) == 1
+        result = results[0]
+        path = result.csvpath
+        len(result) == 1
+        v = path.variables
+        assert v
+        assert "candy" in v
+        #
+        # reload
+        #
+        print("\nreloading food results")
+        paths = CsvPaths()
+        results = paths.results_manager.get_named_results("food")
+        assert results
+        assert len(results) == 1
+        result = results[0]
+        path = result.csvpath
+        len(result) == 1
+        v = path.variables
+        assert v
+        assert "candy" in v
 
     def test_csvpaths_fast_forward_paths(self):
         cs = CsvPaths()

@@ -6,6 +6,7 @@ from .config import Config
 from .s3.s3_nos import S3Do
 from .azure.azure_nos import AzureDo
 from .sftp.sftp_nos import SftpDo
+from .gcs.gcs_nos import GcsDo
 
 
 class Nos:
@@ -54,6 +55,8 @@ class Nos:
                 self._do = SftpDo(self.path)
             elif self.path.startswith("azure://"):
                 self._do = AzureDo(self.path)
+            elif self.path.startswith("gs://"):
+                self._do = GcsDo(self.path)
             else:
                 self._do = FileDo(self.path)
         return self._do
@@ -73,6 +76,15 @@ class Nos:
 
     def dir_exists(self) -> bool:
         return self.do.dir_exists()
+
+    def physical_dirs(self) -> bool:
+        """True if dirs may exist.
+        False if there is no concept of dirs
+        that are independent from objects.
+        Cloud objects stores like S3 are the
+        latter.
+        """
+        return self.do.physical_dirs()
 
     def rename(self, new_path: str) -> None:
         self.do.rename(new_path)
@@ -113,6 +125,9 @@ class FileDo:
     def dir_exists(self) -> bool:
         ret = os.path.exists(self.path)
         return ret
+
+    def physical_dirs(self) -> bool:
+        return True
 
     def rename(self, new_path: str) -> None:
         os.rename(self.path, new_path)
