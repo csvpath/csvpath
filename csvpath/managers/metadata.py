@@ -9,8 +9,11 @@ import socket
 
 class Metadata(ABC):
     def __init__(self, config):
-        self.set_time()
         self.config = config
+        #
+        # fields
+        #
+        self.set_time()
         self._time_started: datetime = None
         self._time_completed: datetime = None
         self._uuid = uuid4()
@@ -35,10 +38,10 @@ class Metadata(ABC):
         if config:
             self.archive_name = config.archive_name
             self.archive_path = config.archive_path
-        #
-        # find base dir so we can add file:// refs, if needed
-        #
 
+    #
+    # find base dir so we can add file:// refs, if needed
+    #
     @property
     def base_path(self):
         if self._base_path is None:

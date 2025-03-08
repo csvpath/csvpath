@@ -49,6 +49,10 @@ class FileRegistrar(Registrar, Listener):
         return j
 
     def patch_named_file(self, *, name, patch, index=-1) -> None:
+        #
+        # TODO: distribute an metadata event to give metadata stores a
+        # chance to update their info re: the file
+        #
         home = self.csvpaths.file_manager.named_file_home(name)
         mp = self.manifest_path(home)
         mani = self.get_manifest(mp)
@@ -140,10 +144,12 @@ class FileRegistrar(Registrar, Listener):
                 f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
             )
         if (
+            # TODO: s3 can do nos.exists
             not path.startswith("s3:")
+            # Nos doesn't handle http files. they are special--inbound only.
             and not path.startswith("http:")
             and not path.startswith("https:")
-            # and not azure?
+            # and not azure? gcp? should be handled by nos anyway.
             and not Nos(path).exists()
         ):
             # if not path.startswith("s3:") and not os.path.exists(path):

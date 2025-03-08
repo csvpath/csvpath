@@ -1,37 +1,15 @@
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
-from .engine import Db
-from .tables import Tables
+from .sql_listener import SqlListener
 
 
-class SqlResultsListener(Listener):
+class SqlResultsListener(SqlListener):
     def __init__(self, config=None):
-        Listener.__init__(self, config=config)
-        self.csvpaths = None
-        self._tables = None
-        self._engine = None
+        SqlListener.__init__(self, config=config)
         self._group_run = None
-
-    @property
-    def tables(self) -> Tables:
-        if self._tables is None:
-            self._tables = Tables(self.config, engine=self.engine)
-            self._tables.assure_tables()
-        return self._tables
-
-    @property
-    def engine(self):
-        if self._engine is None:
-            self._engine = Db.get(self.config)
-        return self._engine
-
-    @engine.setter
-    def engine(self, engine):
-        self._engine = engine
 
     @property
     def group_run(self) -> Table:
@@ -42,7 +20,6 @@ class SqlResultsListener(Listener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
-
         group_run_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
@@ -79,50 +56,21 @@ class SqlResultsListener(Listener):
             self.csvpaths.logger.info(
                 "Inserting group run results metadata into %s", dialect
             )
-            if dialect == "postgresql":
+            if dialect in ["postgresql", "sqlite"]:
+                ist = pg_insert if dialect == "postgresql" else sqlite_insert
                 stmt = (
-                    pg_insert(self.group_run)
+                    ist(self.group_run)
                     .values(group_run_data)
                     .on_conflict_do_update(
                         index_elements=["uuid"],
-                        set_={
-                            "status": group_run_data["status"],
-                            "time_completed": group_run_data["time_completed"],
-                            "all_completed": group_run_data["all_completed"],
-                            "all_valid": group_run_data["all_valid"],
-                            "error_count": group_run_data["error_count"],
-                            "all_expected_files": group_run_data["all_expected_files"],
-                        },
-                    )
-                )
-            elif dialect == "sqlite":
-                stmt = (
-                    sqlite_insert(self.group_run)
-                    .values(group_run_data)
-                    .on_conflict_do_update(
-                        index_elements=["uuid"],
-                        set_={
-                            "status": group_run_data["status"],
-                            "time_completed": group_run_data["time_completed"],
-                            "all_completed": group_run_data["all_completed"],
-                            "all_valid": group_run_data["all_valid"],
-                            "error_count": group_run_data["error_count"],
-                            "all_expected_files": group_run_data["all_expected_files"],
-                        },
+                        set_=self._set(group_run_data),
                     )
                 )
             elif dialect == "mysql":
                 stmt = (
                     mysql_insert(self.group_run)
                     .values(group_run_data)
-                    .on_duplicate_key_update(
-                        status=group_run_data["status"],
-                        time_completed=group_run_data["time_completed"],
-                        all_completed=group_run_data["all_completed"],
-                        all_valid=group_run_data["all_valid"],
-                        error_count=group_run_data["error_count"],
-                        all_expected_files=group_run_data["all_expected_files"],
-                    )
+                    .on_duplicate_key_update(self._set(group_run_data))
                 )
             elif dialect == "mssql":
                 raise NotImplementedError(
@@ -134,3 +82,13 @@ class SqlResultsListener(Listener):
             conn.commit()
         if dispose is True:
             self.engine.dispose()
+
+    def _set(self, group_run_data: dict) -> dict:
+        return {
+            "status": group_run_data["status"],
+            "time_completed": group_run_data["time_completed"],
+            "all_completed": group_run_data["all_completed"],
+            "all_valid": group_run_data["all_valid"],
+            "error_count": group_run_data["error_count"],
+            "all_expected_files": group_run_data["all_expected_files"],
+        }
