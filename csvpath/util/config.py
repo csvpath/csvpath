@@ -212,9 +212,13 @@ on_unmatched_file_fingerprints = halt
 [listeners]
 # add listener group names to send events to the channel they represent
 groups = default
-#slack, marquez, ckan, sftp, sftpplus, otlp, sqlite
+#slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
 
-# add sqlite to capture staging, loads, and results in a local sqlite db
+# add sql to capture results in mysql, postgres, ms sql server, or sqlite
+sql.result = from csvpath.managers.integrations.sql.sql_result_listener import SqlResultListener
+sql.results = from csvpath.managers.integrations.sql.sql_results_listener import SqlResultsListener
+
+# add sqlite to capture results in a local sqlite file
 sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
 sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener import SqliteResultListener
 
@@ -251,6 +255,11 @@ slack.results = from csvpath.managers.integrations.slack.sender import SlackSend
 
 [sqlite]
 db = archive/csvpath.db
+
+[sql]
+# mysql, postgres, sql_server, or sqlite
+dialect = sqlite
+connection_string = sqlite:///archive/csvpath-sqlite.db
 
 [sftp]
 server = localhost

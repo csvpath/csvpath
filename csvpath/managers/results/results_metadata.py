@@ -38,6 +38,7 @@ class ResultsMetadata(Metadata):
         self.named_file_path = m.get("named_file_path")
         self.named_file_fingerprint = m.get("named_file_fingerprint")
         self.named_file_fingerprint_on_file = m.get("")
+        # TODO?
         self.named_file_size: str = m.get("")
         self.named_file_last_change = m.get("")
         self.all_completed = m.get("all_completed")
