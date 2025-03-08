@@ -302,6 +302,9 @@ class FileManager:
         mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
+        #
+        # TODO: add file_size. move FileInfo into Nos. for now it is 0.
+        #
         self.registrar.register_complete(mdata)
 
     def _clean_file_name(self, fname: str) -> str:

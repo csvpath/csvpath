@@ -1,43 +1,21 @@
-from sqlalchemy import create_engine, Table, Engine
+from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
-from .engine import Db
-from .tables import Tables
+from .sql_listener import SqlListener
 
 
-class SqlResultListener(Listener):
+class SqlResultListener(SqlListener):
     def __init__(self, config=None):
-        Listener.__init__(self, config=config)
-        self.csvpaths = None
-        self._tables = None
-        self._engine = None
+        SqlListener.__init__(self, config=config)
         self._instance_run = None
-
-    @property
-    def tables(self) -> Tables:
-        if self._tables is None:
-            self._tables = Tables(self.config, engine=self.engine)
-            self._tables.assure_tables()
-        return self._tables
 
     @property
     def instance_run(self) -> Table:
         if self._instance_run is None:
             self._instance_run = self.tables.instance_run
         return self._instance_run
-
-    @property
-    def engine(self):
-        if self._engine is None:
-            self._engine = Db.get(self.config)
-        return self._engine
-
-    @engine.setter
-    def engine(self, engine):
-        self._engine = engine
 
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
@@ -69,80 +47,40 @@ class SqlResultListener(Listener):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting run result metadata into %s", dialect)
-            if dialect == "postgresql":
-                # Postgres `ON CONFLICT` support
+            if dialect in ["postgresql", "sqlite"]:
+                ist = pg_insert if dialect == "postgresql" else sqlite_insert
                 stmt = (
-                    pg_insert(self.instance_run)
+                    ist(self.instance_run)
                     .values(instance_run_data)
                     .on_conflict_do_update(
-                        index_elements=["uuid"],  # Unique constraint column
-                        set_={
-                            "valid": instance_run_data["valid"],
-                            "completed": instance_run_data["completed"],
-                            "error_count": instance_run_data["error_count"],
-                            "number_of_files_expected": instance_run_data[
-                                "number_of_files_expected"
-                            ],
-                            "number_of_files_generated": instance_run_data[
-                                "number_of_files_generated"
-                            ],
-                            "files_expected": instance_run_data["files_expected"],
-                            "lines_scanned": instance_run_data["lines_scanned"],
-                            "lines_total": instance_run_data["lines_total"],
-                            "lines_matched": instance_run_data["lines_matched"],
-                        },
+                        index_elements=["uuid"], set_=self._set(instance_run_data)
                     )
                 )
             elif dialect == "mysql":
-                # MySQL `ON DUPLICATE KEY UPDATE` support
                 stmt = (
                     mysql_insert(self.instance_run)
                     .values(instance_run_data)
-                    .on_duplicate_key_update(
-                        valid=instance_run_data["valid"],
-                        completed=instance_run_data["completed"],
-                        error_count=instance_run_data["error_count"],
-                        number_of_files_expected=instance_run_data[
-                            "number_of_files_expected"
-                        ],
-                        number_of_files_generated=instance_run_data[
-                            "number_of_files_generated"
-                        ],
-                        files_expected=instance_run_data["files_expected"],
-                        lines_scanned=instance_run_data["lines_scanned"],
-                        lines_total=instance_run_data["lines_total"],
-                        lines_matched=instance_run_data["lines_matched"],
-                    )
+                    .on_duplicate_key_update(self._set(instance_run_data))
                 )
             elif dialect == "mssql":
                 # SQL Server `MERGE` support (not implemented in this example)
                 raise NotImplementedError("SQL Server support is not yet implemented.")
-            elif dialect == "sqlite":
-                stmt = (
-                    sqlite_insert(self.instance_run)
-                    .values(instance_run_data)
-                    .on_conflict_do_update(
-                        index_elements=["uuid"],  # Unique constraint column
-                        set_={
-                            "valid": instance_run_data["valid"],
-                            "completed": instance_run_data["completed"],
-                            "error_count": instance_run_data["error_count"],
-                            "number_of_files_expected": instance_run_data[
-                                "number_of_files_expected"
-                            ],
-                            "number_of_files_generated": instance_run_data[
-                                "number_of_files_generated"
-                            ],
-                            "files_expected": instance_run_data["files_expected"],
-                            "lines_scanned": instance_run_data["lines_scanned"],
-                            "lines_total": instance_run_data["lines_total"],
-                            "lines_matched": instance_run_data["lines_matched"],
-                        },
-                    )
-                )
             else:
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
             conn.commit()
         if dispose is True:
             self.engine.dispose()
+
+    def _set(self, instance_run_data: dict) -> dict:
+        return {
+            "valid": instance_run_data["valid"],
+            "completed": instance_run_data["completed"],
+            "error_count": instance_run_data["error_count"],
+            "number_of_files_expected": instance_run_data["number_of_files_expected"],
+            "number_of_files_generated": instance_run_data["number_of_files_generated"],
+            "files_expected": instance_run_data["files_expected"],
+            "lines_scanned": instance_run_data["lines_scanned"],
+            "lines_total": instance_run_data["lines_total"],
+            "lines_matched": instance_run_data["lines_matched"],
+        }

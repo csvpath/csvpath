@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from csvpath import CsvPaths
 from csvpath.managers.integrations.sql.sql_result_listener import SqlResultListener
 from csvpath.managers.integrations.sql.sql_results_listener import SqlResultsListener
+from csvpath.managers.integrations.sql.sql_file_listener import SqlFileListener
+from csvpath.managers.integrations.sql.sql_paths_listener import SqlPathsListener
 from csvpath.managers.integrations.sql.tables import Tables
 
 
@@ -28,8 +30,8 @@ class TestSql(unittest.TestCase):
         listener.engine = self._engine
         table = listener.instance_run
         assert table.name == "instance_run"
-        assert "uuid" in table.c  # Check if `uuid` column exists
-        assert "valid" in table.c  # Check if `valid` column exists
+        assert "uuid" in table.c
+        assert "valid" in table.c
         #
         # group run
         #
@@ -38,8 +40,93 @@ class TestSql(unittest.TestCase):
         listener.engine = self._engine
         table = listener.group_run
         assert table.name == "named_paths_group_run"
-        assert "uuid" in table.c  # Check if `uuid` column exists
-        assert "run_home" in table.c  # Check if `run_home` column exists
+        assert "uuid" in table.c
+        assert "run_home" in table.c
+        #
+        # named-files
+        #
+        listener = SqlFileListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        table = listener.named_file
+        assert table.name == "named_file"
+        assert "uuid" in table.c
+        assert "file_home" in table.c
+        #
+        # named-paths
+        #
+        listener = SqlPathsListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        table = listener.named_paths
+        assert table.name == "named_paths"
+        assert "uuid" in table.c
+        assert "paths_home" in table.c
+
+    # =======================
+    # inserts
+    # =======================
+
+    def test_sql_named_paths_data_insertion(self):
+        paths = CsvPaths()
+        listener = SqlPathsListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine  # Use in-memory SQLite
+        named_paths_data = {
+            "uuid": "test-uuid",
+            "at": datetime.datetime.now(),
+            "paths_name": "aname",
+            "paths_home": "a/b/c/aname",
+            "group_file_path": "a/b/c/aname/afile.csv/abcsd.csv",
+            "paths_count": 5,
+            "ip_address": "0.0.0.0",
+            "hostname": "mymachine",
+            "username": "fish",
+            "paths_root": "i/j/k",
+            "base_path": "e/f/g",
+            "manifest_path": "a/b/c/aname/manifest.json",
+        }
+        listener._upsert_named_paths(named_paths_data, dispose=False)
+        with listener.engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT * FROM named_paths WHERE uuid = 'test-uuid'")
+            ).fetchone()
+            assert result
+            assert result[0] == "test-uuid"
+            assert result.paths_count == 5
+
+    def test_sql_named_file_data_insertion(self):
+        paths = CsvPaths()
+        listener = SqlFileListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine  # Use in-memory SQLite
+        named_file_data = {
+            "uuid": "test-uuid",
+            "at": datetime.datetime.now(),
+            "named_file_name": "afile.csv",
+            "origin_path": "x/y/z/afile.csv",
+            "name_home": "aname",
+            "file_home": "a/b/c/aname",
+            "file_path": "a/b/c/aname/afile.csv/abcsd.csv",
+            "file_name": "abcsd.csv",
+            "mark": None,
+            "type": "csv",
+            "file_size": 0,
+            "ip_address": "0.0.0.0",
+            "hostname": "mymachine",
+            "username": "fish",
+            "files_root": "i/j/k",
+            "base_path": "e/f/g",
+            "manifest_path": "a/b/c/aname/manifest.json",
+        }
+        listener._upsert_named_file(named_file_data, dispose=False)
+        with listener.engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT * FROM named_file WHERE uuid = 'test-uuid'")
+            ).fetchone()
+            assert result
+            assert result[0] == "test-uuid"
+            assert result.type == "csv"
 
     def test_sql_instance_run_data_insertion(self):
         paths = CsvPaths()
@@ -73,7 +160,6 @@ class TestSql(unittest.TestCase):
             result = conn.execute(
                 text("SELECT * FROM instance_run WHERE uuid = 'test-uuid'")
             ).fetchone()
-            print(f"test_sql_data_insertion: conn: {conn}, result: {result}")
             assert result
             assert result[0] == "test-uuid"
             assert result.valid == "Y"
@@ -112,7 +198,6 @@ class TestSql(unittest.TestCase):
             "manifest_path": "/path/to/manifest",
         }
         listener._upsert_named_paths_group_run(group_run_data, dispose=False)
-
         with self._engine.connect() as conn:
             result = conn.execute(
                 text("SELECT * FROM named_paths_group_run WHERE uuid = 'test-uuid'")
@@ -121,12 +206,88 @@ class TestSql(unittest.TestCase):
             assert result[0] == "test-uuid"
             assert result.status == "completed"
 
+    # =======================
+    # updates
+    # =======================
+
+    def test_sql_upsert_named_paths_functionality(self):
+        paths = CsvPaths()
+        listener = SqlPathsListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        # Initial insert
+        named_paths_data = {
+            "uuid": "test-uuid",
+            "at": datetime.datetime.now(),
+            "paths_name": "aname",
+            "paths_home": "a/b/c/aname",
+            "group_file_path": "a/b/c/aname/afile.csv/abcsd.csv",
+            "paths_count": 5,
+            "ip_address": "0.0.0.0",
+            "hostname": "mymachine",
+            "username": "fish",
+            "paths_root": "i/j/k",
+            "base_path": "e/f/g",
+            "manifest_path": "a/b/c/aname/manifest.json",
+        }
+        listener._upsert_named_paths(named_paths_data, dispose=False)
+        # Update the data
+        updated_named_paths_data = named_paths_data.copy()
+        updated_named_paths_data["paths_count"] = 7  # Change the value
+        listener._upsert_named_paths(updated_named_paths_data, dispose=False)
+        # Verify the updated data
+        with listener.engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT * FROM named_paths WHERE uuid = 'test-uuid'")
+            ).fetchone()
+            assert result.uuid == "test-uuid"
+            assert result.paths_count == 7
+
+    def test_sql_upsert_named_file_functionality(self):
+        paths = CsvPaths()
+        listener = SqlFileListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        # Initial insert
+        named_file_data = {
+            "uuid": "test-uuid",
+            "at": datetime.datetime.now(),
+            "named_file_name": "afile.csv",
+            "origin_path": "x/y/z/afile.csv",
+            "name_home": "aname",
+            "file_home": "a/b/c/aname",
+            "file_path": "a/b/c/aname/afile.csv/abcsd.csv",
+            "file_name": "abcsd.csv",
+            "mark": None,
+            "type": "csv",
+            "file_size": 0,
+            "ip_address": "0.0.0.0",
+            "hostname": "mymachine",
+            "username": "fish",
+            "files_root": "i/j/k",
+            "base_path": "e/f/g",
+            "manifest_path": "a/b/c/aname/manifest.json",
+        }
+        listener._upsert_named_file(named_file_data, dispose=False)
+        # Update the data
+        updated_named_file_data = named_file_data.copy()
+        updated_named_file_data["mark"] = "#"  # Change the value
+        updated_named_file_data["file_size"] = 2000  # Change the value
+        listener._upsert_named_file(updated_named_file_data, dispose=False)
+        # Verify the updated data
+        with listener.engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT * FROM named_file WHERE uuid = 'test-uuid'")
+            ).fetchone()
+            assert result.uuid == "test-uuid"
+            assert result.mark == "#"
+            assert result.file_size == 2000
+
     def test_sql_upsert_instance_run_functionality(self):
         paths = CsvPaths()
         listener = SqlResultListener(config=paths.config)
         listener.csvpaths = paths
         listener.engine = self._engine
-
         # Initial insert
         instance_run_data = {
             "uuid": "test-uuid",
@@ -214,6 +375,10 @@ class TestSql(unittest.TestCase):
             assert result.uuid == "test-uuid"
             assert result.status == "failed"
 
+    # =======================
+    # invalid data
+    # =======================
+
     def test_sql_instance_invalid_data(self):
         paths = CsvPaths()
         listener = SqlResultListener(config=paths.config)
@@ -240,3 +405,31 @@ class TestSql(unittest.TestCase):
         }
         with pytest.raises(KeyError):
             listener._upsert_named_paths_group_run(invalid_data)
+
+    def test_sql_named_file_invalid_data(self):
+        paths = CsvPaths()
+        listener = SqlFileListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        # Missing required field (e.g., "uuid")
+        invalid_data = {
+            "at": datetime.datetime.now(),
+            "status": "completed",
+            # Missing "uuid" and other fields
+        }
+        with pytest.raises(KeyError):
+            listener._upsert_named_file(invalid_data)
+
+    def test_sql_named_paths_invalid_data(self):
+        paths = CsvPaths()
+        listener = SqlPathsListener(config=paths.config)
+        listener.csvpaths = paths
+        listener.engine = self._engine
+        # Missing required field (e.g., "uuid")
+        invalid_data = {
+            "at": datetime.datetime.now(),
+            "status": "completed",
+            # Missing "uuid" and other fields
+        }
+        with pytest.raises(KeyError):
+            listener._upsert_named_paths(invalid_data)

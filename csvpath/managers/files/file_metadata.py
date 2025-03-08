@@ -22,3 +22,4 @@ class FileMetadata(Metadata):
         self.mark = None
         # like csv
         self.type = None
+        self.file_size = 0

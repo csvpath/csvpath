@@ -40,6 +40,7 @@ def clear_files(request):
             except Exception as e:
                 print(f"Error in cleaning {p}: {type(e)}: {e}")
 
+    config._assure_archive_path()
     print("Clean-up complete.")
     print(
         "\nREMEMBER TO CHECK THAT CONFIG.INI PATHS (IN ./CONFIG/ AND ./TEST/) MATCH SYSTEM SEPARATORS\n\n"
