@@ -55,6 +55,7 @@ prompt-toolkit = "^3.0.50"
 pdoc = "^15.0.1"
 azure-storage-blob = "^12.24.1"
 google-cloud-storage = "^3.1.0"
+sqlalchemy = "^2.0.38"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

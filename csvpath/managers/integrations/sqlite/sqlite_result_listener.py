@@ -12,7 +12,7 @@ class SqliteResultListener(Listener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError(
-                "Sqlite results listener cannot continue without a CsvPaths instance"
+                "Sqlite result listener cannot continue without a CsvPaths instance"
             )
         with Sqliter(
             config=self.csvpaths.config, client_class=SqliteResultListener
