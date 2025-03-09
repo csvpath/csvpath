@@ -25,11 +25,19 @@ class SqlResultsListener(SqlListener):
             "at": mdata.time,
             "time_completed": mdata.time_completed,
             "status": mdata.status,
-            "by_line_run": "Y" if mdata.by_line else "N",
-            "all_completed": "Y" if mdata.all_completed else "N",
-            "all_valid": "Y" if mdata.all_valid else "N",
+            "by_line_run": "Y"
+            if (mdata.by_line is True or mdata.by_line == "Y")
+            else "N",
+            "all_completed": "Y"
+            if (mdata.all_completed is True or mdata.all_completed == "Y")
+            else "N",
+            "all_valid": "Y"
+            if (mdata.all_valid is True or mdata.all_valid == "Y")
+            else "N",
+            "all_expected_files": "Y"
+            if (mdata.all_expected_files is True or mdata.all_expected_files == "Y")
+            else "N",
             "error_count": mdata.error_count or 0,
-            "all_expected_files": "Y" if mdata.all_expected_files else "N",
             "archive_name": mdata.archive_name,
             "run_home": mdata.run_home,
             "named_results_name": mdata.named_results_name,
@@ -73,9 +81,7 @@ class SqlResultsListener(SqlListener):
                     .on_duplicate_key_update(self._set(group_run_data))
                 )
             elif dialect == "mssql":
-                raise NotImplementedError(
-                    "SQL Server support for named_paths_group_run is not yet implemented."
-                )
+                raise NotImplementedError("SQL Server support is not yet implemented.")
             else:
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
@@ -87,8 +93,23 @@ class SqlResultsListener(SqlListener):
         return {
             "status": group_run_data["status"],
             "time_completed": group_run_data["time_completed"],
-            "all_completed": group_run_data["all_completed"],
-            "all_valid": group_run_data["all_valid"],
             "error_count": group_run_data["error_count"],
-            "all_expected_files": group_run_data["all_expected_files"],
+            "all_completed": "Y"
+            if (
+                group_run_data["all_completed"] is True
+                or group_run_data["all_completed"] == "Y"
+            )
+            else "N",
+            "all_valid": "Y"
+            if (
+                group_run_data["all_valid"] is True
+                or group_run_data["all_valid"] == "Y"
+            )
+            else "N",
+            "all_expected_files": "Y"
+            if (
+                group_run_data["all_expected_files"] is True
+                or group_run_data["all_expected_files"] == "Y"
+            )
+            else "N",
         }

@@ -311,12 +311,10 @@ class TestSql(unittest.TestCase):
             "manifest_path": "/path/to/manifest",
         }
         listener._upsert_instance_run(instance_run_data, dispose=False)
-
         # Update the data
         updated_run_data = instance_run_data.copy()
         updated_run_data["valid"] = "N"  # Change the value
         listener._upsert_instance_run(updated_run_data, dispose=False)
-
         # Verify the updated data
         with listener.engine.connect() as conn:
             result = conn.execute(
