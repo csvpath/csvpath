@@ -62,7 +62,6 @@ class SqlFileListener(SqlListener):
                     .on_duplicate_key_update(self._set(named_file_data))
                 )
             elif dialect == "mssql":
-                # SQL Server `MERGE` support (not implemented in this example)
                 raise NotImplementedError("SQL Server support is not yet implemented.")
             else:
                 raise ValueError(f"Unsupported database dialect: {dialect}")
@@ -72,7 +71,7 @@ class SqlFileListener(SqlListener):
             self.engine.dispose()
 
     def _set(self, named_file_data) -> dict:
-        set_ = {
+        return {
             "files_root": named_file_data["files_root"],
             "file_home": named_file_data["file_home"],
             "file_path": named_file_data["file_path"],
@@ -84,4 +83,3 @@ class SqlFileListener(SqlListener):
             "hostname": named_file_data["hostname"],
             "username": named_file_data["username"],
         }
-        return set_

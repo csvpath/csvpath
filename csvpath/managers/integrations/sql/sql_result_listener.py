@@ -63,7 +63,6 @@ class SqlResultListener(SqlListener):
                     .on_duplicate_key_update(self._set(instance_run_data))
                 )
             elif dialect == "mssql":
-                # SQL Server `MERGE` support (not implemented in this example)
                 raise NotImplementedError("SQL Server support is not yet implemented.")
             else:
                 raise ValueError(f"Unsupported database dialect: {dialect}")
