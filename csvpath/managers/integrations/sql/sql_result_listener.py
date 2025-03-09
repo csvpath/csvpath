@@ -27,15 +27,24 @@ class SqlResultListener(SqlListener):
             "instance_identity": mdata.instance_identity,
             "instance_index": mdata.instance_index,
             "instance_home": mdata.instance_home,
-            "source_mode_preceding": mdata.source_mode_preceding,
             "preceding_instance_identity": mdata.preceding_instance_identity,
             "actual_data_file": mdata.actual_data_file,
-            "valid": "Y" if mdata.valid else "N",
-            "completed": "Y" if mdata.completed else "N",
+            "source_mode_preceding": "Y"
+            if (
+                mdata.source_mode_preceding is True
+                or mdata.source_mode_preceding == "Y"
+            )
+            else "N",
+            "valid": "Y" if (mdata.valid is True or mdata.valid == "Y") else "N",
+            "completed": "Y"
+            if (mdata.completed is True or mdata.completed == "Y")
+            else "N",
+            "files_expected": "Y"
+            if (mdata.files_expected is True or mdata.files_expected == "Y")
+            else "N",
             "error_count": mdata.error_count if mdata.error_count else 0,
             "number_of_files_expected": mdata.number_of_files_expected,
             "number_of_files_generated": mdata.number_of_files_generated,
-            "files_expected": "Y" if mdata.files_expected else "N",
             "lines_scanned": mdata.lines_scanned,
             "lines_total": mdata.lines_total,
             "lines_matched": mdata.lines_matched,
@@ -47,14 +56,13 @@ class SqlResultListener(SqlListener):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting run result metadata into %s", dialect)
+            s = self._set(instance_run_data)
             if dialect in ["postgresql", "sqlite"]:
                 ist = pg_insert if dialect == "postgresql" else sqlite_insert
                 stmt = (
                     ist(self.instance_run)
                     .values(instance_run_data)
-                    .on_conflict_do_update(
-                        index_elements=["uuid"], set_=self._set(instance_run_data)
-                    )
+                    .on_conflict_do_update(index_elements=["uuid"], set_=s)
                 )
             elif dialect == "mysql":
                 stmt = (
@@ -73,8 +81,15 @@ class SqlResultListener(SqlListener):
 
     def _set(self, instance_run_data: dict) -> dict:
         return {
-            "valid": instance_run_data["valid"],
-            "completed": instance_run_data["completed"],
+            "valid": "Y"
+            if (instance_run_data["valid"] is True or instance_run_data["valid"] == "Y")
+            else "N",
+            "completed": "Y"
+            if (
+                instance_run_data["completed"] is True
+                or instance_run_data["completed"] == "Y"
+            )
+            else "N",
             "error_count": instance_run_data["error_count"],
             "number_of_files_expected": instance_run_data["number_of_files_expected"],
             "number_of_files_generated": instance_run_data["number_of_files_generated"],
