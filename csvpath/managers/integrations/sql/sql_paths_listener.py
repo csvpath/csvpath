@@ -57,7 +57,6 @@ class SqlPathsListener(SqlListener):
                     .on_duplicate_key_update(self._set(named_paths_data))
                 )
             elif dialect == "mssql":
-                # SQL Server `MERGE` support (not implemented in this example)
                 raise NotImplementedError("SQL Server support is not yet implemented.")
             else:
                 raise ValueError(f"Unsupported database dialect: {dialect}")
@@ -67,7 +66,7 @@ class SqlPathsListener(SqlListener):
             self.engine.dispose()
 
     def _set(self, named_paths_data) -> dict:
-        set_ = {
+        return {
             "paths_root": named_paths_data["paths_name"],
             "paths_name": named_paths_data["paths_name"],
             "paths_home": named_paths_data["paths_home"],
@@ -77,4 +76,3 @@ class SqlPathsListener(SqlListener):
             "hostname": named_paths_data["hostname"],
             "username": named_paths_data["username"],
         }
-        return set_

@@ -90,7 +90,9 @@ class Tables:
             Column("file_path", String(250)),
             Column("file_name", String(100)),
             Column("mark", String(5)),
-            Column("type", String(20)),
+            Column(
+                "type", String(250)
+            ),  # type is expected to be like csv, xlsx, etc. but w/http download we don't know
             Column("file_size", Integer, default=0),
             Column("ip_address", String(30)),
             Column("hostname", String(100)),
