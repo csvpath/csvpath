@@ -145,9 +145,10 @@ class FileRegistrar(Registrar, Listener):
             )
         if (
             # TODO: s3 can do nos.exists
-            not path.startswith("s3:")
+            # not path.startswith("s3:")
             # Nos doesn't handle http files. they are special--inbound only.
-            and not path.startswith("http:")
+            # and
+            not path.startswith("http:")
             and not path.startswith("https:")
             # and not azure? gcp? should be handled by nos anyway.
             and not Nos(path).exists()
@@ -188,7 +189,7 @@ class FileRegistrar(Registrar, Listener):
                 and _["file_home"] == mdata.file_home
             ):
                 #
-                # leave as info so nobody has to dig to see why no update
+                # log info so nobody has to dig to see why no update
                 #
                 self.csvpaths.logger.info("File has already been registered: %s", jdata)
                 return
