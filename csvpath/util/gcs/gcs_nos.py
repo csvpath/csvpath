@@ -61,34 +61,6 @@ class GcsDo:
     def physical_dirs(self) -> bool:
         return False
 
-    def listdir(self) -> list[str]:
-        bucket, blob = GcsUtility.path_to_parts(self.path)
-        # print(f"\ngcs_nos: listdir: bucket: {bucket}, blob: {blob}")
-        if not blob.endswith("/"):
-            blob = f"{blob}/"
-        client = GcsUtility.make_client()
-        bucket_obj = client.bucket(bucket)
-        # print(f"gcs_nos: listdir: bucket_obj: {bucket_obj}")
-        # blobs = client.list_blobs(bucket_obj, prefix=blob)
-        blobs = client.list_blobs(bucket_obj, prefix=blob, delimiter="/")
-        lst = [blob.name for blob in blobs]
-        # print(f"gcs_nos: listdir: lst: {lst}")
-        prefixes = [blob for blob in blobs.prefixes]
-        # print(f"gcs_nos: listdir: prefixes: {prefixes}")
-        allnames = lst + prefixes
-        # print(f"gcs_nos: listdir: allnames: {allnames}")
-        names = []
-        for name in allnames:
-            # print(f"gcs_nos: listdir: name 1: {name}")
-            name = name[len(blob) :]
-            # print(f"gcs_nos: listdir: name 2: {name}")
-            if "/" not in name:
-                names.append(name)
-            else:
-                names.append(name[0 : name.find("/")])
-        # print(f"gcsnos: listdir: returning: {names}")
-        return names
-
     def makedirs(self) -> None:
         # Not required for GCS
         ...
@@ -96,3 +68,74 @@ class GcsDo:
     def makedir(self) -> None:
         # Not required for GCS
         ...
+
+    def listdir(
+        self,
+        *,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list[str]:
+        return self._listdir(
+            path=self.path, files_only=files_only, recurse=recurse, dirs_only=dirs_only
+        )
+
+    def _listdir(
+        self,
+        *,
+        path,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list[str]:
+        if files_only is True and dirs_only is True:
+            raise ValueError("Cannot list with neither files nor dirs")
+        bucket, blob = GcsUtility.path_to_parts(path)
+        if not blob.endswith("/") and blob.strip() != "":
+            blob = f"{blob}/"
+        client = GcsUtility.make_client()
+        bucket_obj = client.bucket(bucket)
+        blobs = client.list_blobs(bucket_obj, prefix=blob, delimiter="/")
+
+        names = []
+        for b in blobs:
+            if dirs_only is False:
+                name = b.name
+                if recurse is True:
+                    names.append(name)
+                else:
+                    name = name[len(blob) :]
+                    i = name.find("/")
+                    if i > -1:
+                        name = name[0:i]
+                    names.append(name)
+
+        for prefix in blobs.prefixes:
+            if files_only is True and recurse is True:
+                path = f"{bucket}/{prefix}/"
+                path = path.replace("//", "/")
+                path = f"gs://{path}"
+                names += self._listdir(
+                    path=path,
+                    files_only=files_only,
+                    recurse=recurse,
+                    dirs_only=dirs_only,
+                )
+            if files_only is True and recurse is False:
+                continue
+            if files_only is False and recurse is True:
+                names.append(prefix.rstrip("/"))
+                path = f"{bucket}/{prefix}"
+                path = path.replace("//", "/")
+                path = f"gs://{path}"
+                names += self._listdir(
+                    path=path,
+                    files_only=files_only,
+                    recurse=recurse,
+                    dirs_only=dirs_only,
+                )
+            if files_only is False and recurse is False:
+                prefix = prefix[len(blob) :]
+                names.append(prefix.rstrip("/"))
+
+        return names

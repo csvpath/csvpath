@@ -63,7 +63,7 @@ class TestDataReaders(unittest.TestCase):
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         mgr = paths.file_manager
-        if mgr.name_exists("xlsx"):
+        if mgr.has_named_file("xlsx"):
             mgr.remove_named_file("xlsx")
         mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
         xreader = mgr.get_named_file_reader("xlsx")

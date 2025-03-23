@@ -100,6 +100,7 @@ class GeneralDataWriter(DataFileWriter):
 
     def load_if(self) -> None:
         if self.sink is None:
+            # if not self.path.startswith("inputs")  and self.path.find("categor") > -1:
             mode = "w" if self._mode is None else self._mode
             if mode != "wb":
                 self.sink = open(self.path, mode, encoding="utf-8", newline="")

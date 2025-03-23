@@ -72,7 +72,6 @@ class TestNewCsvPaths(unittest.TestCase):
         #
         # reload
         #
-        print("\nreloading food results")
         paths = CsvPaths()
         results = paths.results_manager.get_named_results("food")
         assert results
@@ -202,7 +201,6 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="stopping"):
-            print(f"***: {i}")
             i += 1
         cs.results_manager.get_named_results("stopping")
         vs = cs.results_manager.get_variables("stopping")
@@ -278,14 +276,19 @@ class TestNewCsvPaths(unittest.TestCase):
 
     def test_csvpaths_replay(self):
         paths = CsvPaths()
-        self.load(paths)
+        paths.paths_manager.remove_named_paths("sourcemode")
+        paths.file_manager.remove_named_file("sourcemode")
+        paths.paths_manager.add_named_paths_from_json(
+            file_path="tests/test_resources/sourcemode.json"
+        )
+        paths.file_manager.add_named_file(name="sourcemode", path=PATH)
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # do a run
         #
         paths.collect_paths(filename="sourcemode", pathsname="sourcemode")
         #
-        # replay:
+        # replay it:
         #   - filename is the last run's source1 csvpath data.csv output
         #   - path is source2:from, meaning csvpath source2 and all following paths
         #
@@ -293,8 +296,10 @@ class TestNewCsvPaths(unittest.TestCase):
         # the filename and named-paths name will be visible in the metadata, along
         # with the resolved physical file path
         #
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(
-            filename="$sourcemode.results.202:last.source1",
+            filename="$sourcemode.results.aprx/202:last/sub.source1",
             pathsname="$sourcemode.csvpaths.source2:from",
         )
         results = paths.results_manager.get_named_results("sourcemode")

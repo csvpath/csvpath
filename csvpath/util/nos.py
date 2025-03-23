@@ -11,9 +11,13 @@ from .gcs.gcs_nos import GcsDo
 
 class Nos:
     def __init__(self, path, config: Config = None):
-        self._path = path
+        self._path = None
         self._do = None
         self._config = config
+        self.path = path
+
+    def __str__(self) -> str:
+        return f"{type(self)}: do: {self.do}, path: {self.path}"
 
     @property
     def path(self) -> str:
@@ -24,7 +28,10 @@ class Nos:
         if self._protocol_mismatch(p):
             self._do = None
         self._path = p
-        self.do.path = p
+        if p is None:
+            self._do = None
+        else:
+            self.do.path = p
 
     def _protocol_mismatch(self, path) -> bool:
         if path is None:
@@ -98,8 +105,17 @@ class Nos:
     def makedir(self) -> None:
         self.do.makedir()
 
-    def listdir(self) -> list[str]:
-        return self.do.listdir()
+    def listdir(
+        self,
+        *,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list[str]:
+        print(f"x: dirs_only: {dirs_only}")
+        return self.do.listdir(
+            files_only=files_only, recurse=recurse, dirs_only=dirs_only
+        )
 
     def isfile(self) -> bool:
         return self.do.isfile()
@@ -138,8 +154,29 @@ class FileDo:
     def makedir(self) -> None:
         Path(self.path).mkdir(parents=True, exist_ok=True)
 
-    def listdir(self) -> list[str]:
-        return os.listdir(self.path)
-
     def isfile(self) -> bool:
         return os.path.isfile(self.path)
+
+    def listdir(
+        self,
+        *,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list[str]:
+        if files_only is True and dirs_only is True:
+            raise ValueError("Cannot list with neither files nor dirs")
+        if recurse is True:
+            lst = []
+            for root, dirs, files in os.walk(self.path):
+                if dirs_only is False:
+                    for file in files:
+                        lst.append(os.path.join(root, file))  # .replace("//","/")
+                if files_only is False:
+                    for d in dirs:
+                        lst.append(os.path.join(root, d))
+            return lst
+        paths = os.listdir(self.path)
+        if files_only:
+            return [_ for _ in paths if os.path.isfile(os.path.join(self.path, _))]
+        return paths

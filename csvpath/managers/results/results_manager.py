@@ -1,12 +1,13 @@
 # pylint: disable=C0114
 import os
+import json
 from pathlib import Path
 import datetime
 import dateutil.parser
 from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
-from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -70,7 +71,13 @@ class ResultsManager:  # pylint: disable=C0115
 
         rr.register_complete(mdata)
 
-    def start_run(self, *, run_dir, pathsname, filename) -> None:
+    #
+    # since the filename may be a reference that picks out multiple files
+    # we pass the physical data file. if file_manager receives that it
+    # will look in the named-file manifest for the registration that matches
+    # and return that uuid.
+    #
+    def start_run(self, *, run_dir, pathsname, filename, file: str = None) -> None:
         """@private"""
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
@@ -85,7 +92,9 @@ class ResultsManager:  # pylint: disable=C0115
         np_uuid = self.csvpaths.paths_manager.get_named_paths_uuid(pathsname)
         if np_uuid is None:
             raise ValueError("named_paths_uuid cannot be None")
-        f_uuid = self.csvpaths.file_manager.get_named_file_uuid(filename)
+        f_uuid = self.csvpaths.file_manager.get_named_file_uuid(
+            name=filename, file=file
+        )
         if f_uuid is None:
             raise ValueError("named_file_uuid cannot be None")
         #
@@ -140,6 +149,9 @@ class ResultsManager:  # pylint: disable=C0115
         rr = ResultRegistrar(csvpaths=self.csvpaths, result=r, result_serializer=rs)
         return rr.manifest
 
+    #
+    # original. not reference friendly?
+    #
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
         if results and len(results) > 0:
@@ -206,7 +218,6 @@ class ResultsManager:  # pylint: disable=C0115
         # the archive. the run's own more complete record is below as a
         # separate event. this could change, but atm seems reasonable.
         #
-
         mdata = RunMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
         mdata.archive_name = self.csvpaths.config.archive_name
@@ -218,7 +229,6 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_file_name = result.file_name
         rr = RunRegistrar(self.csvpaths)
         rr.register_start(mdata)
-
         #
         # we prep the results event
         #
@@ -331,9 +341,8 @@ class ResultsManager:  # pylint: disable=C0115
     def save(self, result: Result) -> None:
         """@private"""
         #
-        # at this time we're not holding on to the result.
-        # we have a place for that, but for now not holding
-        # forces the deserialization to work completely, so
+        # at this time we're not holding on to the result. we have a place for that,
+        # but for now not holding forces the deserialization to work completely, so
         # it is worth more than the minor speed up of caching.
         #
         if self._csvpaths is None:
@@ -342,9 +351,8 @@ class ResultsManager:  # pylint: disable=C0115
             # we are done spooling. need to close whatever may be open.
             result.lines.close()
             # cannot make lines None w/o recreating lines. now we're setting
-            # closed to true to indicate that we've written.
-            # we don't need the serializer trying to save spooled lines
-            # result.lines = None
+            # closed to true to indicate that we've written. we don't need the
+            # serializer trying to save spooled lines result.lines = None
         #
         # if we are doing a transfer(s) do it here so we can put metadata in about
         # the copy before the metadata is serialized into the results.
@@ -356,222 +364,52 @@ class ResultsManager:  # pylint: disable=C0115
             csvpaths=self.csvpaths, result=result, result_serializer=rs
         ).register_complete()
 
-    def get_run_dir_for_reference(self, ref: str) -> str:
-        ref = ReferenceParser(ref)
-        if ref.datatype != ReferenceParser.RESULTS:
-            raise InputException(f"Datatype must be {ReferenceParser.RESULTS}")
-        instance = ref.name_one
-        name_three = ref.name_three
-        rname = self.get_named_results_home(ref.root_major)
-        run_dir = self._find_instance(
-            rname, instance, not_name=None, name_three=name_three
-        )
-        if not run_dir.startswith(rname):
-            run_dir = os.path.join(rname, run_dir)
-        return run_dir
-
-    # in this form: $group.results.2024-01-01_10-15-20.mypath
-    def data_file_for_reference(self, refstr, not_name: str = None) -> str:
-        """@private"""
-        ref = ReferenceParser(refstr)
-        if ref.datatype != ReferenceParser.RESULTS:
-            raise InputException(
-                f"Reference datatype must be {ReferenceParser.RESULTS}"
-            )
-        namedpaths = ref.root_major
-        instance = ref.name_one
-        path = ref.name_three  # not used? why?
-        name_three = ref.name_three
-        base = self._csvpaths.config.archive_path
-        filename = os.path.join(base, namedpaths)
-        if not Nos(filename).dir_exists():
-            raise InputException(
-                f"Reference {refstr} generated {filename} path that does not point to a previously run named-paths group"
-            )
-        #
-        # instance can have var-subs like:
-        #   2024-01-01_10-15-:last
-        #   2024-01-01_10-:first
-        #   2024-01-01_10-:0
-        #
-        instance = self._find_instance(
-            filename, instance, not_name=not_name, name_three=name_three
-        )
-        #
-        # this doubled base showed up as a problem in Cli during replay. it likely stems
-        # from a difference between a :last/:first ref vs. just a plan run name. would
-        # be nice to try buffing it out, but atm it's fine.
-        #
-        if not instance.startswith(filename):
-            filename = os.path.join(filename, instance)
-        else:
-            filename = instance
-        if not Nos(filename).dir_exists():
-            raise InputException(
-                f"Reference {refstr} does not point to a valid named-paths run file at {filename}"
-            )
-        filename = os.path.join(filename, path)
-        if not Nos(filename).dir_exists():
-            raise InputException(
-                f"Reference to {filename} does not point to a csvpath in a named-paths group run"
-            )
-        filename = os.path.join(filename, "data.csv")
-        if not Nos(filename).exists():
-            raise InputException(
-                "Reference does not point to a data file resulting from a named-paths group run"
-            )
-        return filename
-
-    def _find_instance(
-        self, filename, instance, not_name: str = None, name_three: str = None
-    ) -> str:
-        """@private
-        remember that you cannot replay a replay using :last. the reason is that both
-        runs will be looking for the same assets but the last replay run will not have
-        the asset needed. in principle, we could fix this, but in practice, any magic
-        we do to make it always work is going to make the lineage more mysterious.
-        """
-        c = instance.find(":")
-        if c == -1:
-            filename = os.path.join(filename, instance)
-            return filename
-        if not Nos(filename).dir_exists():
-            raise InputException(f"The base dir {filename} must exist")
-        var = instance[c:]
-        instance = instance[0:c]
-        ret = None
-        if var == ":last":
-            ret = self._find_last(
-                filename, instance, not_name=not_name, name_three=name_three
-            )
-        elif var == ":first":
-            ret = self._find_first(
-                filename, instance, not_name=not_name, name_three=name_three
-            )
-        else:
-            raise InputException(f"Unknown reference var-sub token {var}")
-        return ret
-
-    def _find_last(
-        self, filename, instance, not_name: str = None, name_three: str = None
-    ) -> str:
-        """@private"""
-        last = True
-        return self._find(
-            filename, instance, last, not_name=not_name, name_three=name_three
-        )
-
-    def _find_first(
-        self, filename, instance, not_name: str = None, name_three: str = None
-    ) -> str:
-        """@private"""
-        first = False
-        return self._find(
-            filename, instance, first, not_name=not_name, name_three=name_three
-        )
-
-    def _find(
-        self,
-        filename,
-        instance,
-        last: bool = True,
-        not_name: str = None,
-        name_three: str = None,
-    ) -> str:
-        """@private"""
-        names = Nos(filename).listdir()
-        ns = []
-        for n in names:
-            if not_name is not None and not_name.endswith(n):
-                continue
-            if n.startswith("."):
-                continue
-            #
-            # test for manifest existing here?
-            #
-            mani = os.path.join(filename, n)
-            mani = os.path.join(mani, "manifest.json")
-            if not Nos(mani).exists():
-                continue
-            if name_three:
-                mani = os.path.join(filename, n)
-                mani = os.path.join(mani, name_three)
-                mani = os.path.join(mani, "manifest.json")
-                if not Nos(mani).exists():
-                    continue
-            ns.append(n)
-        return self._find_in_dir_names(instance, ns, last)
-
-    def _find_in_dir_names(self, instance: str, names, last: bool = True) -> str:
-        """@private"""
-        ms = "%Y-%m-%d_%H-%M-%S_%f"
-        s = "%Y-%m-%d_%H-%M-%S"
-        names = [n for n in names if n.startswith(instance)]
-        if len(names) == 0:
-            return None
-        #
-        # change from . to _ requires change from find to count
-        #
-        names = sorted(
-            names,
-            key=lambda x: datetime.datetime.strptime(x, ms if x.count("_") > 1 else s),
-        )
-        if last is True:
-            i = len(names)
-            #
-            # we drop 1 because -1 for the 0-base. note that we may find a replay
-            # run that doesn't have the asset we're looking for. that's not great
-            # but it is fine -- the rule is, no replays of replays using :last.
-            # it is on the user to set up their replay approprately.
-            #
-            i -= 1
-            if i < 0:
-                self.csvpaths.logger.error(
-                    f"Previous run is at count {i} but there is no such run. Returning None."
-                )
-                self.csvpaths.logger.info(
-                    "Found previous runs: %s matching instance: %s", names, instance
-                )
-                return None
-            ret = names[i]
-        else:
-            ret = names[0]
-        return ret
-
-    def get_run_time_str(self, name, run_time) -> str:
-        """@private"""
-        rs = ResultSerializer(self._csvpaths.config.archive_path)
-        t = rs.get_run_dir(paths_name=name, run_time=run_time)
-        return t
-
     def remove_named_results(self, name: str) -> None:
         """@private"""
         #
-        # does not get rid of results on disk
+        # TODO: does not get rid of results on disk
         #
         if name in self.named_results:
             del self.named_results[name]
             self._variables = None
         else:
             self.csvpaths.logger.warning(f"Results '{name}' not found")
-            #
-            # we treat this as a recoverable error because typically the user
-            # has complete control of the csvpaths environment, making the
-            # problem config that should be addressed.
-            #
-            # if reached by a reference this error should be trapped at an
-            # expression and handled according to the error policy.
-            #
-            raise InputException(f"Results '{name}' not found")
 
+    #
+    # @deprecated. use remove_named_results
+    #
     def clean_named_results(self, name: str) -> None:
         """@private"""
         if name in self.named_results:
             self.remove_named_results(name)
-            #
-            # clean from filesystem too?
-            #
 
+    def all_run_dir_names(self, path, count) -> dict:
+        mydirs = {}
+        if count >= 0:
+            nos = Nos(path)
+            dirs = nos.listdir()
+            for name in dirs:
+                self.drill_down(nos, path, name, count, mydirs)
+        else:
+            mydirs[os.path.dirname(path)] = path
+        return mydirs
+
+    def drill_down(self, nos, path, name, count, mydirs) -> None:
+        if count >= 0:
+            count -= 1
+            nos.path = os.path.join(path, name)
+            dirs = nos.listdir()
+            for aname in dirs:
+                if count == 0:
+                    mydirs[aname] = os.path.join(nos.path, aname)
+                else:
+                    self.drill_down(
+                        nos, os.path.join(nos.path, aname), aname, count, mydirs
+                    )
+
+    #
+    # effectively is get last named results
+    #
     def get_named_results(self, name) -> List[List[Any]]:
         #
         # CsvPaths instances should not be long lived. they are not servers or
@@ -581,30 +419,61 @@ class ResultsManager:  # pylint: disable=C0115
         if name in self.named_results:
             return self.named_results[name]
         #
-        # find and load the result, if exists. we find
-        # results home with the name. run_home is the
-        # last run dir. the results we're looking for are
-        # the instance dirs in the run dir.
-        # we'll need another method for getting a specific
-        # run, rather than the default, the last one.
+        # find and load the result, if exists. we find results home with the name. run_home is the
+        # last run dir. the results we're looking for are the instance dirs in the run dir.
+        # we'll need another method for getting a specific run, rather than the default, the last one.
+        #
+        # use r̶u̶n̶_̶h̶o̶m̶e̶_̶m̶a̶k̶e̶r̶.r̶u̶n̶s̶_̶h̶o̶m̶e̶_̶f̶r̶o̶m̶_̶t̶e̶m̶p̶l̶a̶t̶e̶ OR an index.json in the named-results root to
+        # find the parent of the runs do the join below with that.
         #
         path = os.path.join(self.csvpaths.config.archive_path, name)
         self.csvpaths.logger.debug(
             "Attempting to load results for %s from %s", name, path
         )
-        nos = Nos(path)
-        exists = nos.dir_exists()
-        nonphy = nos.physical_dirs()
-        # is not nonphy needed?
-        if exists or not nonphy:
-            runs = nos.listdir()
-            if len(runs) > 0:
-                runs.sort()
-                run = runs[len(runs) - 1]
-                rs = self.get_named_results_for_run(name=name, run=run)
-                if rs is not None:
-                    return rs
+        #
+        # find the template. it comes from the named-paths so from the named-paths mgr
+        #
+        template = self._csvpaths.paths_manager.get_template_for_paths(name)
+        #
+        # "top" of template. inserted dirs
+        #
+        run = None
+        if template is not None and not template.strip() == "":
+            #
+            # TODO: there were concerns here pre-complete re the template changes.
+            #
+            t = template[0 : template.find(":run_dir")]
+            t2 = template[template.find(":run_dir") + 8 :]
+            c = t.count("/")  # or \\?
+            c = c if c > -1 else t.count("\\")
+            runs = self.all_run_dir_names(path, c)
+            names = list(runs.keys())
+            names.sort()
+            run = ""
+            if len(names) > 0:
+                run = names[len(names) - 1]
+            rpath = runs[run]
+            rpath = rpath[len(path) + 1 :]
+            if t2 and len(t2) > 0:
+                rpath = f"{rpath}{t2}"
+            run = rpath
+        else:
+            #
+            # original pre-template logic
+            #
+            nos = Nos(path)
+            exists = nos.dir_exists()
+            nonphy = nos.physical_dirs()
+            # is not nonphy needed?
+            if exists or not nonphy:
+                runs = nos.listdir()
+                if len(runs) > 0:
+                    runs.sort()
+                    run = runs[len(runs) - 1]
 
+        results = self.get_named_results_for_run(name=name, run=run)
+        if results:
+            return results
         #
         # we treat this as a recoverable error because typically the user
         # has complete control of the csvpaths environment, making the

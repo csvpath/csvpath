@@ -51,6 +51,14 @@ class SftpConfig:
                 self._load_clients()
         return self._sftp_client
 
+    def reset(self) -> None:
+        if self._ssh_client:
+            self._ssh_client.close()
+            self._sftp_client = None
+            self._ssh_client = None
+            del Box().STUFF[Box.SSH_CLIENT]
+            del Box().STUFF[Box.SFTP_CLIENT]
+
     @property
     def ssh_client(self) -> paramiko.SSHClient:
         if self._ssh_client is None:

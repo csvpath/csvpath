@@ -4,6 +4,7 @@ import time
 import paramiko
 import stat
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
 
 USER = "tinpenny"
@@ -28,6 +29,12 @@ class TestSftpMode(unittest.TestCase):
         server = paths.config.get(section="sftp", name="server")
         port = paths.config.get(section="sftp", name="port")
         fp = f"sftp://{server}:{port}/orders.csv"
+        if not Nos(fp).exists():
+            #
+            # this file should be in the tinpenny root (or whatever account you setup). use
+            # tests/test_resources/add_to_tin_penny_sftp__orders.csv
+            #
+            raise RuntimeError(f"Test file is missing from {fp} so test cannot run")
         paths.file_manager.add_named_file(name="orders", path=fp)
         path = '$[*][ print("#0: $.headers.0, #2: $.headers.2")]'
         d = {"process": [f"{path}"]}

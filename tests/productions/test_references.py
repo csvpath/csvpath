@@ -4,6 +4,7 @@ import pytest
 from lark.exceptions import VisitError
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.productions import Reference
+from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.matching.util.exceptions import MatchException
 
 NAMED_FILES_DIR = f"tests{os.sep}test_resources{os.sep}named_files"
@@ -258,3 +259,36 @@ class TestReferences(unittest.TestCase):
         assert len(lines) == 1
         assert path.variables["in1"] is False
         assert path.variables["in2"] is True
+
+    def test_reference_find_uuid(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.collect_paths(filename="food", pathsname="select")
+        #
+        # find file uuid four ways. two ways for two types of references vs.
+        # named-file names. likewise, two of the four are for uuid methods vs.
+        # getting the manifest and looking up the uuid in it.
+        #
+        uuid = paths.file_manager.get_named_file_uuid(
+            name="$select.results.20:last.two"
+        )
+        assert uuid is not None
+
+        uuid2 = paths.file_manager.get_named_file_uuid(name="food")
+        assert uuid == uuid2
+
+        mani = paths.file_manager.get_manifest("food")
+        uuid3 = mani[len(mani) - 1]["uuid"]
+        assert uuid2 == uuid3
+        #
+        # notice here we have a ref to a specific file version, but we are getting
+        # the whole manifest. it's up to the caller to figure out which item in the
+        # file manifest list they want. in this case we want the last item.
+        #
+        mani2 = paths.file_manager.get_manifest("$food.files.today:last")
+        assert mani == mani2
+        uuid4 = mani2[len(mani2) - 1]["uuid"]
+        assert uuid3 == uuid4

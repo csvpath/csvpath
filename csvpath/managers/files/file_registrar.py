@@ -32,6 +32,8 @@ class FileRegistrar(Registrar, Listener):
         return man[len(man) - 1]["fingerprint"]
 
     def manifest_path(self, home) -> str:
+        if home is None or home.strip() == "":
+            raise ValueError("Home cannot be None or empty")
         nos = Nos(home)
         if nos.physical_dirs() and not nos.dir_exists():
             raise InputException(f"Named file home does not exist: {home}")
@@ -124,6 +126,8 @@ class FileRegistrar(Registrar, Listener):
         mani["from"] = path
         if mark is not None:
             mani["mark"] = mark
+        if mdata.template is not None:
+            mani["template"] = mdata.template
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)
@@ -134,6 +138,10 @@ class FileRegistrar(Registrar, Listener):
     def register_complete(self, mdata: Metadata) -> None:
         path = mdata.origin_path
         home = mdata.name_home
+        if path is None or path.strip() == "":
+            raise ValueError("Path cannot be None or empty")
+        if home is None or home.strip() == "":
+            raise ValueError("Home cannot be None or empty")
         i = path.find("#")
         mark = None
         if i > -1:

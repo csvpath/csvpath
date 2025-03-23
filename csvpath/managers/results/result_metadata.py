@@ -111,6 +111,10 @@ ResultMetadata(
         # data is a list of tuples. not sure it's this simple.
         #
         self.transfers = m.get("transfers")
+        #
+        # do we need/have actual_data_file?
+        #
+        self.actual_data_file = m.get("actual_data_file")
 
     @property
     def named_paths_uuid(self) -> UUID:

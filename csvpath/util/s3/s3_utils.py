@@ -34,9 +34,16 @@ class S3Utils:
         if path.startswith("s3://"):
             path = path[5:]
         b = path.find("/")
-        bucket = path[0:b]
-        key = path[b + 1 :]
-        return (bucket, key)
+        key = None
+        if b > -1:
+            bucket = path[0:b]
+            key = path[b + 1 :]
+        else:
+            bucket = path
+        if key is None or key.strip() == "":
+            key = "/"
+        t = (bucket, key)
+        return t
 
     @classmethod
     def exists(self, bucket: str, key: str, client) -> bool:

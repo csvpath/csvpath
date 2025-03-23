@@ -40,6 +40,8 @@ class ResultsRegistrar(Registrar, Listener):
         filename = mdata.named_file_name
         fingerprint = self.csvpaths.file_manager.get_fingerprint_for_name(filename)
         filepath = self.csvpaths.file_manager.get_named_file(filename)
+        if isinstance(filepath, list):
+            filepath = filepath[0]
         ffingerprint = self._fingerprint_file(filepath)
         mdata.named_file_fingerprint = ffingerprint
         if self.results and len(self.results) > 0:

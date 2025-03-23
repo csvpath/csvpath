@@ -322,6 +322,7 @@ class TestSql(unittest.TestCase):
             ).fetchone()
             assert result.uuid == "test-uuid"
             assert result.valid == "N"
+            conn.commit()
 
     def test_upsert_group_run_functionality(self):
         paths = CsvPaths()
