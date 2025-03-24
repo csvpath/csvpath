@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import os
 import json
+import re
 from pathlib import Path
 import datetime
 import dateutil.parser
@@ -387,13 +388,18 @@ class ResultsManager:  # pylint: disable=C0115
         mydirs = {}
         if count >= 0:
             nos = Nos(path)
-            dirs = nos.listdir()
-            for name in dirs:
-                self.drill_down(nos, path, name, count, mydirs)
+            dirs = nos.listdir(dirs_only=True, recurse=True)
+            for d in dirs:
+                m = re.search(r"^.*\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d)?", d)
+                if m is not None:
+                    d = m.group(0)
+                    name = os.path.basename(d)
+                    mydirs[name] = d
         else:
             mydirs[os.path.dirname(path)] = path
         return mydirs
 
+    """
     def drill_down(self, nos, path, name, count, mydirs) -> None:
         if count >= 0:
             count -= 1
@@ -406,9 +412,10 @@ class ResultsManager:  # pylint: disable=C0115
                     self.drill_down(
                         nos, os.path.join(nos.path, aname), aname, count, mydirs
                     )
+    """
 
     #
-    # effectively is get last named results
+    # effectively, get last named results. use reference for anything more specific.
     #
     def get_named_results(self, name) -> List[List[Any]]:
         #
@@ -438,24 +445,49 @@ class ResultsManager:  # pylint: disable=C0115
         # "top" of template. inserted dirs
         #
         run = None
+        print(
+            f"resmaan: get_named_results: name: {name}, template: {template}, path: {path}"
+        )
         if template is not None and not template.strip() == "":
             #
             # TODO: there were concerns here pre-complete re the template changes.
             #
             t = template[0 : template.find(":run_dir")]
             t2 = template[template.find(":run_dir") + 8 :]
+
             c = t.count("/")  # or \\?
             c = c if c > -1 else t.count("\\")
+            #
+            # problem is here: vvvvv in all_run_dir_names()
+            #
             runs = self.all_run_dir_names(path, c)
+            for r in runs:
+                print(f"resmaan: get_named_results: r: {len(runs)}")
+
             names = list(runs.keys())
+            for r in names:
+                print(f"resmaan: get_named_results: run name: {r}")
+            #
+            # there should be only run_dir names in names here. we sort based on
+            # them. but we need to get the original template-based name. i.e. we
+            # want 'aprx/2025-01-01...' not just '2025-01-01...'. that means we
+            # need the full template name and then sort on the os.path.dirname(path).
+            #
+            # atm, all_run_dir_names() is not giving the full template name. and
+            # it is also giving us names of instances within run_dirs. why? we
+            # definitely don't want those.
+            #
             names.sort()
             run = ""
             if len(names) > 0:
                 run = names[len(names) - 1]
             rpath = runs[run]
+            print(f"resmaan: get_named_results: rpath 1: {rpath}")
             rpath = rpath[len(path) + 1 :]
+            print(f"resmaan: get_named_results: rpath 2: {rpath}")
             if t2 and len(t2) > 0:
                 rpath = f"{rpath}{t2}"
+            print(f"resmaan: get_named_results: rpath 3: {rpath}")
             run = rpath
         else:
             #
@@ -471,6 +503,7 @@ class ResultsManager:  # pylint: disable=C0115
                     runs.sort()
                     run = runs[len(runs) - 1]
 
+        print(f"resmaan: get_named_results: name: {name}, run: {run}")
         results = self.get_named_results_for_run(name=name, run=run)
         if results:
             return results
@@ -499,6 +532,7 @@ class ResultsManager:  # pylint: disable=C0115
         instances = Nos(path).listdir()
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
+            print(f"resumgr: get_named_results_for_run: inst: {inst}")
             if inst == "manifest.json":
                 continue
             r = self.get_named_result_for_instance(

@@ -36,7 +36,7 @@ class SqlPathsListener(SqlListener):
         }
         self._upsert_named_paths(named_paths_data)
 
-    def _upsert_named_paths(self, named_paths_data: dict, *, dispose: bool = True):
+    def _upsert_named_paths(self, named_paths_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting named-paths metadata into %s", dialect)
@@ -62,8 +62,6 @@ class SqlPathsListener(SqlListener):
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
             conn.commit()
-        if dispose is True:
-            self.engine.dispose()
 
     def _set(self, named_paths_data) -> dict:
         return {

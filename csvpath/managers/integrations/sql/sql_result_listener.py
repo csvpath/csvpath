@@ -52,7 +52,7 @@ class SqlResultListener(SqlListener):
         }
         self._upsert_instance_run(instance_run_data)
 
-    def _upsert_instance_run(self, instance_run_data, *, dispose=True):
+    def _upsert_instance_run(self, instance_run_data):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting run result metadata into %s", dialect)
@@ -76,8 +76,6 @@ class SqlResultListener(SqlListener):
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
             conn.commit()
-        if dispose is True:
-            self.engine.dispose()
 
     def _set(self, instance_run_data: dict) -> dict:
         return {

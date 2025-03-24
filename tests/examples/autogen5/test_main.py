@@ -86,7 +86,6 @@ class TestCache(unittest.TestCase):
             rows = rows.fetchmany()
             f = 0
             for row in rows:
-                print(f"trow: {row}")
                 f += 1
             assert f == 1
             assert rows[0][2].endswith("archive")
@@ -121,3 +120,4 @@ class TestCache(unittest.TestCase):
             assert rows[0]["valid"] == "Y"
             assert rows[0]["completed"] == "Y"
             assert rows[0]["error_count"] == 0
+            cursor.close()

@@ -631,7 +631,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         paths = self._get_named_paths(pathsname)
         if template is None:
             template = self.paths_manager.get_template_for_paths(pathsname)
-        # file = self.file_manager.get_named_file(filename)
         self.logger.info(
             "Prepping %s and %s with template %s", filename, pathsname, template
         )

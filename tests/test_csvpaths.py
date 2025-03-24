@@ -1,6 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPaths
+from os import environ
 
 PATH = f"tests{os.sep}test_resources{os.sep}named_files{os.sep}test.csv"
 FILES = {
@@ -223,7 +224,6 @@ class TestNewCsvPaths(unittest.TestCase):
             filename="test", pathsname="all_agree", if_all_agree=True
         )
         assert len(lines) == 3
-
         lines = paths.collect_by_line(
             filename="test", pathsname="all_agree", if_all_agree=False
         )
@@ -275,7 +275,11 @@ class TestNewCsvPaths(unittest.TestCase):
                 assert r.csvpath.data_from_preceding is True
 
     def test_csvpaths_replay(self):
+        os.environ["CSVPATH_CONFIG_PATH"] = "config/config.ini"
         paths = CsvPaths()
+        self.load(paths)
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.paths_manager.remove_named_paths("sourcemode")
         paths.file_manager.remove_named_file("sourcemode")
         paths.paths_manager.add_named_paths_from_json(

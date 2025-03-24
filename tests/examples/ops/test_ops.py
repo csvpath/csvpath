@@ -16,7 +16,6 @@ ASSETS = "tests/examples/ops/assets"
 class TestFileOps(unittest.TestCase):
     def test_reference_filename_match_1(self):
         try:
-            cfg = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
             os.environ[
                 Config.CSVPATH_CONFIG_FILE_ENV
             ] = "tests/examples/ops/config/ops-config.ini"
@@ -190,11 +189,9 @@ class TestFileOps(unittest.TestCase):
             assert lst2[0].find("Mar") > -1
 
         finally:
-            if cfg is not None:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def top(self):
-        cfg = None
         try:
             cfg = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
             os.environ[
@@ -223,8 +220,7 @@ class TestFileOps(unittest.TestCase):
             )
             return paths, cfg
         except Exception as e:
-            if cfg is not None:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
             raise e
 
     def test_references_can_run_1(self):
@@ -240,8 +236,7 @@ class TestFileOps(unittest.TestCase):
             nos = Nos(arc)
             assert nos.dir_exists()
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_2(self):
         paths, cfg = self.top()
@@ -254,8 +249,7 @@ class TestFileOps(unittest.TestCase):
                 filename="acme-invoices",
             )
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_3(self):
         paths, cfg = self.top()
@@ -273,8 +267,7 @@ class TestFileOps(unittest.TestCase):
             # and only two of the 3 csvpaths ran (tho, this also tested elsewhere)
             #
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_4(self):
         paths, cfg = self.top()
@@ -300,8 +293,7 @@ class TestFileOps(unittest.TestCase):
                 filename="$clean-invoices.results.acme/invoices/2025/Feb/:today:last.step-two",
             )
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_6(self):
         paths, cfg = self.top()
@@ -318,8 +310,7 @@ class TestFileOps(unittest.TestCase):
                 filename="$clean-invoices.results.acme/invoices/2025/Feb/2025-:last.step-two",
             )
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_7(self):
         paths, cfg = self.top()
@@ -333,8 +324,7 @@ class TestFileOps(unittest.TestCase):
                 filename="$acme-invoices.files.Acme_invoices_2025-01-25_csv:0",
             )
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
     def test_references_can_run_8(self):
         paths, cfg = self.top()
@@ -350,5 +340,4 @@ class TestFileOps(unittest.TestCase):
                 filename=f"$acme-invoices.files.Acme_invoices_2025-01-25_csv.{datestr}:after",
             )
         finally:
-            if cfg not in ["", None]:
-                os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = cfg
+            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"

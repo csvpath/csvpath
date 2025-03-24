@@ -18,6 +18,7 @@ class Box:
     SFTP_CLIENT = "sftp_client"
     AZURE_BLOB_CLIENT = "azure_blob_client"
     GCS_STORAGE_CLIENT = "gcs_storage_client"
+    SQL_ENGINE = "sql_engine"
 
     STUFF = {}
 
@@ -30,5 +31,9 @@ class Box:
     def add(self, key: str, value: Any) -> None:
         Box.STUFF[key] = value
 
-    def get(self, key: str):
+    def get(self, key: str) -> Any:
         return Box.STUFF.get(key)
+
+    def remove(self, key: str) -> None:
+        if key in Box.STUFF:
+            del Box.STUFF[key]

@@ -9,7 +9,6 @@ class SqlListener(Listener):
         Listener.__init__(self, config=config)
         self.csvpaths = None
         self._tables = None
-        self._engine = None
 
     @property
     def tables(self) -> Tables:
@@ -20,10 +19,4 @@ class SqlListener(Listener):
 
     @property
     def engine(self) -> Engine:
-        if self._engine is None:
-            self._engine = Db.get(self.config)
-        return self._engine
-
-    @engine.setter
-    def engine(self, engine: Engine):
-        self._engine = engine
+        return Db.get(self.config)

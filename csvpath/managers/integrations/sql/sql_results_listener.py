@@ -58,7 +58,7 @@ class SqlResultsListener(SqlListener):
         }
         self._upsert_named_paths_group_run(group_run_data)
 
-    def _upsert_named_paths_group_run(self, group_run_data, *, dispose=True):
+    def _upsert_named_paths_group_run(self, group_run_data):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info(
@@ -86,8 +86,6 @@ class SqlResultsListener(SqlListener):
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
             conn.commit()
-        if dispose is True:
-            self.engine.dispose()
 
     def _set(self, group_run_data: dict) -> dict:
         return {

@@ -104,8 +104,6 @@ class FileManager:
             # run manifest is just a dict, not a list of dict.
             #
             refinder = ResultsReferenceFinder(self._csvpaths, name=name)
-            # use refinder.resolve()
-            # path = refinder.run_home_for_reference(name)
             path = refinder.resolve(name, with_instance=False)
             path = os.path.join(path, "manifest.json")
             nos = self.nos
@@ -153,7 +151,6 @@ class FileManager:
             if ref.datatype == ref.RESULTS:
                 refinder = ResultsReferenceFinder(self._csvpaths, name=name)
                 path = refinder.resolve(name)
-                # path = refinder.instance_home_for_reference(name)
                 path = os.path.join(path, "manifest.json")
                 nos = self.nos
                 nos.path = path

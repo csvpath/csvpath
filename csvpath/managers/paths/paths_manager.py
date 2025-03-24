@@ -221,7 +221,12 @@ class PathsManager:
                     template = None
                     if "_config" in j:
                         c = j["_config"]
-                        template = c.get("template")
+                        print(f"pathsmgr: add_named_paths_from_json: c: {c}")
+                        if k in c:
+                            template = c[k].get("template")
+                    print(
+                        f"pathsmgr: add_named_paths_from_json: name: {k}, template: {template}"
+                    )
                     self.add_named_paths(
                         name=k, paths=paths, source_path=file_path, template=template
                     )

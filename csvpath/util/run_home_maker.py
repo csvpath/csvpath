@@ -171,7 +171,7 @@ class RunHomeMaker:
                     # data.csv file doesn't have that meaningfulness.
                     #
                     refinder = ResultsReferenceFinder(self._csvpaths, name=filename)
-                    mpath = refinder.instance_home_for_reference(filename)
+                    mpath = refinder.resolve(filename)
                     mpath = os.path.join(mpath, "manifest.json")
                     nos = Nos(mpath)
                     if nos.exists():
