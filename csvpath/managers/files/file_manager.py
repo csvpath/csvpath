@@ -411,6 +411,7 @@ class FileManager:
             raise ValueError("Path cannot be None or empty")
         if template is not None:
             temu.valid(template)
+        path = pathu.resep(path)
         #
         # path must end up with only legal filesystem chars.
         # the read-only http backend will have ? and possibly other
