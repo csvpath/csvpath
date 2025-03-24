@@ -20,6 +20,12 @@ class TestCache(unittest.TestCase):
             f"test_autogen5_example_run: groups: {paths.config.get(section='listeners', name='groups')}"
         )
 
+        for h in paths.logger.handlers:
+            print(f"Logger encoding: {h.encoding}")
+        import locale
+
+        print(f"Locale encoding: {locale.getpreferredencoding()}")
+
         paths.paths_manager.add_named_paths_from_file(
             name="autogen5",
             file_path=f"tests{os.sep}examples{os.sep}autogen5{os.sep}assets{os.sep}accountants.csvpath",
