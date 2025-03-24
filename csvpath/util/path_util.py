@@ -31,7 +31,7 @@ class PathUtility:
         # ("\\", "/")
         #
         osname = os.name if hint is None else hint
-        if "://" in path:
+        if path.find("://") > -1:
             return ("/", "\\")
         elif osname in [
             "win",
