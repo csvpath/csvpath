@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 import hashlib
+from .path_util import PathUtility as pathu
 
 
 class Hasher:
@@ -37,6 +38,7 @@ class Hasher:
         return fingerprint
 
     def _post(self, path):
+        path = pathu.resep(path)
         with open(path, "rb", buffering=0) as source:
             h = hashlib.file_digest(source, hashlib.sha256)
             h = h.hexdigest()
@@ -51,6 +53,7 @@ class Hasher:
         return h
 
     def _pre(self, path):
+        path = pathu.resep(path)
         h = None
         hl = hashlib.sha256()
         b = bytearray(128 * 1024)

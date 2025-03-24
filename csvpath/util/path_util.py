@@ -15,31 +15,32 @@ class PathUtility:
         return apath
 
     @classmethod
-    def resep(cls, path) -> str:
-        #
-        # in principle we can use '/' in most cases with windows
-        # but we didn't start that way and there are at least a
-        # couple of corner cases. for now this method doesn't cost
-        # us much.
-        #
-        if path.find("://"):
-            path = path.replace("\\", "/")
-        if path.startswith("c:"):
-            path = path.replace("/", "\\")
-        return path
+    def resep(cls, path: str, hint=None) -> str:
+        osname = os.name if hint is None else hint
+        if "://" in path:
+            return path.replace("\\", "/")
+        elif osname in [
+            "win",
+            "windows",
+            "nt",
+        ]:  # Windows-specific adj. 'nt' is os given, others for humans.
+            return path.replace("/", "\\")
+        else:
+            return path.replace("\\", "/")
+        return path  # Assume POSIX-compatible paths
+
+    @classmethod
+    def lresep(cls, paths: list) -> list:
+        return [cls.resep(path) for path in paths]
 
     @classmethod
     def parts(cls, apath: str) -> list[str]:
-        # splits https://aserver/my/file/is/here into ["https","aserver","my", "file", "is","here"]
         parts = []
         i = apath.find("://")
         if i > -1:
             prot = apath[0:i]
             parts.append(prot)
             apath = apath[i + 3 :]
-            # j = apath.find("/")
-            # parts.append(apath[j+1:])
-            # apath = apath[j+1:]
         for s in apath.split("/"):
             parts.append(s)
         return parts

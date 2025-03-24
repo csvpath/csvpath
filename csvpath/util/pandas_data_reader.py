@@ -26,7 +26,7 @@ class PandasDataReader(DataFileReader):
         self, path: str, *, sheet=None, delimiter=None, quotechar=None
     ) -> None:
         super().__init__()
-        self._path = path
+        self.path = path
         self._delimiter = delimiter if delimiter is not None else ","
         self._quotechar = quotechar if quotechar is not None else '"'
         self._frame = DataFileReader.DATA.get(path)

@@ -19,9 +19,9 @@ class TestPathUtil(unittest.TestCase):
         re = pathu.resep(path)
         assert re == "http://csvpath.org/i/am/a/path"
 
-        path = "c:\\csvpath.org/i/am/a\\path"
-        re = pathu.resep(path)
-        assert re == "c:\\csvpath.org\\i\\am\\a\\path"
+        path = "c:\\\\csvpath.org/i/am/a\\path"
+        re = pathu.resep(path, hint="win")
+        assert re == "c:\\\\csvpath.org\\i\\am\\a\\path"
 
     def test_path_util_parts(self):
         path = "http://csvpath.org/i/am/a/path"

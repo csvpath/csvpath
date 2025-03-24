@@ -399,21 +399,6 @@ class ResultsManager:  # pylint: disable=C0115
             mydirs[os.path.dirname(path)] = path
         return mydirs
 
-    """
-    def drill_down(self, nos, path, name, count, mydirs) -> None:
-        if count >= 0:
-            count -= 1
-            nos.path = os.path.join(path, name)
-            dirs = nos.listdir()
-            for aname in dirs:
-                if count == 0:
-                    mydirs[aname] = os.path.join(nos.path, aname)
-                else:
-                    self.drill_down(
-                        nos, os.path.join(nos.path, aname), aname, count, mydirs
-                    )
-    """
-
     #
     # effectively, get last named results. use reference for anything more specific.
     #
@@ -445,9 +430,6 @@ class ResultsManager:  # pylint: disable=C0115
         # "top" of template. inserted dirs
         #
         run = None
-        print(
-            f"resmaan: get_named_results: name: {name}, template: {template}, path: {path}"
-        )
         if template is not None and not template.strip() == "":
             #
             # TODO: there were concerns here pre-complete re the template changes.
@@ -461,12 +443,7 @@ class ResultsManager:  # pylint: disable=C0115
             # problem is here: vvvvv in all_run_dir_names()
             #
             runs = self.all_run_dir_names(path, c)
-            for r in runs:
-                print(f"resmaan: get_named_results: r: {len(runs)}")
-
             names = list(runs.keys())
-            for r in names:
-                print(f"resmaan: get_named_results: run name: {r}")
             #
             # there should be only run_dir names in names here. we sort based on
             # them. but we need to get the original template-based name. i.e. we
@@ -482,12 +459,9 @@ class ResultsManager:  # pylint: disable=C0115
             if len(names) > 0:
                 run = names[len(names) - 1]
             rpath = runs[run]
-            print(f"resmaan: get_named_results: rpath 1: {rpath}")
             rpath = rpath[len(path) + 1 :]
-            print(f"resmaan: get_named_results: rpath 2: {rpath}")
             if t2 and len(t2) > 0:
                 rpath = f"{rpath}{t2}"
-            print(f"resmaan: get_named_results: rpath 3: {rpath}")
             run = rpath
         else:
             #
@@ -503,7 +477,6 @@ class ResultsManager:  # pylint: disable=C0115
                     runs.sort()
                     run = runs[len(runs) - 1]
 
-        print(f"resmaan: get_named_results: name: {name}, run: {run}")
         results = self.get_named_results_for_run(name=name, run=run)
         if results:
             return results
@@ -532,7 +505,6 @@ class ResultsManager:  # pylint: disable=C0115
         instances = Nos(path).listdir()
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
-            print(f"resumgr: get_named_results_for_run: inst: {inst}")
             if inst == "manifest.json":
                 continue
             r = self.get_named_result_for_instance(

@@ -130,7 +130,6 @@ class S3Do:
         if lst is not None and not dirs_only:
             for o in lst:
                 nkey = o["Key"]
-                print(f"file: {nkey}")
                 if recurse:
                     name = nkey
                 else:

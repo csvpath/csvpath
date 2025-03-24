@@ -77,7 +77,6 @@ class AzureDo:
         recurse: bool = False,
         dirs_only: bool = False,
     ) -> list[str]:
-        print(f"xx: dirs_only: {dirs_only}")
         return self._listdir(
             path=self.path, files_only=files_only, recurse=recurse, dirs_only=dirs_only
         )
@@ -103,7 +102,6 @@ class AzureDo:
         names = []
         for item in blob_list:
             if isinstance(item, BlobPrefix):
-                print(f"prefxi: {item.name}: {dirs_only}")
                 if files_only is True and recurse is False:
                     name = item.name[len(blob) :]
                     names.append(name)

@@ -7,6 +7,7 @@ from .s3.s3_nos import S3Do
 from .azure.azure_nos import AzureDo
 from .sftp.sftp_nos import SftpDo
 from .gcs.gcs_nos import GcsDo
+from .path_util import PathUtility as pathu
 
 
 class Nos:
@@ -112,7 +113,6 @@ class Nos:
         recurse: bool = False,
         dirs_only: bool = False,
     ) -> list[str]:
-        print(f"x: dirs_only: {dirs_only}")
         return self.do.listdir(
             files_only=files_only, recurse=recurse, dirs_only=dirs_only
         )
@@ -123,7 +123,17 @@ class Nos:
 
 class FileDo:
     def __init__(self, path):
+        self._path = None
+        path = pathu.resep(path)
         self.path = path
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @path.setter
+    def path(self, p: str) -> None:
+        self._path = pathu.resep(p)
 
     def remove(self) -> None:
         isf = os.path.isfile(self.path)
