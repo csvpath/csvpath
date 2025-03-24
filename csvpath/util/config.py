@@ -190,6 +190,8 @@ csvpaths = info
 log_file = logs{os.sep}csvpath.log
 log_files_to_keep = 100
 log_file_size = 52428800
+# file or rotating
+handler = file
 
 [config]
 path =
