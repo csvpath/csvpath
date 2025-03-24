@@ -275,6 +275,7 @@ class RunHomeMaker:
         # templates look at the source location. the origin file is still used even
         # when the reference is to a result data file, not to a named-file.
         #
+
         if file_name.startswith("$"):
             ref = ReferenceParser(file_name)
             if ref.datatype == ref.FILES:
@@ -288,6 +289,8 @@ class RunHomeMaker:
             file = mani["from"]
         else:
             mani = self._csvpaths.file_manager.get_manifest(file_name)
+            for _ in mani:
+                print(f"humemakr: get_run_dir: _: {_}")
             file = mani[len(mani) - 1]["from"]
 
         print(f"humemakr: get_run_dir: file: {file}")
@@ -312,6 +315,8 @@ class RunHomeMaker:
             for i, p in enumerate(parts):
                 prefix = prefix.replace(f":{i}", p)
             print(f"humemakr: get_run_dir: prefix 2: {prefix}")
+            prefix = pathu.resep(prefix)
+            print(f"humemakr: get_run_dir: prefix 2.5: {prefix}")
         #
         # TODO: check for an assure_paths_home type method in paths mgr
         #

@@ -16,18 +16,6 @@ class PathUtility:
 
     @classmethod
     def resep(cls, path: str, hint=None) -> str:
-        """
-        if "://" in path:
-            return path.replace("\\", "/")
-        elif osname in [
-            "win",
-            "windows",
-            "nt",
-        ]:  # Windows-specific adj. 'nt' is os given, others for humans.
-            return path.replace("/", "\\")
-        else:
-            return path.replace("\\", "/")
-        """
         sep, notsep = cls.sep(path, hint=hint)
         return path.replace(notsep, sep)
         return path  # Assume POSIX-compatible paths
