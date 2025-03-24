@@ -76,6 +76,7 @@ class LogUtility:
                 filename=component.config.log_file,
                 maxBytes=component.config.log_file_size,
                 backupCount=component.config.log_files_to_keep,
+                encoding="utf-8",
             )
             formatter = logging.Formatter(
                 "%(asctime)s - %(levelname)s - %(name)s - %(message)s"

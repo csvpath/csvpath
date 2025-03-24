@@ -155,7 +155,7 @@ class Config:
         self.refresh()
 
     def save_config(self) -> None:
-        with open(self.configpath, "w") as f:
+        with open(self.configpath, "w", encoding="utf-8") as f:
             self._config.write(f)
 
     def _create_default_config(self) -> None:
