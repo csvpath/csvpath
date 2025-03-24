@@ -73,6 +73,7 @@ class RunHomeMaker:
             )
         return self.get_run_dir(paths_name=pathsname, file_name=filename)
 
+    """
     #
     # this method may not be needed if it was only used by csvpaths to get the run dir.
     #
@@ -99,6 +100,7 @@ class RunHomeMaker:
         self._csvpaths.logger.debug(f"RunHomeMaker: parts: {parts}")
         self._csvpaths.logger.debug(f"RunHomeMaker: path: {path}")
         return path
+    """
 
     def results_dir_name(
         self, *, pathsname: str, filename: str, run_dir: str, template: str
@@ -224,6 +226,7 @@ class RunHomeMaker:
             paths_name = paths_name[0:i]
         return paths_name
 
+    """
     def get_run_dir_name_from_datetime(self, dt) -> str:
         #
         # called by get_run_dir
@@ -232,6 +235,7 @@ class RunHomeMaker:
             return None
         t = dt.strftime("%Y-%m-%d_%H-%M-%S")
         return t
+    """
 
     #
     # this is the method csvpaths uses to site a run.
@@ -253,13 +257,18 @@ class RunHomeMaker:
         if run_time is None:
             run_time = datetime.now()
         if not isinstance(run_time, str):
-            run_time = self.get_run_dir_name_from_datetime(run_time)
+            run_time = run_time.strftime("%Y-%m-%d_%H-%M-%S")
+            # run_time = self.get_run_dir_name_from_datetime(run_time)
         #
         # get the pathsname
         #
+        print(f"humemakr: get_run_dir: paths_name: {paths_name}")
+        print(f"humemakr: get_run_dir: file_name: {file_name}")
+
         if paths_name.startswith("$"):
             ref = ReferenceParser(paths_name)
             paths_name = ref.root_major
+        file = None
         #
         # get the origin file path. we use the original location of the file
         # to construct the template-based results path. both the file and the paths
@@ -280,8 +289,12 @@ class RunHomeMaker:
         else:
             mani = self._csvpaths.file_manager.get_manifest(file_name)
             file = mani[len(mani) - 1]["from"]
+
+        print(f"humemakr: get_run_dir: file: {file}")
+
         #
-        #
+        # needed here?
+        # file = pathu.resep(file)
         #
         if isinstance(file, list):
             file = file[0]
@@ -293,17 +306,22 @@ class RunHomeMaker:
             suffix = temu.get_template_suffix(template=template)
             i = template.find(":run_dir")
             prefix = template[0:i]
+            print(f"humemakr: get_run_dir: prefix 1: {prefix}")
             parts = pathu.parts(file)
             for i, p in enumerate(parts):
                 prefix = prefix.replace(f":{i}", p)
+            print(f"humemakr: get_run_dir: prefix 2: {prefix}")
         #
         # TODO: check for an assure_paths_home type method in paths mgr
         #
         run_dir = os.path.join(self.base_dir, paths_name)
+        print(f"humemakr: get_run_dir: run_dir 1: {run_dir}")
         nos = Nos(run_dir)
         if not nos.dir_exists():
             nos.makedirs()
         run_dir = os.path.join(run_dir, f"{prefix}{run_time}")
+        #
+        print(f"humemakr: get_run_dir: run_dir 2: {run_dir}")
         #
         # the path existing for a different named-paths run in progress
         # or having completed less than 1000ms ago. CsvPaths are single-user,
@@ -333,5 +351,6 @@ class RunHomeMaker:
             #
             #
         run_dir = f"{run_dir}{suffix}"
+        print(f"humemakr: get_run_dir: run_dir 3: {run_dir}")
         self._csvpaths._run_time_str = run_dir
         return self._csvpaths._run_time_str

@@ -110,10 +110,7 @@ class FileManager:
             nos.path = path
             if nos.exists():
                 mani = self.registrar.get_manifest(path)
-            print(f"fmgr: get_named_file_uuid: path: {path}")
-            print(f"fmgr: get_named_file_uuid: mani: {mani}")
             uuid = mani["named_file_uuid"]
-            print(f"fmgr: get_named_file_uuid: uuid: {uuid}")
             return uuid
         elif ref is not None and file is not None:
             mani = self.get_manifest(name)
@@ -192,27 +189,11 @@ class FileManager:
         """@private"""
         if name is None or name.strip() == "":
             raise ValueError("Name cannot be None or empty")
-        print(f"fmrg: named_file_home: name: {name}")
         #
         # not a named-file name
         #
         if name.find("://") > -1:
             return name
-        #
-        # removed because this will fail for templated names
-        #
-        """
-        if name.find("/") > -1:
-            #
-            # this is definitely not what we should be returning. but it is what
-            # works in the new world of remote and fully-qualified local paths.
-            # for now, going with it. the previous implementation was wonky too,
-            # in a different and not visible way, but not good, so this is a step
-            # up in multiple ways.
-            #
-            print(f"fmangr: named_file_home: returning '' for name: {name}")
-            return ""
-        """
         home = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = home
@@ -325,7 +306,6 @@ class FileManager:
     #
     def name_exists(self, name: NamedFileName) -> bool:
         """@private"""
-        print("FileManager.name_exists is deprecated. Use FileManager.has_named_file.")
         return self.has_named_file(name)
 
     def remove_named_file(self, name: NamedFileName) -> None:
@@ -576,7 +556,6 @@ class FileManager:
         #
         #
         #
-        print(f"fmarg: get_named_file: name: {name}")
         if name.startswith("$"):
             ref = ReferenceParser(name)
             if ref.datatype == ref.FILES:

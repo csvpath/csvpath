@@ -72,17 +72,6 @@ class ResultRegistrar(Registrar, Listener):
         mdata.named_file_name = self.result.file_name
         mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid
         #
-        # should we be getting get_run_dir_name_from_datetime or use get_run_dir?
-        # get_run_dir includes any numeric suffix. regardless, the result should
-        # know its run_dir. and if/when we allow run_dir patterns (e.g.
-        # ":3/:2/:run_dir/:1") this would become even more worrisome.
-        #
-        """
-        mdata.run_dir = self.result_serializer.get_run_dir_name_from_datetime(
-            self.result.run_time
-        )
-        """
-        #
         # exp. swapping for the original above. no negative impact. logically it's the better way.
         #
         mdata.run_dir = self.result.run_dir
