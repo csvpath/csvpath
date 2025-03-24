@@ -152,18 +152,12 @@ class FileRegistrar(Registrar, Listener):
                 f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
             )
         if (
-            # TODO: s3 can do nos.exists
-            # not path.startswith("s3:")
             # Nos doesn't handle http files. they are special--inbound only.
-            # and
             not path.startswith("http:")
             and not path.startswith("https:")
-            # and not azure? gcp? should be handled by nos anyway.
             and not Nos(path).exists()
         ):
             # if not path.startswith("s3:") and not os.path.exists(path):
-            #
-            # try for a data reader in case we're smart-opening
             #
             raise InputException(f"Path {path} does not exist")
         #
@@ -183,18 +177,19 @@ class FileRegistrar(Registrar, Listener):
         mdata.manifest_path = mpath
         mdata.type = self._type_from_sourcepath(path)
         jdata = self.get_manifest(mpath)
-        if len(jdata) > 0:
-            _ = jdata[len(jdata) - 1]
+        for _ in jdata:
+            #
             # if the fingerprints are the same and we haven't renamed
             # the file or moved all the files we don't need to reregister
             # this file. at least that is the thinking today. it is possible
             # we might want to reregister in the case of a new listener
             # being added or for some other reason, but not atm.
+            #
             if (
                 "fingerprint" in _
                 and _["fingerprint"] == mdata.fingerprint
                 and "file_home" in _
-                and _["file_home"] == mdata.file_home
+                and _["file_home"].lower() == mdata.file_home.lower()
             ):
                 #
                 # log info so nobody has to dig to see why no update
