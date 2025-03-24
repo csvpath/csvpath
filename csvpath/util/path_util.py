@@ -37,7 +37,7 @@ class PathUtility:
         return [cls.resep(path) for path in paths]
 
     @classmethod
-    def sep(cls, path: str, hint: str) -> tuple[str, str]:
+    def sep(cls, path: str, hint: str = None) -> tuple[str, str]:
         #
         # returns a tuple of sep and not-sep. e.g. for Windows:
         # ("\\", "/")
