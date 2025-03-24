@@ -28,7 +28,8 @@ class Nos:
     def path(self, p: str) -> None:
         if self._protocol_mismatch(p):
             self._do = None
-        p = pathu.resep(p)
+        if p is not None:
+            p = pathu.resep(p)
         self._path = p
         if p is None:
             self._do = None
