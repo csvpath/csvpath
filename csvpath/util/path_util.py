@@ -16,7 +16,7 @@ class PathUtility:
 
     @classmethod
     def resep(cls, path: str, hint=None) -> str:
-        osname = os.name if hint is None else hint
+        """
         if "://" in path:
             return path.replace("\\", "/")
         elif osname in [
@@ -27,6 +27,9 @@ class PathUtility:
             return path.replace("/", "\\")
         else:
             return path.replace("\\", "/")
+        """
+        sep, notsep = cls.sep(path, hint=hint)
+        return path.replace(notsep, sep)
         return path  # Assume POSIX-compatible paths
 
     @classmethod
@@ -34,14 +37,34 @@ class PathUtility:
         return [cls.resep(path) for path in paths]
 
     @classmethod
+    def sep(cls, path: str, hint: str) -> tuple[str, str]:
+        #
+        # returns a tuple of sep and not-sep. e.g. for Windows:
+        # ("\\", "/")
+        #
+        osname = os.name if hint is None else hint
+        if "://" in path:
+            return ("/", "\\")
+        elif osname in [
+            "win",
+            "windows",
+            "nt",
+        ]:
+            return ("\\", "/")
+        else:
+            return ("/", "\\")
+
+    @classmethod
     def parts(cls, apath: str) -> list[str]:
+        apath = cls.resep(apath)
         parts = []
         i = apath.find("://")
         if i > -1:
             prot = apath[0:i]
             parts.append(prot)
             apath = apath[i + 3 :]
-        for s in apath.split("/"):
+        sep = cls.sep(apath)
+        for s in apath.split(sep[0]):
             parts.append(s)
         return parts
 
