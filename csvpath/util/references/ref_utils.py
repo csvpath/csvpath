@@ -46,7 +46,14 @@ class ReferenceUtility:
             return None
         if name.find(":") == -1:
             return default
-        return name[name.find(":") + 1 :]
+        tn = name[name.find(":") + 1 :]
+        #
+        # remove any suffix. suffix can be separated by / or \
+        #
+        i = tn.find("/") if tn.find("/") > -1 else tn.find("\\")
+        if i > -1:
+            tn = tn[0:i]
+        return tn
 
     @classmethod
     def not_pointer(cls, name: str) -> str:
