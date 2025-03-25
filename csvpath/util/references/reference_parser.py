@@ -1,3 +1,6 @@
+from csvpath.util.path_util import PathUtility as pathu
+
+
 class ReferenceException(Exception):
     pass
 
@@ -204,6 +207,7 @@ class ReferenceParser:
             raise ReferenceException("Reference string cannot be None")
         if string[0] != "$":
             raise ReferenceException("Reference string must start with a root '$'")
+        string = pathu.resep(string)
         self._original = string
         root = None
         #

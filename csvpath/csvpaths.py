@@ -107,8 +107,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._error_manager = None
         self._set_managers()
         #
-        # TODO:
-        # self.print_manager = ... <<<=== should we do this?
         #
         #
         self.print_default = print_default

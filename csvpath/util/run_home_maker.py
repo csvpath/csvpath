@@ -41,24 +41,7 @@ class RunHomeMaker:
     # the runs_home is archive/food. in archive/food/above/2025-03.../below/categories the runs_home is
     # archive/food/above
     #
-    """
-    def runs_home_from_template(self, pathsname: str) -> str:
-        #
-        # go to the paths group and find the template
-        #
-        mani = self._csvpaths.paths_manager.get_manifest_for_name(pathsname)
-        if mani is None:
-            raise RuntimeError(f"Manifest for {pathsname} cannot be None")
-        template = mani.get("template")
-        if template is None:
-            return self._csvpaths.paths_manager.named_paths_home(pathsname)
-        #
-        #
-        #
-        self.results_dir_name(pathsname, filename, run_dir, template)
-    """
-    #
-    # this method isn't needed but it is used.
+    # this method isn't really needed but it is used.
     #
     def run_time_str(self, pathsname=None, filename=None) -> str:
         #
@@ -72,78 +55,6 @@ class RunHomeMaker:
                 "Cannot have None in both run_time_str and pathsname"
             )
         return self.get_run_dir(paths_name=pathsname, file_name=filename)
-
-    """
-    #
-    # this method may not be needed if it was only used by csvpaths to get the run dir.
-    #
-    def results_dir_path(
-        self, *, pathsname: str, filename: str, run_dir: str, template: str
-    ) -> str:
-        #
-        # this method calls results_dir_name
-        #
-        if template is None or template == ":run_dir":
-            return run_dir
-        parts = pathu.parts(run_dir)
-        d = self.results_dir_name(
-            pathsname=pathsname, filename=filename, run_dir=parts[2], template=template
-        )
-        parts[2] = d
-        path = f"{os.sep}".join(parts)
-        self._csvpaths.logger.debug(
-            f"RunHomeMaker: results_dir_path: pathsname: {pathsname}"
-        )
-        self._csvpaths.logger.debug(f"RunHomeMaker: filename: {filename}")
-        self._csvpaths.logger.debug(f"RunHomeMaker: run_dir: {run_dir}")
-        self._csvpaths.logger.debug(f"RunHomeMaker: template: {template}")
-        self._csvpaths.logger.debug(f"RunHomeMaker: parts: {parts}")
-        self._csvpaths.logger.debug(f"RunHomeMaker: path: {path}")
-        return path
-
-    def results_dir_name(
-        self, *, pathsname: str, filename: str, run_dir: str, template: str
-    ) -> str:
-        #
-        # if we have path extensions they go here. a path template organizes the
-        # dir structure of the archive more intentionally. it could look like:
-        #
-        #    ":1/:2/:run_dir/:4"
-        #
-        # :1, :2, :4 refer to path segments of the location of the original file.
-        # that is the "from" key in the named-file's manifest
-        #
-        # :run_dir is the run time string we just created above; the run's run home
-        # directory.
-        #
-        self._csvpaths.logger.debug(
-            f"RunHomeMaker: results_dir_name: pathsname: {pathsname}"
-        )
-        self._csvpaths.logger.debug(
-            f"RunHomeMaker: results_dir_name: filename: {filename}"
-        )
-        self._csvpaths.logger.debug(
-            f"RunHomeMaker: results_dir_name: run_dir: {run_dir}"
-        )
-        self._csvpaths.logger.debug(
-            f"RunHomeMaker: results_dir_name: template: {template}"
-        )
-        rts = self.run_time_str(pathsname, filename)
-        rts = self.get_run_dir(paths_name=pathsname, file_name=filename)
-        if template is None:
-            return rts
-        if template.find(":run_dir") == -1:
-            raise ValueError("Path template must include :run_dir")
-        #
-        # find all the path parts from the original filename
-        #
-        path = self.get_data_file_path(filename)
-        parts = pathu.parts(path)
-        for i, p in enumerate(parts):
-            template = template.replace(f":{i}", p)
-        template = template.replace(":run_dir", run_dir)
-        return template
-    """
 
     def get_data_file_path(self, filename: str) -> str:
         if filename.startswith("$"):
@@ -225,17 +136,6 @@ class RunHomeMaker:
         if i > -1:
             paths_name = paths_name[0:i]
         return paths_name
-
-    """
-    def get_run_dir_name_from_datetime(self, dt) -> str:
-        #
-        # called by get_run_dir
-        #
-        if dt is None:
-            return None
-        t = dt.strftime("%Y-%m-%d_%H-%M-%S")
-        return t
-    """
 
     #
     # this is the method csvpaths uses to site a run.
