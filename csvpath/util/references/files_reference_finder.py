@@ -137,8 +137,10 @@ class FilesReferenceFinder:
         name_filter = looking_for[i:] if i > -1 else None
         looking_for = looking_for[0:i] if i > -1 else looking_for
         files = self._collect_paths_for_filename_if(looking_for, exact)
-        print(f"filesreferd: _paths_for_filename_if: files: {files}")
+        print(f"filesreferd: _paths_for_filename_if: files 1: {files}")
+        print(f"filesreferd: _paths_for_filename_if: name_filter: {name_filter}")
         files = self._filter(files, name_filter)
+        print(f"filesreferd: _paths_for_filename_if: files 2: {files}")
         #
         # we convert the . extension of a file to _ extension so it doesn't conflict with a
         # references dotted segments. here we convert back to a . extension.
@@ -147,10 +149,13 @@ class FilesReferenceFinder:
             base = os.path.dirname(f)
             ending = f[len(base) :]
             found = False
+            print(f"filesreferd: _paths_for_filename_if: files: {base}")
+            print(f"filesreferd: _paths_for_filename_if: ending: {ending}")
             for ext in self._csvpaths.config.csv_file_extensions:
                 if base.endswith(f"_{ext}"):
                     f2 = base[0 : base.rfind(f"_{ext}")]
                     f2 = f"{f2}.{ext}"
+                    print(f"filesreferd: _paths_for_filename_if: f2: {f2}")
                     base = f2
                     found = True
                     break
@@ -162,18 +167,23 @@ class FilesReferenceFinder:
         # with a filter. (:first|:last|:all|:index)
         #
         n = self._ref.name_three
+        print(f"filesreferd: _paths_for_filename_if: n: {n}")
         if n is None:
             return files
         pointer = refu.pointer(n, ":all")
         s = refu.not_pointer(n)
         s = self._complete_date_string(s)
         adate = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
+        print(f"filesreferd: _paths_for_filename_if: pointer: {pointer}")
+        print(f"filesreferd: _paths_for_filename_if: s: {s}")
         lst = self._find_in_date(adate=adate, pointer=pointer)
+        print(f"filesreferd: _paths_for_filename_if: lst: {lst}")
         ret = []
         if lst and len(lst) > 0:
             for file in files:
                 if file in lst:
                     ret.append(file)
+        print(f"filesreferd: _paths_for_filename_if: ret: {ret}")
         return ret
 
     def _filter(self, files: list, name_filter) -> list:
