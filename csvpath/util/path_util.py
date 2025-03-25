@@ -47,11 +47,13 @@ class PathUtility:
         apath = cls.resep(apath)
         parts = []
         i = apath.find("://")
+        hint = None
         if i > -1:
             prot = apath[0:i]
             parts.append(prot)
             apath = apath[i + 3 :]
-        sep = cls.sep(apath)
+            hint = "/"
+        sep = cls.sep(apath, hint=hint)
         for s in apath.split(sep[0]):
             parts.append(s)
         return parts

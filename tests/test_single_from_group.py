@@ -21,6 +21,10 @@ class TestSingleFromGroup(unittest.TestCase):
         # this note for a bit until sure all the instances shook out. there were very
         # few -- it was not really used.
         #
+        # longer term, # is still available as a separator within reference components,
+        # other than in datatype. its very possible that a more compelling new use will
+        # come to light.
+        #
         # paths.fast_forward_paths(pathsname="many#many_two", filename="food")
         # vars = paths.results_manager.get_variables("many#many_two")
         assert "two" in vars
