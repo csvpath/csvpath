@@ -234,18 +234,24 @@ class FilesReferenceFinder:
     def _collect_paths_for_filename_if(
         self, looking_for: str, exact: bool = False
     ) -> list:
+        print(
+            f"_collect_paths_for_filename_if: looking_for: {looking_for}, exact: {exact}"
+        )
         #
         # this is an exact match, or, if no exact match, a prefix match. it takes:
         #   > :first|:last|:all
         #   > a prefix date in the ref.name_three position (i.e. $n.files.x.date
         #
         name = self._ref.root_major
+        print(f"_collect_paths_for_filename_if: name: {name}")
         base = self._csvpaths.config.get(section="inputs", name="files")
         starting = os.path.join(base, name)
+        print(f"_collect_paths_for_filename_if: starting: {starting}")
         #
         #
         #
         e = os.path.join(starting, looking_for)
+        print(f"_collect_paths_for_filename_if: e: {e}")
         if exact is True:
             nos = Nos(e)
             #
@@ -267,14 +273,20 @@ class FilesReferenceFinder:
             # this cannot be os.walk!
             #
             lf = os.path.join(starting, looking_for)
+            print(f"filesrefrnd: _collect_paths_for_filename_if: lf: {lf}")
             nos = Nos(starting)
-            for file in nos.listdir(files_only=True, recurse=True):
+            print(f"filesrefrnd: _collect_paths_for_filename_if: nos.path: {nos.path}")
+            lst = nos.listdir(files_only=True, recurse=True)
+            print(f"filesrefrnd: _collect_paths_for_filename_if: lst: {lst}")
+            for file in lst:
+                print(f"filesrefrnd: _collect_paths_for_filename_if: file: {file}")
                 i = file.rfind(".")
                 if i == -1:
                     continue
                 if i == 0:
                     continue
                 ext = file[i + 1 :]
+                print(f"filesrefrnd: _collect_paths_for_filename_if: ext: {ext}")
                 if ext not in self._csvpaths.config.csv_file_extensions:
                     continue
                 #
@@ -283,12 +295,14 @@ class FilesReferenceFinder:
                 # by its sha256 fingerprint + extension.
                 #
                 match = file.startswith(lf)
+                print(f"filesrefrnd: _collect_paths_for_filename_if: match: {match}")
                 if match:
                     possibles.append(file)
                     continue
                 i = file.find(".")
                 j = i + 1
                 file = f"{file[0:i]}_{file[j:]}"
+                print(f"filesrefrnd: _collect_paths_for_filename_if: file: {file}")
                 match = file.startswith(lf)
                 if match:
                     possibles.append(file)
