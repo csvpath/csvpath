@@ -20,7 +20,7 @@ MISMATCH = f"tests{os.sep}test_resources{os.sep}header_mismatch.csv"
 
 
 class TestPrint(unittest.TestCase):
-    def test_function_log_printer1(self):
+    def test_print_function_log_printer1(self):
         buf = buffer()
         h = logging.StreamHandler(buf)
         path = CsvPath()
@@ -174,7 +174,7 @@ class TestPrint(unittest.TestCase):
         assert len(printer.lines) == 1
         assert printer.lines[0] == "a == a"
 
-    def test_lark_print_parser_parse_and_transform(self):
+    def test_print_lark_print_parser_parse_and_transform(self):
         printstr = """$me.headers.level
             $me.headers.message
             $.headers.'this is a header'
