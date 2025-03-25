@@ -100,7 +100,6 @@ class RunHomeMaker:
         self._csvpaths.logger.debug(f"RunHomeMaker: parts: {parts}")
         self._csvpaths.logger.debug(f"RunHomeMaker: path: {path}")
         return path
-    """
 
     def results_dir_name(
         self, *, pathsname: str, filename: str, run_dir: str, template: str
@@ -144,6 +143,7 @@ class RunHomeMaker:
             template = template.replace(f":{i}", p)
         template = template.replace(":run_dir", run_dir)
         return template
+    """
 
     def get_data_file_path(self, filename: str) -> str:
         if filename.startswith("$"):

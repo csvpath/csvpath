@@ -8,6 +8,7 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.files_reference_finder import FilesReferenceFinder
 from csvpath.util.config import Config
 from csvpath.util.nos import Nos
+from csvpath.util.path_util import PathUtility as pathu
 
 INVOICES = "tests/examples/ops/data/customers/acme/invoices"
 ASSETS = "tests/examples/ops/assets"
@@ -202,7 +203,7 @@ class TestFileOps(unittest.TestCase):
             paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
             paths.file_manager.add_named_file(
                 name="acme-invoices",
-                path=f"{INVOICES}{os.sep}2025{os.sep}feb{os.sep}Acme_invoices_2025-01-25.csv",
+                path=f"{INVOICES}{os.sep}2025{os.sep}Feb{os.sep}Acme_invoices_2025-01-25.csv",
             )
             paths.file_manager.add_named_files_from_dir(
                 name="acme-invoices", dirname=f"{INVOICES}"
@@ -233,6 +234,7 @@ class TestFileOps(unittest.TestCase):
             arc = paths.config.archive_path
             arc = os.path.join(arc, "clean-invoices")
             arc = os.path.join(arc, "acme/invoices/2025/Jan/")
+            arc = pathu.resep(arc)
             nos = Nos(arc)
             assert nos.dir_exists()
         finally:
