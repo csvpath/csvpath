@@ -102,6 +102,7 @@ class FilesReferenceFinder:
         # progressive or exact filename
         #
         file = self._paths_for_filename_if()
+        print(f"rilesreff: resolve: 104: files: {file}")
         if file and len(file) > 0:
             return file
         #
@@ -149,7 +150,7 @@ class FilesReferenceFinder:
             base = os.path.dirname(f)
             ending = f[len(base) :]
             found = False
-            print(f"filesreferd: _paths_for_filename_if: files: {base}")
+            print(f"filesreferd: _paths_for_filename_if: base: {base}")
             print(f"filesreferd: _paths_for_filename_if: ending: {ending}")
             for ext in self._csvpaths.config.csv_file_extensions:
                 if base.endswith(f"_{ext}"):
@@ -167,6 +168,7 @@ class FilesReferenceFinder:
         # with a filter. (:first|:last|:all|:index)
         #
         n = self._ref.name_three
+        print(f"filesreferd: _paths_for_filename_if: files: {files}")
         print(f"filesreferd: _paths_for_filename_if: n: {n}")
         if n is None:
             return files
@@ -176,13 +178,29 @@ class FilesReferenceFinder:
         adate = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
         print(f"filesreferd: _paths_for_filename_if: pointer: {pointer}")
         print(f"filesreferd: _paths_for_filename_if: s: {s}")
-        lst = self._find_in_date(adate=adate, pointer=pointer)
+        #
+        # FIX: match by date should be of the files found in the files var, not all findable.
+        #
+        lst = self._find_in_date(adate=adate, pointer=pointer, of_files=files)
         print(f"filesreferd: _paths_for_filename_if: lst: {lst}")
         ret = []
+
+        #
+        # we reverse the original way of doing it because _find_in_date is looking at the
+        # manifest; whereas, the files var is populated from Nos.listdir, which is order
+        # unknown. this gotcha is going to come up again at some point.
+        #
+        if lst and len(lst) > 0:
+            for file in lst:
+                if file in files:
+                    ret.append(file)
+
+        """
         if lst and len(lst) > 0:
             for file in files:
                 if file in lst:
                     ret.append(file)
+        """
         print(f"filesreferd: _paths_for_filename_if: ret: {ret}")
         return ret
 
@@ -416,7 +434,7 @@ class FilesReferenceFinder:
                 lst.append(_)
         return lst
 
-    def _find_in_date(self, adate, pointer) -> list:
+    def _find_in_date(self, adate, pointer, of_files: list[str] = None) -> list:
         mani = self.manifest
         lst = []
         for _ in mani:
@@ -428,6 +446,8 @@ class FilesReferenceFinder:
             # tell us what to do. :all will give any dates that
             # are before the datetime we use as a search.
             #
+            inn = False if of_files is None else _["file"] in of_files
+            print(f"_find_in_date: inn: {inn}, file: {_['file']}")
             if td.date() == adate.date():
                 lst.append(td)
         #
