@@ -204,6 +204,10 @@ class TestFileOps(unittest.TestCase):
                 name="acme-invoices",
                 path=f"{INVOICES}{os.sep}2025{os.sep}Feb{os.sep}Acme_invoices_2025-01-25.csv",
             )
+            #
+            # we don't know the order the files returned from the dirname pointer.
+            # that makes a diffence in some tests below.
+            #
             paths.file_manager.add_named_files_from_dir(
                 name="acme-invoices", dirname=f"{INVOICES}"
             )
@@ -292,7 +296,10 @@ class TestFileOps(unittest.TestCase):
             paths.collect_paths(
                 pathsname="clean-invoices", filename="$acme-invoices.files.:3"
             )
-
+            #
+            # we don't know for sure the filesystem order so using 3 is not straightforward.
+            # we can get the month from the run dir_path and use that.
+            #
             rmani = paths.results_manager.get_last_named_result(
                 name="clean-invoices"
             ).run_manifest
@@ -312,12 +319,6 @@ class TestFileOps(unittest.TestCase):
                 pathsname="clean-invoices",
                 filename=f"$clean-invoices.results.acme/invoices/2025/{month}/:today:last.step-two",
             )
-            """
-            paths.collect_paths(
-                pathsname="clean-invoices",
-                filename="$clean-invoices.results.acme/invoices/2025/Feb/:today:last.step-two",
-            )
-            """
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
@@ -331,10 +332,30 @@ class TestFileOps(unittest.TestCase):
             # run the clean-invoices named-paths group against the data generated in the last run
             # in feb starting at the second step.
             #
+            #
+            # again, can't rely on the order of the files add by directory above.
+            #
+            """
+            """
+            rmani = paths.results_manager.get_last_named_result(
+                name="clean-invoices"
+            ).run_manifest
+            run_home = rmani["run_home"]
+            month = os.path.dirname(run_home)
+            month = os.path.basename(month)
+            #
+            #
+            #
             paths.collect_paths(
                 pathsname="clean-invoices",
-                filename="$clean-invoices.results.acme/invoices/2025/Feb/2025-:last.step-two",
+                filename=f"$clean-invoices.results.acme/invoices/2025/{month}/202:last.step-two",
             )
+            """
+            paths.collect_paths(
+                pathsname="clean-invoices",
+                filename="$clean-invoices.results.acme/invoices/2025/Feb/202:last.step-two",
+            )
+            """
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
