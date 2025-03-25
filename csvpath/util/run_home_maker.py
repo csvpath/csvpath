@@ -162,9 +162,6 @@ class RunHomeMaker:
         #
         # get the pathsname
         #
-        print(f"humemakr: get_run_dir: paths_name: {paths_name}")
-        print(f"humemakr: get_run_dir: file_name: {file_name}")
-
         if paths_name.startswith("$"):
             ref = ReferenceParser(paths_name)
             paths_name = ref.root_major
@@ -189,12 +186,7 @@ class RunHomeMaker:
             file = mani["from"]
         else:
             mani = self._csvpaths.file_manager.get_manifest(file_name)
-            for _ in mani:
-                print(f"humemakr: get_run_dir: _: {_}")
             file = mani[len(mani) - 1]["from"]
-
-        print(f"humemakr: get_run_dir: file: {file}")
-
         #
         # needed here?
         # file = pathu.resep(file)
@@ -209,27 +201,20 @@ class RunHomeMaker:
             suffix = temu.get_template_suffix(template=template)
             i = template.find(":run_dir")
             prefix = template[0:i]
-            print(f"humemakr: get_run_dir: prefix 1: {prefix}")
             parts = pathu.parts(file)
-            print(f"humemakr: get_run_dir: parts: {parts}")
             for i, p in enumerate(parts):
                 prefix = prefix.replace(f":{i}", p)
                 suffix = suffix.replace(f":{i}", p)
 
-            print(f"humemakr: get_run_dir: prefix 2: {prefix}")
             prefix = pathu.resep(prefix)
-            print(f"humemakr: get_run_dir: prefix 2.5: {prefix}")
         #
         # TODO: check for an assure_paths_home type method in paths mgr
         #
         run_dir = os.path.join(self.base_dir, paths_name)
-        print(f"humemakr: get_run_dir: run_dir 1: {run_dir}")
         nos = Nos(run_dir)
         if not nos.dir_exists():
             nos.makedirs()
         run_dir = os.path.join(run_dir, f"{prefix}{run_time}")
-        #
-        print(f"humemakr: get_run_dir: run_dir 2: {run_dir}")
         #
         # the path existing for a different named-paths run in progress
         # or having completed less than 1000ms ago. CsvPaths are single-user,
@@ -259,6 +244,5 @@ class RunHomeMaker:
             #
             #
         run_dir = f"{run_dir}{suffix}"
-        print(f"humemakr: get_run_dir: run_dir 3: {run_dir}")
         self._csvpaths._run_time_str = run_dir
         return self._csvpaths._run_time_str

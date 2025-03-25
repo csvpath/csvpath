@@ -1214,3 +1214,4 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 #
                 # keep this comment for modelines avoidance
                 #
+                ...

@@ -154,9 +154,7 @@ class FileDo:
         return os.path.exists(self.path)
 
     def dir_exists(self) -> bool:
-        print(f"nos.do.dir_exists: path: {self.path}")
         ret = os.path.exists(self.path)
-        print(f"nos.do.dir_exists: ret: {ret}")
         return ret
 
     def physical_dirs(self) -> bool:

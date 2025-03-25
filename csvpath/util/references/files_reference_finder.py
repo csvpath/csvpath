@@ -102,7 +102,6 @@ class FilesReferenceFinder:
         # progressive or exact filename
         #
         file = self._paths_for_filename_if()
-        print(f"rilesreff: resolve: 104: files: {file}")
         if file and len(file) > 0:
             return file
         #
@@ -143,10 +142,7 @@ class FilesReferenceFinder:
         name_filter = looking_for[i:] if i > -1 else None
         looking_for = looking_for[0:i] if i > -1 else looking_for
         files = self._collect_paths_for_filename_if(looking_for, exact)
-        print(f"filesreferd: _paths_for_filename_if: files 1: {files}")
-        print(f"filesreferd: _paths_for_filename_if: name_filter: {name_filter}")
         files = self._filter(files, name_filter)
-        print(f"filesreferd: _paths_for_filename_if: files 2: {files}")
         #
         # we convert the . extension of a file to _ extension so it doesn't conflict with a
         # references dotted segments. here we convert back to a . extension.
@@ -155,13 +151,10 @@ class FilesReferenceFinder:
             base = os.path.dirname(f)
             ending = f[len(base) :]
             found = False
-            print(f"filesreferd: _paths_for_filename_if: base: {base}")
-            print(f"filesreferd: _paths_for_filename_if: ending: {ending}")
             for ext in self._csvpaths.config.csv_file_extensions:
                 if base.endswith(f"_{ext}"):
                     f2 = base[0 : base.rfind(f"_{ext}")]
                     f2 = f"{f2}.{ext}"
-                    print(f"filesreferd: _paths_for_filename_if: f2: {f2}")
                     base = f2
                     found = True
                     break
@@ -173,23 +166,14 @@ class FilesReferenceFinder:
         # with a filter. (:first|:last|:all|:index)
         #
         n = self._ref.name_three
-        print(f"filesreferd: _paths_for_filename_if: files: {files}")
-        print(f"filesreferd: _paths_for_filename_if: n: {n}")
         if n is None:
             return files
         pointer = refu.pointer(n, ":all")
         s = refu.not_pointer(n)
         s = self._complete_date_string(s)
         adate = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
-        print(f"filesreferd: _paths_for_filename_if: pointer: {pointer}")
-        print(f"filesreferd: _paths_for_filename_if: s: {s}")
-        #
-        # FIX: match by date should be of the files found in the files var, not all findable.
-        #
         lst = self._find_in_date(adate=adate, pointer=pointer)
-        print(f"filesreferd: _paths_for_filename_if: lst: {lst}")
         ret = []
-
         #
         # we reverse the original way of doing it because _find_in_date is looking at the
         # manifest; whereas, the files var is populated from Nos.listdir, which is order
@@ -199,14 +183,6 @@ class FilesReferenceFinder:
             for file in lst:
                 if file in files:
                     ret.append(file)
-
-        """
-        if lst and len(lst) > 0:
-            for file in files:
-                if file in lst:
-                    ret.append(file)
-        """
-        print(f"filesreferd: _paths_for_filename_if: ret: {ret}")
         return ret
 
     def _filter(self, files: list, name_filter) -> list:
@@ -228,14 +204,12 @@ class FilesReferenceFinder:
         # for first, last and index we need the possibles in an arrival-date ordered list
         #
         ordered = self._to_arrival_date_order(files)
-        print(f"filesrefd: _filter: {ordered}, name_filter: {name_filter}")
         if name_filter == ":last" or name_filter == "" or name_filter == ":":
             return [ordered[len(ordered) - 1]]
         if name_filter == ":first":
             return [ordered[0]]
         n = name_filter[1:]
         n = ExpressionUtility.to_int(n)
-        print(f"filesrefd: _filter: n: {n}")
         if isinstance(n, int):
             if n >= len(ordered) or n < 0:
                 return []
@@ -247,12 +221,9 @@ class FilesReferenceFinder:
         arrivals = {}
         # create a date->fingerprint dictionary.
         for file in files:
-            print(f"filesrefd: _to_arrival_date_order: file: {file}")
             fingerprint = file.replace("\\", "/")
             fingerprint = fingerprint[fingerprint.rfind("/") + 1 :]
-            print(f"filesrefd: _to_arrival_date_order 1: fingerprint: {fingerprint}")
             fingerprint = fingerprint[0 : fingerprint.rfind(".")]
-            print(f"filesrefd: _to_arrival_date_order 2: fingerprint: {fingerprint}")
             for item in mani:
                 if item["fingerprint"] == fingerprint:
                     d = ExpressionUtility.to_datetime(item["time"])
@@ -268,24 +239,18 @@ class FilesReferenceFinder:
     def _collect_paths_for_filename_if(
         self, looking_for: str, exact: bool = False
     ) -> list:
-        print(
-            f"_collect_paths_for_filename_if: looking_for: {looking_for}, exact: {exact}"
-        )
         #
         # this is an exact match, or, if no exact match, a prefix match. it takes:
         #   > :first|:last|:all
         #   > a prefix date in the ref.name_three position (i.e. $n.files.x.date
         #
         name = self._ref.root_major
-        print(f"_collect_paths_for_filename_if: name: {name}")
         base = self._csvpaths.config.get(section="inputs", name="files")
         starting = os.path.join(base, name)
-        print(f"_collect_paths_for_filename_if: starting: {starting}")
         #
         #
         #
         e = os.path.join(starting, looking_for)
-        print(f"_collect_paths_for_filename_if: e: {e}")
         if exact is True:
             nos = Nos(e)
             #
@@ -293,7 +258,6 @@ class FilesReferenceFinder:
             # of actual data files. we can assume that any files we find means we're
             # in the right place. we return all the files.
             #
-            print(f"filesrefrnd: _collect_paths_for_filename_if: nos.path: {nos.path}")
             if not nos.dir_exists():
                 return None
             files = nos.listdir(files_only=True, recurse=False)
@@ -308,37 +272,17 @@ class FilesReferenceFinder:
             #
             lf = os.path.join(starting, looking_for)
             lf = pathu.resep(lf)
-            print(f"filesrefrnd: _collect_paths_for_filename_if: lf: {lf}")
             nos = Nos(starting)
-            print(f"filesrefrnd: _collect_paths_for_filename_if: nos.path: {nos.path}")
             lst = nos.listdir(files_only=True, recurse=True)
-            print(f"filesrefrnd: _collect_paths_for_filename_if: lst: {lst}")
             for file in lst:
-                print(f"filesrefrnd: _collect_paths_for_filename_if: file: {file}")
                 if file.find("manifest.json") > -1:
                     continue
-                #
-                # we're already looking in the file inputs so we shouldn't have to check the extension. if
-                # there is a bogus extension it's an upstream file add problem.
-                #
-                """
-                i = file.rfind(".")
-                if i == -1:
-                    continue
-                if i == 0:
-                    continue
-                ext = file[i + 1 :]
-                print(f"filesrefrnd: _collect_paths_for_filename_if: ext: {ext}")
-                if ext not in self._csvpaths.config.csv_file_extensions:
-                    continue
-                """
                 #
                 # if we have a prefix match and there are no directories we are at the
                 # physical file level. every file should be a delimited data file named
                 # by its sha256 fingerprint + extension.
                 #
                 match = file.startswith(lf)
-                print(f"filesrefrnd: _collect_paths_for_filename_if: match: {match}")
                 if match:
                     possibles.append(file)
                     continue
@@ -349,7 +293,6 @@ class FilesReferenceFinder:
                 i = file.find(".")
                 j = i + 1
                 file = f"{file[0:i]}_{file[j:]}"
-                print(f"filesrefrnd: _collect_paths_for_filename_if: file: {file}")
                 match = file.startswith(lf)
                 if match:
                     possibles.append(file)

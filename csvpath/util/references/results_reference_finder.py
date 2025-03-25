@@ -117,18 +117,15 @@ class ResultsReferenceFinder:
             r = name.rfind("/")
             name = name[0:r]
             c -= 1
-        print(f"resferf: suffix: {suffix}")
         #
         # find all possible dir path matches
         #
         name_home = self._csvpaths.results_manager.get_named_results_home(
             ref.root_major
         )
-        print(f"resferf: name_home: {name_home}")
         possibles = Nos(name_home).listdir(
             recurse=True, files_only=False, dirs_only=True
         )
-        print(f"resferf: possibles 0: {possibles}")
         #
         # swap out 'today' and 'yesterday'
         #
@@ -145,13 +142,6 @@ class ResultsReferenceFinder:
         # filter possibles. last level should be instances. remove those.
         #
         looking_for = os.path.join(name_home, name)
-        print(f"resferf: pointer: {pointer}")
-        print(f"resferf: name: {name}")
-        print(f"resferf: looking for: {looking_for}")
-        for _ in possibles:
-            print(f"resferf: _1: {_}")
-            print(f"resferf: _2:    {looking_for}")
-            print(f"resferf: _3:    {_.startswith(looking_for)}")
         possibles = [
             p[0 : len(os.path.dirname(p))]
             for p in possibles
@@ -162,21 +152,16 @@ class ResultsReferenceFinder:
         #
         # keep only longest of any strings having a common prefix.
         #
-        print(f"resferf: possibles 1: {possibles}")
         possibles = self._filter_prefixes(possibles)
-        print(f"resferf: possibles 2: {possibles}")
         #
         # handle pointer, if any
         #
         resolved = None
         if len(possibles) == 0:
             ...
-            print(f"resferf: resolved noi: {resolved}")
         if len(possibles) == 1:
             resolved = possibles[0]
-            print(f"resferf: resolved p1: {resolved}")
         elif pointer is not None and pointer.strip() != "" and len(possibles) > 0:
-            print(f"resferf: resolved p2: {resolved}")
             #
             # time order the possibles
             #
@@ -197,7 +182,6 @@ class ResultsReferenceFinder:
                     raise ValueError(f"Pointer :{pointer} is not recognized")
                 elif i < len(possibles):
                     resolved = possibles[i]
-        print(f"resferf: resolved bin: {resolved}")
         if resolved is not None and with_instance is True:
             #
             # add instance name?

@@ -23,7 +23,6 @@ class LineCounter:
         start = time.time()
         if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
             lm.reset()
-            print(f"LineCounter: get_lines_and_headers: path: {path}")
             reader = DataFileReader(
                 path,
                 delimiter=self.csvpaths.delimiter,

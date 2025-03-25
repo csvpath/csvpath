@@ -41,11 +41,9 @@ class CacheIntermediary:
     def get_json(self, path):
         if path in self._cache:
             Intermediary.HIT_COUNT += 1
-            # print(f"Intermediary.hit: {path}: h: {Intermediary.HIT_COUNT}, m: {Intermediary.MISS_COUNT}, w: {Intermediary.WRITE_COUNT}")
             return self._cache[path]
         try:
             Intermediary.MISS_COUNT += 1
-            # print(f"Intermediary.miss: {path}: h: {Intermediary.HIT_COUNT}, m: {Intermediary.MISS_COUNT}, w: {Intermediary.WRITE_COUNT}")
             with DataFileReader(path) as reader:
                 j = json.load(reader.source)
                 self._cache[path] = j
@@ -57,7 +55,6 @@ class CacheIntermediary:
     def put_json(self, path, j) -> None:
         self._cache[path] = j
         Intermediary.WRITE_COUNT += 1
-        # print(f"Intermediary.write: {path}: h: {Intermediary.HIT_COUNT}, m: {Intermediary.MISS_COUNT}, w: {Intermediary.WRITE_COUNT}")
         with DataFileWriter(path=path, mode="w") as writer:
             json.dump(j, writer.sink, indent=2)
 

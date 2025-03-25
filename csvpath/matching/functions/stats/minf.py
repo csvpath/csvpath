@@ -118,7 +118,6 @@ class Max(MinMax):
         if self._ignore():
             return
         v = self._get_the_value_conformed()
-        print(f" vvvv: {v}")
         self.matcher.set_variable("max", tracking=f"{self._get_the_line()}", value=v)
         m = self._store_and_compare(v, MinMax.MAX)
         self.value = m
