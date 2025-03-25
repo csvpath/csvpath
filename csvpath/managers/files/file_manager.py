@@ -564,8 +564,11 @@ class FileManager:
                 ret = reff.resolve()
             elif ref.datatype == ref.RESULTS:
                 reff = ResultsReferenceFinder(self._csvpaths, name=name)
+                print(f"fmgr: get named file: name: {name}")
                 ret = reff.resolve(name, with_instance=True)
+                print(f"fmgr: get named file: ret 1: {ret}")
                 ret = os.path.join(ret, "data.csv")
+                print(f"fmgr: get named file: ret 2: {ret}")
         else:
             if not self.has_named_file(name):
                 return None

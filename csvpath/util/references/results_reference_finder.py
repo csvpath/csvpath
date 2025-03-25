@@ -159,9 +159,12 @@ class ResultsReferenceFinder:
         resolved = None
         if len(possibles) == 0:
             ...
+            print(f"resferf: resolved noi: {resolved}")
         if len(possibles) == 1:
             resolved = possibles[0]
+            print(f"resferf: resolved p1: {resolved}")
         elif pointer is not None and pointer.strip() != "" and len(possibles) > 0:
+            print(f"resferf: resolved p2: {resolved}")
             #
             # time order the possibles
             #
@@ -182,6 +185,7 @@ class ResultsReferenceFinder:
                     raise ValueError(f"Pointer :{pointer} is not recognized")
                 elif i < len(possibles):
                     resolved = possibles[i]
+        print(f"resferf: resolved bin: {resolved}")
         if resolved is not None and with_instance is True:
             #
             # add instance name?

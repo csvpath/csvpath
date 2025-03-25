@@ -243,8 +243,8 @@ class TestFileOps(unittest.TestCase):
             #
             # nos does resep itself.
             #
-            # we don't know which file is last so we cannot just say arc should exist.
-            # we can read the manifest to see what last should be.
+            # we don't know which file is last from the filesystem so we cannot just say
+            # arc should exist. we can read the manifest to see what last should be.
             #
             # nos = Nos(arc)
             # assert nos.dir_exists()
@@ -292,6 +292,13 @@ class TestFileOps(unittest.TestCase):
             paths.collect_paths(
                 pathsname="clean-invoices", filename="$acme-invoices.files.:3"
             )
+
+            rmani = paths.results_manager.get_last_named_result(
+                name="clean-invoices"
+            ).run_manifest
+            run_home = rmani["run_home"]
+            month = os.path.dirname(run_home)
+            month = os.path.basename(month)
             #
             # test for results mani has "named_file_path": "...Acme_invoices_2025-01-27.csv...",
             #
@@ -303,8 +310,14 @@ class TestFileOps(unittest.TestCase):
             #
             paths.collect_paths(
                 pathsname="clean-invoices",
+                filename=f"$clean-invoices.results.acme/invoices/2025/{month}/:today:last.step-two",
+            )
+            """
+            paths.collect_paths(
+                pathsname="clean-invoices",
                 filename="$clean-invoices.results.acme/invoices/2025/Feb/:today:last.step-two",
             )
+            """
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
