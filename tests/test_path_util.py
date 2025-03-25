@@ -7,16 +7,14 @@ class TestPathUtil(unittest.TestCase):
         path = "./csvpath/../org/i/am/a/path"
         normed = pathu.norm(path)
         assert normed
+        normed = pathu.resep(normed)
         assert normed != path
-        assert normed == "org/i/am/a/path"
+        assert normed == pathu.resep("org/i/am/a/path")
 
         path = "http://csvpath.com/test/../org/i/am/a/path"
         normed = pathu.norm(path, stripp=True)
-        print(f"test_path_util_norm: normed: {normed}")
-        chk = pathu.resep("org/i/am/a/path")
         normed = pathu.resep(normed)
-        print(f"test_path_util_norm: chk: {chk}")
-        assert normed == chk
+        assert normed == pathu.resep(normed)
 
     def test_path_util_resep(self):
         path = "http://csvpath.org/i/am/a\\path"
