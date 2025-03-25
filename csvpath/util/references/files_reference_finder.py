@@ -82,6 +82,8 @@ class FilesReferenceFinder:
             f"Cannot match reference {self.ref._ref_string} pointing to file {file} to a manifest entry"
         )
 
+    # $invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv
+
     def resolve(self) -> str | list:
         #
         # search order:
@@ -134,6 +136,7 @@ class FilesReferenceFinder:
         name_filter = looking_for[i:] if i > -1 else None
         looking_for = looking_for[0:i] if i > -1 else looking_for
         files = self._collect_paths_for_filename_if(looking_for, exact)
+        print(f"filesreferd: _paths_for_filename_if: files: {files}")
         files = self._filter(files, name_filter)
         #
         # we convert the . extension of a file to _ extension so it doesn't conflict with a
@@ -191,12 +194,14 @@ class FilesReferenceFinder:
         # for first, last and index we need the possibles in an arrival-date ordered list
         #
         ordered = self._to_arrival_date_order(files)
+        print(f"filesrefd: _filter: {ordered}, name_filter: {name_filter}")
         if name_filter == ":last" or name_filter == "" or name_filter == ":":
             return [ordered[len(ordered) - 1]]
         if name_filter == ":first":
             return [ordered[0]]
         n = name_filter[1:]
         n = ExpressionUtility.to_int(n)
+        print(f"filesrefd: _filter: n: {n}")
         if isinstance(n, int):
             if n >= len(ordered) or n < 0:
                 return []
@@ -208,9 +213,12 @@ class FilesReferenceFinder:
         arrivals = {}
         # create a date->fingerprint dictionary.
         for file in files:
+            print(f"filesrefd: _to_arrival_date_order: file: {file}")
             fingerprint = file.replace("\\", "/")
             fingerprint = fingerprint[fingerprint.rfind("/") + 1 :]
+            print(f"filesrefd: _to_arrival_date_order 1: fingerprint: {fingerprint}")
             fingerprint = fingerprint[0 : fingerprint.rfind(".")]
+            print(f"filesrefd: _to_arrival_date_order 2: fingerprint: {fingerprint}")
             for item in mani:
                 if item["fingerprint"] == fingerprint:
                     d = ExpressionUtility.to_datetime(item["time"])
@@ -245,6 +253,7 @@ class FilesReferenceFinder:
             # of actual data files. we can assume that any files we find means we're
             # in the right place. we return all the files.
             #
+            print(f"filesrefrnd: _collect_paths_for_filename_if: nos.path: {nos.path}")
             if not nos.dir_exists():
                 return None
             files = nos.listdir(files_only=True, recurse=False)
