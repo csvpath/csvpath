@@ -12,7 +12,7 @@ class TestPathUtil(unittest.TestCase):
 
         path = "http://csvpath.com/test/../org/i/am/a/path"
         normed = pathu.norm(path, stripp=True)
-        assert normed == "org/i/am/a/path"
+        assert normed == pathu.resep("org/i/am/a/path")
 
     def test_path_util_resep(self):
         path = "http://csvpath.org/i/am/a\\path"
