@@ -45,8 +45,7 @@ class Sqliter:
 
     def __enter__(self):
         self._conn = self.connection
-        self._conn.row_factory = Row  # sqlite3.Row
-
+        self._conn.row_factory = Row
         return self._conn
 
     def __exit__(self, exc_type, exc_value, exc_traceback):

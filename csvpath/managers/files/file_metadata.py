@@ -23,3 +23,4 @@ class FileMetadata(Metadata):
         # like csv
         self.type = None
         self.file_size = 0
+        self.template = None

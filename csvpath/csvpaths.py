@@ -1,11 +1,10 @@
 """ CsvPaths' intent is to help you manage and automate your use
     of the CsvPath library. it makes it easier to scale your CSV quality control. """
 
+import os
+import traceback
 from abc import ABC, abstractmethod
 from typing import List, Any
-import traceback
-
-# import atexit
 from datetime import datetime, timezone
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
@@ -15,6 +14,8 @@ from .util.config import Config
 from .util.log_utility import LogUtility
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException, CsvPathsException
+from .util.references.reference_parser import ReferenceParser
+from .util.run_home_maker import RunHomeMaker
 from .managers.paths.paths_manager import PathsManager
 from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
@@ -106,8 +107,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._error_manager = None
         self._set_managers()
         #
-        # TODO:
-        # self.print_manager = ... <<<=== should we do this?
         #
         #
         self.print_default = print_default
@@ -208,27 +207,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             raise Exception("CsvPaths cannot be None")
         self._error_manager = em
 
-    def run_time_str(self, pathsname=None) -> str:
-        """@private
-        adds the stringified current run time to the named-paths
-        group home_dir to create the run_dir"""
-        if self._run_time_str is None and pathsname is None:
-            raise CsvPathsException(
-                "Cannot have None in both run_time_str and pathsname"
-            )
-        if self._run_time_str is None:
-            self._run_time_str = self.results_manager.get_run_time_str(
-                pathsname, self.current_run_time
-            )
-        return self._run_time_str
-
     @property
     def current_run_time(self) -> datetime:
-        """@private
-        gets the time marking the start of the run. used to create the run home directory."""
-        if self._current_run_time is None:
-            self._current_run_time = datetime.now(timezone.utc)
-        return self._current_run_time
+        maker = RunHomeMaker(self)
+        return maker.current_run_time
 
     def csvpath(self) -> CsvPath:
         """Gets a CsvPath object primed with a reference to this CsvPaths"""
@@ -365,6 +347,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         filename,
         by_line: bool = False,
         crt: str,
+        index: int = -1,
     ) -> None:
         """@private"""
         # file is the physical file (+/- if preceding mode) filename is the named-file name
@@ -379,88 +362,79 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # semantics around csvpaths influencing one another.
         #
         # we strip comments from above the path so we need to extract them first
+        #
         path = MetadataParser(self).extract_metadata(instance=csvpath, csvpath=path)
         identity = csvpath.identity
         self.logger.debug("Csvpath %s after metadata extract: %s", identity, path)
-        # update the settings using the metadata fields we just collected
+        #
+        # update the run settings using the metadata fields we just collected
+        #
         csvpath.update_settings_from_metadata()
         #
-        # if we have a reference, resolve it. we may not actually use the file
-        # if we're in source-mode: preceding, but that doesn't matter from the
-        # pov of the reference.
+        # historic note: file references are resolved in the filemanager. and we don't care
+        # for if we are using source-mode preceding for that.
         #
-        """
-        if filename.startswith("$"):
+        if csvpath.data_from_preceding is True and index > 0:
             #
-            # this should already have been done in FileManager. get_named_file looks for '$' and
-            # delegates references to results manager, same as below. that value comes in here as
-            # the local file var, same as we set below.
+            # if index  == 0 we can't look to the preceding csvpath in the run.
+            # if it is -1 we didn't pass in an index -- possibly because by_line.
             #
-            # verified and cleaned up. delete when ready!
-            #
-            self.logger.debug(
-                "File name is a reference: %s. Replacing the path passed in with the reffed data file path.",
-                filename,
-            )
-            #
-            # find file from two types of references: file and results
-            # -- results ref is to a sourcemode preceding output or a reference to a result from some run:
-            #      $sourcemode.results.202:last.source1
-            # -- file reference is to a prior version of a file
-            #      $myfilename.files.3
-            #      $myfilename.files.yesterday:last
-            #      $myfilename.files.today:last
-            #      $myfilename.files.[today|yesterday|yyyy-mm-dd_hh-mm-ss|number|fingerprint]:[last|first|number]
-            #
-            #
-
-            file2 = self.results_manager.data_file_for_reference(filename, not_name=crt)
-            assert file == file2
-        """
-        #
-        #
-        #
-        if csvpath.data_from_preceding is True:
             if by_line is True:
                 raise CsvPathsException(
                     "Breadth-first runs do not support source-mode preceding because each line of data flows through each csvpath in order already"
                 )
             #
-            # we are in source-mode: preceding
-            # that means we ignore the original data file path and
-            # instead use the data.csv from the preceding csvpath. that is,
-            # assuming there is a preceding csvpath and it created and
-            # saved data.
+            # we are in source-mode: preceding that means we ignore the original data file path and
+            # instead use the data.csv from the preceding csvpath. that is, assuming there is a
+            # preceding csvpath and it created and saved data.
             #
             # find the preceding csvpath in the named-paths
             #
-            # we may be in a file reference like: $sourcemode.csvpaths.source2:from. if so
+            # we may have a reference like: $sourcemode.csvpaths.source2:from. if so
             # we just need the named-paths name.
             #
+            # cannot do this anymore because ref templates.
+            # resman should get the whole reference
+            #
             if pathsname.startswith("$"):
-                self.logger.debug(
-                    "Named-paths name is a reference: %s. Stripping it down to just the actual named-paths name.",
-                    pathsname,
-                )
-                pathsname = pathsname[1 : pathsname.find(".")]
-            result = self.results_manager.get_last_named_result(
-                name=pathsname, before=csvpath.identity
-            )
-            if result is not None:
-                # get its data.csv path for this present run
-                # swap in that path for the regular origin path
-                file = result.data_file_path
-                csvpath.metadata["source-mode-source"] = file
-                self.logger.info(
-                    "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
-                    csvpath.identity,
-                    file,
-                )
+                ref = ReferenceParser(pathsname)
+                idname = self.paths_manager._get_from_names(ref.root_major, identity)[0]
+                idnames = self.paths_manager.get_identified_path_names_in(pathsname)
+                i = idnames.index(idname)
+                identity = idnames[i - 1]
+                file = f"{crt}{os.sep}{identity}{os.sep}data.csv"
+                self.logger.debug("csvpaths.load_csvpath: idnames: %s", idnames)
+                self.logger.debug("csvpaths.load_csvpath: idname: %s", idname)
+                self.logger.debug("csvpaths.load_csvpath: identity: %s", identity)
+                self.logger.debug("csvpaths.load_csvpath: ref: %s", ref)
+                self.logger.debug("csvpaths.load_csvpath: pathsname: %s", pathsname)
+                self.logger.debug("csvpaths.load_csvpath: file: %s", file)
             else:
-                self.logger.warning(
-                    "Cannot find a preceding data file to use for csvpath identified as %s running in source-mode",
-                    csvpath.identity,
+                #
+                # not a reference
+                #
+                result = self.results_manager.get_last_named_result(
+                    name=pathsname, before=csvpath.identity
                 )
+                if result is not None:
+                    # get its data.csv path for this present run
+                    # swap in that path for the regular origin path
+                    file = result.data_file_path
+                    #
+                    # this was added when the mode was created. it duplicates info available in manifests.
+                    #
+                    csvpath.metadata["source-mode-source"] = file
+                    self.logger.info(
+                        "Csvpath identified as %s uses last csvpath's data.csv at %s as source",
+                        csvpath.identity,
+                        file,
+                    )
+                else:
+                    self.logger.warning(
+                        "No preceding data file for csvpath %s running in source-mode",
+                        csvpath.identity,
+                    )
+
         f = path.find("[")
         self.logger.debug("Csvpath matching part starts at char # %s", f)
         apath = f"${file}{path[f:]}"
@@ -470,42 +444,86 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # ready to run. time to register the run. this is separate from
         # the run_register.py (ResultsRegister) event
         #
-        # crt = self.run_time_str(pathsname)
-        # fingerprint = self.file_manager.get_fingerprint_for_name(filename)
-        #
         self.logger.debug("Done loading csvpath")
 
-    # =========================
-    # main functions
-    # =========================
-
-    def collect_paths(self, *, pathsname, filename) -> None:
-        """
-        Sequentially does a CsvPath.collect() on filename for every named path. lines are collected into results."""
+    def _get_named_paths(self, pathsname: str) -> list:
+        if pathsname is None:
+            raise ValueError("Named-paths name cannot be None")
         paths = self.paths_manager.get_named_paths(pathsname)
         if paths is None:
             raise InputException(f"No named-paths found for {pathsname}")
+        if not isinstance(paths, list):
+            raise InputException(
+                f"Named-paths group {pathsname} must be represented as a list[str]"
+            )
         if len(paths) == 0:
             raise InputException(f"Named-paths group {pathsname} is empty")
         if "" in paths:
             raise InputException(
                 f"Named-paths group {pathsname} has one or more empty csvpaths"
             )
-        file = self.file_manager.get_named_file(filename)
-        if file is None:
+        return paths
+
+    # =========================
+    # main functions
+    # =========================
+
+    def collect_paths(
+        self, *, pathsname: str, filename: str, template: str = None
+    ) -> None:
+        """
+        Sequentially does a CsvPath.collect() on filename for every named-path in the
+        specified named-paths group. if a file reference is passed in, we iterate on
+        every concrete data file selected by the reference. unlike the named-paths
+        iteration, each file we iterate on becomes its own call to collect_paths. lines
+        are collected into a results object, not returned.
+        """
+        files = self.file_manager.get_named_file(filename)
+        if files is None:
             raise InputException(f"No named-file found for {filename}")
-        self.logger.info("Prepping %s and %s", filename, pathsname)
+        if isinstance(files, list):
+            for file in files:
+                self._collect_paths(
+                    pathsname=pathsname, filename=filename, template=template, file=file
+                )
+        else:
+            self._collect_paths(
+                pathsname=pathsname, filename=filename, template=template, file=files
+            )
+
+    def _collect_paths(
+        self, *, pathsname: str, file: str, filename: str, template: str = None
+    ) -> None:
+        #
+        # if template is None we need to go find any template that was given when
+        # the named-paths were loaded.
+        #
+        paths = self._get_named_paths(pathsname)
+        if template is None:
+            template = self.paths_manager.get_template_for_paths(pathsname)
+        self.logger.info(
+            "Prepping %s and %s with template %s", filename, pathsname, template
+        )
         self.clean(paths=pathsname)
         self.logger.info(
-            "Beginning collect_paths %s with %s paths", pathsname, len(paths)
+            "Beginning collect_paths %s with %s paths using template %s",
+            pathsname,
+            len(paths),
+            template,
         )
-        crt = self.run_time_str(pathsname)
+        #
+        # run identification and directories created here
+        #
+        maker = RunHomeMaker(self)
+        crt = maker.get_run_dir(
+            paths_name=pathsname, file_name=filename, template=template
+        )
         results = []
         #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename
+            run_dir=crt, pathsname=pathsname, filename=filename, file=file
         )
         #
         #
@@ -532,6 +550,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     pathsname=pathsname,
                     filename=filename,
                     crt=crt,
+                    index=i,
                 )
                 #
                 # if run-mode: no-run we skip ahead without saving results
@@ -553,7 +572,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                         csvpath.match,
                     )
                 #
-                # this is obviously not a good idea for very large files!
+                # TODO: unmatched needs additional support for streaming very large files
                 #
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
@@ -584,11 +603,35 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         )
         self.wrap_up()
 
-    def fast_forward_paths(self, *, pathsname, filename):
+    def fast_forward_paths(
+        self, *, pathsname: str, filename: str, template: str = None
+    ) -> None:
+        """
+        Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected.
+        """
+        files = self.file_manager.get_named_file(filename)
+        if files is None:
+            raise InputException(f"No named-file found for {filename}")
+        if isinstance(files, list):
+            for file in files:
+                self._fast_forward_paths(
+                    pathsname=pathsname, filename=filename, template=template, file=file
+                )
+        else:
+            self._fast_forward_paths(
+                pathsname=pathsname, filename=filename, template=template, file=files
+            )
+
+    def _fast_forward_paths(
+        self, *, pathsname: str, file: str, filename: str, template: str = None
+    ) -> None:
         """Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected."""
-        paths = self.paths_manager.get_named_paths(pathsname)
-        file = self.file_manager.get_named_file(filename)
-        self.logger.info("Prepping %s and %s", filename, pathsname)
+        paths = self._get_named_paths(pathsname)
+        if template is None:
+            template = self.paths_manager.get_template_for_paths(pathsname)
+        self.logger.info(
+            "Prepping %s and %s with template %s", filename, pathsname, template
+        )
         self.clean(paths=pathsname)
         self.logger.info(
             "Beginning FF %s with %s paths against file %s. No match results will be held.",
@@ -596,7 +639,13 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             len(paths),
             filename,
         )
-        crt = self.run_time_str(pathsname)
+        #
+        # run identification and directories created here
+        #
+        maker = RunHomeMaker(self)
+        crt = maker.get_run_dir(
+            paths_name=pathsname, file_name=filename, template=template
+        )
         #
         # run starts here
         #
@@ -647,8 +696,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     "Completed fast forward of csvpath %s against %s", i, file
                 )
             except Exception as ex:  # pylint: disable=W0718
-                # ex.trace = traceback.format_exc()
-                # ex.source = self
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
                 if self.ecoms.do_i_raise():
                     self.results_manager.save(result)
@@ -668,19 +715,36 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.wrap_up()
 
     def next_paths(
-        self, *, pathsname, filename, collect: bool = False
+        self,
+        *,
+        pathsname: str,
+        filename: str,
+        collect: bool = False,
+        template: str = None,
     ):  # pylint: disable=R0914
-        """Does a CsvPath.next() on filename for every line against every named path in sequence"""
-        paths = self.paths_manager.get_named_paths(pathsname)
-        if paths is None:
-            print(
-                f"PathsManager.get_named_paths for {pathsname} must return a set of named-paths"
-            )
+        """
+        Does a CsvPath.next() on filename for every line against every named path in sequence
+        """
+        paths = self._get_named_paths(pathsname)
+        if template is None:
+            template = self.paths_manager.get_template_for_paths(pathsname)
+
         file = self.file_manager.get_named_file(filename)
+        if isinstance(file, list):
+            raise ValueError(
+                "Multiple file runs are not supported with this iterative next() method"
+            )
         self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
         self.logger.info("Beginning next_paths with %s paths", len(paths))
-        crt = self.run_time_str(pathsname)
+
+        #
+        # run identification and directories created here
+        #
+        maker = RunHomeMaker(self)
+        crt = maker.get_run_dir(
+            paths_name=pathsname, file_name=filename, template=template
+        )
         #
         # run starts here
         #
@@ -743,11 +807,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 #
                 self.results_manager.add_named_result(result)
                 for line in csvpath.next():
-                    #
-                    # removed dec 1. why was this? it doesn't seem to make sense and
-                    # removing it doesn't break any unit tests. was it a mistake?
-                    #
-                    # line.append(result)
                     if collect:
                         result.append(line)
                         result.unmatched = csvpath.unmatched
@@ -771,26 +830,41 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     # =============== breadth first processing ================
 
     def collect_by_line(
-        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+        self,
+        *,
+        pathsname,
+        filename,
+        if_all_agree=False,
+        collect_when_not_matched=False,
+        template: str = None,
     ):
-        """Does a CsvPath.collect() on filename where each row is considered
-        by every named path before the next row starts
-
-        next_by_line for if_all_agree and collect_when_not_matched.
         """
+        Does a CsvPath.collect() on filename where each row is considered by
+        every named path before the next row starts next_by_line for if_all_agree
+        and collect_when_not_matched.
+        """
+        files = self.file_manager.get_named_file(filename)
+        if isinstance(files, str):
+            files = [files]
         self.logger.info(
-            "Starting collect_by_line for paths: %s and file: %s", pathsname, filename
+            "Starting collect_by_line for paths: %s and file: %s with template: %s",
+            pathsname,
+            filename,
+            template,
         )
         lines = []
-        for line in self.next_by_line(  # pylint: disable=W0612
-            pathsname=pathsname,
-            filename=filename,
-            collect=True,
-            if_all_agree=if_all_agree,
-            collect_when_not_matched=collect_when_not_matched,
-        ):
-            # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
-            lines.append(line)
+        for file in files:
+            for line in self._next_by_line(  # pylint: disable=W0612
+                pathsname=pathsname,
+                filename=filename,
+                collect=True,
+                if_all_agree=if_all_agree,
+                collect_when_not_matched=collect_when_not_matched,
+                file=file,
+                template=template,
+            ):
+                # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
+                lines.append(line)
         self.logger.info(
             "Completed collect_by_line for paths: %s and file: %s", pathsname, filename
         )
@@ -804,31 +878,45 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         return lines
 
     def fast_forward_by_line(
-        self, *, pathsname, filename, if_all_agree=False, collect_when_not_matched=False
+        self,
+        *,
+        pathsname,
+        filename,
+        if_all_agree=False,
+        collect_when_not_matched=False,
+        template: str = None,
     ):
-        """Does a CsvPath.fast_forward() on filename where each row is
-        considered by every named path before the next row starts
-
-        next_by_line for if_all_agree and collect_when_not_matched.
         """
+        Does a CsvPath.fast_forward() on filename where each row is considered by
+        every named path before the next row starts next_by_line for if_all_agree
+        and collect_when_not_matched.
+        """
+        files = self.file_manager.get_named_file(filename)
+        if isinstance(files, str):
+            files = [files]
         self.logger.info(
-            "Starting fast_forward_by_line for paths: %s and file: %s",
+            "Starting fast_forward_by_line for paths: %s and file: %s with template: %s",
             pathsname,
             filename,
+            template,
         )
-        for line in self.next_by_line(  # pylint: disable=W0612
-            pathsname=pathsname,
-            filename=filename,
-            collect=False,
-            if_all_agree=if_all_agree,
-            collect_when_not_matched=collect_when_not_matched,
-        ):
-            # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
-            pass
+        for file in files:
+            for line in self._next_by_line(  # pylint: disable=W0612
+                pathsname=pathsname,
+                filename=filename,
+                collect=False,
+                if_all_agree=if_all_agree,
+                collect_when_not_matched=collect_when_not_matched,
+                file=file,
+                template=template,
+            ):
+                # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
+                pass
         self.logger.info(
-            "Completed fast_forward_by_line for paths: %s and file: %s",
+            "Completed fast_forward_by_line for paths: %s and file: %s with template: %s",
             pathsname,
             filename,
+            template,
         )
 
     def next_by_line(  # pylint: disable=R0912,R0915,R0914
@@ -839,6 +927,37 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         collect: bool = False,
         if_all_agree=False,
         collect_when_not_matched=False,
+        template: str = None,
+    ) -> List[Any]:
+        #
+        # we're doing a programmatic use when we use next_by_line() so we don't allow
+        # multiple file runs. we check that here; the other _by_line()s skip it.
+        #
+        file = self.file_manager.get_named_file(filename)
+        if isinstance(file, list):
+            raise ValueError(
+                "Multi-file runs are not supported with iterative next_by_line()"
+            )
+        return self._next_by_line(
+            pathsname=pathsname,
+            filename=filename,
+            collect=collect,
+            if_all_agree=if_all_agree,
+            collect_when_not_matched=collect_when_not_matched,
+            template=template,
+            file=file,
+        )
+
+    def _next_by_line(  # pylint: disable=R0912,R0915,R0914
+        self,
+        *,
+        pathsname,
+        filename,
+        collect: bool = False,
+        if_all_agree=False,
+        collect_when_not_matched=False,
+        template: str = None,
+        file: str,
     ) -> List[Any]:
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts.
@@ -852,26 +971,29 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         which did not match are returned, rather than the default behavior.
         """
         # re: R0912 -- absolutely. plan to refactor.
+        if isinstance(file, list):
+            ValueError(
+                "This method only supports iterating through a single file, not a list of files"
+            )
         self.logger.info("Prepping %s and %s", filename, pathsname)
         self.clean(paths=pathsname)
-        fn = self.file_manager.get_named_file(filename)
-        paths = self.paths_manager.get_named_paths(pathsname)
-        if (
-            paths is None or not isinstance(paths, list) or len(paths) == 0
-        ):  # pragma: no cover
-            raise InputException(
-                f"Pathsname '{pathsname}' must name a list of csvpaths"
-            )
+        paths = self._get_named_paths(pathsname)
+        if template is None:
+            template = self.paths_manager.get_template_for_paths(pathsname)
+
         #
-        # experiment!
+        # create run identity and directories
         #
-        crt = self.run_time_str(pathsname)
+        maker = RunHomeMaker(self)
+        crt = maker.get_run_dir(
+            paths_name=pathsname, file_name=filename, template=template
+        )
         #
         # also use of crt below
         #
         csvpath_objects = self._load_csvpath_objects(
             paths=paths,
-            named_file=fn,
+            named_file=file,
             collect_when_not_matched=collect_when_not_matched,
             filename=filename,
             pathsname=pathsname,
@@ -888,12 +1010,12 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             crt=crt,
         )
         #
-        # setting fn into the csvpath is less obviously useful at CsvPaths
+        # setting file into the csvpath is less obviously useful at CsvPaths
         # but we'll do it for consistency.
         #
         self.logger.info("Beginning next_by_line with %s paths", len(csvpath_objects))
         reader = FileManager.get_reader(
-            fn, delimiter=self.delimiter, quotechar=self.quotechar
+            file, delimiter=self.delimiter, quotechar=self.quotechar
         )
         stopped_count: List[int] = []
         for line in reader.next():
@@ -925,8 +1047,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     if self._skip_all:
                         self.logger.warning("Skip-all set. Continuing to next.")
                         #
-                        # all following CsvPaths must have their
-                        # line_monitors incremented
+                        # all following CsvPaths must have their line_monitors incremented
                         #
                         self.current_matcher.track_line(line)
                         continue
@@ -950,7 +1071,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                         #
                     if self.current_matcher.stopped:  # pylint: disable=R1724
                         continue
-
                     #
                     # allowing the match to happen regardless of keep
                     # because we may want side-effects or to have different
@@ -986,8 +1106,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                         line = self.current_matcher.limit_collection(line)
                         p[1].append(line)
             except Exception as ex:  # pylint: disable=W0718
-                # ex.trace = traceback.format_exc()
-                # ex.source = self
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
                 if self.ecoms.do_i_raise():
                     for r in csvpath_objects:
@@ -1010,7 +1128,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             results.append(result)
             result.unmatched = r[0].unmatched
             self.results_manager.save(result)
-
         #
         # run ends here
         #
@@ -1046,7 +1163,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     crt=crt,
                 )
                 if csvpath.data_from_preceding is True:
-                    # this exception raise may be redundant, but I'm leaving it for now for good measure.
+                    # this exception raise may be redundant.
                     raise CsvPathsException(
                         "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
                     )
@@ -1074,8 +1191,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         for i, csvpath in enumerate(csvpath_objects):
             try:
                 #
-                # Result will set itself into its CsvPath as error collector
-                # printer, etc.
+                # Result sets itself into its CsvPath as error collector, printer, etc.
                 #
                 result = Result(
                     csvpath=csvpath[0],
@@ -1094,12 +1210,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 #
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
-                """
-                ex.trace = traceback.format_exc()
-                ex.source = self
-                ErrorHandler(csvpaths=self, error_collector=csvpath).handle_error(ex)
-                """
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
                 #
                 # keep this comment for modelines avoidance
                 #
+                ...

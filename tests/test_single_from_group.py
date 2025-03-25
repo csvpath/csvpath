@@ -14,7 +14,18 @@ class TestSingleFromGroup(unittest.TestCase):
         paths.paths_manager.add_named_paths_from_dir(
             directory=f"tests{os.sep}test_resources{os.sep}named_paths"
         )
-        paths.fast_forward_paths(pathsname="many#many_two", filename="food")
-        vars = paths.results_manager.get_variables("many#many_two")
+        paths.fast_forward_paths(pathsname="$many.csvpaths.many_two", filename="food")
+        vars = paths.results_manager.get_variables("$many.csvpaths.many_two")
+        #
+        # we no longer support # as a shorthand for .csvpaths. in references. leaving
+        # this note for a bit until sure all the instances shook out. there were very
+        # few -- it was not really used.
+        #
+        # longer term, # is still available as a separator within reference components,
+        # other than in datatype. its very possible that a more compelling new use will
+        # come to light.
+        #
+        # paths.fast_forward_paths(pathsname="many#many_two", filename="food")
+        # vars = paths.results_manager.get_variables("many#many_two")
         assert "two" in vars
         assert "one" not in vars

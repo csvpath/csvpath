@@ -69,40 +69,6 @@ class S3Do:
         # may not be needed?
         ...
 
-    def listdir(self) -> list[str]:
-        bucket, key = S3Utils.path_to_parts(self.path)
-        if not key.endswith("/"):
-            key = f"{key}/"
-        prefix = key
-        client = S3Utils.make_client()
-        #
-        # boto3 uses a deprecated feature. pytest doesn't like it. this is a quick fix.
-        #
-        import warnings
-
-        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
-        #
-        result = client.list_objects(Bucket=bucket, Prefix=prefix, Delimiter="/")
-        names = []
-        # if result has direct children they are in contents
-        lst = result.get("Contents")
-        if lst is not None:
-            for o in lst:
-                nkey = o["Key"]
-                name = nkey[nkey.rfind("/") + 1 :]
-                names.append(name)
-        # if result is for an intermediate dir with or without direct children
-        # the notional child directories are in common prefixes.
-        lst = result.get("CommonPrefixes")
-        if lst is not None:
-            for o in lst:
-                nkey = o["Prefix"]
-                nkey = nkey[0 : len(nkey) - 1] if len(nkey) > 0 else nkey
-                name = nkey[nkey.rfind("/") + 1 :]
-                if name.strip() != "":
-                    names.append(name)
-        return names
-
     def isfile(self) -> bool:
         bucket, key = S3Utils.path_to_parts(self.path)
         client = S3Utils.make_client()
@@ -118,3 +84,83 @@ class S3Do:
             assert str(e).find("404") > -1
             return False
         return True
+
+    def listdir(
+        self,
+        *,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list[str]:
+        return self._listdir(
+            path=self.path, files_only=files_only, recurse=recurse, dirs_only=dirs_only
+        )
+
+    def _listdir(
+        self,
+        *,
+        path,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+    ) -> list:
+        if files_only is True and dirs_only is True:
+            raise ValueError("Cannot list with neither files nor dirs")
+        bucket, key = S3Utils.path_to_parts(path)
+        if not key.endswith("/"):
+            key = f"{key}/"
+        prefix = key
+        client = S3Utils.make_client()
+        #
+        # boto3 uses a deprecated feature. pytest doesn't like it. this is a quick fix.
+        #
+        import warnings
+
+        warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcnow")
+        #
+        if prefix == "/":
+            result = client.list_objects(Bucket=bucket, Delimiter="/")
+        else:
+            result = client.list_objects(Bucket=bucket, Prefix=prefix, Delimiter="/")
+        names = []
+        #
+        # if result has direct children they are in contents
+        #
+        lst = result.get("Contents")
+        if lst is not None and not dirs_only:
+            for o in lst:
+                nkey = o["Key"]
+                if recurse:
+                    name = nkey
+                else:
+                    name = nkey[nkey.rfind("/") + 1 :]
+                names.append(name)
+        #
+        # if result is for an intermediate dir with or without direct children
+        # the notional child directories are in common prefixes. they are not
+        # really directories tho.
+        #
+        if files_only is False or recurse is True:
+            lst = result.get("CommonPrefixes")
+            if lst is not None:
+                for o in lst:
+                    next_key = o["Prefix"]
+                    if next_key == key:
+                        continue
+                    name = None
+                    if next_key.strip() == "":
+                        continue
+                    name = next_key[0 : len(next_key) - 1]
+                    if recurse is False:
+                        name = name[name.rfind("/") + 1 :]
+                    if files_only is False:
+                        names.append(name)
+                    if recurse is True:
+                        path = f"s3://{bucket}/{next_key}"
+                        names += self._listdir(
+                            path=path,
+                            files_only=files_only,
+                            recurse=recurse,
+                            dirs_only=dirs_only,
+                        )
+        return names

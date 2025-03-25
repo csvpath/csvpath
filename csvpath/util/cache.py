@@ -3,6 +3,7 @@ import os
 import csv
 import hashlib
 from typing import Dict
+from .path_util import PathUtility as pathu
 
 
 class Cache:
@@ -45,7 +46,10 @@ class Cache:
         return res
 
     def cache_text(self, filename, strtype: str, data: str) -> None:
+        filename = pathu.resep(filename)
+        cachedir = self._cachedir()
+        cachedir = pathu.resep(cachedir)
         cn = self._cache_name(filename)
-        cachepath = os.path.join(self._cachedir(), f"{cn}.{strtype}")
+        cachepath = os.path.join(cachedir, f"{cn}.{strtype}")
         with open(cachepath, "w", encoding="utf-8") as file:
             file.write(str(data))

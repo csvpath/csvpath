@@ -5,10 +5,12 @@ from ..util.exceptions import MatchException, DataException
 
 
 class Reference(Matchable):
-    """reference is to specific variable values or an existence
-    test against a header's values
-    """
+    """reference is to specific variable values or an existence test against a header's values"""
 
+    #
+    # the Reference class only deals with runtime metadata (vars, headers, csvpath)
+    # and named-paths ("csvpaths"). atm, METADATA is aspirational, if even needed.
+    #
     VARIABLES = "variables"
     HEADERS = "headers"
     CSVPATHS = "csvpaths"

@@ -1,60 +1,100 @@
 # pylint: disable=C0114
 import os
 import paramiko
+import stat
+from stat import S_ISDIR, S_ISREG
 from csvpath.util.box import Box
-from .sftp_config import SftpConfig
 from ..path_util import PathUtility as pathu
+from .sftp_config import SftpConfig
+from .sftp_walk import SftpWalk
 
 
 class SftpDo:
     def __init__(self, path):
         self._path = None
+        self._server_part = None
+        self._config = None
         self.setup(path)
 
     def setup(self, path: str = None) -> None:
         box = Box()
         config = box.get(Box.CSVPATHS_CONFIG)
+        self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
         self._config = SftpConfig(config)
         if path:
             self.path = path
-
-    """
-    @classmethod
-    def strip_protocol(self, path: str) -> str:
-        return pathu.stripp(path)
-    """
+            #
+            # have to set the cwd to the path. from the caller's POV this is
+            # a new use of Nos.
+            #
+            # to keep it simple just reset.
+            #
+            self._config.reset()
 
     @property
     def path(self) -> str:
         return self._path
 
+    """
+    @property
+    def parent_dir_path(self) -> str:
+        p = self.path
+        if p.find("/") == -1:
+            return "/"
+        if not p.startswith("/"):
+            p = f"/{p}"
+        return p[0:p.rfind("/")]
+    """
+
     @path.setter
     def path(self, p) -> None:
         p = pathu.resep(p)
         p = pathu.stripp(p)
+        #
+        # when we set the path using Nos we are always expecting the
+        # fully qualified path. pathu.stripp may not give us the sftp
+        # root. we shouldn't assume. instead make sure.
+        #
+        if not p.startswith("/"):
+            p = f"/{p}"
         self._path = p
 
     def remove(self) -> None:
+        if self.path == "/":
+            raise ValueError("Cannot remove the root")
         if self.isfile():
             self._config.sftp_client.remove(self.path)
         else:
-            self._rmdir(self.path)
+            walk = SftpWalk(self._config)
+            walk.remove(self.path)
 
-    def _rmdir(self, path):
-        lst = [path]
-        self._descendents(lst, path)
-        lst.reverse()
-        for p in lst:
-            if self._isfile(p):
-                self._config.sftp_client.remove(p)
-            else:
-                self._config.sftp_client.rmdir(p)
-
-    def _descendents(self, lst, path) -> list[str]:
-        for n in self._listdir(path, default=[]):
-            p = f"{path}/{n}"
-            lst.append(p)
-            self._descendents(lst, p)
+    def listdir(
+        self,
+        *,
+        files_only: bool = False,
+        recurse: bool = False,
+        dirs_only: bool = False,
+        default=None,
+    ) -> list[str]:
+        if files_only is True and dirs_only is True:
+            raise ValueError("Cannot list with neither files nor dirs")
+        walk = SftpWalk(self._config)
+        #
+        # TODO: walk reads the whole tree under self.path, regardless if we want recursion
+        # or not. we can obviously do better! this is just a simple first pass.
+        #
+        path = self.path
+        lst = walk.listdir(path=path, default=[])
+        if files_only:
+            lst = [_ for _ in lst if _[1] is True]
+        if dirs_only:
+            lst = [_ for _ in lst if _[1] is False]
+        if recurse:
+            lst = [_[0] for _ in lst]
+        else:
+            lst = [_[0][_[0].rfind("/") + 1 :] for _ in lst]
+            lst = [_ for _ in lst if _.find("/") == -1]
+        return lst
 
     def copy(self, to) -> None:
         if not self.exists():
@@ -78,7 +118,7 @@ class SftpDo:
 
     def dir_exists(self) -> bool:
         try:
-            ld = self._listdir(self.path, default=None)
+            ld = self.listdir(default=None)
             return ld is not None
         except FileNotFoundError:
             return False
@@ -124,12 +164,3 @@ class SftpDo:
 
     def makedir(self) -> None:
         self.makedirs()
-
-    def listdir(self) -> list[str]:
-        return self._listdir(self.path)
-
-    def _listdir(self, path, default=None) -> list[str]:
-        try:
-            return self._config.sftp_client.listdir(path)
-        except OSError:
-            return default

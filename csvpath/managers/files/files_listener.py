@@ -66,6 +66,8 @@ class FilesListener(Listener):  # Registrar,
         mani["file_home"] = mdata.file_home
         mani["file_name"] = mdata.file_name
         mani["name_home"] = mdata.name_home
+        if mdata.template is not None:
+            mani["template"] = mdata.template
         if mdata.mark is not None:
             mani["mark"] = mdata.mark
         mani["manifest_path"] = self.manifest_path()

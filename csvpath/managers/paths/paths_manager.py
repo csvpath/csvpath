@@ -6,15 +6,16 @@ from json import JSONDecodeError
 from csvpath import CsvPath
 from csvpath.util.exceptions import InputException
 from csvpath.util.metadata_parser import MetadataParser
-from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.box import Box
 from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
+from csvpath.util.template_util import TemplateUtility as temu
 
-# types added just for clarity
+# types for clarity
 NamedPathsName = NewType("NamedPathsName", str)
 """@private"""
 Csvpath = NewType("Csvpath", str)
@@ -66,6 +67,16 @@ class PathsManager:
         p = self.paths_root_manifest_path
         with DataFileReader(p) as reader:
             return json.load(reader.source)
+
+    def get_manifest_for_name(self, name: str) -> dict:
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            if ref.datatype != ref.CSVPATHS:
+                raise ValueError(f"Reference datatype is not valid: {ref.datatype}")
+            name = ref.root_major
+        home = self.named_paths_home(name)
+        home = os.path.join(home, "manifest.json")
+        return self.registrar.get_manifest(home)
 
     @property
     def registrar(self) -> PathsRegistrar:
@@ -125,7 +136,7 @@ class PathsManager:
         self.csvpaths.logger.info("Set named-paths to %s groups", len(np))
 
     def add_named_paths_from_dir(
-        self, *, directory: str, name: NamedPathsName = None
+        self, *, directory: str, name: NamedPathsName = None, template=None
     ) -> None:
         if directory is None:
             msg = "Named paths collection name needed"
@@ -152,13 +163,14 @@ class PathsManager:
                     # add files one by one under their own names
                     #
                     aname = self._name_from_name_part(p)
-                    self.add_named_paths_from_file(name=aname, file_path=path)
+                    self.add_named_paths_from_file(
+                        name=aname, file_path=path, template=template
+                    )
                 else:
                     #
                     # if a name, aggregate all the files
                     #
                     _ = self._get_csvpaths_from_file(path)
-
                     #
                     # try to find a run-index: N metadata and use it
                     # to try to impose order? we could do this, but it would
@@ -166,13 +178,11 @@ class PathsManager:
                     # use the ordered ways of creating named-paths that
                     # already exist: JSON and all-in-ones
                     #
-                    """
-                    c = self.csvpaths.csvpath()
-                    MetadataParser(c).extract_metadata(instance=c, csvpath=path)
-                    """
                     agg += _
             if len(agg) > 0:
-                self.add_named_paths(name=name, paths=agg, source_path=directory)
+                self.add_named_paths(
+                    name=name, paths=agg, source_path=directory, template=template
+                )
         else:
             msg = "Dirname must point to a directory"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -180,11 +190,13 @@ class PathsManager:
                 raise InputException(msg)
 
     def add_named_paths_from_file(
-        self, *, name: NamedPathsName, file_path: str
+        self, *, name: NamedPathsName, file_path: str, template=None
     ) -> None:
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
         _ = self._get_csvpaths_from_file(file_path)
-        self.add_named_paths(name=name, paths=_, source_path=file_path)
+        self.add_named_paths(
+            name=name, paths=_, source_path=file_path, template=template
+        )
 
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
@@ -193,13 +205,27 @@ class PathsManager:
                 j = json.load(f)
                 self.csvpaths.logger.debug("Found JSON file with %s keys", len(j))
                 for k in j:
+                    #
+                    # _config is an optional dict of pathname-to-configuration data.
+                    # config data includes run_dir templates. it may come to include
+                    # modes or other settings.
+                    #
+                    if k == "_config":
+                        continue
                     self.store_json_paths_file(k, file_path)
                     v = j[k]
                     paths = []
                     for f in v:
                         _ = self._get_csvpaths_from_file(f)
                         paths += _
-                    self.add_named_paths(name=k, paths=paths, source_path=file_path)
+                    template = None
+                    if "_config" in j:
+                        c = j["_config"]
+                        if k in c:
+                            template = c[k].get("template")
+                    self.add_named_paths(
+                        name=k, paths=paths, source_path=file_path, template=template
+                    )
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
@@ -214,11 +240,18 @@ class PathsManager:
         from_dir: str = None,
         from_json: str = None,
         source_path: str = None,
+        template: str = None,
     ) -> None:
+        if template is not None:
+            temu.valid(template)
         if from_file is not None:
-            return self.add_named_paths_from_file(name=name, file_path=from_file)
+            return self.add_named_paths_from_file(
+                name=name, file_path=from_file, template=template
+            )
         elif from_dir is not None:
-            return self.add_named_paths_from_dir(name=name, directory=from_dir)
+            return self.add_named_paths_from_dir(
+                name=name, directory=from_dir, template=template
+            )
         elif from_json is not None:
             return self.add_named_paths_from_json(file_path=from_json)
         if not isinstance(paths, list):
@@ -239,6 +272,8 @@ class PathsManager:
         for i, t in enumerate(ids):
             if t is None or t.strip() == "":
                 ids[i] = f"{i}"
+        if template is not None:
+            self.store_template_for_paths(name, template)
         mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
@@ -251,11 +286,11 @@ class PathsManager:
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
         mdata.source_path = source_path
+        mdata.template = template
         self.registrar.register_complete(mdata)
 
     #
     # adding ref handling for the form: $many.csvpaths.food
-    # which is equiv to: many#food
     #
     def get_named_paths(self, name: NamedPathsName) -> list[Csvpath]:
         self.csvpaths.logger.info("Getting named-paths for %s", name)
@@ -303,15 +338,87 @@ class PathsManager:
             ...
         return ret
 
-    def store_json_paths_file(self, name: str, jsonpath: str) -> None:
+    def store_json_paths_file(self, name: NamedPathsName, jsonpath: str) -> None:
         """@private"""
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
+        nos = Nos(jsonpath)
+        if nos.exists():
+            with DataFileReader(jsonpath) as file:
+                j = file.read()
+                if not j or len(j.strip()) == 0:
+                    raise ValueError(
+                        f"Path to JSON file at {jsonpath} does not have valid JSON"
+                    )
+                self.store_json_for_paths(name, j)
+
+    def store_json_for_paths(self, name: NamedPathsName, definition: str) -> None:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
         home = self.named_paths_home(name)
-        j = ""
-        with DataFileReader(jsonpath) as file:
-            j = file.read()
         p = os.path.join(home, "definition.json")
         with DataFileWriter(path=p) as writer:
-            writer.write(j)
+            writer.sink.write(definition)
+
+    def get_json_paths_file(self, name: NamedPathsName) -> dict:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
+        home = self.named_paths_home(name)
+        path = os.path.join(home, "definition.json")
+        nos = Nos(path)
+        if nos.exists():
+            with DataFileReader(path) as file:
+                return json.load(file.source)
+        else:
+            with DataFileWriter(path=path, mode="w") as writer:
+                json.dump({}, writer.sink, indent=2)
+        return {}
+
+    def get_template_for_paths(self, name: NamedPathsName) -> str:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
+        definition = self.get_json_paths_file(name)
+        if "_config" not in definition:
+            return ""
+        config = definition["_config"]
+        if name not in config:
+            return ""
+        template = config[name].get("template")
+        if template is None:
+            return ""
+        return template
+
+    def store_template_for_paths(self, name: NamedPathsName, template: str) -> None:
+        if template is None:
+            raise ValueError("Template cannot be None")
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
+        definition = self.get_json_paths_file(name)
+        config = definition.get("_config")
+        if config is None:
+            config = {}
+            definition["_config"] = config
+        if name not in config:
+            config[name] = {"template": template}
+        else:
+            config[name]["template"] = template
+        j = json.dumps(definition)
+        self.store_json_for_paths(name, j)
 
     @property
     def named_paths_names(self) -> list[str]:
@@ -384,18 +491,15 @@ class PathsManager:
         self.registrar.update_manifest_if(name=name, group_file_path=grp, paths=cs)
         return cs
 
-    def _str_from_list(self, paths: list[Csvpath]) -> str:
+    def _str_from_list(self, paths: list[Csvpath]) -> Csvpath:
         """@private"""
         f = ""
         for _ in paths:
             f = f"{f}\n\n---- CSVPATH ----\n\n{_}"
         return f
 
-    def _copy_in(self, name, csvpathstr) -> None:
+    def _copy_in(self, name: NamedPathsName, csvpathstr: Csvpath) -> None:
         temp = self._group_file_path(name)
-        #
-        # TODO: use a DataFileWriter that supports S3, local, etc. to write.
-        #
         with DataFileWriter(path=temp, mode="w") as writer:
             writer.append(csvpathstr)
         return temp
@@ -404,10 +508,7 @@ class PathsManager:
         temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
         return temp
 
-    def _get_csvpaths_from_file(self, file_path: str) -> list[str]:
-        #
-        # TODO: use DataFileReader to support S3 and local
-        #
+    def _get_csvpaths_from_file(self, file_path: str) -> list[Csvpath]:
         with DataFileReader(file_path) as reader:
             cp = reader.read()
             _ = [
@@ -435,6 +536,15 @@ class PathsManager:
                 break
         return ps
 
+    def _get_from_names(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
+        ps = []
+        paths = self.get_identified_paths_in(npn)
+        for path in paths:
+            if path[0] != identity and len(ps) == 0:
+                continue
+            ps.append(path[0])
+        return ps
+
     def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
         ps = []
         paths = self.get_identified_paths_in(npn)
@@ -444,11 +554,22 @@ class PathsManager:
             ps.append(path[1])
         return ps
 
+    def get_identified_path_names_in(
+        self, nps: NamedPathsName, paths: list[Csvpath] = None
+    ) -> list[str]:
+        paths = self.get_identified_paths_in(nps, paths)
+        names = []
+        for p in paths:
+            names.append(p[0])
+        return names
+
     def get_identified_paths_in(
         self, nps: NamedPathsName, paths: list[Csvpath] = None
     ) -> list[tuple[Identity, Csvpath]]:
         """@private"""
+        #
         # used by PathsRegistrar
+        #
         if paths is None:
             paths = self.get_named_paths(nps)
         idps = []

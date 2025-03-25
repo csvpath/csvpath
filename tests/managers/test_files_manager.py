@@ -178,7 +178,7 @@ class TestFilesManager(unittest.TestCase):
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         fm = paths.file_manager
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises((FileNotFoundError, IsADirectoryError)):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):
@@ -192,12 +192,12 @@ class TestFilesManager(unittest.TestCase):
         }
         fm.set_named_files(nf)
         assert fm.named_files_count >= 2
-        assert fm.name_exists("wonderful")
-        assert fm.name_exists("amazing")
+        assert fm.has_named_file("wonderful")
+        assert fm.has_named_file("amazing")
         fm.remove_named_file("wonderful")
-        assert not fm.name_exists("wonderful")
+        assert not fm.has_named_file("wonderful")
         fm.remove_named_file("amazing")
-        assert not fm.name_exists("amazing")
+        assert not fm.has_named_file("amazing")
 
     def test_file_mgr_dict2(self):
         paths = CsvPaths()

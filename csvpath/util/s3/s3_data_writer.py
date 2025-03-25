@@ -19,10 +19,9 @@ class S3DataWriter(DataFileWriter):
             )
 
     def write(self, data) -> None:
-        """this is a one-and-done write in mode 'w'. you don't use the data writer
-        as a context manager for this method. for multiple write
-        calls to the same file handle use append().
-        """
+        """a one-and-done write. mode 'w'. don't call this using DataFileWriter as a context manager."""
+        if data is None:
+            raise ValueError("Data cannot be None")
         client = S3Utils.make_client()
         with open(self.path, "wb", transport_params={"client": client}) as file:
             file.write(data.encode("utf-8"))

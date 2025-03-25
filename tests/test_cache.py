@@ -3,6 +3,7 @@ import os
 import shutil
 from csvpath import CsvPaths
 from csvpath.util.line_monitor import LineMonitor
+from csvpath.util.path_util import PathUtility as pathu
 
 PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 FILES = {
@@ -59,6 +60,7 @@ class TestCache(unittest.TestCase):
         cache.cache_text(filename, "csv", ",".join(headers))
         csvpaths = CsvPaths()
         cache = csvpaths.file_manager.lines_and_headers_cacher.cache
+        filename = pathu.resep(filename)
         cheaders = cache.cached_text(filename, "csv")
         assert cheaders == headers
         assert len(cheaders) == len(headers)

@@ -1,45 +1,10 @@
 import unittest
-from csvpath.util.reference_parser import ReferenceParser
+from csvpath.util.references.reference_parser import ReferenceParser
+from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath import CsvPaths
 
 
 class TestReferenceParser(unittest.TestCase):
-    def test_find_in_dir_names(self):
-        rm = CsvPaths().results_manager
-        last = True
-        names = [
-            "2024-03-03_01-01-03",
-            "2024-03-04_01-05-01",
-            "2024-03-04_03-51-07",
-            "2024-03-04_03-40-16",
-            "2024-03-04_05-25-10",
-            "2024-03-05_01-08-15",
-            "2024-03-06_01-02-27",
-            "2024-03-07_01-10-09",
-            "2024-03-04_07-21-10",
-            "2024-03-04_00-11-24",
-        ]
-        instance = "2024-03-03_01-"
-        name = rm._find_in_dir_names(instance, names, last)
-        assert name == "2024-03-03_01-01-03"
-
-        instance = "2024-03-04_"
-        name = rm._find_in_dir_names(instance, names, last)
-        assert name == "2024-03-04_07-21-10"
-
-        instance = "2024-03-"
-        name = rm._find_in_dir_names(instance, names, last)
-        assert name == "2024-03-07_01-10-09"
-
-        last = False
-        instance = "2024-"
-        name = rm._find_in_dir_names(instance, names, last)
-        assert name == "2024-03-03_01-01-03"
-
-        instance = "2024-03-04"
-        name = rm._find_in_dir_names(instance, names, last)
-        assert name == "2024-03-04_00-11-24"
-
     def test_ref_parser_1(self):
         ref = ReferenceParser("$many.csvpaths.first")
         assert ref.root_major == "many"

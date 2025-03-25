@@ -13,3 +13,4 @@ class PathsMetadata(Metadata):
         self.named_paths_identities: list[str] = None
         self.named_paths: list[str] = None
         self.source_path: str = None
+        self.template: str = None

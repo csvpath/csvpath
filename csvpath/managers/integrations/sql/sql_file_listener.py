@@ -41,7 +41,7 @@ class SqlFileListener(SqlListener):
         }
         self._upsert_named_file(named_file_data)
 
-    def _upsert_named_file(self, named_file_data: dict, *, dispose: bool = True):
+    def _upsert_named_file(self, named_file_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting named-file metadata into %s", dialect)
@@ -67,8 +67,6 @@ class SqlFileListener(SqlListener):
                 raise ValueError(f"Unsupported database dialect: {dialect}")
             conn.execute(stmt)
             conn.commit()
-        if dispose is True:
-            self.engine.dispose()
 
     def _set(self, named_file_data) -> dict:
         return {

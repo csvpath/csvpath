@@ -72,11 +72,25 @@ class LogUtility:
         if name in LogUtility.LOGGERS:
             logger = LogUtility.LOGGERS[name]
         else:
-            log_file_handler = RotatingFileHandler(
-                filename=component.config.log_file,
-                maxBytes=component.config.log_file_size,
-                backupCount=component.config.log_files_to_keep,
+            log_file_handler = None
+            handler_type = component.config.get(
+                section="logging", name="handler", default="file"
             )
+            log_file_handler = None
+            if handler_type == "file":
+                log_file_handler = logging.FileHandler(
+                    filename=component.config.log_file,
+                    encoding="utf-8",
+                )
+            elif handler_type == "rotating":
+                log_file_handler = RotatingFileHandler(
+                    filename=component.config.log_file,
+                    maxBytes=component.config.log_file_size,
+                    backupCount=component.config.log_files_to_keep,
+                    encoding="utf-8",
+                )
+            else:
+                raise ValueError(f"Unknown type of log file handler: {handler_type}")
             formatter = logging.Formatter(
                 "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
             )

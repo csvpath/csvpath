@@ -71,9 +71,13 @@ class ResultRegistrar(Registrar, Listener):
         mdata.named_paths_uuid_string = self.csvpaths.run_metadata.named_paths_uuid
         mdata.named_file_name = self.result.file_name
         mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid
-        mdata.run_dir = self.result_serializer.get_run_dir_name_from_datetime(
-            self.result.run_time
-        )
+        #
+        # exp. swapping for the original above. no negative impact. logically it's the better way.
+        #
+        mdata.run_dir = self.result.run_dir
+        #
+        # end exp
+        #
         mdata.source_mode_preceding = self.result.source_mode_preceding
         mdata.run_home = self.result.run_dir
         mdata.group_run_uuid = self.csvpaths.run_metadata.uuid_string

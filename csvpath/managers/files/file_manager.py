@@ -5,12 +5,14 @@ from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
-from csvpath.util.reference_parser import ReferenceParser
-from csvpath.util.reference_finder import ReferenceFinder
+from csvpath.util.references.reference_parser import ReferenceParser
+from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.template_util import TemplateUtility as temu
 from .file_registrar import FileRegistrar
 from .lines_and_headers_cacher import LinesAndHeadersCacher
 from .file_metadata import FileMetadata
@@ -75,46 +77,123 @@ class FileManager:
         """@private"""
         return os.path.join(self.named_files_dir, "manifest.json")
 
-    def get_named_file_uuid(self, name: NamedFileName) -> str:
+    #
+    # namedfile: a NamedFileName (name or reference)
+    # file: fully qualified path to match against the file key in the manifest.
+    # only one of these two arguments may be passed.
+    #
+    # if we're referencing results the file UUID is the instance results UUID
+    # because the data.csv doesn't have its own UUID. it does have a fingerprint
+    # but we'll stick with the UUID since it shouldn't ever be confusing.
+    #
+    def get_named_file_uuid(self, *, name: NamedFileName, file=None) -> str:
+        if name is None and file is None:
+            raise ValueError("Named-file name and file cannot both be None")
         if name is None:
-            raise ValueError("Paths name cannot be None")
-        if name.startswith("$"):
-            path = self.csvpaths.results_manager.get_run_dir_for_reference(name)
+            raise ValueError("File can be None but named-file name must be passed")
+
+        ref = ReferenceParser(name) if name.startswith("$") else None
+        if ref is not None and file is None:
+            if ref.datatype != ref.RESULTS:
+                raise ValueError("Reference must be results, not {ref.datatype}")
+            #
+            # see examples/references/test_ref.py. there we handle references like:
+            #    $sourcemode.results.202:last.source1
+            #
+            # looking at the manifest for a run, not the named-file manifest. the
+            # run manifest is just a dict, not a list of dict.
+            #
+            refinder = ResultsReferenceFinder(self._csvpaths, name=name)
+            path = refinder.resolve(name, with_instance=False)
             path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
             if nos.exists():
-                m = self.registrar.get_manifest(path)
-                return m["uuid"]
+                mani = self.registrar.get_manifest(path)
+            uuid = mani["named_file_uuid"]
+            return uuid
+        elif ref is not None and file is not None:
+            mani = self.get_manifest(name)
+            if ref.datatype == ref.FILES:
+                for _ in mani:
+                    if _["file"] == file:
+                        return _["uuid"]
+            elif ref.datatype == ref.RESULTS:
+                return mani["uuid"]
+            else:
+                raise ValueError("Invalid reference type in {name}")
         else:
+            mani = self.get_manifest(name)
+            if file is None:
+                #
+                # we assume that if we're not handling a reference and our file is None
+                # we are looking for the most recent UUID.
+                #
+                return mani[len(mani) - 1]["uuid"]
+            else:
+                for _ in mani:
+                    if _["file"] == file:
+                        return _["uuid"]
+        raise ValueError(f"No matching UUID found for file {file} in {name}")
+
+    def get_manifest(self, name: NamedFileName) -> json:
+        if name is None:
+            raise ValueError("Paths name cannot be None")
+        mani = None
+        #
+        # find a results manifest by results reference
+        #
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            if ref.datatype == ref.RESULTS:
+                refinder = ResultsReferenceFinder(self._csvpaths, name=name)
+                path = refinder.resolve(name)
+                path = os.path.join(path, "manifest.json")
+                nos = self.nos
+                nos.path = path
+                if nos.exists():
+                    mani = self.registrar.get_manifest(path)
+                    #
+                    # TODO: mani should never be a str. fixing. if this is found please delete.
+                    #
+                    if isinstance(mani, str):
+                        mani = json.loads(mani)
+            elif ref.datatype == ref.FILES:
+                #
+                # find a file manifest by reference
+                #
+                rf = FilesReferenceFinder(self.csvpaths, name=name)
+                mani = rf.manifest
+            else:
+                raise ValueError("Unhandled type of reference: {name}")
+        else:
+            #
+            # find a file manifest
+            #
             path = self.named_file_home(name)
             path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
             if nos.exists():
-                m = self.registrar.get_manifest(path)
-                return m[len(m) - 1]["uuid"]
-        raise ValueError(f"No manifest for file named {name}")
+                mani = self.registrar.get_manifest(path)
+        if mani is None:
+            raise ValueError(f"No manifest for file named {name}")
+        if isinstance(mani, str):
+            raise ValueError(f"Manifest is str: {mani}")
+        return mani
 
     #
     # named-file homes are a dir like: inputs/named_files/March-2024/March-2024.csv
     #
     def named_file_home(self, name: NamedFileName) -> str:
         """@private"""
+        if name is None or name.strip() == "":
+            raise ValueError("Name cannot be None or empty")
         #
         # not a named-file name
         #
         if name.find("://") > -1:
             return name
-        if name.find("/") > -1:
-            #
-            # this is definitely not what we should be returning. but it is what
-            # works in the new world of remote and fully-qualified local paths.
-            # for now, going with it. the previous implementation was wonky too,
-            # in a different and not visible way, but not good, so this is a step
-            # up in multiple ways.
-            #
-            return ""
         home = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = home
@@ -123,7 +202,7 @@ class FileManager:
         home = pathu.resep(home)
         return home
 
-    def assure_named_file_home(self, name: str) -> str:
+    def assure_named_file_home(self, name: NamedFileName) -> str:
         """@private"""
         home = self.named_file_home(name)
         nos = self.nos
@@ -144,8 +223,10 @@ class FileManager:
     # this method won't create a directory in a blob store because that's not
     # possible.
     #
-    def assure_file_home(self, name: str, path: str) -> str:
+    def assure_file_home(self, name: NamedFileName, path: str, template=None) -> str:
         """@private"""
+        if name is None or name.strip() == "":
+            raise ValueError("Name cannot be None or empty")
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
         nos = self.nos
@@ -153,6 +234,11 @@ class FileManager:
         sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         fname = self._clean_file_name(fname)
+        if template is not None and template.strip() != "":
+            fname = self._apply_template(path=path, name=fname, template=template)
+        #
+        # why is named file home giving a long name when no template?
+        #
         home = self.named_file_home(name)
         home = os.path.join(home, fname)
         nos.path = home
@@ -160,6 +246,31 @@ class FileManager:
             nos.makedirs()
         home = pathu.resep(home)
         return home
+
+    def _apply_template(self, *, path: str, name: str, template: str) -> str:
+        if template is None:
+            return name
+        if template.find(":filename") == -1:
+            raise ValueError(f"Template {template} must include :filename")
+        t = template
+        #
+        # uses the origin path + template to decorate the cleaned filename with
+        # origin-path parts and static tokens to make a file path to a version of
+        # a file. e.g.
+        #   -> path: a/b/c/d/myfile.csv
+        #   -> name: myfile.csv
+        #   -> template: :3/:1/:filename
+        #   -> result: d/b/myfile.csv
+        # this will become:
+        #   -> d/b/myfile.csv/myfile.csv
+        # and then, once fingerprinted:
+        #   -> d/b/myfile.csv/0b849c9c1ef....csv
+        #
+        parts = pathu.parts(path)
+        for i, part in enumerate(parts):
+            t = t.replace(f":{i}", part)
+        t = t.replace(":filename", parts[-1])
+        return t
 
     @property
     def named_files_count(self) -> int:
@@ -184,25 +295,26 @@ class FileManager:
     # this feels like the better sig.
     #
     def has_named_file(self, name: NamedFileName) -> bool:
-        return self.name_exists(name)
-
-    #
-    # deprecated but stable
-    #
-    def name_exists(self, name: NamedFileName) -> bool:
-        """@private"""
         p = self.named_file_home(name)
         nos = self.nos
         nos.path = p
         b = nos.dir_exists()
         return b
 
-    def remove_named_file(self, name: str) -> None:
+    #
+    # deprecated but stable in the short term. will be removed.
+    #
+    def name_exists(self, name: NamedFileName) -> bool:
+        """@private"""
+        return self.has_named_file(name)
+
+    def remove_named_file(self, name: NamedFileName) -> None:
         """@private"""
         p = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = p
-        nos.remove()
+        if nos.exists():
+            nos.remove()
 
     def remove_all_named_files(self) -> None:
         """@private"""
@@ -212,46 +324,94 @@ class FileManager:
 
     def set_named_files(self, nf: dict[str, str]) -> None:
         """@private"""
+        cfg = {} if nf.get("_config") is None else nf.get("_config")
         for k, v in nf.items():
-            self.add_named_file(name=k, path=v)
+            if k == "_config":
+                continue
+            template = None
+            if k in cfg and "template" in cfg[k]:
+                template = cfg[k]["template"]
+            self.add_named_file(name=k, path=v, template=template)
 
     def set_named_files_from_json(self, filename: str) -> None:
-        """named-files from json files are always local"""
+        """named-files from json uses json files to add any number of named files.
+        the json files are always local, atm. the json structure is a dict. e.g:
+             "orders": "c:\\data\\acme\\orders\\2025-01-30.csv",
+             "orders": "c:\\data\\acme\\orders\\2025-01-31.csv",
+             "_config":
+                 "orders"
+                     "template": ":1/:3/:filename"
+        """
         try:
-            #
-            # TODO: named-files json files are always local. they should
-            # be able to be on s3 so that we are completely independent of
-            # the local disk w/re file manager
-            #
-            with open(filename, "r", encoding="utf-8") as f:
-                j = json.load(f)
+            with DataFileReader(filename) as reader:
+                j = json.load(reader.source)
                 self.set_named_files(j)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
                 raise
 
-    def add_named_files_from_dir(self, dirname: str):
+    #
+    # if name is provided all files selected will be registered under the same name in
+    # the order they are found; which is likely not deterministic. template, if any, is
+    # the way we're going to use the source path to create a consistent path within the
+    # files area. recurse is going to typically be True because we want to add all the
+    # files we find below the indicated root directory.
+    #
+    # if we don't pass in a name, each file is registered under its filename, minus the
+    # extension
+    #
+    def add_named_files_from_dir(
+        self, dirname: str, *, name=None, template: str = None, recurse=True
+    ):
+        if dirname is None or dirname.strip() == "":
+            raise ValueError("Dirname cannot be None or empty")
+        #
+        # need to support adding all files from directory under the same name. preferably
+        # in order of file created time, if possible.
+        #
         nos = self.nos
         nos.path = dirname
-        dlist = nos.listdir()
+        dlist = nos.listdir(files_only=True, recurse=recurse)
         base = dirname
+        #
+        # collect all full paths that are files and have correct extensions
+        #
         for p in dlist:
             _ = p.lower()
             ext = p[p.rfind(".") + 1 :].strip().lower()
             if ext in self._csvpaths.config.csv_file_extensions:
-                name = p if p.rfind(".") == -1 else p[0 : p.rfind(".")]
-                path = os.path.join(base, p)
-                self.add_named_file(name=name, path=path)
+                if name is None:
+                    n = p if p.rfind(".") == -1 else p[0 : p.rfind(".")]
+                else:
+                    n = name
+                if n.find(nos.sep) > -1:
+                    n = n[n.rfind(nos.sep) + 1 :]
+                #
+                # we expect when Nos gives us a recursive listing the files are qualified
+                # by every dir up to the starting dir.
+                #
+                if recurse is True:
+                    path = p
+                else:
+                    path = os.path.join(base, p)
+
+                self.add_named_file(name=n, path=path, template=template)
             else:
                 self._csvpaths.logger.debug(
                     "%s is not in accept list", os.path.join(base, p)
                 )
 
-    #
-    # -------------------------------------
-    #
-    def add_named_file(self, *, name: str, path: str) -> None:
+    def add_named_file(
+        self, *, name: NamedFileName, path: str, template: str = None
+    ) -> None:
+        if name is None or name.strip() == "":
+            raise ValueError("Name cannot be None or empty")
+        if path is None or path.strip() == "":
+            raise ValueError("Path cannot be None or empty")
+        if template is not None:
+            temu.valid(template)
+        path = pathu.resep(path)
         #
         # path must end up with only legal filesystem chars.
         # the read-only http backend will have ? and possibly other
@@ -262,7 +422,8 @@ class FileManager:
         #
         # create folder tree in inputs/named_files/name/filename
         #
-        home = self.assure_file_home(name, path)
+        #
+        home = self.assure_file_home(name, path, template)
         file_home = home
         mark = None
         #
@@ -281,7 +442,7 @@ class FileManager:
         #
         # copy file to its home location
         #
-        self._copy_in(path, home)
+        self._copy_in(path, home, template)
         name_home = self.named_file_home(name)
         rpath, h = self._fingerprint(home)
         mdata = FileMetadata(self.csvpaths.config)
@@ -302,6 +463,7 @@ class FileManager:
         mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
         mdata.name_home = name_home
         mdata.mark = mark
+        mdata.template = template
         #
         # TODO: add file_size. move FileInfo into Nos. for now it is 0.
         #
@@ -313,17 +475,18 @@ class FileManager:
         fname = fname.replace("=", "_")
         return fname
 
-    def _copy_in(self, path, home) -> None:
-        """@private"""
+    def _copy_in(self, path, home, template=None) -> None:
         nos = self.nos
         nos.path = path
         sep = nos.sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
+        #
         # creates
         #   a/file.csv -> named_files/name/file.csv/file.csv
         # the dir name matching the resulting file name is correct
         # once the file is landed and fingerprinted, the file
         # name is changed.
+        #
         fname = self._clean_file_name(fname)
         temp = os.path.join(home, fname)
         if pathu.parts(path)[0] == pathu.parts(home)[0]:
@@ -347,27 +510,70 @@ class FileManager:
     # where this gets interesting is the datestamp identifing the
     # run. we need to allow for var sub and/or other shortcuts
     #
-    def get_named_file(self, name: str) -> str:
+    def get_named_file(self, name: NamedFileName) -> str | list:
+        if name is None or name.strip() == "":
+            raise ValueError("Name cannot be None or empty")
         ret = None
         #
-        # references can be to results or to prior versions of a file. in
+        # references can be to results or to prior versions of a file.
+        #
+        # at the moment, files and results references are similar but not as much the same
+        # as they could be. regardless, there would be differences because of the different
+        # data structures they deal with.
+        #
+        # results references look like:
+        #      $myname.results.2025-03-:first.myinstance
+        #
+        # the pointer in name_one (the name of the run_dir) can be :first, :last, :index. ffr,
+        # we can easily swap :today and :yesterday in if needed. see comment in ResultsRefFinder
+        #
         # prior file version references we can do:
-        #      $myfilename.files.index
-        #      $myfilename.files.[yesterday|today]:[last|first|index]
+        #      $myfilename.files.:index
+        #           $orders.files.all:2
+        #
+        #      $myfilename.files.[yesterday|today][:last|:first|:index|:all|None]
+        #           $orders.files.yesterday:last
+        #
         #      $myfilename.files.fingerprint
-        #      $myfilename.files.[yyyy-mm-dd_hh-mm-ss]:[before|after|None]
+        #           $orders.files.a7b0c5d761d74581c8b69481d355b59e6b891e2a1c6bbc3976c52e7a91cd5c28
+        #
+        #      $myfilename.files.[yyyy-mm-dd_hh-mm-ss][:before|:after|:all-before|:all-after|None]
+        #           $orders.files.:1
+        #
+        #      $myfilename.files.filename.[yyyy-mm-dd_hh-mm-ss][:all|:first|:last|:before|:after|None]
+        #           $orders.files.march-orders_csv
+        #           $orders.files.march-orders_csv:2025-03
+        #
+        # order:
+        #   fingerprint exact match
+        #   filename prefix match
+        #   index match
+        #   yesterday|today
+        #   date prefix match
+        #
+        #   with file templates like ":5/:4/:filename" we can do directory references like:
+        #       $orders.files.2025/mar:all
+        #
+        #
+        #
         #
         if name.startswith("$"):
-            reff = ReferenceFinder(self._csvpaths, name)
-            ret = reff.resolve()
+            ref = ReferenceParser(name)
+            if ref.datatype == ref.FILES:
+                reff = FilesReferenceFinder(self._csvpaths, name=name)
+                ret = reff.resolve()
+            elif ref.datatype == ref.RESULTS:
+                reff = ResultsReferenceFinder(self._csvpaths, name=name)
+                ret = reff.resolve(name, with_instance=True)
+                ret = os.path.join(ret, "data.csv")
         else:
-            if not self.name_exists(name):
+            if not self.has_named_file(name):
                 return None
             n = self.named_file_home(name)
             ret = self.registrar.registered_file(n)
         return ret
 
-    def get_fingerprint_for_name(self, name) -> str:
+    def get_fingerprint_for_name(self, name: NamedFileName) -> str:
         """@private"""
         if name.startswith("$"):
             # atm, we don't give fingerprints for references doing rewind/replay
@@ -380,7 +586,7 @@ class FileManager:
     #
     # -------------------------------------
     #
-    def get_named_file_reader(self, name: str) -> DataFileReader:
+    def get_named_file_reader(self, name: NamedFileName) -> DataFileReader:
         """@private"""
         path = self.get_named_file(name)
         t = self.registrar.type_of_file(self.named_file_home(name))
@@ -432,7 +638,6 @@ class FileManager:
             # if we're re-adding the file we don't need to make
             # another copy of it. re-adds are fine.
             #
-            # need an s3 way to do this
             nos.path = hpath
             remove_fpath = nos.exists()
             #

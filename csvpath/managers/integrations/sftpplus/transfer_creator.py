@@ -160,10 +160,12 @@ class SftpPlusTransferCreator:
         if self.message_path is None:
             raise ValueError("Message path cannot be none")
         msg = self.message
+        """
         print("\n******************************************************")
         print(f"TransferCreator.process_msg: processing: path: {self.message_path}")
         print(f"TransferCreator.process_msg: processing: msg: {msg}")
         print("******************************************************\n")
+        """
         self.csvpaths.logger.debug(
             "Transfer creator processing %s: %s", self.message_path, msg
         )
@@ -256,10 +258,8 @@ class SftpPlusTransferCreator:
         ts = Transfers()
         active = msg.get("active")
         if active == "delete":
-            print(f"_update_existing_transfer: deleting tuuid: {tuuid}")
             ts.delete_transfer(uuid=tuuid)
         else:
-            print(f"_update_existing_transfer: updating tuuid: {tuuid}")
             ts.update_transfer(
                 uuid=tuuid, update="enabled", value=VarUtility.is_true(msg["active"])
             )

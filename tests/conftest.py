@@ -3,10 +3,26 @@ import os
 import shutil
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
+from csvpath.util.box import Box
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if Box.SQL_ENGINE in Box.STUFF:
+        try:
+            box = Box()
+            engine = box.get(key=Box.SQL_ENGINE)
+            engine.dispose()
+            box.remove(Box.SQL_ENGINE)
+        except Exception as e:
+            print(f"Error in test cleanup: {type(e)}: {e}")
 
 
 @pytest.fixture(scope="session", autouse=True)
 def clear_files(request):
+    _clear_files()
+
+
+def _clear_files():
     if os.sep == "\\":
         e = ""
         if os.path.exists("conf.env"):

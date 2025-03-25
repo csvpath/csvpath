@@ -156,7 +156,6 @@ class JobBuilder:
 
     def _base_job(self, mdata: Metadata):
         try:
-            print(f"creating job for {mdata}")
             fs = {}
             fs["documentation"] = documentation_job.DocumentationJobFacet(
                 description="no description"

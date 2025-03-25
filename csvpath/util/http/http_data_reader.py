@@ -15,7 +15,7 @@ class HttpDataReader(CsvDataReader):
             self.source = open(self._path, "r")
 
     def next(self) -> list[str]:
-        with open(self._path, "r") as file:
+        with open(self._path, "r", encoding="utf-8") as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
