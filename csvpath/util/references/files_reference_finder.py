@@ -3,8 +3,9 @@ import datetime
 import os
 from datetime import timedelta, timezone
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from .reference_parser import ReferenceParser
 from ..nos import Nos
+from ..path_util import PathUtility as pathu
+from .reference_parser import ReferenceParser
 from .ref_utils import ReferenceUtility as refu
 
 
@@ -273,6 +274,7 @@ class FilesReferenceFinder:
             # this cannot be os.walk!
             #
             lf = os.path.join(starting, looking_for)
+            lf = pathu.resep(lf)
             print(f"filesrefrnd: _collect_paths_for_filename_if: lf: {lf}")
             nos = Nos(starting)
             print(f"filesrefrnd: _collect_paths_for_filename_if: nos.path: {nos.path}")
@@ -280,6 +282,13 @@ class FilesReferenceFinder:
             print(f"filesrefrnd: _collect_paths_for_filename_if: lst: {lst}")
             for file in lst:
                 print(f"filesrefrnd: _collect_paths_for_filename_if: file: {file}")
+                if file.find("manifest.json") > -1:
+                    continue
+                #
+                # we're already looking in the file inputs so we shouldn't have to check the extension. if
+                # there is a bogus extension it's an upstream file add problem.
+                #
+                """
                 i = file.rfind(".")
                 if i == -1:
                     continue
@@ -289,6 +298,7 @@ class FilesReferenceFinder:
                 print(f"filesrefrnd: _collect_paths_for_filename_if: ext: {ext}")
                 if ext not in self._csvpaths.config.csv_file_extensions:
                     continue
+                """
                 #
                 # if we have a prefix match and there are no directories we are at the
                 # physical file level. every file should be a delimited data file named
@@ -299,6 +309,10 @@ class FilesReferenceFinder:
                 if match:
                     possibles.append(file)
                     continue
+                #
+                # check if we have an extension that needs dot to become underscore because
+                # dots don't work for references.
+                #
                 i = file.find(".")
                 j = i + 1
                 file = f"{file[0:i]}_{file[j:]}"
