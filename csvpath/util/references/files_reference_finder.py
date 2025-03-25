@@ -127,6 +127,11 @@ class FilesReferenceFinder:
 
     def _paths_for_filename_if(self, exact: bool = False) -> list:
         #
+        # remember that files are coming in manifest order supposedly. however,
+        # there may be cases where we get filesystem / bucket order, which is
+        # not ordered.
+        #
+        #
         # a progressive match filename search that can be limited by a date in name_three
         # if we wanted to set a range we could use name_four (using a # delimiter) but
         # we don't know that's a real need yet.
@@ -181,7 +186,7 @@ class FilesReferenceFinder:
         #
         # FIX: match by date should be of the files found in the files var, not all findable.
         #
-        lst = self._find_in_date(adate=adate, pointer=pointer, of_files=files)
+        lst = self._find_in_date(adate=adate, pointer=pointer)
         print(f"filesreferd: _paths_for_filename_if: lst: {lst}")
         ret = []
 
@@ -434,7 +439,7 @@ class FilesReferenceFinder:
                 lst.append(_)
         return lst
 
-    def _find_in_date(self, adate, pointer, of_files: list[str] = None) -> list:
+    def _find_in_date(self, adate, pointer) -> list:
         mani = self.manifest
         lst = []
         for _ in mani:
@@ -446,8 +451,6 @@ class FilesReferenceFinder:
             # tell us what to do. :all will give any dates that
             # are before the datetime we use as a search.
             #
-            inn = False if of_files is None else _["file"] in of_files
-            print(f"_find_in_date: inn: {inn}, file: {_['file']}")
             if td.date() == adate.date():
                 lst.append(td)
         #

@@ -117,7 +117,7 @@ class TestFileOps(unittest.TestCase):
         assert len(lst2) == 1
         assert lst2[0].find("Jan") > -1
         #
-        # date filter
+        # date filter *
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:after"
@@ -234,8 +234,20 @@ class TestFileOps(unittest.TestCase):
             arc = os.path.join(arc, "clean-invoices")
             arc = os.path.join(arc, "acme/invoices/2025/Jan/")
             arc = pathu.resep(arc)
-            nos = Nos(arc)
-            assert nos.dir_exists()
+            mani = paths.file_manager.get_manifest("acme-invoices")
+            rmani = paths.results_manager.get_last_named_result(
+                name="clean-invoices"
+            ).run_manifest
+            assert mani
+            assert mani[len(mani) - 1]["file"] == rmani["named_file_path"]
+            #
+            # nos does resep itself.
+            #
+            # we don't know which file is last so we cannot just say arc should exist.
+            # we can read the manifest to see what last should be.
+            #
+            # nos = Nos(arc)
+            # assert nos.dir_exists()
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 

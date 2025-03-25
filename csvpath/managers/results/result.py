@@ -2,6 +2,7 @@
 import os
 from uuid import UUID
 import uuid
+import json
 from datetime import datetime
 from typing import Any
 from csvpath import CsvPath
@@ -15,6 +16,7 @@ from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
 from .result_serializer import ResultSerializer
 from .readers.readers import ResultReadersFacade
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.util.file_readers import DataFileReader
 
 
 class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
@@ -137,6 +139,13 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     @run_dir.setter
     def run_dir(self, d: str) -> None:
         self._run_dir = d
+
+    @property
+    def run_manifest(self) -> dict:
+        p = self.run_dir
+        p = os.path.join(p, "manifest.json")
+        with DataFileReader(p) as reader:
+            return json.load(reader.source)
 
     @property
     def by_line(self) -> bool:

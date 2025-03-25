@@ -108,6 +108,9 @@ class Nos:
     def makedir(self) -> None:
         self.do.makedir()
 
+    #
+    # listdir should be assumed to be unordered.
+    #
     def listdir(
         self,
         *,
@@ -151,7 +154,9 @@ class FileDo:
         return os.path.exists(self.path)
 
     def dir_exists(self) -> bool:
+        print(f"nos.do.dir_exists: path: {self.path}")
         ret = os.path.exists(self.path)
+        print(f"nos.do.dir_exists: ret: {ret}")
         return ret
 
     def physical_dirs(self) -> bool:
@@ -169,6 +174,9 @@ class FileDo:
     def isfile(self) -> bool:
         return os.path.isfile(self.path)
 
+    #
+    # listdir returns files in filesystem order, i.e. unordered.
+    #
     def listdir(
         self,
         *,
