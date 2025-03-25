@@ -276,7 +276,8 @@ class PathsManager:
         for i, t in enumerate(ids):
             if t is None or t.strip() == "":
                 ids[i] = f"{i}"
-        self.store_template_for_paths(name, template)
+        if template is not None:
+            self.store_template_for_paths(name, template)
         mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
@@ -404,6 +405,8 @@ class PathsManager:
         return template
 
     def store_template_for_paths(self, name: NamedPathsName, template: str) -> None:
+        if template is None:
+            raise ValueError("Template cannot be None")
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
@@ -417,7 +420,7 @@ class PathsManager:
         if name not in config:
             config[name] = {"template": template}
         else:
-            config[name][template] = template
+            config[name]["template"] = template
         j = json.dumps(definition)
         self.store_json_for_paths(name, j)
 

@@ -214,6 +214,8 @@ class RunHomeMaker:
             print(f"humemakr: get_run_dir: parts: {parts}")
             for i, p in enumerate(parts):
                 prefix = prefix.replace(f":{i}", p)
+                suffix = suffix.replace(f":{i}", p)
+
             print(f"humemakr: get_run_dir: prefix 2: {prefix}")
             prefix = pathu.resep(prefix)
             print(f"humemakr: get_run_dir: prefix 2.5: {prefix}")
