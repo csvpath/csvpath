@@ -335,8 +335,6 @@ class TestFileOps(unittest.TestCase):
             #
             # again, can't rely on the order of the files add by directory above.
             #
-            """
-            """
             rmani = paths.results_manager.get_last_named_result(
                 name="clean-invoices"
             ).run_manifest
@@ -350,12 +348,6 @@ class TestFileOps(unittest.TestCase):
                 pathsname="clean-invoices",
                 filename=f"$clean-invoices.results.acme/invoices/2025/{month}/202:last.step-two",
             )
-            """
-            paths.collect_paths(
-                pathsname="clean-invoices",
-                filename="$clean-invoices.results.acme/invoices/2025/Feb/202:last.step-two",
-            )
-            """
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
