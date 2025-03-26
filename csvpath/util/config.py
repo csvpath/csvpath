@@ -406,6 +406,7 @@ webhook_url =
         #
         #
         #
+        print(f"reading config frm: {self._configpath}")
         self._config.read(self._configpath)
         self.refresh()
 
