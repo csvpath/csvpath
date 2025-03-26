@@ -403,10 +403,6 @@ webhook_url =
             )
             return
         self._assure_config_file_path()
-        #
-        #
-        #
-        print(f"reading config frm: {self._configpath}")
         self._config.read(self._configpath)
         self.refresh()
 

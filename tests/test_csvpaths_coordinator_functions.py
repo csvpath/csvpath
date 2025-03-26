@@ -135,6 +135,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         # skip_all() is not usable in serial runs (_paths methods)
         # it does the same as skip()
         #
+        #
         cs = CsvPaths()
         cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.file_manager.set_named_files(FILES)
