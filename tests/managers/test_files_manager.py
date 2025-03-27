@@ -69,7 +69,8 @@ class TestFilesManager(unittest.TestCase):
         mani2 = paths.file_manager.files_root_manifest
         print(f"mani: {mani} !! {mani2}")
         assert len(mani) + 1 == len(mani2)
-        paths.config.add_to_config("listeners", "groups", grps)
+        if grps is not None and isinstance(grps, str):
+            paths.config.add_to_config("listeners", "groups", grps)
 
     def test_named_files_home(self):
         paths = CsvPaths()

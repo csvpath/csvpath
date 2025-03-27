@@ -537,7 +537,7 @@ class FileManager:
         #      $myfilename.files.fingerprint
         #           $orders.files.a7b0c5d761d74581c8b69481d355b59e6b891e2a1c6bbc3976c52e7a91cd5c28
         #
-        #      $myfilename.files.[yyyy-mm-dd_hh-mm-ss][:before|:after|:all-before|:all-after|None]
+        #      $myfilename.files.[yyyy-mm-dd_hh-mm-ss][:before|:after|None]
         #           $orders.files.:1
         #
         #      $myfilename.files.filename.[yyyy-mm-dd_hh-mm-ss][:all|:first|:last|:before|:after|None]

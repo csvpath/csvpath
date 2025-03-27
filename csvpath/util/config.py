@@ -403,9 +403,6 @@ webhook_url =
             )
             return
         self._assure_config_file_path()
-        #
-        #
-        #
         self._config.read(self._configpath)
         self.refresh()
 

@@ -67,6 +67,7 @@ class Tables:
             Column("username", String(50)),
             Column("base_path", String(250)),
             Column("manifest_path", String(250), nullable=False),
+            Column("template", String(250), nullable=True),
         )
         self._named_paths = named_paths
         return self._named_paths
@@ -100,6 +101,7 @@ class Tables:
             Column("files_root", String(250), nullable=False),
             Column("base_path", String(250)),
             Column("manifest_path", String(250), nullable=False),
+            Column("template", String(250), nullable=True),
         )
         self._named_file = named_file
         return self._named_file

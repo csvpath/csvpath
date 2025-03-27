@@ -53,7 +53,8 @@ class TestPathsManager(unittest.TestCase):
         print(f"mani: {mani}")
         print(f"mani2: {mani2}")
         assert len(mani) + 1 == len(mani2)
-        paths.add_to_config("listeners", "groups", grps)
+        if grps is not None and isinstance(grps, str):
+            paths.add_to_config("listeners", "groups", grps)
 
     def test_named_paths_adda(self):
         name = f"{uuid4()}"
