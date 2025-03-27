@@ -36,6 +36,7 @@ def _clear_files():
 
     paths = CsvPaths()
     config = paths.config
+    print(f"CONFIG PATH IS: {config.config_path}")
     archive = config.archive_path
     files = config.inputs_files_path
     paths = config.inputs_csvpaths_path

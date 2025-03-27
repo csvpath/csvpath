@@ -4,6 +4,7 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
 from .sql_listener import SqlListener
+from .updates import Updates
 
 
 class SqlFileListener(SqlListener):
@@ -38,10 +39,18 @@ class SqlFileListener(SqlListener):
             "files_root": mdata.named_files_root,
             "base_path": mdata.base_path,
             "manifest_path": mdata.manifest_path,
+            "template": mdata.template,
         }
         self._upsert_named_file(named_file_data)
 
     def _upsert_named_file(self, named_file_data: dict):
+        try:
+            self._upsert_named_file_unreliably(named_file_data)
+        except Exception:
+            Updates(self.engine).do_updates()
+            self._upsert_named_file_unreliably(named_file_data)
+
+    def _upsert_named_file_unreliably(self, named_file_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting named-file metadata into %s", dialect)
@@ -80,4 +89,7 @@ class SqlFileListener(SqlListener):
             "ip_address": named_file_data["ip_address"],
             "hostname": named_file_data["hostname"],
             "username": named_file_data["username"],
+            "template": named_file_data["template"]
+            if "template" in named_file_data
+            else None,
         }

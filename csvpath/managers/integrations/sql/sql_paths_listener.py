@@ -4,6 +4,7 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
 from .sql_listener import SqlListener
+from .updates import Updates
 
 
 class SqlPathsListener(SqlListener):
@@ -33,10 +34,18 @@ class SqlPathsListener(SqlListener):
             "username": mdata.username,
             "base_path": mdata.base_path,
             "manifest_path": mdata.manifest_path,
+            "template": mdata.template,
         }
         self._upsert_named_paths(named_paths_data)
 
     def _upsert_named_paths(self, named_paths_data: dict):
+        try:
+            self._upsert_named_paths_unreliably(named_paths_data)
+        except Exception:
+            Updates(self.engine).do_updates()
+            self._upsert_named_paths_unreliably(named_paths_data)
+
+    def _upsert_named_paths_unreliably(self, named_paths_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting named-paths metadata into %s", dialect)
@@ -73,4 +82,5 @@ class SqlPathsListener(SqlListener):
             "ip_address": named_paths_data["ip_address"],
             "hostname": named_paths_data["hostname"],
             "username": named_paths_data["username"],
+            "template": named_paths_data.get("template"),
         }
