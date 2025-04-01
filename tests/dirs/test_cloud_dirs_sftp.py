@@ -6,7 +6,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.sftp.sftp_nos import SftpDo
 from csvpath.util.sftp.sftp_walk import SftpWalk
-
+from csvpath.util.sftp.sftp_config import SftpConfig
 
 paths = CsvPaths()
 c = paths.config
@@ -41,7 +41,16 @@ text = "this is the text"
 
 
 class TestCloudDirsSftp(unittest.TestCase):
+    def _available(self):
+        return SftpConfig.check_for_server(paths.config)
+
     def test_sftp_crud_dirs(self):
+        if not self._available():
+            print(
+                "Cannot run test test_sftp_crud_dirs because the server is not available"
+            )
+            return
+
         for adir in DIRS:
             SftpDo(adir).makedirs()
         for path in PATHS:
@@ -64,6 +73,12 @@ class TestCloudDirsSftp(unittest.TestCase):
         assert ("pdq/abc_3.txt", True) in lst
 
     def test_sftp_crud_files(self):
+        if not self._available():
+            print(
+                "Cannot run test test_sftp_crud_files because the server is not available"
+            )
+            return
+
         for name in PATHS:
             try:
                 Nos(name).remove()

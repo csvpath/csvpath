@@ -4,7 +4,6 @@ import pytest
 from lark.exceptions import VisitError
 from csvpath import CsvPaths, CsvPath
 from csvpath.matching.productions import Reference
-from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.matching.util.exceptions import MatchException
 
 NAMED_FILES_DIR = f"tests{os.sep}test_resources{os.sep}named_files"

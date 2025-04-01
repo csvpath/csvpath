@@ -58,6 +58,7 @@ class ResultsReferenceFinder:
     #
     #   - get_file_manifest_entry_for_results_reference()
     #   - resolve()
+    #   - resolve_possibles()
     #
     # =========================================
     #
@@ -101,7 +102,7 @@ class ResultsReferenceFinder:
     #   - if there is a name_three instance identity, include it
     #
 
-    def resolve(self, refstr: str = None, with_instance=True) -> str:
+    def resolve_possibles(self, refstr: str = None, with_instance=True) -> str:
         if refstr is None:
             refstr = self._name
         if refstr is None:
@@ -136,7 +137,6 @@ class ResultsReferenceFinder:
         #
         # extract pointer, if any
         #
-        pointer = refu.pointer(name)
         name = refu.not_pointer(name)
         #
         # filter possibles. last level should be instances. remove those.
@@ -154,35 +154,60 @@ class ResultsReferenceFinder:
         #
         possibles = self._filter_prefixes(possibles)
         #
-        # handle pointer, if any
+        # sort possibles
         #
+        if len(possibles) < 2:
+            return possibles
+        ps = {os.path.basename(p): p for p in possibles}
+        keys = list(ps.keys())
+        keys.sort()
+        possibles = [ps[k] for k in keys]
+        return possibles
+
+    def resolve(self, refstr: str = None, with_instance=True) -> str:
+        if refstr is None:
+            refstr = self._name
+        if refstr is None:
+            raise ValueError("Must pass in a reference string on init or this method")
+        ref = ReferenceParser(refstr)
+        name = ref.name_one
+        possibles = self.resolve_possibles(refstr, with_instance)
         resolved = None
-        if len(possibles) == 0:
-            ...
-        if len(possibles) == 1:
+        pointer = refu.pointer(name)
+        if (
+            pointer
+            and pointer.find(":") > -1
+            and (pointer.startswith("today") or pointer.startswith("yesterday"))
+        ):
+            pointer = refu.pointer(pointer)
+        name = refu.not_pointer(name)
+        #
+        # do the pointer
+        #
+        i = ExpressionUtility.to_int(pointer)
+        if pointer == "last":
+            resolved = possibles[len(possibles) - 1]
+        elif pointer == "first":
             resolved = possibles[0]
-        elif pointer is not None and pointer.strip() != "" and len(possibles) > 0:
-            #
-            # time order the possibles
-            #
-            ps = {os.path.dirname(p): p for p in possibles}
-            keys = list(ps.keys())
-            keys.sort()
-            possibles = [ps[k] for k in keys]
-            #
-            # do the pointer
-            #
-            if pointer == "last":
-                resolved = possibles[len(possibles) - 1]
-            elif pointer == "first":
-                resolved = possibles[0]
-            else:
-                i = ExpressionUtility.to_int(pointer)
-                if not isinstance(i, int):
-                    raise ValueError(f"Pointer :{pointer} is not recognized")
-                elif i < len(possibles):
-                    resolved = possibles[i]
-        if resolved is not None and with_instance is True:
+        elif not isinstance(i, int):
+            raise ValueError(f"Pointer :{pointer} is not recognized")
+        elif i < len(possibles):
+            resolved = possibles[i]
+        #
+        # ideally, maybe?, if resolved is None and len(possibles) > 0 return
+        # the top possible, which should be the nearest possible to the time
+        # indicated or the first path found if there are multiple path prefixes
+        # due to a template. otoh, I'm not 100% convinced I'm right about that
+        # approach. any way you think about it, returning multiple results is
+        # not great and returning a single result when multiple match has the
+        # chance of confusing the user and or giving them a bug. for now, just
+        # taking a wait and see -- and returning None
+        #
+        if (
+            resolved is not None
+            and with_instance is True
+            and ref.name_three is not None
+        ):
             #
             # add instance name?
             #
@@ -194,6 +219,24 @@ class ResultsReferenceFinder:
         possibles.sort(key=len, reverse=True)  # Sort by length, longest first
         result = []
         for string in possibles:
-            if not any(other.startswith(string) for other in result):
+            if not any(self._trailing(string, other) for other in result):
+                # if not any(other.startswith(string) for other in result):
                 result.append(string)
         return result
+
+    def _trailing(self, candidate: str, other: str) -> bool:
+        if not other.startswith(candidate):
+            return False
+        #
+        # looking for matches like: 2025-01-01_00-01-05 vis-a-vis 2025-01-01_00-01-05_01
+        # if we see those we like them both because both are separate runs, even though
+        # their paths/names overlap
+        #
+        r = other[len(candidate) :]
+        if r[0] != "_" or len(r) == 1:
+            return True
+        r = r[1:]
+        i = ExpressionUtility.to_int(r)
+        if isinstance(i, int):
+            return False
+        return True

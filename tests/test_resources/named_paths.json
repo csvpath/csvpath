@@ -9,9 +9,5 @@
   "needs split": [
     "tests/test_resources/named_paths/zips.csvpaths"
   ],
-  "_config": {
-    "many": {
-      "template": ":1/:run_dir/:2"
-    }
-  }
+  "_config": { }
 }

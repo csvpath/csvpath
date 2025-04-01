@@ -14,6 +14,7 @@ from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
 from csvpath.util.template_util import TemplateUtility as temu
+from csvpath.matching.util.expression_utility import ExpressionUtility as expu
 
 # types for clarity
 NamedPathsName = NewType("NamedPathsName", str)
@@ -26,6 +27,12 @@ Identity = NewType("Identity", str)
 
 class PathsManager:
     MARKER: str = "---- CSVPATH ----"
+    SCRIPT_TYPES: list[str] = [
+        "on_complete_all_script",
+        "on_complete_errors_script",
+        "on_complete_valid_script",
+        "on_complete_invalid_script",
+    ]
 
     def __init__(self, *, csvpaths, named_paths=None):
         """@private"""
@@ -325,14 +332,29 @@ class PathsManager:
             elif directive == ":from":
                 ret = self._get_from(npn, identity)
             else:
+                #
+                #
+                #
+                directive = directive[1:]
+                i = expu.to_int(directive)
+                if isinstance(i, int):
+                    path = self._group_file_path(npn)
+                    lst = self._get_csvpaths_from_file(path)
+                    if i >= len(lst):
+                        raise ValueError("Cannot find a csvpath in {npn} at {i}")
+                    csvpath = lst[i]
+                    return [csvpath]
+                #
+                #
+                #
                 self.csvpaths.logger.error(
-                    "Incorrect reference directive: name: %s, paths-name: %, identity: %",
+                    "Incorrect reference directive: name: %s, paths-name: %s, identity: %s",
                     name,
                     npn,
                     identity,
                 )
                 raise InputException(
-                    f"Reference directive must be :to or :from, not {directive}"
+                    f"Reference directive must be :to or :from or :<int>, not {directive}"
                 )
         else:
             ...
@@ -419,6 +441,118 @@ class PathsManager:
             config[name]["template"] = template
         j = json.dumps(definition)
         self.store_json_for_paths(name, j)
+
+    #
+    # store script to run after the named-path. we could make this a mode, but it
+    # should be in the named-paths first.
+    #
+    def store_script_for_paths(
+        self,
+        *,
+        name: NamedPathsName,
+        script_name: str,
+        when: str = None,
+        script_type: str = None,
+        text: str = None,
+    ) -> None:
+        if script_name is None:
+            raise ValueError("script_name cannot be None")
+        if when not in [None, "all", "errors", "valid", "invalid"]:
+            raise ValueError(
+                "When must be one of 'all', 'errors', 'valid', or 'invalid'; it cannot be None"
+            )
+        if script_type is None and when is None:
+            when = "all"
+        elif script_type is not None and when is not None:
+            raise ValueError("Cannot provide both when and script_type")
+        if script_type is None:
+            script_type = f"on_complete_{when}_script"
+
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
+        # check this creates if not found
+        definition = self.get_json_paths_file(name)
+        config = definition.get("_config")
+        if config is None:
+            config = {}
+            definition["_config"] = config
+        if name not in config:
+            config[name] = {script_type: script_name}
+        else:
+            config[name][script_type] = script_name
+        j = json.dumps(definition)
+        self.store_json_for_paths(name, j)
+        #
+        # if we have the text of the script, store that too
+        #
+        if text is not None:
+            #
+            # if the user configured a shell we'll use it to add a shebang.
+            #
+            if not text.startswith("#!"):
+                s = self.csvpaths.config.get(section="scripts", name="shell")
+                if s is not None:
+                    text = f"#!{s}\n{text}"
+            script_file = os.path.join(self.named_paths_home(name), script_name)
+            with DataFileWriter(path=script_file) as file:
+                file.write(text)
+
+    def get_config_for_paths(self, name: NamedPathsName) -> dict:
+        definition = self.get_json_paths_file(name)
+        config = definition.get("_config")
+        return None if config is None else config.get(name)
+
+    def get_scripts_for_paths(self, name: NamedPathsName) -> list:
+        config = self.get_config_for_paths(name)
+        lst = []
+        for t in self.SCRIPT_TYPES:
+            s = config.get(t)
+            if s is not None:
+                lst.append((t, s))
+        return lst
+
+    #
+    # given a named-paths name and one of the four types of scripts, returns the
+    # full filesystem path to the script file. the four types of scripts are:
+    #    - on_complete_all_script
+    #    - on_complete_errors_script
+    #    - on_complete_valid_script
+    #    - on_complete_invalid_script
+    #
+    def get_script_path_for_paths(
+        self, *, name: NamedPathsName, script_type: str
+    ) -> str:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if script_type is None:
+            raise ValueError("Script type cannot be None")
+        if script_type not in PathsManager.SCRIPT_TYPES:
+            raise ValueError(f"Unknown script type {script_type}")
+
+        definition = self.get_json_paths_file(name)
+        config = definition.get("_config")
+        if config is None:
+            raise ValueError(f"Script {script_type} is not configured")
+        cfg = config.get(name)
+        if cfg is None:
+            raise ValueError(f"Script {script_type} is not configured")
+        script_name = cfg.get(script_type)
+        return os.path.join(self.named_paths_home(name), script_name)
+
+    #
+    # gets the text of the script indicated by named-paths name and script type
+    #
+    def get_script_for_paths(self, *, name: NamedPathsName, script_type: str) -> str:
+        path = self.get_script_path_for_paths(name=name, script_type=script_type)
+        if path is None:
+            raise ValueError(f"Script path for {script_type} is not found in {name}")
+        nos = Nos(path)
+        if nos.exists():
+            with DataFileReader(path) as file:
+                return file.read()
+        else:
+            raise ValueError(f"Script {path} not found")
 
     @property
     def named_paths_names(self) -> list[str]:
@@ -553,6 +687,13 @@ class PathsManager:
                 continue
             ps.append(path[1])
         return ps
+
+    def get_preceeding_instance_identity(self, name, index: int) -> str:
+        if index <= 0:
+            raise ValueError("0 is the first csvpath in named-paths group")
+        paths = self.get_named_paths(name)
+        paths = self.get_identified_paths_in(name, paths)
+        return paths[index - 1][0]
 
     def get_identified_path_names_in(
         self, nps: NamedPathsName, paths: list[Csvpath] = None

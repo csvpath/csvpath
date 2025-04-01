@@ -24,15 +24,51 @@ class TestFilesReferenceFinder(unittest.TestCase):
         paths.fast_forward_paths(filename="food", pathsname="food")
         return paths
 
+    def test_mani_path_to_ref(self) -> None:
+        refstr = refu.results_manifest_path_to_reference(
+            archive_name="archive",
+            manipath="archive/many/test_resources/2025-03-27_01-16-05/named_files/many_two/manifest.json",
+            is_instance=True,
+        )
+        ref = ReferenceParser(refstr)
+        assert ref.root_major == "many"
+        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_three == "many_two"
+        #
+        # not an instance
+        #
+        refstr = refu.results_manifest_path_to_reference(
+            archive_name="archive",
+            manipath="archive/many/test_resources/2025-03-27_01-16-05/manifest.json",
+            is_instance=False,
+        )
+        ref = ReferenceParser(refstr)
+        assert ref.root_major == "many"
+        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_three is None
+
+        #
+        # instance with sub
+        #
+        refstr = refu.results_manifest_path_to_reference(
+            archive_name="archive",
+            manipath="archive/many/test_resources/2025-03-27_01-16-05/sub/myinstance/manifest.json",
+            is_instance=True,
+        )
+        ref = ReferenceParser(refstr)
+        assert ref.root_major == "many"
+        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_three == "myinstance"
+
     def test_files_ref_finder_reference_mani(self):
         paths = self.setup()
         #
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.name == ref
         assert isinstance(finder._ref, ReferenceParser)
         assert finder._ref.root_major == "food"
-        assert finder._ref.name_one == "today:first"
+        assert finder._ref.name_one == ":today:first"
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
         assert "file" in finder.manifest[0]
@@ -40,7 +76,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
 
     def test_files_ref_finder_fingerprint(self):
         paths = self.setup()
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
@@ -56,7 +92,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         print("init csvpaths")
         paths = self.setup()
         print("starting ref finding")
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
@@ -84,7 +120,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         #
         #
         #
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 3
@@ -97,7 +133,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         #
         #
         #
-        ref = "$food.files.today:last"
+        ref = "$food.files.:today:last"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 3
@@ -112,20 +148,35 @@ class TestFilesReferenceFinder(unittest.TestCase):
         )
 
     def test_files_ref_finder_pointer(self):
+        #
+        # see comment below re: stacked pointers
+        #
         paths = self.setup()
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         n = finder._ref.name_one
         p = refu.pointer(n, "last")
+        p == "today:first"
+        p = refu.pointer(p, "last")
         assert p == "first"
 
     def test_files_ref_finder_not_pointer(self):
+        #
+        # pointers can be stacked in limited cases. :today and :yesterday
+        # are replacement tokens, not instructions. they are currently the
+        # only pointer-like tokens that we use. otoh, :first is a "real"
+        # pointer in that it tells you what to do -- take the first found
+        # item -- but doesn't have a value used in itself. :today has a
+        # value -- it is the current day's timestamp.
+        #
         paths = self.setup()
-        ref = "$food.files.today:first"
+        ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         n = finder.ref.name_one
+        p = refu.pointer(n)
+        assert p == "today:first"
         p = refu.not_pointer(n)
-        assert p == "today"
+        assert p == ""
 
     def test_files_ref_finder_complete_date_string(self):
         paths = self.setup()

@@ -48,7 +48,9 @@ class SftpSender(Listener, threading.Thread):
         self._password = VarUtility.get_str(m, v, "sftp-password")
         self._target_path = VarUtility.get_str(m, v, "sftp-target-path")
         self._original = VarUtility.get_bool(m, v, "sftp-original-data")
-        self._files = VarUtility.get_value_pairs(m, v, "sftp-files")
+        self._files = VarUtility.get_value_pairs(
+            metadata=m, variables=v, key="sftp-files"
+        )
 
     def run(self):
         self.csvpaths.logger.info("Checking for requests to send result files by SFTP")

@@ -9,7 +9,8 @@ from .event import EventBuilder
 
 class SlackSender(Listener, threading.Thread):
     def __init__(self, *, config=None):
-        super().__init__(config)
+        Listener.__init__(self, config=config)
+        threading.Thread.__init__(self)
         self._url = None
         self.csvpaths = None
         self.result = None
