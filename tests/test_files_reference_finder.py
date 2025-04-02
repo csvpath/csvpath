@@ -27,24 +27,24 @@ class TestFilesReferenceFinder(unittest.TestCase):
     def test_mani_path_to_ref(self) -> None:
         refstr = refu.results_manifest_path_to_reference(
             archive_name="archive",
-            manipath="archive/many/test_resources/2025-03-27_01-16-05/named_files/many_two/manifest.json",
+            manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}named_files{os.sep}many_two{os.sep}manifest.json",
             is_instance=True,
         )
         ref = ReferenceParser(refstr)
         assert ref.root_major == "many"
-        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three == "many_two"
         #
         # not an instance
         #
         refstr = refu.results_manifest_path_to_reference(
             archive_name="archive",
-            manipath="archive/many/test_resources/2025-03-27_01-16-05/manifest.json",
+            manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}manifest.json",
             is_instance=False,
         )
         ref = ReferenceParser(refstr)
         assert ref.root_major == "many"
-        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three is None
 
         #
@@ -52,12 +52,12 @@ class TestFilesReferenceFinder(unittest.TestCase):
         #
         refstr = refu.results_manifest_path_to_reference(
             archive_name="archive",
-            manipath="archive/many/test_resources/2025-03-27_01-16-05/sub/myinstance/manifest.json",
+            manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}sub{os.sep}myinstance{os.sep}manifest.json",
             is_instance=True,
         )
         ref = ReferenceParser(refstr)
         assert ref.root_major == "many"
-        assert ref.name_one == "test_resources/2025-03-27_01-16-05"
+        assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three == "myinstance"
 
     def test_files_ref_finder_reference_mani(self):
@@ -129,7 +129,11 @@ class TestFilesReferenceFinder(unittest.TestCase):
         file = finder._path_for_day_if()
         assert file is not None
         assert len(file) == 1
-        assert pathu.equal(file[0], f"inputs/named_files/food/food.csv/{f}.csv", True)
+        assert pathu.equal(
+            file[0],
+            f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv",
+            True,
+        )
         #
         #
         #
@@ -144,7 +148,9 @@ class TestFilesReferenceFinder(unittest.TestCase):
         assert file is not None
         assert len(file) == 1
         assert pathu.equal(
-            file[0], f"inputs/named_files/food/people2.csv/{f}.csv", True
+            file[0],
+            f"inputs{os.sep}named_files{os.sep}food{os.sep}people2.csv{os.sep}{f}.csv",
+            True,
         )
 
     def test_files_ref_finder_pointer(self):

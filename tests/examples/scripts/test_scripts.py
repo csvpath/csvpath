@@ -1,6 +1,7 @@
 import unittest
 import pytest
 import os
+import platform
 from csvpath import CsvPaths
 from csvpath.managers.paths.paths_manager import PathsManager
 from csvpath.util.nos import Nos
@@ -24,9 +25,20 @@ class TestPathsScripts(unittest.TestCase):
         # setup paths
         #
         paths.paths_manager.add_named_paths_from_file(name="many", file_path=PATH)
-        paths.paths_manager.store_script_for_paths(
-            name="many", when="all", script_name="run.sh", text="echo 'hello world!'"
-        )
+        if platform.system() == "Windows":
+            paths.paths_manager.store_script_for_paths(
+                name="many",
+                when="all",
+                script_name="run.bat",
+                text="echo 'hello world!'",
+            )
+        else:
+            paths.paths_manager.store_script_for_paths(
+                name="many",
+                when="all",
+                script_name="run.sh",
+                text="echo 'hello world!'",
+            )
         #
         # set up file
         #

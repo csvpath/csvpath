@@ -93,25 +93,21 @@ class ScriptsResultsListener(Listener, threading.Thread):
                 #
                 # below is supposedly cross platform but just in case.
                 #
-                try:
-                    os.chmod(path, 0o755)
-                except Exception:
-                    ...
-                result = subprocess.run(
-                    [path], capture_output=True, text=True, check=True
-                )
-                out = result.stdout
-                err = result.stderr
-                if err is not None and err.strip() != "":
-                    out = f"{out}\n ===================== \n{err}"
-                n = datetime.now(timezone.utc)
-                script_out_name = (
-                    f"{script_name}-{n.strftime('%Y-%m-%d_%H-%M-%S_%f')}.txt"
-                )
-                script_out_path = mdata.run_home
-                script_out_path = os.path.join(script_out_path, script_out_name)
-                with DataFileWriter(path=script_out_path) as writer:
-                    writer.write(out)
+            try:
+                os.chmod(path, 0o755)
+            except Exception:
+                ...
+            result = subprocess.run([path], capture_output=True, text=True, check=True)
+            out = result.stdout
+            err = result.stderr
+            if err is not None and err.strip() != "":
+                out = f"{out}\n ===================== \n{err}"
+            n = datetime.now(timezone.utc)
+            script_out_name = f"{script_name}-{n.strftime('%Y-%m-%d_%H-%M-%S_%f')}.txt"
+            script_out_path = mdata.run_home
+            script_out_path = os.path.join(script_out_path, script_out_name)
+            with DataFileWriter(path=script_out_path) as writer:
+                writer.write(out)
         except Exception as e:
             msg = f"Run script failed on results {mdata.named_paths_name}, script_name {script_name}, with {type(e)}: {e}"
             self.csvpaths.logger.error(msg)
