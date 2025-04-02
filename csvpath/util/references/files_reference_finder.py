@@ -43,6 +43,8 @@ class FilesReferenceFinder:
             self._ref = ReferenceParser(name)
         if self._ref is None:
             self._ref = ref
+        if name is None:
+            self._name = ref.ref_string
         self._mani = None
         self._version_index = -1
 
@@ -122,7 +124,9 @@ class FilesReferenceFinder:
         file = self._path_for_date_if()
         if file is not None:
             return file
-        raise ValueError(f"Reference {self._ref} does not identify files")
+        raise ValueError(
+            f"Reference {self.name} does not identify files with {self._ref}"
+        )
 
     def _paths_for_filename_if(self, exact: bool = False) -> list:
         #
@@ -299,32 +303,38 @@ class FilesReferenceFinder:
             return possibles
 
     def _is_day(self) -> bool:
+        return (
+            self._ref.name_one.find(":yesterday") > -1
+            or self._ref.name_one.find(":today") > -1
+        )
+        """
         n = self._ref.name_one
         if n.find(":"):
             n = n[0 : n.find(":")]
         return n in ["yesterday", "today"]
+        """
 
     def _path_for_day_if(self) -> list[str]:
         #
         # takes :first, :last, :all, :<index>
         #
+        print(f"ffrf: _path_for_day_if: name_one: {self._ref.name_one}")
         if self._is_day():
-            day = None
-            pointer = None
-            n = self._ref.name_one
-            i = n.find(":")
+            day = self._ref.name_one[1:]
+            i = day.find(":")
             if i > -1:
-                day = n[0:i]
-                pointer = n[i + 1 :]
+                pointer = day[i + 1 :]
+                day = day[0:i]
             else:
-                day = n
                 pointer = "last"
-            pointer = refu.pointer(n, "last")
             dat = None
             if day == "today":
-                dat = datetime.datetime.now()
-            if day == "yesterday":
-                dat = datetime.datetime.now() - timedelta(days=1)
+                dat = datetime.datetime.now(timezone.utc)
+            elif day == "yesterday":
+                dat = datetime.datetime.now(timezone.utc) - timedelta(days=1)
+            #
+            # what if none?
+            #
             ds = self._list_of_records_by_date(dat)
             #
             #
@@ -385,16 +395,22 @@ class FilesReferenceFinder:
     def _find_in_date(self, adate, pointer) -> list:
         mani = self.manifest
         lst = []
+        adate = adate.replace(tzinfo=timezone.utc)
         for _ in mani:
             t = _["time"]
             td = ExpressionUtility.to_datetime(t)
+            td = td.replace(tzinfo=timezone.utc)
             #
             # determine if td is within adate's day.
             # we'll take all the dates and the pointer will
             # tell us what to do. :all will give any dates that
             # are before the datetime we use as a search.
             #
-            if td.date() == adate.date():
+            if (
+                td.year == adate.year
+                and td.month == adate.month
+                and td.day == adate.day
+            ):
                 lst.append(td)
         #
         # find the right date

@@ -5,9 +5,11 @@ from csvpath import CsvPaths
 from csvpath.managers.paths.paths_manager import PathsManager
 from csvpath.managers.paths.paths_listener import PathsListener
 from csvpath.managers.paths.paths_metadata import PathsMetadata
+from csvpath.util.nos import Nos
 
 DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
 JSON = f"tests{os.sep}test_resources{os.sep}named_paths.json"
+PATH = f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}many.csvpaths"
 
 
 class TestPathsManager(unittest.TestCase):
@@ -178,6 +180,10 @@ class TestPathsManager(unittest.TestCase):
         assert len(paths) == 2
         assert paths[0].find("#3") > -1
         assert paths[1].find("#4") > -1
+
+        paths = pm.get_named_paths("$many.csvpaths.:1")
+        assert len(paths) == 1
+        assert paths[0].find("#2") > -1
 
     # need:
     # . all in directory under one name

@@ -23,7 +23,7 @@ class TestSftpVarValues(unittest.TestCase):
         assert r
         m = r.csvpath.metadata
         v = r.csvpath.variables
-        lst = VarUtility.get_value_pairs(m, v, "sftp-files")
+        lst = VarUtility.get_value_pairs(metadata=m, variables=v, key="sftp-files")
         assert lst
         assert len(lst) == 3
         assert lst[0] == ("data.csv", "data.csv")

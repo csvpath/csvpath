@@ -9,6 +9,7 @@ from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.references.reference_parser import ReferenceParser
+from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -132,8 +133,38 @@ class ResultsManager:  # pylint: disable=C0115
             meta = {**meta, **rs.csvpath.metadata}
         return meta
 
-    def get_specific_named_result(self, name: str, name_or_id: str) -> Result:
+    def get_specific_named_result(self, name: str, name_or_id: str = None) -> Result:
+        #
+        # ideally we need to handle two things:
+        #   1: name=mygroup, name_or_id=myinstance
+        #   2: $mygroup.results.path-to-run_dir.myinstance#[variables|headers|csvpath|metadata|errors|printouts]
+        #
+
+        if name is None:
+            raise ValueError("Name cannot be none")
+        if name_or_id is None:
+            if name.startswith("$"):
+                ref = ReferenceParser(name)
+                if ref.root_minor is not None:
+                    name_or_id = ref.root_minor
+                elif ref.name_three is not None:
+                    name_or_id = ref.name_three
+                else:
+                    #
+                    # assuming the instance name_or_id is in the ref's name_one,
+                    # this could be reasonable. or it may be user-error. if the user
+                    # really wanted a date or template path to run_dir, this would be
+                    # off base. but if they are looking for just the most recent run's
+                    # instance it would at least make sense, but, regardless, would
+                    # still not be ok.
+                    #
+                    raise ValueError("You must identity which run")
+        if name_or_id is None:
+            raise ValueError("Instance name cannot be none")
+
         results = self.get_named_results(name)
+        if results and not isinstance(results, list):
+            return results
         if results and len(results) > 0:
             for r in results:
                 if name_or_id == r.csvpath.identity:
@@ -151,7 +182,8 @@ class ResultsManager:  # pylint: disable=C0115
         return rr.manifest
 
     #
-    # original. not reference friendly?
+    # returns the last run of name's last csvpath instance result object.
+    # seems like an odd use case to support with its own method. needed?
     #
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
@@ -264,6 +296,13 @@ class ResultsManager:  # pylint: disable=C0115
         for r in results:
             self.add_named_result(r)
 
+    #
+    # this name is somewhat confusing. we're listing the names of results, not the
+    # runs of the names. that means we're returning the flat list of paths-names/
+    # results-names directly below the archive root. if we were listing actual runs
+    # the challenge would be greater because templates allow for different structures
+    # below the flat named-results list, but that's not what we're doing.
+    #
     def list_named_results(self) -> list[str]:
         path = self._csvpaths.config.archive_path
         if Nos(path).dir_exists():
@@ -399,10 +438,73 @@ class ResultsManager:  # pylint: disable=C0115
             mydirs[os.path.dirname(path)] = path
         return mydirs
 
+    def _get_named_results_for_reference(self, name: str) -> List[List[Any]]:
+        #
+        # $mygroup.results.orders/acme/2025:first.myinstance
+        #
+        ref = ReferenceParser(name)
+        if ref.datatype == ref.RESULTS:
+            reff = ResultsReferenceFinder(self.csvpaths, name=name)
+            #
+            # we don't need the finder to identify the instance. we'll do
+            # ourselves. which is helpful if we're using name_four. the
+            # suffix is a nagging worry.
+            #
+            path = reff.resolve(with_instance=False)
+            #
+            # name = the named-paths / named-results name
+            # run = the path to run_dir minus the archive/name root
+            # path = the full path to the run_dir
+            if path is None:
+                msg = f"Results '{name}' does not exist"
+                self.csvpaths.logger.error(msg)
+                if self.csvpaths.ecoms.do_i_raise():
+                    raise InputException(msg)
+            run = path[len(self.csvpaths.config.archive_name) :]
+            nos = Nos(path)
+            run = run[run.find(nos.sep) + 1 :]
+            #
+            #
+            #
+            if ref.name_three is None:
+                return self._get_named_results_for_run(
+                    name=ref.root_major, run=run, path=path
+                )
+            return self.get_named_result_for_instance(
+                name=ref.root_major, run_dir=path, run=run, instance=ref.name_three
+            )
+            """
+                else:
+                    return self._get_named_results_for_run(
+                        name=ref.root_major,
+                        run=run,
+                        path=path
+                    )
+                """
+        elif ref.datatype == ref.CSVPATHS:
+            #
+            # if we're trying to get results using a named-paths reference
+            # we must be reusing a named-paths reference that started the run
+            # in that case, we're just looking for the named-paths name, not
+            # anything more specific, so we'll try again passing only the
+            # root, the named-paths name.
+            #
+            return self.get_named_results(ref.root_major)
+        else:
+            raise ValueError(f"Unexpected reference datatype in: {ref}")
+
     #
     # effectively, get last named results. use reference for anything more specific.
     #
     def get_named_results(self, name) -> List[List[Any]]:
+        #
+        # as it turns out, references are (finally!) the easiest, so let's do that
+        # first.
+        #
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.startswith("$"):
+            return self._get_named_results_for_reference(name)
         #
         # CsvPaths instances should not be long lived. they are not servers or
         # agents. for each new run, unless there is a reason to not create a new
@@ -436,7 +538,6 @@ class ResultsManager:  # pylint: disable=C0115
             #
             t = template[0 : template.find(":run_dir")]
             t2 = template[template.find(":run_dir") + 8 :]
-
             c = t.count("/")  # or \\?
             c = c if c > -1 else t.count("\\")
             #
@@ -476,9 +577,8 @@ class ResultsManager:  # pylint: disable=C0115
                 if len(runs) > 0:
                     runs.sort()
                     run = runs[len(runs) - 1]
-
         results = self.get_named_results_for_run(name=name, run=run)
-        if results:
+        if results is not None:
             return results
         #
         # we treat this as a recoverable error because typically the user
@@ -502,6 +602,16 @@ class ResultsManager:  # pylint: disable=C0115
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
         path = os.path.join(self.csvpaths.config.archive_path, name)
         path = os.path.join(path, run)
+        return self._get_named_results_for_run(name=name, run=run, path=path)
+
+    #
+    # name = the named-paths / named-results name
+    # run = the path to run_dir minus the archive/name root
+    # path = the full path to the run_dir
+    #
+    def _get_named_results_for_run(
+        self, *, name: str, run: str, path: str
+    ) -> list[list[Any]]:
         instances = Nos(path).listdir()
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:

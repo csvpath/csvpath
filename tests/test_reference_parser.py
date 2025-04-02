@@ -1,6 +1,5 @@
 import unittest
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath import CsvPaths
 
 

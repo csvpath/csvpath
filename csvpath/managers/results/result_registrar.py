@@ -15,7 +15,6 @@ class ResultRegistrar(Registrar, Listener):
     """@private"""
 
     def __init__(self, *, csvpaths, result, result_serializer=None):
-        # super().__init__(csvpaths, result)
         Registrar.__init__(self, csvpaths, result)
         Listener.__init__(self, csvpaths.config)
         self.result_serializer = result_serializer
@@ -40,11 +39,10 @@ class ResultRegistrar(Registrar, Listener):
         mdata.origin_data_file = self.result.origin_data_file
         ri = int(self.result.run_index) if self.result.run_index else 0
         if ri >= 1:
-            rs = self.result.csvpath.csvpaths.results_manager.get_named_results(
-                self.result.paths_name
+            pid = self.csvpaths.paths_manager.get_preceeding_instance_identity(
+                self.result.paths_name, ri
             )
-            r = rs[ri - 1]
-            mdata.preceding_instance_identity = r.identity_or_index
+            mdata.preceding_instance_identity = pid
         if p is None:
             self.result.csvpath.csvpaths.logger.debug(
                 "No named-paths manifest available at %s so not setting named_paths_uuid_string",
@@ -107,11 +105,10 @@ class ResultRegistrar(Registrar, Listener):
         mdata.origin_data_file = self.result.origin_data_file
         ri = int(self.result.run_index) if self.result.run_index else 0
         if ri >= 1:
-            rs = self.result.csvpath.csvpaths.results_manager.get_named_results(
-                self.result.paths_name
+            pid = self.csvpaths.paths_manager.get_preceeding_instance_identity(
+                self.result.paths_name, ri
             )
-            r = rs[ri - 1]
-            mdata.preceding_instance_identity = r.identity_or_index
+            mdata.preceding_instance_identity = pid
         self.distribute_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:

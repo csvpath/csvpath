@@ -128,8 +128,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._fail_all = False
         self._skip_all = False
         self._advance_all = 0
+        #
+        # TODO: we probably don't need all three of these
+        #
         self._current_run_time = None
         self._run_time_str = None
+        self._last_run_dir = None
+        #
+        #
+        #
         self.named_paths_name = None
         """ @private """
         self.named_file_name = None
@@ -172,6 +179,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     def ecoms(self, ec: ErrorCommunications) -> None:
         """@private"""
         self._ecoms = ec
+
+    @property
+    def last_run_dir(self) -> str:
+        return self._last_run_dir
 
     @property
     def file_manager(self) -> FileManager:
@@ -297,7 +308,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._run_time_str = None
         self.logger.debug("Cleared run coordination")
 
-    def clean(self, *, paths) -> None:
+    #
+    # we do not currently use the paths param. what was the purpose?
+    #
+    def clean(self, *, paths=None) -> None:
         """@private
         at this time we do not recommend reusing CsvPaths, but it is doable
         you should clean before reuse unless you want to accumulate results."""
@@ -518,6 +532,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         crt = maker.get_run_dir(
             paths_name=pathsname, file_name=filename, template=template
         )
+        #
+        # capture the last run dir for the benefit of the caller
+        #
+        self._last_run_dir = crt
+
         results = []
         #
         # run starts here
@@ -647,6 +666,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             paths_name=pathsname, file_name=filename, template=template
         )
         #
+        # capture the last run dir for the benefit of the caller
+        #
+        self._last_run_dir = crt
+        #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
@@ -745,6 +768,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         crt = maker.get_run_dir(
             paths_name=pathsname, file_name=filename, template=template
         )
+        #
+        # capture the last run dir for the benefit of the caller
+        #
+        self._last_run_dir = crt
         #
         # run starts here
         #
@@ -980,7 +1007,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         paths = self._get_named_paths(pathsname)
         if template is None:
             template = self.paths_manager.get_template_for_paths(pathsname)
-
         #
         # create run identity and directories
         #
@@ -988,6 +1014,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         crt = maker.get_run_dir(
             paths_name=pathsname, file_name=filename, template=template
         )
+        #
+        # capture the last run dir for the benefit of the caller
+        #
+        self._last_run_dir = crt
         #
         # also use of crt below
         #

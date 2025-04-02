@@ -113,3 +113,28 @@ class SftpConfig:
                 s = environ.get(s)
             self._password = s
         return self._password
+
+    @classmethod
+    def check_for_server(self, config: Config) -> bool:
+        try:
+            sftpconfig = SftpConfig(config)
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(
+                sftpconfig.server,
+                sftpconfig.port,
+                sftpconfig.username,
+                sftpconfig.password,
+            )
+        except Exception as e:
+            print(e)
+            print(
+                f"Unreachable: {sftpconfig.server}:{sftpconfig.port} with the {sftpconfig.username} account"
+            )
+            return False
+        finally:
+            try:
+                client.close()
+            except Exception:
+                ...
+        return True

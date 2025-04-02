@@ -7,7 +7,10 @@ class ResultsMetadata(Metadata):
 
     def __init__(self, config):
         super().__init__(config)
-        self.time_completed: datetime = None
+        #
+        # time_completed is in the Metadata parent
+        #
+        # self.time_completed: datetime = None
         self.run_home: str = None
         self.named_paths_name: str = None
         self.named_paths_uuid: str = None

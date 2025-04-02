@@ -194,7 +194,9 @@ class FileRegistrar(Registrar, Listener):
                 #
                 # log info so nobody has to dig to see why no update
                 #
-                self.csvpaths.logger.info("File has already been registered: %s", jdata)
+                self.csvpaths.logger.info(
+                    "File has already been registered: %s", mdata.name_home
+                )
                 return
         self.distribute_update(mdata)
 

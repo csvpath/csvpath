@@ -4,7 +4,6 @@ import time
 import paramiko
 import stat
 from csvpath import CsvPaths
-from csvpath.util.sftp.sftp_config import SftpConfig
 from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
 
@@ -13,16 +12,12 @@ PASSWORD = "tinpenny"
 
 
 class TestSftpMode(unittest.TestCase):
-    def test_load_named_file_from_sftp(self):
-        paths = CsvPaths()
-        if not self._check_for_server(paths):
-            print(
-                "Cannot run test test_load_named_file_from_sftp because the server is not available"
-            )
+    def test_webhooks_1(self):
+        if not self._check_for_server():
             return
         #
         # tests if the sftp backend let's us use sftp:// to do add_named_file.
-        # this may not be the best place for this test, but good enough.
+        # this may not be the best place for this test, but it's good enough.
         #
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
@@ -50,11 +45,7 @@ class TestSftpMode(unittest.TestCase):
         assert paths.results_manager.is_valid("process")
 
     def test_sftp_send(self):
-        paths = CsvPaths()
-        if not self._check_for_server(paths):
-            print(
-                "Cannot run test test_load_named_file_from_sftp because the server is not available"
-            )
+        if not self._check_for_server():
             return
         self._clear()
         paths = CsvPaths()
@@ -108,5 +99,22 @@ class TestSftpMode(unittest.TestCase):
         finally:
             client.close()
 
-    def _check_for_server(self, paths: CsvPaths) -> bool:
-        return SftpConfig.check_for_server(paths.config)
+    def _check_for_server(self):
+        try:
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect("localhost", 10022, USER, PASSWORD)
+        except Exception as e:
+            print(e)
+            print("WARNING: cannot run sftp test")
+            print(
+                f"required: localhost:10022 with the {USER} account and an {PASSWORD} env var"
+            )
+            return False
+        finally:
+            try:
+                client.close()
+            except Exception:
+                ...
+        print("SFTP mode: _check_for_server: server is ready to test")
+        return True

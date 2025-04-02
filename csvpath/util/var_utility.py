@@ -86,7 +86,7 @@ class VarUtility:
 
     @classmethod
     def get_value_pairs(
-        cls, mdata: dict, variables: dict, directive: str
+        cls, *, metadata: dict, variables: dict, key: str, default: str = None
     ) -> list[tuple[str, str]]:
         #
         # gets values like key: a > b, c > d
@@ -95,16 +95,16 @@ class VarUtility:
         # all caps -- which will be subsituted. if the presumed env var name doesn't
         # result in a value the presumed name is returned.
         #
-        if directive is None:
-            return None
-        v = mdata.get(directive)
+        if key is None:
+            return default
+        v = metadata.get(key)
         if v is None:
-            return None
+            return default
         v = f"{v}"
         vs = v.split(",")
         pairs = []
         for v in vs:
-            pair = VarUtility.create_pair(mdata, variables, v)
+            pair = VarUtility.create_pair(metadata, variables, v)
             pairs.append(pair)
         return pairs
 
@@ -138,7 +138,10 @@ class VarUtility:
     @classmethod
     def value_or_var_value(cls, mdata: dict, variables: dict, v: str) -> ...:
         #
-        # do any var swapping first
+        # do any var swapping first. variable values are used like:
+        #     var|name
+        # this returns the value of the variable name. in reference form: $.variables.name
+        #
         i = v.find("var|")
         if i != -1:
             v2 = v[4:]

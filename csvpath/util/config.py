@@ -216,6 +216,9 @@ on_unmatched_file_fingerprints = halt
 groups = default
 #slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
 
+# add a listener to exec scripts at the end of named-paths group runs
+scripts.results = from csvpath.managers.integrations.scripts.scripts_results_listener import ScriptsResultsListener
+
 # add sql to capture results in mysql, postgres, ms sql server, or sqlite
 sql.file = from csvpath.managers.integrations.sql.sql_file_listener import SqlFileListener
 sql.paths = from csvpath.managers.integrations.sql.sql_paths_listener import SqlPathsListener
@@ -301,6 +304,12 @@ verify = False
 # on-valid-slack: webhook-minus-'https://' and/or
 # on-invalid-slack: webhook-minus-'https://'
 webhook_url =
+
+[scripts]
+run_scripts = no
+shell = /bin/bash
+
+
             """
             file.write(c)
             print(f"Created a default config file at {directory} with name {name}.")
