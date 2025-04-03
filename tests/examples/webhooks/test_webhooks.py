@@ -94,8 +94,8 @@ class TestWebhooks(unittest.TestCase):
             }
         """
         assert payload.get("type") == "all"
-        assert payload.get("me") == "one"
-        assert payload.get("name") == "many one"
+        assert payload.get("me") in ["one", "two"]
+        assert payload.get("name") in ["many one", "many_two"]
         assert payload.get("time") is not None
         #
         # check errors

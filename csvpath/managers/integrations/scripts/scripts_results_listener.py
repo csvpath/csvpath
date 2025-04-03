@@ -65,7 +65,7 @@ class ScriptsResultsListener(Listener, threading.Thread):
             invalid_script = cfg.get(t)
             if invalid_script is not None and invalid_script.strip() != "":
                 self._run(mdata=mdata, script_name=invalid_script, script_type=t)
-        if mdata.error_count and len(mdata.error_count) > 0:
+        if mdata.error_count > 0:
             t = "on_complete_error_script"
             error_script = cfg.get(t)
             if error_script is not None and error_script.strip() != "":
