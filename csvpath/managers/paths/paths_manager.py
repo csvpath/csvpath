@@ -442,6 +442,23 @@ class PathsManager:
         j = json.dumps(definition)
         self.store_json_for_paths(name, j)
 
+    def get_config_for_paths(self, name: NamedPathsName) -> dict:
+        if name.startswith("$"):
+            name = ReferenceParser(name).root_major
+        definition = self.get_json_paths_file(name)
+        config = definition.get("_config")
+        if config is None:
+            config = {}
+        return {} if config.get(name) is None else config.get(name)
+
+    def store_config_for_paths(self, name: NamedPathsName, cfg: dict) -> None:
+        if name.startswith("$"):
+            name = ReferenceParser(name).root_major
+        j = self.get_json_paths_file(name)
+        j["_config"] = cfg
+        d = json.dumps(j, indent=2)
+        self.store_json_for_paths(name, d)
+
     #
     # store script to run after the named-path. we could make this a mode, but it
     # should be in the named-paths first.
@@ -497,11 +514,6 @@ class PathsManager:
             script_file = os.path.join(self.named_paths_home(name), script_name)
             with DataFileWriter(path=script_file) as file:
                 file.write(text)
-
-    def get_config_for_paths(self, name: NamedPathsName) -> dict:
-        definition = self.get_json_paths_file(name)
-        config = definition.get("_config")
-        return None if config is None else config.get(name)
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
         config = self.get_config_for_paths(name)

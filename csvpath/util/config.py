@@ -216,6 +216,9 @@ on_unmatched_file_fingerprints = halt
 groups = default
 #slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
 
+# general purpose webhook caller
+webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultListener
+
 # add a listener to exec scripts at the end of named-paths group runs
 scripts.results = from csvpath.managers.integrations.scripts.scripts_results_listener import ScriptsResultsListener
 

@@ -42,6 +42,9 @@ text = "this is the text"
 
 class TestCloudDirsSftp(unittest.TestCase):
     def _available(self):
+        skip = CsvPaths().config.get(section="testing", name="sftp.skip", default="no")
+        if skip.strip() == "yes":
+            return False
         return SftpConfig.check_for_server(paths.config)
 
     def test_sftp_crud_dirs(self):

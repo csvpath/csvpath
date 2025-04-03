@@ -11,6 +11,8 @@ from csvpath.managers.integrations.sftpplus.transfer_creator import (
 
 
 class TestSftpPlus(unittest.TestCase):
+    RUNNING = None
+
     def test_sftpplus_load_paths(self):
         if not self._check_for_server():
             return
@@ -125,6 +127,8 @@ class TestSftpPlus(unittest.TestCase):
             client.close()
 
     def _check_for_server(self):
+        if TestSftpPlus.RUNNING is not None:
+            return TestSftpPlus.RUNNING
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -141,10 +145,12 @@ class TestSftpPlus(unittest.TestCase):
                 """WARNING: cannot run sftp test:
                 required: server on port 10022 with test_user account and an SFTP_PASSWORD env var"""
             )
-            return False
+            TestSftpPlus.RUNNING = False
+            return TestSftpPlus.RUNNING
         finally:
             try:
                 client.close()
             except Exception:
                 ...
-        return True
+        TestSftpPlus.RUNNING = True
+        return TestSftpPlus.RUNNING

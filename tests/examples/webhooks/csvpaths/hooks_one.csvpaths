@@ -1,0 +1,13 @@
+
+
+---- CSVPATH ----
+
+~ name: many one
+~
+$[*][
+    print("this is line $.csvpath.line_number of a path")
+    @me = "one"
+    @now = now()
+]
+
+

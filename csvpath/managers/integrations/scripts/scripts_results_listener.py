@@ -6,10 +6,6 @@ from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 from csvpath.util.file_writers import DataFileWriter
 
-#
-# TODO: spin off in a thread
-#
-
 
 class ScriptsResultsListener(Listener, threading.Thread):
     def __init__(self, config=None):

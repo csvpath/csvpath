@@ -198,13 +198,14 @@ class PrintParser:
     def _get_metadata(self, ref, results):
         #
         # combine metadata for the run with metadata
-        # about the individual csvpaths. last adder
-        # wins.
+        # about the individual csvpaths. last adder wins.
         #
         data = self.csvpath.csvpaths.results_manager.get_metadata(ref["named_paths"])
+        """
         for result in results:
             csvpath = result.csvpath
             data = {**data, **csvpath.metadata}
+        """
         return data
 
     def _get_runtime_data_from_results(self, ref, results) -> None:

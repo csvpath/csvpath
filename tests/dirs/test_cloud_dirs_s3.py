@@ -41,6 +41,10 @@ class TestCloudDirsS3(unittest.TestCase):
             """
             )
             return
+        skip = CsvPaths().config.get(section="testing", name="s3.skip", default="no")
+        if skip.strip() == "yes":
+            return
+
         text = "this is the text"
 
         c = S3Utils.make_client()

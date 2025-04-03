@@ -39,6 +39,10 @@ class TestCloudDirsAzure(unittest.TestCase):
             """
             )
             return
+        skip = CsvPaths().config.get(section="testing", name="azure.skip", default="no")
+        if skip.strip() == "yes":
+            return
+
         text = "this is the text"
 
         AzureUtility.make_client()
