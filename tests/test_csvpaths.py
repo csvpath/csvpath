@@ -149,18 +149,10 @@ class TestNewCsvPaths(unittest.TestCase):
         cs.fast_forward_by_line(filename="food", pathsname="many")
         meta = cs.results_manager.get_metadata("many")
         assert meta is not None
-        assert "paths_name" in meta
-        assert "file_name" in meta
-        assert "data_lines" in meta
-        assert "csvpaths_applied" in meta
-        assert "csvpaths_completed" in meta
-        assert "valid" in meta
-        assert meta["paths_name"] == "many"
-        assert meta["file_name"] == "food"
-        assert meta["data_lines"] == 11
-        assert meta["csvpaths_applied"] == 2
-        assert meta["csvpaths_completed"] is True
-        assert meta["valid"] is True
+        assert "id" in meta
+        assert "name" in meta
+        assert meta["id"] == "many_two"
+        assert meta["name"] == "many one"
 
     def test_csvpaths_metadata2(self):
         #

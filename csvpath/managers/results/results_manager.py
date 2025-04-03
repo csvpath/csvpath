@@ -113,25 +113,27 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_start(mdata)
         return mdata
 
-    def get_metadata(self, name: str) -> Dict[str, Any]:
-        """@private
-        gets the run metadata. will include the metadata complete from
-        the first results. however, the metadata for individual results must
-        come direct from them in order to not overwrite"""
+    #
+    # this new version gets all the metadata from first through last member of the
+    # named-paths group. last key added wins. if you need to be sure one csvpath
+    # doesn't stomp on the last iterate the result objects yourself.
+    #
+    def get_metadata(self, name: str) -> bool:
         results = self.get_named_results(name)
-        meta = {}
-        if results and len(results) > 0:
-            rs = results[0]
-            path = rs.csvpath
-            meta["paths_name"] = rs.paths_name
-            meta["file_name"] = rs.file_name
-            meta["data_lines"] = path.line_monitor.data_end_line_count
-            paths = len(self.csvpaths.paths_manager.get_named_paths(name))
-            meta["csvpaths_applied"] = paths
-            meta["csvpaths_completed"] = paths == len(results)
-            meta["valid"] = self.is_valid(name)
-            meta = {**meta, **rs.csvpath.metadata}
-        return meta
+        vs = {}
+        for r in results:
+            vs = {**r.csvpath.metadata, **vs}
+        return vs
+
+    #
+    # unlike get_variables and get_metadata, get_errors adds lists with no chance for loss.
+    #
+    def get_errors(self, name: str) -> bool:
+        results = self.get_named_results(name)
+        es = []
+        for r in results:
+            es += r.csvpath.errors
+        return es
 
     def get_specific_named_result(self, name: str, name_or_id: str = None) -> Result:
         #

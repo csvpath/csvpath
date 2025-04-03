@@ -43,6 +43,9 @@ class Error(Metadata):
         self.message: str = msg
         self.expanded_message: str = None
         self.filename: str = None
+        self.run_dir = None
+        if error_manager and error_manager.csvpaths:
+            self.run_dir = error_manager.csvpaths.last_run_dir
         self.cwd = os.getcwd()
         self.pid = os.getpid()
 
@@ -67,6 +70,7 @@ class Error(Metadata):
             and self.message == e.message
             and self.identity == e.identity
             and self.filename == e.filename
+            and self.run_dir == e.run_dir
             and f"{self.time}" == f"{e.time}"
         )
 
@@ -106,6 +110,8 @@ class Error(Metadata):
             "filename": self.filename,
             "time": f"{self.time}",
         }
+        if self.run_dir is not None:
+            ret["run_dir"] = self.run_dir
         return ret
 
     def from_json(self, j: dict) -> None:
@@ -127,6 +133,8 @@ class Error(Metadata):
             self.identity = j["identity"]
         if "filename" in j:
             self.filename = j["filename"]
+        if "run_dir" in j:
+            self.run_dir = j["run_dir"]
         if "time" in j:
             time = dateutil.parser.parse(j["time"])
             self.time = time
@@ -152,6 +160,7 @@ ip_address: {self.ip_address},
 username: {self.username},
 named_paths_name: {self.named_paths_name if self.named_paths_name else ""},
 named_file_name: {self.named_file_name if self.named_file_name else ""},
+run_dir: {self.run_dir if self.run_dir else ""},
 filename: {self.filename if self.filename else ""},
 path identity: {self.identity if self.identity else ""},
 expression_index: {self.expression_index if self.expression_index else ""},

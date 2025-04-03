@@ -1,6 +1,6 @@
 import unittest
 from os import environ
-from csvpath.csvpaths import CsvPaths
+from csvpath import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -39,6 +39,11 @@ class TestCloudDirsGcs(unittest.TestCase):
             """
             )
             return
+
+        skip = CsvPaths().config.get(section="testing", name="gcs.skip", default="no")
+        if skip.strip() == "yes":
+            return
+
         text = "this is the text"
 
         GcsUtility.make_client()

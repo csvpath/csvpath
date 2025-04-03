@@ -88,6 +88,20 @@ class VarUtility:
     def get_value_pairs(
         cls, *, metadata: dict, variables: dict, key: str, default: str = None
     ) -> list[tuple[str, str]]:
+        if key is None:
+            return default
+        v = metadata.get(key)
+        if v is None:
+            return default
+        v = metadata.get(key)
+        return cls.get_value_pairs_from_value(
+            metadata=metadata, variables=variables, value=v, default=default
+        )
+
+    @classmethod
+    def get_value_pairs_from_value(
+        cls, *, metadata: dict, variables: dict, value: str, default=None
+    ) -> list[tuple[str, str]]:
         #
         # gets values like key: a > b, c > d
         # the return is [(a,b),(b,c)]
@@ -95,16 +109,13 @@ class VarUtility:
         # all caps -- which will be subsituted. if the presumed env var name doesn't
         # result in a value the presumed name is returned.
         #
-        if key is None:
+        if value is None:
             return default
-        v = metadata.get(key)
-        if v is None:
-            return default
-        v = f"{v}"
-        vs = v.split(",")
+        value = f"{value}"
+        vs = value.split(",")
         pairs = []
-        for v in vs:
-            pair = VarUtility.create_pair(metadata, variables, v)
+        for value in vs:
+            pair = VarUtility.create_pair(metadata, variables, value)
             pairs.append(pair)
         return pairs
 
@@ -119,9 +130,11 @@ class VarUtility:
         v2 = v[i + 1 :]
         v2 = v2.strip()
 
-        v3 = VarUtility.value_or_var_value(mdata, variables, v2)
-        if v3 is not None:
+        v3 = VarUtility.value_or_var_value(mdata=mdata, variables=variables, v=v2)
+        if v3 is not None and isinstance(v3, str):
             v2 = v3.strip()
+        elif v3 is not None:
+            v2 = v3
         return (v1, v2)
 
     @classmethod
@@ -132,28 +145,41 @@ class VarUtility:
         if v is None:
             return None
         if isinstance(v, str):
-            v = VarUtility.value_or_var_value(mdata, variables, v)
+            v = VarUtility.value_or_var_value(mdata=mdata, variables=variables, v=v)
         return v
 
     @classmethod
-    def value_or_var_value(cls, mdata: dict, variables: dict, v: str) -> ...:
+    def value_or_var_value(cls, *, mdata: dict, variables: dict, v: str):
         #
         # do any var swapping first. variable values are used like:
         #     var|name
         # this returns the value of the variable name. in reference form: $.variables.name
         #
-        i = v.find("var|")
-        if i != -1:
-            v2 = v[4:]
+        i = f"{v}".find("var|")
+        if i > -1:
+            v2 = f"{v}"[4:]
             v2 = v2.strip()
             if v2 in variables:
                 v2 = variables[v2]
             v = v2
         #
+        # do any meta swapping. metadata is the metadata from a csvpath's comments. e.g.
+        #     description: this is my path
+        # meta values are used like:
+        #     meta|name
+        # this returns the value of the metadata field name. in reference form: $.metadata.name
+        #
+        i = f"{v}".find("meta|")
+        if i > -1 and mdata is not None:
+            v2 = f"{v}"[5:]
+            v2 = v2.strip()
+            v2 = mdata.get(v2)
+            v = v2
+        #
         # if the value is ALL CAPS check if it is an
         # env var.
-        if v and v.isupper():
-            v2 = v.strip()
+        if v and f"{v}".isupper():
+            v2 = f"{v}".strip()
             v2 = os.getenv(v2)
             if v2 is not None:
                 v = v2.strip()

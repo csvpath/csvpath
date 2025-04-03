@@ -433,9 +433,9 @@ class TestPrint(unittest.TestCase):
         printstr = """ $food.variables.type """
         result = parser.transform(printstr)
         assert result.strip() == "fruit"
-        printstr = """ $food.metadata.valid """
+        printstr = """ $food.metadata.name """
         result = parser.transform(printstr)
-        assert result.strip() == "False"
+        assert result and result.strip() in ["candy check", "first type"]
 
     # ==================
 
