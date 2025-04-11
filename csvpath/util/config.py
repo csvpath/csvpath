@@ -71,8 +71,6 @@ class Config:
 
     def __init__(self, *, load=True):
         self.load = load
-        self._cache_dir_path = None
-        self._function_imports = None
         self._additional_listeners = None
         self._csvpath_file_extensions = None
         self._csv_file_extensions = None
@@ -83,12 +81,11 @@ class Config:
         self._log_file = None
         self._log_files_to_keep = None
         self._log_file_size = None
-        self._archive_path = None
-        self._transfer_root = None
-        self._inputs_files_path = None
-        self._inputs_csvpaths_path = None
         self._config = RawConfigParser()
         self.log_file_handler = None
+        #
+        # if env is set it wins out over anything else.
+        #
         self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
         if self._configpath is None:
             self._configpath = Config.CONFIG
@@ -116,19 +113,34 @@ class Config:
     def config_path(self) -> str:
         return self._configpath
 
+    @property
+    def sections(self) -> list[str]:
+        return self._config.sections()
+
     def get(self, *, section: str, name: str, default=None):
         return self._get(section, name, default)
 
     def _get(self, section: str, name: str, default=None):
+        #
+        # TODO: we should swap all uppercase values for env var values if we find a
+        # matching env var. same as we do for metadata values
+        #
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
             s = self._config[section][name]
             ret = None
-            if s.find(",") > -1:
+            if s and isinstance(s, str) and s.find(",") > -1:
                 ret = [s.strip() for s in s.split(",")]
-            else:
+            elif isinstance(s, str):
                 ret = s.strip()
+            else:
+                ret = s
+
+            if ret and isinstance(ret, str) and ret.isupper():
+                v2 = os.getenv(ret)
+                if v2 is not None:
+                    ret = v2.strip()
             return ret
         except KeyError:
             if self.csvpath_log_level == LogLevels.DEBUG:
@@ -136,6 +148,11 @@ class Config:
                     f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
                 )
             return default
+
+    def _set(self, section, key, value) -> None:
+        if isinstance(value, list):
+            value = ",".join(value)
+        self._config.set(section, key, value)
 
     #
     # adds the value to the internal configparser object. doesn't save.
@@ -172,15 +189,11 @@ class Config:
                 os.makedirs(directory)
         with open(self._configpath, "w", encoding="utf-8") as file:
             c = f"""
-[csvpath_files]
-extensions = txt, csvpath, csvpaths
-
-[csv_files]
-extensions = txt, csv, tsv, dat, tab, psv, ssv
+[extensions]
+csvpath_files = csvpath, csvpaths
+csv_files = txt, csv, tsv, dat, tab, psv, ssv
 
 [errors]
-csvpath = collect, fail, print
-csvpaths = raise, collect
 use_format = full
 pattern = {{time}}:{{file}}:{{line}}:{{paths}}:{{instance}}:{{chain}}:  {{message}}
 
@@ -189,7 +202,7 @@ csvpath = info
 csvpaths = info
 log_file = logs{os.sep}csvpath.log
 log_files_to_keep = 100
-log_file_size = 52428800
+log_file_size = 50000000
 # file or rotating
 handler = file
 
@@ -314,7 +327,19 @@ shell = /bin/bash
 
 
             """
+
             file.write(c)
+            #
+            # writing a new config means we want to immediately load it?
+            # possibly not.
+            #
+            self._assure_logs_path()
+            self._assure_archive_path()
+            self._assure_transfer_root()
+            self._assure_inputs_files_path()
+            self._assure_cache_path()
+            self._assure_inputs_csvpaths_path()
+
             print(f"Created a default config file at {directory} with name {name}.")
             print("If you want your config to be somewhere else remember to")
             print("update the path in the default config.ini")
@@ -391,15 +416,18 @@ shell = /bin/bash
         if uc and uc.strip().lower() == "no":
             return
         if self.load:
-            if self.cache_dir_path is None or self.cache_dir_path.strip() == "":
-                self.cache_dir_path = "cache"
-            if self.cache_dir_path.find("://") > -1:
+            p = self._get("cache", "path", "cache")
+            if p:
+                p = p.strip()
+            if p == "":
+                self._set("cache", "use_cache", "no")
+                return
+            if p.find("://") > -1:
                 raise ConfigurationException(
-                    f"Cache dir must be on the local drive, not {self.cache_dir_path}"
+                    f"Cache dir must be on the local drive, not {p}"
                 )
-            exists = path.exists(self.cache_dir_path)
-            if not exists:
-                os.makedirs(self.cache_dir_path)
+            if not os.path.exists(p):
+                os.makedirs(p)
 
     def _assure_config_file_path(self) -> None:
         if self.load:
@@ -424,42 +452,41 @@ shell = /bin/bash
     # file, it just gathers and translates settings for external use.
     #
     def refresh(self) -> None:
-        self.csvpath_file_extensions = self._get(
-            Sections.CSVPATH_FILES.value, "extensions"
+        #
+        # the sections: csv_files and csvpath_files are deprecated in favor of
+        # a single extensions section with csv_files and csvpath_files as keys.
+        # is is a simpler way to go and will UI better. the old way can hang about
+        # for a release or two, but should be retired soon.
+        #
+        #
+        # file extensions will reload themselves as long as we clear them
+        #
+        self.csvpath_file_extensions = None
+        self.csv_file_extensions = None
+        #
+        #
+        #
+        self.csvpath_errors_policy = self._get(
+            Sections.ERRORS.value,
+            "csvpath",
+            ["raise", "print", "stop", "fail", "collect"],
         )
-        self.csv_file_extensions = self._get(Sections.CSV_FILES.value, "extensions")
-
-        self.csvpath_errors_policy = self._get(Sections.ERRORS.value, "csvpath")
-        self.csvpaths_errors_policy = self._get(Sections.ERRORS.value, "csvpaths")
+        self.csvpaths_errors_policy = self._get(
+            Sections.ERRORS.value,
+            "csvpaths",
+            ["raise", "print", "stop", "fail", "collect"],
+        )
 
         self.csvpath_log_level = self._get(Sections.LOGGING.value, "csvpath")
         self.csvpaths_log_level = self._get(Sections.LOGGING.value, "csvpaths")
 
         self.log_file = self._get(Sections.LOGGING.value, LogFile.LOG_FILE.value)
         self.log_files_to_keep = self._get(
-            Sections.LOGGING.value, LogFile.LOG_FILES_TO_KEEP.value
+            Sections.LOGGING.value, LogFile.LOG_FILES_TO_KEEP.value, 10
         )
         self.log_file_size = self._get(
-            Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value
+            Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, 12800000
         )
-        # path to external functions list. external functions are very optional.
-        # not blowing up when absent seems reasonable.
-        try:
-            self.function_imports = self._get(Sections.FUNCTIONS.value, "imports")
-        except Exception:
-            print(
-                "WARNING: config cannot load [functions][imports] from {self.configpath}"
-            )
-            pass
-        # likewise caching.
-        try:
-            self.cache_dir_path = self._get(Sections.CACHE.value, "path")
-        except Exception:
-            print("WARNING: config cannot load [cache][path] from {self.configpath}")
-            pass
-        #
-        # reload if another config path is set
-        #
         path = self._get("config", "path")
         if path:
             path = path.strip().lower()
@@ -470,23 +497,6 @@ shell = /bin/bash
         self.validate_config()
 
     def validate_config(self) -> None:
-        #
-        # files
-        #
-        if (
-            self.csvpath_file_extensions is None
-            or not isinstance(self.csvpath_file_extensions, list)
-            or not len(self.csvpath_file_extensions) > 0
-        ):
-            raise ConfigurationException(
-                f"CsvPath file extensions are wrong: {self.csvpath_file_extensions}"
-            )
-        if (
-            self.csv_file_extensions is None
-            or not isinstance(self.csv_file_extensions, list)
-            or not len(self.csv_file_extensions) > 0
-        ):
-            raise ConfigurationException("CSV file extensions are wrong")
         #
         # error policies
         #
@@ -582,11 +592,11 @@ shell = /bin/bash
 
     @property
     def cache_dir_path(self) -> str:
-        return self._cache_dir_path
+        return self._get("cache", "path")
 
     @cache_dir_path.setter
     def cache_dir_path(self, p) -> None:
-        self._cache_dir_path = p
+        self._set("cache", "path", p)
 
     def halt_on_unmatched_file_fingerprints(self) -> bool:
         houf = self._get("inputs", "on_unmatched_file_fingerprints")
@@ -598,29 +608,19 @@ shell = /bin/bash
 
     @property
     def transfer_root(self) -> str:
-        if self._transfer_root is None:
-            self._transfer_root = self._get("results", "transfers")
-            if self._transfer_root is None:
-                self._transfer_root = "transfers"
-                self.add_to_config("results", "transfers", "transfers")
-        return self._transfer_root
+        return self._get("results", "transfers", "transfers")
 
     @transfer_root.setter
     def transfer_root(self, p) -> None:
-        self._transfer_root = p
+        self._set("results", "transfers", p)
 
     @property
     def archive_path(self) -> str:
-        if self._archive_path is None:
-            self._archive_path = self._get("results", "archive")
-            if self._archive_path is None:
-                self._archive_path = "archive"
-                self.add_to_config("results", "archive", "archive")
-        return self._archive_path
+        return self._get("results", "archive", "archive")
 
     @archive_path.setter
     def archive_path(self, p) -> None:
-        self._archive_path = p
+        self._set("results", "archive", p)
 
     @property
     def archive_name(self) -> str:
@@ -631,40 +631,40 @@ shell = /bin/bash
 
     @property
     def inputs_files_path(self) -> str:
-        if self._inputs_files_path is None:
-            self._inputs_files_path = self._get("inputs", "files")
-            if self._inputs_files_path is None:
-                self._inputs_files_path = "inputs"
-                self.add_to_config("inputs", "files", f"inputs{os.sep}named_files")
-        return self._inputs_files_path
+        return self._get("inputs", "files", f"inputs{os.sep}named_files")
 
     @inputs_files_path.setter
     def inputs_files_path(self, p) -> None:
-        self._inputs_files_path = p
+        self._set("inputs", "files", p)
 
     @property
     def inputs_csvpaths_path(self) -> str:
-        if self._inputs_csvpaths_path is None:
-            self._inputs_csvpaths_path = self._get("inputs", "csvpaths")
-            if self._inputs_csvpaths_path is None:
-                self._inputs_csvpaths_path = "inputs"
-                self.add_to_config("inputs", "csvpaths", f"inputs{os.sep}named_paths")
-        return self._inputs_csvpaths_path
+        return self._get("inputs", "csvpaths", f"inputs{os.sep}named_paths")
 
     @inputs_csvpaths_path.setter
     def inputs_csvpaths_path(self, p) -> None:
-        self._inputs_csvpaths_path = p
+        self._set("inputs", "csvpaths", p)
 
     @property
     def function_imports(self) -> str:
-        return self._function_imports
+        return self._get(Sections.FUNCTIONS.value, "imports", "imports")
 
     @function_imports.setter
     def function_imports(self, path: str) -> None:
-        self._function_imports = path
+        self._set(Sections.FUNCTIONS.value, "imports", path)
 
     @property
     def csvpath_file_extensions(self) -> list[str]:
+        if self._csvpath_file_extensions is None:
+            cs = self._get("extensions", "csvpath_files")
+            if not cs or len(cs) == 0:
+                #
+                # the old way
+                #
+                cs = self._get(Sections.CSVPATH_FILES.value, "extensions")
+                if not cs or len(cs) == 0:
+                    cs = ["csvpath", "csvpaths"]
+            self._csvpath_file_extensions = cs
         return self._csvpath_file_extensions
 
     @csvpath_file_extensions.setter
@@ -675,6 +675,16 @@ shell = /bin/bash
 
     @property
     def csv_file_extensions(self) -> list[str]:
+        if self._csv_file_extensions is None:
+            cs = self._get("extensions", "csv_files")
+            if not cs or len(cs) == 0:
+                #
+                # the old way
+                #
+                cs = self._get(Sections.CSV_FILES.value, "extensions")
+                if not cs or len(cs) == 0:
+                    cs = ["csv", "xlsx"]
+            self._csv_file_extensions = cs
         return self._csv_file_extensions
 
     @csv_file_extensions.setter
@@ -729,22 +739,34 @@ shell = /bin/bash
 
     @property
     def log_files_to_keep(self) -> int:
-        return self._log_files_to_keep
+        fs = self._get(Sections.LOGGING.value, LogFile.LOG_FILES_TO_KEEP.value, 10)
+        try:
+            fs = int(fs)
+        except ValueError:
+            return 10
+        return fs
 
     @log_files_to_keep.setter
     def log_files_to_keep(self, i: int) -> None:
         try:
-            self._log_files_to_keep = int(i)
-        except (TypeError, ValueError):
-            raise ConfigurationException("Error in log_files_to_keep config")
+            i = int(i)
+        except (ValueError, TypeError):
+            i = 10
+        self._set(Sections.LOGGING.value, LogFile.LOG_FILES_TO_KEEP.value, i)
 
     @property
     def log_file_size(self) -> int:
-        return self._log_file_size
+        fs = self._get(Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, 12800000)
+        try:
+            fs = int(fs)
+        except ValueError:
+            fs = 12800000
+        return fs
 
     @log_file_size.setter
     def log_file_size(self, i: int) -> None:
         try:
-            self._log_file_size = int(i)
+            i = int(i)
         except (TypeError, ValueError):
-            raise ConfigurationException("Error in log_files_size config")
+            i = 12800000
+        self._set(Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, i)

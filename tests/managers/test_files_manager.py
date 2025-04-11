@@ -14,6 +14,55 @@ JSON = f"tests{os.sep}test_resources{os.sep}named_files.json"
 
 
 class TestFilesManager(unittest.TestCase):
+
+    #
+    # base case. add zap, find zap
+    #
+    def test_files_named_file_exists_1(self) -> None:
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        nf = "zap"
+        #
+        # clear out anything lingering
+        #
+        exists = paths.file_manager.has_named_file(nf)
+        existed = paths.file_manager.remove_named_file(nf)
+        assert not exists or existed
+        #
+        # should be nothing there now
+        #
+        assert not paths.file_manager.has_named_file(nf)
+        #
+        # test
+        #
+        paths.file_manager.add_named_file(name=nf, path="tests/test_resources/test.csv")
+        assert paths.file_manager.has_named_file(nf)
+        #
+        # clear what we just added
+        #
+        assert paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
+    #
+    # seen bad case. use of relative path for name. no has, get, or remove should work
+    #
+    def test_files_named_file_exists_2(self) -> None:
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        nf = "zap/test.csv"
+        #
+        # clear out anything lingering
+        #
+        with pytest.raises(ValueError):
+            paths.file_manager.has_named_file(nf)
+        #
+        # test
+        #
+        with pytest.raises(ValueError):
+            paths.file_manager.add_named_file(
+                name=nf, path="tests/test_resources/test.csv"
+            )
+
     def test_files_listener_1(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")

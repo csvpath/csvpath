@@ -824,7 +824,15 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         if self.csvpaths is None:
             return data
         name = self._get_name(data)
-        path = self.csvpaths.file_manager.get_named_file(name)
+        #
+        # this will blow up frequently when name is an actual path. ie name == path
+        # below. since we want file manager to be discriminating we have to catch
+        # the error and reset the name
+        #
+        try:
+            path = self.csvpaths.file_manager.get_named_file(name)
+        except ValueError:
+            path = name
         if path is None:
             return data
         if path == name:

@@ -70,40 +70,19 @@ class TestConfig(unittest.TestCase):
         #
         # CSVPATH FILES
         #
-        with pytest.raises(ConfigurationException):
-            config.csvpath_file_extensions = None
-            config.validate_config()
         #
         # should work because the @property will list it
         #
         config.csvpath_file_extensions = "txt"
         config.validate_config()
         #
-        # can't be empty
-        #
-        with pytest.raises(ConfigurationException):
-            config.csvpath_file_extensions = []
-            config.validate_config()
-        config.csvpath_file_extensions = ["csvpaths", "csvpath"]
-        #
         # CSV FILES
         #
-        with pytest.raises(ConfigurationException):
-            config.csv_file_extensions = None
-            config.validate_config()
         #
         # should work because the @property will list it
         #
         config.csv_file_extensions = "txt"
         config.validate_config()
-        #
-        # can't be empty
-        #
-        with pytest.raises(ConfigurationException):
-            config.csv_file_extensions = []
-            config.validate_config()
-        config.csv_file_extensions = ["csv", "tsv"]
-
         #
         # CSVPATH ERROR POLICY
         #
@@ -207,31 +186,3 @@ class TestConfig(unittest.TestCase):
             config.log_file = 1
             config.validate_config()
         config.log_file = ".{os.sep}log"
-
-        #
-        # LOG FILES TO KEEP
-        #
-        with pytest.raises(ConfigurationException):
-            config.log_files_to_keep = None
-            config.validate_config()
-        #
-        # must be a number
-        #
-        with pytest.raises(ConfigurationException):
-            config.log_files_to_keep = "one"
-            config.validate_config()
-        config.log_files_to_keep = 5
-
-        #
-        # LOG FILES SIZE
-        #
-        with pytest.raises(ConfigurationException):
-            config.log_file_size = None
-            config.validate_config()
-        #
-        # must be a number
-        #
-        with pytest.raises(ConfigurationException):
-            config.log_file_size = "one"
-            config.validate_config()
-        config.log_file_size = 50

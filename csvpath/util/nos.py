@@ -88,12 +88,8 @@ class Nos:
         return self.do.dir_exists()
 
     def physical_dirs(self) -> bool:
-        """True if dirs may exist.
-        False if there is no concept of dirs
-        that are independent from objects.
-        Cloud objects stores like S3 are the
-        latter.
-        """
+        """True if dirs can exist independently. False if there is no concept of dirs
+        that are independent from objects. Cloud objects stores like S3 are the latter."""
         return self.do.physical_dirs()
 
     def rename(self, new_path: str) -> None:
@@ -108,9 +104,6 @@ class Nos:
     def makedir(self) -> None:
         self.do.makedir()
 
-    #
-    # listdir should be assumed to be unordered.
-    #
     def listdir(
         self,
         *,

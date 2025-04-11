@@ -295,6 +295,14 @@ class FileManager:
     # this feels like the better sig.
     #
     def has_named_file(self, name: NamedFileName) -> bool:
+        #
+        # cannot be a reference or part of a reference. has to just
+        # be the simple name of the named file.
+        #
+        self.legal_name(name)
+        #
+        # the home should exist if the named file exists.
+        #
         p = self.named_file_home(name)
         nos = self.nos
         nos.path = p
@@ -310,11 +318,19 @@ class FileManager:
 
     def remove_named_file(self, name: NamedFileName) -> None:
         """@private"""
+        #
+        # cannot delete any specific files. this is for the named_file
+        # as a whole. the named_file is immutable, so this is all-or-nothing
+        # and we expect it to happen rarely in a production env.
+        #
+        self.legal_name(name)
         p = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = p
         if nos.exists():
             nos.remove()
+            return True
+        return False
 
     def remove_all_named_files(self) -> None:
         """@private"""
@@ -351,6 +367,22 @@ class FileManager:
             if self.csvpaths.ecoms.do_i_raise():
                 raise
 
+    def legal_name(self, name: str) -> None:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.strip() == "":
+            raise ValueError("Name cannot be empty")
+        if name.find("/") > -1 or name.find("\\") > -1:
+            raise ValueError(
+                f"Not a legal name: {name}. Path seperators are not allowed."
+            )
+        if name.find(".") > -1:
+            raise ValueError(f"Not a legal name: {name}. Periods are not allowed.")
+        if name.find("$") > -1:
+            raise ValueError(f"Not a legal name: {name}. Dollarsigns are not allowed.")
+        if name.find("#") > -1:
+            raise ValueError(f"Not a legal name: {name}. Hashmarks are not allowed.")
+
     #
     # if name is provided all files selected will be registered under the same name in
     # the order they are found; which is likely not deterministic. template, if any, is
@@ -364,8 +396,12 @@ class FileManager:
     def add_named_files_from_dir(
         self, dirname: str, *, name=None, template: str = None, recurse=True
     ):
-        if dirname is None or dirname.strip() == "":
-            raise ValueError("Dirname cannot be None or empty")
+        #
+        # legal_name handled at add_named_file
+        #
+        # self.legal_name(name)
+        # if dirname is None or dirname.strip() == "":
+        #    raise ValueError("Dirname cannot be None or empty")
         #
         # need to support adding all files from directory under the same name. preferably
         # in order of file created time, if possible.
@@ -405,8 +441,9 @@ class FileManager:
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
     ) -> None:
-        if name is None or name.strip() == "":
-            raise ValueError("Name cannot be None or empty")
+        self.legal_name(name)
+        # if name is None or name.strip() == "":
+        #    raise ValueError("Name cannot be None or empty")
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
         if template is not None:
