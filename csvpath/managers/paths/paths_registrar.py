@@ -35,7 +35,7 @@ class PathsRegistrar(Registrar, Listener):
         mdata.fingerprint = self._fingerprint(name=mdata.named_paths_name)
         self.distribute_update(mdata)
 
-    def update_manifest_if(self, *, group_file_path, name, paths=None):
+    def update_manifest_if(self, *, group_file_path, name, paths):
         #
         # if we find that the current group file does not have the same
         # fingerprint as the most recent on file, we register a new version.
@@ -47,20 +47,19 @@ class PathsRegistrar(Registrar, Listener):
         mpath = self.manifest_path(name)
         cf = self._most_recent_fingerprint(mpath)
         if f != cf:
-            mdata = PathsMetadata()
+            mdata = PathsMetadata(self.csvpaths.config)
             mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
-            #
-            # why two of these? :/
-            #
-            # mdata.named_paths_file = group_file_path
             mdata.group_file_path = group_file_path
             mdata.named_paths = paths
             mdata.named_paths_identities = [
-                t[0] for t in self.manager.get_identified_paths_in(name)
+                #
+                # if we don't pass paths to get_identified_paths_in we will infinite loop
+                #
+                t[0]
+                for t in self.manager.get_identified_paths_in(name, paths)
             ]
-            if paths:
-                mdata.named_paths_count = len(paths)
+            mdata.named_paths_count = len(paths)
             mdata.manifest_path = mpath
             mdata.fingerprint = f
             self.distribute_update(mdata)

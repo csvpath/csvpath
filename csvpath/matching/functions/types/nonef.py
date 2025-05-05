@@ -5,9 +5,10 @@ from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.functions.function import Function
 from ..args import Args
 from ..function_focus import ValueProducer
+from .type import Type
 
 
-class Nonef(ValueProducer):
+class Nonef(ValueProducer, Type):
     """returns None"""
 
     def check_valid(self) -> None:
@@ -47,7 +48,7 @@ class Nonef(ValueProducer):
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 
 
-class Blank(ValueProducer):
+class Blank(ValueProducer, Type):
     """returns True to match, returns its child's value or None. represents any value"""
 
     def check_valid(self) -> None:
@@ -73,7 +74,7 @@ class Blank(ValueProducer):
         self.match = self.default_match()
 
 
-class Wildcard(ValueProducer):
+class Wildcard(ValueProducer, Type):
     """returns True to match, return value: the arg: 1-9+ or '*', or None.
     represents any number of headers"""
 

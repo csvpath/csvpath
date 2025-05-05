@@ -11,6 +11,10 @@ class Fail(MatchDecider):
     """
 
     def check_valid(self) -> None:
+        self.escription = [
+            "Indicates that a csvpath statement fails a data file. ",
+            "Failures can be seen in metadata and are used in error handling.",
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()
@@ -39,6 +43,10 @@ class FailAll(MatchDecider):
     """
 
     def check_valid(self) -> None:
+        self.description = [
+            "Indicates that all csvpaths that are running as a group should be marked failed. ",
+            "I.e., the data file triggering the failure will have failed across the board, even if only one csvpath caught a problem.",
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

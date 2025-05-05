@@ -1,4 +1,4 @@
-from .ol_listener import OpenLineageListener
+from csvpath.managers.integrations.ol.ol_listener import OpenLineageListener
 
 
 class OpenLineageFileListener(OpenLineageListener):

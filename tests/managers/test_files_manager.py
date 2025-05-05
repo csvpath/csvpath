@@ -53,8 +53,14 @@ class TestFilesManager(unittest.TestCase):
         #
         # clear out anything lingering
         #
-        with pytest.raises(ValueError):
-            paths.file_manager.has_named_file(nf)
+        # with pytest.raises(ValueError):
+        #
+        # this method no longer raises an error. it now just returns False. more intuitive.
+        # this seems to be the only test the change broke.
+        #
+        t = paths.file_manager.has_named_file(nf)
+        assert t is False
+
         #
         # test
         #

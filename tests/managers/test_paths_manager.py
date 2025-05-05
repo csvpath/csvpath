@@ -6,6 +6,8 @@ from csvpath.managers.paths.paths_manager import PathsManager
 from csvpath.managers.paths.paths_listener import PathsListener
 from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
 
 DIR = f"tests{os.sep}test_resources{os.sep}named_paths"
 JSON = f"tests{os.sep}test_resources{os.sep}named_paths.json"
@@ -58,6 +60,54 @@ class TestPathsManager(unittest.TestCase):
         if grps is not None and isinstance(grps, str):
             paths.add_to_config("listeners", "groups", grps)
 
+    def test_named_paths_add_and_external_change(self):
+        name = f"{uuid4()}"
+        apath = "$[*][yes()]"
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.paths_manager.add_named_paths(name=name, paths=[apath])
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst
+        assert len(lst) == 1
+        assert lst[0].strip() == apath.strip()
+        #
+        # get named-paths manifest to count number of updates == 1
+        #
+        mani = CsvPaths().paths_manager.get_manifest_for_name(name)
+        assert len(mani) == 1
+        #
+        # update the group.csvpaths file "by hand"
+        #
+        home = CsvPaths().paths_manager.named_paths_home(name)
+        nos = Nos(home)
+        assert nos.exists()
+        nos.path = os.path.join(home, "group.csvpaths")
+        assert nos.exists()
+        with DataFileReader(nos.path) as read:
+            with DataFileWriter(path=nos.path) as write:
+                t = read.read()
+                t += " ~ test ~ "
+                write.write(t)
+        #
+        # get paths to trigger the catch-up mani write. this is what
+        # we're testing.
+        #
+        paths = CsvPaths().paths_manager.get_named_paths(name)
+        assert paths
+        assert len(paths) == 1
+        #
+        # check the mani len
+        #
+        mani = CsvPaths().paths_manager.get_manifest_for_name(name)
+        assert len(mani) == 2
+        #
+        # clean up
+        #
+        CsvPaths().paths_manager.remove_named_paths(name)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst is None
+
     def test_named_paths_adda(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
@@ -69,6 +119,36 @@ class TestPathsManager(unittest.TestCase):
         assert lst
         assert len(lst) == 1
         assert lst[0].strip() == apath.strip()
+        CsvPaths().paths_manager.remove_named_paths(name)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst is None
+
+    def test_named_paths_add_to_existing(self):
+        apath = "$[*][yes()]"
+        paths = CsvPaths()
+        name = "test_add_to_existing"
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        if paths.paths_manager.has_named_paths("test_add_to_existing"):
+            paths.paths_manager.remove_named_paths(name)
+        #
+        # add one
+        #
+        paths.paths_manager.add_named_paths(name=name, paths=[apath])
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst
+        assert len(lst) == 1
+        assert lst[0].strip() == apath.strip()
+        #
+        # add another on top
+        #
+        paths.paths_manager.add_named_paths(name=name, paths=[apath], append=True)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst
+        assert len(lst) == 2
+        assert lst[0].strip() == apath.strip()
+        assert lst[1].strip() == apath.strip()
+
         CsvPaths().paths_manager.remove_named_paths(name)
         lst = CsvPaths().paths_manager.get_named_paths(name)
         assert lst is None

@@ -513,7 +513,15 @@ class ResultsManager:  # pylint: disable=C0115
         # CsvPaths instance, we would create a new one.
         #
         if name in self.named_results:
-            return self.named_results[name]
+            #
+            # exp. removed 4 May.
+            # was/is this ever a good idea?
+            #
+            # seems to be important for a handful of unit tests.
+            #
+            rs = self.named_results[name]
+            print(f"resman: get_named_results: found named results cache: {rs}")
+            return rs
         #
         # find and load the result, if exists. we find results home with the name. run_home is the
         # last run dir. the results we're looking for are the instance dirs in the run dir.
@@ -573,7 +581,9 @@ class ResultsManager:  # pylint: disable=C0115
             nos = Nos(path)
             exists = nos.dir_exists()
             nonphy = nos.physical_dirs()
+            #
             # is not nonphy needed?
+            #
             if exists or not nonphy:
                 runs = nos.listdir()
                 if len(runs) > 0:

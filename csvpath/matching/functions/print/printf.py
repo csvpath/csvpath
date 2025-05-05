@@ -16,9 +16,8 @@ class Print(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             f"{self.name}() prints to one or more default or designated Printer instances.",
-            "Print can have a function or equality argument that is evaluated after printing completes.",
+            f"{self._cap_name()} can have a function or equality argument that is evaluated after printing completes.",
         ]
         if self.name == "error":
             self.description.append(
@@ -30,7 +29,7 @@ class Print(SideEffect):
         a = self.args.argset(2)
         a.arg(name="print this", types=[Term], actuals=[str, self.args.EMPTY_STRING])
         a.arg(
-            name="print to specific printer",
+            name="print to specific Printer stream",
             types=[None, Term],
             actuals=[str, self.args.EMPTY_STRING],
         )

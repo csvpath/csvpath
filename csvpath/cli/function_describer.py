@@ -31,6 +31,11 @@ class FunctionDescriber:
     def sigs(cls, function):
         sigs = []
         args = function.args
+        if not args:
+            #
+            # this is possibly due to the very small number of unrefactored functions. (3?)
+            #
+            return sigs
         argsets = args.argsets
         for ai, a in enumerate(argsets):
             pa = ""

@@ -84,10 +84,23 @@ class Min(MinMax):
     """matches when its value is the smallest"""
 
     def check_valid(self) -> None:
+        self.description = [
+            f"{self.name}() tracks the min value from the first to the current line.",
+            "Values are compared as numbers, if possible, otherwise as strings.",
+            "The optional second argument is 'scan', 'match', or 'line'. It limits which lines will be compared.",
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
-        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        a.arg(
+            name="value to compare",
+            types=[Variable, Term, Header, Function],
+            actuals=[int, float],
+        )
+        a.arg(
+            name="limit min to match, scan, or lines",
+            types=[None, Variable, Term, Header, Function],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -107,6 +120,11 @@ class Max(MinMax):
     """matches when its value is the largest"""
 
     def check_valid(self) -> None:
+        self.description = [
+            f"{self.name}() tracks the max value from the first to the current line.",
+            "Values are compared as numbers, if possible, otherwise as strings.",
+            "The optional second argument is 'scan', 'match', or 'line'. It limits which lines will be compared.",
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
@@ -130,11 +148,22 @@ class Average(MinMax):
     """returns the running average"""
 
     def check_valid(self) -> None:
+        self.description = [
+            f"{self.name}() returns the running {self.ave_or_med} from the first to the current line"
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
-        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        a.arg(
+            name="value to average",
+            types=[Variable, Term, Header, Function],
+            actuals=[int, float],
+        )
+        a.arg(
+            name="match, scan, lines",
+            types=[None, Variable, Term, Header, Function],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

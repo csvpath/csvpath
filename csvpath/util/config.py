@@ -152,6 +152,8 @@ class Config:
     def _set(self, section, key, value) -> None:
         if isinstance(value, list):
             value = ",".join(value)
+        if not self._config.has_section(section):
+            self._config.add_section(section)
         self._config.set(section, key, value)
 
     #
@@ -168,7 +170,11 @@ class Config:
         #
         if value is None:
             value = ""
-        self._config[section][key] = value
+        #
+        # why would we not use _set(section, key, value)?
+        #
+        # self._config[section][key] = value
+        self._set(section, key, value)
         self.refresh()
 
     def save_config(self) -> None:
@@ -230,7 +236,7 @@ groups = default
 #slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
 
 # general purpose webhook caller
-webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultListener
+webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultsListener
 
 # add a listener to exec scripts at the end of named-paths group runs
 scripts.results = from csvpath.managers.integrations.scripts.scripts_results_listener import ScriptsResultsListener
@@ -256,7 +262,7 @@ otlp.results = from csvpath.managers.integrations.otlp.otlp_results_listener imp
 otlp.errors = from csvpath.managers.integrations.otlp.otlp_error_listener import OpenTelemetryErrorListener
 
 # add sftp to the list of groups above to push content and metadata to an SFTP account
-sftp.results = from csvpath.managers.integrations.sftp.sftp_listener import SftpListener
+sftp.results = from csvpath.managers.integrations.sftp.sftp_sender import SftpSender
 
 # add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
 sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener

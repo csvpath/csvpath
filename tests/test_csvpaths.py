@@ -84,7 +84,7 @@ class TestNewCsvPaths(unittest.TestCase):
         assert v
         assert "candy" in v
 
-    def test_csvpaths_fast_forward_paths(self):
+    def test_csvpaths_x_fast_forward_paths(self):
         cs = CsvPaths()
         self.load(cs)
         cs.config.add_to_config("errors", "csvpath", "raise, collect, print")
@@ -126,7 +126,7 @@ class TestNewCsvPaths(unittest.TestCase):
 
     # ================= breadth first ==================
 
-    def test_csvpaths_next_by_line(self):
+    def test_csvpaths_x_next_by_line(self):
         cs = CsvPaths()
         self.load(cs)
         cs.config.add_to_config("errors", "csvpath", "raise, collect, print")

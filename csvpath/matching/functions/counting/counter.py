@@ -14,9 +14,15 @@ class Counter(ValueProducer):
     """
 
     def check_valid(self) -> None:  # pylint: disable=W0246
+        self.description = [
+            "Increments a variable. The increment is 1 by default. ",
+            "Counters must be named using a name qualifier. Without that, the ID generated for your counter will be tough to use.",
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Any], actuals=[int])
+        self.args.argset(1).arg(
+            name="amount to increment by", types=[None, Any], actuals=[int]
+        )
         self.args.validate(self.siblings())
         name = self.first_non_term_qualifier(self.get_id())
         # initializing the counter to 0. if we don't do this and the counter is

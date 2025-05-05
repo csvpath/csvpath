@@ -62,7 +62,15 @@ class ErrorCommunications:
     def do_i_stop(self) -> bool:
         mode = None
         if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
+            #
+            # looks wrong. function in FlightPath is not correct. doesn't match other do_i_...
+            #
             mode = self._csvpath.stop_on_validation_errors
+            #
+            # this was a change made for flightpath. not sure it works. it may well work.
+            # however atm visibility isn't great. come back later.
+            #
+            # return self._csvpath.stop_on_validation_errors
         policy = self.in_policy(OnError.STOP.value)
         return mode is True or policy is True
 

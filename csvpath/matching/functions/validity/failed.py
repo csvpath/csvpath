@@ -8,6 +8,9 @@ class Failed(MatchDecider):
     """matches when the current file is in the failed/invalid state"""
 
     def check_valid(self) -> None:
+        self.description = [
+            "Matches when the current file is in the failed/invalid state."
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

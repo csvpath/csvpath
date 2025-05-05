@@ -14,6 +14,7 @@ class TestCkan(unittest.TestCase):
         #
         #
         #
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}examples{os.sep}ckan{os.sep}csvs"
         )
@@ -37,6 +38,7 @@ class TestCkan(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
         #
@@ -79,6 +81,7 @@ class TestCkan(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
         #
@@ -133,11 +136,11 @@ class TestCkan(unittest.TestCase):
     #
     # TODO: remaining 4 vvvvv
     #
-
     def test_ckan_dataset_name(self):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
         #
@@ -183,6 +186,7 @@ class TestCkan(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
         #
@@ -221,6 +225,7 @@ class TestCkan(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
         #
@@ -244,9 +249,3 @@ class TestCkan(unittest.TestCase):
         lst._set_metadata_fields(dataset=dataset, result=r)
         assert {"key": "name", "value": "this is a var value"} in dataset.fields
         assert {"key": "line_number", "value": "15"} in dataset.fields
-
-    # ------------------------------
-    #
-    #
-    # TODO: more tests
-    #

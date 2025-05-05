@@ -1,7 +1,7 @@
 from openlineage.client import OpenLineageClient
 
-from ..metadata import Metadata
-from .ol_listener import OpenLineageListener
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.integrations.ol.ol_listener import OpenLineageListener
 
 
 class OpenLineagePathsListener(OpenLineageListener):

@@ -63,7 +63,7 @@ class PrintoutsReader(ResultReader):
 
 class ResultReadersFacade(ErrorsReader, UnmatchedReader, LinesReader, PrintoutsReader):
     #
-    # as soonn as we get a run_dir and an instance we'll create the
+    # as soon as we get a run_dir and an instance we'll create the
     # instance_dir and load the readers
     #
     def __init__(self, result):

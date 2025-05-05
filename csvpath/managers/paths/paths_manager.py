@@ -248,6 +248,7 @@ class PathsManager:
         from_json: str = None,
         source_path: str = None,
         template: str = None,
+        append: bool = False,
     ) -> None:
         if template is not None:
             temu.valid(template)
@@ -273,7 +274,7 @@ class PathsManager:
         for _ in paths:
             self.csvpaths.logger.debug("Adding %s to %s", _, name)
         s = self._str_from_list(paths)
-        t = self._copy_in(name, s)
+        t = self._copy_in(name, s, append=append)
         grp_paths = self.get_identified_paths_in(name, paths=paths)
         ids = [t[0] for t in grp_paths]
         for i, t in enumerate(ids):
@@ -630,9 +631,15 @@ class PathsManager:
         cs = s.split("---- CSVPATH ----")
         cs = [s for s in cs if s.strip() != ""]
         #
-        # this update may not happen. it depends on if the group.csvpaths file has changed.
-        # if someone put a new group.csvpaths file by hand we want to capture its fingerprint
-        # for future reference. this shouldn't happen, but it probably will happen.
+        # this update may not result in broadcasting an update event to listeners.
+        # that all depends on if group.csvpaths was changed outside the manager.
+        # if someone put a new group.csvpaths file by hand we want to capture its
+        # fingerprint for future reference. this shouldn't happen, but it probably
+        # will happen.
+        #
+        # seen 1x with FlightPath. not yet clear if FP is doing something new and
+        # desireable or if it has a bug. in principle, still don't see a reason this
+        # update should obtain, unless a user edits a file they shouldn't.
         #
         self.registrar.update_manifest_if(name=name, group_file_path=grp, paths=cs)
         return cs
@@ -644,7 +651,21 @@ class PathsManager:
             f = f"{f}\n\n---- CSVPATH ----\n\n{_}"
         return f
 
-    def _copy_in(self, name: NamedPathsName, csvpathstr: Csvpath) -> None:
+    def _copy_in(self, name: NamedPathsName, csvpathstr: Csvpath, append=False) -> None:
+        #
+        # if we have a set of paths we append these new paths
+        #
+        if self.has_named_paths(name) and append is True:
+            existing = self.get_named_paths(name)
+            estr = self._str_from_list(existing)
+            if not estr.strip().endswith(
+                "---- CSVPATH ----"
+            ) and not csvpathstr.strip().startswith("---- CSVPATH ----"):
+                csvpathstr = f"{estr}\n\n---- CSVPATH ----\n\n"
+            csvpathstr = f"{estr}{csvpathstr}"
+        #
+        # continue with the write
+        #
         temp = self._group_file_path(name)
         with DataFileWriter(path=temp, mode="w") as writer:
             writer.append(csvpathstr)

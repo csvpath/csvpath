@@ -4,7 +4,7 @@ from .exceptions import InputException
 
 
 class MetadataParser:
-    def __init__(self, csvpath) -> None:
+    def __init__(self, csvpath=None) -> None:
         # we were passing in csvpath to get a logger but we
         # weren't actually using it and it complicates using
         # the parser in new ways.
@@ -107,9 +107,27 @@ class MetadataParser:
                         metafield += c
                 current_word = ""
             else:
+                """ """
                 if metafield is not None:
                     metafield += c
                 current_word = ""
+                """
+                #
+                # exp! 29 apr 2025. change made for FlightPath. the
+                # change was intended to support delimited:| or quotechar:"
+                #
+                # it worked for that purpose but played hell with csvpath unit tests.
+                # we still need a solution because we need to be able to set the
+                # delimiter and quotechar. we could make people write them out: pipe,
+                # quote, etc. that wouldn't be terrible. and much less fraught than
+                # letting more punctuation into metadata comments.
+                #
+                print(f"flightpath change to mdata parser. check!")
+                if metafield is None:
+                    metafield = ""
+                metafield += c
+                current_word = ""
+                """
         if metaname:
             metadata_fields[metaname] = (
                 metafield.strip() if metafield is not None else None

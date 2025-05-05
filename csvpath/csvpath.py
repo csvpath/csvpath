@@ -19,7 +19,6 @@ from .matching.matcher import Matcher
 from .scanning.scanner import Scanner
 from .util.metadata_parser import MetadataParser
 from .managers.errors.error import Error
-from .managers.errors.error_collector import ErrorCollector
 from .managers.errors.error_comms import ErrorCommunications
 from .managers.errors.error_manager import ErrorManager
 from .managers.metadata import Metadata
@@ -33,6 +32,7 @@ from .util.exceptions import (
     CsvPathsException,
 )
 from .matching.util.exceptions import MatchException
+from .managers.errors.error_collector import ErrorCollector
 
 
 class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
@@ -672,7 +672,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #   - logic-mode: AND | OR
         #   - return-mode: matches | no-matches
         #   - print-mode: default | no-default
-        #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match
+        #   - validation-mode: (no-)print | log | (no-)raise | quiet | (no-)match | (no-)stop
         #   - run-mode: no-run | run
         #   - unmatched-mode: no-keep | keep
         #   - source-mode: preceding | origin
@@ -975,7 +975,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     def limit_collection_to(self, indexes: List[int]) -> None:
         """@private"""
         self._limit_collection_to = indexes
-        self.logger.warning("Setting a limit on headers collected: %s", indexes)
+        if self._limit_collection_to and self._limit_collection_to != indexes:
+            self.logger.info("Limiting headers collected: %s", indexes)
 
     def stop(self) -> None:
         """@private"""
@@ -1137,7 +1138,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         # DataFileReader is abstract. instantiating it results in a concrete subclass.
         # pylint doesn't like that just because it doesn't see what we're doing.
-        # otoh, is this a bad way to do it? not sure but it works fine.
+        # otoh, is this a bad way to do it? it works fine.
         #
         reader = DataFileReader(  # pylint: disable=E0110
             self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar

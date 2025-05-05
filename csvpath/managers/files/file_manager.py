@@ -299,7 +299,10 @@ class FileManager:
         # cannot be a reference or part of a reference. has to just
         # be the simple name of the named file.
         #
-        self.legal_name(name)
+        try:
+            self.legal_name(name)
+        except Exception:
+            return False
         #
         # the home should exist if the named file exists.
         #
