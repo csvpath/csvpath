@@ -11,9 +11,25 @@ class EmptyStack(ValueProducer):
     """collects empty header names and/or indexes in a stack var."""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            If no arguments are provided, adds the names of any headers without values
+            to a stack. If one or more arguments are provided and an argument is a
+            variable that variable is checked for emptyness.
+
+            Header and variable arguments can be mixed.
+
+            The resulting stack does not persist from line to line.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.argset(0)
-        self.args.argset().arg(types=[None, Variable, Header], actuals=[None, Any])
+        self.args.argset().arg(
+            name="header or var", types=[None, Variable, Header], actuals=[None, Any]
+        )
         self.args.validate(self.siblings())
         super().check_valid()  # pragma: no cover
 

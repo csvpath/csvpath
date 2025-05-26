@@ -16,11 +16,26 @@ class All(MatchDecider):
     """checks that a number of match components return True"""
 
     def check_valid(self) -> None:  # pragma: no cover
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            Tests if all contained or referenced match components evaluate to True.
+            If all() has no arguments the check is if all headers have values.
+        """
+            ),
+        ]
         self.args = Args(matchable=self)
-        self.args.argset(0)
-        self.args.argset(1).arg(types=[None, Variables, Headers], actuals=[])
+        self.args.argset(0)  # what would the function of all() w/o args be?
+        self.args.argset(1).arg(
+            name="a function indicating all headers or all variables",
+            types=[None, Variables, Headers],
+            actuals=[],
+        )
         self.args.argset().arg(
-            types=[None, Function, Variable, Header], actuals=[None, Any]
+            name="one of a set of match components",
+            types=[None, Function, Variable, Header],
+            actuals=[None, Any],
         )
         self.args.validate(self.siblings())
         super().check_valid()

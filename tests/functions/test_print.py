@@ -165,6 +165,7 @@ class TestPrint(unittest.TestCase):
         path.parse(
             f"""${MISMATCH}[*] [
             yes()
+            ~ count() implies onmatch so this assignment comes last ~
             @a = count()
             print.onchange.once("a == $.variables.a")
         ]"""

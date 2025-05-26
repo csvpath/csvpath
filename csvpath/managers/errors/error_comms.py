@@ -17,7 +17,7 @@ class ErrorCommunications:
     the error policy in config/config.ini (or whereever your config is)
     is the baseline. however, every csvpath can override the config
     for some of the error handling using a comment with the metadata
-    field args-validation-mode. (soon to be validation-mode). config
+    field validation-mode. config
     has two setting values not tracked in metadata: quiet and log.
     """
 

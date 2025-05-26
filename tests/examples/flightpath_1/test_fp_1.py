@@ -1,0 +1,61 @@
+import unittest
+from csvpath import CsvPaths
+from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+
+
+class TestFlightPathRefs(unittest.TestCase):
+    def test_flightpath_1(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config(
+            "inputs", "files", "tests/examples/flightpath_1/references"
+        )
+        ref = "$test.files.tms_bars4:all"
+        finder = FilesReferenceFinder(paths, name=ref)
+        res = finder.resolve()
+        assert res
+        assert isinstance(res, list)
+        assert len(res) == 2
+
+    def test_flightpath_2(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config(
+            "inputs", "files", "tests/examples/flightpath_1/references"
+        )
+        ref = "$test.files.2025-05-10:before"
+        finder = FilesReferenceFinder(paths, name=ref)
+        res = finder.resolve()
+        assert res
+        assert isinstance(res, list)
+        assert len(res) == 4
+
+    def test_flightpath_3(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config(
+            "inputs", "files", "tests/examples/flightpath_1/references"
+        )
+        ref = "$test.files.tms_bars4:all.2025-05-10:before"
+        finder = FilesReferenceFinder(paths, name=ref)
+        res = finder.resolve()
+        assert res
+        assert isinstance(res, list)
+        assert len(res) == 1
+
+    def test_flightpath_4(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config(
+            "inputs", "files", "tests/examples/flightpath_1/references"
+        )
+        ref = "$test.files.2025-05-10_02-00-00:before"
+        finder = FilesReferenceFinder(paths, name=ref)
+        res = finder.resolve()
+        assert res
+        assert isinstance(res, list)
+        assert len(res) == 5

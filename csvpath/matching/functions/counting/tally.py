@@ -12,10 +12,33 @@ class Tally(ValueProducer):
     """collects the number of times values are seen"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                tally() tracks the value of a variable, function, or header.
+
+                It always matches, effectively giving it nocontrib. Tally collects its
+                counts regardless of other matches or failures to match, unless you add
+                the onmatch qualifier.
+
+                Tally keeps its count in variables named for the values it is tracking.
+                It can track multiple values. Each of the values becomes a variable under
+                its own name. A header would be tracked under its name, prefixed by tally_, as:
+
+                {'tally_firstname': {'Fred':3}}
+
+                Tally also tracks the concatenation of the multiple values under the key tally.
+                To use another key name add a non-keyword qualifier to tally. For example,
+                tally.birds(#bird_color, #bird_name) has a tally variable of birds with values
+                like blue|bluebird,red|redbird.
+            """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Header, Variable, Function], actuals=[Any])
+        a.arg(name="Value to count", types=[Header, Variable, Function], actuals=[Any])
         self.args.validate(self.siblings())
         super().check_valid()
 

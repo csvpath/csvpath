@@ -13,6 +13,21 @@ class And(MatchDecider):
     need more control."""
 
     def check_valid(self) -> None:  # pragma: no cover
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """
+                and() tests if its contained match components evaluate to True.
+
+                Matching is ANDed by default, but it can be set to OR. And and()
+                gives you a bit more control in certain situations, such as making.
+                a when/do expression that is based on multiple match components.
+
+                The functionality of and() overlaps with all(), but all() has
+                powers that are more specific than and().
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(types=[Matchable], actuals=[None, Any])

@@ -1,10 +1,11 @@
 # pylint: disable=C0114
-import datetime
 import os
+import datetime
 from datetime import timedelta, timezone
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from ..nos import Nos
-from ..path_util import PathUtility as pathu
+from csvpath.util.nos import Nos
+from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.date_util import DateUtility as daut
 from .reference_parser import ReferenceParser
 from .ref_utils import ReferenceUtility as refu
 
@@ -22,7 +23,7 @@ class FilesReferenceFinder:
     #         $myfilename.files.12467d811d1589ede586e3a42c41046641bedc1c73941f4c21e2fd2966f188b4
     #  TODO:
     #    >> by original file name:
-    #         $myfilename.files.orders-march_csv[:first|:last|:index]
+    #         $myfilename.files.orders-march_csv[:first|:last|:index|:all]
     #         $myfilename.files.orders-march_csv.2025-02-28[:after|:before]
     #
     # NOTE: adding :all and possibly other ways to get multiple file paths results. if we get multiple
@@ -124,11 +125,53 @@ class FilesReferenceFinder:
         file = self._path_for_date_if()
         if file is not None:
             return file
+        #
+        # should this really be an exception? if we think of refs as a query language we
+        # would not want a query without results to be exceptional.
+        #
+        # from that point of view we maybe should return [].
+        #
+        return []
+        """
         raise ValueError(
             f"Reference {self.name} does not identify files with {self._ref}"
         )
+        """
 
     def _paths_for_filename_if(self, exact: bool = False) -> list:
+        res = self._filename_if(exact)
+        if res:
+            res = self._filename_filter(res)
+        return res
+
+    def _filename_filter(self, files: list) -> list:
+        #
+        # if we have a third ref component (name_three) it would be a date prefix. possibly
+        # with a filter. (:first|:last|:all|:index)
+        #
+        n = self._ref.name_three
+        if n is None:
+            return files
+        pointer = refu.pointer(n, ":all")
+        s = refu.not_pointer(n)
+        s = self._complete_date_string(s)
+        adate = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
+        lst = self._find_in_range(adate=adate, pointer=pointer)
+        ret = []
+        #
+        # we reverse the original way of doing it because _find_in_date is looking at the
+        # manifest; whereas, the files var is populated from Nos.listdir, which is order
+        # unknown. this gotcha is going to come up again at some point.
+        #
+        if not isinstance(lst, list):
+            lst = [lst]
+        if lst and len(lst) > 0:
+            for file in lst:
+                if file in files:
+                    ret.append(file)
+        return ret
+
+    def _filename_if(self, exact: bool = False) -> list:
         #
         # remember that files are coming in manifest order supposedly. however,
         # there may be cases where we get filesystem / bucket order, which is
@@ -165,29 +208,7 @@ class FilesReferenceFinder:
             if found:
                 f = f"{base}{ending}"
                 files[i] = f
-        #
-        # if we have a third ref component (name_three) it would be a date prefix. possibly
-        # with a filter. (:first|:last|:all|:index)
-        #
-        n = self._ref.name_three
-        if n is None:
-            return files
-        pointer = refu.pointer(n, ":all")
-        s = refu.not_pointer(n)
-        s = self._complete_date_string(s)
-        adate = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
-        lst = self._find_in_date(adate=adate, pointer=pointer)
-        ret = []
-        #
-        # we reverse the original way of doing it because _find_in_date is looking at the
-        # manifest; whereas, the files var is populated from Nos.listdir, which is order
-        # unknown. this gotcha is going to come up again at some point.
-        #
-        if lst and len(lst) > 0:
-            for file in lst:
-                if file in files:
-                    ret.append(file)
-        return ret
+        return files
 
     def _filter(self, files: list, name_filter) -> list:
         if files is None:
@@ -218,7 +239,7 @@ class FilesReferenceFinder:
             if n >= len(ordered) or n < 0:
                 return []
             return [ordered[n]]
-        raise RuntimeError("Unable to filter files {files} with {name_filter}")
+        raise RuntimeError(f"Unable to filter files {files} with {name_filter}")
 
     def _to_arrival_date_order(self, files: list[str]) -> list[str]:
         mani = self.manifest
@@ -318,7 +339,6 @@ class FilesReferenceFinder:
         #
         # takes :first, :last, :all, :<index>
         #
-        print(f"ffrf: _path_for_day_if: name_one: {self._ref.name_one}")
         if self._is_day():
             day = self._ref.name_one[1:]
             i = day.find(":")
@@ -358,14 +378,36 @@ class FilesReferenceFinder:
             self._version_index = i
             return [ds[i]["file"]]
 
-    def _path_for_date_if(self) -> str:
+    def _path_for_date_if(self) -> str | list:
         try:
             name_one = self._ref.name_one
             pointer = refu.pointer(name_one, "after")
             s = refu.not_pointer(name_one)
             s = self._complete_date_string(s)
             dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
-            return self._find_in_date(dat, pointer)
+            #
+            # this is an interesting point because what we do depends on pointers
+            # and may have been different intentions at different times. today --
+            # and i think this is logical
+            #  - after takes a timestamp forward to the present
+            #  - before takes the history from moment 1 to the timestamp
+            #  - all is all
+            #  - last-before (or last?) is the most recent to the timestamp
+            #  - first is the first following the timestamp
+            # and for the future
+            #  - if we do 'on' it would be within the most specific unit (e.g. '2025-05-10' would be on that day
+            #  - if we did a between it would be timestamp:timestamp
+            #
+            # long story short, we can keep _find_in_date for the other place used, but we need
+            # a method that looks at a range of dates, not just a day
+            #
+            # exp.
+            #
+            _ = self._find_in_range(dat, pointer)
+            #
+            #
+            # _ = self._find_in_date(dat, pointer)
+            return _
         except ValueError:
             #
             # we return none because this is expected. we won't like the date
@@ -375,22 +417,60 @@ class FilesReferenceFinder:
             #
             return None
 
-    def _list_of_records_by_date(self, adate=None) -> list:
-        mani = self.manifest
+    def _find_in_range(self, adate, pointer) -> list:
+        if pointer == "after":
+            return self._all_after(adate)
+        elif pointer == "before":
+            return self._all_before(adate)
+        elif pointer == "first":
+            ret = self._first_after(adate)
+            if not isinstance(ret, list):
+                ret = [ret]
+            return ret
+        elif pointer == "last":
+            ret = self._last_before(adate)
+            if not isinstance(ret, list):
+                ret = [ret]
+            return ret
+        else:
+            raise ValueError("Unknown pointer: {pointer}")
+
+    def _all_after(self, adate) -> list:
+        lst = [t["time"] for t in self.manifest]
+        lst2 = daut.all_after(adate, lst)
+        lst3 = []
+        for i, t in enumerate(lst2):
+            if t is not None:
+                lst3.append(self.manifest[i]["file"])
+        return lst3
+
+    def _all_before(self, adate) -> list:
         lst = []
-        adate = adate.astimezone(timezone.utc) if adate is not None else None
-        for _ in mani:
-            t = _["time"]
-            td = ExpressionUtility.to_datetime(t)
-            if adate is None:
-                lst.append(_)
-            elif (
-                adate.year == td.year
-                and adate.month == td.month
-                and adate.day == td.day
-            ):
-                lst.append(_)
-        return lst
+        for t in self.manifest:
+            lst.append(t["time"])
+        lst2 = daut.all_before(adate, lst)
+        lst3 = []
+        for i, t in enumerate(lst2):
+            if t is not None:
+                lst3.append(self.manifest[i]["file"])
+        return lst3
+
+    def _first_after(self, adate) -> str:
+        lst = [t["time"] for t in self.manifest]
+        lst2 = daut.all_after(adate, lst)
+        for i, t in enumerate(lst2):
+            if t is not None:
+                return self.manifest[i]["file"]
+
+    def _last_before(self, adate) -> str:
+        lst = [t["time"] for t in self.manifest]
+        lst2 = daut.all_before(adate, lst)
+        for i, t in enumerate(lst2):
+            if t is None:
+                if i == 0:
+                    return None
+                else:
+                    return self.manifest[i - 1]["file"]
 
     def _find_in_date(self, adate, pointer) -> list:
         mani = self.manifest
@@ -405,6 +485,9 @@ class FilesReferenceFinder:
             # we'll take all the dates and the pointer will
             # tell us what to do. :all will give any dates that
             # are before the datetime we use as a search.
+            #
+            # this can't be right? we want all dates on a day, before a day or after a day, right?
+            # maybe not in all cases, but in the case i'm looking at this doesn't work.
             #
             if (
                 td.year == adate.year
@@ -427,6 +510,8 @@ class FilesReferenceFinder:
     def _find_in_dates(
         self, lst: list[datetime.datetime], adate: datetime.datetime, pointer: str
     ) -> list:
+        if not lst or len(lst) == 0:
+            return None
         adate = adate.replace(tzinfo=timezone.utc)
         multi = []
         if pointer == "last":
@@ -459,6 +544,23 @@ class FilesReferenceFinder:
                     f"Pointer {pointer} is incorrect. Only 'before', 'first', 'after', 'all', and None are allowed, not {pointer}"
                 )
         return None if len(multi) == 0 else multi
+
+    def _list_of_records_by_date(self, adate=None) -> list:
+        mani = self.manifest
+        lst = []
+        adate = adate.astimezone(timezone.utc) if adate is not None else None
+        for _ in mani:
+            t = _["time"]
+            td = ExpressionUtility.to_datetime(t)
+            if adate is None:
+                lst.append(_)
+            elif (
+                adate.year == td.year
+                and adate.month == td.month
+                and adate.day == td.day
+            ):
+                lst.append(_)
+        return lst
 
     def _complete_date_string(self, n: str) -> str:
         dat = ""

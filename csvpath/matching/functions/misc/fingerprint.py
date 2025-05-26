@@ -10,6 +10,24 @@ from ..args import Args
 
 class LineFingerprint(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Sets the line-by-line SHA256 hash of the current data file into a variable.
+                    You can use a name qualifier to name the variable. Otherwise, the name will be
+                    by_line_fingerprint.
+
+                    Since the hash is created line-by-line it changes on every scan. And even if
+                    all lines are scanned the fingerprint at the end of the run is highly unlikely
+                    to match the file fingerprint from the manifest.json. This difference is due to
+                    the way lines are fed into the fingerprint algorithm, skipped blanks, and other
+                    artifacts. Line fingerprint simply gives you an additional tool for ascertaining
+                    the identity of certain input data bits.
+            """
+            ),
+        ]
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         self.args.argset(0)
         self.args.validate(self.siblings())
@@ -33,6 +51,26 @@ class LineFingerprint(SideEffect):
 
 class FileFingerprint(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Enters the SHA256 hash of the current data file into metadata.
+
+                    A file's hash is available in run metadata. However, this function can
+                    do a couple of things that may have value.
+
+                    First, it can enter the data
+                    into the meta.json file as a stand-alone value under any name you like.
+
+                    Second and more importantly, it takes a fingerprint of a source-mode:preceding
+                    run's data file. This allows you to easily confirm that the input to the
+                    current csvpath was the exact output of the preceding csvpath and different
+                    from the original data file.
+            """
+            ),
+        ]
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         self.args.argset(0)
         self.args.validate(self.siblings())
@@ -51,6 +89,16 @@ class FileFingerprint(SideEffect):
 
 class StoreFingerprint(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Migrates a by-line fingerprint from its variable into run metadata. If a name
+                qualifier was used to create the by-line fingerprint the same name must be used
+                with this function.
+            """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         self.args.argset(0)

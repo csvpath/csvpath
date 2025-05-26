@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from csvpath.matching.util.exceptions import DataException
 from csvpath.matching.productions import Term, Variable
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -8,7 +9,7 @@ from ..args import Args
 
 
 class HeaderName(ValueProducer):
-    """looks up a header name by index or an index by header name
+    """looks up a header name by index or an index by header name.
     if given an expected result as a 2nd argument we return
     True/False on the match of expected to actual
 
@@ -18,10 +19,43 @@ class HeaderName(ValueProducer):
     """
 
     def check_valid(self) -> None:
+        d = None
+        if self.name == "header_name":
+            d = self.wrap(
+                """\
+                        Looks up a header name by index.
+
+                        If given an expected result as a 2nd argument the return is
+                        True/False on the match of expected to actual
+
+                        If no value is provided, header_name() is an existance test for the
+                        header, not a check for the line having a value for the header.
+            """
+            )
+        else:
+            d = self.wrap(
+                """\
+                        Looks up a header index by header name.
+
+                        If given an expected result as a 2nd argument the return is
+                        True/False on the match of expected to actual
+
+                        If no value is provided, header_name() is an existance test for the
+                        header, not a check for the line having a value for the header.
+            """
+            )
+
+        self.description = [self._cap_name(), d]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Function, Variable], actuals=[str, int])
-        a.arg(types=[None, Term], actuals=[str, int])
+        a.arg(
+            name="header identity", types=[Term, Function, Variable], actuals=[str, int]
+        )
+        a.arg(
+            name="value check",
+            types=[None, Term],
+            actuals=[None, Any, self.args.EMPTY_STRING],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

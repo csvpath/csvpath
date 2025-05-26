@@ -20,12 +20,38 @@ class Any(MatchDecider):
     """
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                any() returns True if at least one contained match component
+                matches a given value.
+
+                With no arguments any() matches if there are values in any variable or header.
+
+                With a single headers() or variables() function any() returns True if there is
+                a match component of the the type indicated with a value.
+
+                With a second argument the test is for the specific value in any match component
+                of the indicated type.
+
+                any() is similar to or() or OR logic. While any() gives
+                you more fine-grained control, remember that you can
+                also use logic-mode to configure a csvpath to use OR as
+                the basis for matching.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(0)
 
         a = self.args.argset(2)
-        a.arg(types=[Variables, Headers], actuals=[None, typing.Any])
-        a.arg(types=[typing.Any], actuals=[None, typing.Any])
+        a.arg(
+            name="Indicates where to look",
+            types=[Variables, Headers],
+            actuals=[None, typing.Any],
+        )
+        a.arg(name="The value to find", types=[typing.Any], actuals=[None, typing.Any])
 
         a = self.args.argset(1)
         a.arg(types=[typing.Any, Variables, Headers], actuals=[None, typing.Any])

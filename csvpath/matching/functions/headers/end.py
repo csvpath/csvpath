@@ -10,8 +10,22 @@ class End(ValueProducer):
     """returns the value of the last header"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            Returns the value of the last header.
+
+            If an integer argument N is given, the return is the value of the
+            last header minus N. I.e., if the last header is #11, end(3) returns
+            the value of #8.
+        """
+            ),
+        ]
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Any], actuals=[int])
+        self.args.argset(1).arg(
+            name="positions to the left of end", types=[None, Any], actuals=[int]
+        )
         self.args.validate(self.siblings())
 
         super().check_valid()

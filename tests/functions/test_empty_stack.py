@@ -40,3 +40,23 @@ class TestFunctionsEmptyStack(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 1
+
+    def test_function_empty_stack3(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${FOOD}[1*][
+                even(line_number()) -> @a.renew = line_number()
+                push.notnone("empties", empty_stack(@a, #healthy) )
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 5
+        assert "empties" in path.variables
+        assert isinstance(path.variables["empties"], list)
+        s = path.variables["empties"]
+        assert len(s) == 5
+        for es in s:
+            assert isinstance(es, list)
+            assert len(es) == 1
+            assert es == ["a"]

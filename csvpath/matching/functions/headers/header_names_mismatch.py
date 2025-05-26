@@ -5,19 +5,35 @@ from ..args import Args
 
 
 class HeaderNamesMismatch(ValueProducer):
-    """
-    given a delimited list of headers, checks that they all exist and
-    optionally are in the same order. seems like a match decision activity
-    and you have to dig for the generated data but given how much
-    good information we're creating the function's pretty clearly a val
-    producer.
-    """
-
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Given a | delimited list of headers, checks that all exist and
+                are in the same order.
+
+                While the function is intended for matching, substantial data is
+                created in variables. The following variables containing header names
+                may be useful:
+
+                - N_present
+
+                - N_unmatched
+
+                - N_misordered
+
+                - N_duplicated
+
+                (Where 'N' is a name qualifier, if given, or 'header_names_mismatch')
+
+        """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term], actuals=[str])
+        a.arg(name="pipe delimited headers", types=[Term], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
 

@@ -9,9 +9,9 @@ class ExplainMode:
         # explain-mode: explain
         # turns on capturing match reasoning and dumps the captured decisions to INFO
         # at the end of a match. the reasoning is already present in the DEBUG but it
-        # is harder to see amid all the noise. we don't want to dump explainations
+        # is harder to see amid all the noise. we don't want to dump explanations
         # all the time tho because it is very expensive -- potentially 25% worse
-        # performance. the explainations could be improved. atm this is an experimental
+        # performance. the explanations could be improved. atm this is an experimental
         # feature.
         #
         self._explain: bool = None

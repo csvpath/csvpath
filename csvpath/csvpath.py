@@ -584,7 +584,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     @property
     def explain(self) -> bool:
         """@private
-        when this property is True CsvPath dumps a match explaination
+        when this property is True CsvPath dumps a match explanation
         to INFO. this can be expensive. a 25% performance hit wouldn't
         be unexpected.
         """
@@ -1265,9 +1265,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         ls = []
         for k in self.limit_collection_to:
             if k is None or k >= len(line):
-                raise InputException(
-                    f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k} of {self.limit_collection_to} in headers {self.headers}"
-                )
+                #
+                # FP change. didn't do do_i_raise and didn't handle w/error mgr
+                #
+                msg = f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k} of {self.limit_collection_to} in headers {self.headers}"
+                self.error_manager.handle_error(source=self, msg=msg)
+                if self.ecoms.do_i_raise():
+                    raise InputException(msg)
             ls.append(line[k])
         return ls
 
@@ -1322,6 +1326,12 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         if use_cache:
             uc = self.csvpaths.config.get(section="cache", name="use_cache")
             use_cache = uc is None or uc.strip().lower() != "no"
+        #
+        # do we really want to only use cache if we're running a named-paths group?
+        # users may want to run one-offs repeatedly, particularly in FP. otoh, we
+        # don't have a file_manager and its a big change for probably a small number of
+        # bad cases and it can be worked around by simply using a CsvPaths.
+        #
         if self.csvpaths and use_cache is True:
             self.line_monitor = self.csvpaths.file_manager.lines_and_headers_cacher.get_new_line_monitor(
                 self.scanner.filename

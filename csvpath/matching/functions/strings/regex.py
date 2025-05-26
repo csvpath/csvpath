@@ -12,10 +12,34 @@ class Regex(MatchDecider):
     """does a regex match on a value"""
 
     def check_valid(self) -> None:
+        d = None
+        if self.name == "exact":
+            d = self.wrap(
+                """\
+                Looks for an exact match, with unmatched preceding or trailing characters,
+                of a regular expression to a string.
+
+                The regular expression can be in argument one or two.
+            """
+            )
+        else:
+            d = self.wrap(
+                """\
+                Matches a regular expression to a string.
+
+                The regular expression can be in argument one or two.
+
+                Optionally, the third argument returns a group from the
+                match, if any groups were defined.
+            """
+            )
+
+        self.description = [self._cap_name(), d]
         self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(
+            name="str or regex",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
@@ -24,10 +48,15 @@ class Regex(MatchDecider):
         # as an actual value in both.
         #
         a.arg(
+            name="str or regex",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
-        a.arg(types=[None, Term, Variable, Header, Function, Reference], actuals=[int])
+        a.arg(
+            name="group",
+            types=[None, Term, Variable, Header, Function, Reference],
+            actuals=[int],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
         left = self._function_or_equality.left

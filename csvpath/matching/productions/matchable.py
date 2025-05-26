@@ -29,7 +29,7 @@ class Matchable(Qualified):  # pylint: disable=R0904
         self._id: str = None
 
     def _cap_name(self) -> str:
-        return f"{self.name[0].upper()}{self.name[1:]}"
+        return f"{self.name[0].upper()}{self.name[1:].replace('_', ' ')}"
 
     def _a_an(self) -> str:
         return "an" if self.name[0] in ["a", "e", "i", "o", "u"] else "a"

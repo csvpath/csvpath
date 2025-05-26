@@ -1,0 +1,14 @@
+~
+   id: printing   test-data: process-list-cols.csv
+~
+$[1*][
+
+    print.once("The city is $.headers.SRC_NAM_TX", "once")
+
+
+    lt(@times, 4) ->
+        print("The city is $.headers.SRC_NAM_TX", counter.times())
+
+
+    ~line_number.nocontrib() == 10 -> stop() ~
+]

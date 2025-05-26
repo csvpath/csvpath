@@ -11,11 +11,26 @@ class Increment(ValueProducer):
     """increments a var every n-times each different value is seen"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+              increment() increases a variable tracking each match every N-matches.
+
+              For example in a file with four lines of first names where there are
+              two Johns, one Fred, and one Shen we would expect increment.john(#firstname=="John", 2)
+              to create the variable john_increment with a value of 1.
+
+              increment() and counter() are similar. Counter lets you add N each time you see a True value; whereas,
+              increment() lets you add 1 each N times you see a True value. Both are ratios.
+            """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Matchable], actuals=[Any])
-        a.arg(types=[Term], actuals=[int])
+        a.arg(name="Match component", types=[Matchable], actuals=[Any])
+        a.arg(name="Ratio", types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 

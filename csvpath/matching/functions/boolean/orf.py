@@ -26,10 +26,25 @@ class Or(MatchDecider):
         super().reset()
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    or() implements OR logic in a csvpath writer-directed way.
+
+                    Evaluation of or() completes before any errors are handled to
+                    allow for the OR operation to be informed by branch invalidity.
+
+                    Remember that logic-mode allows you to apply OR logic to the
+                    whole csvpath, if that is needed. or() is of course more
+                    specific and composable.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Matchable], actuals=[None, Any])
-        a.arg(types=[Matchable], actuals=[None, Any])
+        a.arg(name="First alternative", types=[Matchable], actuals=[None, Any])
+        a.arg(name="Next alternative", types=[Matchable], actuals=[None, Any])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
         ds = ExpressionUtility.get_my_descendents(self, include_equality=True)

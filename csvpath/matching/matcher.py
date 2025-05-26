@@ -170,11 +170,11 @@ class Matcher:  # pylint: disable=R0902
     #
     #
     @property
-    def explaination(self) -> list[tuple]:
+    def explanation(self) -> list[tuple]:
         return self._explain
 
-    @explaination.setter
-    def explaination(self, es) -> None:
+    @explanation.setter
+    def explanation(self, es) -> None:
         self._explain = es
 
     def what(self, actor, action) -> What:
@@ -388,10 +388,10 @@ class Matcher:  # pylint: disable=R0902
         # exp!  do we want to keep this?
         #
         if self.csvpath.explain:
-            self.csvpath.logger.info("Dumping explaination:")
-            for e in self.explaination:
+            self.csvpath.logger.info("Dumping explanation:")
+            for e in self.explanation:
                 self.csvpath.logger.info(f"  {e}")
-            self.explaination = []
+            self.explanation = []
         #
         # end exp
         #

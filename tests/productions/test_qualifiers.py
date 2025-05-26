@@ -135,7 +135,7 @@ class TestFunctionsQualifiers(unittest.TestCase):
         assert "onmatch" in quals
         assert "onchange" in quals
 
-    def test_latch(self):
+    def test_latch_1(self):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
@@ -150,6 +150,24 @@ class TestFunctionsQualifiers(unittest.TestCase):
         path.fast_forward()
         assert path.variables["my_firstname"] == "David"
         assert path.variables["other_firstname"] == "Frog"
+
+    def test_latch_2(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""
+            ~ explain-mode: no-explain ~
+            ${PATH}[*][
+            @a.latch = line_number()
+            @b = line_number()
+            push("as", @a)
+            push("bs", @b)
+            ]"""
+        )
+        path.fast_forward()
+        print(f"vars: {path.variables}")
+        assert path.variables["a"] == 0
+        assert path.variables["b"] == 8
 
     def test_function_every_qualifier1(self):
         path = CsvPath()

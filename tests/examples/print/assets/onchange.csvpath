@@ -1,0 +1,9 @@
+~
+   id: printing   test-data: process-list-cols.csv
+~
+$[1*][
+
+    print.onchange("The city is $.headers.SRC_NAM_TX")
+
+    line_number.nocontrib() == 30 -> stop()
+]

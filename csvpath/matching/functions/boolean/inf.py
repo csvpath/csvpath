@@ -11,10 +11,31 @@ class In(MatchDecider):
     terms are treated as | delimited strings of values"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    in() checks if the component value is in the values of the other arguments.
+
+                    One advanced in() capability is for lookups in the results of other
+                    named-path group runs.
+
+                    String terms are treated as possibly | delimited strings of values
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
+        a.arg(
+            name="Value to find",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, Any],
+        )
+        a.arg(
+            name="Place to look",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, Any],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

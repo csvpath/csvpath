@@ -26,7 +26,7 @@ class ArgumentValidationHelper:
         # Validate each argument against the argset.
         # this part gets ugly. we should instead just say:
         #   f"invalid {argset.matchable.name}. {argset.explain}"
-        # and then write the explaination into the classes. (OMG! but it would be best, imho).
+        # and then write the explanation into the classes. (OMG! but it would be best, imho).
         #
         results = []
         for va in valid_argsets:
