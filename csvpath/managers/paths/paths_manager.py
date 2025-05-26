@@ -197,12 +197,20 @@ class PathsManager:
                 raise InputException(msg)
 
     def add_named_paths_from_file(
-        self, *, name: NamedPathsName, file_path: str, template=None
+        self,
+        *,
+        name: NamedPathsName,
+        file_path: str,
+        template=None,
+        append: bool = False,
     ) -> None:
+        #
+        # change for FP: added append as a pass-through
+        #
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
         _ = self._get_csvpaths_from_file(file_path)
         self.add_named_paths(
-            name=name, paths=_, source_path=file_path, template=template
+            name=name, paths=_, source_path=file_path, template=template, append=append
         )
 
     def add_named_paths_from_json(self, file_path: str) -> None:
@@ -253,8 +261,11 @@ class PathsManager:
         if template is not None:
             temu.valid(template)
         if from_file is not None:
+            #
+            # change for FP. added append as a pass-through
+            #
             return self.add_named_paths_from_file(
-                name=name, file_path=from_file, template=template
+                name=name, file_path=from_file, template=template, append=append
             )
         elif from_dir is not None:
             return self.add_named_paths_from_dir(
@@ -712,6 +723,32 @@ class PathsManager:
             ps.append(path[0])
         return ps
 
+    #
+    # this version correctly picks up csvpaths that the Framework identifies by index
+    # because they don't have user assigned identities. this was seen in FlightPath
+    # but applies in general.
+    #
+    def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
+        index = expu.to_int(identity)
+        ps = []
+        paths = self.get_identified_paths_in(npn)
+        for i, path in enumerate(paths):
+            #
+            # if we have the identity or the identity is the index or we are collecting
+            # after our first collection because :from collects all csvpaths coming after
+            # a starting csvpath
+            #
+            if (path[0] == identity or (path[0] is None and index == i)) or len(ps) > 0:
+                ps.append(path[1])
+            """
+            if path[0] != identity and len(ps) == 0:
+                continue
+            ps.append(path[1])
+            """
+        return ps
+
+    """
+    original version
     def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
         ps = []
         paths = self.get_identified_paths_in(npn)
@@ -720,6 +757,7 @@ class PathsManager:
                 continue
             ps.append(path[1])
         return ps
+    """
 
     def get_preceeding_instance_identity(self, name, index: int) -> str:
         if index <= 0:
@@ -756,11 +794,35 @@ class PathsManager:
             idps.append((c.identity, path))
         return idps
 
+    """
     def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
         if npn is not None:
             paths = self.get_identified_paths_in(npn)
             for path in paths:
                 if path[0] == identity:
+                    return path[1]
+        raise InputException(
+            f"Path identified as '{identity}' must be in the group identitied as '{npn}'"
+        )
+    """
+
+    def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
+        #
+        # this version of the method is a change for FlightPath. the change is correct for
+        # all purposes, but showed up clearly in FP. the problem is that we don't test index
+        # for unidentitied paths. luckily we do return all paths with None as the identity
+        # for those w/o user specified id. for those we just need to test the index.
+        #
+        # this version assumes that if a csvpath is identitied we do not allow using the
+        # index to point to it. this may not be the right assumption, but it is arguably a
+        # good way to go. if the writer bothered to identify, the id is more specific than
+        # the index and so less error-prone.
+        #
+        index = expu.to_int(identity)
+        if npn is not None:
+            paths = self.get_identified_paths_in(npn)
+            for i, path in enumerate(paths):
+                if path[0] == identity or (path[0] is None and index == i):
                     return path[1]
         raise InputException(
             f"Path identified as '{identity}' must be in the group identitied as '{npn}'"

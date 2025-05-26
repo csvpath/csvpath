@@ -190,4 +190,6 @@ class FileDo:
         paths = os.listdir(self.path)
         if files_only:
             return [_ for _ in paths if os.path.isfile(os.path.join(self.path, _))]
+        elif dirs_only:
+            return [_ for _ in paths if not os.path.isfile(os.path.join(self.path, _))]
         return paths

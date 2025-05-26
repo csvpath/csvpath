@@ -11,13 +11,35 @@ class Now(ValueProducer):
     """returns the current datetime"""
 
     def check_valid(self) -> None:
+        if self.name in ["thisyear", "thismonth", "today"]:
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                A convenience function that returns the datetime component as a string.
+                """
+                ),
+            ]
+        else:
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                Returns the current datetime. If a strftime() format is provided the
+                return is a string matching the format.
+                """
+                ),
+            ]
+
         self.args = Args(matchable=self)
         self.args.argset(0)
         if self.name in ["thisyear", "thismonth", "today"]:
             self.args.validate(self.siblings())
         else:
             self.args.argset(1).arg(
-                types=[None, Term, Function, Header, Variable], actuals=[None, str]
+                name="format",
+                types=[None, Term, Function, Header, Variable],
+                actuals=[None, str],
             )
             self.args.validate(self.siblings())
         super().check_valid()

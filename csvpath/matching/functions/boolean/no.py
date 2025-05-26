@@ -8,6 +8,15 @@ class No(MatchDecider):
     """returns False"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    no() always evaluates to False. It is similar to yes() and none().
+            """
+            ),
+        ]
+
         self.aliases = ["no", "false"]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())

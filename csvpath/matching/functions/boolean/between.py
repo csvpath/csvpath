@@ -13,6 +13,20 @@ class Between(MatchDecider):
     """this class implements a date, number or string between test"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Returns true if the values provided have a between relationship.
+
+                The values can be dates, numbers, or strings. They must all be of the
+                same type.
+
+                between() has a number of aliases. One of them may work better syntactically in
+                your use case, but they are all the same logic.
+                """
+            ),
+        ]
         if self.name in ["between", "inside", "from_to", "range"]:
             self.aliases = ["between", "inside", "from_to", "range"]
         elif self.name in ["beyond", "outside", "before_after"]:
@@ -20,36 +34,54 @@ class Between(MatchDecider):
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(
+            name="The value to test",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, datetime, date],
         )
         a.arg(
+            name="From",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, datetime, date],
         )
         a.arg(
+            name="To",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, datetime, date],
         )
 
         a = self.args.argset(3)
         a.arg(
+            name="The value to test",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, float, int],
         )
         a.arg(
+            name="From",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, float, int],
         )
         a.arg(
+            name="To",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, float, int],
         )
 
         a = self.args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, str])
+        a.arg(
+            name="The value to test",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, str],
+        )
+        a.arg(
+            name="From",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, str],
+        )
+        a.arg(
+            name="To",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, str],
+        )
 
         self.args.validate(self.siblings())
         super().check_valid()

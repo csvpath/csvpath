@@ -1,0 +1,140 @@
+REG_4CH_CD,SRC_NAM_TX,STP_SEQ_NO,STP_NAM_TX,PRC_NAM_TX,APP_NAM_TX,DPT_NAM_TX,Department type,Process type,PRT_NAM_TX,PRD_NAM_TX
+AFGH,Official Gazette of Afghanistan,1,Mail LA,Mail CDT,Outlook,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,2,Preparation TRET,Preparation TRET,No application : manual,Trademark Editing Team,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,3,Preparation CDT,Preparation CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,4,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,5,Pdf load,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,6,Segmentation + External Saba,External Keying Saba,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,6,Segmentation + External Saba,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,7,Check oppo,Check oppo dates CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,8,Conversion,ConversiontoolWatch,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,9,Check missed images,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,10,Start Batchproc TrET,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,11,Indexing TrET,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,12,Watchnews,Watchnews GOOD - BAD int or ext - NEUTRAL,No application : manual,Content Service Desk,Data systems internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,13,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,AFGH Appl - Watch + ISS
+AFGH,Official Gazette of Afghanistan,1,Scannen,Scanning pdf,Kodak high volume scanner + uploader,Content Conversion team I,Data systems internal,No parts,Archive,AFGH Archive
+AFGH,Official Gazette of Afghanistan,1,Create file,Create dummy File,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Online BTW,AFGH BTW ISS - Online
+AFGH,Official Gazette of Afghanistan,1,Create file,ArcanumXml,Outlook,Content Conversion team A,Data systems internal,Automatic,Online BTW,AFGH BTW ISS - Online
+AFGH,Official Gazette of Afghanistan,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Archive,AFGH NO Trademarks
+ALBA,Albanian TM data (updates),1,Load data by TCT,Load data by TCT,Outlook,Trademark Content Team,CompuMark internal,No parts,Online,(old) ALBA - Online (TCT)
+ALBA,Albanian TM data (updates),1,Check files,Check files CDT,UltraEdit,Content Dispatch Team,CompuMark internal,No parts,Online BTW,ALBA BTW DA - Online
+ALBA,Albanian TM data (updates),2,Conversion scheduler,Conversion Scheduler CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,ALBA BTW DA - Online
+ALBA,Albanian TM data (updates),3,Processing Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,ALBA BTW DA - Online
+ALBA,Albanian TM data (updates),3,Processing Arcanum,ArcanumXml,Outlook,Content Conversion team A,Data systems internal,Automatic,Online BTW,ALBA BTW DA - Online
+ALBA,Gazeta e markave,1,Scannen,Scanning Lighthouse,Kodak high volume scanner + uploader,Content Conversion team I,Data systems internal,No parts,Online BTW,(old) ALBA Online
+ALBA,Gazeta e markave,2,External Lighthouse,External KeyStation Lighthouse,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Online BTW,(old) ALBA Online
+ALBA,Gazeta e markave,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,2,PDF load,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,3,Segmentation,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,4,Color Flag,External Img Color Flag Scope,Trim : breakup,Scope,External,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,5,Check color Img,Img Check color,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,6,Conversion,ConversiontoolWatch,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,7,Check missed images,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,8,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,9,Indexing,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALBA,Gazeta e markave,10,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,ALBA  Appl - Watch + ISS
+ALGE,Algerian TM data (updates),1,Check files,Check files CDT,UltraEdit,Content Dispatch Team,CompuMark internal,No parts,Online BTW,ALGE BTW DA - Online
+ALGE,Algerian TM data (updates),2,Conversion Scheduler,Conversion Scheduler CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,ALGE BTW DA - Online
+ALGE,Algerian TM data (updates),3,Processing Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,ALGE BTW DA - Online
+ALGE,Algerian TM data (updates),3,Processing Arcanum,ArcanumXml,Outlook,Content Conversion team A,Data systems internal,Automatic,Online BTW,ALGE BTW DA - Online
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),2,Issue + Start Batchproc,Start Batchproc CCT,Tips,Content Conversion team T,Data systems internal,No parts,Search,ALGE Reg - Search
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),3,Load Errors,Load errors status CCT,Tips,Content Conversion team T,Data systems internal,No parts,Search,ALGE Reg - Search
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),4,Quality Controle,Quality Control CCT,No application : manual,Content Conversion team T,Data systems internal,No parts,Search,ALGE Reg - Search
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),5,Adapt Cretext,Adapt Cretext,Windows NT,Content Conversion team T,Data systems internal,No parts,Search,ALGE Reg - Search
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),2,Pdf load,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),3,Segmentation + External keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),3,Segmentation + External keying,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),4,Color Flag + Move files + Conversion,Conversiontool IBD,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),4,Color Flag + Move files + Conversion,Move files,No application : manual,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),4,Color Flag + Move files + Conversion,External Img Color Flag Scope,Trim : breakup,Scope,External,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),5,Check Color Img,Img Check color,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),6,Check missed images,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),7,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),8,Indexing,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ALGE,Bulletin Officiel de la Propriete Industrielle (pdf),9,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,ALGE Reg - Watch + ISS
+ANDO,Andorra - Gaseta de Marques (missings),1,Pdf download,Pdf download,Acrobat reader,Content Conversion team I,Data systems internal,No parts,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),2,Segmentation,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),3,Keying,Keying,Key Entry 3,Trademark Editing Team,CompuMark internal,No parts,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),4,Headertool,Headertool CDT,Headertool,Content Dispatch Team D,Data systems internal,No parts,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),5,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),6,Indexing DP,Indexing,Tips,Trademark Editing Team,CompuMark internal,Manual,ISS,ANDO  missing ISS
+ANDO,Andorra - Gaseta de Marques (missings),7,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,ISS,ANDO  missing ISS
+ANDO,Gaseta de Marques,1,Start BatchProc,Start Batchproc CCT,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,(old) ANDO Online
+ANDO,Gaseta de Marques,2,Load errors,Load errors,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,(old) ANDO Online
+ANDO,Gaseta de Marques,3,Adapt Cretext,Adapt Cretext,Windows NT,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,(old) ANDO Online
+ANDO,Gaseta de Marques,1,Pdf download ,Conversion FU CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,1,Pdf download ,Mail oper CDT,Outlook,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,2,Preparation CDT,Preparation CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,3,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,4,Mail,Mail CDT,Outlook,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,5,Pdf load,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,6,Segmentation + External Keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,6,Segmentation + External Keying,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,7,Move Files + Conversion,Conversiontool IBD,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,7,Move Files + Conversion,Move files,No application : manual,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,8,Img controle color + Check missed images,Img controle color,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,8,Img controle color + Check missed images,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,9,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,10,Indexing TrET,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,11,Mail TrET,Mail CDT_D,Outlook,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,12,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications + TMgo365,ANDO Reg - Watch + ISS
+ANDO,Gaseta de Marques,1,Controle ISS /errorlist,Controle ISS CCT,No application : manual,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,2,Conversion Scheduler,Conversion Scheduler CCT,No application : manual,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,3,Start Batchproc STAT,Start Batchproc stat CCT,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,4,Load errors,Load errors,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,5,Start batchproc Status,Start Batchproc status CCT,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,6,Load errors Status,Load errors status CCT,Tips,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANDO,Gaseta de Marques,7,Adapt Cretext (Word),Adapt Cretext,Windows NT,Content Conversion team T,Data systems internal,No parts,Online + TMgo365,ANDO Status - Online
+ANGO,The Official Trademark Bulletin of Angola,1,Scanning,Scanning pdf,Kodak high volume scanner + uploader,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,2,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,3,Pdf processing ,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,4,Segmentation + Keying + Verif,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,4,Segmentation + Keying + Verif,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,5,Img controle,Img controle color,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,6,Copy files + Conversion,Conversiontool IBD,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,6,Copy files + Conversion,Copy Files,No application : manual,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,7,Check missed images + Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,7,Check missed images + Arcanum,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,8,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,9,Indexing,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,10,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,ANGO Appl - Watch + ISS
+ANGO,The Official Trademark Bulletin of Angola,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Archive,ANGO NO Trademarks
+ANGO,The Official Trademark Bulletin of Angola,2,Arcanum Files,ArcanumXml,Outlook,Content Conversion team A,Data systems internal,Automatic,Online,ANGO online
+ANGU,Government of Anguilla Official Gazette,1,External Keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,(old) ANGU BTW Key - Online
+ANGU,Government of Anguilla Official Gazette,2,Controle Completeness Data,Controle Data,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Online BTW,(old) ANGU BTW Key - Online
+ANGU,Government of Anguilla Official Gazette,3,External Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,(old) ANGU BTW Key - Online
+ANGU,Government of Anguilla Official Gazette,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,2,Preparation + next theo,Check theo_date,Atrium++,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,2,Preparation + next theo,Preparation CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,3,Pdf download IP,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,4,Segmentation + External Keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,4,Segmentation + External Keying,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,5,Copy Files + Conversion,Conversiontool IBD,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,5,Copy Files + Conversion,Copy Files,No application : manual,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,6,Check Missed Images + processing Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,6,Check Missed Images + processing Arcanum,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,7,Start Batchproc DP,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,8,Indexing,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,9,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,ANGU Appl - Watch + ISS
+ANGU,Government of Anguilla Official Gazette,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Archive,ANGU NO Trademarks
+ANGU,Government of Anguilla Official Gazette,2,Arcanum Files,ArcanumXml,Outlook,Content Conversion team A,Data systems internal,Automatic,Online,ANGU online
+ANTI,Antigua and Barbuda Official Gazette,2,External Keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,(old) ANTI BTW Key - Online
+ANTI,Antigua and Barbuda Official Gazette,3,Controle Completeness Data,Controle Data,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Online BTW,(old) ANTI BTW Key - Online
+ANTI,Antigua and Barbuda Official Gazette,4,External Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Online BTW,(old) ANTI BTW Key - Online
+ANTI,Antigua and Barbuda Official Gazette,1,Preparation IPPO,Preparation CDT,No application : manual,Content Dispatch Team,CompuMark internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,2,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,3,PDF Load,Pdf load,Trim : breakup,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,4,Segmentation + External Keying,External KeyStation IBD CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,4,Segmentation + External Keying,Segmentation,Trim : breakup,Content Conversion team I,Data systems internal,Automatic,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,5,Copy Files + Conversion,Conversiontool IBD,Conversiontool,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,5,Copy Files + Conversion,Copy Files,No application : manual,Content Conversion team C,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,6,Processing Arcanum,Processing Arcanum CCTI,No application : manual,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,7,Check Missed Images,Check Missed Images,Windows NT,Content Conversion team I,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,8,Start Batchproc,Start Batchproc TRET,Tips,Trademark Editing Team,CompuMark internal,Automatic,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,9,Indexing,Indexing,Tips,Trademark Editing Team,CompuMark internal,,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,10,Dispatcher,Send through dispatcher,Atrium++,Content Dispatch Team D,Data systems internal,No parts,Watch + ISS + Publications,ANTI Appl - Watch + ISS
+ANTI,Antigua and Barbuda Official Gazette,1,Scannen,Scanning pdf,Kodak high volume scanner + uploader,Content Conversion team I,Data systems internal,No parts,Archive,ANTI Archive
+ANTI,Antigua and Barbuda Official Gazette,1,Intake Care,Intake Care,Atrium++,Quality Care,CompuMark internal,No parts,Intelocal,ANTI Intelocal
+

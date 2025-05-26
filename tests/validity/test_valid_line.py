@@ -361,3 +361,21 @@ class TestValidLine(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.collect()
+
+    def test_valid_line_distinct_1(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "collect, print")
+        path.parse(
+            f"""
+            ~ id:fails distinct ~
+            ${PATH}[*][
+              line.distinct(
+                  string.firstname(#0),
+                  string.lastname(#1),
+                  wildcard()
+              )
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 8

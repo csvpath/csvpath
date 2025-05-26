@@ -71,16 +71,16 @@ class Config:
 
     def __init__(self, *, load=True):
         self.load = load
-        self._additional_listeners = None
-        self._csvpath_file_extensions = None
-        self._csv_file_extensions = None
-        self._csvpath_errors_policy = None
-        self._csvpaths_errors_policy = None
-        self._csvpath_log_level = None
-        self._csvpaths_log_level = None
-        self._log_file = None
-        self._log_files_to_keep = None
-        self._log_file_size = None
+        # self._additional_listeners = None
+        # self._csvpath_file_extensions = None
+        # self._csv_file_extensions = None
+        # self._csvpath_errors_policy = None
+        # self._csvpaths_errors_policy = None
+        # self._csvpath_log_level = None
+        # self._csvpaths_log_level = None
+        # self._log_file = None
+        # self._log_files_to_keep = None
+        # self._log_file_size = None
         self._config = RawConfigParser()
         self.log_file_handler = None
         #
@@ -143,10 +143,13 @@ class Config:
                     ret = v2.strip()
             return ret
         except KeyError:
-            if self.csvpath_log_level == LogLevels.DEBUG:
-                print(
-                    f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
-                )
+            try:
+                if self._config["logging"]["csvpath"] == LogLevels.DEBUG:
+                    print(
+                        f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
+                    )
+            except KeyError:
+                ...
             return default
 
     def _set(self, section, key, value) -> None:
@@ -200,6 +203,8 @@ csvpath_files = csvpath, csvpaths
 csv_files = txt, csv, tsv, dat, tab, psv, ssv
 
 [errors]
+csvpath = collect, fail, print
+csvpaths = print, collect
 use_format = full
 pattern = {{time}}:{{file}}:{{line}}:{{paths}}:{{instance}}:{{chain}}:  {{message}}
 
@@ -472,17 +477,18 @@ shell = /bin/bash
         #
         #
         #
+        """
         self.csvpath_errors_policy = self._get(
             Sections.ERRORS.value,
             "csvpath",
-            ["raise", "print", "stop", "fail", "collect"],
+            ["print", "stop", "fail", "collect"],
         )
         self.csvpaths_errors_policy = self._get(
             Sections.ERRORS.value,
             "csvpaths",
-            ["raise", "print", "stop", "fail", "collect"],
+            ["print", "stop", "fail", "collect"],
         )
-
+        """
         self.csvpath_log_level = self._get(Sections.LOGGING.value, "csvpath")
         self.csvpaths_log_level = self._get(Sections.LOGGING.value, "csvpaths")
 
@@ -511,7 +517,9 @@ shell = /bin/bash
             or not isinstance(self.csvpath_errors_policy, list)
             or not len(self.csvpath_errors_policy) > 0
         ):
-            raise ConfigurationException("CsvPath error policy is wrong")
+            raise ConfigurationException(
+                f"CsvPath error policy is wrong: {self.csvpath_errors_policy}"
+            )
         for _ in self.csvpath_errors_policy:
             if _ not in [s.value for s in OnError]:
                 raise ConfigurationException(f"CsvPath error policy {_} is wrong")
@@ -661,87 +669,115 @@ shell = /bin/bash
 
     @property
     def csvpath_file_extensions(self) -> list[str]:
-        if self._csvpath_file_extensions is None:
-            cs = self._get("extensions", "csvpath_files")
+        # if self._csvpath_file_extensions is None:
+        cs = self._get("extensions", "csvpath_files")
+        if not cs or len(cs) == 0:
+            #
+            # the old way
+            #
+            cs = self._get(Sections.CSVPATH_FILES.value, "extensions")
             if not cs or len(cs) == 0:
-                #
-                # the old way
-                #
-                cs = self._get(Sections.CSVPATH_FILES.value, "extensions")
-                if not cs or len(cs) == 0:
-                    cs = ["csvpath", "csvpaths"]
-            self._csvpath_file_extensions = cs
-        return self._csvpath_file_extensions
+                cs = ["csvpath", "csvpaths"]
+        return cs
+        #    self._csvpath_file_extensions = cs
+        # return self._csvpath_file_extensions
 
     @csvpath_file_extensions.setter
     def csvpath_file_extensions(self, ss: list[str]) -> None:
         if isinstance(ss, str):
             ss = [ss]
-        self._csvpath_file_extensions = ss
+        self._set("extensions", "csvpath_files", ss)
+        # self._csvpath_file_extensions = ss
 
     @property
     def csv_file_extensions(self) -> list[str]:
-        if self._csv_file_extensions is None:
-            cs = self._get("extensions", "csv_files")
+        # if self._csv_file_extensions is None:
+        cs = self._get("extensions", "csv_files")
+        if not cs or len(cs) == 0:
+            #
+            # the old way
+            #
+            cs = self._get(Sections.CSV_FILES.value, "extensions")
             if not cs or len(cs) == 0:
-                #
-                # the old way
-                #
-                cs = self._get(Sections.CSV_FILES.value, "extensions")
-                if not cs or len(cs) == 0:
-                    cs = ["csv", "xlsx"]
-            self._csv_file_extensions = cs
-        return self._csv_file_extensions
+                cs = ["csv", "xlsx"]
+        return cs
+        #    self._csv_file_extensions = cs
+        # return self._csv_file_extensions
 
     @csv_file_extensions.setter
     def csv_file_extensions(self, ss: list[str]) -> None:
         if isinstance(ss, str):
             ss = [ss]
-        self._csv_file_extensions = ss
+        self._set("extensions", "csvpaths_files", ss)
+        # self._csv_file_extensions = ss
 
     @property
     def csvpath_errors_policy(self) -> list[str]:
-        return self._csvpath_errors_policy
+        p = self._get(
+            Sections.ERRORS.value,
+            "csvpath",
+            ["print", "stop", "fail", "collect"],
+        )
+        if not isinstance(p, list):
+            return [p]
+        return p
+        # return self._csvpath_errors_policy
 
     @csvpath_errors_policy.setter
     def csvpath_errors_policy(self, ss: list[str]) -> None:
         if isinstance(ss, str):
             ss = [ss]
-        self._csvpath_errors_policy = ss
+        self._set(Sections.ERRORS.value, "csvpath", ss)
+        # self._csvpath_errors_policy = ss
 
     @property
     def csvpaths_errors_policy(self) -> list[str]:
-        return self._csvpaths_errors_policy
+        p = self._get(
+            Sections.ERRORS.value,
+            "csvpaths",
+            ["print", "stop", "fail", "collect"],
+        )
+        if isinstance(p, str):
+            return [p]
+        return p
+        # return self._csvpaths_errors_policy
 
     @csvpaths_errors_policy.setter
     def csvpaths_errors_policy(self, ss: list[str]) -> None:
         if isinstance(ss, str):
             ss = [ss]
-        self._csvpaths_errors_policy = ss
+        self._set(Sections.ERRORS.value, "csvpaths", ss)
+        # self._csvpaths_errors_policy = ss
 
     @property
     def csvpath_log_level(self) -> str:
-        return self._csvpath_log_level
+        return self._get("logging", "csvpath")
+        # return self._csvpath_log_level
 
     @csvpath_log_level.setter
     def csvpath_log_level(self, s: str) -> None:
-        self._csvpath_log_level = s
+        self._set("logging", "csvpath", s)
+        # self._csvpath_log_level = s
 
     @property
     def csvpaths_log_level(self) -> str:
-        return self._csvpaths_log_level
+        return self._get("logging", "csvpaths")
+        # return self._csvpaths_log_level
 
     @csvpaths_log_level.setter
     def csvpaths_log_level(self, s: str) -> None:
-        self._csvpaths_log_level = s
+        self._set("logging", "csvpaths", s)
+        # self._csvpaths_log_level = s
 
     @property
     def log_file(self) -> str:
-        return self._log_file
+        return self.get(section="logging", name="log_file")
+        # return self._log_file
 
     @log_file.setter
     def log_file(self, s: str) -> None:
-        self._log_file = s
+        self._set("logging", "log_file", s)
+        # self._log_file = s
 
     @property
     def log_files_to_keep(self) -> int:

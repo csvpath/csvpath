@@ -29,9 +29,8 @@ class Qualities(Enum):
     # indicates that the match component is only activated one time
     ONCE = "once"
     #
-    # there is only one function using distinct -- push -- and in an
-    # ad hoc kind of way. this token isn't used, but it is reasonable
-    # to keep it and formalize the use.
+    # there are only two functions using distinct -- line & push -- it is likely we'll
+    # use it more over time.
     #
     # indicates that the value being set must be unique in its context
     DISTINCT = "distinct"
@@ -353,14 +352,24 @@ class Qualified:  # pylint: disable=R0904
             return True
         _id = f"{self.get_id()}_onchange"  # pylint: disable=E1101
         v = self.matcher.get_variable(_id)  # pylint: disable=E1101
+        ocv = self._on_change_value()
         me = hashlib.sha256(
-            f"{self.to_value(skip=[self])}".encode("utf-8")  # pylint: disable=E1101
+            f"{ocv}".encode("utf-8")  # pylint: disable=E1101
         ).hexdigest()
         self.matcher.set_variable(_id, value=me)  # pylint: disable=E1101
         # this might be better as an is True/is False test
         # but this works fine
         ret = me != v
         return ret
+
+    @property
+    def _on_change_value(self):
+        #
+        # override this if a more specific value is needed. e.g. print.
+        # a side-effect has no value production but may want to onchange.
+        #
+        print(f"getting _on_change_value in {self}")
+        return self.to_value(skip=[self])
 
     @property
     def onchange(self) -> bool:  # pylint: disable=C0116

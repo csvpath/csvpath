@@ -45,6 +45,23 @@ class TestAssignment(unittest.TestCase):
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()
 
+    def test_qualifier_increment0(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.collect(
+            f"""
+            ${PATH}[*][
+                @a.increase = line_number()
+                @b = line_number()
+                push("as", @a)
+                push("bs", @b)
+            ]"""
+        )
+        print(f"vars: {path.variables}")
+        print(f"as: {path.variables['as']}")
+        print(f"bs: {path.variables['bs']}")
+        assert path.variables["as"] == path.variables["bs"]
+
     def test_qualifier_increment1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
@@ -96,6 +113,22 @@ class TestAssignment(unittest.TestCase):
         lines = path.collect()
         assert lines
         assert len(lines) == 1
+
+    def test_qualifier_decrement3(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""${NUMBERS}[0-2][
+                    @b.decrease = line_number()
+                    @a = line_number()
+                    push("as", @a)
+                    push("bs", @b)
+                ]"""
+        )
+        path.collect()
+        print(f"as: {path.variables['as']}")
+        print(f"bs: {path.variables['bs']}")
+        assert path.variables["bs"] == [0, 0, 0]
 
     def test_qualifier_assignment(self):
         path = CsvPath()

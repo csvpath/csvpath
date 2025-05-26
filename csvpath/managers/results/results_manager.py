@@ -309,7 +309,12 @@ class ResultsManager:  # pylint: disable=C0115
         path = self._csvpaths.config.archive_path
         if Nos(path).dir_exists():
             names = Nos(path).listdir()
-            names = [n for n in names if not n.startswith(".")]
+            #
+            # listing dir shouldn't return manifest.json or any file. can do better here.
+            #
+            names = [
+                n for n in names if not n.startswith(".") and not n.endswith(".json")
+            ]
             names.sort()
         else:
             self._csvpaths.logger.warning(
@@ -520,7 +525,6 @@ class ResultsManager:  # pylint: disable=C0115
             # seems to be important for a handful of unit tests.
             #
             rs = self.named_results[name]
-            print(f"resman: get_named_results: found named results cache: {rs}")
             return rs
         #
         # find and load the result, if exists. we find results home with the name. run_home is the

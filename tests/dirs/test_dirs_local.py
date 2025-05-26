@@ -1,5 +1,6 @@
 import unittest
 from os import environ
+import os
 from csvpath.csvpaths import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
@@ -140,3 +141,38 @@ class TestDirsLocal(unittest.TestCase):
 
         Nos(Paths.DIRS[1]).remove()
         Nos(Paths.DIRS[1]).dir_exists() is False
+
+    def test_test_local_dirs_only(self) -> None:
+        #
+        # setup
+        #
+        for name in Paths.PATHS:
+            try:
+                nos = Nos(name).remove()
+            except Exception:
+                ...
+        for adir in Paths.DIRS:
+            nos = Nos(adir)
+            if not nos.exists():
+                nos.makedirs()
+        for path in Paths.PATHS:
+            with DataFileWriter(path=path) as writer:
+                writer.append(Paths.text)
+
+        #
+        # test
+        #   - recurse=False
+        #
+        #
+        lst = None
+        lst = Nos("tests/test_resources/test_dirs/").listdir(
+            recurse=False, files_only=False, dirs_only=True
+        )
+        assert lst is not None
+        assert os.path.basename(Paths.TEMP_DIR_1) in lst
+        assert os.path.basename(Paths.TEMP_DIR_2) in lst
+        assert os.path.basename(Paths.TEMP_DIR_3) not in lst
+        assert Paths.TEMP_FILE_1 not in lst
+        assert Paths.TEMP_FILE_2 not in lst
+        assert Paths.TEMP_FILE_3 not in lst
+        assert Paths.TEMP_FILE_4 not in lst

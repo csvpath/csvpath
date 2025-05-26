@@ -15,6 +15,17 @@ class Empty(MatchDecider):
     if you pass it headers() it checks for all headers being empty."""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    empty() checks for empty or blank header values in a given line.
+                    It reports True only if all the places it is directed to look are empty.
+
+                    If you pass it a headers() function it checks for all headers being empty.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         #
         # we'd like to disallow headers from taking a value in this case, but we
@@ -22,9 +33,13 @@ class Empty(MatchDecider):
         # argset, so we handle that in a helper validation function.
         #
         a = self.args.argset(1)
-        a.arg(types=[Headers])
+        a.arg(name="Points to the headers", types=[Headers])
         a = self.args.argset()
-        a.arg(types=[Variable, Function, Header], actuals=[None, Any])
+        a.arg(
+            name="Component to check",
+            types=[Variable, Function, Header],
+            actuals=[None, Any],
+        )
         self.args.validate(self.siblings())
         #
         self._validate()

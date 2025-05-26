@@ -9,13 +9,23 @@ class Concat(ValueProducer):
     """concats two strings"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+               Concatenates any number of strings, numbers, or bool values.
+        """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(
+            name="value",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, float, bool, self.args.EMPTY_STRING],
         )
         a.arg(
+            name="append this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, float, bool, self.args.EMPTY_STRING],
         )

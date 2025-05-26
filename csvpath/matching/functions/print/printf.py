@@ -53,14 +53,53 @@ class Print(SideEffect):
                 if self.matcher.csvpath.do_i_raise():
                     raise ChildrenException(msg)
         super().check_valid()
+        #
+        # adding this here rather than __init__ because lazy. should be fine.
+        #
+        self._my_internal_val = None
 
     def _produce_value(self, skip=None) -> None:
         self._apply_default_value()
 
+    def _on_change_value(self):
+        #
+        # normally this goes to to_value but here our value never changes.
+        #
+        return self._my_internal_value()
+
+    def reset(self) -> None:
+        super().reset()
+        self._my_internal_val = None
+
+    def _my_internal_value(self) -> str:
+        # print(f"override: getting _on_change_value in {self}")
+        if not self._my_internal_val:
+            child = None
+            if isinstance(self.children[0], Equality):
+                child = self.children[0].left
+            else:
+                child = self.children[0]
+            string = child.to_value()
+            parser = PrintParser(csvpath=self.matcher.csvpath)
+            v = parser.transform(string)
+            #
+            # we intentionally add a single char suffix
+            #
+            if v[len(v) - 1] == " ":
+                v = v[0 : len(v) - 1]
+            self._my_internal_val = v
+        return self._my_internal_val
+
     def _decide_match(self, skip=None) -> None:
         right = self._child_two()
-        if self.do_onchange():
-            if self.do_once():
+        if self.do_once():
+            if self.do_onchange():
+                # if self.do_onchange():
+                # if self.do_once():
+                """
+                #
+                # generate value
+                #
                 child = None
                 if isinstance(self.children[0], Equality):
                     child = self.children[0].left
@@ -69,11 +108,11 @@ class Print(SideEffect):
                 string = child.to_value()
                 parser = PrintParser(csvpath=self.matcher.csvpath)
                 v = parser.transform(string)
+                """
+                v = self._my_internal_value()
                 #
-                # we intentionally add a single char suffix
+                # handle value
                 #
-                if v[len(v) - 1] == " ":
-                    v = v[0 : len(v) - 1]
                 file = right.to_value() if right and isinstance(right, Term) else None
                 if file is not None:
                     self.matcher.csvpath.print_to(file, f"{v}")

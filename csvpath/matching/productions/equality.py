@@ -337,7 +337,13 @@ class Equality(Matchable):
         #
         # increase and decrease
         #
-        if increase and (
+        # print(f"equalitye: not cur and not val: {(not current_value and not value)}")
+        # print(f"         : not cur and not val: {(not value)}")
+        # print(f"         : not cur and not val: {(current_value is not None and current_value >= value)}")
+        # print(f"         : not cur and not val: cur, val: {current_value}, {value}")
+        if increase and current_value is None:
+            ...
+        elif increase and (
             (not current_value and not value)
             or not value
             or (current_value is not None and current_value >= value)
@@ -349,7 +355,9 @@ class Equality(Matchable):
             )
             self.assign().result(ret).because("increase")
             return not ret
-        if decrease and (
+        if decrease and current_value is None:
+            ...
+        elif decrease and (
             (not current_value and not value)
             or not value
             or (current_value is not None and current_value <= value)

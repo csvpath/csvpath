@@ -60,6 +60,26 @@ class TestPathsManager(unittest.TestCase):
         if grps is not None and isinstance(grps, str):
             paths.add_to_config("listeners", "groups", grps)
 
+    def test_paths_manager_append_1(self):
+        paths = CsvPaths()
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.get(section="listeners", name="groups")
+        paths.add_to_config("listeners", "groups", "default")
+        paths.paths_manager.add_named_paths_from_file(
+            name="aname",
+            file_path=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+            append=False,
+        )
+        assert paths.paths_manager.has_named_paths("aname")
+        assert len(paths.paths_manager.get_named_paths("aname")) == 2
+        paths.paths_manager.add_named_paths_from_file(
+            name="aname",
+            file_path=f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
+            append=True,
+        )
+        assert paths.paths_manager.has_named_paths("aname")
+        assert len(paths.paths_manager.get_named_paths("aname")) == 4
+
     def test_named_paths_add_and_external_change(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"

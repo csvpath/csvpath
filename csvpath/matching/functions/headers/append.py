@@ -11,10 +11,27 @@ class Append(SideEffect):
     """appends the header and value to the lines of the file being iterated"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            Adds the header name and a value to the end of every line.
+            The name is added to the headers and available for use in the csvpath.
+            An appended header becomes part of the headers when it is first set. If
+            The append() is conditional to a when/do operator there could be lines
+            that do not have the appended header; however, after the first appended
+            line all lines have the appended header.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(3)
-        a.arg(types=[Term], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
+        a.arg(name="name of appended header", types=[Term], actuals=[str])
+        a.arg(
+            name="value",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, Any],
+        )
         a.arg(
             name="append header name to header row data",
             types=[None, Term, Function],

@@ -1,6 +1,8 @@
 # pylint: disable=C0114
 import traceback
 import time
+from textwrap import TextWrapper, dedent
+
 from typing import Any
 from ..productions.matchable import Matchable
 from csvpath.matching.util.exceptions import ChildrenException
@@ -26,10 +28,22 @@ class Function(Matchable):
         if child:
             self.add_child(child)
         self.description = []
-        self.match_qualifiers = ["onmatch"]
-        self.value_qualifiers = ["onmatch"]
+        self.match_qualifiers: list[str] = ["onmatch"]
+        self.value_qualifiers: list[str] = ["onmatch"]
+        self.side_effect_qualifiers: list[str] = ["onmatch"]
         self.name_qualifier = False
         self.aliases = []
+        self.wrapper = TextWrapper(drop_whitespace=True)
+
+    def wrap(self, text: str) -> str:
+        ss = text.split("\n\n")
+        ts = []
+        for s in ss:
+            s = dedent(s)
+            sa = self.wrapper.wrap(s)
+            ts.append("\n".join(sa))
+
+        return "\n\n".join(ts)
 
     def __str__(self) -> str:
         scn = self._simple_class_name()

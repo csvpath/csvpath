@@ -10,6 +10,18 @@ class Not(MatchDecider):
     """returns the boolean inverse of a value"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    not() returns the boolean inverse of its argument.
+
+                    Optionally, if an function is provided as a second argument, not()
+                    will evaluate it as a side-effect if not() evaluates to True.
+            """
+            ),
+        ]
+
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(
