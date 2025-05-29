@@ -2734,3 +2734,4 @@ pandas = []
 lock-version = "2.0"
 python-versions = ">3.10,<4.0"
 content-hash = "a31a92b85173bff6affbae142b60c44076cefac3f7b7a70aefb43e81bb896fc6"
+

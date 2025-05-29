@@ -9,7 +9,7 @@ class Header(Matchable):
     RDBMS but with CSV characteristics"""
 
     def __str__(self) -> str:
-        return f"""{self._simple_class_name()}({self.qualified_name}) """
+        return f"""{self._simple_class_name()}({self.qualified_name})"""
 
     def __init__(self, matcher, *, value: Any = None, name: str = None) -> None:
         # header names can be quoted like "Last Year Number"

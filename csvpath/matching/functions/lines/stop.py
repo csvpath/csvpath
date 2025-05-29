@@ -8,8 +8,50 @@ from ..args import Args
 
 class Stopper(SideEffect):
     def check_valid(self) -> None:
+        self.description = None
+        if self.name == "stop":
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                        Halts the run abruptly.
+
+                        When stop() contains no other match components it simply stops the run.
+
+                        When stop contains another match component, stop() is conditional to its
+                        evaluation. In this way stop() functions like a when/do expression.
+                        This functionality convenient in some cases and adds additional composability.
+
+                        stop() will not necessarily prevent other match components in its
+                        csvpath from being evaluated. Match components that come earlier in the
+                        csvpath will be evaluated as normal. Match components that have the onmatch
+                        qualifier are evaluated at the end of the csvpath, and so might not be
+                        evaluated when stop() happens even if they come before stop().
+                """
+                ),
+            ]
+        elif self.name == "stop_all":
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                        Halts the containing csvpath's run abruptly and, in certain
+                        named-paths group runs, prevents subsequent csvpaths from running.
+
+                        stop_all() shuts down a whole named-paths group run when the run method is
+                        either breadth-first or the iterative programmatic next_paths() method.
+                        Breadth-first runs are triggered with the collect_by_line(),
+                        fast_forward_by_line(), and next_by_line() methods.
+
+                        See stop() for more behavior details.
+                """
+                ),
+            ]
+
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
+        self.args.argset(1).arg(
+            name="eval this", types=[None, Function, Equality], actuals=[None, Any]
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
@@ -64,10 +106,53 @@ class StopAll(Stopper):
 
 class Skipper(SideEffect):
     def check_valid(self) -> None:
+        self.description = None
+        if self.name == "skip":
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                        Jumps to the next line abruptly.
+
+                        skip() short-circuits the full csvpath evaluation
+                        of a line. Earlier match components will be evaluated; although, with
+                        the exception of any components carrying the onmatch qualifier, which
+                        pushes them to the back of the csvpath processing order.
+
+                        Like stop(), skip() can optionally take a function argument that will determine if
+                        skip() is triggered. In this way, skip() acts as if it has an embedded
+                        when/do operator.
+                """
+                ),
+            ]
+        elif self.name == "skip_all":
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                        Jumps to the next line abruptly. In a named-paths group run, where the
+                        run method is breadth-first, skip_all() jumps to the next line without
+                        any following csvpaths seeing the line at all.
+
+                        A breadth-first run method is one of collect_by_line(),
+                        fast_forward_by_line, or next_by_line(). These methods pass each line through
+                        all csvpaths in the named-paths group before continuing to the next line.
+
+                        skip_all() short-circuits the full csvpath evaluation
+                        of a line. Earlier match components will be evaluated; although, with
+                        the exception of any components carrying the onmatch qualifier, which
+                        pushes them to the back of the csvpath processing order.
+
+                        See skip() for more behavior details.
+            """
+                ),
+            ]
         self.match_qualifiers.append("once")
         self.args = Args(matchable=self)
         self.args.argset(0)
-        self.args.argset(1).arg(types=[Function, Equality], actuals=[None, Any])
+        self.args.argset(1).arg(
+            name="eval this", types=[Function, Equality], actuals=[None, Any]
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

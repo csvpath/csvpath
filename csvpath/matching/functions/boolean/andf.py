@@ -30,8 +30,8 @@ class And(MatchDecider):
         ]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Matchable], actuals=[None, Any])
-        a.arg(types=[Matchable], actuals=[None, Any])
+        a.arg(name="Eval this", types=[Matchable], actuals=[None, Any])
+        a.arg(name="And eval this", types=[Matchable], actuals=[None, Any])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

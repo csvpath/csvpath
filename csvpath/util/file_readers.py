@@ -164,7 +164,7 @@ class DataFileReader(ABC):
                     quotechar=quotechar,
                 )
             #
-            # not an XSLT
+            # not an XLSX
             #
             if path.startswith("s3://"):
                 instance = ClassLoader.load(

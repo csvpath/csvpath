@@ -89,23 +89,72 @@ class Line(MatchDecider):
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
         self.value = self.matches(skip=skip)
 
+    def _decide_match(self, skip=None) -> None:
+        errors = []
+        #
+        # validation work happens here
+        #
+        found = self._count_headers(errors=errors)
+        expected = len(self.matcher.csvpath.headers)
+        #
+        # here down is error handling and signaling results
+        #
+        if expected != found:
+            msg = f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
+            errors.append(msg)
+        for e in errors:
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=e)
+        if len(errors) > 0:
+            msg = f"{len(errors)} errors in line()"
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+            self.match = False
+        elif self._distinct_if(skip=skip):
+            pass
+        else:
+            self.match = self.default_match()
+
+    # =======================================
+    #
+    #
+
     def _count_headers(self, *, errors, skip=None) -> None:
         sibs = self.siblings()
+        #
+        # advance is set by wildcard and we skip headers that are advanced over
+        #
         advance = 0
         advanced = 0
+        advance_max = 0
         for i, s in enumerate(sibs):
             if advance > 0:
                 advance -= 1
                 advanced += 1
-                continue
             if isinstance(s, Equality):
                 s = s._child_one()
-            if self._handle_types_if(skip, i, s, errors):
+            #
+            # from here down we are checking
+            #   header:             i+advanced
+            #   vs match component: i
+            #
+            if self._handle_types_if(
+                skip, i, s, errors, advanced=advanced, advance_max=advance_max
+            ):
                 pass
             elif self._handle_blank_if(skip, i, s, errors):
                 pass
             elif isinstance(s, Wildcard):
-                advance = self._get_advance(skip, i, s, sibs)
+                advance = self._get_advance(
+                    skip,
+                    i,
+                    s,
+                    sibs,
+                    advanced=advanced,
+                    advance=advance,
+                    advance_max=advance_max,
+                )
+                if advance > advance_max:
+                    advance_max = advance
             elif isinstance(s, Nonef):
                 if not ExpressionUtility.is_none(self.matcher.line[i]):
                     msg = f"Position {i} is not empty"
@@ -120,25 +169,6 @@ class Line(MatchDecider):
         found = len(sibs) + advanced + advance
         return found
 
-    def _decide_match(self, skip=None) -> None:
-        errors = []
-        found = self._count_headers(errors=errors)
-        expected = len(self.matcher.csvpath.headers)
-        if expected != found:
-            msg = f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
-            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-            if self.matcher.csvpath.do_i_raise():
-                raise MatchException(msg)
-        if len(errors) > 0:
-            msg = f"{len(errors)} errors in line()"
-            if self.matcher.csvpath.do_i_raise():
-                raise MatchException(msg)
-            self.match = False
-        elif self._distinct_if(skip=skip):
-            pass
-        else:
-            self.match = self.default_match()
-
     def _distinct_if(self, skip) -> None:
         if self.distinct:
             name = self.first_non_term_qualifier(self.name)
@@ -152,8 +182,26 @@ class Line(MatchDecider):
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
 
-    def _get_advance(self, skip, i, s, sibs) -> int:
+    def _get_advance(
+        self,
+        skip,
+        i,
+        s,
+        sibs,
+        *,
+        advanced: int = 0,
+        advance: int = 0,
+        advance_max: int = 0,
+    ) -> int:
         advance = 0
+        if i == len(sibs) - 1:
+            hs = len(self.matcher.csvpath.headers)
+            a = i + advanced + advance
+            f = hs - a
+            # minus 1 for the wildcard itself
+            ret = f - 1
+            # wildcard is last. we don't care if there is more stuff, we're done w/line().
+            return ret
         v = s._value_one(skip=skip)
         if v is None or f"{v}".strip() == "*":
             advance = self._find_next_specified_header(skip, i, sibs)
@@ -204,10 +252,16 @@ class Line(MatchDecider):
             errors.append(msg)
         return True
 
-    def _handle_types_if(self, skip, i, s, errors) -> bool:
-        if not isinstance(s, (String, Decimal, Date, Boolean)):
+    def _handle_types_if(
+        self, skip, i, s, errors, *, advanced=-1, advance_max=-1
+    ) -> bool:
+        if not isinstance(s, (String, Decimal, Date, Boolean, Email, Url)):
             return False
         t = s._child_one()
+        i = advance_max + i
+        #
+        # we need i+advanced in order to pick the right header
+        #
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
             msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"

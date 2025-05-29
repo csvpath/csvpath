@@ -9,7 +9,7 @@ from ..args import Args
 
 
 class Every(ValueProducer):
-    """uses the % of values seen to select every N sightings of a
+    """selects every N sightings of a
     value. results in a list of counts of values (potentially
     quite expensive) behind the scenes for generating the %.
     since there isn't an intrinsic state we're exposing and the
@@ -17,10 +17,18 @@ class Every(ValueProducer):
     """
 
     def check_valid(self) -> None:
+        self.description = [
+            self.wrap(
+                """\
+                Matches every N times a value is seen.
+            """
+            ),
+        ]
+        self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Matchable], actuals=[None, Any])
-        a.arg(types=[Term], actuals=[int])
+        a.arg(name="watch", types=[Matchable], actuals=[None, Any])
+        a.arg(name="pick every N", types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 

@@ -10,13 +10,25 @@ class ResetHeaders(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            "Reset Headers",
-            "reset_headers() sets the headers to the values of the current row.",
-            "This may mean that the number of headers changes. It may be that the header names are completely different after the reset.",
-            "Resetting headers has no effect on the lines that have already been passed.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                reset_headers() sets the headers to the values of the current row.
+
+                This may change the number of headers. It may be that the
+                header names are completely different after the reset.
+
+                Resetting headers has no effect on the lines that have already been passed.
+
+                If a function is passed as an argument it is evaluated after the
+                header reset happens as a side-effect.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(name="exec", types=[None, Function], actuals=[])
+        self.args.argset(1).arg(
+            name="evaluate this", types=[None, Function], actuals=[]
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

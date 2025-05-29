@@ -1,0 +1,4 @@
+id, given_name, family_name,city, state, zipcode, email, linkedin, phone
+1,jeffie, winters,New York, NY,01001,nobody@csvpath.org,https://www.linkedin.com,01-212-1212
+
+

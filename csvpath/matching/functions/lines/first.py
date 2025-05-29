@@ -12,10 +12,24 @@ class First(ValueProducer):
     NEVER = -9999999999
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Captures the first line a value or set of values is seen on.
+
+                first() stores the first line in a variable using the
+                concatenation of the values seen as the tracking value.
+
+                first() can use a name qualifier as its variable name; otherwise,
+                the variable name is "first".
+            """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Header], actuals=[Any])
+        a.arg(name="header to track", types=[Header], actuals=[Any])
         self.args.validate(self.siblings())
         super().check_valid()
 

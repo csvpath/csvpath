@@ -21,8 +21,10 @@ class Increment(ValueProducer):
               two Johns, one Fred, and one Shen we would expect increment.john(#firstname=="John", 2)
               to create the variable john_increment with a value of 1.
 
-              increment() and counter() are similar. Counter lets you add N each time you see a True value; whereas,
-              increment() lets you add 1 each N times you see a True value. Both are ratios.
+              increment(), counter(), and every() are similar. counter() lets you add N each
+              time a match component evaluates to True. increment() adds 1 each N times a
+              match component evaluates to True. every() adds 1 every N-times a value is seen,
+              matching or not.
             """
             ),
         ]

@@ -3,7 +3,7 @@
 
 `mismatch()` returns the number of headers in a row greater or less than the number expected.
 
-CsvPath uses the 0th row as headers. Headers are like columns, except without any of the guarintees you might wish for:
+CsvPath uses the 0th row as headers. Headers are like columns, except without any of the guarantees you might wish for:
 - The expected headers may not have delimited "slots" or "cells" in any given line
 - The number of headers per file is not fixed
 - There can be multiple header rows, not just the first non-blank line

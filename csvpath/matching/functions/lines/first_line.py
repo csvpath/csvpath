@@ -11,14 +11,51 @@ class FirstLine(MatchDecider):
     """True when on the first line, scan, or match"""
 
     def check_valid(self) -> None:
+        self.description = None
         if self.name in ["firstline", "first_line"]:
             self.aliases = ["firstline", "first_line"]
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                    Evaluates to True on the first line.
+
+                    Optionally, takes a function argument that is evaluated if firstline() matches
+                """
+                ),
+            ]
         elif self.name in ["firstscan", "first_scan"]:
             self.aliases = ["firstscan", "first_scan"]
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                    Evaluates to True on the first line scanned. A scanned line is
+                    one that has been evaluated for matching.
+
+                    Optionally, takes a function argument that is evaluated if firstscan() matches
+                """
+                ),
+            ]
+
         elif self.name in ["firstmatch", "first_match"]:
             self.aliases = ["firstmatch", "first_match"]
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                    Evaluates to True at the first line matched. firstmatch() implies the
+                    onmatch qualifier, but does not require it.
+
+                    Optionally, takes a function argument that is evaluated if firstmatch() matches
+                """
+                ),
+            ]
+
         self.args = Args(matchable=self)
-        self.args.argset(1).arg(types=[None, Function, Equality], actuals=[None, Any])
+        self.args.argset(1).arg(
+            name="eval this", types=[None, Function, Equality], actuals=[None, Any]
+        )
         self.args.validate(self.siblings())
         if len(self.children) == 1 and isinstance(self.children[0], Equality):
             if not self.children[0].op == "=":

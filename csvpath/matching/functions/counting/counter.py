@@ -8,15 +8,24 @@ from ..args import Args
 
 class Counter(ValueProducer):
     """
-    A simple click-counter. every click increments the counter by
-    1 unless a child provides an int. effectively the same as doing
+    A simple click-counter. Every click increments the counter by
+    1 unless a child provides an int. Effectively the same as doing
     i+=1 in Python or @v = add(@v, 1) in csvpath.
     """
 
     def check_valid(self) -> None:  # pylint: disable=W0246
         self.description = [
-            "Increments a variable. The increment is 1 by default. ",
-            "Counters must be named using a name qualifier. Without that, the ID generated for your counter will be tough to use.",
+            self.wrap(
+                """\
+                Increments a variable. The increment is 1 by default.
+
+                Counters must be named using a name qualifier. Without that, the ID generated
+                for your counter will be tough to use.
+
+                A name qualifier is an arbitrary name added with a dot after the function
+                name and before the parentheses. It looks like counter.my_name()
+            """
+            ),
         ]
         self.name_qualifier = True
         self.args = Args(matchable=self)

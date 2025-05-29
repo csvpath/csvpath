@@ -47,14 +47,18 @@ class Any(MatchDecider):
 
         a = self.args.argset(2)
         a.arg(
-            name="Indicates where to look",
+            name="where to look",
             types=[Variables, Headers],
             actuals=[None, typing.Any],
         )
-        a.arg(name="The value to find", types=[typing.Any], actuals=[None, typing.Any])
+        a.arg(name="value to find", types=[typing.Any], actuals=[None, typing.Any])
 
         a = self.args.argset(1)
-        a.arg(types=[typing.Any, Variables, Headers], actuals=[None, typing.Any])
+        a.arg(
+            name="where to look",
+            types=[typing.Any, Variables, Headers],
+            actuals=[None, typing.Any],
+        )
 
         self.args.validate(self.siblings())
         super().check_valid()
