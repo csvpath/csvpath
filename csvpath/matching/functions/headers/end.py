@@ -17,9 +17,10 @@ class End(ValueProducer):
             Returns the value of the last header.
 
             If an integer argument N is given, the return is the value of the
-            last header minus N. I.e., if the last header is #11, end(3) returns
-            the value of #8.
-        """
+            last header minus N.
+
+            I.e., if the last header is #11, end(3) returns the value of header #8.
+            """
             ),
         ]
         self.args = Args(matchable=self)

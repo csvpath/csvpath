@@ -10,10 +10,36 @@ class Replace(SideEffect):
     """replaces the value of the header with another value"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Replaces the value of the header with another value on every line.
+
+                    If a header is passed as the first argument its value is replaced.
+
+                    If a header name or index is passed as the first argument the identified
+                    header's value is replaced.
+
+                    For example, $[*][@a = line_number() replace(#order_number, @a)]
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Header], actuals=[int, str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        a.arg(name="replace value", types=[Header], actuals=[None, Any])
+        a.arg(
+            name="replacement",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[Any],
+        )
+        a = self.args.argset(2)
+        a.arg(name="replace by header identity", types=[Term], actuals=[int, str])
+        a.arg(
+            name="replacement",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, Any],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

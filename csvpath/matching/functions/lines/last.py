@@ -11,12 +11,30 @@ class Last(MatchDecider):
     """matches on the last line that will be scanned. last() will always run."""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Evaluates True on the last line to be scanned.
+
+                    last() will always run, even if its line turns out to be
+                    blank and would otherwise be skipped.
+
+                    Optionally, last() can take a function that will be
+                    evaluated when last() evaluates to True. This function, if provided,
+                    will not necessarily be the last evaluation of the run, but will happen
+                    only on the last line.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         #
         # we don't expect or use a value, but we don't care if one is generated
         #
         self.args.argset(1).arg(
-            types=[None, Function, Variable, Equality], actuals=[None, Any]
+            name="eval on last",
+            types=[None, Function, Variable, Equality],
+            actuals=[None, Any],
         )
         self.args.validate(self.siblings())
         super().check_valid()

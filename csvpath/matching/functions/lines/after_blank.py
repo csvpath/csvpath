@@ -8,6 +8,14 @@ class AfterBlank(MatchDecider):
     physical line was blank or had no data values"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            Evaluates to True if the immediately preceding physical line was blank or had no header values.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

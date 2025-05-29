@@ -20,11 +20,18 @@ class CountDups(ValueProducer):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            "Count Dups",
-            "count_dups() returns the number of duplicate lines or the number of lines where there are duplicate sets of header values.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Produces the number of duplicate lines or the number of
+                    lines where there are duplicate subsets of header values.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
-        self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
+        self.args.argset().arg(
+            name="check this", types=[None, Header], actuals=[None, Any]
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -46,8 +53,13 @@ class HasDups(MatchDecider):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            "Has Dups",
-            "has_dups() returns True if there are duplicate lines or lines with duplicate sets of header values.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Evaluates to True if there are duplicate lines or duplicate
+                    subsets of header values.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
         self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
@@ -69,8 +81,13 @@ class DupLines(ValueProducer):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            "Dups Lines",
-            "dups_lines() returns a list of the numbers of duplicate lines or lines with duplicate sets of header values.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                dups_lines() returns a list of the numbers of duplicate lines or lines
+                with duplicate subsets of header values.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
         self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])

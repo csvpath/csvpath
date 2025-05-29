@@ -221,7 +221,7 @@ class TestValidLine(unittest.TestCase):
 
     def test_valid_line_wildcard1(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect"]
+        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
@@ -245,7 +245,7 @@ class TestValidLine(unittest.TestCase):
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
-                  validation-mode: print, no-raise, no-stop ~
+                  validation-mode: print, raise, no-stop ~
             ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
@@ -266,7 +266,7 @@ class TestValidLine(unittest.TestCase):
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
-                  validation-mode: print, no-raise, no-stop ~
+                  validation-mode: print, raise, no-stop ~
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
@@ -283,7 +283,7 @@ class TestValidLine(unittest.TestCase):
 
     def test_valid_line_wildcard4(self):
         path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect"]
+        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
         #
         # wildcard(4) means the wildcard itself + 3 more headers.
         # or think of it as saying: wildcard takes 4 places,
@@ -292,7 +292,7 @@ class TestValidLine(unittest.TestCase):
         path.parse(
             f"""~ return-mode: matches
                   logic-mode: AND
-                  validation-mode: print, no-raise, no-stop ~
+                  validation-mode: print, raise, no-stop ~
                 ${PEOPLE}[1*][
                 and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
                 line(
@@ -379,3 +379,5 @@ class TestValidLine(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 8
+        assert lines[7][0] == "Slug"
+        assert lines[3][0] == "Frog"
