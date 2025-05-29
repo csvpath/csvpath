@@ -13,14 +13,39 @@ class Equals(MatchDecider):
     better another way."""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                f"""\
+                    Tests the equality of two values.
+
+                    In most cases you will use == to test equality. However, in some cases
+                    {self.name}() gives more flexibility.
+
+                    Moreover, in one case, you must use the function, not ==. Using {self.name}()
+                    is required in order to set a variable to the value of an equality test.
+
+                    In other words, to set @a equal to the equality test of @b to the string "c", you must do:
+                    @a = {self.name}(@b, "c"). @a = @b == "c" is not allowed.
+            """
+            ),
+        ]
         if self.name in ["equal", "equals", "eq"]:
             self.aliases = ["equal", "equals", "eq"]
         elif self.name in ["neq", "not_equal_to"]:
             self.aliases = ["neq", "not_equal_to"]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[Any])
+        a.arg(
+            name="is this",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[Any],
+        )
+        a.arg(
+            name="equal to that",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[Any],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

@@ -12,6 +12,7 @@ class AboveBelow(MatchDecider):
     """this class implements greater-than, less-than"""
 
     def check_valid(self) -> None:
+        self.description = None
         if self.name in ["gt", "above", "after"]:
             self.aliases = ["gt", "above", "after"]
             self.description = [
@@ -36,7 +37,6 @@ class AboveBelow(MatchDecider):
                 "Less than or equal to",
                 f"{self.name}() returns true if a value is less than or equal to another value.",
             ]
-
         #
         #
         #
@@ -48,10 +48,12 @@ class AboveBelow(MatchDecider):
         # not Ok. we never expect that comparison.
         #
         a.arg(
+            name="relate this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, int, float, date, datetime, str],
         )
         a.arg(
+            name="to that",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, int, float, date, datetime, str],
         )

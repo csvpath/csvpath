@@ -6,13 +6,29 @@ from ..args import Args
 
 
 class Mod(ValueProducer):
-    """takes the modulus of numbers"""
+    """takes the modulo of numbers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Calculates the modulo of two numbers.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int, float])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[int, float])
+        a.arg(
+            name="dividend",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[int, float],
+        )
+        a.arg(
+            name="divisor",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[int, float],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

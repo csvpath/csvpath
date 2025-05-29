@@ -11,10 +11,21 @@ class Odd(MatchDecider):
     """returns true if n%2==0"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                f"""\
+                    Checks a contained value to see if it is {self.name}.
+                """
+            ),
+        ]
+
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
-            types=[Variable, Header, Function, Reference, Equality], actuals=[None, int]
+            name="check this",
+            types=[Variable, Header, Function, Reference, Equality],
+            actuals=[None, int],
         )
         self.args.validate(self.siblings())
         super().check_valid()
