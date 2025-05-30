@@ -7,6 +7,14 @@ class PrintQueue(ValueProducer):
     """returns the number of lines printed to the Printer instances"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Returns the number of printouts that have been done by the present csvpath so far.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

@@ -17,7 +17,28 @@ class Print(SideEffect):
     def check_valid(self) -> None:
         self.description = [
             f"{self.name}() prints to one or more default or designated Printer instances.",
-            f"{self._cap_name()} can have a function or equality argument that is evaluated after printing completes.",
+            self.wrap(
+                f"""\
+                        {self._cap_name()} can have a function or equality argument that is
+                        evaluated after printing completes.
+
+                        There are four reference data types available during printing:
+
+                        - variables
+
+                        - headers
+
+                        - metadata
+
+                        - csvpath
+
+                        The latter is the runtime metrics and config for the presently
+                        running csvpath. See csvpath.org, the CsvPath Framework GitHub
+                        repo docs, or the Runtime Print Fields section of the FlightPath
+                        help tabs for more details. The run_table() function also gives
+                        a good view of the available fields.
+                """
+            ),
         ]
         if self.name == "error":
             self.description.append(
@@ -40,7 +61,7 @@ class Print(SideEffect):
         # this may need a rethink.
         #
         a.arg(
-            name="eval",
+            name="eval after",
             types=[None, Function, Equality],
             actuals=[None, Any],
         )

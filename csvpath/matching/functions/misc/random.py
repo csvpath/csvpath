@@ -13,10 +13,26 @@ class Random(ValueProducer):
     """returns a random int within a range"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Generates a random number from within an integer range.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
+        a.arg(
+            name="greater than this",
+            types=[Term, Variable, Header, Function],
+            actuals=[int],
+        )
+        a.arg(
+            name="and less than that",
+            types=[Term, Variable, Header, Function],
+            actuals=[int],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
