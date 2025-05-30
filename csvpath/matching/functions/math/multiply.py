@@ -9,10 +9,26 @@ class Multiply(ValueProducer):
     """multiplies numbers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Multiplies numbers. Any number of arguments is acceptable.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[float, int])
+        a.arg(
+            name="multiply this",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[float, int],
+        )
+        a.arg(
+            name="by that",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[float, int],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

@@ -12,13 +12,23 @@ class Add(ValueProducer):
     """this class adds numbers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+            Adds numbers. add() can take any number of int and/or float arguments.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
         a.arg(
+            name="add this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, int, float],
         )
         a.arg(
+            name="to that",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, int, float],
         )

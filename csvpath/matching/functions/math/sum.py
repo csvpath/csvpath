@@ -10,10 +10,30 @@ class Sum(ValueProducer):
     """returns the running sum of numbers"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Returns the running sum of a source.
+
+                    sum() is similar to subtotal() but unlike subtotal
+                    it does not use categorization to create multiple running totals.
+
+                    Remember that CsvPath Language will convert None, bool, and the empty string
+                    to int. This results in a predictable summation. If you are looking for a way
+                    to make sure all lines have summable values try using integer() or another
+                    approach.
+                """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Function, Term, Header], actuals=[int, float])
+        a.arg(
+            name="sum this",
+            types=[Variable, Function, Term, Header],
+            actuals=[int, float],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

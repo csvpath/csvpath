@@ -12,6 +12,16 @@ class HeaderTable(SideEffect):
     """prints a header table"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                        Prints a table with all the header names and indexes. This output
+                        is primarily geared towards helping make visible changes in headers.
+                        The table is well formatted for easy reading and/or use as a simple report.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()
@@ -34,10 +44,19 @@ class RowTable(SideEffect):
     """prints a row table"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                        Prints a table with all the header names and values for each line. The table
+                        is well formatted for easy reading and/or use as a simple report.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[None, Term], actuals=[int])
-        a.arg(types=[None, Term], actuals=[int])
+        a.arg(name="from header", types=[None, Term], actuals=[int])
+        a.arg(name="to header", types=[None, Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -78,9 +97,23 @@ class VarTable(SideEffect):
     """prints a variables table"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                        Prints a table with all the variable names and values at each line. If
+                        no variable name is passed, table includes all vars. Otherwise, the vars
+                        identified by name are printed.
+
+                        The table is well formatted for easy reading and/or use as a simple report.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.argset().arg(
-            types=[None, Variable, Header, Term, Function], actuals=[str]
+            name="var name",
+            types=[None, Variable, Header, Term, Function],
+            actuals=[str],
         )
         self.args.validate(self.siblings())
         super().check_valid()
@@ -149,6 +182,15 @@ class RunTable(SideEffect):
     """prints a table of runtime data and any metadata available"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                        Prints a table with all the metadata names and values available at each line. The table
+                        is well formatted for easy reading and/or use as a simple report.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

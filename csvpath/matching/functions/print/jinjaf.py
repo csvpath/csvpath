@@ -20,10 +20,42 @@ class Jinjaf(SideEffect):
         self._engine = None
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    jinja() enables you to create a document using a template and tokens
+                    derrived from the presently executing run and any number of past csvpath
+                    results.
+
+                    The jinja() context includes the same reference types as are available in
+                    print() statements: variables, headers, metadata, and csvpath runtime data.
+                    The present csvpath's information is under the key "local", with those
+                    four dictionaries below that. Any past csvpath results are aggregated in
+                    dicts keyed by the four reference types names.
+
+                    Be aware, Jinja is quite slow; much more so than print() which is already
+                    taxing for high print volumes and/or very large files.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset()
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            name="template",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="out",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="results ref",
+            types=[None, Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -43,7 +75,7 @@ class Jinjaf(SideEffect):
         output_path = siblings[1].to_value(skip=skip)
         paths = []
         for i, s in enumerate(siblings):
-            if i == 2:
+            if i >= 2:
                 v = s.to_value(skip=skip)
                 paths.append(v)
         page = None
