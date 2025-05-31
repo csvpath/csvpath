@@ -11,9 +11,18 @@ class Length(ValueProducer):
     """returns the length of a string"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Returns the length of a string.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
         a.arg(
+            name="get length",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[None, str, self.args.EMPTY_STRING],
         )

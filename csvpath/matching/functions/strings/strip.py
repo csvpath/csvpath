@@ -9,9 +9,21 @@ class Strip(ValueProducer):
     """removes whitespace from the beginning and end of a string"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Alters a string by trimming leading and trailing whitespace.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Header, Reference, Function], actuals=[str])
+        a.arg(
+            name="trim this",
+            types=[Variable, Header, Reference, Function],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

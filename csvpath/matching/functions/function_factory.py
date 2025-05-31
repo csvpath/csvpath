@@ -442,6 +442,7 @@ class FunctionFactory:
         fs["brief_stack_trace"] = BriefStackTrace
         fs["vote_stack"] = VoteStack
         fs["do_when_stack"] = DoWhenStack
+        fs["when_do_stack"] = DoWhenStack
         fs["metaphone"] = Metaphone
         fs["header_table"] = HeaderTable
         fs["row_table"] = RowTable

@@ -17,10 +17,18 @@ class Log(SideEffect):
     """logs a msg at a log level, defaulting to info"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Writes a message to the CsvPath Framework log at a certain log level.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term], actuals=[str])
-        a.arg(types=[None, Term], actuals=[str])
+        a.arg(name="log this", types=[Term], actuals=[str])
+        a.arg(name="info, debug, warn, error", types=[None, Term], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -47,9 +55,24 @@ class Debug(SideEffect):
     """sets the logging level"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Sets the CsvPath Framework log level.
+
+                   The level is set for the CsvPath class, not the CsvPaths class. That
+                   means the log level is changed for particular csvpath currently running,
+                   not any other csvpaths running after or along-side in a breadth-first
+                   configuration.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.argset(1).arg(
-            types=[None, Term, Function, Variable, Header], actuals=[None, str]
+            name="info, debug, warn, error",
+            types=[None, Term, Function, Variable, Header],
+            actuals=[None, str],
         )
         self.args.validate(self.siblings())
         super().check_valid()
@@ -65,12 +88,22 @@ class Debug(SideEffect):
         else:
             level = "debug"
         logger = LogUtility.logger(self.matcher.csvpath, level)
-        assert logger.level == logging.ERROR
         self.matcher.csvpath.logger = logger
 
 
 class BriefStackTrace(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Writes a shallow stack trace to the log or to print().
+
+                   If a second argument, either 'log' or 'print', is not provided the default
+                   is to print to the default printout stream.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.argset(1).arg(
             types=[None, Term, Function, Variable, Header], actuals=[None, str]
@@ -98,6 +131,20 @@ class BriefStackTrace(SideEffect):
 
 class VoteStack(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Returns the votes of the match components for each line as a stack.
+
+                    The votes are collected from the central record, not from
+                    each component directly. This means that any match components that
+                    have not yet voted will return None, rather than True or False. This
+                    is most noticable when you are printing the vote stack. The print function,
+                    not having voted until it is complete, always returns None.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()
@@ -124,6 +171,16 @@ class VoteStack(SideEffect):
 
 class DoWhenStack(SideEffect):
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Returns a stack of bool representing the when/do operators for each line.
+
+                    Those when/do operators that were triggered have a True. Those that didn't fire have a False.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         self.args.validate(self.siblings())
         super().check_valid()

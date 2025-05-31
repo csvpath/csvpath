@@ -18,7 +18,7 @@ class HeaderTable(SideEffect):
                 """\
                         Prints a table with all the header names and indexes. This output
                         is primarily geared towards helping make visible changes in headers.
-                        The table is well formatted for easy reading and/or use as a simple report.
+                        The table is text formatted.
                 """
             ),
         ]
@@ -48,8 +48,8 @@ class RowTable(SideEffect):
             self._cap_name(),
             self.wrap(
                 """\
-                        Prints a table with all the header names and values for each line. The table
-                        is well formatted for easy reading and/or use as a simple report.
+                        Prints a table with all the header names and values for each line.
+                        The table is text formatted.
                 """
             ),
         ]
@@ -105,7 +105,7 @@ class VarTable(SideEffect):
                         no variable name is passed, table includes all vars. Otherwise, the vars
                         identified by name are printed.
 
-                        The table is well formatted for easy reading and/or use as a simple report.
+                        The table is text formatted.
                 """
             ),
         ]
@@ -186,8 +186,8 @@ class RunTable(SideEffect):
             self._cap_name(),
             self.wrap(
                 """\
-                        Prints a table with all the metadata names and values available at each line. The table
-                        is well formatted for easy reading and/or use as a simple report.
+                        Prints a table with all the metadata names and values available at each line.
+                        The table is text formatted.
                 """
             ),
         ]

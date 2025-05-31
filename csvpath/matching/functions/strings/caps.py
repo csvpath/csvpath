@@ -6,12 +6,29 @@ from ..args import Args
 
 
 class Capitalize(ValueProducer):
-    """uppercases the first character of a string or words"""
+    """upper-cases the first character of a string or words"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Alters a string by changing the casing. If the optional second
+                   argument is True the string's words will all be upper-cased. Otherwise,
+                   only the first letter of the string is upper-cased.
+
+                   The function of capitalizing each contained word is not guaranteed to preserve
+                   spacing, treat punctuation in an ideal way, or handle all possible special cases.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            name="string to modify",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
         a.arg(
             name="if true, init-cap all words",
             types=[None, Term, Function, Variable],

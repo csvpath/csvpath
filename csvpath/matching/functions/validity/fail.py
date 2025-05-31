@@ -11,7 +11,7 @@ class Fail(MatchDecider):
     """
 
     def check_valid(self) -> None:
-        self.escription = [
+        self.description = [
             "Indicates that a csvpath statement fails a data file. ",
             "Failures can be seen in metadata and are used in error handling.",
         ]

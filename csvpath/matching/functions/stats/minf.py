@@ -85,9 +85,18 @@ class Min(MinMax):
 
     def check_valid(self) -> None:
         self.description = [
-            f"{self.name}() tracks the min value from the first to the current line.",
-            "Values are compared as numbers, if possible, otherwise as strings.",
-            "The optional second argument is 'scan', 'match', or 'line'. It limits which lines will be compared.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                Tracks the minimum value from the first physical line, scanned line, or match to
+                the current line.
+
+                Values are compared as numbers, if possible, otherwise as strings.
+
+                The optional second argument is 'scan', 'match', or 'line'. It
+                limits which lines will be compared.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
@@ -97,7 +106,7 @@ class Min(MinMax):
             actuals=[int, float],
         )
         a.arg(
-            name="limit min to match, scan, or lines",
+            name="scan, match, or line",
             types=[None, Variable, Term, Header, Function],
             actuals=[str],
         )
@@ -121,14 +130,31 @@ class Max(MinMax):
 
     def check_valid(self) -> None:
         self.description = [
-            f"{self.name}() tracks the max value from the first to the current line.",
-            "Values are compared as numbers, if possible, otherwise as strings.",
-            "The optional second argument is 'scan', 'match', or 'line'. It limits which lines will be compared.",
+            self._cap_name(),
+            self.wrap(
+                """\
+                Tracks the maximum value from the first physical line, scanned line, or match to
+                the current line.
+
+                Values are compared as numbers, if possible, otherwise as strings.
+
+                The optional second argument is 'scan', 'match', or 'line'. It
+                limits which lines will be compared.
+            """
+            ),
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Variable, Term, Header, Function], actuals=[int, float])
-        a.arg(types=[None, Variable, Term, Header, Function], actuals=[str])
+        a.arg(
+            name="value to compare",
+            types=[Variable, Term, Header, Function],
+            actuals=[int, float],
+        )
+        a.arg(
+            name="scan, match, or line",
+            types=[None, Variable, Term, Header, Function],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -149,7 +175,20 @@ class Average(MinMax):
 
     def check_valid(self) -> None:
         self.description = [
-            f"{self.name}() returns the running {self.ave_or_med} from the first to the current line"
+            self._cap_name(),
+            self.wrap(
+                f"""\
+                Tracks the {self.ave_or_med} from the first physical line, scanned line, or match to
+                the current line.
+
+                The optional second argument is one of 'scan', 'match', or 'line'. It
+                limits which lines will be compared.
+            """
+            ),
+        ]
+
+        self.description = [
+            f"{self.name}() returns the running  from the first to the current line"
         ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
@@ -160,7 +199,7 @@ class Average(MinMax):
             actuals=[int, float],
         )
         a.arg(
-            name="match, scan, lines",
+            name="match, scan, or line",
             types=[None, Variable, Term, Header, Function],
             actuals=[str],
         )
@@ -181,11 +220,9 @@ class Average(MinMax):
             and self.matcher.csvpath.line_monitor.physical_line_number == 0
         ):
             return
-            # return self.value
         # if the line must match and it doesn't stop here and return
         if self.is_match() and not self.line_matches():
             return
-            # return self.value
         n = self.first_non_term_qualifier(self.ave_or_med)
         # set the "average" or "median" variable tracking the value by line, scan, or match count
         self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)

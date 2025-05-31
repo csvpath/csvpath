@@ -10,9 +10,19 @@ class Percent(ValueProducer):
     the count of total data lines"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Returns the percent of scanned, matched or all lines so-far seen of
+                   the total data lines in the file. Data lines have data. The total
+                   does not include blanks.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term], actuals=[str])
+        a.arg(name="scan, match, or line", types=[Term], actuals=[str])
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

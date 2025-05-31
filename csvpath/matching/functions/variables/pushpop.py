@@ -11,13 +11,29 @@ class Push(SideEffect):
     """pushes values onto a stack variable"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Appends a value to a stack variable. The stack is created if not found.
+            """
+            ),
+        ]
         self.match_qualifiers.append("distinct")
         self.match_qualifiers.append("notnone")
 
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[None, Any])
+        a.arg(
+            name="stack name",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="push this",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[None, Any],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -62,10 +78,23 @@ class Pop(ValueProducer):
     """poppes the top value off a stack variable"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Removes and returns the last value added to a stack variable.
+                The stack is created if not found.
+            """
+            ),
+        ]
         self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[None, str])
+        a.arg(
+            name="stack name",
+            types=[Variable, Header, Function, Reference, Term],
+            actuals=[None, str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -73,8 +102,8 @@ class Pop(ValueProducer):
         k = self.children[0].to_value(skip=skip)
         stack = self.matcher.get_variable(k, set_if_none=[])
         if len(stack) > 0:
-            self.value = stack[len(stack) - 1]
-            stack = stack[0 : len(stack) - 2]
+            self.value = None if stack == [] else stack[len(stack) - 1]
+            stack = [] if stack == [] else stack[0 : len(stack) - 2]
             self.matcher.set_variable(k, value=stack)
 
     def _decide_match(self, skip=None) -> None:
@@ -89,9 +118,22 @@ class Stack(SideEffect):
     """returns a stack variable"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Returns a stack variable.
+                The stack is created if not found.
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
+        a.arg(
+            name="stack name",
+            types=[Variable, Header, Function, Reference, Term],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -113,11 +155,25 @@ class Peek(ValueProducer):
     """gets the value of the top item in a stack variable"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Returns a value at a stack variable index, but does not remove it.
+
+                The stack is created if not found.
+            """
+            ),
+        ]
         self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term], actuals=[int])
+        a.arg(
+            name="stack name",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(name="index", types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -125,7 +181,10 @@ class Peek(ValueProducer):
         eq = self.children[0]
         k = eq.left.to_value(skip=skip)
         v = eq.right.to_value(skip=skip)
-        v = int(v)
+        if v is None:
+            v = -1
+        else:
+            v = int(v)
         stack = self.matcher.get_variable(k, set_if_none=[])
         if v < len(stack):
             self.value = stack[v]
@@ -142,10 +201,24 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Returns number of values in a stack variable.
+
+                The stack is created if not found.
+            """
+            ),
+        ]
         self.aliases = ["peek_size", "size"]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Header, Function, Reference, Term], actuals=[str])
+        a.arg(
+            name="stack name",
+            types=[Variable, Header, Function, Reference, Term],
+            actuals=[str],
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

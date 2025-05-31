@@ -9,9 +9,21 @@ class Upper(ValueProducer):
     """uppercases a string"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Alters a string by upper-casing it.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
+        a.arg(
+            name="uppercase this",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 

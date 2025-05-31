@@ -11,9 +11,40 @@ class Stdev(ValueProducer):
     """takes the running sample or population standard deviation for a value"""
 
     def check_valid(self) -> None:
+        self.description = None
+        if self.name == "pstdev":
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                       Given a stack of values returns the population standard deviation.
+
+                       This function expects a string naming a stack prepared by the csvpath
+                       holding the values to be assessed. The stack variable can be created using push()
+                       or other functions.
+                    """
+                ),
+            ]
+        else:
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                       Given a stack of values returns the sample standard deviation.
+
+                       This function expects a string naming a stack prepared by the csvpath
+                       holding the values to be assessed. The stack variable can be created using push()
+                       or other functions.
+                    """
+                ),
+            ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Variable, Function, Term], actuals=[str, tuple, list])
+        a.arg(
+            name="stack var name",
+            types=[Variable, Function, Term],
+            actuals=[str, tuple, list],
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 

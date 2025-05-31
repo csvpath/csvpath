@@ -8,10 +8,22 @@ class PercentUnique(ValueProducer):
     """return the % of a value that is unique over lines so far seen"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Returns the percent of values of a header that are unique
+                   over the lines seen so far.
+
+                   Uses a percent_unique variable behind the scenes. Add a name
+                   qualifier to allow for more than one percent unique function.
+                """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(types=[Header], actuals=[str])
+        a.arg(name="header to watch", types=[Header], actuals=[str])
         self.args.validate(self.siblings())
         super().check_valid()
 
