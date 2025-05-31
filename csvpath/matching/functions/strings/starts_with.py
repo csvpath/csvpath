@@ -12,15 +12,33 @@ class StartsWith(ValueProducer):
     def check_valid(self) -> None:
         if self.name in ["startswith", "starts_with"]:
             self.aliases = ["startswith", "starts_with"]
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                       Matches when a string begins with another string.
+                    """
+                ),
+            ]
         elif self.name in ["endswith", "ends_with"]:
             self.aliases = ["endswith", "ends_with"]
+            self.description = [
+                self._cap_name(),
+                self.wrap(
+                    """\
+                       Matches when a string ends with another string.
+                    """
+                ),
+            ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(
+            name="check this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
         a.arg(
+            name="for this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )

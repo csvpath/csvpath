@@ -10,9 +10,18 @@ class Contains(ValueProducer):
     """returns true if the first string contains the second"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Matches if the first string contains the second.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(
+            name="does this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
@@ -21,6 +30,7 @@ class Contains(ValueProducer):
         # in the inputs
         #
         a.arg(
+            name="contain this",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )

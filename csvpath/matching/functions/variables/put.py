@@ -9,6 +9,21 @@ class Put(ValueProducer):
     """Sets a variable with or without a tracking value"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Sets a variable tracking value.
+
+                    A tracking value is similar to a dictionary key. It usually keys a
+                    count, calculation, or transformation.
+
+                    While get() and put() make it possible to create and use tracking-value
+                    variables in an ad hoc dict-like way, this is not recommended unless there
+                    is no simplier solution based on more specific functions.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])

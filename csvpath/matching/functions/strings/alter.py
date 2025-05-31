@@ -7,23 +7,29 @@ from ..args import Args
 
 
 class Alter(ValueProducer):
-    """returns true if the first string contains the second"""
-
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                   Alters a string by replacing all instances of a substring.
+                """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(3)
         a.arg(
-            name="string to alter",
+            name="in",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
         a.arg(
-            name="find this",
+            name="find",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
         a.arg(
-            name="replace with this",
+            name="replace",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, self.args.EMPTY_STRING, None],
         )
