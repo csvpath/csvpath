@@ -200,7 +200,7 @@ class Config:
             c = f"""
 [extensions]
 csvpath_files = csvpath, csvpaths
-csv_files = txt, csv, tsv, dat, tab, psv, ssv
+csv_files = csv, tsv, dat, tab, psv, ssv
 
 [errors]
 csvpath = collect, fail, print

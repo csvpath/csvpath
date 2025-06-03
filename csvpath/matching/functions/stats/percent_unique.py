@@ -38,13 +38,11 @@ class PercentUnique(ValueProducer):
         for v, k in enumerate(d):
             if d[k] == 1:
                 uniques += 1
-        t = self.matcher.csvpath.match_count
-        #
-        # no longer necessary. match is updated immediately
-        # that onmatch -- via line_matches() -- is True
-        #
-        # t += 1
-        self.value = round(uniques / t, 2) * 100
+        t = len(d)
+        if t == 0:
+            self.value = 0
+        else:
+            self.value = round(uniques / (t), 2) * 100
 
     def _decide_match(self, skip=None) -> None:
         v = self.to_value(skip=skip)

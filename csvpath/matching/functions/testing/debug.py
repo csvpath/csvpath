@@ -89,6 +89,7 @@ class Debug(SideEffect):
             level = "debug"
         logger = LogUtility.logger(self.matcher.csvpath, level)
         self.matcher.csvpath.logger = logger
+        self.match = self.default_match()
 
 
 class BriefStackTrace(SideEffect):

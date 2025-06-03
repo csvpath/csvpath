@@ -34,10 +34,10 @@ class Import(SideEffect):
             was placed. Once the second csvpath has been imported it is as if you
             had written all the match components in the same place.
 
-            Keep in mind that in CsvPath Language, order matters. Import may come at any
-            point in a csvpath, allowing you to managed ordering. Remember that the onmatch
-            qualifier reorders match components so that those with onmatch are evaluted
-            after those without onmatch.
+            Keep in mind that in CsvPath Language, order matters. Import may come
+            at any point in a csvpath, allowing you to managed ordering. Remember that
+            the onmatch qualifier reorders match components so that those with onmatch
+            are evaluted after those without onmatch.
 
             import() only works in the context of a CsvPaths instance. CsvPaths manages
             finding the imported csvpath. You make the import using a named-paths name,
@@ -46,9 +46,9 @@ class Import(SideEffect):
             Named-paths names point to a set of csvpaths. You can point to the csvpath you
             want to import in two ways:
 
-             - Using a reference in the form $named-paths-name.csvpaths.csvpath-identity
+            - Using a reference in the form $named-paths-name.csvpaths.csvpath-identity
 
-             - Giving a named-path name, optionally with a # and the identity of a specific csvpath
+            - Giving a named-path name, optionally with a # and the identity of a specific csvpath
 
             If you plan to import, remember to give your csvpaths an identity in the
             comments using the id or name metadata keys.

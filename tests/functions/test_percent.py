@@ -1,6 +1,8 @@
 import unittest
+import pytest
 import os
 from csvpath import CsvPath
+from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = f"tests{os.sep}test_resources{os.sep}test.csv"
 
@@ -34,3 +36,16 @@ class TestFunctionsPercent(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 6
         assert path.variables["p"] == 1
+
+    def test_function_percent_1(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+            ${PATH}[*][
+                @p = percent.onmatch("line")
+            ]
+        """
+        )
+        with pytest.raises(ChildrenException):
+            path.fast_forward()

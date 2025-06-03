@@ -50,6 +50,7 @@ class TestFunctionsSubtract(unittest.TestCase):
             [ @l = subtract(1) @l2 = minus(1) ]"""
         )
         path.fast_forward()
+        print(f"test_function_subtract4: {path.variables}")
         assert path.variables["l"] == -1
         assert path.variables["l2"] == -1
 
@@ -63,3 +64,18 @@ class TestFunctionsSubtract(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.fast_forward()
+
+    def test_function_subtract6(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+             @d = 1.5
+             @l = minus(@d)
+            ]"""
+        )
+        path.fast_forward()
+        print(f"test_function_subtract4: {path.variables}")
+        assert path.variables["l"] == -1.5

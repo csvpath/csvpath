@@ -28,7 +28,7 @@ class Every(ValueProducer):
         self.args = Args(matchable=self)
         a = self.args.argset(2)
         a.arg(name="watch", types=[Matchable], actuals=[None, Any])
-        a.arg(name="pick every N", types=[Term], actuals=[int])
+        a.arg(name="pick every N", types=[Term], actuals=[int, float])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -41,15 +41,10 @@ class Every(ValueProducer):
         cnt += 1
         self.matcher.set_variable(self.me(), tracking=tracked_value, value=cnt)
         #
-        # TODO: this conversion error should be caught by Args
+        # any conversion error will be caught by Args
         #
         every = child.right.to_value(skip=skip)
         i = ExpressionUtility.to_int(every)
-        if not isinstance(i, int):
-            msg = f"Cannot convert {every} to int"
-            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-            if self.matcher.csvpath.do_i_raise():
-                raise MatchException(msg)
         self.value = cnt % i
 
     def _decide_match(self, skip=None) -> None:
@@ -60,4 +55,4 @@ class Every(ValueProducer):
             self.match = False
 
     def me(self):
-        return self.qualifier if self.qualifier is not None else self.get_id(self)
+        return self.first_non_term_qualifier(self.get_id(self))

@@ -1,0 +1,34 @@
+~
+
+  id: min-max
+  test-data: examples/math/Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv
+~
+
+$[1*][ 
+
+]
+
+---- CSVPATH ----
+
+~
+   id: ave and median
+  validation-mode: raise, print, stop
+  test-data: examples/math/Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv
+~
+
+$[1*][ 
+
+]
+
+
+---- CSVPATH ----
+
+~
+  id: percent unique
+  validation-mode: raise, print, stop
+  test-data: examples/math/Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv
+~
+
+$[1*][ 
+
+]

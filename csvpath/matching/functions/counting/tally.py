@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
-from ..function_focus import ValueProducer
+from ..function_focus import SideEffect
 from csvpath.matching.productions import Equality
 from csvpath.matching.productions import Variable, Header
 from csvpath.matching.util.exceptions import MatchException
@@ -8,7 +8,7 @@ from ..function import Function
 from ..args import Args
 
 
-class Tally(ValueProducer):
+class Tally(SideEffect):
     """collects the number of times values are seen"""
 
     def check_valid(self) -> None:
@@ -24,14 +24,15 @@ class Tally(ValueProducer):
 
                 Tally keeps its count in variables named for the values it is tracking.
                 It can track multiple values. Each of the values becomes a variable under
-                its own name. A header would be tracked under its name, prefixed by tally_, as:
+                its own name. A header would be tracked under its name, prefixed by tally_,
+                as:
 
                 {'tally_firstname': {'Fred':3}}
 
-                Tally also tracks the concatenation of the multiple values under the key tally.
-                To use another key name add a non-keyword qualifier to tally. For example,
-                tally.birds(#bird_color, #bird_name) has a tally variable of birds with values
-                like blue|bluebird,red|redbird.
+                Tally also tracks the concatenation of the multiple values under the key
+                tally. To use another key name add a non-keyword qualifier to tally. For
+                example, tally.birds(#bird_color, #bird_name) has a tally variable of birds
+                with values like blue|bluebird,red|redbird.
             """
             ),
         ]

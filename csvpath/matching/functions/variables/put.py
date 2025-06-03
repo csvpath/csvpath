@@ -26,15 +26,29 @@ class Put(ValueProducer):
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(
+            name="var name",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="var value",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, bool, tuple],
         )
         a = self.args.argset(3)
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
-        a.arg(types=[Term, Variable, Header, Function, Reference], actuals=[str])
         a.arg(
+            name="var name",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="tracking key",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(
+            name="tracking value",
             types=[Term, Variable, Header, Function, Reference],
             actuals=[str, int, bool, tuple],
         )

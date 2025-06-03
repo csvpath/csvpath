@@ -39,11 +39,15 @@ class ResetHeaders(SideEffect):
         hs = LineCounter.clean_headers(self.matcher.line[:])
         self.matcher.csvpath.headers = hs
         self.matcher.header_dict = None
+        #
+        # exp - fixing RuntimeError: dictionary changed size during iteration
+        #
+        keys = []
         for key in self.matcher.csvpath.variables.keys():
             #
             # if we checked for header name mismatches it happened just once
             # and is now invalid. we need to delete the vars and let it happen
-            # again.
+            # again with the new headers.
             #
             if (
                 key.endswith("_present")
@@ -52,9 +56,14 @@ class ResetHeaders(SideEffect):
                 or key.endswith("_misordered")
             ):
                 self.matcher.csvpath.logger.warning(  # pragma: no cover
-                    "Deleting variable {key} as an old header name mismatch var"
+                    f"Deleting variable {key} as an old header name mismatch var"
                 )
-                del self.matcher.csvpath.variables[key]
+                # del self.matcher.csvpath.variables[key]
+                keys.append(key)
+        for key in keys:
+            del self.matcher.csvpath.variables[key]
+        # end exp
+
         pln = self.matcher.csvpath.line_monitor.physical_line_number
         self.matcher.csvpath.logger.warning(
             f"Resetting headers mid run! Line number: {pln}."

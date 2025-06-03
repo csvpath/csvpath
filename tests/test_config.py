@@ -47,7 +47,7 @@ class TestConfig(unittest.TestCase):
         assert config is not None
         assert config.CONFIG == f"config{os.sep}config.ini"
         assert config.csv_file_extensions
-        assert len(config.csv_file_extensions) == 7
+        assert len(config.csv_file_extensions) == 6
         assert "csv" in config.csv_file_extensions
         config.set_config_path_and_reload(
             f"tests{os.sep}test_resources{os.sep}config.ini"

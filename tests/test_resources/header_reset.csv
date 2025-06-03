@@ -1,0 +1,22 @@
+agency,compliance_project_name,project_address,neighborhood,developer,general_contractor_name,subcontractor,trade,period_ending,gender,person_of_color,race,boston_resident,worker_hours_this_period
+BPDA,60 Kilmarnock Street,60 Kilmarnock Street,Fenway/Kenmore,Cabot And Company,Consigli Construction Company,Spectrum Integrated Technologies,Technician,2024-09-22,Man,f,Caucasian,f,32
+BPDA,60 Kilmarnock Street,60 Kilmarnock Street,Fenway/Kenmore,Cabot And Company,Consigli Construction Company,Spectrum Integrated Technologies,Electrician,2024-09-22,Man,f,Caucasian,f,16
+BPDA,Huntington Tower,65 Allerton Street,Roxbury,Toll Brothers,Suffolk Construction Company,"E.M. Duggan, Inc.",Plumber,2024-09-22,Man,t,African American,f,2
+BPDA,Huntington Tower,65 Allerton Street,Roxbury,Toll Brothers,Suffolk Construction Company,"E.M. Duggan, Inc.",Plumber,2024-09-22,Man,f,Caucasian,t,8
+BPDA,Roxbury Prep,69-71 Proctor Street,Roxbury,,Suffolk Construction Company,Maia Steel,Iron Worker,2024-09-22,Man,f,Caucasian,f,11
+OED,10 World Trade,10 World Trade Center Ave,South Boston,Boston Global Investors (BGI),Suffolk Construction Company,"E.M. Duggan, Inc.",Plumber,2024-09-22,Man,f,Caucasian,t,40
+OED,10 World Trade,10 World Trade Center Ave,South Boston,Boston Global Investors (BGI),Suffolk Construction Company,"E.M. Duggan, Inc.",Plumber,2024-09-22,Man,f,Caucasian,f,258.5
+OED,10 World Trade,10 World Trade Center Ave,South Boston,Boston Global Investors (BGI),Suffolk Construction Company,"E.M. Duggan, Inc.",Plumber,2024-09-22,Woman,f,Caucasian,f,40
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,"E.M. Duggan, Inc.",Pipefitter,2024-09-22,Woman,f,Caucasian,f,48
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,J & M Brown Electrical,Electrician,2024-09-22,Man,t,African American,f,112
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,J & M Brown Electrical,Electrician,2024-09-22,Woman,f,Caucasian,f,82
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,J & M Brown Electrical,Electrician,2024-09-22,Man,t,Hispanic/Latino,f,16
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,"E.M. Duggan, Inc.",Plumber,2024-09-22,Man,f,Caucasian,f,80
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,"E.M. Duggan, Inc.",Plumber,2024-09-22,Woman,f,Caucasian,f,24
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,J & M Brown Electrical,Electrician,2024-09-22,Man,f,Caucasian,f,271
+OED,350 Boylston Street,350 Boylston Street,Fenway/Kenmore,The Druker Company LTD,John Moriarty and Associates,"E.M. Duggan, Inc.",Pipefitter,2024-09-22,Man,t,Hispanic/Latino,f,40
+
+agency,neighborhood,project,outcome
+OED,Seaport,10 World Trade Center Ave,on-time
+OED,Back Bay,350 Boylston Street,late
+CITY SRVS,Fenway,Jersey Street Cafe,in-progress
