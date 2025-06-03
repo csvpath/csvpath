@@ -1,0 +1,13 @@
+
+~
+   id:
+   test-data: examples/duplicates/Alzheimers_Disease_and_Healthy_Aging_Data_sample.csv
+~
+
+$[1-2000][
+
+   dup_lines(#Stratification1, #Stratification2, #LocationID)
+   ~@m.increase.nocontrib = int( percent("match") )~
+   @m = divide(count_scans(), count() )
+   print.onmatch("Of $.csvpath.line_number lines, $.variables.m% overlap on age, race, and location")
+]

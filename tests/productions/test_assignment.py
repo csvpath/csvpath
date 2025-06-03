@@ -68,7 +68,7 @@ class TestAssignment(unittest.TestCase):
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should work ~
-                    @up.increase = #1
+                    @up.increase = int(#1)
                 ]"""
         )
         lines = path.collect()
@@ -81,7 +81,7 @@ class TestAssignment(unittest.TestCase):
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should not decrease @up ~
-                    @up.increase = #2
+                    @up.increase = int(#2)
                 ]"""
         )
         lines = path.collect()
@@ -94,7 +94,7 @@ class TestAssignment(unittest.TestCase):
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should work ~
-                    @down.decrease = #2
+                    @down.decrease = int(#2)
                 ]"""
         )
         lines = path.collect()
@@ -107,7 +107,7 @@ class TestAssignment(unittest.TestCase):
         path.parse(
             f"""${NUMBERS}[1-3][
                     ~ should not increase @up ~
-                    @down.decrease = #1
+                    @down.decrease = int(#1)
                 ]"""
         )
         lines = path.collect()

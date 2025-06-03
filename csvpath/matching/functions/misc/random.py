@@ -56,12 +56,25 @@ class Shuffle(ValueProducer):
     """returns a random int within a range without duplicates"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Generates a random number from within an integer range
+                    without duplicates.
+                """
+            ),
+        ]
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(0)
         a = self.args.argset(2)
-        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
-        a.arg(types=[Term, Variable, Header, Function], actuals=[int])
+        a.arg(
+            name="from this int",
+            types=[Term, Variable, Header, Function],
+            actuals=[int],
+        )
+        a.arg(name="to this", types=[Term, Variable, Header, Function], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -80,16 +93,6 @@ class Shuffle(ValueProducer):
             lower2 = ExpressionUtility.to_int(lower)
             lower = lower2
             upper2 = ExpressionUtility.to_int(upper)
-            #
-            # should be caught by Args
-            #
-            """
-            if not isinstance(upper2, int):
-                msg = f"Cannot convert {upper} to int"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-                if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
-            """
             upper = upper2
             order = sample(range(lower, upper), upper - lower)
         elif order == []:

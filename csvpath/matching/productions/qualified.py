@@ -368,7 +368,6 @@ class Qualified:  # pylint: disable=R0904
         # override this if a more specific value is needed. e.g. print.
         # a side-effect has no value production but may want to onchange.
         #
-        print(f"getting _on_change_value in {self}")
         return self.to_value(skip=[self])
 
     @property

@@ -71,6 +71,25 @@ class TestFunctionsFail(unittest.TestCase):
         assert path.variables["valid"] is True
         assert path.variables["failed"] is False
 
+    def test_function_fail5(self):
+        # this failed to work in flightpath examples
+        # turned out there was a bug in the display template that
+        # labeled is_valid as being failed, i.e. backwards.
+        # leaving this here mostly for the comment in case of
+        # another template, example, etc.
+        path = CsvPath()
+        lines = path.collect(
+            f"""~
+                  validation-mode: stop, fail
+                ~
+                ${PATH}[*][
+                  print("$.csvpath.line_number")
+                  line_number.nocontrib() == 3 -> error("This is a problem!")
+                ]"""
+        )
+        assert len(lines) == 3
+        assert path.is_valid is False
+
     def test_function_fail_all1(self):
         path = CsvPath()
 

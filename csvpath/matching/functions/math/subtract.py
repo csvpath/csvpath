@@ -13,7 +13,9 @@ class Subtract(ValueProducer):
         self.description = [
             self._cap_name(),
             f"{self.name}() subtracts two or more numbers.",
-            "When there is only one argument, the number is made flipped from positive to negative or negative to positive.",
+            """ When there is only one argument, the number is flipped from positive
+                to negative or negative to positive.
+            """,
         ]
         self.aliases = ["subtract", "minus"]
         self.args = Args(matchable=self)
@@ -28,15 +30,15 @@ class Subtract(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
-        if isinstance(child, Term):
+        if isinstance(child, Equality):
+            self.value = self._do_sub(child, skip=skip)
+        else:
             v = child.to_value()
             #
             # this will not fail. args already checked.
             #
             v = ExpressionUtility.to_float(v)
             self.value = v * -1
-        elif isinstance(child, Equality):
-            self.value = self._do_sub(child, skip=skip)
 
     def _do_sub(self, child, skip=None):
         siblings = child.commas_to_list()

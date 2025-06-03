@@ -100,6 +100,18 @@ class TestFunctionsDebug(unittest.TestCase):
         path.collect()
         assert path.logger.level == logging.ERROR
 
+    def test_function_debug_2(self):
+        # debug was not returning default match and so was
+        # blocking matches, which as a side-effect it should
+        # not do.
+        path = CsvPath()
+        lines = path.collect(
+            f"""
+            ${PATH}[*]
+            [ debug( "error") ]"""
+        )
+        assert len(lines) == 9
+
     def test_function_brief_stack_trace(self):
         path = CsvPath()
         path.logger.level = logging.DEBUG

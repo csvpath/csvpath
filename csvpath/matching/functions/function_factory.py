@@ -61,7 +61,10 @@ from .boolean.any import Any
 from .boolean.all import All
 from .boolean.exists import Exists
 from .stats.percent import Percent
-from .stats.minf import Min, Max, Average, Median
+
+# from .stats.minf import Min, Max, Average, Median
+from .stats.minf import Average, Median
+from .stats.nminmax import Min, Max
 from .stats.percent_unique import PercentUnique
 from .stats.stdev import Stdev
 from .print.printf import Print

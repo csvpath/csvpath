@@ -17,6 +17,9 @@ class Percent(ValueProducer):
                    Returns the percent of scanned, matched or all lines so-far seen of
                    the total data lines in the file. Data lines have data. The total
                    does not include blanks.
+
+                   By default percent() tracks % matches of total lines in the file. If
+                   percent() has the onmatch qualifier it always tracks matches, overriding
                 """
             ),
         ]
@@ -28,6 +31,14 @@ class Percent(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         which = self.children[0].to_value(skip=skip)
+        if which is None or self.onmatch:
+            if which and which != "match" and self.onmatch:
+                msg = "percent() has the onmatch qualifier but its argument is not 'match'"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
+            which = "match"
+
         if which not in ["scan", "match", "line"]:
             # correct structure / children exception. we could probably do this
             # in check_validate since we're requiring a Term, but this is fine.
@@ -42,8 +53,11 @@ class Percent(ValueProducer):
             count = self.matcher.csvpath.current_scan_count  # pragma: no cover
         else:
             count = self.matcher.csvpath.current_match_count
+
         total = self.matcher.csvpath.line_monitor.data_end_line_count
-        value = count / total
+        value = 0
+        if total > 0:
+            value = count / total
         self.value = round(value, 2)
         self.matcher.csvpath.logger.debug(
             f"Percent: val: {value}, cnt: {count}, total: {total}, rounded: {self.value}"  # pylint: disable=C0301
