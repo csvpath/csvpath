@@ -44,7 +44,12 @@ class ReferenceParser:
         self._root_major = None
         self._root_minor = None
         self._datatype = None
-        self._names = None
+        self._names = []
+        self._name_one_is_fingerprint = False
+        self._name_one_tokens = None
+        self._name_two_tokens = None
+        self._name_three_tokens = None
+        self._name_four_tokens = None
         self._marker = None
         self._separator = None
         if string is not None:
@@ -56,6 +61,10 @@ class ReferenceParser:
         root minor:{self._root_minor}
         datatype:{self._datatype}
         names:{self._names}
+        name one tokens: {self._name_one_tokens}
+        name two tokens: {self._name_two_tokens}
+        name three tokens: {self._name_three_tokens}
+        name four tokens: {self._name_four_tokens}
         """
 
     @property
@@ -79,8 +88,35 @@ class ReferenceParser:
         return ret
 
     @property
+    def name_one_is_fingerprint(self) -> bool:
+        return self._name_one_is_fingerprint
+
+    @name_one_is_fingerprint.setter
+    def name_one_is_fingerprint(self, b: bool) -> None:
+        self._name_one_is_fingerprint = b
+
+    @property
     def root_major(self) -> str:
         return self._root_major
+
+    @root_major.setter
+    def root_major(self, r: str) -> None:
+        self._root_major = r
+
+    @property
+    def root_name(self) -> str:
+        if self.root_minor:
+            return f"{self.root_major}#{self.root_minor}"
+        return self._root_major
+
+    @root_name.setter
+    def root_name(self, name: str) -> str:
+        i = name.find("#")
+        if i > -1:
+            self._root_major = name[0:i]
+            self._root_minor = name[i + 1 :]
+        else:
+            self._root_major = name
 
     @root_major.setter
     def root_major(self, r: str) -> None:
@@ -139,7 +175,6 @@ class ReferenceParser:
 
     def _split(self, r, marker: str = "#") -> list:
         names = []
-
         if r is not None:
             i = r.find(marker)
             if i > -1:
@@ -182,6 +217,33 @@ class ReferenceParser:
     def name_one(self) -> str:
         return self._names[0]
 
+    @name_one.setter
+    def name_one(self, n: str) -> str:
+        self._assure_names()
+        if not n:
+            #
+            # why might we want to preserve 2 and 3 if we
+            # don't have 0 and 1?
+            #
+            self._names[0] = None
+            self._names[1] = None
+            return
+        i = n.find("#")
+        if i > -1:
+            self._names[0] = n[0:i]
+            self._names[1] = n[i + 1 :]
+            return
+        if len(self.names) == 0:
+            self.names.append(n)
+        else:
+            self.names[0] = n
+
+    def _assure_names(self) -> None:
+        if self._names is None:
+            self._names = []
+        while len(self._names) < 4:
+            self._names.append(None)
+
     @property
     def name_two(self) -> str:
         return self._names[1]
@@ -190,9 +252,84 @@ class ReferenceParser:
     def name_three(self) -> str:
         return self._names[2]
 
+    @name_three.setter
+    def name_three(self, n: str) -> str:
+        self._assure_names()
+        if not n:
+            self._names[2] = None
+            self._names[3] = None
+            return
+        i = n.find("#")
+        if i > -1:
+            self._names[2] = n[0:i]
+            self._names[3] = n[i + 1 :]
+        else:
+            self._names[2] = n
+            self._names[3] = None
+
     @property
     def name_four(self) -> str:
         return self._names[3]
+
+    #
+    # adds a string or a list[str] of tokens. each string will
+    # be parsed for additional tokens. i.e. all:yesterday:first
+    # would become three tokens. (three tokens are not expected,
+    # tho)
+    #
+    def _add_tokens(self, ts: list, t: str | list) -> None:
+        if t is None:
+            return
+        if not isinstance(t, list):
+            t = [t]
+        for s in t:
+            s = s.lstrip(":")
+            i = s.find(":")
+            if i == -1:
+                ts.append(s)
+            else:
+                ts.append(t[0:i])
+                self._add_tokens(ts, s[i + 1])
+
+    @property
+    def name_one_tokens(self) -> list:
+        return self._name_one_tokens
+
+    @name_one_tokens.setter
+    def name_one_tokens(self, t: str | list) -> None:
+        if self._name_one_tokens is None:
+            self._name_one_tokens = []
+        self._add_tokens(self._name_one_tokens, t)
+
+    @property
+    def name_two_tokens(self) -> list:
+        return self._name_two_tokens
+
+    @name_two_tokens.setter
+    def name_two_tokens(self, t: str | list) -> None:
+        if self._name_two_tokens is None:
+            self._name_two_tokens = []
+        self._add_tokens(self._name_two_tokens, t)
+
+    @property
+    def name_three_tokens(self) -> list:
+        return self._name_three_tokens
+
+    @name_three_tokens.setter
+    def name_three_tokens(self, t: str | list) -> None:
+        if self._name_three_tokens is None:
+            self._name_three_tokens = []
+        self._add_tokens(self._name_three_tokens, t)
+
+    @property
+    def name_four_tokens(self) -> list:
+        return self._name_four_tokens
+
+    @name_four_tokens.setter
+    def name_four_tokens(self, t: str | list) -> None:
+        if self._name_four_tokens is None:
+            self._name_four_tokens = []
+        self._add_tokens(self._name_four_tokens, t)
 
     @property
     def names(self) -> list[str]:
