@@ -433,7 +433,7 @@ class FilesReferenceFinder:
                 ret = [ret]
             return ret
         else:
-            raise ValueError("Unknown pointer: {pointer}")
+            raise ValueError(f"Unknown pointer: {pointer}")
 
     def _all_after(self, adate) -> list:
         lst = [t["time"] for t in self.manifest]
