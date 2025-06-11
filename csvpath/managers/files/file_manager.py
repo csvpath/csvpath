@@ -6,7 +6,11 @@ from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+
+# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.files_reference_finder_2 import (
+    FilesReferenceFinder2 as FilesReferenceFinder,
+)
 from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
@@ -158,6 +162,8 @@ class FileManager:
                     #
                     if isinstance(mani, str):
                         mani = json.loads(mani)
+                else:
+                    ...
             elif ref.datatype == ref.FILES:
                 #
                 # find a file manifest by reference

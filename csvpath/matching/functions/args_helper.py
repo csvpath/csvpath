@@ -3,7 +3,6 @@ import datetime
 from csvpath.matching.functions.function import Function
 from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.util.expression_utility import ExpressionUtility
-import traceback
 
 
 class ArgumentValidationHelper:

@@ -1,5 +1,6 @@
 from csvpath.managers.metadata import Metadata
 from datetime import datetime
+from uuid import UUID
 
 
 class ResultsMetadata(Metadata):
@@ -28,12 +29,32 @@ class ResultsMetadata(Metadata):
         self.error_count: int = None
         self.all_expected_files: bool = None
         self.by_line: bool = False
+        self._run_uuid: UUID = None
+
+    @property
+    def run_uuid(self) -> UUID:
+        return self._run_uuid
+
+    @run_uuid.setter
+    def run_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError("Must be a UUID")
+        self._run_uuid = u
+
+    @property
+    def run_uuid_string(self) -> str:
+        return str(self._run_uuid)
+
+    @run_uuid_string.setter
+    def run_uuid_string(self, u: str) -> None:
+        self._run_uuid = UUID(u)
 
     def from_manifest(self, m) -> None:
         if m is None:
             return
         super().from_manifest(m)
         self.run_home = m["run_home"]
+        self.run_uuid_string = m.get("run_uuid")
         self.named_paths_name = m.get("named_paths_name")
         self.named_paths_uuid = m.get("named_paths_uuid")
         self.named_file_name = m.get("named_file_name")

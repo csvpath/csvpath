@@ -22,6 +22,18 @@ class TemplateUtility:
         s = template[i + 8 :]
         return s
 
+    # csvpaths: "CsvPaths" disallowed by flake
+    @classmethod
+    def strip_suffix(cls, csvpaths, template: str) -> str:
+        #
+        # remove dead code?
+        #
+        if template is not None:
+            suffix = cls.get_template_suffix(csvpaths=csvpaths, template=template)
+            template = template[0 : len(template) - len(suffix)]
+            return template
+        return None
+
     @classmethod
     def find_template(self, csvpaths, ref: str) -> str:
         ref = ReferenceParser(ref)

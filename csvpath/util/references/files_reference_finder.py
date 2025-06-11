@@ -126,17 +126,9 @@ class FilesReferenceFinder:
         if file is not None:
             return file
         #
-        # should this really be an exception? if we think of refs as a query language we
-        # would not want a query without results to be exceptional.
-        #
-        # from that point of view we maybe should return [].
+        # found nothing
         #
         return []
-        """
-        raise ValueError(
-            f"Reference {self.name} does not identify files with {self._ref}"
-        )
-        """
 
     def _paths_for_filename_if(self, exact: bool = False) -> list:
         res = self._filename_if(exact)

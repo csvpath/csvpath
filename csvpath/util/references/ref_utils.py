@@ -129,6 +129,8 @@ class ReferenceUtility:
 
     @classmethod
     def bare_index_if(cls, name: str) -> int | None:
+        if name is None:
+            return None
         name = name.strip()
         if name[0] != ":":
             return None

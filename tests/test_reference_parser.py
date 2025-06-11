@@ -26,36 +26,34 @@ class TestReferenceParser(unittest.TestCase):
         assert ref.names[0] == "2024-01-01_00-24-01"
         assert ref.names[2] == "first"
 
-        ref = ReferenceParser("$many.results.2024-01-01_*.first")
+        ref = ReferenceParser("$many.results.2024-01-01_.first")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "results"
-        assert ref.names[0] == "2024-01-01_*"
+        assert ref.names[0] == "2024-01-01_"
         assert ref.names[2] == "first"
 
         ref = ReferenceParser("$many.results.2024-01-01_:first.first")
         assert ref.root_major == "many"
         assert ref.root_minor is None
         assert ref.datatype == "results"
-        assert ref.names[0] == "2024-01-01_:first"
-        assert ref.names[2] == "first"
+        assert ref.names[0] == "2024-01-01_"
+        assert ref.name_one_tokens[0] == "first"
+        assert ref.name_three == "first"
 
         ref = ReferenceParser("$many#things.results.2024-01-01_:first.second#third")
         assert ref.root_major == "many"
         assert ref.root_minor == "things"
         assert ref.datatype == "results"
-        assert ref.names[0] == "2024-01-01_:first"
+        assert ref.names[0] == "2024-01-01_"
         assert ref.names[1] is None
         assert ref.names[2] == "second"
         assert ref.names[3] == "third"
 
-        ref = ReferenceParser(
-            "$many#things.results.2024-01-01_:first#second.third#fourth"
-        )
+        ref = ReferenceParser("$many#things.results.2024-01-01_:first.third#fourth")
         assert ref.root_major == "many"
         assert ref.root_minor == "things"
         assert ref.datatype == "results"
-        assert ref.names[0] == "2024-01-01_:first"
-        assert ref.names[1] == "second"
+        assert ref.names[0] == "2024-01-01_"
         assert ref.names[2] == "third"
         assert ref.names[3] == "fourth"

@@ -14,11 +14,11 @@ class TestRefs(unittest.TestCase):
             path=f"tests{os.sep}examples{os.sep}print{os.sep}assets{os.sep}process-list-cols.csv",
         )
         paths.paths_manager.add_named_paths_from_file(
-            name="sourcemode",
+            name="oc",
             file_path=f"tests{os.sep}examples{os.sep}print{os.sep}assets{os.sep}onchange.csvpath",
         )
-        paths.collect_paths(filename="people", pathsname="sourcemode")
-        results = paths.results_manager.get_named_results("sourcemode")
+        paths.collect_paths(filename="people", pathsname="oc")
+        results = paths.results_manager.get_named_results("oc")
         assert len(results) == 1
         assert len(results[0].lines) > 2  # don't know how many but much > 1
         printouts = results[0].get_printouts("default")
@@ -33,11 +33,11 @@ class TestRefs(unittest.TestCase):
             path=f"tests{os.sep}examples{os.sep}print{os.sep}assets{os.sep}process-list-cols.csv",
         )
         paths.paths_manager.add_named_paths_from_file(
-            name="sourcemode",
-            file_path=f"tests{os.sep}examples{os.sep}print{os.sep}assets{os.sep}once.csvpath",
+            name="oncex",
+            file_path=f"tests{os.sep}examples{os.sep}print{os.sep}assets{os.sep}oncex.csvpath",
         )
-        paths.collect_paths(filename="people", pathsname="sourcemode")
-        results = paths.results_manager.get_named_results("sourcemode")
+        paths.collect_paths(filename="people", pathsname="oncex")
+        results = paths.results_manager.get_named_results("oncex")
         assert len(results) == 1
         assert len(results[0].lines) > 2  # don't know how many but much > 1
         printouts = results[0].get_printouts("once")

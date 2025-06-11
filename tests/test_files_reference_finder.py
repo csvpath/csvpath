@@ -4,8 +4,14 @@ import datetime
 from datetime import timedelta, timezone
 from csvpath import CsvPaths
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+
+# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.files_reference_finder_2 import (
+    FilesReferenceFinder2 as FilesReferenceFinder,
+)
+from csvpath.util.references.files_tools.date_completer import DateCompleter
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.date_util import DateUtility as daut
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
 
 FILES = {
@@ -24,7 +30,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         paths.fast_forward_paths(filename="food", pathsname="food")
         return paths
 
-    def test_mani_path_to_ref(self) -> None:
+    def test_b_files_ref_finder_mani_path_to_ref(self) -> None:
         refstr = refu.results_manifest_path_to_reference(
             archive_name="archive",
             manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}named_files{os.sep}many_two{os.sep}manifest.json",
@@ -65,131 +71,37 @@ class TestFilesReferenceFinder(unittest.TestCase):
         #
         ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
-        assert finder.name == ref
+        assert finder.ref.reference == ref
         assert isinstance(finder._ref, ReferenceParser)
         assert finder._ref.root_major == "food"
-        assert finder._ref.name_one == ":today:first"
+        assert finder._ref.name_one_tokens == ["today", "first"]
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
         assert "file" in finder.manifest[0]
         assert finder.manifest[0]["type"] == "csv"
 
-    def test_files_ref_finder_fingerprint(self):
+    def test_b_files_ref_finder_fingerprint(self):
         paths = self.setup()
         ref = "$food.files.:today:first"
         finder = FilesReferenceFinder(paths, name=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
         f = finder.manifest[0]["fingerprint"]
-        #
         ref = f"$food.files.{f}"
-        finder = FilesReferenceFinder(paths, name=ref)
-        file = finder._path_for_fingerprint_if()
-        assert file is not None
-        assert file == finder.manifest[0]["file"]
+        print(f"reference is: {ref}")
+        results = FilesReferenceFinder(paths, name=ref).query()
+        assert results is not None
+        assert results.files is not None
+        assert len(results.files) == 1
+        assert results.files[0] == finder.manifest[0]["file"]
 
-    def test_files_ref_finder_index(self):
-        print("init csvpaths")
-        paths = self.setup()
-        print("starting ref finding")
-        ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
-        assert finder.manifest is not None
-        assert len(finder.manifest) >= 1
-        f = finder.manifest[0]["fingerprint"]
-        #
-        ref = "$food.files.:0"
-        finder = FilesReferenceFinder(paths, name=ref)
-        file = finder._path_for_bare_index_if()
-        assert file is not None
-        assert len(file) == 1
-        assert pathu.equal(
-            file[0],
-            f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv",
-            True,
-        )
-
-    def test_files_ref_finder_for_day(self):
-        paths = self.setup()
-        paths.file_manager.add_named_file(
-            name="food", path=f"tests{os.sep}test_resources{os.sep}people.csv"
-        )
-        paths.file_manager.add_named_file(
-            name="food", path=f"tests{os.sep}test_resources{os.sep}people2.csv"
-        )
-        #
-        #
-        #
-        ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
-        assert finder.manifest is not None
-        assert len(finder.manifest) >= 3
-        f = finder.manifest[0]["fingerprint"]
-
-        file = finder._path_for_day_if()
-        assert file is not None
-        assert len(file) == 1
-        assert pathu.equal(
-            file[0],
-            f"inputs{os.sep}named_files{os.sep}food{os.sep}food.csv{os.sep}{f}.csv",
-            True,
-        )
-        #
-        #
-        #
-        ref = "$food.files.:today:last"
-        finder = FilesReferenceFinder(paths, name=ref)
-        assert finder.manifest is not None
-        assert len(finder.manifest) >= 3
-        f = finder.manifest[len(finder.manifest) - 1]["fingerprint"]
-
-        file = finder._path_for_day_if()
-        print(f"testfrf: file: {file}")
-        assert file is not None
-        assert len(file) == 1
-        assert pathu.equal(
-            file[0],
-            f"inputs{os.sep}named_files{os.sep}food{os.sep}people2.csv{os.sep}{f}.csv",
-            True,
-        )
-
-    def test_files_ref_finder_pointer(self):
-        #
-        # see comment below re: stacked pointers
-        #
-        paths = self.setup()
-        ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
-        n = finder._ref.name_one
-        p = refu.pointer(n, "last")
-        p == "today:first"
-        p = refu.pointer(p, "last")
-        assert p == "first"
-
-    def test_files_ref_finder_not_pointer(self):
-        #
-        # pointers can be stacked in limited cases. :today and :yesterday
-        # are replacement tokens, not instructions. they are currently the
-        # only pointer-like tokens that we use. otoh, :first is a "real"
-        # pointer in that it tells you what to do -- take the first found
-        # item -- but doesn't have a value used in itself. :today has a
-        # value -- it is the current day's timestamp.
-        #
-        paths = self.setup()
-        ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
-        n = finder.ref.name_one
-        p = refu.pointer(n)
-        assert p == "today:first"
-        p = refu.not_pointer(n)
-        assert p == ""
-
-    def test_files_ref_finder_complete_date_string(self):
+    def test_b_files_ref_finder_complete_date_string(self):
         paths = self.setup()
         ref = "$food.files.2025-02-26_01-01"
         finder = FilesReferenceFinder(paths, name=ref)
         s = finder.ref.name_one
-        s = finder._complete_date_string(s)
+        # s = finder._complete_date_string(s)
+        s = DateCompleter.get(s)
         assert s == "2025-02-26_01-01-00"
         dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
         assert isinstance(dat, datetime.datetime)
@@ -197,7 +109,8 @@ class TestFilesReferenceFinder(unittest.TestCase):
         ref = "$food.files.2025-02"
         finder = FilesReferenceFinder(paths, name=ref)
         s = finder.ref.name_one
-        s = finder._complete_date_string(s)
+        # s = finder._complete_date_string(s)
+        s = DateCompleter.get(s)
         assert s == "2025-02-01_00-00-00"
         dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
         assert isinstance(dat, datetime.datetime)
@@ -205,32 +118,31 @@ class TestFilesReferenceFinder(unittest.TestCase):
         ref = "$food.files.2025-"
         finder = FilesReferenceFinder(paths, name=ref)
         s = finder.ref.name_one
-        s = finder._complete_date_string(s)
+        # s = finder._complete_date_string(s)
+        s = DateCompleter.get(s)
         assert s == "2025-01-01_00-00-00"
         dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
         assert isinstance(dat, datetime.datetime)
 
-    def test_files_ref_finder_date_if(self):
-        paths = self.setup()
-        ref = "$food.files.2025-02-26_01-01"
-        finder = FilesReferenceFinder(paths, name=ref)
-
-        two_days_ago = datetime.datetime.today().astimezone(timezone.utc) - timedelta(
-            days=2
-        )
-        yesterday = datetime.datetime.today().astimezone(timezone.utc) - timedelta(
-            days=1
-        )
+    def test_b_files_ref_finder_date_if(self):
+        self.setup()
+        # in the rewrite of files ref finder we ended up with a tool that doesn't fit this test
+        # however, the tool mainly relies on daut so we can test that level instead.
+        # ref = "$food.files.2025-02-26_01-01"
+        # finder = FilesReferenceFinder(paths, name=ref)
+        #
         today = datetime.datetime.today().astimezone(timezone.utc)
-        tomorrow = datetime.datetime.today().astimezone(timezone.utc) + timedelta(
-            days=1
-        )
-
+        two_days_ago = today - timedelta(days=2)
+        yesterday = today - timedelta(days=1)
+        tomorrow = today + timedelta(days=1)
         lst = [two_days_ago, yesterday, today, tomorrow]
-        pointer = "before"
-        i = finder._find_in_dates(lst, today, pointer)
-        assert i == [0, 1]
 
-        pointer = "after"
-        i = finder._find_in_dates(lst, today, pointer)
-        assert i == [3]
+        before = daut.all_before(today, lst)
+        before = daut.dates_from_list(before)
+        assert len(before) == 2
+        assert before == [two_days_ago, yesterday]
+
+        after = daut.all_after(today, lst)
+        after = daut.dates_from_list(after)
+        assert len(after) == 1
+        assert after == [tomorrow]

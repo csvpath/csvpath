@@ -25,6 +25,5 @@ class TestRunHome(unittest.TestCase):
         run_dir = maker.get_run_dir(paths_name="food", file_name="food")
         assert run_dir is not None
         assert run_dir.startswith(paths.config.archive_path)
-        print(f"test_run_home_template_1: run_dir: {run_dir}")
         parts = pathu.parts(run_dir)
         assert len(parts) == 3

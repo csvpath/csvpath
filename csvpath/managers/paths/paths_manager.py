@@ -324,6 +324,13 @@ class PathsManager:
                 )
             npn = ref.root_major
             identity = ref.name_one
+            #
+            # atm, we haven't changed as part of the new ref grammar. we don't use
+            # the ref directly so we have to rebuild any tokens on name_one
+            #
+            if len(ref.name_one_tokens) > 0:
+                t = ":".join(ref.name_one_tokens)
+                identity = f"{identity}:{t}"
         else:
             npn, identity = self._paths_name_path(name)
         if identity is None and self.has_named_paths(npn):
@@ -740,24 +747,7 @@ class PathsManager:
             #
             if (path[0] == identity or (path[0] is None and index == i)) or len(ps) > 0:
                 ps.append(path[1])
-            """
-            if path[0] != identity and len(ps) == 0:
-                continue
-            ps.append(path[1])
-            """
         return ps
-
-    """
-    original version
-    def _get_from(self, npn: NamedPathsName, identity: Identity) -> list[Csvpath]:
-        ps = []
-        paths = self.get_identified_paths_in(npn)
-        for path in paths:
-            if path[0] != identity and len(ps) == 0:
-                continue
-            ps.append(path[1])
-        return ps
-    """
 
     def get_preceeding_instance_identity(self, name, index: int) -> str:
         if index <= 0:
