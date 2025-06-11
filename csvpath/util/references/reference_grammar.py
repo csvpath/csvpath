@@ -4,7 +4,13 @@ from dataclasses import dataclass
 
 from lark import Lark, Transformer, v_args, Tree, Token
 
-from .reference_parser import ReferenceParser
+#
+# open questions:
+#  - should we support # in names one and three?
+#  - if we support # how do tokens work?
+#  - non_local_reference type "reference" is set to "variable" in the transformer. is this long-term?
+#  - should we limit tokens by type? e.g. csvpaths type takes :from and :to but not :today and :yesterday
+#
 
 REFERENCE_GRAMMAR = r"""
     ?start: reference
@@ -62,7 +68,7 @@ REFERENCE_GRAMMAR = r"""
     local_name_two: path? tokens?
                   | DATETIME? tokens?
 
-    fingerprint: IDENTIFIER
+    fingerprint: HASH
 
     header_name: "'"? IDENTIFIER "'"? | INTEGER
 
@@ -102,8 +108,11 @@ REFERENCE_GRAMMAR = r"""
     path: PATH_SEGMENT ("/" PATH_SEGMENT?)*
 
     // Terminals - PATH_SEGMENT now excludes dots to enforce two-dot limit
-    IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_#]*/
-    PATH_SEGMENT: /[a-zA-Z0-9_-]+/
+    IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_# \-]*/
+    PATH_SEGMENT: /[a-zA-Z0-9_\- #]+/
+
+    HASH: /[abcdef0-9]{64}/
+
     INTEGER: /\d+/
     DATETIME: /\d{4}-/
             | /\d{4}-\d{2}/
@@ -123,7 +132,8 @@ REFERENCE_GRAMMAR = r"""
 class ReferenceTransformer(Transformer):
     """Transformer to convert parse tree into structured data"""
 
-    def __init__(self, ref: ReferenceParser) -> None:
+    # ref: "ReferenceParser" disallowed by flake
+    def __init__(self, ref) -> None:
         self.ref = ref
 
     def root_name(self, items):
@@ -188,10 +198,10 @@ class ReferenceTransformer(Transformer):
         # because name and fingerprint are both just strings.
         #
         f = None
-        if items and len(items) > 0:
+        if items is not None and len(items) > 0:
             f = items[0].value
             self.ref.name_one = f
-            self.name_one_is_fingerprint = True
+            self.ref.name_one_is_fingerprint = True
         return str(f)
 
     def local_type(self, items):
@@ -207,6 +217,8 @@ class ReferenceTransformer(Transformer):
             t = items[0].data
             t = t.value
             t = t[0 : t.find("_")]
+            if t == "reference":
+                t = "variables"
             self.ref.datatype = t
         return str(t)
 
@@ -275,17 +287,22 @@ class ReferenceTransformer(Transformer):
 
 
 class QueryParser:
-    def __init__(self):
+    # ref: "ReferenceParser" disallowed by flake
+    def __init__(self, ref):
         self.parser = Lark(REFERENCE_GRAMMAR, parser="earley")
+        self.ref = ref
 
-    def parse(self, query: str) -> ReferenceParser:
+    def parse(self, query: str):
         """Parse a CsvPath query string and return structured representation"""
+        if self.ref is None:
+            raise RuntimeError("A reference object must be available for parsing")
         try:
-            ref = ReferenceParser()
             result = self.parser.parse(query)
-            ReferenceTransformer(ref).transform(result)
-            return ref
+            ReferenceTransformer(self.ref).transform(result)
+            return self.ref
         except Exception as e:
+            # from csvpath.util.log_utility import LogUtility
+            # LogUtility.log_brief_trace()
             raise ValueError(f"Failed to parse query '{query}': {e}")
 
     def validate_query(self, query: str) -> bool:

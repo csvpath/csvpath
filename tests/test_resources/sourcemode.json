@@ -4,7 +4,7 @@
     ],
     "_config": {
             "sourcemode": {
-                "template":"aprx/:run_dir/sub"
+                "template":"aprx/:run_dir"
             }
     }
 }

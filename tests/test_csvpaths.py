@@ -295,7 +295,7 @@ class TestNewCsvPaths(unittest.TestCase):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(
-            filename="$sourcemode.results.aprx/202:last/sub.source1",
+            filename="$sourcemode.results.aprx/202:last.source1",
             pathsname="$sourcemode.csvpaths.source2:from",
         )
         results = paths.results_manager.get_named_results("sourcemode")

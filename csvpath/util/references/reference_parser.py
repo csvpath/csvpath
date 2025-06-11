@@ -1,8 +1,6 @@
 from csvpath.util.path_util import PathUtility as pathu
-
-
-class ReferenceException(Exception):
-    pass
+from .reference_grammar import QueryParser
+from .reference_exceptions import ReferenceException
 
 
 class ReferenceParser:
@@ -12,22 +10,26 @@ class ReferenceParser:
     #    $.datatype.major[.minor]
     #    $named-paths#identity[.datatype.major.minor]
     #
+    # see the reference_grammar.py and test_ref_grammar.py
+    #
     # the # and . characters are the main stops. # is used (rarely) to
     # reduce the scope of the component (a.k.a. name) it is on. the '.'
     # is used to separate components. typically the same thing you may
     # be able to do with # is better doable in adding the last component
     # to the reference.
     #
-    # depending on the usage, most references can take pointers or filters
-    # in the form of colon-name. E.g.:
+    # depending on the usage, references can take pointers or filters
+    # on names one, two, three, and four. they are in the form of
+    # colon-name. e.g.:
     #     $named-paths.datatype.[major][:pointer][.minor][:pointer]
     # in some cases the major component could be empty, but a pointer on
     # be present. for e.g. you might want to reference the 3rd version
     # of a named-file without specifying the underlying path, fingerprint,
     # etc.
     #
-    # local is the $.type.name form used in print() to point to
-    # the current csvpath runtime.
+    # local is the $.type.name form used in print() to point to the current
+    # csvpath runtime.
+    #
     LOCAL = "local"
     #
     # data types
@@ -46,14 +48,17 @@ class ReferenceParser:
         self._datatype = None
         self._names = []
         self._name_one_is_fingerprint = False
-        self._name_one_tokens = None
-        self._name_two_tokens = None
-        self._name_three_tokens = None
-        self._name_four_tokens = None
+        self._name_one_tokens = []
+        self._name_two_tokens = []
+        self._name_three_tokens = []
+        self._name_four_tokens = []
         self._marker = None
         self._separator = None
+        self._reference = string
+        self.parser = None
         if string is not None:
-            self.parse(string)
+            self.parser = QueryParser(ref=self)
+            self.parser.parse(self._reference)
 
     def __str__(self) -> str:
         return f"""
@@ -66,6 +71,10 @@ class ReferenceParser:
         name three tokens: {self._name_three_tokens}
         name four tokens: {self._name_four_tokens}
         """
+
+    @property
+    def reference(self) -> str:
+        return self._reference
 
     @property
     def ref_string(self) -> str:
@@ -92,8 +101,8 @@ class ReferenceParser:
         return self._name_one_is_fingerprint
 
     @name_one_is_fingerprint.setter
-    def name_one_is_fingerprint(self, b: bool) -> None:
-        self._name_one_is_fingerprint = b
+    def name_one_is_fingerprint(self, t: bool) -> None:
+        self._name_one_is_fingerprint = t
 
     @property
     def root_major(self) -> str:
@@ -271,6 +280,17 @@ class ReferenceParser:
     def name_four(self) -> str:
         return self._names[3]
 
+    @classmethod
+    def find_int_token(cls, tokens: list) -> int | None:
+        if tokens is None:
+            raise ValueError("Tokens cannot be None")
+        for t in tokens:
+            try:
+                return int(t)
+            except Exception:
+                ...
+        return None
+
     #
     # adds a string or a list[str] of tokens. each string will
     # be parsed for additional tokens. i.e. all:yesterday:first
@@ -340,6 +360,12 @@ class ReferenceParser:
         self._names = ns
 
     def parse(self, string: str) -> None:
+        self.parser = QueryParser(ref=self)
+        self.parser.parse(string)
+        #
+        # the old way:
+        #
+        """
         if string is None:
             raise ReferenceException("Reference string cannot be None")
         if string[0] != "$":
@@ -364,3 +390,4 @@ class ReferenceParser:
 
         string = string[dot + 1 :]
         self._set_names(string)
+        """

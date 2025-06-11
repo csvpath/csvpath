@@ -1,6 +1,10 @@
 import unittest
 from csvpath import CsvPaths
-from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+
+# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.files_reference_finder_2 import (
+    FilesReferenceFinder2 as FilesReferenceFinder,
+)
 
 
 class TestFlightPathRefs(unittest.TestCase):

@@ -1,13 +1,22 @@
 import unittest
 import os
-import datetime
+
+# import datetime
+from datetime import datetime
 from datetime import timedelta, timezone
 from csvpath import CsvPaths
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.files_reference_finder import FilesReferenceFinder
-from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
+
+# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.files_reference_finder_2 import (
+    FilesReferenceFinder2 as FilesReferenceFinder,
+)
+from csvpath.util.references.results_reference_finder_2 import (
+    ResultsReferenceFinder2 as ResultsReferenceFinder,
+)
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 FILES = {
     "food": f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
@@ -16,7 +25,7 @@ FILES = {
 NAMED_PATHS_DIR = f"tests{os.sep}test_resources{os.sep}named_paths{os.sep}"
 
 
-class TestFilesReferenceFinder(unittest.TestCase):
+class TestResultsReferenceFinder(unittest.TestCase):
     def setup(self):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
@@ -25,53 +34,67 @@ class TestFilesReferenceFinder(unittest.TestCase):
         paths.fast_forward_paths(filename="food", pathsname="food")
         return paths
 
-    def test_files_ref_finder_num_pos(self):
+    def test_results_ref_finder_num_pos(self):
         paths = self.setup()
-        ps = ResultsReferenceFinder(paths).resolve_possibles("$food.results.:today")
-        psi = len(ps)
+        results1 = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+        print(f"test_files_ref_finder_num_pos: results1: {results1.files}")
+
+        psi = len(results1)
         paths.fast_forward_paths(filename="food", pathsname="food")
-        ps = ResultsReferenceFinder(paths).resolve_possibles("$food.results.:today")
-        assert psi + 1 == len(ps)
+        results2 = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+        print(f"test_files_ref_finder_num_pos: results2: {results2.files}")
+        assert psi + 1 == len(results2)
 
     def test_files_ref_finder_last_changes(self):
         paths = self.setup()
 
-        ps = ResultsReferenceFinder(paths).resolve_possibles(
-            "$food.results.:today:last"
-        )
-        psi = len(ps)
-        first_index = psi - 1
+        i = paths.results_manager.get_number_of_results("food")
+        results = ResultsReferenceFinder(paths).resolve("$food.results.:today:last")
+        results1 = results.files[0]
+        iminus = i - 1
+        chk = ResultsReferenceFinder(paths).resolve(f"$food.results.:{iminus}")
+        chk = results.files[0]
+        assert results1 == chk
 
         paths.fast_forward_paths(filename="food", pathsname="food")
 
-        ps = ResultsReferenceFinder(paths).resolve_possibles(
-            "$food.results.:today:last"
+        results = ResultsReferenceFinder(paths).resolve("$food.results.:today:last")
+        results2 = results.files[0]
+        assert results1 != results2
+        chk = ResultsReferenceFinder(paths).resolve(f"$food.results.:{i}")
+        chk = results.files[0]
+        assert results2 == chk
+
+        last = (
+            ResultsReferenceFinder(paths).resolve("$food.results.:today:last").files[0]
         )
-        psi = len(ps)
-        last_index = psi - 1
-        assert first_index == last_index - 1
-
-        last = ResultsReferenceFinder(paths).resolve("$food.results.:today:last")
-        first = ResultsReferenceFinder(paths).resolve(
-            f"$food.results.:today:{first_index}"
+        assert results2 == last
+        files = ResultsReferenceFinder(paths).resolve("$food.results.:today").files
+        assert results1 in files
+        assert results1 == files[-2]
+        index1 = files.index(results1)
+        index2 = files.index(
+            ResultsReferenceFinder(paths).resolve("$food.results.:today:first").files[0]
         )
+        assert index2 <= index1
+        assert index2 == 0
 
-        assert ps[len(ps) - 2] == first
-        assert ps[len(ps) - 1] == last
-
-    def test_files_ref_finder_today(self):
+    def test_results_ref_finder_today(self):
         paths = self.setup()
-
-        ps = ResultsReferenceFinder(paths).resolve_possibles("$food.results.:today")
-        starting = len(ps)
-
+        starting = 0
+        try:
+            ps = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+            starting = len(ps)
+        except Exception:
+            # we get here if this test is run stand-alone
+            ...
         paths.fast_forward_paths(filename="food", pathsname="food")
         paths.fast_forward_paths(filename="food", pathsname="food")
         paths.fast_forward_paths(filename="food", pathsname="food")
         #
         # should have three more results
         #
-        ps = ResultsReferenceFinder(paths).resolve_possibles("$food.results.:today")
+        ps = ResultsReferenceFinder(paths).resolve("$food.results.:today")
         plusthree = len(ps)
         assert plusthree == starting + 3
         #
@@ -107,11 +130,21 @@ class TestFilesReferenceFinder(unittest.TestCase):
         assert len(resultsD) == 2
         maniD = resultsD[0].run_manifest
 
-        assert maniA["uuid"] == maniD["uuid"]
-        assert maniB["uuid"] != maniC["uuid"] != maniD["uuid"]
-        assert maniB["time"] < maniC["time"] < maniD["time"]
+        assert maniA["run_uuid"] == maniD["run_uuid"]  # most recent
+        assert maniB["run_uuid"] != maniC["run_uuid"] != maniD["run_uuid"]
+        #
+        #
+        #
+        # dtB = datetime.fromisoformat(maniB["time"])
+        B = exut.to_datetime(maniB["time"])
+        # dtC = datetime.fromisoformat(maniC["time"])
+        C = exut.to_datetime(maniC["time"])
+        # dtD = datetime.fromisoformat(maniD["time"])
+        D = exut.to_datetime(maniD["time"])
+        assert B < C
+        assert C < D
 
-    def test_result_manifest_2(self):
+    def test_results_ref_finder_manifest_2(self):
         paths = self.setup()
         paths.fast_forward_paths(filename="food", pathsname="food")
         paths.fast_forward_paths(filename="food", pathsname="food")

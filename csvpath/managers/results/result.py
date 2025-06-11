@@ -37,6 +37,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         run_time: datetime = None,
         runtime_data: dict = None,
         by_line: bool = False,
+        run_uuid: UUID,
     ):
         """@private"""
         ErrorCollector.__init__(self)
@@ -100,6 +101,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         self._unmatched: list[list[Any]] = None
         self._lines: list[list[Any]] = None
         self._readers_facade = ResultReadersFacade(self)
+        self._run_uuid = run_uuid
 
     @property
     def actual_data_file(self) -> str:
@@ -122,11 +124,23 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
             self._uuid = uuid.uuid4()
         return self._uuid
 
+    @property
+    def run_uuid(self) -> UUID:
+        if self._run_uuid is None:
+            self._run_uuid = uuid.uuid4()
+        return self._run_uuid
+
     @uuid.setter
     def uuid(self, u: UUID) -> None:
         if not isinstance(u, UUID):
             raise ValueError("Uuid must be a UUID")
         self._uuid = u
+
+    @run_uuid.setter
+    def run_uuid(self, u: UUID) -> None:
+        if not isinstance(u, UUID):
+            raise ValueError("Uuid must be a UUID")
+        self._run_uuid = u
 
     @property
     def run_time(self) -> datetime:

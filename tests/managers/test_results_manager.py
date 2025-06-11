@@ -118,18 +118,16 @@ class TestResultsManager(unittest.TestCase):
         result = paths.results_manager.get_specific_named_result(
             "$food#candy check.results.:0"
         )
-        assert result
+        assert result is not None
         assert isinstance(result, Result)
         assert result.csvpath.identity == "candy check"
-        print(f"result: {result}")
 
         result = paths.results_manager.get_specific_named_result(
             "$food.results.2025.candy check"
         )
-        assert result
+        assert result is not None
         assert isinstance(result, Result)
         assert result.csvpath.identity == "candy check"
-        print(f"result: {result}")
 
         with pytest.raises(ValueError):
             paths.results_manager.get_specific_named_result("$food.results.candy check")

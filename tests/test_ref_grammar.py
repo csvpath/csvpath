@@ -1,6 +1,7 @@
 import unittest
 import pytest
 from csvpath.util.references.reference_grammar import QueryParser
+from csvpath.util.references.reference_parser import ReferenceParser
 
 
 class TestReferenceGrammar(unittest.TestCase):
@@ -13,8 +14,7 @@ class TestReferenceGrammar(unittest.TestCase):
         # is a no-go. fingerprints are exact references, not points in time/sequence. the
         # grammar will allow it, tho, so up to the RP and finders to control for that.
         #
-
-        parser = QueryParser()
+        parser = QueryParser(ref=ReferenceParser())
         file_queries = [
             "$mydata.files.abc123abc123abc123abc123abc123abc123abc123abc123",  # fingerprint
             "$mydata.files.data/input-csv",  # path only

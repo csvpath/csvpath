@@ -37,6 +37,7 @@ class ResultMetadata(Metadata):
         #
         self.preceding_instance_identity = None
         self.run: str = None
+        self.run_uuid: UUID = None
         self.run_home: str = None
         self.instance_home: str = None
         self.instance_identity: str = None
@@ -97,6 +98,7 @@ ResultMetadata(
         #
         #
         self.run = m.get("run")
+        self.run_uuid_string = m.get("run_uuid")
         self.run_home = m.get("run_home")
         self.instance_home = m.get("instance_home")
         self.instance_identity = m.get("instance_identity")
@@ -115,6 +117,24 @@ ResultMetadata(
         # do we need/have actual_data_file?
         #
         self.actual_data_file = m.get("actual_data_file")
+
+    @property
+    def run_uuid(self) -> UUID:
+        return self._run_uuid
+
+    @run_uuid.setter
+    def run_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError("Must be a UUID")
+        self._run_uuid = u
+
+    @property
+    def run_uuid_string(self) -> str:
+        return str(self._run_uuid)
+
+    @run_uuid_string.setter
+    def run_uuid_string(self, u: str) -> None:
+        self._run_uuid = UUID(u)
 
     @property
     def named_paths_uuid(self) -> UUID:

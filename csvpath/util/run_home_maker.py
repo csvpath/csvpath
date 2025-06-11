@@ -2,8 +2,19 @@ import os
 import json
 from datetime import datetime, timezone
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.files_reference_finder import FilesReferenceFinder
-from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
+
+# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
+from csvpath.util.references.files_reference_finder_2 import (
+    FilesReferenceFinder2 as FilesReferenceFinder,
+)
+from csvpath.util.references.results_reference_finder_2 import (
+    ResultsReferenceFinder2 as ResultsReferenceFinder,
+)
+from csvpath.util.references.reference_manifest_entry_finder import (
+    ReferenceManifestEntryFinder,
+)
+
+# from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
@@ -176,11 +187,11 @@ class RunHomeMaker:
         if file_name.startswith("$"):
             ref = ReferenceParser(file_name)
             if ref.datatype == ref.FILES:
-                mani = FilesReferenceFinder(
+                mani = ReferenceManifestEntryFinder(
                     self._csvpaths, ref=ref
-                ).get_manifest_entry_for_reference()
+                ).get_file_manifest_entry_for_reference()
             elif ref.datatype == ref.RESULTS:
-                mani = ResultsReferenceFinder(
+                mani = ReferenceManifestEntryFinder(
                     self._csvpaths, name=file_name
                 ).get_file_manifest_entry_for_results_reference()
             file = mani["from"]

@@ -36,6 +36,7 @@ class RunRegistrar(Registrar, Listener):
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
         m["time"] = f"{mdata.time}"
+        m["run_uuid"] = mdata.run_uuid_string
         m["run_home"] = mdata.run_home
         m["identity"] = mdata.identity
         m["named_paths_name"] = mdata.named_paths_name

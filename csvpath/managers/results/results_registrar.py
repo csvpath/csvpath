@@ -96,6 +96,7 @@ class ResultsRegistrar(Registrar, Listener):
         m = {}
         m["time"] = mdata.time_string
         m["uuid"] = mdata.uuid_string
+        m["run_uuid"] = mdata.run_uuid_string
         m["serial"] = mdata.by_line is False
         if mdata.time_completed:
             m["time_completed"] = mdata.time_completed_string

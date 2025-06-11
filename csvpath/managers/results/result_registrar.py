@@ -33,6 +33,7 @@ class ResultRegistrar(Registrar, Listener):
     def register_start(self, mdata: Metadata) -> None:
         p = self.named_paths_manifest
         mdata.by_line = self.result.by_line
+        mdata.run_uuid = self.result.run_uuid
         mdata.manifest_path = self.manifest_path
         mdata.instance_index = self.result.run_index
         mdata.actual_data_file = self.result.actual_data_file
@@ -78,7 +79,7 @@ class ResultRegistrar(Registrar, Listener):
         #
         mdata.source_mode_preceding = self.result.source_mode_preceding
         mdata.run_home = self.result.run_dir
-        mdata.group_run_uuid = self.csvpaths.run_metadata.uuid_string
+        mdata.group_run_uuid = self.csvpaths.run_metadata.run_uuid_string
         mdata.instance_home = self.result.instance_dir
         mdata.instance_identity = self.result.identity_or_index
         mdata.instance_index = self.result.run_index
@@ -122,6 +123,7 @@ class ResultRegistrar(Registrar, Listener):
         m["named_results_name"] = mdata.named_results_name
         m["named_paths_uuid"] = mdata.named_paths_uuid_string
         m["run"] = mdata.run
+        m["run_uuid"] = mdata.run_uuid_string
         m["run_home"] = mdata.run_home
         m["instance_identity"] = mdata.instance_identity
         m["instance_index"] = mdata.instance_index

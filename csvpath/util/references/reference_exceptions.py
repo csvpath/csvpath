@@ -1,0 +1,2 @@
+class ReferenceException(Exception):
+    pass

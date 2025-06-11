@@ -3,6 +3,7 @@
 
 import os
 import traceback
+from uuid import uuid4, UUID
 from abc import ABC, abstractmethod
 from typing import List, Any
 from datetime import datetime, timezone
@@ -539,10 +540,18 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
 
         results = []
         #
+        # exp
+        # adding uuid for the run as a whole
+        run_uuid = uuid4()
+        #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, file=file
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            file=file,
+            run_uuid=run_uuid,
         )
         #
         #
@@ -558,6 +567,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_index=i,
                 run_time=self.current_run_time,
                 run_dir=crt,
+                run_uuid=run_uuid,
             )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
@@ -670,10 +680,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._last_run_dir = crt
         #
+        #
+        #
+        run_uuid = uuid4()
+        #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename
+            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
         )
         #
         #
@@ -689,6 +703,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_index=i,
                 run_time=self.current_run_time,
                 run_dir=crt,
+                run_uuid=run_uuid,
             )
             try:
                 self._load_csvpath(
@@ -773,10 +788,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._last_run_dir = crt
         #
+        #
+        #
+        run_uuid = uuid4()
+        #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename
+            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
         )
         #
         #
@@ -808,6 +827,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_index=i,
                 run_time=self.current_run_time,
                 run_dir=crt,
+                run_uuid=run_uuid,
             )
             if self._fail_all:
                 self.logger.warning(
@@ -1210,10 +1230,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname, crt: str):
         """@private"""
         #
+        #
+        #
+        run_uuid = uuid4()
+        #
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename
+            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
         )
         #
         #
@@ -1232,6 +1256,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     run_time=self.current_run_time,
                     run_dir=crt,
                     by_line=True,
+                    run_uuid=run_uuid,
                 )
                 csvpath[1] = result
                 #
