@@ -5,11 +5,6 @@ import pytest
 from datetime import datetime, timezone
 from csvpath import CsvPaths
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.files_reference_finder_2 import (
-    FilesReferenceFinder2 as FilesReferenceFinder,
-)
-
-# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
 from csvpath.util.config import Config
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu

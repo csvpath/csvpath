@@ -11,7 +11,11 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
 )
-from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
+
+# from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
+from csvpath.util.references.results_reference_finder_2 import (
+    ResultsReferenceFinder2 as ResultsReferenceFinder,
+)
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
@@ -107,8 +111,19 @@ class FileManager:
             # looking at the manifest for a run, not the named-file manifest. the
             # run manifest is just a dict, not a list of dict.
             #
-            refinder = ResultsReferenceFinder(self._csvpaths, name=name)
-            path = refinder.resolve(name, with_instance=False)
+            # removing any names three and four because we want the run manifest
+            # not an instance manifest. in results the name_three is always an
+            # instance, not a narrower of the name_one.
+            #
+            ref.name_three = None
+            ref.name_three_tokens = None
+            ref.name_four_tokens = None
+            refinder = ResultsReferenceFinder(self._csvpaths, ref=ref)
+            lst = refinder.resolve()
+            #
+            # we should be more defensive, yes?
+            #
+            path = lst[0]
             path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
@@ -150,8 +165,12 @@ class FileManager:
         if name.startswith("$"):
             ref = ReferenceParser(name)
             if ref.datatype == ref.RESULTS:
-                refinder = ResultsReferenceFinder(self._csvpaths, name=name)
-                path = refinder.resolve(name)
+                refinder = ResultsReferenceFinder(self._csvpaths, reference=name)
+                lst = refinder.resolve()
+                #
+                # what about if not found?
+                #
+                path = lst[0]
                 path = os.path.join(path, "manifest.json")
                 nos = self.nos
                 nos.path = path
@@ -168,7 +187,7 @@ class FileManager:
                 #
                 # find a file manifest by reference
                 #
-                rf = FilesReferenceFinder(self.csvpaths, name=name)
+                rf = FilesReferenceFinder(self.csvpaths, reference=name)
                 mani = rf.manifest
             else:
                 raise ValueError("Unhandled type of reference: {name}")
@@ -456,7 +475,7 @@ class FileManager:
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
         if template is not None:
-            temu.valid(template)
+            temu.valid(template, file=True)
         path = pathu.resep(path)
         #
         # path must end up with only legal filesystem chars.
@@ -606,11 +625,19 @@ class FileManager:
         if name.startswith("$"):
             ref = ReferenceParser(name)
             if ref.datatype == ref.FILES:
-                reff = FilesReferenceFinder(self._csvpaths, name=name)
-                ret = reff.resolve()
+                reff = FilesReferenceFinder(self._csvpaths, reference=name)
+                lst = reff.resolve()
+                #
+                # more defensive? what if multiple?
+                #
+                ret = lst[0]
             elif ref.datatype == ref.RESULTS:
-                reff = ResultsReferenceFinder(self._csvpaths, name=name)
-                ret = reff.resolve(name, with_instance=True)
+                reff = ResultsReferenceFinder(self._csvpaths, reference=name)
+                lst = reff.resolve()
+                #
+                # more defensive?
+                #
+                ret = lst[0]
                 ret = os.path.join(ret, "data.csv")
         else:
             if not self.has_named_file(name):

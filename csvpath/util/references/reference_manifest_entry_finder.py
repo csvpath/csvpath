@@ -35,8 +35,11 @@ class ReferenceManifestEntryFinder:
     def csvpaths(self):
         return self._csvpaths
 
-    def get_file_manifest_entry_for_results_reference(self) -> dict:
-        results = ResultsReferenceFinder(self.csvpaths).resolve(self.reference)
+    def get_file_manifest_entry_for_results_reference(self, reference=None) -> dict:
+        results = ResultsReferenceFinder(
+            self.csvpaths,
+            reference=reference if reference is not None else self.reference,
+        ).query()
         if len(results.files) > 1:
             raise ReferenceException(
                 "Expecting only one result path, not {len(results.files)}"
@@ -70,9 +73,7 @@ class ReferenceManifestEntryFinder:
                 return self.get_file_manifest_entry_for_reference(ref=ref)
             elif ref.datatype == ref.RESULTS:
                 # results ref? use this method recursively
-                return ResultsReferenceFinder(
-                    self._csvpaths, name=nfn
-                ).get_file_manifest_entry_for_results_reference()
+                return self.get_file_manifest_entry_for_results_reference(reference=nfn)
         else:
             # plain nfn? do this:
             mani = self._csvpaths.file_manager.get_manifest(nfn)

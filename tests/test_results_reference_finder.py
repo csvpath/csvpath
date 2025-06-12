@@ -6,11 +6,6 @@ from datetime import datetime
 from datetime import timedelta, timezone
 from csvpath import CsvPaths
 from csvpath.util.references.reference_parser import ReferenceParser
-
-# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
-from csvpath.util.references.files_reference_finder_2 import (
-    FilesReferenceFinder2 as FilesReferenceFinder,
-)
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
@@ -36,12 +31,16 @@ class TestResultsReferenceFinder(unittest.TestCase):
 
     def test_results_ref_finder_num_pos(self):
         paths = self.setup()
-        results1 = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+        results1 = ResultsReferenceFinder(
+            paths, reference="$food.results.:today"
+        ).query()
         print(f"test_files_ref_finder_num_pos: results1: {results1.files}")
 
         psi = len(results1)
         paths.fast_forward_paths(filename="food", pathsname="food")
-        results2 = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+        results2 = ResultsReferenceFinder(
+            paths, reference="$food.results.:today"
+        ).query()
         print(f"test_files_ref_finder_num_pos: results2: {results2.files}")
         assert psi + 1 == len(results2)
 
@@ -49,32 +48,46 @@ class TestResultsReferenceFinder(unittest.TestCase):
         paths = self.setup()
 
         i = paths.results_manager.get_number_of_results("food")
-        results = ResultsReferenceFinder(paths).resolve("$food.results.:today:last")
+        results = ResultsReferenceFinder(
+            paths, reference="$food.results.:today:last"
+        ).query()
         results1 = results.files[0]
         iminus = i - 1
-        chk = ResultsReferenceFinder(paths).resolve(f"$food.results.:{iminus}")
+        chk = ResultsReferenceFinder(
+            paths, reference=f"$food.results.:{iminus}"
+        ).query()
         chk = results.files[0]
         assert results1 == chk
 
         paths.fast_forward_paths(filename="food", pathsname="food")
 
-        results = ResultsReferenceFinder(paths).resolve("$food.results.:today:last")
+        results = ResultsReferenceFinder(
+            paths, reference="$food.results.:today:last"
+        ).query()
         results2 = results.files[0]
         assert results1 != results2
-        chk = ResultsReferenceFinder(paths).resolve(f"$food.results.:{i}")
+        chk = ResultsReferenceFinder(paths, reference=f"$food.results.:{i}").query()
         chk = results.files[0]
         assert results2 == chk
 
         last = (
-            ResultsReferenceFinder(paths).resolve("$food.results.:today:last").files[0]
+            ResultsReferenceFinder(paths, reference="$food.results.:today:last")
+            .query()
+            .files[0]
         )
         assert results2 == last
-        files = ResultsReferenceFinder(paths).resolve("$food.results.:today").files
+        files = (
+            ResultsReferenceFinder(paths, reference="$food.results.:today")
+            .query()
+            .files
+        )
         assert results1 in files
         assert results1 == files[-2]
         index1 = files.index(results1)
         index2 = files.index(
-            ResultsReferenceFinder(paths).resolve("$food.results.:today:first").files[0]
+            ResultsReferenceFinder(paths, reference="$food.results.:today:first")
+            .query()
+            .files[0]
         )
         assert index2 <= index1
         assert index2 == 0
@@ -83,7 +96,7 @@ class TestResultsReferenceFinder(unittest.TestCase):
         paths = self.setup()
         starting = 0
         try:
-            ps = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+            ps = ResultsReferenceFinder(paths, reference="$food.results.:today").query()
             starting = len(ps)
         except Exception:
             # we get here if this test is run stand-alone
@@ -94,7 +107,7 @@ class TestResultsReferenceFinder(unittest.TestCase):
         #
         # should have three more results
         #
-        ps = ResultsReferenceFinder(paths).resolve("$food.results.:today")
+        ps = ResultsReferenceFinder(paths, reference="$food.results.:today").query()
         plusthree = len(ps)
         assert plusthree == starting + 3
         #

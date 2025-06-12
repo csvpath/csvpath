@@ -70,7 +70,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         paths = self.setup()
         #
         ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         assert finder.ref.reference == ref
         assert isinstance(finder._ref, ReferenceParser)
         assert finder._ref.root_major == "food"
@@ -83,13 +83,13 @@ class TestFilesReferenceFinder(unittest.TestCase):
     def test_b_files_ref_finder_fingerprint(self):
         paths = self.setup()
         ref = "$food.files.:today:first"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         assert finder.manifest is not None
         assert len(finder.manifest) >= 1
         f = finder.manifest[0]["fingerprint"]
         ref = f"$food.files.{f}"
         print(f"reference is: {ref}")
-        results = FilesReferenceFinder(paths, name=ref).query()
+        results = FilesReferenceFinder(paths, reference=ref).query()
         assert results is not None
         assert results.files is not None
         assert len(results.files) == 1
@@ -98,7 +98,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
     def test_b_files_ref_finder_complete_date_string(self):
         paths = self.setup()
         ref = "$food.files.2025-02-26_01-01"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         s = finder.ref.name_one
         # s = finder._complete_date_string(s)
         s = DateCompleter.get(s)
@@ -107,7 +107,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         assert isinstance(dat, datetime.datetime)
 
         ref = "$food.files.2025-02"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         s = finder.ref.name_one
         # s = finder._complete_date_string(s)
         s = DateCompleter.get(s)
@@ -116,7 +116,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         assert isinstance(dat, datetime.datetime)
 
         ref = "$food.files.2025-"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         s = finder.ref.name_one
         # s = finder._complete_date_string(s)
         s = DateCompleter.get(s)
@@ -129,7 +129,7 @@ class TestFilesReferenceFinder(unittest.TestCase):
         # in the rewrite of files ref finder we ended up with a tool that doesn't fit this test
         # however, the tool mainly relies on daut so we can test that level instead.
         # ref = "$food.files.2025-02-26_01-01"
-        # finder = FilesReferenceFinder(paths, name=ref)
+        # finder = FilesReferenceFinder(paths, reference=ref)
         #
         today = datetime.datetime.today().astimezone(timezone.utc)
         two_days_ago = today - timedelta(days=2)

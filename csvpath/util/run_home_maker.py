@@ -13,8 +13,6 @@ from csvpath.util.references.results_reference_finder_2 import (
 from csvpath.util.references.reference_manifest_entry_finder import (
     ReferenceManifestEntryFinder,
 )
-
-# from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
@@ -94,8 +92,14 @@ class RunHomeMaker:
                     # structuring the results in the archive; whereas, a source-mode:preceding
                     # data.csv file doesn't have that meaningfulness.
                     #
-                    refinder = ResultsReferenceFinder(self._csvpaths, name=filename)
-                    mpath = refinder.resolve(filename)
+                    refinder = ResultsReferenceFinder(
+                        self._csvpaths, reference=filename
+                    )
+                    lst = refinder.resolve()
+                    #
+                    # should we be more defensive?
+                    #
+                    mpath = lst[0]
                     mpath = os.path.join(mpath, "manifest.json")
                     nos = Nos(mpath)
                     if nos.exists():
@@ -207,8 +211,7 @@ class RunHomeMaker:
         suffix = ""
         prefix = ""
         if template is not None and template.strip() != "":
-            if not temu.valid(template):
-                raise ValueError(f"Invalid template: {template}")
+            temu.valid(template)
             suffix = temu.get_template_suffix(template=template)
             i = template.find(":run_dir")
             prefix = template[0:i]

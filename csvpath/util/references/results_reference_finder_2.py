@@ -20,11 +20,18 @@ from csvpath.util.references.results_tools.yesterday_or_today_translator import 
 
 
 class ResultsReferenceFinder2:
+
     # csvpaths == csvpaths:"CsvPaths" which is disallowed by flake
-    def __init__(self, csvpaths) -> None:
-        self._csvpaths = csvpaths
-        self._ref = None
+    def __init__(
+        self, csvpaths, *, ref: ReferenceParser = None, reference: str = None
+    ) -> None:
         self.reference: str = None
+        self._csvpaths = csvpaths
+        self._ref = ref
+        if reference is not None:
+            if ref is not None:
+                raise ValueError("Cannot provide both ref and name")
+            self._ref = ReferenceParser(reference)
 
     @property
     def ref(self) -> ReferenceParser:
@@ -35,18 +42,22 @@ class ResultsReferenceFinder2:
     def csvpaths(self):
         return self._csvpaths
 
-    def resolve(self, refstr: str) -> ReferenceResults:
-        self.reference = refstr
-        #
-        # translate yesterday and today
-        #
-        if refstr.find("yesterday") > -1 or refstr.find("today") > -1:
-            return YesterdayOrTodayTranslator.update(finder=self, refstr=refstr)
-        # print(f"ResultsRefFinder: resolve: 1")
-        #
-        #
-        #
-        self._ref = ReferenceParser(refstr)
+    def resolve(self) -> list:
+        lst = self.query().files
+        return lst
+
+    def query(self) -> ReferenceResults:
+        if self.ref is None:
+            refstr = self.reference
+            #
+            # translate yesterday and today
+            #
+            if refstr.find("yesterday") > -1 or refstr.find("today") > -1:
+                return YesterdayOrTodayTranslator.update(finder=self, refstr=refstr)
+            #
+            #
+            #
+            self._ref = ReferenceParser(refstr)
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         #
         # find possibles based on path, date, index
@@ -61,8 +72,8 @@ class ResultsReferenceFinder2:
         # 2. path. with templates the path to the run dir can vary
         # 3. date string
         #
-        # print(f"ResultsRefFinder: resolve: 3: results: {len(results)}")
         PathFilter.update(results)
+        # print(f"ResultsRefFinder: resolve: 3: results: {len(results)}")
         #
         # checking for date in name_one
         #
@@ -79,7 +90,7 @@ class ResultsReferenceFinder2:
         # print(f"ResultsRefFinder: resolve: 6: results: {len(results)}")
         if self.ref.name_three is not None:
             IdentityFinder.update(results=results)
-            # print(f"ResultsRefFinder: resolve: 7: results: {len(results)}")
+            print(f"ResultsRefFinder: resolve: 7: results: {len(results)}")
             DataFinder.update(results=results)
         #
         # point to output file

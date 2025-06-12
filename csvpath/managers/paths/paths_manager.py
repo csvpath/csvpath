@@ -259,6 +259,9 @@ class PathsManager:
         append: bool = False,
     ) -> None:
         if template is not None:
+            #
+            # this will raise an error. if that's a problem use temu.validate
+            #
             temu.valid(template)
         if from_file is not None:
             #
@@ -435,10 +438,10 @@ class PathsManager:
             return ""
         config = definition["_config"]
         if name not in config:
-            return ""
+            return None
         template = config[name].get("template")
         if template is None:
-            return ""
+            return None
         return template
 
     def store_template_for_paths(self, name: NamedPathsName, template: str) -> None:

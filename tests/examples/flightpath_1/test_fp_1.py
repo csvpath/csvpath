@@ -16,7 +16,7 @@ class TestFlightPathRefs(unittest.TestCase):
             "inputs", "files", "tests/examples/flightpath_1/references"
         )
         ref = "$test.files.tms_bars4:all"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         res = finder.resolve()
         assert res
         assert isinstance(res, list)
@@ -30,7 +30,7 @@ class TestFlightPathRefs(unittest.TestCase):
             "inputs", "files", "tests/examples/flightpath_1/references"
         )
         ref = "$test.files.2025-05-10:before"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         res = finder.resolve()
         assert res
         assert isinstance(res, list)
@@ -44,7 +44,7 @@ class TestFlightPathRefs(unittest.TestCase):
             "inputs", "files", "tests/examples/flightpath_1/references"
         )
         ref = "$test.files.tms_bars4:all.2025-05-10:before"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         res = finder.resolve()
         assert res
         assert isinstance(res, list)
@@ -58,7 +58,7 @@ class TestFlightPathRefs(unittest.TestCase):
             "inputs", "files", "tests/examples/flightpath_1/references"
         )
         ref = "$test.files.2025-05-10_02-00-00:before"
-        finder = FilesReferenceFinder(paths, name=ref)
+        finder = FilesReferenceFinder(paths, reference=ref)
         res = finder.resolve()
         assert res
         assert isinstance(res, list)

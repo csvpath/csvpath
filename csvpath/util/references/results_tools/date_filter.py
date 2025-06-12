@@ -77,7 +77,13 @@ class DateFilter:
         return None
 
     @classmethod
-    def according_to_limit(cls, results, first: datetime, last: datetime) -> None:
+    def according_to_limit(
+        cls, results, first: datetime, last: datetime, filter=False
+    ) -> None:
+        #
+        # if filter is true, only select what to keep from results; otherwise
+        # add from manifest to results
+        #
         if first is None and last is None:
             # not doing everything here atm
             raise ValueError("First and last cannot both be None")
@@ -92,18 +98,26 @@ class DateFilter:
             # of today is within and the zeroth minute of tomorrow is
             # outside
             #
-
             dat = dat.astimezone(timezone.utc) if dat else None
             last = last.astimezone(timezone.utc) if last else None
             first = first.astimezone(timezone.utc) if first else None
-
+            add = False
             if last is not None and dat < last:
-                reals.append(_["run_home"])
+                add = True
             elif first is not None and dat >= first:
-                reals.append(_["run_home"])
+                add = True
             elif first <= dat < last:
+                add = True
+            if add:
                 reals.append(_["run_home"])
-        results.files = reals
+        if filter:
+            fs = []
+            for _ in results.files:
+                if _ in reals:
+                    fs.append(_)
+            results.files = fs
+        else:
+            results.files = reals
 
     @classmethod
     def everything_before(cls, results, name_or_token: str) -> None:
