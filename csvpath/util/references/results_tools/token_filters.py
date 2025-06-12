@@ -55,13 +55,13 @@ class TokenFilters:
             end = datetime.datetime.now(timezone.utc)
             end = cls.first_moment(end)
             begin = end - timedelta(days=1)
-            DateFilter.according_to_limit(results, begin, end)
+            DateFilter.according_to_limit(results, begin, end, filter=True)
             return
         if token == "today":
             begin = datetime.datetime.now(timezone.utc)
             begin = cls.first_moment(begin)
             end = begin + timedelta(days=1)
-            DateFilter.according_to_limit(results, begin, end)
+            DateFilter.according_to_limit(results, begin, end, filter=True)
             return
         if token == "first":
             results.files = [results.files[0]]
@@ -77,7 +77,7 @@ class TokenFilters:
             end = DateFilter.to_date(token[0])
             end = cls.first_moment(end)
             end = end + timedelta(days=1)
-            DateFilter.according_to_limit(results, begin, end)
+            DateFilter.according_to_limit(results, begin, end, filter=True)
             return
         if DateFilter.is_date(token):
             begin = DateFilter.to_date(token)
@@ -90,7 +90,7 @@ class TokenFilters:
             else:
                 begin = cls.first_moment(begin)
                 end = begin + timedelta(days=1)
-                DateFilter.according_to_limit(results, begin, end)
+                DateFilter.according_to_limit(results, begin, end, filter=True)
             return
         #
         # see if we have an index. if we have just one index we'll

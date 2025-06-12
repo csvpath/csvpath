@@ -10,8 +10,6 @@ from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.references.reference_parser import ReferenceParser
-
-# from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
@@ -28,6 +26,7 @@ from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
 from .result import Result
 from .result_file_reader import ResultFileReader
+from csvpath.util.template_util import TemplateUtility as temu
 
 
 class ResultsManager:  # pylint: disable=C0115
@@ -460,13 +459,13 @@ class ResultsManager:  # pylint: disable=C0115
         #
         ref = ReferenceParser(name)
         if ref.datatype == ref.RESULTS:
-            reff = ResultsReferenceFinder(self.csvpaths)
+            reff = ResultsReferenceFinder(self.csvpaths, reference=name)
             #
             # we don't need the finder to identify the instance. we'll do
             # ourselves. which is helpful if we're using name_four. the
             # suffix is a nagging worry.
             #
-            results = reff.resolve(name)
+            results = reff.query()
             #
             # name = the named-paths / named-results name
             # run = the path to run_dir minus the archive/name root
@@ -546,6 +545,17 @@ class ResultsManager:  # pylint: disable=C0115
         # find the template. it comes from the named-paths so from the named-paths mgr
         #
         template = self._csvpaths.paths_manager.get_template_for_paths(name)
+        if template is not None and not template == "":
+            temu.valid(template)
+        else:
+            template = ""
+        #
+        # we should check here to make sure the template ends with :run_dir. that is a
+        # requirement as of June 2025. it is basically the same as :filename in named-files
+        # templates. originally there could be additional directories below :run_dir, but
+        # that makes trouble with the new grammar-based refs and in any case was always
+        # pretty illogical.
+        #
         #
         # "top" of template. inserted dirs
         #

@@ -35,7 +35,7 @@ class TemplateUtility:
         return None
 
     @classmethod
-    def find_template(self, csvpaths, ref: str) -> str:
+    def find_template(cls, csvpaths, ref: str) -> str:
         ref = ReferenceParser(ref)
         paths = ref.root_major
         #
@@ -45,7 +45,13 @@ class TemplateUtility:
         return t
 
     @classmethod
-    def valid(self, template: str) -> bool:
+    def valid(cls, template: str, file: bool = False) -> None:
+        v, r = cls.validate(template, file=file)
+        if not v:
+            raise ValueError(r)
+
+    @classmethod
+    def validate(cls, template: str, file: bool = False) -> tuple[bool, str]:
         #
         # removed the windows \\ rules because we cannot assume a dev using windows
         # works in a purely windows env. may need to convert seps in some step.
@@ -53,44 +59,47 @@ class TemplateUtility:
         #
         # cannot be empty
         #
+        if template is None:
+            return (True, "No template")
         if template is None or template.strip() == "":
-            return False
+            return (False, "Templates cannot be the empty string")
         #
-        # must have '/:run_dir/'
+        # must end in '/:run_dir'. this is a change from the orig which just required
+        # a run_dir. now we require it to be the end of the template.
         #
-        t = len(template)
-        r = template.find(":run_dir")
-        if r == -1:
-            return False
+        e = ":filename" if file else ":run_dir"
+        if not template.endswith(e):
+            return (False, f"Must end in {e}")
+        #
+        # if r == -1:
+        #    return False
         #
         # cannot start or end with path separators
         #
-        if template.startswith("/") or template.endswith("/"):
-            return False
+        if template.startswith("/"):
+            return (False, "Cannot start with a slash")
         #
-        # must have path separators around :run_dir or beginning or end of template
+        # must have path separators before :run_dir
         #
-        if r != 0 and template[r - 1] != "/":
-            return False
-        if r + 9 <= t and template[r + 8] != "/":
-            return False
+        r = template.find(e)
+        if r == 0:
+            return (False, f"Cannot start with {e}")
+        if template[r - 1] != "/":
+            return (False, f"{e} must follow a path separator")
         #
-        # cannot use both '/' and '\\'
         #
-        # if template.find("/") > -1 and template.find("\\") > -1:
+        #
         if template.find("\\") > -1:
-            return False
+            return (False, "Templates use forward-slash path separators")
         #
-        # remove run_dir for remaining tests
+        # remove run_dir or filename for remaining tests
         #
-        t2 = None
-        t2 = template.replace("/:run_dir/", "/")
-        t2 = t2.rstrip("/:run_dir")
+        t2 = template.rstrip(f"/{e}")
         #
-        # cannot be just ":run_dir"
+        # cannot be just ":run_dir". covered this above, no?
         #
         if t2 == "/" or t2.strip() == "":
-            return False
+            return (False, "Cannot be solely {e}")
         #
         # index pointers must be the only other uses of colon and
         # must have 1 or 2 integers, not 3
@@ -104,7 +113,7 @@ class TemplateUtility:
                     return False
                 ns = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
                 if t2[i + 1] not in ns:
-                    return False
+                    return (False, "Colon-led tokens must be numbers or :run_dir")
                 try:
                     if t2[i + 2] in ns and t2[i + 3] in ns:
                         return False
@@ -114,11 +123,11 @@ class TemplateUtility:
             # no illegal chars
             #
             elif c in ["[", "]", "?", "!", "{", "}", "#", "`", ".", "(", ")"]:
-                return False
+                return (False, "Illegal character")
             #
             # cannot begin or end in '/' or have double slashes
             #
             elif c == "/":
                 if t2[i + 1] == "/":
-                    return False
-        return True
+                    return (False, "Cannot have leading or double-slashes")
+        return (True, "Good template")

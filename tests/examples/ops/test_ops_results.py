@@ -207,9 +207,10 @@ class TestResultsOps(unittest.TestCase):
             #
             psi = 0
             try:
-                results = ResultsReferenceFinder(paths).resolve(
-                    "$clean-invoices.results.acme/invoices/2025/Feb"
+                finder = ResultsReferenceFinder(
+                    paths, reference="$clean-invoices.results.acme/invoices/2025/Feb"
                 )
+                results = finder.query()
                 psi = len(results)
             except Exception:
                 ...

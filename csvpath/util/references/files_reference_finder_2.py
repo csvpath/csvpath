@@ -13,19 +13,19 @@ from .files_tools.manifest_order import ManifestOrder
 class FilesReferenceFinder2:
     # csvpaths: "CsvPaths" due to flake
     def __init__(
-        self, csvpaths, *, ref: ReferenceParser = None, name: str = None
+        self, csvpaths, *, ref: ReferenceParser = None, reference: str = None
     ) -> None:
         self._csvpaths = csvpaths
-        self._name = name
+        self.reference = reference
         self._ref = None
-        if self._name is not None:
+        if self.reference is not None:
             if ref is not None:
                 raise ValueError("Cannot provide both ref and name")
-            self._ref = ReferenceParser(name)
+            self._ref = ReferenceParser(reference)
         if self._ref is None:
             self._ref = ref
-        if name is None:
-            self._name = ref.ref_string
+        if reference is None:
+            self.reference = ref.ref_string
 
     @property
     def ref(self) -> ReferenceParser:
@@ -41,24 +41,6 @@ class FilesReferenceFinder2:
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         mani = results.manifest
         return mani
-
-    #
-    # used by results reference finder and run home maker
-    #
-    """
-    def get_manifest_entry_for_reference(self) -> dict:
-        results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
-        mani = results.manifest
-        file = self.resolve()
-        if isinstance(file, list):
-            file = file[len(file) - 1]
-        for _ in mani:
-            if file == _["file"]:
-                return _
-        raise ValueError(
-            f"Cannot match reference {self.ref._ref_string} pointing to file {file} to a manifest entry"
-        )
-    """
 
     def resolve(self) -> list:
         lst = self.query().files
