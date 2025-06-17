@@ -87,6 +87,14 @@ class ReferenceParser:
         """
 
     @property
+    def next(self) -> list[str]:
+        return self._next
+
+    @next.setter
+    def next(self, ns: list[str]) -> None:
+        self._next = ns
+
+    @property
     def reference(self) -> str:
         return self._reference
 
@@ -251,7 +259,7 @@ class ReferenceParser:
             self._names[0] = None
             self._names[1] = None
             return
-        i = n.find("#")
+        i = f"{n}".find("#")
         if i > -1:
             self._names[0] = n[0:i]
             self._names[1] = n[i + 1 :]

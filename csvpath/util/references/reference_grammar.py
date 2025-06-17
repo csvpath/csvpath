@@ -28,7 +28,7 @@ REFERENCE_GRAMMAR = r"""
     csvpath_reference:   "$."    local_type            local_name_one ("." local_name_two)?
     variables_reference: "$."    local_type            local_name_one ("." local_name_two)?
     metadata_reference:  "$."    local_type            local_name_one ("." local_name_two)?
-    headers_reference:   "$."    local_type            header_name
+    headers_reference:   "$."    headers_type          header_name ("." local_name_two)?
 
     //========================================
 
@@ -229,12 +229,15 @@ REFERENCE_GRAMMAR = r"""
     //========================================
 
 
-    local_name_one: header_name
-                  | IDENTIFIER
+    local_name_one: IDENTIFIER
+    //local_name_one: header_name
+    //              | IDENTIFIER
+
     local_name_two: IDENTIFIER
     instance_name: IDENTIFIER
     fingerprint: HASH
-    header_name: "'"? IDENTIFIER "'"? | INTEGER
+    //header_name: "'"? IDENTIFIER "'"? | INTEGER
+    header_name: HEADER_IDENTIFIER
     //
     //instance_tokens: unmatched
     //               | data
@@ -297,9 +300,9 @@ REFERENCE_GRAMMAR = r"""
     root_minor_name: IDENTIFIER
     path: PATH_SEGMENT ("/" PATH_SEGMENT?)*
 
-
     // Terminals - PATH_SEGMENT now excludes dots to enforce two-dot limit
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_# \-]*/
+    HEADER_IDENTIFIER:  "'"? /[a-zA-Z0-9][a-zA-Z0-9_# \-\|+\? \[\]]*/ "'"?
     PATH_SEGMENT: /[a-zA-Z0-9_\- #]+/
 
     HASH: /[abcdef0-9]{64}/
@@ -333,6 +336,7 @@ class QueryParser:
         """Parse a CsvPath query string and return structured representation"""
         if self.ref is None:
             raise RuntimeError("A reference object must be available for parsing")
+        """
         try:
             result = self.parser.parse(query)
             ReferenceTransformer(self.ref).transform(result)
@@ -341,6 +345,10 @@ class QueryParser:
             # from csvpath.util.log_utility import LogUtility
             # LogUtility.log_brief_trace()
             raise ValueError(f"Failed to parse query '{query}': {e}")
+        """
+        result = self.parser.parse(query)
+        ReferenceTransformer(self.ref).transform(result)
+        return self.ref
 
     def validate_query(self, query: str) -> bool:
         try:
