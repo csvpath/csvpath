@@ -142,10 +142,13 @@ class TestFileOps(unittest.TestCase):
         # date filter *
         #
         d = datetime.now().astimezone(timezone.utc)
-        reference = f"$invoices.files.acme/2025:all.:{d.strftime('%Y-%m-%d')}:after"
+        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
+        print(f"reference: {reference}")
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
         lst2 = finder.resolve()
+        for _ in lst2:
+            print(f"  _: {_}")
         assert lst2 is not None
         assert isinstance(lst2, list)
         assert len(lst2) == 5
@@ -154,9 +157,11 @@ class TestFileOps(unittest.TestCase):
     def test_reference_2_filename_match_08(self):
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:first"
+        ref = None
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
         lst2 = finder.resolve()
+        print(f"ref.seq: {ref.sequence}")
         assert lst2 is not None
         assert isinstance(lst2, list)
         assert len(lst2) == 1
@@ -201,7 +206,7 @@ class TestFileOps(unittest.TestCase):
         assert lst2[0].find("Jan") > -1
 
     def test_reference_2_filename_match_12(self):
-        reference = "$invoices.files.:yesterday:all"
+        reference = "$invoices.files.:yesterday"
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
         lst2 = finder.resolve()

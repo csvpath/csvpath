@@ -811,14 +811,15 @@ class PathsManager:
         # good way to go. if the writer bothered to identify, the id is more specific than
         # the index and so less error-prone.
         #
+        print("")
         index = expu.to_int(identity)
         if npn is not None:
             paths = self.get_identified_paths_in(npn)
             for i, path in enumerate(paths):
-                if path[0] == identity or (path[0] is None and index == i):
+                if path[0] == identity or index == i:
                     return path[1]
         raise InputException(
-            f"Path identified as '{identity}' must be in the group identitied as '{npn}'"
+            f"Csvpath identified as '{identity}' must be in the group identitied as '{npn}'"
         )
 
     def _name_from_name_part(self, name):

@@ -1,7 +1,7 @@
 import datetime
 from datetime import timedelta, timezone
 from csvpath.util.references.reference_results import ReferenceResults
-from csvpath.util.references.files_tools.date_completer import DateCompleter
+from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 

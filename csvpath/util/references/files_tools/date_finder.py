@@ -1,7 +1,7 @@
 import datetime
 from datetime import timedelta, timezone
 from csvpath.util.references.reference_results import ReferenceResults
-from csvpath.util.references.files_tools.date_completer import DateCompleter
+from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.util.references.files_tools.range_finder import RangeFinder
 
 
@@ -38,7 +38,6 @@ class DateFinder:
             #
             s = DateCompleter.get(name)
             dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
-            print(f"date finder: dat: {dat}")
             #
             # this is an interesting point because what we do depends on pointers
             # and may have been different intentions at different times. today --

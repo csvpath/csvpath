@@ -6,15 +6,24 @@ from csvpath.util.references.reference_results import ReferenceResults
 
 class DayFinder:
     @classmethod
-    def update(cls, results: ReferenceResults, tokens: list[str], token: str) -> None:
+    def update(cls, results: ReferenceResults, tokens: list[str], token: str) -> bool:
         files = results.files
         lst = cls.get(results, tokens, token)
+        if lst == []:
+            return False
         remove = []
         for _ in files:
             if _ not in lst:
                 remove.append(_)
         for _ in remove:
             files.remove(_)
+        #
+        # day finder consumes the 2nd token. e.g. today:1 or today:last are both
+        # handled at the same time. we get two tokens. that means after dayfinder
+        # we're done.
+        #
+        tokens.clear()
+        return True
 
     @classmethod
     def get(cls, results, tokens: list[str], token: str) -> list[str]:
@@ -22,7 +31,7 @@ class DayFinder:
         # takes :first, :last, :all, :<index>
         #
         if not cls._is_day(token):
-            return
+            return []
         dat = None
         if token == "today":
             dat = datetime.datetime.now(timezone.utc)
