@@ -52,10 +52,24 @@ class ReferenceParser:
         self._name_two_tokens = []
         self._name_three_tokens = []
         self._name_four_tokens = []
+        #
+        # exp!!
+        # self.next holds hints for what more you could do with this query
+        # e.g. $agroup.results.2025-01:after would return:
+        #   :index, :first, :last
+        #   .datetime
+        # if the query changed to $agroup.results.2025-01:after:10 the return would be:
+        #   .csvpath name
+        #
+        self._next = []
+        #
+        #
+        #
         self._marker = None
         self._separator = None
         self._reference = string
         self.parser = None
+        self.sequence = []
         if string is not None:
             self.parser = QueryParser(ref=self)
             self.parser.parse(self._reference)
@@ -224,7 +238,7 @@ class ReferenceParser:
 
     @property
     def name_one(self) -> str:
-        return self._names[0]
+        return self._names[0] if len(self._names) > 0 else None
 
     @name_one.setter
     def name_one(self, n: str) -> str:
@@ -255,11 +269,11 @@ class ReferenceParser:
 
     @property
     def name_two(self) -> str:
-        return self._names[1]
+        return self._names[1] if len(self._names) > 1 else None
 
     @property
     def name_three(self) -> str:
-        return self._names[2]
+        return self._names[2] if len(self._names) > 2 else None
 
     @name_three.setter
     def name_three(self, n: str) -> str:
@@ -278,7 +292,7 @@ class ReferenceParser:
 
     @property
     def name_four(self) -> str:
-        return self._names[3]
+        return self._names[3] if len(self._names) > 3 else None
 
     @classmethod
     def find_int_token(cls, tokens: list) -> int | None:
@@ -291,6 +305,17 @@ class ReferenceParser:
                 ...
         return None
 
+    def get_range_from_tokens(self, tokens) -> str:
+        range = None
+        range = "today" if "today" in tokens else None
+        range = "yesterday" if "yesterday" in tokens else range
+        range = "all" if "all" in tokens else range
+        range = "from" if "from" in tokens else range
+        range = "to" if "to" in tokens else range
+        range = "after" if "after" in tokens else range
+        range = "before" if "before" in tokens else range
+        return range
+
     #
     # adds a string or a list[str] of tokens. each string will
     # be parsed for additional tokens. i.e. all:yesterday:first
@@ -300,9 +325,15 @@ class ReferenceParser:
     def _add_tokens(self, ts: list, t: str | list) -> None:
         if t is None:
             return
+        if isinstance(t, str):
+            t = t.strip()
+        if t == "":
+            return
         if not isinstance(t, list):
             t = [t]
         for s in t:
+            if not isinstance(s, str):
+                raise ValueError(f"Cannot add token {s}")
             s = s.lstrip(":")
             i = s.find(":")
             if i == -1:
@@ -320,6 +351,18 @@ class ReferenceParser:
         if self._name_one_tokens is None:
             self._name_one_tokens = []
         self._add_tokens(self._name_one_tokens, t)
+
+    def append_name_one_token(self, t: str) -> None:
+        self._add_tokens(self.name_one_tokens, t)
+
+    def append_name_two_token(self, t: str) -> None:
+        self._add_tokens(self.name_two_tokens, t)
+
+    def append_name_three_token(self, t: str) -> None:
+        self._add_tokens(self.name_three_tokens, t)
+
+    def append_name_four_token(self, t: str) -> None:
+        self._add_tokens(self.name_four_tokens, t)
 
     @property
     def name_two_tokens(self) -> list:

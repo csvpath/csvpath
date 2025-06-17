@@ -3,14 +3,8 @@ from typing import Union, Optional, List, Any
 from dataclasses import dataclass
 
 from lark import Lark, Transformer, v_args, Tree, Token
+from csvpath.util.references.reference_transformer import ReferenceTransformer
 
-#
-# open questions:
-#  - should we support # in names one and three?
-#  - if we support # how do tokens work?
-#  - non_local_reference type "reference" is set to "variable" in the transformer. is this long-term?
-#  - should we limit tokens by type? e.g. csvpaths type takes :from and :to but not :today and :yesterday
-#
 
 REFERENCE_GRAMMAR = r"""
     ?start: reference
@@ -27,19 +21,16 @@ REFERENCE_GRAMMAR = r"""
                    | variables_reference
                    | metadata_reference
 
-    file_reference:      "$" root_name non_local_type name_one ("." name_two)?
-    csvpaths_reference:  "$" root_name non_local_type name_one ("." name_two)?
-    results_reference:   "$" root_name non_local_type name_one ("." name_two)?
-    reference_reference: "$" root_name non_local_type name_one ("." name_two)?
-    csvpath_reference:   "$."    local_type           local_name_one ("." local_name_two)?
-    variables_reference: "$."    local_type           local_name_one ("." local_name_two)?
-    metadata_reference:  "$."    local_type           local_name_one ("." local_name_two)?
-    headers_reference:   "$."    local_type           header_name
+    file_reference:      "$" root_name  files_type     files_names
+    results_reference:   "$" root_name  results_type   results_names
+    csvpaths_reference:  "$" root_name  csvpaths_type  csvpaths_names
+    reference_reference: "$" root_names reference_type reference_names
+    csvpath_reference:   "$."    local_type            local_name_one ("." local_name_two)?
+    variables_reference: "$."    local_type            local_name_one ("." local_name_two)?
+    metadata_reference:  "$."    local_type            local_name_one ("." local_name_two)?
+    headers_reference:   "$."    local_type            header_name
 
-    non_local_type: files_type
-                  | csvpaths_type
-                  | results_type
-                  | reference_type
+    //========================================
 
     local_type: csvpath_type
               | headers_type
@@ -55,24 +46,200 @@ REFERENCE_GRAMMAR = r"""
     variables_type: "variables."
     metadata_type: "metadata."
 
-    name_one: fingerprint
-            | path? tokens?
-            | DATETIME? tokens?
+    //========================================
+    //
 
-    name_two: path? tokens?
-            | DATETIME? tokens?
+    files_names: files_fingerprint
+               | files_arrival
+               | files_arrival files_arrival_ordinal
+               | files_arrival files_arrival_range
+               | files_arrival files_arrival_range files_arrival_range_ordinal
+               | files_arrival files_arrival_range ("." files_arrival_two_arrival) files_arrival_two_arrival_range
+               | files_arrival files_arrival_range ("." files_arrival_two_arrival) files_arrival_two_arrival_range files_arrival_two_arrival_range_ordinal
 
-    local_name_one: path? tokens?
-                  | DATETIME? tokens?
+               | files_path
+               | files_path files_path_ordinal
+               | files_path files_path_range
+               | files_path files_path_range files_path_range_ordinal
+               | files_path files_path_range
+               | files_path files_path_range ("." files_path_range_arrival) files_path_range_arrival_range
+               | files_path files_path_range ("." files_path_range_arrival) files_path_range_arrival_range files_path_range_arrival_range_ordinal
+               | files_path files_path_range ("." files_path_range_arrival) files_path_range_arrival_ordinal
+               | files_path files_path_arrival
+               | files_path files_path_arrival files_path_arrival_ordinal
+               | files_path files_path_arrival files_path_arrival_range
+               | files_path files_path_arrival files_path_arrival_range ("." ":"? files_path_two_arrival) files_path_two_arrival_range
+               | files_path files_path_arrival files_path_arrival_range files_path_arrival_range_ordinal
+               | files_path ("." files_path_two_arrival)
+               | files_path ("." files_path_two_arrival) files_path_two_arrival_range
+               | files_path ("." files_path_two_arrival) files_path_two_arrival_range files_path_two_arrival_range_ordinal
+               | files_path ("." files_path_two_arrival) files_path_two_arrival_ordinal
 
-    local_name_two: path? tokens?
-                  | DATETIME? tokens?
+               | files_ordinal
+               | files_range
+               | files_range files_range_ordinal
 
+    results_names: run_date
+                 | run_date ("." run_date_instance)
+                 | run_date ("." run_date_instance) run_date_instance_data
+                 | run_date ("." run_date_instance) run_date_instance_unmatched
+
+                 | run_date run_date_ordinal
+                 | run_date run_date_ordinal ("." run_date_ordinal_instance)
+                 | run_date run_date_ordinal ("." run_date_ordinal_instance) run_date_ordinal_instance_data
+                 | run_date run_date_ordinal ("." run_date_ordinal_instance) run_date_ordinal_instance_unmatched
+
+                 | run_date run_date_range
+                 | run_date run_date_range run_date_range_ordinal
+                 | run_date run_date_range run_date_range_ordinal ("." run_date_range_ordinal_instance)
+                 | run_date run_date_range run_date_range_ordinal ("." run_date_range_ordinal_instance) run_date_range_ordinal_instance_data
+                 | run_date run_date_range run_date_range_ordinal ("." run_date_range_ordinal_instance) run_date_range_ordinal_instance_unmatched
+                 | run_date run_date_range ("." run_date_range_date) run_date_range_date_range
+                 | run_path
+
+                 | run_path run_path_ordinal
+                 | run_path run_path_ordinal ("." run_path_ordinal_instance)
+                 | run_path run_path_ordinal ("." run_path_ordinal_instance) run_path_ordinal_instance_data
+                 | run_path run_path_ordinal ("." run_path_ordinal_instance) run_path_ordinal_instance_unmatched
+
+                 | run_path run_path_date
+                 | run_path run_path_date run_path_date_range
+                 | run_path run_path_date run_path_date_range ("." run_path_date_range_date)  run_path_date_range_date_range
+                 | run_path run_path_date run_path_date_ordinal
+                 | run_path run_path_date run_path_date_ordinal ("." run_path_date_ordinal_instance)
+                 | run_path run_path_date run_path_date_ordinal ("." run_path_date_ordinal_instance) run_path_date_ordinal_instance_data
+                 | run_path run_path_date run_path_date_ordinal ("." run_path_date_ordinal_instance) run_path_date_ordinal_instance_unmatched
+
+                 | run_path run_path_range
+                 | run_path run_path_range run_path_range_ordinal
+                 | run_path run_path_range run_path_range_ordinal ("." run_path_range_ordinal_instance)
+                 | run_path run_path_range run_path_range_ordinal ("." run_path_range_ordinal_instance) run_path_range_ordinal_instance_data
+                 | run_path run_path_range run_path_range_ordinal ("." run_path_range_ordinal_instance) run_path_range_ordinal_instance_unmatched
+
+                 | run_path ("." run_path_instance)
+                 | run_path ("." run_path_instance) run_path_instance_data
+                 | run_path ("." run_path_instance) run_path_instance_unmatched
+
+                 | results_ordinal
+                 | results_ordinal ("." results_ordinal_instance)
+                 | results_ordinal ("." results_ordinal_instance) results_ordinal_instance_data
+                 | results_ordinal ("." results_ordinal_instance) results_ordinal_instance_unmatched
+
+                 | results_range
+                 | results_range results_range_ordinal
+                 | results_range results_range_ordinal ("." results_range_ordinal_instance)
+                 | results_range results_range_ordinal ("." results_range_ordinal_instance) results_range_ordinal_instance_data
+                 | results_range results_range_ordinal ("." results_range_ordinal_instance) results_range_ordinal_instance_unmatched
+
+    // CSVPATHS ALL NAMES
+    csvpaths_names: csvpaths_instance_name_one
+                  | csvpaths_instance_name_one csvpaths_instance_name_one_range
+                  | csvpaths_instance_name_one csvpaths_instance_name_one_range ("." ":"? csvpaths_instance_name_three)
+                  | csvpaths_instance_name_one csvpaths_instance_name_one_range ("." ":"? csvpaths_instance_name_three) csvpaths_instance_name_three_range
+
+    csvpaths_instance_name_one_range: range
+    csvpaths_instance_name_three_range: range
+    csvpaths_instance_name_one: IDENTIFIER | /\d{1,3}/ | ":" /\d{1,3}/
+    csvpaths_instance_name_three: IDENTIFIER | /\d{1,3}/ | ":" /\d{1,3}/
+
+    // REFERENCES ALL NAMES
+    reference_names: reference_major_name ("." reference_minor_name)?
+    reference_major_name: IDENTIFIER
+    reference_minor_name: IDENTIFIER
+
+    //========================================
+    //
+    // run date and run path atoms
+    //
+
+    files_arrival: DATETIME
+    files_arrival_ordinal: ordinal
+    files_arrival_range: no_timebox_range
+    files_arrival_range_ordinal: ordinal
+    files_arrival_two_arrival: DATETIME
+    files_arrival_two_arrival_range: range
+    files_arrival_two_arrival_range_ordinal: ordinal
+    files_fingerprint: fingerprint
+    files_ordinal: ordinal
+    files_path: path
+    files_path_arrival: point
+    files_path_arrival_ordinal: ordinal
+    files_path_arrival_range: range
+    files_path_arrival_range_ordinal: ordinal
+    files_path_two_arrival: DATETIME
+    files_path_two_arrival_range: range
+    files_path_two_arrival_range_ordinal: ordinal
+    files_path_two_arrival_ordinal: ordinal
+    files_path_ordinal: ordinal
+    files_path_range: range
+    files_path_range_arrival: DATETIME
+    files_path_range_arrival_ordinal: ordinal
+    files_path_range_arrival_range: range
+    files_path_range_arrival_range_ordinal: ordinal
+    files_path_range_ordinal: ordinal
+    files_range: range
+    files_range_ordinal: ordinal
+    results_ordinal: ordinal
+    results_range: range
+    results_range_ordinal_instance: IDENTIFIER
+    results_range_ordinal_instance_data: ":data"
+    results_range_ordinal_instance_unmatched: ":unmatched"
+    results_range_ordinal: ordinal
+    results_ordinal_instance: IDENTIFIER
+    results_ordinal_instance_data: "data"
+    results_ordinal_instance_unmatched: ":unmatched"
+    run_date: DATETIME
+    run_date_instance: IDENTIFIER
+    run_date_instance_data: ":data"
+    run_date_instance_unmatched: ":unmatched"
+    run_date_ordinal: ordinal
+    run_date_ordinal_instance: IDENTIFIER
+    run_date_ordinal_instance_data: ":data"
+    run_date_ordinal_instance_unmatched: ":unmatched"
+    run_date_range: no_timebox_range
+    run_date_range_date: DATETIME
+    run_date_range_date_range: range
+    run_date_range_ordinal: ordinal
+    run_date_range_ordinal_instance: IDENTIFIER
+    run_date_range_ordinal_instance_data: ":data"
+    run_date_range_ordinal_instance_unmatched: ":unmatched"
+    run_path: path
+    run_path_date: point
+    run_path_date_ordinal: ordinal
+    run_path_date_range: range
+    run_path_date_range_date: DATETIME
+    run_path_date_range_date_range: range
+    run_path_date_ordinal_instance: IDENTIFIER
+    run_path_date_ordinal_instance_data: ":data"
+    run_path_date_ordinal_instance_unmatched: ":unmatched"
+    run_path_range: range
+    run_path_range_ordinal: ordinal
+    run_path_range_ordinal_instance: IDENTIFIER
+    run_path_range_ordinal_instance_data: ":data"
+    run_path_range_ordinal_instance_unmatched: ":unmatched"
+    run_path_ordinal: ordinal
+    run_path_ordinal_instance: IDENTIFIER
+    run_path_ordinal_instance_data: ":data"
+    run_path_ordinal_instance_unmatched: ":unmatched"
+    run_path_instance: IDENTIFIER
+    run_path_instance_data: ":data"
+    run_path_instance_unmatched: ":unmatched"
+
+
+    //========================================
+
+
+    local_name_one: header_name
+                  | IDENTIFIER
+    local_name_two: IDENTIFIER
+    instance_name: IDENTIFIER
     fingerprint: HASH
-
     header_name: "'"? IDENTIFIER "'"? | INTEGER
-
-    tokens: token (token)?
+    //
+    //instance_tokens: unmatched
+    //               | data
+    //
+    //tokens: token (token)?
     token: yesterday
           | today
           | last
@@ -86,26 +253,50 @@ REFERENCE_GRAMMAR = r"""
           | point
           | data
           | unmatched
-          | preceding
+
+    last: ":last"
+    first: ":first"
 
     yesterday: ":yesterday"
     today: ":today"
-    last: ":last"
-    first: ":first"
     before: ":before"
     after: ":after"
     ffrom: ":from"
     to: ":to"
     all: ":all"
+
     data: ":data"
     unmatched: ":unmatched"
-    preceding: ":preceding"
     index: ":" INTEGER
     point: ":" DATETIME
 
+    tofrom: to
+          | ffrom
+
+    no_timebox_range: ffrom
+                    | to
+                    | all
+                    | after
+                    | before
+
+    range: yesterday
+         | today
+         | ffrom
+         | to
+         | all
+         | after
+         | before
+
+    ordinal: first
+           | last
+           | index
+
     // Basic components
+    root_names: root_name ("#" root_minor_name)?
     root_name: IDENTIFIER
+    root_minor_name: IDENTIFIER
     path: PATH_SEGMENT ("/" PATH_SEGMENT?)*
+
 
     // Terminals - PATH_SEGMENT now excludes dots to enforce two-dot limit
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_# \-]*/
@@ -116,8 +307,12 @@ REFERENCE_GRAMMAR = r"""
     INTEGER: /\d+/
     DATETIME: /\d{4}-/
             | /\d{4}-\d{2}/
+            | /\d{4}-\d{2}-/
             | /\d{4}-\d{2}-\d{2}/
+            | /\d{4}-\d{2}-\d{2}_/
+            | /\d{4}-\d{2}-\d{2}_\d{2}/
             | /\d{4}-\d{2}-\d{2}_\d{2}-/
+            | /\d{4}-\d{2}-\d{2}_\d{2}-\d{2}/
             | /\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-/
             | /\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/
 
@@ -125,172 +320,14 @@ REFERENCE_GRAMMAR = r"""
     %ignore WS
 """
 
-
-# =====================================
-
-
-class ReferenceTransformer(Transformer):
-    """Transformer to convert parse tree into structured data"""
-
-    # ref: "ReferenceParser" disallowed by flake
-    def __init__(self, ref) -> None:
-        self.ref = ref
-
-    def root_name(self, items):
-        name = None
-        if items and len(items) > 0 and items[0]:
-            name = items[0].value
-            name = str(name)
-            self.ref.root_name = name
-        return name
-
-    def name_one(self, items):
-        name, tokens = self._name_and_tokens(items)
-        self.ref.name_one = name
-        self.ref.name_one_tokens = tokens
-
-    #
-    # name two becomes name three after we're done parsing because
-    # names one and two (in the query parser) are both potentially
-    # split in two around a '#' to make names one through four. the
-    # rest of CsvPath uses ReferenceParser as the reference class
-    # and so knows name_one, name_two, name_three, and name_four,
-    # with focus being on names one and three.
-    #
-    def name_two(self, items):
-        name, tokens = self._name_and_tokens(items)
-        self.ref.name_three = name
-        self.ref.name_three_tokens = tokens
-
-    def local_name_one(self, items):
-        name, tokens = self._name_and_tokens(items)
-        self.ref.name_one = name
-        self.ref.name_one_tokens = tokens
-
-    def local_name_two(self, items):
-        name, tokens = self._name_and_tokens(items)
-        self.ref.name_three = name
-        self.ref.name_three_tokens = tokens
-
-    def _name_and_tokens(self, items) -> tuple[str, list]:
-        if not items or len(items) == 0:
-            return
-        data = None
-        tokens = []
-        if isinstance(items[0], str):
-            data = items[0]
-            if data and data.startswith(":"):
-                tokens.append(data[1:])
-            if len(items) > 1:
-                tokens = tokens + items[1]
-        elif isinstance(items[0], list):
-            tokens = items[0]
-        return (data, tokens)
-
-    def path(self, items):
-        p = "/".join(str(item.value) for item in items)
-        return p
-
-    def fingerprint(self, items):
-        #
-        # need to set ref flag to say name_two not allowed because
-        # fingerprint. otherwise we won't have that info later on
-        # because name and fingerprint are both just strings.
-        #
-        f = None
-        if items is not None and len(items) > 0:
-            f = items[0].value
-            self.ref.name_one = f
-            self.ref.name_one_is_fingerprint = True
-        return str(f)
-
-    def local_type(self, items):
-        return self._type(items)
-
-    def non_local_type(self, items):
-        return self._type(items)
-
-    def _type(self, items):
-        t = None
-        if items and len(items) > 0:
-            # change from e.g. files_type to files
-            t = items[0].data
-            t = t.value
-            t = t[0 : t.find("_")]
-            if t == "reference":
-                t = "variables"
-            self.ref.datatype = t
-        return str(t)
-
-    def INTEGER(self, item) -> int:
-        return int(item)
-
-    def DATETIME(self, item) -> str:
-        return f":{item}"
-
-    # ============================
-    # tokens
-    #
-
-    def index(self, item) -> int:
-        return f":{item[0]}"
-
-    def point(self, item) -> int:
-        return f"{item[0]}"
-
-    def today(self, item) -> int:
-        return ":today"
-
-    def yesterday(self, item) -> int:
-        return ":yesterday"
-
-    def all(self, item) -> int:
-        return ":all"
-
-    def first(self, item) -> int:
-        return ":first"
-
-    def last(self, item) -> int:
-        return ":last"
-
-    def before(self, item) -> int:
-        return ":before"
-
-    def after(self, item) -> int:
-        return ":after"
-
-    def ffrom(self, item) -> int:
-        return ":from"
-
-    def to(self, item) -> int:
-        return ":to"
-
-    def data(self, item) -> int:
-        return ":data"
-
-    def unmatched(self, item) -> int:
-        return ":unmatched"
-
-    def preceding(self, item) -> int:
-        return ":preceding"
-
-    def token(self, item) -> list:
-        return item[0] if item and isinstance(item, list) else item
-
-    def tokens(self, items) -> list:
-        if isinstance(items, list):
-            return items
-        return items.children
-
-
 # =====================================
 
 
 class QueryParser:
     # ref: "ReferenceParser" disallowed by flake
     def __init__(self, ref):
-        self.parser = Lark(REFERENCE_GRAMMAR, parser="earley")
-        self.ref = ref
+        self.parser = Lark(REFERENCE_GRAMMAR, parser="earley", debug=True)
+        self.ref = ref  # a ReferenceParser
 
     def parse(self, query: str):
         """Parse a CsvPath query string and return structured representation"""

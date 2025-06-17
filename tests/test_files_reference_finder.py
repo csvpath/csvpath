@@ -9,7 +9,7 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
 )
-from csvpath.util.references.files_tools.date_completer import DateCompleter
+from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.date_util import DateUtility as daut
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
