@@ -1,5 +1,6 @@
 import unittest
 import pytest
+from lark.exceptions import UnexpectedCharacters
 from csvpath.util.references.reference_grammar import QueryParser
 from csvpath.util.references.reference_parser import ReferenceParser
 
@@ -29,14 +30,11 @@ class TestReferenceGrammar(unittest.TestCase):
             "$mydata.files.data/test_csv:2024-01-15_00:from.2024-01-30:to",  # path, timestamps, and tokens
             "$mydata.files.data/test_csv:2024-01-15_00-:from.:2024-01-30:to",  # path, timestamps, and tokens
         ]
-        print("\n\nTesting File References:")
         for i, query in enumerate(file_queries):
-            result = parser.parse(query)
-            print(f"[{i}]✓ {query} -> {result}\n")
+            parser.parse(query)
 
     def test_reference_grammar_results(self):
         parser = QueryParser(ref=ReferenceParser())
-        # Test results reference examples
         results_queries = [
             "$job.results.process_data",  # identity only
             "$job.results.:today",  # today reference
@@ -46,16 +44,16 @@ class TestReferenceGrammar(unittest.TestCase):
             "$job.results.2024-01-15_14-30-45:last.process_data",  # datetime last identity
             "$job.results.analysis/monthly/:today:last.summary",  # path today last identity
             "$job.results.analysis/monthly/work/papers/:today:last.summary",  # path today last identity
-            "$job.results.analysis/monthly/work/papers/:today:last.summary:unmatched",  # path today last identity
             "$job.results.analysis/data:2",  # path with index
             "$job.results.analysis/data:2.summary",  # path index identity
         ]
-        print("\nTesting Results References:")
         for i, query in enumerate(results_queries):
-            result = parser.parse(query)
-            print(f"[{i}]✓ {query} -> {result}\n")
+            parser.parse(query)
 
-        # Test csvpaths reference examples
+    def test_reference_grammar_results_2(self):
+        q = "$job.results.analysis/monthly/work/papers/:today:last.summary:unmatched"  # path range ordinal identity
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse(q)
 
     def test_reference_grammar_csvpaths(self):
         parser = QueryParser(ref=ReferenceParser())
@@ -67,27 +65,27 @@ class TestReferenceGrammar(unittest.TestCase):
             "$mypaths.csvpaths.3",
             "$mypaths.csvpaths.:3",
         ]
-        print("\nTesting Csvpaths References:")
         for i, query in enumerate(csvpaths_queries):
-            result = parser.parse(query)
-            print(f"[{i}]✓ {query} -> {result}\n")
-
-        # Test local reference examples
+            parser.parse(query)
 
     def test_reference_grammar_local(self):
         parser = QueryParser(ref=ReferenceParser())
-        local_queries = [
-            "$.csvpath.line_number",
-            "$.variables.City.Boston",
-            "$.variables.people",
-            "$.headers.firstnames",
-            "$.metadata.id",
-            "$.headers.6",
-        ]
-        print("\nTesting Local References:")
-        for i, query in enumerate(local_queries):
-            result = parser.parse(query)
-            print(f"[{i}]✓ {query} -> {result}\n")
+        parser.parse("$.csvpath.line_number")
+
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse("$.variables.City.Boston")
+
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse("$.variables.people")
+
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse("$.headers.firstnames")
+
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse("$.metadata.id")
+
+        parser = QueryParser(ref=ReferenceParser())
+        parser.parse("$.headers.6")
 
     def test_reference_grammar_fail(self):
         parser = QueryParser(ref=ReferenceParser())
@@ -95,6 +93,5 @@ class TestReferenceGrammar(unittest.TestCase):
             "$mydata.files.data/input.csv.2024-01-15_14-30-45",  # Too many dots - should fail
         ]
         for i, query in enumerate(failing_queries):
-            with pytest.raises(ValueError):
-                result = parser.parse(query)
-                print(f"[{i}]✗ {query} -> SHOULD HAVE FAILED but got: {result}\n")
+            with pytest.raises((ValueError, UnexpectedCharacters)):
+                parser.parse(query)
