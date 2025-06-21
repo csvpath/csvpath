@@ -95,37 +95,7 @@ class TestPathsOps(unittest.TestCase):
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
             raise e
 
-    """
-    def test_references_can_run_1(self):
-        paths, cfg = self.top()
-        try:
-            # most basic run; tho, it will use the paths template, so the signature doesn't
-            # change but it's not completely stock.
-            #
-            paths.collect_paths(pathsname="clean-invoices", filename="acme-invoices")
-            arc = paths.config.archive_path
-            arc = os.path.join(arc, "clean-invoices")
-            arc = os.path.join(arc, "acme/invoices/2025/Jan/")
-            arc = pathu.resep(arc)
-            mani = paths.file_manager.get_manifest("acme-invoices")
-            rmani = paths.results_manager.get_last_named_result(
-                name="clean-invoices"
-            ).run_manifest
-            assert mani
-            assert mani[len(mani) - 1]["file"] == rmani["named_file_path"]
-            #
-            # nos does resep itself.
-            #
-            # we don't know which file is last from the filesystem so we cannot just say
-            # arc should exist. we can read the manifest to see what last should be.
-            #
-            # nos = Nos(arc)
-            # assert nos.dir_exists()
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
-    """
-
-    def test_references_can_run_paths_2(self):
+    def test_paths_can_run_paths_2(self):
         paths, cfg = self.top()
         try:
             #
@@ -141,7 +111,7 @@ class TestPathsOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_can_run_paths_3(self):
+    def test_paths_can_run_paths_3(self):
         paths, cfg = self.top()
         try:
             #

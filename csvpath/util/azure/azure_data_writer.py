@@ -14,17 +14,19 @@ class AzureDataWriter(DataFileWriter):
             client = AzureUtility.make_client()
             self.sink = open(
                 self.path,
-                self._mode,
+                self.mode,
                 transport_params={"client": client},
             )
             AzureDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
-        """this is a one-and-done write in mode 'w'. you don't use the data writer
-        as a context manager for this method. for multiple write calls to the same
+        """this is a one-and-done write. for multiple write calls to the same
         file handle use append().
         """
         client = AzureUtility.make_client()
+        #
+        # should this always be "wb"?
+        #
         with open(self.path, "wb", transport_params={"client": client}) as file:
             file.write(data.encode("utf-8"))
 

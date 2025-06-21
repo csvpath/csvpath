@@ -103,7 +103,7 @@ class TestResultsOps(unittest.TestCase):
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
             raise e
 
-    def test_references_can_run_1(self):
+    def test_results_references_can_run_1(self):
         paths, cfg = self.top()
         try:
             # most basic run; tho, it will use the paths template, so the signature doesn't
@@ -131,7 +131,7 @@ class TestResultsOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_results_can_run_4(self):
+    def test_results_references_results_can_run_4(self):
         paths, cfg = self.top()
         try:
             #
@@ -167,7 +167,7 @@ class TestResultsOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_results_can_run_6(self):
+    def test_results_references_results_can_run_6(self):
         paths, cfg = self.top()
         try:
             paths.collect_paths(
@@ -196,7 +196,7 @@ class TestResultsOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_get_results(self):
+    def test_results_references_get_results(self):
         paths, cfg = self.top()
         d = datetime.now().astimezone(timezone.utc)
         datestr = d.strftime("%Y-%m-%d")

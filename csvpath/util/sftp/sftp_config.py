@@ -38,14 +38,15 @@ class SftpConfig:
         if self._sftp_client is None or self._ssh_client is None:
             self._load_clients()
         else:
+            box = Box()
             t = self._ssh_client.get_transport()
             if not t or not t.is_active():
                 try:
                     self._ssh_client.close()
                     self._sftp_client = None
                     self._ssh_client = None
-                    del Box().STUFF[Box.SSH_CLIENT]
-                    del Box().STUFF[Box.SFTP_CLIENT]
+                    box.remove(Box.SSH_CLIENT)
+                    box.remove(Box.SFTP_CLIENT)
                 except Exception:
                     ...
                 self._load_clients()
@@ -53,11 +54,12 @@ class SftpConfig:
 
     def reset(self) -> None:
         if self._ssh_client:
+            box = Box()
             self._ssh_client.close()
             self._sftp_client = None
             self._ssh_client = None
-            del Box().STUFF[Box.SSH_CLIENT]
-            del Box().STUFF[Box.SFTP_CLIENT]
+            box.remove(Box.SSH_CLIENT)
+            box.remove(Box.SFTP_CLIENT)
 
     @property
     def ssh_client(self) -> paramiko.SSHClient:
@@ -72,7 +74,14 @@ class SftpConfig:
         if self._sftp_client is None or self._ssh_client is None:
             c = paramiko.SSHClient()
             c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            c.connect(self.server, self.port, self.username, self.password)
+            c.connect(
+                self.server,
+                self.port,
+                self.username,
+                self.password,
+                allow_agent=False,
+                look_for_keys=False,
+            )
             self._ssh_client = c
             self._sftp_client = c.open_sftp()
             Box().add(Box.SSH_CLIENT, self._ssh_client)
@@ -125,6 +134,8 @@ class SftpConfig:
                 sftpconfig.port,
                 sftpconfig.username,
                 sftpconfig.password,
+                allow_agent=False,
+                look_for_keys=False,
             )
         except Exception as e:
             print(e)

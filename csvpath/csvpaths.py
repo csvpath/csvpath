@@ -90,11 +90,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # we need to pass some state around. it's ugly, but logically not
         # terrible and better than other options bar major refactoring.
         #
-        # careful of Box. if used as a ctx mgr it is risky till we refactor
-        # it to protect different users
-        Box().add(Box.CSVPATHS_CONFIG, self._config)
-        # atexit.register(self.on_exit)
-
+        box = Box()
+        box.add(Box.CSVPATHS_CONFIG, self._config)
         #
         # managers centralize activities, offer async potential, and
         # are where integrations hook in. ErrorManager functionality
@@ -161,6 +158,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # relationship.
         #
         self.run_metadata = None
+        #
+        # for many purposes csvpaths can clean up at the end of
+        # runs. in some cases you may want to do it manually
+        # later. e.g. if you are doing a run and then want to
+        # inspect or use the results in another run you might
+        # want to keep the connections live. when ready, call
+        # wrap_up(). defaults to True.
+        #
+        self._wrap_up_automatically = True
         """ @private """
         self.logger.info("initialized CsvPaths")
 
@@ -170,6 +176,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.results_manager = ResultsManager(csvpaths=self)
         self.ecoms = ErrorCommunications(csvpaths=self)
         self.error_manager = ErrorManager(csvpaths=self)
+
+    @property
+    def wrap_up_automatically(self) -> bool:
+        return self._wrap_up_automatically
+
+    @wrap_up_automatically.setter
+    def wrap_up_automatically(self, auto: bool) -> None:
+        self._wrap_up_automatically = auto
 
     @property
     def ecoms(self) -> ErrorCommunications:
@@ -319,12 +333,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._set_managers()
         self.clear_run_coordination()
         self._errors = []
-        self.named_paths_name = None
         self.named_file_name = None
         self.current_matcher = None
-        self._errors = []
         self.named_paths_name = None
-        self.named_file_name = None
         self.run_metadata = None
 
     def wrap_up(self) -> None:
@@ -337,16 +348,20 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         box = Box()
         ds = []
-        for k, v in box.STUFF.items():
+        for k, v in box.get_my_stuff().items():
             self.logger.debug(f"csvpaths.wrapping up: {k}: {v}")
             if hasattr(v, "close"):
-                try:
-                    v.close()
-                    ds.append(k)
-                except Exception:
-                    ...
-        for k in ds:
-            del box.STUFF[k]
+                ds.append(k)
+        for _ in ds:
+            try:
+                v = box.get(_)
+                v.close()
+                box.remove(_)
+            except Exception as e:
+                msg = f"Error in wrapping up: {e}"
+                self.error_manager.handle_error(source=self, msg=msg)
+                if self.ecoms.do_i_raise():
+                    raise CsvPathsException(msg)
 
     # =========================
     # prep csvpath children
@@ -630,7 +645,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
-        self.wrap_up()
+        if self.wrap_up_automatically:
+            self.wrap_up()
 
     def fast_forward_paths(
         self, *, pathsname: str, filename: str, template: str = None
@@ -750,7 +766,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             "Completed fast_forward_paths %s with %s paths", pathsname, len(paths)
         )
-        self.wrap_up()
+        if self.wrap_up_automatically:
+            self.wrap_up()
 
     def next_paths(
         self,
@@ -872,7 +889,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             run_dir=crt, pathsname=pathsname, results=results
         )
         self.clear_run_coordination()
-        self.wrap_up()
+        if self.wrap_up_automatically:
+            self.wrap_up()
 
     # =============== breadth first processing ================
 
@@ -1185,7 +1203,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             run_dir=results[0].run_dir, pathsname=pathsname, results=results
         )
         self.clear_run_coordination()
-        self.wrap_up()
+        if self.wrap_up_automatically:
+            self.wrap_up()
 
     def _load_csvpath_objects(
         self,

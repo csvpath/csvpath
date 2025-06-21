@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.exceptions import CsvPathsException
+from csvpath.util.box import Box
 
 
 class ScriptsResultsListener(Listener, threading.Thread):
@@ -14,17 +16,24 @@ class ScriptsResultsListener(Listener, threading.Thread):
         self.csvpaths = None
 
     def run(self):
+        #
+        # csvpath adds its config, but under it's thread's name, so we
+        # have to do it again here.
+        #
+        Box().add(Box.CSVPATHS_CONFIG, self.csvpaths.config)
         self._metadata_update(self.metadata)
+        self.csvpaths.wrap_up()
 
     def metadata_update(self, mdata: Metadata) -> None:
         self.metadata = mdata
         self.start()
 
     def _metadata_update(self, mdata: Metadata) -> None:
+        #
+        # create separate csvpaths instance here on the thread?
+        #
         if not self.csvpaths:
-            raise RuntimeError(
-                "Scripts results listener cannot continue without a CsvPaths instance"
-            )
+            raise RuntimeError("Scripts results listener requires a CsvPaths instance")
         if mdata.time_completed is None:
             return
         #
@@ -40,6 +49,7 @@ class ScriptsResultsListener(Listener, threading.Thread):
         # find any scripts
         #
         pm = self.csvpaths.paths_manager
+        cfg = None
         cfg = pm.get_config_for_paths(mdata.named_paths_name)
         if cfg is None:
             return

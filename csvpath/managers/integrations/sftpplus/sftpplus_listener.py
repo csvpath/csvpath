@@ -4,6 +4,7 @@ import threading
 import paramiko
 from tempfile import NamedTemporaryFile
 from csvpath import CsvPaths
+from csvpath.util.box import Box
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.managers.listener import Listener
@@ -109,8 +110,14 @@ class SftpPlusListener(Listener, threading.Thread):
         return self._run_method
 
     def run(self):
+        #
+        # csvpath adds its config, but under it's thread's name, so we
+        # have to do it again here.
+        #
+        Box().add(Box.CSVPATHS_CONFIG, self.csvpaths.config)
         self.csvpaths.logger.info("Checking for requests to send result files by SFTP")
         self._metadata_update()
+        self.csvpaths.wrap_up()
 
     def metadata_update(self, mdata: Metadata) -> None:
         if mdata is None:

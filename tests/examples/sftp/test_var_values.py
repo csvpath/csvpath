@@ -12,12 +12,12 @@ class TestSftpVarValues(unittest.TestCase):
         paths = CsvPaths()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}examples{os.sep}sftp{os.sep}csvs"
         )
-        paths.paths_manager.add_named_paths_from_json(
-            f"tests{os.sep}examples{os.sep}sftp{os.sep}group.json"
-        )
+        path = f"tests{os.sep}examples{os.sep}sftp{os.sep}group.json"
+        paths.paths_manager.add_named_paths_from_json(path)
         paths.collect_paths(filename="March-2024", pathsname="sftptest")
         r = paths.results_manager.get_specific_named_result("sftptest", "upc-sku")
         assert r

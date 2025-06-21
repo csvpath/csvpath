@@ -24,10 +24,11 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def nos(self) -> Nos:
         if self._nos is None:
-            self._nos = Box.STUFF.get("boto_s3_nos")
+            box = Box()
+            self._nos = box.get("boto_s3_nos")
             if self._nos is None:
                 self._nos = Nos(None)
-                Box().add("boto_s3_nos", self._nos)
+                box.add("boto_s3_nos", self._nos)
         return self._nos
 
     def register_start(self, mdata: Metadata) -> None:

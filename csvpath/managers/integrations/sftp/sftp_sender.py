@@ -5,6 +5,7 @@ from csvpath.managers.results.results_metadata import ResultsMetadata
 from csvpath.managers.results.results_registrar import ResultsRegistrar
 from csvpath.managers.results.result import Result
 from csvpath.managers.listener import Listener
+from csvpath.util.box import Box
 from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
 from csvpath.util.file_readers import DataFileReader
@@ -53,6 +54,12 @@ class SftpSender(Listener, threading.Thread):
         )
 
     def run(self):
+        #
+        # csvpath adds its config, but under it's thread's name, so we
+        # have to do it again here.
+        #
+        Box().add(Box.CSVPATHS_CONFIG, self.csvpaths.config)
+
         self.csvpaths.logger.info("Checking for requests to send result files by SFTP")
         self.results = self.csvpaths.results_manager.get_named_results(
             self.metadata.named_results_name
@@ -61,6 +68,10 @@ class SftpSender(Listener, threading.Thread):
             self.result = result
             self._collect_fields()
             self._metadata_update()
+        #
+        # clear out this thread
+        #
+        self.csvpaths.wrap_up()
 
     def metadata_update(self, mdata: Metadata) -> None:
         if mdata is None:
@@ -94,7 +105,14 @@ class SftpSender(Listener, threading.Thread):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect(self._server, self._port, self._user, self._password)
+            client.connect(
+                self._server,
+                self._port,
+                self._user,
+                self._password,
+                allow_agent=False,
+                look_for_keys=False,
+            )
             sftp = client.open_sftp()
             self.csvpaths.logger.info("Preparing to send %s files", len(self._files))
             try:

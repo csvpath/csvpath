@@ -35,8 +35,10 @@ class PathsListener(Listener):
     @property
     def manifest(self) -> list:
         mpath = self.manifest_path
-        with DataFileReader(mpath) as file:
-            j = json.load(file.source)
+        with DataFileReader(mpath, encoding="utf-8") as file:
+            contents = file.read()
+            j = json.loads(contents)
+            # j = json.load(file.source)
             return j
 
     @property

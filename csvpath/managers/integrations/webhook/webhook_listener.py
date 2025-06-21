@@ -2,6 +2,7 @@ import requests
 import threading
 
 from abc import ABC
+from csvpath.util.box import Box
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -78,6 +79,7 @@ class WebhookListener(Listener, threading.Thread):
 
     def run(self):
         self._metadata_update(self.metadata)
+        self.csvpaths.wrap_up()
 
     def metadata_update(self, mdata: Metadata) -> None:
         self.metadata = mdata

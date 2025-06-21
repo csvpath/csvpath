@@ -1,4 +1,3 @@
-# pylint: disable=C0114
 import csv
 import importlib
 import hashlib
@@ -15,9 +14,13 @@ from .path_util import PathUtility as pathu
 class DataFileReader(ABC):
     DATA = {}
 
-    def __init__(self) -> None:
+    def __init__(self, mode="r", encoding="utf-8") -> None:
         self._path = None
         self.source = None
+        self._mode = None
+        self._encoding = None
+        self.mode = mode
+        self.encoding = encoding
 
     @classmethod
     def register_data(cls, *, path, filelike) -> None:
@@ -30,6 +33,26 @@ class DataFileReader(ABC):
     def __enter__(self):
         self.load_if()
         return self
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    @mode.setter
+    def mode(self, m: str) -> None:
+        self._mode = m
+
+    @property
+    def is_binary(self) -> bool:
+        return "b" in self.mode
+
+    @property
+    def encoding(self) -> str:
+        return self._encoding
+
+    @encoding.setter
+    def encoding(self, e: str) -> None:
+        self._encoding = e
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.close()
@@ -48,8 +71,13 @@ class DataFileReader(ABC):
 
     def load_if(self) -> None:
         if self.source is None:
-            p = self.path
-            self.source = open(p, "r", encoding="utf-8")
+            if "b" in self.mode:
+                self.source = open(self.path, mode=self.mode)
+            else:
+                print(
+                    f"datafiler: loadif: mode: {self.mode}, encoding: {self.encoding}, path: {self.path}"
+                )
+                self.source = open(self.path, mode=self.mode, encoding=self.encoding)
 
     def read(self) -> str:
         #
@@ -88,11 +116,16 @@ class DataFileReader(ABC):
         cls,
         path: str,
         *,
+        mode: str = "r",
+        encoding: str = "utf-8",
         filetype: str = None,
         sheet=None,
         delimiter=None,
         quotechar=None,
     ):
+        #
+        # not passing mode and encoding?
+        #
         if cls == DataFileReader:
             sheet = None
             if path.find("#") > -1:
@@ -210,19 +243,27 @@ class DataFileReader(ABC):
     def next(self) -> list[str]:
         pass
 
-    @abstractmethod
     def file_info(self) -> dict[str, str | int | float]:
-        pass
+        ...
 
-    def next_raw(self, mode: str = "r") -> list[str]:
+    """
+    def next_raw(self, mode: str =None) -> list[str]:
         try:
-            with open(self.path, mode=mode, encoding="utf-8") as file:
-                for line in file:
-                    yield line
+            if mode is None:
+                mode = self.mode
+            if "b" in mode:
+                with open(self.path, mode=mode) as file:
+                    for line in file:
+                        yield line
+            else:
+                with open(self.path, mode=mode, encoding=self.encoding) as file:
+                    for line in file:
+                        yield line
         except UnicodeDecodeError:
             with open(self.path, mode="rb") as file:
                 for line in file:
                     yield line
+    """
 
 
 class CsvDataReader(DataFileReader):
@@ -230,6 +271,8 @@ class CsvDataReader(DataFileReader):
         self,
         path: str,
         *,
+        mode: str = "r",
+        encoding: str = "utf-8",
         filetype: str = None,
         sheet=None,
         delimiter=None,
@@ -243,9 +286,11 @@ class CsvDataReader(DataFileReader):
             )
         self._delimiter = delimiter if delimiter is not None else ","
         self._quotechar = quotechar if quotechar is not None else '"'
+        self.mode = mode
+        self.encoding = encoding
 
     def next(self) -> list[str]:
-        with open(self.path, "r", encoding="utf-8") as file:
+        with open(self.path, self.mode, encoding=self.encoding) as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
@@ -261,6 +306,8 @@ class XlsxDataReader(DataFileReader):
         self,
         path: str,
         *,
+        mode: str = "rb",  # XLSX are always binary
+        encoding: str = None,  # XLSX are always binary
         filetype: str = None,
         sheet=None,
         delimiter=None,
@@ -269,6 +316,8 @@ class XlsxDataReader(DataFileReader):
         super().__init__()
         self._sheet = sheet
         self.path = path
+        self.mode = mode
+        self.encoding = encoding
         #
         # path should have already been trimmed in __new__ above.
         #
