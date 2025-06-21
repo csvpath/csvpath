@@ -47,6 +47,10 @@ class TestPathsScripts(unittest.TestCase):
             path=f"tests{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
         )
         #
+        # we're using threads, but we worked around that with a box refactor, so not needed?
+        #
+        # paths.wrap_up_automatically = False
+        #
         # run
         #
         paths.collect_paths(
@@ -78,6 +82,7 @@ class TestPathsScripts(unittest.TestCase):
         import time
 
         time.sleep(0.25)
+        assert paths.has_errors() is False
         #
         # check for output
         #
@@ -90,6 +95,7 @@ class TestPathsScripts(unittest.TestCase):
             if file.startswith(lst[0][1]):
                 found = True
         assert found is True
+        paths.wrap_up()
 
     def test_paths_mgr_add_script_1(self) -> None:
         paths = CsvPaths()

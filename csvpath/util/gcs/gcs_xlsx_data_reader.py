@@ -22,6 +22,7 @@ class GcsXlsxDataReader(XlsxDataReader):
         if self.source is None:
             client = GcsUtility.make_client()
             try:
+                # xlsx are binary, so always rb.
                 self.source = open(self.path, "rb", transport_params={"client": client})
             except DeprecationWarning:
                 ...

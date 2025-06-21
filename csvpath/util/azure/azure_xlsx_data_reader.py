@@ -22,6 +22,10 @@ class AzureXlsxDataReader(XlsxDataReader):
         if self.source is None:
             client = AzureUtility.make_client()
             try:
+                #
+                # xlsx are binary files, so always rb, regardless of self.mode. not
+                # expecting problems.
+                #
                 self.source = open(self.path, "rb", transport_params={"client": client})
             except DeprecationWarning:
                 ...

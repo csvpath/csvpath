@@ -15,22 +15,29 @@ class HttpDataReader(CsvDataReader):
             self.source = open(self._path, "r")
 
     def next(self) -> list[str]:
-        with open(self._path, "r", encoding="utf-8") as file:
+        with open(self._path, self.mode) as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
             for line in reader:
                 yield line
 
-    def next_raw(self, mode: str = "r") -> list[str]:
+    """
+    def next_raw(self) -> list[str]:
         try:
-            with open(self._path, mode=mode, encoding="utf-8") as file:
+            if mode.find("b") > -1:
+                with open(self._path, mode=self.mode) as file:
+                for line in file:
+                    yield line
+            else:
+                with open(self._path, mode=self.mode, encoding=self.encoding) as file:
                 for line in file:
                     yield line
         except UnicodeDecodeError:
             with open(self._path, mode="rb") as file:
                 for line in file:
                     yield line
+    """
 
     def fingerprint(self) -> str:
         ...
@@ -43,7 +50,3 @@ class HttpDataReader(CsvDataReader):
 
     def rename(self, path: str, new_path: str) -> None:
         ...
-
-    def file_info(self) -> dict[str, str | int | float]:
-        # TODO: what can/should we provide here?
-        return {}

@@ -43,11 +43,12 @@ class PathsManager:
 
     @property
     def nos(self) -> Nos:
+        box = Box()
         if self._nos is None:
-            self._nos = Box.STUFF.get("boto_s3_nos")
+            self._nos = box.get("boto_s3_nos")
             if self._nos is None:
                 self._nos = Nos(None)
-                Box().add("boto_s3_nos", self._nos)
+                box.add("boto_s3_nos", self._nos)
         return self._nos
 
     #
@@ -238,6 +239,7 @@ class PathsManager:
                         c = j["_config"]
                         if k in c:
                             template = c[k].get("template")
+
                     self.add_named_paths(
                         name=k, paths=paths, source_path=file_path, template=template
                     )
@@ -419,6 +421,7 @@ class PathsManager:
         home = self.named_paths_home(name)
         path = os.path.join(home, "definition.json")
         nos = Nos(path)
+
         if nos.exists():
             with DataFileReader(path) as file:
                 return json.load(file.source)
@@ -471,7 +474,10 @@ class PathsManager:
         config = definition.get("_config")
         if config is None:
             config = {}
-        return {} if config.get(name) is None else config.get(name)
+        config = config.get(name)
+        if config is None:
+            config = {}
+        return config
 
     def store_config_for_paths(self, name: NamedPathsName, cfg: dict) -> None:
         if name.startswith("$"):
@@ -811,7 +817,6 @@ class PathsManager:
         # good way to go. if the writer bothered to identify, the id is more specific than
         # the index and so less error-prone.
         #
-        print("")
         index = expu.to_int(identity)
         if npn is not None:
             paths = self.get_identified_paths_in(npn)

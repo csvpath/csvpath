@@ -64,170 +64,6 @@ class TestFileOps(unittest.TestCase):
     def teardown_class(cls):
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_reference_2_filename_match_01(self):
-        #
-        # exact match. beware the '.' extension. must be changed to '_' or
-        # the extension left off.
-        #
-        reference = "$invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst = finder.resolve()
-        assert lst is not None
-        assert isinstance(lst, list)
-        assert len(lst) == 1
-        assert lst[0].find("Jan") > -1
-
-    def test_reference_2_filename_match_03(self):
-        #
-        # progressive match
-        #
-        reference = "$invoices.files.acme/2025"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst = finder.resolve()
-        assert lst is not None
-        assert isinstance(lst, list)
-        assert len(lst) == 5
-        #
-        # filters.
-        #
-        # first all. should be the same as no fillters
-        #
-        reference = "$invoices.files.acme/2025:all"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert lst2 == lst
-
-    def test_reference_2_filename_match_04(self):
-        #
-        # first, last, index
-        #
-        # :first. should be the first file registered
-        #
-        reference = "$invoices.files.acme/2025:first"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Mar") > -1
-
-    def test_reference_2_filename_match_05(self):
-        reference = "$invoices.files.acme/2025:last"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Feb") > -1
-
-    def test_reference_2_filename_match_06(self):
-        reference = "$invoices.files.acme/2025:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Jan") > -1
-
-    def test_reference_2_filename_match_07(self):
-        #
-        # date filter *
-        #
-        d = datetime.now().astimezone(timezone.utc)
-        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
-        print(f"reference: {reference}")
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        for _ in lst2:
-            print(f"  _: {_}")
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 5
-        assert lst2[0].find("Mar") > -1
-
-    def test_reference_2_filename_match_08(self):
-        d = datetime.now().astimezone(timezone.utc)
-        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:first"
-        ref = None
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        print(f"ref.seq: {ref.sequence}")
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Mar") > -1
-
-    def test_reference_2_filename_match_09(self):
-        #
-        # not 100% sure this should raise an error, but today it does.
-        #
-        d = datetime.now().astimezone(timezone.utc)
-        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:before"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        # assert lst2
-        assert len(lst2) == 0
-
-    def test_reference_2_filename_match_10(self):
-        #
-        # index w/o anything else
-        #
-        reference = "$invoices.files.:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Jan") > -1
-
-    def test_reference_2_filename_match_11(self):
-        #
-        # day
-        #
-        reference = "$invoices.files.:today:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Jan") > -1
-
-    def test_reference_2_filename_match_12(self):
-        reference = "$invoices.files.:yesterday"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 0
-
-    def test_reference_2_filename_match_13(self):
-        #
-        # date
-        #
-        d = datetime.now().astimezone(timezone.utc)
-        reference = f"$invoices.files.{d.strftime('%Y-%m-%d_')}:first"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
-        lst2 = finder.resolve()
-        assert lst2 is not None
-        assert isinstance(lst2, list)
-        assert len(lst2) == 1
-        assert lst2[0].find("Mar") > -1
-
     def top(self):
         try:
             cfg = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
@@ -264,7 +100,175 @@ class TestFileOps(unittest.TestCase):
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
             raise e
 
-    def test_references_can_run_1(self):
+    # ===============================================
+    #
+    #
+
+    def test_files_reference_2_filename_match_01(self):
+        #
+        # exact match. beware the '.' extension. must be changed to '_' or
+        # the extension left off.
+        #
+        reference = "$invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst = finder.resolve()
+        assert lst is not None
+        assert isinstance(lst, list)
+        assert len(lst) == 1
+        assert lst[0].find("Jan") > -1
+
+    def test_files_reference_2_filename_match_03(self):
+        #
+        # progressive match
+        #
+        reference = "$invoices.files.acme/2025"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst = finder.resolve()
+        assert lst is not None
+        assert isinstance(lst, list)
+        assert len(lst) == 5
+        #
+        # filters.
+        #
+        # first all. should be the same as no fillters
+        #
+        reference = "$invoices.files.acme/2025:all"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert lst2 == lst
+
+    def test_files_reference_2_filename_match_04(self):
+        #
+        # first, last, index
+        #
+        # :first. should be the first file registered
+        #
+        reference = "$invoices.files.acme/2025:first"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Mar") > -1
+
+    def test_files_reference_2_filename_match_05(self):
+        reference = "$invoices.files.acme/2025:last"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Feb") > -1
+
+    def test_files_reference_2_filename_match_06(self):
+        reference = "$invoices.files.acme/2025:1"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Jan") > -1
+
+    def test_files_reference_2_filename_match_07(self):
+        #
+        # date filter *
+        #
+        d = datetime.now().astimezone(timezone.utc)
+        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
+        print(f"reference: {reference}")
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        for _ in lst2:
+            print(f"  _: {_}")
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 5
+        assert lst2[0].find("Mar") > -1
+
+    def test_files_reference_2_filename_match_08(self):
+        d = datetime.now().astimezone(timezone.utc)
+        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:first"
+        ref = None
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        print(f"ref.seq: {ref.sequence}")
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Mar") > -1
+
+    def test_files_reference_2_filename_match_09(self):
+        #
+        # not 100% sure this should raise an error, but today it does.
+        #
+        d = datetime.now().astimezone(timezone.utc)
+        reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:before"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        # assert lst2
+        assert len(lst2) == 0
+
+    def test_files_reference_2_filename_match_10(self):
+        #
+        # index w/o anything else
+        #
+        reference = "$invoices.files.:1"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Jan") > -1
+
+    def test_files_reference_2_filename_match_11(self):
+        #
+        # day
+        #
+        reference = "$invoices.files.:today:1"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Jan") > -1
+
+    def test_files_reference_2_filename_match_12(self):
+        reference = "$invoices.files.:yesterday"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 0
+
+    def test_files_reference_2_filename_match_13(self):
+        #
+        # date
+        #
+        d = datetime.now().astimezone(timezone.utc)
+        reference = f"$invoices.files.{d.strftime('%Y-%m-%d_')}:first"
+        ref = ReferenceParser(reference)
+        finder = FilesReferenceFinder(TestFileOps.PATHS, ref=ref)
+        lst2 = finder.resolve()
+        assert lst2 is not None
+        assert isinstance(lst2, list)
+        assert len(lst2) == 1
+        assert lst2[0].find("Mar") > -1
+
+    def test_files_references_can_run_1(self):
         paths, cfg = self.top()
         try:
             # most basic run; tho, it will use the paths template, so the signature doesn't
@@ -292,7 +296,7 @@ class TestFileOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_can_run_7(self):
+    def test_files_references_can_run_7(self):
         paths, cfg = self.top()
         try:
             #
@@ -306,7 +310,7 @@ class TestFileOps(unittest.TestCase):
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = "config/config.ini"
 
-    def test_references_can_run_8(self):
+    def test_files_references_can_run_8(self):
         paths, cfg = self.top()
         d = datetime.now().astimezone(timezone.utc)
         datestr = d.strftime("%Y-%m-%d")

@@ -85,15 +85,28 @@ class SftpDo:
         #
         path = self.path
         lst = walk.listdir(path=path, default=[])
-        if files_only:
+        if files_only is True:
             lst = [_ for _ in lst if _[1] is True]
-        if dirs_only:
+        if dirs_only is True:
             lst = [_ for _ in lst if _[1] is False]
-        if recurse:
+        if recurse is True:
             lst = [_[0] for _ in lst]
-        else:
-            lst = [_[0][_[0].rfind("/") + 1 :] for _ in lst]
-            lst = [_ for _ in lst if _.find("/") == -1]
+        else:  #
+            lst2 = []
+            if path.startswith("/"):
+                path = path[1:]
+            for _ in lst:
+                t = _[0]
+                if t.startswith("/"):
+                    t = t[1:]
+                if path != "" and not t.startswith(path):
+                    raise ValueError("Expecting contents to start with base path")
+                if path != "":
+                    t = t[len(path) + 1 :]
+                if t.count("/") > 0:
+                    continue
+                lst2.append(t)
+            lst = lst2
         return lst
 
     def copy(self, to) -> None:
@@ -106,6 +119,8 @@ class SftpDo:
             port=self._config.port,
             username=self._config.username,
             password=self._config.password,
+            allow_agent=False,
+            look_for_keys=False,
         )
         stdin, stdout, stderr = a.exec_command(f"cp {self.path} {to}")
 
@@ -118,8 +133,24 @@ class SftpDo:
 
     def dir_exists(self) -> bool:
         try:
+            #
+            # list dir now returns [] by default, for better or worse. rather than
+            # change what seems to work fine in most cases we're taking the same
+            # stat-based approach as in isfile(). let's see how that does.
+            #
+            return self.isdir(self.path)
+            """
             ld = self.listdir(default=None)
+            print(f"sftpnos: dir_exists: path: {self.path}: ld: {ld}: is dir: {self._isdir(self.path)}")
             return ld is not None
+            """
+        except FileNotFoundError:
+            return False
+
+    def isdir(self, path) -> bool:
+        try:
+            attr = self._config.sftp_client.stat(path)
+            return stat.S_ISDIR(attr.st_mode)
         except FileNotFoundError:
             return False
 
@@ -129,6 +160,16 @@ class SftpDo:
     def isfile(self) -> bool:
         return self._isfile(self.path)
 
+    #
+    # the old method worked fine with SFTPPlus but fails on SFTPGo.
+    # i thought that there was an issue with the stat approach, but i
+    # don't remember -- it's been months. the replacement works fine
+    # on SFTPGo. haven't tried SFTPPlus yet because license. leaving
+    # here in case this comes back up. worst case we might need a
+    # double check or server specific approach, but that would be
+    # probably not less brittle and would be ugly.
+    #
+    """
     def _isfile(self, path) -> bool:
         try:
             self._config.sftp_client.open(path, "r")
@@ -136,12 +177,22 @@ class SftpDo:
         except (FileNotFoundError, OSError):
             r = False
         return r
+    """
+
+    def _isfile(self, path) -> bool:
+        try:
+            attr = self._config.sftp_client.stat(path)
+            return stat.S_ISREG(attr.st_mode)
+        except FileNotFoundError:
+            return False
 
     def rename(self, new_path: str) -> None:
         try:
             np = pathu.resep(new_path)
             np = pathu.stripp(np)
             self._config.sftp_client.rename(self.path, np)
+        except FileNotFoundError:
+            raise
         except (IOError, PermissionError):
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
 

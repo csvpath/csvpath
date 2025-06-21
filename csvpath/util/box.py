@@ -1,12 +1,13 @@
 from typing import Any
+import threading
 
 #
-# just a box to put things in. initial use is
-# sharing a boto3 client under "boto_s3_client".
-# sftp also needs it.
-#
-# can be used as a context mgr, but be careful
-# that you don't empty someone else's box stuff.
+# just a box to put shared things in. separates things in the box
+# by thread using thread name. use CsvPaths.wrap_up() to clear the
+# box for the thread calling the method. remember that CsvPaths adds
+# its config to the box, but may clear it out while others are still
+# interested in it if its thread finishes before another box user.
+# new threads should consider readding it as part of their own namespace.
 #
 
 
@@ -22,18 +23,42 @@ class Box:
 
     STUFF = {}
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        Box.STUFF = {}
+    @property
+    def _thread(self) -> str:
+        current_thread = threading.current_thread()
+        return current_thread.name
 
     def add(self, key: str, value: Any) -> None:
-        Box.STUFF[key] = value
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            s = {}
+            Box.STUFF[self._thread] = s
+        s[key] = value
 
     def get(self, key: str) -> Any:
-        return Box.STUFF.get(key)
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            s = {}
+            Box.STUFF[self._thread] = s
+        return s.get(key)
+
+    def empty_my_stuff(self) -> None:
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            return
+        for key in s:
+            self.remove(key)
+
+    def get_my_stuff(self) -> dict:
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            s = {}
+            Box.STUFF[self._thread] = s
+        return s
 
     def remove(self, key: str) -> None:
-        if key in Box.STUFF:
-            del Box.STUFF[key]
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            return
+        if key in s:
+            del s[key]

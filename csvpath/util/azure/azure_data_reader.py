@@ -1,4 +1,3 @@
-# pylint: disable=C0114
 import csv
 from smart_open import open
 from csvpath.util.hasher import Hasher
@@ -12,14 +11,19 @@ class AzureDataReader(CsvDataReader):
         if self.source is None:
             client = AzureUtility.make_client()
             try:
-                self.source = open(self.path, "r", transport_params={"client": client})
+                self.source = open(
+                    self.path, self.mode, transport_params={"client": client}
+                )
             except DeprecationWarning:
                 ...
 
     def next(self) -> list[str]:
+        if self.is_binary:
+            raise ValueError("CSV files must be opened in text mode, not binary.")
         with open(
             uri=self.path,
-            mode="r",
+            mode=self.mode,
+            encoding=self.encoding,
             transport_params={"client": AzureUtility.make_client()},
         ) as file:
             reader = csv.reader(
@@ -46,7 +50,3 @@ class AzureDataReader(CsvDataReader):
         source_container, source_blob = self.path_to_parts(path)
         dest_container, dest_blob = self.path_to_parts(new_path)
         AzureUtility.rename(source_container, source_blob, dest_container, dest_blob)
-
-    def file_info(self) -> dict[str, str | int | float]:
-        # TODO: what can/should we provide here for cloud services? Can leave for now.
-        return {}

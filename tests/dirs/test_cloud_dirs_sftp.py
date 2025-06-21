@@ -140,6 +140,8 @@ class TestCloudDirsSftp(unittest.TestCase):
         assert lst is not None
         assert "abc_2.txt" in lst
         assert "ijk" in lst
+        assert "abc_4.txt" not in lst
+        assert "ijk/abc_4.txt" not in lst
 
         lst = Nos(f"{myserver}/xyz").listdir(recurse=False, files_only=True)
         assert lst is not None

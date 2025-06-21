@@ -20,13 +20,19 @@ class SftpXlsxDataReader(XlsxDataReader):
 
     def load_if(self) -> None:
         if self.source is None:
-            config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
+            config = Box().get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
             self.source = open(
                 self.path,
+                # always binary
                 "rb",
                 transport_params={
-                    "connect_kwargs": {"username": c.username, "password": c.password}
+                    "connect_kwargs": {
+                        "username": c.username,
+                        "password": c.password,
+                        "look_for_keys": False,
+                        "allow_agent": False,
+                    }
                 },
             )
 

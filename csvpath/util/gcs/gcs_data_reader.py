@@ -12,14 +12,16 @@ class GcsDataReader(CsvDataReader):
         if self.source is None:
             client = GcsUtility.make_client()
             try:
-                self.source = open(self.path, "r", transport_params={"client": client})
+                self.source = open(
+                    self.path, self.mode, transport_params={"client": client}
+                )
             except DeprecationWarning:
                 ...
 
     def next(self) -> list[str]:
         with open(
             uri=self.path,
-            mode="r",
+            mode=self.mode,
             transport_params={"client": GcsUtility.make_client()},
         ) as file:
             reader = csv.reader(

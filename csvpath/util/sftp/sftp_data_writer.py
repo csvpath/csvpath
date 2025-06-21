@@ -10,30 +10,37 @@ from .sftp_config import SftpConfig
 class SftpDataWriter(DataFileWriter):
     def load_if(self) -> None:
         if self.sink is None:
-            config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
+            config = Box().get(Box.CSVPATHS_CONFIG)
             c = SftpConfig(config)
             self.sink = open(
                 self.path,
-                self._mode,
+                self.mode,
                 newline="",
                 transport_params={
-                    "connect_kwargs": {"username": c.username, "password": c.password}
+                    "connect_kwargs": {
+                        "username": c.username,
+                        "password": c.password,
+                        "look_for_keys": False,
+                        "allow_agent": False,
+                    }
                 },
             )
 
     def write(self, data) -> None:
-        config = Box.STUFF.get(Box.CSVPATHS_CONFIG)
+        config = Box().get(Box.CSVPATHS_CONFIG)
         c = SftpConfig(config)
+        print(f"ftpdatawr: appending: {self.path}, {self.mode}")
         with open(
             self.path,
-            self._mode,
+            self.mode,
             newline="",
             transport_params={
-                "connect_kwargs": {"username": c.username, "password": c.password}
+                "connect_kwargs": {
+                    "username": c.username,
+                    "password": c.password,
+                    "look_for_keys": False,
+                    "allow_agent": False,
+                }
             },
         ) as sink:
             sink.write(data)
-
-    def file_info(self) -> dict[str, str | int | float]:
-        # TODO: what can/should we provide here?
-        return {}

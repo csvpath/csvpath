@@ -88,9 +88,9 @@ class TestS3(unittest.TestCase):
         S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
         with DataFileWriter(path=path) as writer:
             writer.append(text)
-        reader = DataFileReader(path)
-        for s in reader.next_raw():
-            assert s == text.encode("utf-8")
+        reader = DataFileReader(path, mode="r", encoding="utf-8")
+        for s in reader.next_plain():
+            assert s == text
             break
         assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c)
         S3Utils.remove(BUCKET, TEMP_FILE_NAME, client=c)
@@ -148,9 +148,9 @@ class TestS3(unittest.TestCase):
         with DataFileWriter(path=a) as writer:
             writer.append(text)
         # check that we're actually writing Ok. this is extra.
-        reader = DataFileReader(a)
-        for s in reader.next_raw():
-            assert s == text.encode("utf-8")
+        reader = DataFileReader(a, mode="r", encoding="utf-8")
+        for s in reader.next_plain():
+            assert s == text
             break
         with DataFileWriter(path=b) as writer:
             writer.append(text)
@@ -192,8 +192,8 @@ class TestS3(unittest.TestCase):
         with DataFileWriter(path=a) as writer:
             writer.append(text)
         reader = DataFileReader(a)
-        for s in reader.next_raw():
-            assert s == text.encode("utf-8")
+        for s in reader.next_plain():
+            assert s == text
             break
 
         b = Nos(a).exists()

@@ -44,11 +44,12 @@ class FileManager:
 
     @property
     def nos(self) -> Nos:
+        box = Box()
         if self._nos is None:
-            self._nos = Box.STUFF.get("boto_s3_nos")
+            self._nos = box.get("boto_s3_nos")
             if self._nos is None:
                 self._nos = Nos(None)
-                Box().add("boto_s3_nos", self._nos)
+                box.add("boto_s3_nos", self._nos)
         return self._nos
 
     @property
@@ -563,10 +564,15 @@ class FileManager:
 
     def _copy_down(self, path, temp, mode="wb") -> None:
         """@private"""
+        """
         with DataFileReader(path) as reader:
             with DataFileWriter(path=temp, mode=mode) as writer:
                 for line in reader.next_raw():
                     writer.append(line)
+        """
+        with DataFileReader(path, mode="rb") as reader:
+            with DataFileWriter(path=temp, mode="wb") as writer:
+                writer.write(reader.read())
 
     #
     # can take a reference. the ref would only be expected to point

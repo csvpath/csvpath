@@ -77,8 +77,13 @@ class FileRegistrar(Registrar, Listener):
     def _patch_blob(self, mani: dict, index: int, patch: dict) -> None:
         old = mani[index]["file"]
         newhome = f"{os.path.dirname(mani[index]['file_home'])}/{patch['file_name']}"
+        nos = Nos(newhome)
+        if not nos.dir_exists():
+            nos.makedir()
         new = f"{newhome}/{mani[index]['fingerprint']}.{mani[index]['type']}"
         nos = Nos(old)
+        if not nos.exists():
+            raise ValueError("File not found: {old}")
         nos.rename(new)
         mani[index]["file"] = new
         mani[index]["file_home"] = newhome

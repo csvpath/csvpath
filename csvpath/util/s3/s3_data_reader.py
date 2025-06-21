@@ -19,15 +19,19 @@ class S3DataReader(CsvDataReader):
         if self.source is None:
             client = S3Utils.make_client()
             try:
-                self.source = open(self.path, "r", transport_params={"client": client})
+                self.source = open(
+                    self.path, self.mode, transport_params={"client": client}
+                )
             except DeprecationWarning:
                 ...
 
     def next(self) -> list[str]:
-        #
-        # TODO: check if smart-open is in play and open w/o client is correct
-        #
-        with open(uri=self.path, mode="r") as file:
+        with open(
+            uri=self.path,
+            mode="r",
+            encoding=self.encoding,
+            transport_params={"client": S3Utils.make_client()},
+        ) as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
             )
@@ -62,14 +66,29 @@ class S3DataReader(CsvDataReader):
     # TODO: are read() and raw_read() incorrect because not S3, like open() above?
     #
     def read(self) -> str:
-        with open(uri=self.path, mode="r", encoding="utf-8") as file:
+        with open(uri=self.path, mode=self.mode, encoding=self.encoding) as file:
             return file.read()
 
-    def next_raw(self) -> str:
-        with open(uri=self.path, mode="rb") as file:
-            for line in file:
-                yield line
-
-    def file_info(self) -> dict[str, str | int | float]:
-        # TODO: what can/should we provide here?
-        return {}
+    #
+    # does not use a csv reader, unlike next().
+    # was in use by a test, but not elsewhere. seems useful. keeping here.
+    # if we use it again we need an analog in the other backends.
+    #
+    def next_plain(self) -> str:
+        if self.mode.find("b") > -1:
+            with open(
+                uri=self.path,
+                mode=self.mode,
+                transport_params={"client": S3Utils.make_client()},
+            ) as file:
+                for line in file:
+                    yield line
+        else:
+            with open(
+                uri=self.path,
+                mode=self.mode,
+                encoding=self.encoding,
+                transport_params={"client": S3Utils.make_client()},
+            ) as file:
+                for line in file:
+                    yield line

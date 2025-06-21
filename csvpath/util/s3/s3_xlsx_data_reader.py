@@ -21,10 +21,13 @@ class S3XlsxDataReader(XlsxDataReader):
 
     def load_if(self) -> None:
         if self.source is None:
-            client = Box.STUFF.get("boto_s3_client")
+            client = Box().get("boto_s3_client")
             if client is None:
                 client = S3Utils.make_client()
             try:
+                #
+                # binary files, always rb
+                #
                 self.source = open(self.path, "rb", transport_params={"client": client})
             except DeprecationWarning:
                 ...
