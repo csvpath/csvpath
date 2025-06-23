@@ -69,7 +69,7 @@ REFERENCE_GRAMMAR = r"""
                | files_path files_path_arrival files_path_arrival_ordinal
                | files_path files_path_arrival files_path_arrival_range
                | files_path files_path_arrival files_path_arrival_range ("." ":"? files_path_two_arrival) files_path_two_arrival_range
-               | files_path files_path_arrival files_path_arrival_range files_path_arrival_range_ordinal
+               | files_path files_path_arrival files_path_arrival_range ("." files_path_arrival_range_ordinal)
                | files_path ("." files_path_two_arrival)
                | files_path ("." files_path_two_arrival) files_path_two_arrival_range
                | files_path ("." files_path_two_arrival) files_path_two_arrival_range files_path_two_arrival_range_ordinal

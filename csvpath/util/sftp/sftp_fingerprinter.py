@@ -2,14 +2,28 @@ import uuid
 import tempfile
 from smart_open import open
 from csvpath.util.hasher import Hasher
+from csvpath import CsvPaths
 from csvpath.util.box import Box
 from .sftp_config import SftpConfig
 
 
 class SftpFingerprinter:
+    @property
+    def _config(self):
+        config = Box().get(Box.CSVPATHS_CONFIG)
+        if config is None:
+            #
+            # if none, we may not be in a context closely tied to a CsvPaths.
+            # e.g. FP. so we create a new csvpaths just for the config. it will
+            # be identical to any csvpaths in this project unless the other
+            # csvpaths were long-lived and had programmatic changes.
+            #
+            config = CsvPaths().config
+            Box().add(Box.CSVPATHS_CONFIG, config)
+        return config
+
     def fingerprint(self, path: str) -> str:
-        box = Box()
-        config = box.get(Box.CSVPATHS_CONFIG)
+        config = self._config
         #
         #
         #

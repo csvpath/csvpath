@@ -138,6 +138,11 @@ class GeneralDataWriter(DataFileWriter):
     def write(self, data) -> None:
         if self.is_binary:
             with open(self.path, self.mode) as file:
+                if not isinstance(data, bytes):
+                    try:
+                        data = data.encode("utf-8")
+                    except Exception:
+                        ...
                 file.write(data)
         else:
             with open(self.path, self.mode, encoding=self.encoding, newline="") as file:

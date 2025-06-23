@@ -2,15 +2,30 @@
 
 import os
 from smart_open import open
+from csvpaths import CsvPaths
 from csvpath.util.box import Box
 from ..file_writers import DataFileWriter
 from .sftp_config import SftpConfig
 
 
 class SftpDataWriter(DataFileWriter):
+    @property
+    def _config(self):
+        config = Box().get(Box.CSVPATHS_CONFIG)
+        if config is None:
+            #
+            # if none, we may not be in a context closely tied to a CsvPaths.
+            # e.g. FP. so we create a new csvpaths just for the config. it will
+            # be identical to any csvpaths in this project unless the other
+            # csvpaths were long-lived and had programmatic changes.
+            #
+            config = CsvPaths().config
+            Box().add(Box.CSVPATHS_CONFIG, config)
+        return config
+
     def load_if(self) -> None:
         if self.sink is None:
-            config = Box().get(Box.CSVPATHS_CONFIG)
+            config = self._config
             c = SftpConfig(config)
             self.sink = open(
                 self.path,
@@ -27,7 +42,7 @@ class SftpDataWriter(DataFileWriter):
             )
 
     def write(self, data) -> None:
-        config = Box().get(Box.CSVPATHS_CONFIG)
+        config = self._config
         c = SftpConfig(config)
         print(f"ftpdatawr: appending: {self.path}, {self.mode}")
         with open(

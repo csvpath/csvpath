@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from lark.exceptions import UnexpectedCharacters
+from lark.exceptions import UnexpectedCharacters, UnexpectedEOF
 from csvpath.util.references.reference_grammar import QueryParser
 from csvpath.util.references.reference_parser import ReferenceParser
 
@@ -91,7 +91,9 @@ class TestReferenceGrammar(unittest.TestCase):
         parser = QueryParser(ref=ReferenceParser())
         failing_queries = [
             "$mydata.files.data/input.csv.2024-01-15_14-30-45",  # Too many dots - should fail
+            "$big_test.files.B:2025-:from:first",  # Too many tokens on name_one: date, from and first
+            "$big_test.files.B:2025-:from.2025-",  # path + arrival + range name-three-date must end in range or range + ordinal
         ]
         for i, query in enumerate(failing_queries):
-            with pytest.raises((ValueError, UnexpectedCharacters)):
+            with pytest.raises((ValueError, UnexpectedCharacters, UnexpectedEOF)):
                 parser.parse(query)

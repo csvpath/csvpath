@@ -636,9 +636,16 @@ class PathsManager:
         """@private"""
         return len(self._get_named_paths(name))
 
-    def total_named_paths(self) -> bool:
+    def total_named_paths(self) -> int:
         """@private"""
         return len(self.named_paths_names)  # pragma: no cover
+
+    @property
+    def named_paths_count(self) -> int:
+        #
+        # this signature matches the file_manager interface
+        #
+        return self.total_named_paths()
 
     #
     # ================== internals =====================

@@ -3,6 +3,7 @@ import os
 import paramiko
 import stat
 from stat import S_ISDIR, S_ISREG
+from csvpath import CsvPaths
 from csvpath.util.box import Box
 from ..path_util import PathUtility as pathu
 from .sftp_config import SftpConfig
@@ -10,6 +11,20 @@ from .sftp_walk import SftpWalk
 
 
 class SftpDo:
+    @property
+    def _config(self):
+        config = Box().get(Box.CSVPATHS_CONFIG)
+        if config is None:
+            #
+            # if none, we may not be in a context closely tied to a CsvPaths.
+            # e.g. FP. so we create a new csvpaths just for the config. it will
+            # be identical to any csvpaths in this project unless the other
+            # csvpaths were long-lived and had programmatic changes.
+            #
+            config = CsvPaths().config
+            Box().add(Box.CSVPATHS_CONFIG, config)
+        return config
+
     def __init__(self, path):
         self._path = None
         self._server_part = None
@@ -17,8 +32,7 @@ class SftpDo:
         self.setup(path)
 
     def setup(self, path: str = None) -> None:
-        box = Box()
-        config = box.get(Box.CSVPATHS_CONFIG)
+        config = self._config
         self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
         self._config = SftpConfig(config)
         if path:
@@ -34,17 +48,6 @@ class SftpDo:
     @property
     def path(self) -> str:
         return self._path
-
-    """
-    @property
-    def parent_dir_path(self) -> str:
-        p = self.path
-        if p.find("/") == -1:
-            return "/"
-        if not p.startswith("/"):
-            p = f"/{p}"
-        return p[0:p.rfind("/")]
-    """
 
     @path.setter
     def path(self, p) -> None:
