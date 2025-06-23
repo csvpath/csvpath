@@ -61,7 +61,7 @@
               "timeout": -1.0,
               "arguments": [
                 "-c",
-                "poetry run pytest -s -v -k test_line_monitor_line_handling"
+                "poetry run pytest"
               ],
               "run_if": "passed",
               "type": "exec"
