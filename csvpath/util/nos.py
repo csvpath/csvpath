@@ -3,11 +3,8 @@ import os
 import shutil
 from pathlib import Path
 from .config import Config
-from .s3.s3_nos import S3Do
-from .azure.azure_nos import AzureDo
-from .sftp.sftp_nos import SftpDo
-from .gcs.gcs_nos import GcsDo
 from .path_util import PathUtility as pathu
+from .class_loader import ClassLoader
 
 
 class Nos:
@@ -60,13 +57,29 @@ class Nos:
     def do(self):
         if self.path is not None and self._do is None:
             if self.path.startswith("s3://"):
-                self._do = S3Do(self.path)
+                instance = ClassLoader.load(
+                    "from csvpath.util.s3.s3_nos import S3Do",
+                    args=[self.path],
+                )
+                self._do = instance
             elif self.path.startswith("sftp://"):
-                self._do = SftpDo(self.path)
+                instance = ClassLoader.load(
+                    "from csvpath.util.sftp.sftp_nos import SftpDo",
+                    args=[self.path],
+                )
+                self._do = instance
             elif self.path.startswith("azure://"):
-                self._do = AzureDo(self.path)
+                instance = ClassLoader.load(
+                    "from csvpath.util.azure.azure_nos import AzureDo",
+                    args=[self.path],
+                )
+                self._do = instance
             elif self.path.startswith("gs://"):
-                self._do = GcsDo(self.path)
+                instance = ClassLoader.load(
+                    "from csvpath.util.gcs.gcs_nos import GcsDo",
+                    args=[self.path],
+                )
+                self._do = instance
             else:
                 self._do = FileDo(self.path)
         return self._do

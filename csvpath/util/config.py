@@ -692,7 +692,7 @@ shell = /bin/bash
     @property
     def csv_file_extensions(self) -> list[str]:
         # if self._csv_file_extensions is None:
-        cs = self._get("extensions", "csv_files")
+        cs = self._get("extensions", Sections.CSV_FILES.value)
         if not cs or len(cs) == 0:
             #
             # the old way
@@ -708,7 +708,7 @@ shell = /bin/bash
     def csv_file_extensions(self, ss: list[str]) -> None:
         if isinstance(ss, str):
             ss = [ss]
-        self._set("extensions", "csvpaths_files", ss)
+        self._set("extensions", Sections.CSVPATH_FILES.value, ss)
         # self._csv_file_extensions = ss
 
     @property
