@@ -2,7 +2,7 @@
 
 import os
 from smart_open import open
-from csvpaths import CsvPaths
+from csvpath import CsvPaths
 from csvpath.util.box import Box
 from ..file_writers import DataFileWriter
 from .sftp_config import SftpConfig

@@ -13,17 +13,22 @@ from .sftp_walk import SftpWalk
 class SftpDo:
     @property
     def _config(self):
-        config = Box().get(Box.CSVPATHS_CONFIG)
-        if config is None:
+        if self._cfg is None:
+            self._cfg = Box().get(Box.CSVPATHS_CONFIG)
             #
             # if none, we may not be in a context closely tied to a CsvPaths.
             # e.g. FP. so we create a new csvpaths just for the config. it will
             # be identical to any csvpaths in this project unless the other
             # csvpaths were long-lived and had programmatic changes.
             #
-            config = CsvPaths().config
-            Box().add(Box.CSVPATHS_CONFIG, config)
-        return config
+            if self._cfg is None:
+                self._cfg = CsvPaths().config
+                Box().add(Box.CSVPATHS_CONFIG, self._cfg)
+        return self._cfg
+
+    @_config.setter
+    def _config(self, cfg: SftpConfig) -> None:
+        self._cfg = cfg
 
     def __init__(self, path):
         self._path = None
