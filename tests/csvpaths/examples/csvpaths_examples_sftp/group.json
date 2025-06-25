@@ -1,0 +1,6 @@
+{
+    "sftptest": [
+        "tests/csvpaths/examples/csvpaths_examples_sftp/csvpaths/sku_upc.csvpath"
+    ]
+}
+

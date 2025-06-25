@@ -1,0 +1,150 @@
+import unittest
+import os
+import time
+import paramiko
+import stat
+from csvpath import CsvPaths
+from csvpath.util.config import Config
+from csvpath.managers.integrations.sftpplus.transfer_creator import (
+    SftpPlusTransferCreator,
+)
+
+FILE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_sftpplus{os.sep}csvs{os.sep}March-2024.csv"
+DIR = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_sftpplus{os.sep}csvpaths"
+
+
+class TestCsvPathsExamplesSftpPlus(unittest.TestCase):
+    RUNNING = None
+
+    def test_sftpplus_load_paths(self):
+        if not self._check_for_server():
+            return
+        paths = CsvPaths()
+        self._clear(paths)
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("listeners", "groups", "sftpplus")
+        paths.config.add_to_config(
+            "listeners",
+            "sftpplus.paths",
+            "from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener",
+        )
+        paths.paths_manager.add_named_paths_from_dir(
+            name="sftpplus",
+            directory=f"tests{os.sep}examples{os.sep}sftpplus{os.sep}csvpaths",
+        )
+        #
+        # no way to determine automatically if this succeeds yet
+        #
+
+    def test_sftpplus_drop_file(self):
+        if not self._check_for_server():
+            return
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        config = Config()
+        client.connect(
+            config.get(section="sftpplus", name="server"),
+            10022,
+            "tinpenny",
+            "tinpenny",
+        )
+        sftp = client.open_sftp()
+        sftp.put(
+            FILE,
+            "orders{os.sep}March-2024.csv",
+        )
+        #
+        # no way to determine automatically if this succeeds yet
+        #
+
+    def test_sftpplus_basic(self):
+        if not self._check_for_server():
+            return
+        paths = CsvPaths()
+        self._clear(paths)
+        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("listeners", "groups", "sftpplus")
+        paths.config.add_to_config(
+            "listeners",
+            "sftpplus.paths",
+            "from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener",
+        )
+        paths.file_manager.add_named_file(name="sftpplus-orders", path=FILE)
+        paths.paths_manager.add_named_paths_from_dir(name="sftpplus", directory=DIR)
+        paths.collect_paths(filename="sftpplus-orders", pathsname="sftpplus")
+        #
+        # how to check arrival?
+        #
+        # time.sleep(3)
+        # self._check_arrival(["dirname{os.sep}data.csv", "dirname{os.sep}foo.json"])
+
+    def _clear(self, paths: CsvPaths):
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(
+                paths.config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
+            sftp = client.open_sftp()
+            for entry in sftp.listdir_attr(f".{os.sep}"):
+                if not stat.S_ISDIR(entry.st_mode):
+                    sftp.remove(f".{os.sep}{entry.filename}")
+            for entry in sftp.listdir_attr(f".{os.sep}csvpath_messages{os.sep}handled"):
+                if not stat.S_ISDIR(entry.st_mode):
+                    sftp.remove(f".{os.sep}handled{os.sep}{entry.filename}")
+            sftp.close()
+        except Exception:
+            ...
+        finally:
+            client.close()
+
+    def _check_arrival(self, paths):
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(
+                paths.config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
+            sftp = client.open_sftp()
+            for path in paths:
+                sftp.stat(path)
+            sftp.close()
+        finally:
+            client.close()
+
+    def _check_for_server(self):
+        if TestCsvPathsExamplesSftpPlus.RUNNING is not None:
+            return TestCsvPathsExamplesSftpPlus.RUNNING
+        try:
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            config = Config()
+            client.connect(
+                config.get(section="sftpplus", name="server"),
+                10022,
+                "mailbox",
+                "mailbox",
+            )
+        except Exception as e:
+            print(e)
+            print(
+                """WARNING: cannot run sftp test:
+                required: server on port 10022 with test_user account and an SFTP_PASSWORD env var"""
+            )
+            TestCsvPathsExamplesSftpPlus.RUNNING = False
+            return TestCsvPathsExamplesSftpPlus.RUNNING
+        finally:
+            try:
+                client.close()
+            except Exception:
+                ...
+        TestCsvPathsExamplesSftpPlus.RUNNING = True
+        return TestCsvPathsExamplesSftpPlus.RUNNING

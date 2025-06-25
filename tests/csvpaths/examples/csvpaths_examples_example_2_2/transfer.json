@@ -1,0 +1,11 @@
+{
+    "transfer": [
+        "tests/csvpaths/examples/csvpaths_examples_example_2_2/csvpaths/metadata.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_example_2_2/csvpaths/file_length.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_example_2_2/csvpaths/prices_b.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_example_2_2/csvpaths/output.csvpath"
+    ],
+    "top_matter_import": [
+        "tests/csvpaths/examples/csvpaths_examples_example_2_2/csvpaths/top_matter_import.csvpath"
+    ]
+}

@@ -1,0 +1,9 @@
+{
+    "test": "tests/csvpaths/test_resources/test.csv",
+    "numbers": "tests/csvpaths/test_resources/numbers.csv",
+    "_config": {
+        "test":{
+            "template":":1/:2/:filename"
+        }
+    }
+}

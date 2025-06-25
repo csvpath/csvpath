@@ -43,7 +43,6 @@ class FilesReferenceFinder2:
 
     def query(self) -> ReferenceResults:
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
-        print(f"ref: {self.ref}")
         #
         # if we find fingerprint we are done
         #

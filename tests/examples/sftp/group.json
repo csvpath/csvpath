@@ -1,6 +1,0 @@
-{
-    "sftptest": [
-        "tests/examples/sftp/csvpaths/sku_upc.csvpath"
-    ]
-}
-
