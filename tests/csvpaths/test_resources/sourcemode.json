@@ -1,0 +1,10 @@
+{
+    "sourcemode": [
+            "tests/csvpaths/test_resources/named_paths/source_mode.csvpaths"
+    ],
+    "_config": {
+            "sourcemode": {
+                "template":"aprx/:run_dir"
+            }
+    }
+}

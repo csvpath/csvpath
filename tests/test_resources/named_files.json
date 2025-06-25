@@ -1,9 +1,0 @@
-{
-    "test": "tests/test_resources/test.csv",
-    "numbers": "tests/test_resources/numbers.csv",
-    "_config": {
-        "test":{
-            "template":":1/:2/:filename"
-        }
-    }
-}

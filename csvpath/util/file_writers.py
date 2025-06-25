@@ -44,14 +44,6 @@ class DataFileWriter(ABC):
 
     def append(self, data) -> None:
         self.load_if()
-        print(
-            f"datawriters: self: {type(self)} isbin: {self.is_binary}, is str: {isinstance(data, str)}"
-        )
-        """
-        if not self.is_binary and isinstance(data, str):
-            data = data.encode("utf-8")
-        self.sink.write(data)
-        """
         if self.is_binary and isinstance(data, str):
             data = data.encode(self.encoding)
         self.sink.write(data)

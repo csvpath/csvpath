@@ -1,0 +1,13 @@
+{
+  "many": [
+    "tests/csvpaths/test_resources/named_paths/many.csvpaths"
+  ],
+  "numbers": [
+    "tests/csvpaths/test_resources/named_paths/zips.csvpaths",
+    "tests/csvpaths/test_resources/named_paths/select.csvpaths"
+  ],
+  "needs split": [
+    "tests/csvpaths/test_resources/named_paths/zips.csvpaths"
+  ],
+  "_config": { }
+}

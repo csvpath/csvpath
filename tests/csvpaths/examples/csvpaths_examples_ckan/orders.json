@@ -1,0 +1,13 @@
+{
+    "ckantest": [
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/top_matter_import.csvpath"
+    ],
+    "orders": [
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/metadata.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/file_length.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/reset.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/categories.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/prices.csvpath",
+        "tests/csvpaths/examples/csvpaths_examples_ckan/csvpaths/sku_upc.csvpath"
+    ]
+}

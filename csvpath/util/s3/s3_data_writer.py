@@ -24,7 +24,9 @@ class S3DataWriter(DataFileWriter):
             raise ValueError("Data cannot be None")
         client = S3Utils.make_client()
         with open(self.path, "wb", transport_params={"client": client}) as file:
-            file.write(data.encode("utf-8"))
+            if not isinstance(data, bytes):
+                data = data.encode("utf-8")
+            file.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

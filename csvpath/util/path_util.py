@@ -18,7 +18,6 @@ class PathUtility:
     def resep(cls, path: str, hint=None) -> str:
         sep, notsep = cls.sep(path, hint=hint)
         return path.replace(notsep, sep)
-        return path  # Assume POSIX-compatible paths
 
     @classmethod
     def lresep(cls, paths: list) -> list:

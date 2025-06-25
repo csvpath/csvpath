@@ -1,0 +1,32 @@
+import unittest
+import os
+from csvpath import CsvPath
+from csvpath.util.file_readers import DataFileReader
+
+PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
+
+
+class TestCsvPathPandas(unittest.TestCase):
+    def test_csvpath_pandas_1(self):
+        try:
+            import pandas as pd
+        except ImportError:
+            print("Pandas is not installed. Test will be skipped.")
+            return
+        df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
+        DataFileReader.register_data(path="pandastest", filelike=df)
+        c = """
+            ~
+              id: pandas test
+              validation-mode: no-raise, print
+            ~
+            $pandastest[1*][
+                line(
+                    string.notnone("firstname"),
+                    string.notnone("lastname"),
+                    string("say")
+                )
+                #lastname == "Bat"
+            ] """
+        lines = CsvPath().collect(c)
+        assert len(lines) == 7

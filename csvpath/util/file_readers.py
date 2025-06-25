@@ -63,9 +63,7 @@ class DataFileReader(ABC):
             self.source = None
 
     def fingerprint(self) -> str:
-        """non-local file-like situations -- e.g. smart-open -- must
-        implement their own fingerprint method
-        """
+        """non-local situations must implement their own fingerprint method"""
         h = Hasher().hash(self.path)
         return h
 
@@ -74,9 +72,6 @@ class DataFileReader(ABC):
             if "b" in self.mode:
                 self.source = open(self.path, mode=self.mode)
             else:
-                print(
-                    f"datafiler: loadif: mode: {self.mode}, encoding: {self.encoding}, path: {self.path}"
-                )
                 self.source = open(self.path, mode=self.mode, encoding=self.encoding)
 
     def read(self) -> str:
