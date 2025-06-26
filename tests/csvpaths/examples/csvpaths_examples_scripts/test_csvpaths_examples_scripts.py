@@ -81,13 +81,14 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         #
         import time
 
-        time.sleep(0.25)
+        time.sleep(0.5)
         assert paths.has_errors() is False
         #
         # check for output
         #
         p = os.path.join(out, lst[0][1])
         exists = Nos(p).exists()
+        print(f"test_paths_mgr_script_run_1: p: {p}")
         assert exists
         found = False
         files = Nos(out).listdir()

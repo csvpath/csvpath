@@ -1,11 +1,12 @@
 import unittest
 import os
 from csvpath import CsvPaths
+from tests.csvpaths.builder import Builder
 
 
 class TestCsvPathsSingleFromGroup(unittest.TestCase):
     def test_single_from_group(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="food",

@@ -7,6 +7,9 @@ from csvpath.managers.results.result_file_reader import ResultFileReader
 from csvpath.util.file_readers import FileInfo
 from csvpath.util.line_spooler import CsvLineSpooler
 from csvpath.util.path_util import PathUtility as pathu
+from tests.csvpaths.builder import Builder
+from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
+from tests.csvpaths.kit.tracking_paths_manager import TrackingPathsManager
 
 
 def setup_module(module):
@@ -25,21 +28,13 @@ ERROR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}
 
 class TestCsvPathsManagersResultReaders(unittest.TestCase):
     def _setup(self) -> None:
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths(name="food", from_file=FOOD)
         paths.paths_manager.add_named_paths(name="arrivals", from_file=PEOPLE)
+        paths.paths_manager.add_named_paths(name="error_reload", from_file=ERROR)
         paths.file_manager.add_named_file(name="food", path=FOOD_CSV)
         paths.file_manager.add_named_file(name="people", path=PEOPLE_CSV)
-        paths.paths_manager.add_named_paths(name="error_reload", from_file=ERROR)
         return paths
-
-    def _teardown(self, paths: CsvPaths, filename, pathsname) -> None:
-        if paths.file_manager.has_named_file(filename):
-            paths.file_manager.remove_named_file(filename)
-        if paths.paths_manager.has_named_paths(pathsname):
-            paths.paths_manager.remove_named_paths(pathsname)
 
     def test_result_readers(self):
         f = ResultReadersFacade(None)
@@ -53,33 +48,32 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         paths = self._setup()
         paths.collect_paths(pathsname="food", filename="food")
         results = paths.results_manager.get_named_results("food")
-
         result = results[0]
-
         cs = CsvLineSpooler(None)
         dpath = cs._instance_data_file_path()
         assert dpath is None
-
         cs = CsvLineSpooler(result)
         c = result.csvpath
         result.csvpath = None
         dpath = cs._instance_data_file_path()
         assert dpath is None
         result.csvpath = c
-
         dpath = result.data_file_path
         assert dpath is not None
         assert pathu.equal(dpath, cs._instance_data_file_path())
-
         dpath = result.data_file_path
         assert dpath is not None
         assert pathu.equal(dpath, cs._instance_data_file_path())
-
-        self._teardown(paths, "food", "food")
 
     def test_reload_result_reader_helpers(self):
         paths = self._setup()
         paths.collect_paths(pathsname="food", filename="food")
+        #
+        # paths does clean() and set_managers() so we would need to renew our wrapped
+        # versions. however, we don't need to tear down and shouldn't
+        #
+        # paths.file_manager = TrackingFileManager(csvpaths=paths, mgr=paths.file_manager)
+        # paths.paths_manager = TrackingPathsManager(csvpaths=paths, mgr=paths.paths_manager)
         results = paths.results_manager.get_named_results("food")
         result = results[0]
         result_dir = os.path.join(result.run_dir, result.identity_or_index)
@@ -103,11 +97,16 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
             assert "created" in info
             assert info["created"] is not None
 
-        self._teardown(paths, "food", "food")
-
     def test_reload_result_file_lines_reader(self):
         paths = self._setup()
         paths.collect_paths(pathsname="food", filename="food")
+        #
+        # paths does clean() and set_managers() so we need to renew our wrapped versions
+        #
+        paths.file_manager = TrackingFileManager(csvpaths=paths, mgr=paths.file_manager)
+        paths.paths_manager = TrackingPathsManager(
+            csvpaths=paths, mgr=paths.paths_manager
+        )
         results = paths.results_manager.get_named_results("food")
         assert len(results) == 2
         result = results[0]
@@ -123,8 +122,6 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         assert len(lines2) == 1
         assert len(lines) == len(lines2)
 
-        self._teardown(paths, "food", "food")
-
     def test_reload_errors(self):
         paths = self._setup()
         paths.collect_paths(pathsname="error_reload", filename="people")
@@ -137,9 +134,7 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         #
         # reload
         #
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         results = paths.results_manager.get_named_results("error_reload")
         assert results is not None
         assert len(results) == 1
@@ -147,12 +142,8 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         errors2 = results[0].errors
         assert errors2 is not None
         assert len(errors2) == len(errors)
-        print("\nHow are these equal?")
         errors[0].how_eq(errors2[0])
-
         assert errors[0] == errors2[0]
-
-        self._teardown(paths, "people", "error_reload")
 
     def test_reload_printouts(self):
         paths = self._setup()
@@ -170,9 +161,7 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         #
         #
         #
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
@@ -183,22 +172,17 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         assert printouts
         assert len(printouts) == 3
 
-        self._teardown(paths, "people", "arrivals")
-
     def test_reload_lines(self):
         paths = self._setup()
         paths.collect_paths(pathsname="arrivals", filename="people")
         results = paths.results_manager.get_named_results("arrivals")
         assert results is not None
         assert len(results) == 2
-        print(f"results[0]: {results[0]}")
         assert len(results[0]) == 8
         #
         #
         #
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
@@ -212,8 +196,6 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
 
         assert results2[0].is_valid
 
-        # self._teardown(paths, "people", "arrivals")
-
     def test_reload_unmatched(self):
         paths = self._setup()
         paths.collect_paths(pathsname="arrivals", filename="people")
@@ -223,9 +205,7 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         #
         #
         #
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         results2 = paths.results_manager.get_named_results("arrivals")
         assert results2 is not None
         assert len(results2) == 2
@@ -243,8 +223,6 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         assert len(lst1) == len(lst2)
         for i, _ in enumerate(lst1):
             assert lst1[i] == lst2[i]
-
-        self._teardown(paths, "people", "arrivals")
 
     def test_reload_result_reader_helpers_2(self):
         p = DELETEME

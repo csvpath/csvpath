@@ -6,6 +6,7 @@ from csvpath import CsvPaths
 from csvpath.util.config import OnError
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.exceptions import CsvPathsException
+from tests.csvpaths.builder import Builder
 
 FILE = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}import_internal.csvpath"
@@ -16,9 +17,7 @@ FILES_DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
 
 class TestCsvPathsFunctionsImport(unittest.TestCase):
     def test_function_import2(self):
-        paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
 
         paths.file_manager.add_named_files_from_dir(FILES_DIR)
         paths.paths_manager.add_named_paths_from_dir(directory=PATHS_DIR)
@@ -47,7 +46,7 @@ class TestCsvPathsFunctionsImport(unittest.TestCase):
         assert es[3][0].children[0].matcher == path.matcher
 
     def test_function_import3(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.csvpath_errors_policy = [OnError.RAISE.value]
         paths.config.csvpaths_errors_policy = [OnError.RAISE.value]
 

@@ -4,11 +4,12 @@ from csvpath.util.sqliter import Sqliter
 from csvpath.managers.integrations.sqlite.sqlite_results_listener import (
     SqliteResultsListener,
 )
+from tests.csvpaths.builder import Builder
 
 
 class TestCsvPathsSqliteBootstrap(unittest.TestCase):
     def test_sqlite_1(self):
-        paths = CsvPaths()
+        paths = Builder().build()
 
         with Sqliter(config=paths.config, client_class=SqliteResultsListener) as conn:
             cursor = conn.cursor()

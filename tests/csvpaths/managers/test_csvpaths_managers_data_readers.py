@@ -8,6 +8,8 @@ from csvpath.util.file_readers import (
     XlsxDataReader,
 )
 from csvpath import CsvPaths
+from tests.csvpaths.builder import Builder
+from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
 
 PATH_CSV = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 PATH_XLSX = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.xlsx"
@@ -20,11 +22,11 @@ class TestCsvPathsManagersDataReaders(unittest.TestCase):
         b = os.path.exists(path)
         if b:
             shutil.rmtree(path)
+        if "xlsx" in TrackingFileManager.ADDED:
+            del TrackingFileManager.ADDED["xlsx"]
 
     def test_data_readers_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
@@ -37,9 +39,7 @@ class TestCsvPathsManagersDataReaders(unittest.TestCase):
 
     def test_data_readers_2(self):
         self._clean()
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         mgr = paths.file_manager
         mgr.add_named_file(name="csv", path=PATH_CSV)
         mgr.add_named_file(name="xlsx", path=PATH_XLSX)
@@ -59,9 +59,7 @@ class TestCsvPathsManagersDataReaders(unittest.TestCase):
 
     def test_data_readers_3(self):
         self._clean()
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         mgr = paths.file_manager
         if mgr.has_named_file("xlsx"):
             mgr.remove_named_file("xlsx")

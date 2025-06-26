@@ -305,7 +305,8 @@ REFERENCE_GRAMMAR = r"""
     HEADER_IDENTIFIER:  "'"? /[a-zA-Z0-9][a-zA-Z0-9_# \-\|+\? \[\]]*/ "'"?
     PATH_SEGMENT: /[a-zA-Z0-9_\- #]+/
 
-    HASH: /[abcdef0-9]{64}/
+    //HASH: /[abcdef0-9]{64}/
+    HASH: /[a-f0-9]{64}/i | /[A-Za-z0-9+\/]{44}/ | /[A-Za-z0-9+\/]{43}=/
 
     INTEGER: /\d+/
     DATETIME: /\d{4}-/

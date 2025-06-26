@@ -22,22 +22,22 @@ class HttpDataReader(CsvDataReader):
             for line in reader:
                 yield line
 
-    """
-    def next_raw(self) -> list[str]:
+    def next_raw(self, mode: str = None) -> list[str]:
+        if mode is None:
+            mode = self.mode
         try:
             if mode.find("b") > -1:
-                with open(self._path, mode=self.mode) as file:
-                for line in file:
-                    yield line
+                with open(self._path, mode=mode) as file:
+                    for line in file:
+                        yield line
             else:
-                with open(self._path, mode=self.mode, encoding=self.encoding) as file:
-                for line in file:
-                    yield line
+                with open(self._path, mode=mode, encoding=self.encoding) as file:
+                    for line in file:
+                        yield line
         except UnicodeDecodeError:
             with open(self._path, mode="rb") as file:
                 for line in file:
                     yield line
-    """
 
     def fingerprint(self) -> str:
         ...

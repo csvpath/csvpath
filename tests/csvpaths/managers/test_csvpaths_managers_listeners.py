@@ -4,6 +4,7 @@ from datetime import datetime
 from csvpath.managers.registrar import Registrar
 from csvpath import CsvPaths
 from csvpath.util.config import Config
+from tests.csvpaths.builder import Builder
 
 TINI = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
 
@@ -11,9 +12,7 @@ TINI = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}deleteme{os.sep}conf
 class TestCsvPathsManagersListeners(unittest.TestCase):
     def test_additional_listeners1(self):
         stmt = "from csvpath.managers.run.run_listener_stdout import StdOutRunListener"
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         r = Registrar(csvpaths=paths)
         listeners = [r]
         assert len(listeners) == 1
@@ -29,9 +28,7 @@ class TestCsvPathsManagersListeners(unittest.TestCase):
             if os.path.exists(testini):
                 os.remove(testini)
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
-            paths = CsvPaths()
-            paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-            paths.add_to_config("errors", "csvpath", "raise, collect, print")
+            paths = Builder().build()
             config = paths.config
             assert os.path.exists(testini)
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = f"config{os.sep}config.ini"

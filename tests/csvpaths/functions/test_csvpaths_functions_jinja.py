@@ -3,6 +3,7 @@ import os
 from csvpath import CsvPaths
 from csvpath.matching.functions.print.jinjaf import Jinjaf
 from csvpath.util.path_util import PathUtility as pathu
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 NAMED_FILES_DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
@@ -13,18 +14,16 @@ IN = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}in.txt"
 
 class TestCsvPathsFunctionsJinja(unittest.TestCase):
     def test_function_jinja_get_tokens(self):
-        cs = CsvPaths()
-        cs.add_to_config("errors", "csvpaths", "raise, collect, print")
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
-        cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
-        cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
-        cs.fast_forward_paths(filename="zipcodes", pathsname="zips")
-        rm = cs.results_manager
+        paths = Builder().build()
+        paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
+        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.fast_forward_paths(filename="zipcodes", pathsname="zips")
+        rm = paths.results_manager
         resultset = rm.get_named_results("zips")
         results = resultset[0]
         rcp = results.csvpath
         rcp.variables
-        path = cs.csvpath()
+        path = paths.csvpath()
         path.parse(
             f"""
             ${PATH}[1*]
@@ -60,9 +59,7 @@ class TestCsvPathsFunctionsJinja(unittest.TestCase):
         assert tokens["zips"]["headers"]["zip"] == ""
 
     def test_function_jinja1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         path = paths.csvpath()
         path.parse(
             f""" ~name:jinja~ ${PATH}[*][ yes()

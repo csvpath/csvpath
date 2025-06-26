@@ -70,11 +70,9 @@ class S3DataReader(CsvDataReader):
             return file.read()
 
     #
-    # does not use a csv reader, unlike next().
-    # was in use by a test, but not elsewhere. seems useful. keeping here.
-    # if we use it again we need an analog in the other backends.
+    # no csv interpretation. used in FileManager.
     #
-    def next_plain(self) -> str:
+    def next_raw(self) -> str:
         if self.mode.find("b") > -1:
             with open(
                 uri=self.path,

@@ -94,11 +94,11 @@ class ScriptsResultsListener(Listener, threading.Thread):
             )
             path = os.path.dirname(mdata.manifest_path)
             path = os.path.join(path, script_name)
-            with DataFileWriter(path=path) as to:
-                to.write(b)
-                #
-                # below is supposedly cross platform but just in case.
-                #
+            dfw = DataFileWriter(path=path)
+            dfw.write(b)
+            #
+            # below is supposedly cross platform but just in case.
+            #
             try:
                 os.chmod(path, 0o755)
             except Exception:
@@ -112,8 +112,8 @@ class ScriptsResultsListener(Listener, threading.Thread):
             script_out_name = f"{script_name}-{n.strftime('%Y-%m-%d_%H-%M-%S_%f')}.txt"
             script_out_path = mdata.run_home
             script_out_path = os.path.join(script_out_path, script_out_name)
-            with DataFileWriter(path=script_out_path) as writer:
-                writer.write(out)
+            dfw = DataFileWriter(path=script_out_path)
+            dfw.write(out)
         except Exception as e:
             msg = f"Run script failed on results {mdata.named_paths_name}, script_name {script_name}, with {type(e)}: {e}"
             self.csvpaths.logger.error(msg)

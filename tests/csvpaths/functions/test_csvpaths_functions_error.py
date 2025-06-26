@@ -4,15 +4,14 @@ import json
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathsFunctionsError(unittest.TestCase):
     def test_function_error_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.add_to_config(
             "errors",
             "pattern",
@@ -46,9 +45,7 @@ class TestCsvPathsFunctionsError(unittest.TestCase):
         assert lst[0].find("errors:1:errors:") > -1
 
     def test_function_error_2(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[
@@ -76,9 +73,7 @@ class TestCsvPathsFunctionsError(unittest.TestCase):
         assert lst[0].find("test_errors:errors:0") == -1
 
     def test_error_file(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths(
             name="errors",
             paths=[

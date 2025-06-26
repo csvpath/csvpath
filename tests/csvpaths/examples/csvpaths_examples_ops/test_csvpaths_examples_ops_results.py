@@ -210,7 +210,6 @@ class TestCsvPathsExamplesResultsOps(unittest.TestCase):
             #
             psi = 0
             ref = "$clean-invoices.results.acme/invoices/2025/Feb"
-            print(f"test_res_ref_get_res: 1: {ref}")
             try:
                 finder = ResultsReferenceFinder(paths, reference=ref)
                 results = finder.query()
@@ -224,7 +223,9 @@ class TestCsvPathsExamplesResultsOps(unittest.TestCase):
             # 'acme-invoices' that came from a file named 2025-02-invoices.csv on or after 2025-02-15
             #
             ref = f"$acme-invoices.files.Acme_invoices_2025-01-25_csv.{datestr}:after"
-            print(f"test_res_ref_get_res: 2: {ref}")
+            #
+            #
+            #
             paths.collect_paths(pathsname="clean-invoices", filename=ref)
             results2 = paths.results_manager.get_named_results("clean-invoices")
             assert results2 is not None
@@ -235,7 +236,6 @@ class TestCsvPathsExamplesResultsOps(unittest.TestCase):
             reffile = (
                 f"$acme-invoices.files.Acme_invoices_2025-01-25_csv.{datestr}:after"
             )
-            print(f"test_res_ref_get_res: 3: {reffile}")
             paths.collect_paths(pathsname=refpath, filename=reffile)
             results3 = paths.results_manager.get_named_results("clean-invoices")
             assert results3 is not None
@@ -245,7 +245,6 @@ class TestCsvPathsExamplesResultsOps(unittest.TestCase):
             # prob
             #
             ref = f"$clean-invoices.results.acme/invoices/2025/Feb:{psi}"
-            print(f"test_res_ref_get_res: 4: {ref}")
             results4 = paths.results_manager.get_named_results(ref)
             assert results4 is not None
             assert len(results4) == 3
@@ -255,13 +254,11 @@ class TestCsvPathsExamplesResultsOps(unittest.TestCase):
             #
             psi1 = psi + 1
             ref = f"$clean-invoices.results.acme/invoices/2025/Feb:{psi1}"
-            print(f"test_res_ref_get_res: 5: {ref}")
             results5 = paths.results_manager.get_named_results(ref)
             assert results5 is not None
             assert len(results5) == 1
 
             ref = f"$clean-invoices.results.acme/invoices/2025/Feb:{psi}.step-three"
-            print(f"test_res_ref_get_res: 6: {ref}")
             result6 = paths.results_manager.get_named_results(ref)
             assert result6 is not None
             assert result6.identity_or_index == "step-three"

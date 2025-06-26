@@ -1,6 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPaths
+from tests.csvpaths.builder import Builder
 
 FILES = {
     "energy": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}xlsx{os.sep}2023-reported-energy-and-water-metrics.xlsx",
@@ -13,8 +14,7 @@ NAMED_PATHS_DIR = (
 
 class TestCsvPathsXlsx(unittest.TestCase):
     def test_csvpaths_xlsx_primary_1(self):
-        paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.collect_paths(filename="primary", pathsname="primary")
@@ -27,8 +27,7 @@ class TestCsvPathsXlsx(unittest.TestCase):
         assert len(results) == 22
 
     def test_csvpaths_bytes_written_1(self):
-        paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.collect_paths(filename="energy", pathsname="bytes")

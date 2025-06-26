@@ -94,11 +94,10 @@ class ReferenceManifestEntryFinder:
         mani = results.manifest
         files = results.files
         file = None if len(files) == 0 else files[0]
-        # if isinstance(file, list):
-        #    file = file[len(file) - 1]
         for _ in mani:
-            if file == _["file"]:
+            path = _["file"]
+            if file == path:
                 return _
         raise ValueError(
-            f"Cannot match reference {self.ref._ref_string} pointing to file {file} to a manifest entry"
+            f"Cannot match reference {self.ref.ref_string} pointing to file {file} to a manifest entry"
         )

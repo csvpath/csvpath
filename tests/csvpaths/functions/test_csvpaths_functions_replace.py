@@ -2,6 +2,7 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPaths
+from tests.csvpaths.builder import Builder
 
 FILE = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}insert.csvpath"
@@ -9,7 +10,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}i
 
 class TestCsvPathsFunctionsReplace(unittest.TestCase):
     def test_function_insert_2(self):
-        paths = CsvPaths()
+        paths = Builder().build()
 
         paths.paths_manager.add_named_paths_from_file(name="insert", file_path=PATH)
         paths.file_manager.add_named_file(name="insert", path=FILE)

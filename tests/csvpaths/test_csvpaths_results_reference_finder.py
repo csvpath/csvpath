@@ -11,6 +11,7 @@ from csvpath.util.references.results_reference_finder_2 import (
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
+from tests.csvpaths.builder import Builder
 
 FILES = {
     "food": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
@@ -23,7 +24,7 @@ NAMED_PATHS_DIR = (
 
 class TestResultsCsvPathsReferenceFinder(unittest.TestCase):
     def setup(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.file_manager.set_named_files(FILES)
