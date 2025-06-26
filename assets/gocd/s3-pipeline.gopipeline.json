@@ -51,7 +51,6 @@
               "command": "zsh",
               "timeout": -1.0,
               "arguments": [
-                "-c",
                 "assets/gocd/s3.sh"
               ],
               "run_if": "passed",
