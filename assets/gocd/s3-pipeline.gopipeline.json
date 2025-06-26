@@ -62,6 +62,7 @@
               "timeout": -1.0,
               "arguments": [
                 "-c",
+                "CSVPATH_CONFIG_PATH="\"assets/config/jenkins-s3.ini\"",
                 "poetry run pytest"
               ],
               "run_if": "passed",
