@@ -2,6 +2,7 @@ import unittest
 import os
 from csvpath import CsvPaths
 from os import environ
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}test.csv"
 NAMED_PATHS_DIR = (
@@ -20,8 +21,7 @@ JSON = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}sourcemode.json"
 
 class TestCsvPathsNewCsvPaths(unittest.TestCase):
     def load(self):
-        paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths_from_file(
             name="sourcemode",
             file_path=SOURCE_MODE,
@@ -32,7 +32,7 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         return paths
 
     def test_csvpaths_next_paths_1(self):
-        paths = CsvPaths()
+        paths = self.load()
         paths.paths_manager.add_named_paths_from_file(
             name="food",
             file_path=FOOD_PATH,
@@ -50,7 +50,7 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         CsvPaths()
 
     def test_csvpaths_next_paths_2(self):
-        paths = CsvPaths()
+        paths = self.load()
         paths.paths_manager.add_named_paths_from_file(
             name="food", file_path=FOOD_PATH_LITE
         )
@@ -260,7 +260,8 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         # the filename and named-paths name will be visible in the metadata, along
         # with the resolved physical file path
         #
-        paths = CsvPaths()
+        paths = self.load()
+        # paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(
             filename="$sourcemode.results.aprx/202:last.source1",

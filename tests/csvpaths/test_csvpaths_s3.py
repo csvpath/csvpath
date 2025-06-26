@@ -6,6 +6,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.s3.s3_utils import S3Utils
 from csvpath.util.s3.s3_fingerprinter import S3Fingerprinter
+from tests.csvpaths.builder import Builder
 
 FILES = {"timezones": "s3://csvpath-example-1/timezones.csv"}
 INPUTS_FILES = "s3://csvpath-example-1/inputs/named_files"
@@ -29,8 +30,7 @@ class TestCsvPathsS3(unittest.TestCase):
         #
         # tests that we can load a file from s3 into named_files
         #
-        cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs = Builder().build()
         cs.file_manager.add_named_file(
             name="timezones", path="s3://csvpath-example-1/timezones.csv"
         )
@@ -56,8 +56,7 @@ class TestCsvPathsS3(unittest.TestCase):
                 """
             )
             return
-        cs = CsvPaths()
-        cs.add_to_config("errors", "csvpath", "raise, collect, print")
+        cs = Builder().build()
         cs.file_manager.set_named_files(FILES)
         path = '$[*][ print("$.headers.0 full name: $.headers.2")]'
         d = {"tz": [f"{path}"]}
@@ -89,7 +88,7 @@ class TestCsvPathsS3(unittest.TestCase):
         with DataFileWriter(path=path) as writer:
             writer.append(text)
         reader = DataFileReader(path, mode="r", encoding="utf-8")
-        for s in reader.next_plain():
+        for s in reader.next_raw():
             assert s == text
             break
         assert S3Utils.exists(BUCKET, TEMP_FILE_NAME, client=c)
@@ -149,7 +148,7 @@ class TestCsvPathsS3(unittest.TestCase):
             writer.append(text)
         # check that we're actually writing Ok. this is extra.
         reader = DataFileReader(a, mode="r", encoding="utf-8")
-        for s in reader.next_plain():
+        for s in reader.next_raw():
             assert s == text
             break
         with DataFileWriter(path=b) as writer:
@@ -192,7 +191,7 @@ class TestCsvPathsS3(unittest.TestCase):
         with DataFileWriter(path=a) as writer:
             writer.append(text)
         reader = DataFileReader(a)
-        for s in reader.next_plain():
+        for s in reader.next_raw():
             assert s == text
             break
 
@@ -324,6 +323,6 @@ class TestCsvPathsS3(unittest.TestCase):
                 """
             )
             return
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.inputs_files_path = INPUTS_FILES
         paths.file_manager.set_named_files(FILES)

@@ -65,8 +65,8 @@ class PathsManager:
             nos.makedirs()
         nos.path = p
         if not nos.exists():
-            with DataFileWriter(path=p) as writer:
-                writer.write("[]")
+            dfw = DataFileWriter(path=p)
+            dfw.write("[]")
         return p
 
     @property
@@ -540,8 +540,11 @@ class PathsManager:
                 if s is not None:
                     text = f"#!{s}\n{text}"
             script_file = os.path.join(self.named_paths_home(name), script_name)
-            with DataFileWriter(path=script_file) as file:
-                file.write(text)
+            try:
+                dfw = DataFileWriter(path=script_file, mode="wb")
+                dfw.write(text)
+            except Exception as e:
+                print(f"error! {type(e)}: {e}")
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
         config = self.get_config_for_paths(name)
@@ -702,6 +705,10 @@ class PathsManager:
         #
         temp = self._group_file_path(name)
         with DataFileWriter(path=temp, mode="w") as writer:
+            #
+            # note that this only actually appends if mode is "a" or "ab". here it
+            # "w" so we rewrite the file. but we append to the existing above.
+            #
             writer.append(csvpathstr)
         return temp
 

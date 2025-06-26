@@ -13,6 +13,7 @@ from csvpath.matching.util.lark_print_parser import (
     LarkPrintTransformer,
 )
 from csvpath.matching.util.exceptions import PrintParserException
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 DIR_FILES = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
@@ -21,9 +22,7 @@ DIR_PATHS = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths"
 
 class TestCsvPathsFunctionsPrint(unittest.TestCase):
     def test_print_get_runtime_data_from_results(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.file_manager.add_named_files_from_dir(DIR_FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=DIR_PATHS)
         paths.collect_paths(filename="food", pathsname="food")
@@ -80,9 +79,7 @@ class TestCsvPathsFunctionsPrint(unittest.TestCase):
         assert data["stopped"]["candy check"] == data["stopped"]["first type"]
 
     def test_print_header_ref(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.file_manager.add_named_files_from_dir(DIR_FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=DIR_PATHS)
         paths.collect_paths(filename="food", pathsname="food")
@@ -94,9 +91,7 @@ class TestCsvPathsFunctionsPrint(unittest.TestCase):
         assert len(data["candy check"]) == 5
 
     def test_print_parser_named_paths_data(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         LogUtility.logger(paths, "debug")
         paths.file_manager.add_named_files_from_dir(DIR_FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=DIR_PATHS)

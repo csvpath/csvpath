@@ -5,6 +5,7 @@ from lark.exceptions import VisitError
 from csvpath import CsvPaths
 from csvpath.matching.productions import Reference
 from csvpath.matching.util.exceptions import MatchException
+from tests.csvpaths.builder import Builder
 
 NAMED_FILES_DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
 NAMED_PATHS_DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths"
@@ -13,7 +14,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}food.csv"
 
 class TestCsvPathsReferences(unittest.TestCase):
     def test_reference_for_var(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
@@ -47,7 +48,7 @@ class TestCsvPathsReferences(unittest.TestCase):
         #
         # setup the city->zip variable
         #
-        cs = CsvPaths()
+        cs = Builder().build()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
@@ -82,7 +83,7 @@ class TestCsvPathsReferences(unittest.TestCase):
         assert path.variables["zip"] == "01915"
 
     def test_reference2(self):
-        cs = CsvPaths()
+        cs = Builder().build()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
@@ -124,7 +125,7 @@ class TestCsvPathsReferences(unittest.TestCase):
         assert path.variables["empty_cities"] is False
 
     def test_reference3(self):
-        cs = CsvPaths()
+        cs = Builder().build()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
@@ -195,7 +196,7 @@ class TestCsvPathsReferences(unittest.TestCase):
     # general. but its not a priority for today.
     #
     def test_reference_specific_header_lookup(self):
-        cs = CsvPaths()
+        cs = Builder().build()
         cs.add_to_config("errors", "csvpath", "raise, collect, print")
         cs.add_to_config("errors", "csvpaths", "raise, collect, print")
         cs.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)
@@ -219,7 +220,7 @@ class TestCsvPathsReferences(unittest.TestCase):
         assert path.variables["in2"] is True
 
     def test_reference_find_uuid(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_files_from_dir(NAMED_FILES_DIR)

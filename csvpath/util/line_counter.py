@@ -21,6 +21,7 @@ class LineCounter:
         lm = LineMonitor()
         headers = None
         start = time.time()
+        # we just created lm. how could it not be None/-1?
         if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
             lm.reset()
             reader = DataFileReader(

@@ -11,6 +11,8 @@ class FilesReferenceFinder2:
     def __init__(
         self, csvpaths, *, ref: ReferenceParser = None, reference: str = None
     ) -> None:
+        if ref is None and reference is None:
+            raise ValueError("Must provide either ref or reference")
         self._csvpaths = csvpaths
         self.reference = reference
         self._ref = None
@@ -49,34 +51,34 @@ class FilesReferenceFinder2:
         FingerprintFinder.update(results)
         if len(results) > 0:
             return results
-        print(f"51: results: {len(results)}")
+        # print(f"51: results: {len(results)}")
         #
         # other name_one stuff.
         # we'll work off a shared copy of the name_one tokens
         #
         tokens = self.ref.name_one_tokens[:]
-        print(f"57: results: {len(results)}")
+        # print(f"57: results: {len(results)}")
         #
         # if range exists it impacts everything except an ordinal.
         # otherwise, path or date may exist and if either does, it
         # disallows the other.
         #
         if not self._range_if_name_one(results=results, tokens=tokens):
-            print(f"65: results: {len(results)}")
+            # print(f"65: results: {len(results)}")
             if not self._date_if_name_one(results=results, tokens=tokens):
-                print(f"66: results: {len(results)}")
+                # print(f"66: results: {len(results)}")
                 self._path_if_name_one(results=results, tokens=tokens)
-        print(f"69: results: {len(results)}")
+        # print(f"69: results: {len(results)}")
         #
         # ordinals simply pickout an item in results.files, if possible
         #
         self._ordinal_if_name_one(results=results, tokens=tokens)
-        print(f"73: results: {len(results)}")
+        # print(f"73: results: {len(results)}")
         #
         # name_two stuff
         #
         tokens = self.ref.name_three_tokens[:]
-        print(f"78: results: {len(results)}")
+        # print(f"78: results: {len(results)}")
         #
         # this is no longer true with added ordinals
         # if len(tokens) > 1:
@@ -86,19 +88,17 @@ class FilesReferenceFinder2:
         # nothing else happens. so we can do this first.
         #
         if not self._ordinal_if_name_three(results=results, tokens=tokens):
-            print(f"86:: results: {len(results)}, tokens: {tokens}")
+            # print(f"86:: results: {len(results)}, tokens: {tokens}")
             if self._range_if_name_three(results=results, tokens=tokens):
-                print(f"87:: results: {len(results)}, tokens: {tokens}")
+                # print(f"87:: results: {len(results)}, tokens: {tokens}")
                 # 1. test me!!!
                 self._ordinal_if_name_three(results=results, tokens=tokens)
             # if not an ordinal and not a date+range we may be a date+ordinal
             # 2. test me!!!
             elif self._arrival_ordinal_if_name_three(results=results, tokens=tokens):
                 # 3. which includes me!!!
-                print(f"98:: results: {len(results)}, tokens: {tokens}")
                 self._ordinal_if_name_three(results=results, tokens=tokens)
-
-        print(f"88: results: {len(results)}, tokens: {tokens}")
+        # print(f"88: results: {len(results)}, tokens: {tokens}")
         #
         # done
         #
@@ -180,6 +180,29 @@ class FilesReferenceFinder2:
         results.files = keep
         return True
 
+    def _path_minus_prolog(
+        self, *, path: str, results=None, named_file_name: str = None
+    ) -> str:
+        root_major = results.ref.root_major if results is not None else named_file_name
+        if root_major is None:
+            root_major = self.ref.root_major
+        # inputs = self.csvpaths.config.get(section="inputs", name="files")
+        p = root_major
+        sepped = f"{p}/"
+        i = path.find(sepped)
+        #
+        # we expect either p/ or /p/ in path
+        #
+        if i != 0 and path[i - 1] != "/":
+            #
+            # one fallback in case we found the same name in inputs and name_one
+            #
+            i = path.find(sepped, i + 1)
+        if i > -1:
+            path = path[i + len(p) :]
+            path = path.lstrip("/")
+        return path
+
     def _range_of_name_one(self, *, results, rrange: str) -> None:
         mani = self.manifest
         return self._do_range_of_name_one(results=results, rrange=rrange, mani=mani)
@@ -205,8 +228,8 @@ class FilesReferenceFinder2:
         for i, _ in enumerate(mani):
             if date is None:
                 path = _["file"]
-                pp = path[px + 1 :]
-                sw = self._starts_with(pp, nameone)
+                # minus = self._path_minus_prolog(named_file_name=self.ref.root_major, path=path)
+                sw = self._starts_with(path, nameone)
                 if rrange == "all":
                     if sw:
                         keep.append(path)
@@ -276,8 +299,11 @@ class FilesReferenceFinder2:
             nameone = ""
         for _ in mani:
             path = _["file"]
-            pp = path[px + 1 :]
-            if self._starts_with(pp, nameone):
+            minus = self._path_minus_prolog(
+                named_file_name=self.ref.root_major, path=path
+            )
+            # pp = path[px + 1 :]
+            if self._starts_with(minus, nameone):
                 dat = exut.to_datetime(_["time"])
                 if lt and dat < thedate:
                     keep.append(path)
@@ -341,12 +367,11 @@ class FilesReferenceFinder2:
         #
         #
         #
-        prefix, px = self._prefix(results)
+        # prefix, px = self._prefix(results)
         keep = []
         for _ in mani:
             path = _["file"]
-            pp = path[px + 1 :]
-            sw = self._starts_with(pp, name)
+            sw = self._starts_with(path, name)
             if not sw:
                 ...
             if sw:
@@ -360,6 +385,7 @@ class FilesReferenceFinder2:
         return True
 
     def _starts_with(self, path, prefix) -> bool:
+        path = self._path_minus_prolog(path=path)
         if path.startswith(prefix):
             return True
         i = path.rfind(".")
@@ -402,7 +428,6 @@ class FilesReferenceFinder2:
             for m in mani:
                 index[m["file"]] = m["time"]
         keep = []
-
         for _ in results.files:
             #
             #
@@ -410,13 +435,21 @@ class FilesReferenceFinder2:
             t = None
             if index is None:
                 for m in mani:
-                    if m["file"] == _:
+                    path = m["file"]
+                    #
+                    # because this is file v. file we need to apply minus to _, the "prefix",
+                    # because starts_with assumes the prefix is name_one
+                    #
+                    minus = self._path_minus_prolog(
+                        named_file_name=self.ref.root_major, path=_
+                    )
+                    if self._starts_with(path, minus):
                         t = m["time"]
                         break
             else:
                 t = index.get(_)
             if t is None:
-                raise ValueError("Cannot find a time for {_}")
+                raise ValueError(f"Cannot find a time for {_}")
             t = exut.to_datetime(t)
             if tokens[0] in ["before", "to"]:
                 if t < date:
@@ -433,6 +466,20 @@ class FilesReferenceFinder2:
         #
         del tokens[0]
         return True
+
+    """
+    def _create_inputs_path(self, results, path) -> str:
+        d = os.path.join(results.ref.root_major, path)
+        inputs = self.csvpaths.config.get(section="inputs", name="files")
+        i = inputs.find("://")
+        if i > -1:
+            inputs = inputs[i+3:]
+            inputs = inputs.lstrip("/")
+            inputs = inputs[inputs.find("/"):]
+            inputs = inputs.lstrip("/")
+        d = os.path.join(inputs, d )
+        return d
+    """
 
     # ==============================================
 

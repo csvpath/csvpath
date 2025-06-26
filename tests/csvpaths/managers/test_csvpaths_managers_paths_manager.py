@@ -8,6 +8,7 @@ from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from tests.csvpaths.builder import Builder
 
 DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths"
 JSON = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths.json"
@@ -16,8 +17,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 
 class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_paths_listener_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         reg = PathsListener(paths)
         mdata = PathsMetadata(paths.config)
         mdata.named_paths_name = "aname"
@@ -45,8 +45,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert mani["fingerprint"] == "123"
 
     def test_paths_listener_2(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         grps = paths.config.get(section="listeners", name="groups")
         paths.add_to_config("listeners", "groups", "default")
         mani = paths.paths_manager.paths_root_manifest
@@ -54,15 +53,12 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             name="aname", paths=["$[*][yes()]"], source_path="a/b/c"
         )
         mani2 = paths.paths_manager.paths_root_manifest
-        print(f"mani: {mani}")
-        print(f"mani2: {mani2}")
         assert len(mani) + 1 == len(mani2)
         if grps is not None and isinstance(grps, str):
             paths.add_to_config("listeners", "groups", grps)
 
     def test_paths_manager_append_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         paths.config.get(section="listeners", name="groups")
         paths.add_to_config("listeners", "groups", "default")
         paths.paths_manager.add_named_paths_from_file(
@@ -83,9 +79,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_named_paths_add_and_external_change(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths(name=name, paths=[apath])
         lst = CsvPaths().paths_manager.get_named_paths(name)
         assert lst
@@ -101,14 +95,14 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         #
         home = CsvPaths().paths_manager.named_paths_home(name)
         nos = Nos(home)
-        assert nos.exists()
+        assert nos.dir_exists()
         nos.path = os.path.join(home, "group.csvpaths")
         assert nos.exists()
         with DataFileReader(nos.path) as read:
-            with DataFileWriter(path=nos.path) as write:
-                t = read.read()
-                t += " ~ test ~ "
-                write.write(t)
+            dfw = DataFileWriter(path=nos.path)
+            t = read.read()
+            t += " ~ test ~ "
+            dfw.write(t)
         #
         # get paths to trigger the catch-up mani write. this is what
         # we're testing.
@@ -131,9 +125,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_named_paths_adda(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.paths_manager.add_named_paths(name=name, paths=[apath])
         lst = CsvPaths().paths_manager.get_named_paths(name)
         assert lst
@@ -145,17 +137,15 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
 
     def test_named_paths_add_to_existing(self):
         apath = "$[*][yes()]"
-        paths = CsvPaths()
+        paths = Builder().build()
         name = "test_add_to_existing"
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
         if paths.paths_manager.has_named_paths("test_add_to_existing"):
             paths.paths_manager.remove_named_paths(name)
         #
         # add one
         #
         paths.paths_manager.add_named_paths(name=name, paths=[apath])
-        lst = CsvPaths().paths_manager.get_named_paths(name)
+        lst = Builder().build().paths_manager.get_named_paths(name)
         assert lst
         assert len(lst) == 1
         assert lst[0].strip() == apath.strip()
@@ -163,20 +153,18 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         # add another on top
         #
         paths.paths_manager.add_named_paths(name=name, paths=[apath], append=True)
-        lst = CsvPaths().paths_manager.get_named_paths(name)
+        lst = Builder().build().paths_manager.get_named_paths(name)
         assert lst
         assert len(lst) == 2
         assert lst[0].strip() == apath.strip()
         assert lst[1].strip() == apath.strip()
 
-        CsvPaths().paths_manager.remove_named_paths(name)
-        lst = CsvPaths().paths_manager.get_named_paths(name)
+        Builder().build().paths_manager.remove_named_paths(name)
+        lst = Builder().build().paths_manager.get_named_paths(name)
         assert lst is None
 
     def test_named_paths_set_named_paths1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         paths.file_manager.add_named_file(
             name="test",
             path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv",
@@ -198,9 +186,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert len(results[3]) == 0
 
     def test_named_paths_json1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         pm = paths.paths_manager
         pm.remove_all_named_paths()
         pm.add_named_paths_from_json(file_path=JSON)
@@ -211,9 +197,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert pm.number_of_named_paths("needs split") == 1
 
     def test_named_paths_dict1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         pm = paths.paths_manager
         np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         i = pm.total_named_paths()
@@ -228,9 +212,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert pm.number_of_named_paths("many") == 2
 
     def test_named_paths_dict2(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         pm = paths.paths_manager
         np = ["~name:wonderful~$[*][yes()]", "~id:amazing~$[*][yes()]"]
         pm.remove_named_paths("numbers")
@@ -244,9 +226,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert pm.total_named_paths() == i + 1
 
     def test_named_paths_from_and_to_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         pm = paths.paths_manager
         np = [
             "~id:wonderful~ $[*][#1 yes()]",
@@ -290,9 +270,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     # . all in directory under one name
     # . add duplicates to name
     def test_named_paths_dir(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         pm = paths.paths_manager
         pm.remove_all_named_paths()
         assert pm.total_named_paths() == 0
@@ -300,7 +278,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         files = os.listdir(DIR)
         files = [f for f in files if f.find("csvpath") > -1]
         assert pm.total_named_paths() == len(files)
-        paths2 = CsvPaths()
+        paths2 = Builder().build()
         pm2 = paths2.paths_manager
         pm2.remove_all_named_paths()
         pm2.add_named_paths_from_dir(directory=DIR, name="many")

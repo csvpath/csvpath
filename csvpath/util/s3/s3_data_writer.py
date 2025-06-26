@@ -14,19 +14,23 @@ class S3DataWriter(DataFileWriter):
             client = S3Utils.make_client()
             self.sink = open(
                 self.path,
-                self._mode,
+                self.mode,
                 transport_params={"client": client},
             )
 
     def write(self, data) -> None:
-        """a one-and-done write. mode 'w'. don't call this using DataFileWriter as a context manager."""
+        #
+        # don't call this using DataFileWriter as a context manager.
+        #
         if data is None:
             raise ValueError("Data cannot be None")
+        if not isinstance(data, bytes):
+            data = data.encode("utf-8")
         client = S3Utils.make_client()
         with open(self.path, "wb", transport_params={"client": client}) as file:
-            if not isinstance(data, bytes):
-                data = data.encode("utf-8")
             file.write(data)
+            file.flush()
+            file.close()
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

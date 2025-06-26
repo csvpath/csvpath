@@ -364,8 +364,8 @@ class ResultsManager:  # pylint: disable=C0115
             pathfrom = t[2]
             pathto = t[3]
             with DataFileReader(pathfrom) as pf:
-                with DataFileWriter(path=pathto, mode="w") as pt:
-                    pt.write(pf.read())
+                dfw = DataFileWriter(path=pathto, mode="w")
+                dfw.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
         """@private"""

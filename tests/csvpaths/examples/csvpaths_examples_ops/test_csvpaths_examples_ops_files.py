@@ -189,12 +189,9 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
-        print(f"reference: {reference}")
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
         lst2 = finder.resolve()
-        for _ in lst2:
-            print(f"  _: {_}")
         assert lst2 is not None
         assert isinstance(lst2, list)
         assert len(lst2) == 5
@@ -207,7 +204,6 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
         lst2 = finder.resolve()
-        print(f"ref.seq: {ref.sequence}")
         assert lst2 is not None
         assert isinstance(lst2, list)
         assert len(lst2) == 1

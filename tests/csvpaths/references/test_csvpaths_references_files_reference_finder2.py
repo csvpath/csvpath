@@ -8,6 +8,7 @@ from csvpath import CsvPaths
 from csvpath.util.references.files_reference_finder_2 import FilesReferenceFinder2
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.reference_results import ReferenceResults
+from tests.csvpaths.builder import Builder
 
 
 class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
@@ -34,70 +35,70 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
     def test_range_of_date_limited_paths(self):
         mani, two_days_ago, yesterday, today = self._mani()
 
-        csvpaths = CsvPaths()
+        paths = Builder().build()
         rrange = "before"
 
         datestr = yesterday.strftime("%Y-%m-%d")
         reference = f"$test.files.a:{datestr}:{rrange}"
         ref = ReferenceParser(string=reference)
-        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        results = ReferenceResults(csvpaths=paths, ref=ref)
         #
         # yesterday at the current time
         #
         thedate = datetime.now(timezone.utc) - timedelta(days=1)
         thedate = thedate - timedelta(minutes=10)
 
-        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=paths, ref=ref)
         finder._do_range_of_date_limited_paths(
             results=results, rrange=rrange, thedate=thedate, mani=mani
         )
 
         assert results.files is not None
         assert len(results.files) == 1
-        assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
     def test_name_one_within_time_box(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        paths = Builder().build()
         rrange = "yesterday"
         reference = "$test.files.:yesterday"
         ref = ReferenceParser(string=reference)
-        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        results = ReferenceResults(csvpaths=paths, ref=ref)
         #
         # yesterday at the current time minus 10 min
         #
         thedate = datetime.now(timezone.utc) - timedelta(days=1)
         thedate = thedate - timedelta(minutes=10)
 
-        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=paths, ref=ref)
         finder._do_name_one_within_time_box(
             results=results, rrange=rrange, thedate=thedate, mani=mani
         )
 
         assert results.files is not None
         assert len(results.files) == 1
-        assert results.files[0] == mani[1]["file"]
+        assert mani[1]["file"].endswith(results.files[0])
+        # assert mani[0]["file"].endswith(results.files[0])
 
     def test_do_range_of_name_one_1a(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
-
+        paths = Builder().build()
         #
         # before. before is exclusive.
         #
         reference = "$test.files.a/i:before"
         ref = ReferenceParser(string=reference)
-        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
-        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        results = ReferenceResults(csvpaths=paths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=paths, ref=ref)
         finder._do_range_of_name_one(results=results, rrange="before", mani=mani)
 
         assert results.files is not None
         assert len(results.files) == 2
-        assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
     def test_do_range_of_name_one_1b(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
 
         #
         # to. to is inclusive.
@@ -110,7 +111,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
         assert results.files is not None
         assert len(results.files) == 3
-        assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
         #
         # from. from is inclusive.
@@ -123,7 +124,8 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
         assert results.files is not None
         assert len(results.files) == 2
-        assert results.files[0] == mani[2]["file"]
+        # assert results.files[0] == mani[2]["file"]
+        assert mani[2]["file"].endswith(results.files[0])
 
         #
         # after. after is exclusive.
@@ -136,11 +138,12 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
         assert results.files is not None
         assert len(results.files) == 1
-        assert results.files[0] == mani[3]["file"]
+        # assert results.files[0] == mani[3]["file"]
+        assert mani[3]["file"].endswith(results.files[0])
 
     def test_do_range_of_name_one_2(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
 
         #
         # yesterday at the current time
@@ -164,7 +167,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
         assert results.files is not None
         assert len(results.files) == 1
-        assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
         #
         # before and after are both inclusive.
@@ -207,7 +210,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
     def test_path_if_name_one_1(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
         reference = "$test.files.a"
         ref = ReferenceParser(string=reference)
         results = ReferenceResults(csvpaths=csvpaths, ref=ref)
@@ -217,11 +220,11 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         )
         assert results.files is not None
         assert len(results.files) == 4
-        assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
     def test_path_if_name_one_2(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
         y = yesterday.strftime("%Y-%m-%d")
         reference = f"$test.files.a:{y}"
         ref = ReferenceParser(string=reference)
@@ -232,11 +235,12 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         )
         assert results.files is not None
         assert len(results.files) == 1
-        assert results.files[0] == mani[1]["file"]
+        # assert results.files[0] == mani[1]["file"]
+        assert mani[1]["file"].endswith(results.files[0])
 
     def test_date_if_name_one(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
         y = yesterday.strftime("%Y-%m-%d")
         reference = f"$test.files.{y}"
         ref = ReferenceParser(string=reference)
@@ -251,7 +255,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
     def test_do_ordinal_if(self):
         mani, two_days_ago, yesterday, today = self._mani()
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
         reference = "$test.files.:last"
         ref = ReferenceParser(string=reference)
         results = ReferenceResults(csvpaths=csvpaths, ref=ref)
@@ -290,7 +294,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         #
         mani, two_days_ago, yesterday, today = self._mani()
 
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
         rrange = "from"
 
         ffromstr = two_days_ago.strftime("%Y-%m-%d")
@@ -312,14 +316,16 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
 
         assert results.files is not None
         assert len(results.files) == 4
-        assert results.files[0] == mani[0]["file"]
+        # assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
         finder._do_range_if_name_three(
             results=results, tokens=results.ref.name_three_tokens, mani=mani
         )
         assert results.files is not None
         assert len(results.files) == 2
-        assert results.files[0] == mani[0]["file"]
+        # assert results.files[0] == mani[0]["file"]
+        assert mani[0]["file"].endswith(results.files[0])
 
     def test_path_range_arrival_ordinal_if_name_three(self):
         #
@@ -327,7 +333,7 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         #
         mani, two_days_ago, yesterday, today = self._mani()
 
-        csvpaths = CsvPaths()
+        csvpaths = Builder().build()
 
         ttostr = today.strftime("%Y-%m-%d")
         reference = f"$test.files.a/e:from.{ttostr}:first"

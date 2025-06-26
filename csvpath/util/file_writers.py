@@ -43,6 +43,10 @@ class DataFileWriter(ABC):
         ...
 
     def append(self, data) -> None:
+        #
+        # note that this only actually appends if mode is "a" or "ab". if
+        # "w" we rewrite the file, despite the method name. :/
+        #
         self.load_if()
         if self.is_binary and isinstance(data, str):
             data = data.encode(self.encoding)

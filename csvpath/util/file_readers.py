@@ -241,8 +241,10 @@ class DataFileReader(ABC):
     def file_info(self) -> dict[str, str | int | float]:
         ...
 
-    """
-    def next_raw(self, mode: str =None) -> list[str]:
+    #
+    # no csv interpretation. used in FileManager.
+    #
+    def next_raw(self, mode: str = None) -> list[str]:
         try:
             if mode is None:
                 mode = self.mode
@@ -258,7 +260,6 @@ class DataFileReader(ABC):
             with open(self.path, mode="rb") as file:
                 for line in file:
                     yield line
-    """
 
 
 class CsvDataReader(DataFileReader):
@@ -274,15 +275,18 @@ class CsvDataReader(DataFileReader):
         quotechar=None,
     ) -> None:
         super().__init__()
-        self.path = path
-        if sheet is not None or path.find("#") > -1:
-            raise InputException(
-                f"Received unexpected # char or sheet argument '{sheet}'. CSV files do not have worksheets."
-            )
-        self._delimiter = delimiter if delimiter is not None else ","
-        self._quotechar = quotechar if quotechar is not None else '"'
-        self.mode = mode
-        self.encoding = encoding
+        try:
+            self.path = path
+            if sheet is not None or path.find("#") > -1:
+                raise InputException(
+                    f"Received unexpected # char or sheet argument '{sheet}'. CSV files do not have worksheets."
+                )
+            self._delimiter = delimiter if delimiter is not None else ","
+            self._quotechar = quotechar if quotechar is not None else '"'
+            self.mode = mode
+            self.encoding = encoding
+        except Exception as e:
+            print(f"Error: cannot init reader: {type(e)}: {e}")
 
     def next(self) -> list[str]:
         with open(self.path, self.mode, encoding=self.encoding) as file:

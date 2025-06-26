@@ -8,6 +8,8 @@ from csvpath.managers.files.files_listener import FilesListener
 from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.path_util import PathUtility as pathu
+from tests.csvpaths.builder import Builder
+from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
 
 DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
 JSON = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files.json"
@@ -22,8 +24,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
     # base case. add zap, find zap
     #
     def test_files_named_file_exists_1(self) -> None:
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         nf = "zap"
         #
         # clear out anything lingering
@@ -50,8 +51,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
     # seen bad case. use of relative path for name. no has, get, or remove should work
     #
     def test_files_named_file_exists_2(self) -> None:
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         nf = "zap/test.csv"
         #
         # clear out anything lingering
@@ -67,8 +67,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
             paths.file_manager.add_named_file(name=nf, path=FILE)
 
     def test_files_listener_1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         reg = FilesListener(paths)
         mdata = FileMetadata(paths.config)
         mdata.named_file_name = None
@@ -107,23 +106,19 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert mani["origin_path"] == "p/d/q"
 
     def test_files_listener_2(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths = Builder().build()
         grps = paths.config.get(section="listeners", name="groups")
         paths.config.add_to_config("listeners", "groups", "default")
         paths.file_manager.add_named_file(name="testx", path=FILE)
         mani = paths.file_manager.files_root_manifest
         paths.file_manager.add_named_file(name="testy", path=FILE)
         mani2 = paths.file_manager.files_root_manifest
-        print(f"mani: {mani} !! {mani2}")
         assert len(mani) + 1 == len(mani2)
         if grps is not None and isinstance(grps, str):
             paths.config.add_to_config("listeners", "groups", grps)
 
     def test_named_files_home(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         m = paths.file_manager
         d = m.named_files_dir
         d = pathu.norm(d)
@@ -131,9 +126,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert d.endswith(f"inputs{os.sep}named_files")
 
     def test_named_file_home(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         m = paths.file_manager
         d = m.named_file_home("aname")
         d = pathu.norm(d)
@@ -141,9 +134,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert d.endswith(f"inputs{os.sep}named_files{os.sep}aname")
 
     def test_copy_in(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         m = paths.file_manager
         tf = FILE
         home = m.assure_file_home("mytest", tf)
@@ -156,16 +147,12 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         Nos(d).remove()
 
     def test_reg_fingerprint(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         m = paths.file_manager
         home = m.assure_file_home("mytest", FILE)
         d = m._copy_in(FILE, home)
-        print(f"test_reg_fingerprint: d1: {d}")
         if d.find("://") == -1:
             d = pathu.norm(d)
-        print(f"test_reg_fingerprint: d2: {d}")
         assert Nos(d).exists()
         rpath = m._fingerprint(home)
         assert d != rpath
@@ -174,13 +161,13 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         Nos(p).remove()
 
     def test_rereg(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         m = paths.file_manager
         reg = m.registrar
         try:
             shutil.rmtree(f"{paths.config.inputs_files_path}{os.sep}testx")
+            if "testx" in TrackingFileManager.ADDED:
+                del TrackingFileManager.ADDED["testx"]
         except Exception:
             pass
         m.add_named_file(name="testx", path=FILE)
@@ -195,18 +182,14 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert len(m) == 1
 
     def test_file_mgr_dir1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         fm = paths.file_manager
         fm.remove_all_named_files()
         fm.add_named_files_from_dir(DIR)
         assert fm.named_files_count == 4
 
     def test_file_mgr_json1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         fm = paths.file_manager
         fm.remove_all_named_files()
         assert fm.named_files_count == 0
@@ -214,18 +197,13 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert fm.named_files_count == 2
 
     def test_file_mgr_json2(self):
-        paths = CsvPaths()
-        # setting this config shouldn't be needed here, right?
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         fm = paths.file_manager
         with pytest.raises((FileNotFoundError, IsADirectoryError)):
             fm.set_named_files_from_json("xyz")
 
     def test_file_mgr_dict1(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         fm = paths.file_manager
         nf = {
             "wonderful": WONDERFUL,
@@ -235,15 +213,15 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert fm.named_files_count >= 2
         assert fm.has_named_file("wonderful")
         assert fm.has_named_file("amazing")
-        fm.remove_named_file("wonderful")
+        if not fm.remove_named_file("wonderful"):
+            raise RuntimeError("cannot remove wonderful")
         assert not fm.has_named_file("wonderful")
-        fm.remove_named_file("amazing")
+        if not fm.remove_named_file("amazing"):
+            raise RuntimeError("cannot remove amazing")
         assert not fm.has_named_file("amazing")
 
     def test_file_mgr_dict2(self):
-        paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths = Builder().build()
         fm = paths.file_manager
         try:
             fm.remove_named_file("wonderful")

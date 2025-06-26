@@ -4,13 +4,14 @@ import os
 from csvpath import CsvPaths
 from csvpath.util.printer import LogPrinter
 from csvpath.matching.util.exceptions import MatchException
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathsComments(unittest.TestCase):
     def test_comment_settings_affecting_multiple_paths(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         """~ 3 paths:
                 - AND no matches all returned

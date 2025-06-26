@@ -3,6 +3,7 @@ import os
 from csvpath import CsvPaths
 from csvpath.util.run_home_maker import RunHomeMaker
 from csvpath.util.path_util import PathUtility as pathu
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 PATHS = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths"
@@ -13,7 +14,7 @@ PATH2 = (
 
 class TestCsvPathsRunHome(unittest.TestCase):
     def test_run_home_template_1(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_file(name="food", file_path=PATHS)
         paths.file_manager.add_named_file(name="food", path=PATH)

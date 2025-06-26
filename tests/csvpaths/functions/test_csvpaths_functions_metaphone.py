@@ -1,6 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPaths
+from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 LOOKUP_FILE = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}lookup_names.csv"
@@ -10,7 +11,7 @@ LOOKUP_PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{o
 class TestCsvPathsFunctionsMetaphone(unittest.TestCase):
     def test_function_metaphone2(self):
         # load the lookup table
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(name="lookups", path=LOOKUP_FILE)

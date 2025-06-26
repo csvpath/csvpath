@@ -136,7 +136,8 @@ class FileManager:
             mani = self.get_manifest(name)
             if ref.datatype == ref.FILES:
                 for _ in mani:
-                    if _["file"] == file:
+                    p = _["file"]
+                    if p == file:
                         return _["uuid"]
             elif ref.datatype == ref.RESULTS:
                 return mani["uuid"]
@@ -152,7 +153,8 @@ class FileManager:
                 return mani[len(mani) - 1]["uuid"]
             else:
                 for _ in mani:
-                    if _["file"] == file:
+                    p = _["file"]
+                    if p == file:
                         return _["uuid"]
         raise ValueError(f"No matching UUID found for file {file} in {name}")
 
@@ -345,7 +347,7 @@ class FileManager:
         """@private"""
         return self.has_named_file(name)
 
-    def remove_named_file(self, name: NamedFileName) -> None:
+    def remove_named_file(self, name: NamedFileName) -> bool:
         """@private"""
         #
         # cannot delete any specific files. this is for the named_file
@@ -356,7 +358,7 @@ class FileManager:
         p = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = p
-        if nos.exists():
+        if nos.dir_exists():
             nos.remove()
             return True
         return False
@@ -564,15 +566,10 @@ class FileManager:
 
     def _copy_down(self, path, temp, mode="wb") -> None:
         """@private"""
-        """
         with DataFileReader(path) as reader:
             with DataFileWriter(path=temp, mode=mode) as writer:
                 for line in reader.next_raw():
                     writer.append(line)
-        """
-        with DataFileReader(path, mode="rb") as reader:
-            with DataFileWriter(path=temp, mode="wb") as writer:
-                writer.write(reader.read())
 
     #
     # can take a reference. the ref would only be expected to point
@@ -626,8 +623,6 @@ class FileManager:
         #       $orders.files.2025/mar:all
         #
         #
-        #
-        #
         if name.startswith("$"):
             ref = ReferenceParser(name)
             if ref.datatype == ref.FILES:
@@ -636,15 +631,14 @@ class FileManager:
                 #
                 # more defensive? what if multiple?
                 #
-                ret = lst[0]
+                if len(lst) > 0:
+                    ret = lst[0]
             elif ref.datatype == ref.RESULTS:
                 reff = ResultsReferenceFinder(self._csvpaths, reference=name)
                 lst = reff.resolve()
-                #
-                # more defensive?
-                #
-                ret = lst[0]
-                ret = os.path.join(ret, "data.csv")
+                if len(lst) > 0:
+                    ret = lst[0]
+                    ret = os.path.join(ret, "data.csv")
         else:
             if not self.has_named_file(name):
                 return None

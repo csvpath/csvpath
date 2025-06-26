@@ -12,9 +12,12 @@ from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.date_util import DateUtility as daut
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
+from tests.csvpaths.builder import Builder
 
+FOOD = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv"
+FOOD_PATHS = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths"
 FILES = {
-    "food": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
+    "food": FOOD,
     "test": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}test.csv",
 }
 NAMED_PATHS_DIR = (
@@ -24,9 +27,14 @@ NAMED_PATHS_DIR = (
 
 class TestFilesCsvPathsReferenceFinder(unittest.TestCase):
     def setup(self):
-        paths = CsvPaths()
+        paths = Builder().build()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.paths_manager.add_named_paths(name="food", from_file=FOOD_PATHS)
+        #
+        #
+        # replaceme! commented out for testing to speed up s3. remove the line above.
+        #
+        # paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.file_manager.set_named_files(FILES)
         paths.fast_forward_paths(filename="food", pathsname="food")
         return paths
