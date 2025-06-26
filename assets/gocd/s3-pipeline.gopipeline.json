@@ -31,15 +31,16 @@
         "roles": [],
         "allow_only_on_success": false
       },
-      "environment_variables": [],
+      "environment_variables": [
+            {
+              "name": "CSVPATH_CONFIG_PATH",
+              "value": "\"assets/config/jenkins-s3.ini\""
+            }
+      ],
       "jobs": [
         {
           "name": "unit-tests",
           "environment_variables": [
-            {
-              "name": "CSVPATH_CONFIG_PATH",
-              "value": "\"assets/config/jenkins-local-sftp.ini\""
-            }
           ],
           "tabs": [],
           "resources": [],
