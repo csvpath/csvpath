@@ -48,7 +48,7 @@
               "timeout": -1.0,
               "arguments": [
                 "/C",
-                "assets\gocd\windows\azure.bat"
+                "assets\\gocd\\windows\\azure.bat"
               ],
               "run_if": "passed",
               "type": "exec"
