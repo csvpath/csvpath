@@ -1,4 +1,5 @@
 {
+  "format_version": 1,
   "group": "Windows",
   "name": "windows-azure",
   "display_order_weight": -1.0,
