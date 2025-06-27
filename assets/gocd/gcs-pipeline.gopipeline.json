@@ -50,18 +50,7 @@
               "command": "zsh",
               "timeout": -1.0,
               "arguments": [
-                "-c",
-                "poetry install"
-              ],
-              "run_if": "passed",
-              "type": "exec"
-            },
-            {
-              "command": "zsh",
-              "timeout": -1.0,
-              "arguments": [
-                "-c",
-                "poetry run pytest"
+                "assets/gocd/gcs.sh"
               ],
               "run_if": "passed",
               "type": "exec"
