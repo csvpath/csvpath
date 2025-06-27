@@ -3,7 +3,9 @@
   "environments": [
     {
       "name": "windows-builds",
-      "pipelines": ["windows-azure"],
+      "pipelines": [
+        "windows-azure"
+      ],
       "environment_variables": []
     }
   ]
