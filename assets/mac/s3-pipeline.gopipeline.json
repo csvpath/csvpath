@@ -1,5 +1,5 @@
 {
-  "group": "mac",
+  "group": "Mac",
   "name": "S3-pipeline",
   "display_order_weight": -1.0,
   "label_template": "${COUNT}",
@@ -36,9 +36,14 @@
       "jobs": [
         {
           "name": "unit-tests",
-          "environment_variables": [],
+          "environment_variables": [
+            {
+              "name": "CSVPATH_CONFIG_PATH",
+              "value": "\"assets/config/jenkins-s3.ini\""
+            }
+          ],
           "tabs": [],
-          "resources": ["mac"],
+          "resources": [],
           "artifacts": [],
           "timeout": 0.0,
           "tasks": [

@@ -1,6 +1,6 @@
 {
-  "group": "mac",
-  "name": "S3-pipeline",
+  "group": "Mac",
+  "name": "SFTP-pipeline",
   "display_order_weight": -1.0,
   "label_template": "${COUNT}",
   "lock_behavior": "none",
@@ -21,7 +21,7 @@
   ],
   "stages": [
     {
-      "name": "test-s3",
+      "name": "test-azure",
       "fetch_materials": true,
       "never_cleanup_artifacts": false,
       "clean_working_directory": false,
@@ -31,14 +31,18 @@
         "roles": [],
         "allow_only_on_success": false
       },
-      "environment_variables": [
-      ],
+      "environment_variables": [],
       "jobs": [
         {
           "name": "unit-tests",
-          "environment_variables": [],
+          "environment_variables": [
+            {
+              "name": "CSVPATH_CONFIG_PATH",
+              "value": "\"assets/config/jenkins-local-sftp.ini\""
+            }
+          ],
           "tabs": [],
-          "resources": ["mac"],
+          "resources": [],
           "artifacts": [],
           "timeout": 0.0,
           "tasks": [
@@ -46,7 +50,7 @@
               "command": "zsh",
               "timeout": -1.0,
               "arguments": [
-                "assets/gocd/mac/s3.sh"
+                "assets/gocd/mac/sftp.sh"
               ],
               "run_if": "passed",
               "type": "exec"

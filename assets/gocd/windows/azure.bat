@@ -1,7 +1,7 @@
-set CSVPATH_CONFIG_PATH=assets/config/jenkins-local-azure.ini
+set CSVPATH_CONFIG_PATH=assets\config\jenkins-local-azure.ini
 echo %CSVPATH_CONFIG_PATH%
-source ~/dev/exports.sh
-poetry install
-poetry run pytest
+cmd.exe /C c:\\dev\exports.bat
+c:\Users\python\.local\bin\poetry.exe install
+c:\Users\python\.local\bin\poetry.exe run pytest
 
 
