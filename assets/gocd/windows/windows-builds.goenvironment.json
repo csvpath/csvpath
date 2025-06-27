@@ -4,7 +4,7 @@
     {
       "name": "windows-builds",
       "pipelines": ["windows-azure"],
-      "agents": ["dd537488-bc45-459f-a0dd-e83e225479af"],
+      "agents": ["WIN-ANS74NB6NNO"],
       "environment_variables": []
     }
   ]
