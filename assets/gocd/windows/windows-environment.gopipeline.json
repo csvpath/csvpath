@@ -1,4 +1,5 @@
 {
+  "format_version": 1,
   "environments": [
     {
       "name": "windows-builds",
