@@ -1,5 +1,5 @@
 {
-  "group": "defaultGroup",
+  "group": "Mac",
   "name": "GCS-pipeline",
   "display_order_weight": -1.0,
   "label_template": "${COUNT}",
@@ -50,7 +50,7 @@
               "command": "zsh",
               "timeout": -1.0,
               "arguments": [
-                "assets/gocd/gcs.sh"
+                "assets/gocd/mac/gcs.sh"
               ],
               "run_if": "passed",
               "type": "exec"
