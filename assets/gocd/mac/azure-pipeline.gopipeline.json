@@ -16,6 +16,7 @@
         "includes": []
       },
       "auto_update": true,
+      "name": "new-csvpath-repo",
       "type": "git"
     }
   ],
