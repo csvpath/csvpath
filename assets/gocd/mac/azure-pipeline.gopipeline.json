@@ -1,6 +1,6 @@
 {
   "group": "Mac",
-  "name": "Azure-pipeline",
+  "name": "azure-pipeline",
   "display_order_weight": -1.0,
   "label_template": "${COUNT}",
   "lock_behavior": "none",
