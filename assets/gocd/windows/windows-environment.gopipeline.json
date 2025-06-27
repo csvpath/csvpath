@@ -1,0 +1,12 @@
+{
+  "environments": [
+    {
+      "name": "windows-builds",
+      "pipelines": ["windows-azure"],
+      "agents": ["WIN-ANS74NB6NNO"],
+      "environment_variables": [
+      ]
+    }
+  ]
+}
+
