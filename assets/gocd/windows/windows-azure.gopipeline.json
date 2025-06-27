@@ -43,9 +43,10 @@
           "timeout": 0.0,
           "tasks": [
             {
-              "command": "zsh",
+              "command": "cmd.exe",
               "timeout": -1.0,
               "arguments": [
+                "/C",
                 "assets/gocd/windows/azure.bat"
               ],
               "run_if": "passed",
