@@ -1,9 +1,10 @@
 {
+  "format_version": 1,
   "environments": [
     {
       "name": "windows-builds",
-      "pipelines": [],
-      "agents": [],
+      "pipelines": ["windows-azure"],
+      "agents": ["dd537488-bc45-459f-a0dd-e83e225479af"],
       "environment_variables": []
     }
   ]
