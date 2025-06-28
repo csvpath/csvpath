@@ -1,6 +1,6 @@
 {
   "group": "mac",
-  "name": "S3-pipeline",
+  "name": "s3-pipeline",
   "display_order_weight": -1.0,
   "label_template": "${COUNT}",
   "lock_behavior": "none",
