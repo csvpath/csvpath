@@ -80,7 +80,7 @@ class ResultRegistrar(Registrar, Listener):
         #
         mdata.source_mode_preceding = self.result.source_mode_preceding
         mdata.run_home = self.result.run_dir
-        mdata.group_run_uuid = self.csvpaths.run_metadata.run_uuid_string
+        mdata.run_uuid_string = self.csvpaths.run_metadata.run_uuid_string
         mdata.instance_home = self.result.instance_dir
         mdata.instance_identity = self.result.identity_or_index
         mdata.instance_index = self.result.run_index

@@ -1109,14 +1109,18 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.logger.info(
                 "Iteration time was %s", round(self.total_iteration_time, 2)
             )
-            self.logger.info(
-                "%s per line",
-                round(
-                    self.total_iteration_time
-                    / self.line_monitor.physical_end_line_count,
-                    2,
-                ),
-            )
+            if (
+                self.line_monitor.physical_end_line_count
+                and self.line_monitor.physical_end_line_count > 0
+            ):
+                self.logger.info(
+                    "%s per line",
+                    round(
+                        self.total_iteration_time
+                        / self.line_monitor.physical_end_line_count,
+                        2,
+                    ),
+                )
         except Exception as e:
             if not self.ecoms.do_i_quiet():
                 self.logger.error(e, exc_info=True)

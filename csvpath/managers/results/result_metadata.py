@@ -9,7 +9,7 @@ class ResultMetadata(Metadata):
         super().__init__(config)
         # these we know right away
         self.named_paths_uuid = None
-        self.group_run_uuid = None
+        # self.group_run_uuid = None
         self.named_results_name: str = None
         #
         # in a non-source-mode = preceding situation the

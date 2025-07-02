@@ -71,16 +71,6 @@ class Config:
 
     def __init__(self, *, load=True):
         self.load = load
-        # self._additional_listeners = None
-        # self._csvpath_file_extensions = None
-        # self._csv_file_extensions = None
-        # self._csvpath_errors_policy = None
-        # self._csvpaths_errors_policy = None
-        # self._csvpath_log_level = None
-        # self._csvpaths_log_level = None
-        # self._log_file = None
-        # self._log_files_to_keep = None
-        # self._log_file_size = None
         self._config = RawConfigParser()
         self.log_file_handler = None
         #
@@ -176,7 +166,6 @@ class Config:
         #
         # why would we not use _set(section, key, value)?
         #
-        # self._config[section][key] = value
         self._set(section, key, value)
         self.refresh()
 
@@ -477,18 +466,6 @@ shell = /bin/bash
         #
         #
         #
-        """
-        self.csvpath_errors_policy = self._get(
-            Sections.ERRORS.value,
-            "csvpath",
-            ["print", "stop", "fail", "collect"],
-        )
-        self.csvpaths_errors_policy = self._get(
-            Sections.ERRORS.value,
-            "csvpaths",
-            ["print", "stop", "fail", "collect"],
-        )
-        """
         self.csvpath_log_level = self._get(Sections.LOGGING.value, "csvpath")
         self.csvpaths_log_level = self._get(Sections.LOGGING.value, "csvpaths")
 

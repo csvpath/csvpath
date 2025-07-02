@@ -26,17 +26,20 @@ class S3DataReader(CsvDataReader):
                 ...
 
     def next(self) -> list[str]:
-        with open(
-            uri=self.path,
-            mode="r",
-            encoding=self.encoding,
-            transport_params={"client": S3Utils.make_client()},
-        ) as file:
-            reader = csv.reader(
-                file, delimiter=self._delimiter, quotechar=self._quotechar
-            )
-            for line in reader:
-                yield line
+        try:
+            with open(
+                uri=self.path,
+                mode="r",
+                encoding=self.encoding,
+                transport_params={"client": S3Utils.make_client()},
+            ) as file:
+                reader = csv.reader(
+                    file, delimiter=self._delimiter, quotechar=self._quotechar
+                )
+                for line in reader:
+                    yield line
+        except DeprecationWarning:
+            ...
 
     def fingerprint(self) -> str:
         self.load_if()
