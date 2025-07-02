@@ -6,14 +6,12 @@ echo %CSVPATH_CONFIG_PATH%
 cmd.exe /C c:\\dev\exports.bat
 
 ::
-:: these four lines work fine, but they result in error messages and some lines are not needed
+:: these four lines DO NOT work fine. that was a mistake.
 ::
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe config installer.prefer-binary true
+:: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe config installer.prefer-binary true
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe env remove --all
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip uninstall -y cryptography
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --prefer-binary cryptography
-
-:: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe env remove --all
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary cryptography cryptography
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --prefer-binary cryptography
 
 
