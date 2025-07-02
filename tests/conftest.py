@@ -23,7 +23,9 @@ def clear_files(request):
 
 
 def _clear_files():
+    """
     if os.sep == "\\":
+
         e = ""
         if os.path.exists("conf.env"):
             with open("conf.env", "r", encoding="utf-8") as file:
@@ -33,7 +35,7 @@ def _clear_files():
             e = f"assets{os.sep}config{os.sep}jenkins-local-windows.ini"
         print(f"\nConftest: clear_files: env setup: e: {e}")
         os.environ["CSVPATH_CONFIG_PATH"] = e
-
+    """
     paths = CsvPaths()
     config = paths.config
     print(f"CONFIG PATH IS: {config.config_path}")

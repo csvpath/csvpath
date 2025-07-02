@@ -13,8 +13,8 @@ class TestUtilBinaryCopy:
             f"tests{os.sep}util{os.sep}test_resources{os.sep}tmp{os.sep}temp.xlsx"
         )
         nos = Nos(os.path.dirname(new_path))
-        nos.makedirs()
-
+        if not nos.dir_exists():
+            nos.makedirs()
         nos = Nos(new_path)
         if nos.exists():
             nos.remove()

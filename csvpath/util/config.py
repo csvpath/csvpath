@@ -73,14 +73,52 @@ class Config:
         self.load = load
         self._config = RawConfigParser()
         self.log_file_handler = None
+        self._configpath = None
         #
-        # if env is set it wins out over anything else.
+        # if env is set it is over anything else. However, the config.ini
+        # found by env var or any other way has its configpath evaluated and
+        # will be reloaded if it is found to be different. this could result
+        # an infinite loop, but that would be an unlikely user error easily
+        # corrected.
         #
-        self._configpath = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
+        # pass in None to trigger a configpath load
+        self.configpath = None
+
+    @property
+    def configpath(self) -> str:
         if self._configpath is None:
-            self._configpath = Config.CONFIG
-        if self.load:
-            self._load_config()
+            self.configpath = None
+        return self._configpath
+
+    @configpath.setter
+    def configpath(self, path: str) -> None:
+        #
+        # if None passed in, check Env vars, if None, use default
+        #
+        if path is not None:
+            path = path.strip()
+        if path == "":
+            path = None
+        if path is None:
+            path = environ.get(Config.CSVPATH_CONFIG_FILE_ENV)
+            if path is not None:
+                path = path.strip()
+            if path == "":
+                path = None
+            if path is None:
+                print(f"configpath 3: {self._configpath}, path: {path}")
+                path = Config.CONFIG
+        self._configpath = path
+        self._load_config()
+        # if newly loaded config path doesn't match where it was loaded from, reload w/it.
+        path = self.get(section="config", name="path")
+        if path is not None:
+            path = path.strip()
+        if path == "":
+            path = None
+        if path is not None and path != self._configpath:
+            # if recurse, could loop. but probably won't and not looping is user's responsibility.
+            self.configpath = path
 
     @property
     def load(self) -> bool:
@@ -96,12 +134,12 @@ class Config:
         self._load_config()
 
     def set_config_path_and_reload(self, path: str) -> None:
-        self._configpath = path
+        self.configpath = path
         self.reload()
 
     @property
     def config_path(self) -> str:
-        return self._configpath
+        return self.configpath
 
     @property
     def sections(self) -> list[str]:
@@ -176,16 +214,16 @@ class Config:
     def _create_default_config(self) -> None:
         directory = ""
         name = ""
-        if self._configpath is None or self._configpath.strip() == "":
+        if self.configpath is None or self.configpath.strip() == "":
             raise ConfigurationException("Config path cannot be None")
-        if self._configpath.find(os.sep) > 0:
-            s = self._configpath.rfind(os.sep)
-            directory = self._configpath[0:s]
-            name = self._configpath[s + 1 :]
+        if self.configpath.find(os.sep) > 0:
+            s = self.configpath.rfind(os.sep)
+            directory = self.configpath[0:s]
+            name = self.configpath[s + 1 :]
         if directory != "":
             if not path.exists(directory):
                 os.makedirs(directory)
-        with open(self._configpath, "w", encoding="utf-8") as file:
+        with open(self.configpath, "w", encoding="utf-8") as file:
             c = f"""
 [extensions]
 csvpath_files = csvpath, csvpaths
@@ -431,9 +469,9 @@ shell = /bin/bash
 
     def _assure_config_file_path(self) -> None:
         if self.load:
-            if not self._configpath or self._configpath.strip() == "":
-                self._configpath = Config.CONFIG
-            if not os.path.isfile(self._configpath):
+            if not self.configpath or self.configpath.strip() == "":
+                self.configpath = Config.CONFIG
+            if not os.path.isfile(self.configpath):
                 self._create_default_config()
 
     def _load_config(self, norecurse=False):
@@ -443,7 +481,7 @@ shell = /bin/bash
             )
             return
         self._assure_config_file_path()
-        self._config.read(self._configpath)
+        self._config.read(self.configpath)
         self.refresh()
 
     #
@@ -479,8 +517,8 @@ shell = /bin/bash
         path = self._get("config", "path")
         if path:
             path = path.strip().lower()
-        if path and path != "" and path != self._configpath.strip().lower():
-            self._configpath = path
+        if path and path != "" and path != self.configpath.strip().lower():
+            self.configpath = path
             self.reload()
             return
         self.validate_config()
@@ -555,14 +593,6 @@ shell = /bin/bash
         self._assure_inputs_csvpaths_path()
 
     # ======================================
-
-    @property
-    def configpath(self) -> str:
-        return self._configpath
-
-    @configpath.setter
-    def configpath(self, path: str) -> None:
-        self._configpath = path
 
     def additional_listeners(self, listener_type) -> list[str]:
         # pull type for group names
