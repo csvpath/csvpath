@@ -6,7 +6,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.gcs.gcs_utils import GcsUtility
 
-BUCKET = "csvpath_dev"
+BUCKET = "csvpath-testing-1"
 TEMP_FILE_1 = "abc_1.txt"
 TEMP_FILE_2 = "xyz/abc_2.txt"
 TEMP_FILE_3 = "pdq/abc_3.txt"
@@ -35,7 +35,7 @@ class TestCsvPathsDirsGcs(unittest.TestCase):
             print(
                 """
                   Google Cloud Storage tests require a connection string env var
-                  with permission to read files in gs://csvpath_dev/
+                  with permission to read files in gs://csvpath-testing-1/
             """
             )
             return

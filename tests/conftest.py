@@ -51,7 +51,10 @@ def _clear_files():
             continue
         p = p.strip()
         nos.path = p
-        print(f"Checking {p} ")
+        print(
+            f"Checking {p} conf: GCS_CREDENTIALS_PATH: {os.environ['GCS_CREDENTIALS_PATH']}"
+        )
+
         if nos.dir_exists():
             print(f"Deleting from {p}")
             try:

@@ -1,0 +1,64 @@
+{
+  "group": "Mac",
+  "name": "local-pipeline",
+  "display_order_weight": -1.0,
+  "label_template": "${COUNT}",
+  "lock_behavior": "none",
+  "environment_variables": [],
+  "parameters": [],
+  "materials": [
+    {
+      "url": "https://github.com/csvpath/csvpath",
+      "branch": "main",
+      "shallow_clone": false,
+      "filter": {
+        "ignore": [],
+        "includes": []
+      },
+      "auto_update": true,
+      "name": "new-csvpath-repo",
+      "type": "git"
+    }
+  ],
+  "stages": [
+    {
+      "name": "test-local",
+      "fetch_materials": true,
+      "never_cleanup_artifacts": false,
+      "clean_working_directory": false,
+      "approval": {
+        "type": "success",
+        "users": [],
+        "roles": [],
+        "allow_only_on_success": false
+      },
+      "environment_variables": [],
+      "jobs": [
+        {
+          "name": "unit-tests",
+          "environment_variables": [
+            {
+              "name": "CSVPATH_CONFIG_PATH",
+              "value": "\"assets/config/config.ini\""
+            }
+          ],
+          "tabs": [],
+          "resources": ["mac"],
+          "artifacts": [],
+          "timeout": 0.0,
+          "tasks": [
+            {
+              "command": "zsh",
+              "timeout": -1.0,
+              "arguments": [
+                "assets/gocd/mac/local.sh"
+              ],
+              "run_if": "passed",
+              "type": "exec"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
