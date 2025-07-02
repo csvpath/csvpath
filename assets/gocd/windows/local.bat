@@ -11,9 +11,10 @@ cmd.exe /C c:\\dev\exports.bat
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe config installer.prefer-binary true
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe env remove --all
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip uninstall -y cryptography
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary cryptography cryptography
+:: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary cryptography cryptography
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --prefer-binary cryptography
 
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-deps cryptography --platform win_amd64 --only-binary=cryptography
 
 ::
 :: do the build
