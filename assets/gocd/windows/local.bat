@@ -14,6 +14,11 @@ cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip uninstall -y cryptogra
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary cryptography cryptography
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --prefer-binary cryptography
 
+:: exp
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --upgrade pip
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --upgrade setuptools
+::
+
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-binary paramiko paramiko
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-binary cryptography cryptography
 
