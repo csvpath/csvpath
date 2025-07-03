@@ -2,8 +2,19 @@
 :: setup the env vars
 ::
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
-echo %CSVPATH_CONFIG_PATH%
+
 cmd.exe /C c:\\dev\exports.bat
+
+cmd.exe /C set > gocd_env.txt
+
+echo %CSVPATH_CONFIG_PATH%
+echo %PATH%
+echo %OPENSSL_LIB_DIR%
+echo %OPENSSL_INCLUDE_DIR%
+echo %OPENSSL_CONF%
+echo %OPENSSL_MODULES%
+echo %OPENSSL_ROOT_DIR%
+
 
 ::
 :: these four lines DO NOT work fine. that was a mistake.
