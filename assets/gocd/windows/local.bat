@@ -3,7 +3,7 @@
 ::
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 
-::cmd.exe /C c:\\dev\exports.bat
+cmd.exe /C c:\\dev\exports.bat
 
 ::cmd.exe /C set > gocd_env.txt
 
