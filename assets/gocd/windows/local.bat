@@ -19,10 +19,11 @@ cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --upgrade pip
 cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --upgrade setuptools
 ::
 ::cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-deps pynacl --platform win_amd64 --only-binary=pynacl
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install pynacl==1.5.0
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary pynacl pynacl==1.5.0
 
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-binary paramiko paramiko
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-binary cryptography cryptography
+::  --force-reinstall
+cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --no-binary paramiko paramiko
+::cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-binary cryptography cryptography
 
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pip install --force-reinstall --no-deps cryptography --platform win_amd64 --only-binary=cryptography
 
