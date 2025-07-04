@@ -4,7 +4,7 @@
 ::
 echo(
 echo "working dir: "
-echo cd
+cd
 ::)<-- just here for vim syntax highlighting
 
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
