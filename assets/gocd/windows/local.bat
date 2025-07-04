@@ -2,6 +2,10 @@
 ::
 :: setup the env vars
 ::
+echo(
+echo "working dir: "
+echo cd
+"")
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 
 set AWS_ACCESS_KEY_ID=""
