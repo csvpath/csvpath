@@ -3,10 +3,11 @@
 ::
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 
-cmd.exe /C c:\\dev\exports.bat
+cmd.exe /C c:\dev\exports.bat
 
 ::cmd.exe /C set > gocd_env.txt
 
+echo %GCS_CREDENTIALS_PATH%
 echo %CSVPATH_CONFIG_PATH%
 echo %PATH%
 
@@ -37,7 +38,7 @@ echo %PATH%
 ::
 :: do the build
 ::
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe install
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pytest
+cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
+cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
 
