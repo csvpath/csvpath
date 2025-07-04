@@ -1,3 +1,5 @@
-doskey svk=pytest -s -v -k $1
+@echo=off
+poetry run pytest -s -v -k %1
+
 
 
