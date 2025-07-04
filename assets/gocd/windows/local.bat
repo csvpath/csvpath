@@ -4,7 +4,6 @@
 ::
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 
-
 set AWS_ACCESS_KEY_ID=""
 set AWS_SECRET_ACCESS_KEY=""
 set SFTP_USER=""
@@ -29,17 +28,19 @@ set OTEL_SERVICE_NAME=""
 set OTEL_RESOURCE_ATTRIBUTES=""
 
 
-cmd.exe /C call c:\dev\exports.bat
+call c:\dev\exports.bat
 
 ::cmd.exe /C set > gocd_env.txt
-echo "\n\nGCS path: "
+echo(
+echo "GCS path: "
 echo %GCS_CREDENTIALS_PATH%
 echo "CsvPath config path: "
 echo %CSVPATH_CONFIG_PATH%
 ::echo "Login account path: "
 ::echo %PATH%
-echo "\n"
-::
+echo(
+
+::))<-- just here for vim syntax highlighting
 :: these four lines DO NOT work fine. that was a mistake.
 ::
 :: cmd.exe /C c:\\Users\python\.local\bin\poetry.exe config installer.prefer-binary true
