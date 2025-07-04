@@ -6,11 +6,14 @@ set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 cmd.exe /C c:\dev\exports.bat
 
 ::cmd.exe /C set > gocd_env.txt
-
+echo ""
+echo "GCS path: "
 echo %GCS_CREDENTIALS_PATH%
+echo "CsvPath config path: "
 echo %CSVPATH_CONFIG_PATH%
+echo "Login account path: "
 echo %PATH%
-
+echo ""
 ::
 :: these four lines DO NOT work fine. that was a mistake.
 ::
