@@ -5,7 +5,8 @@
 echo(
 echo "working dir: "
 echo cd
-"")
+::)<-- just here for vim syntax highlighting
+
 set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-local.ini
 
 set AWS_ACCESS_KEY_ID=""
