@@ -86,7 +86,12 @@ class Nos:
 
     @property
     def sep(self) -> str:
-        return "/" if self.path.find("\\") == -1 else os.sep
+        #
+        # should this be checking what our self.do is to see if we need
+        # posix/cloud seps?
+        #
+        # return "/" if self.path.find("\\") == -1 else os.sep
+        return self.do.sep
 
     def join(self, name: str) -> str:
         return self.do.join(name)
@@ -137,6 +142,10 @@ class FileDo:
         self._path = None
         path = pathu.resep(path)
         self.path = path
+
+    @property
+    def sep(self) -> str:
+        return os.sep
 
     @property
     def path(self) -> str:

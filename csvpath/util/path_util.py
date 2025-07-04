@@ -1,4 +1,5 @@
 import os
+from pathlib import PurePosixPath
 
 
 class PathUtility:
@@ -15,13 +16,11 @@ class PathUtility:
         #
         # exp!
         #
-        from pathlib import PurePosixPath
-
         apath = str(PurePosixPath(apath))
         return apath
 
     @classmethod
-    def resep(cls, path: str, hint=None) -> str:
+    def resep(cls, path: str, *, hint=None) -> str:
         sep, notsep = cls.sep(path, hint=hint)
         return path.replace(notsep, sep)
 
@@ -30,7 +29,7 @@ class PathUtility:
         return [cls.resep(path) for path in paths]
 
     @classmethod
-    def sep(cls, path: str, hint: str = None) -> tuple[str, str]:
+    def sep(cls, path: str, *, hint: str = None) -> tuple[str, str]:
         #
         # returns a tuple of sep and not-sep. e.g. for Windows:
         # ("\\", "/")

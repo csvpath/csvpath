@@ -14,16 +14,17 @@ class PathFilter:
             return
         filtered = []
         archive = results.csvpaths.config.get(section="results", name="archive")
-        # print(f"PathFilter: name: {name}, archive: {archive}")
         pre = os.path.join(archive, ref.root_major)
         pre = os.path.join(pre, name)
+        #
+        # after these two joins what is the risk of windows seps in cloud paths?
+        # will nos account for that? nos does, but worth remembering this point.
+        #
         for _ in results.files:
-            # print(f"PathFilter: __: {_}")
             #
             # should be prefixed by archive path or not? seems like it should be.
             # the tests will tell us.
             #
-            # _ = _[len(archive)+1:]
             if _.startswith(pre):
                 filtered.append(_)
         results.files = filtered

@@ -26,6 +26,10 @@ class SftpDo:
                 Box().add(Box.CSVPATHS_CONFIG, self._cfg)
         return self._cfg
 
+    @property
+    def sep(self) -> str:
+        return "/"
+
     @_config.setter
     def _config(self, cfg: SftpConfig) -> None:
         self._cfg = cfg
@@ -56,7 +60,7 @@ class SftpDo:
 
     @path.setter
     def path(self, p) -> None:
-        p = pathu.resep(p)
+        p = pathu.resep(p, hint="posix")
         p = pathu.stripp(p)
         #
         # when we set the path using Nos we are always expecting the
@@ -196,7 +200,7 @@ class SftpDo:
 
     def rename(self, new_path: str) -> None:
         try:
-            np = pathu.resep(new_path)
+            np = pathu.resep(new_path, hint="posix")
             np = pathu.stripp(np)
             self._config.sftp_client.rename(self.path, np)
         except FileNotFoundError:

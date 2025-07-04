@@ -8,7 +8,6 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.ref_utils import ReferenceUtility as refu
 from csvpath.util.references.results_tools.resolve_possibles import PossiblesResolver
-from csvpath.util.references.results_tools.index_picker import IndexPicker
 from csvpath.util.references.results_tools.path_filter import PathFilter
 from csvpath.util.references.results_tools.date_filter import DateFilter
 from csvpath.util.references.results_tools.token_filters import TokenFilters
@@ -32,6 +31,15 @@ class ResultsReferenceFinder2:
             if ref is not None:
                 raise ValueError("Cannot provide both ref and name")
             self._ref = ReferenceParser(reference)
+        #
+        # we need to know the os path segment separator to use. if
+        # we're working on a config.ini that points to a cloud service
+        # for [results]archive then we're always '/'.
+        #
+        self.sep = (
+            csvpaths.config.get(section="results", name="archive").find("://") > -1
+        )
+        self.sep = "/" if self.sep is True or os.sep == "/" else "\\"
 
     @property
     def ref(self) -> ReferenceParser:

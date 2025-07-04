@@ -2,7 +2,6 @@ import datetime
 from datetime import time, timedelta, timezone
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.reference_exceptions import ReferenceException
-from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.util.references.results_tools.date_filter import DateFilter
 
 

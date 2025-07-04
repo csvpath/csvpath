@@ -24,6 +24,13 @@ class FilesReferenceFinder2:
             self._ref = ref
         if reference is None:
             self.reference = ref.ref_string
+        #
+        # we need to know the os path segment separator to use. if
+        # we're working on a config.ini that points to a cloud service
+        # for [inputs]files then we're always '/'.
+        #
+        self.sep = csvpaths.config.get(section="inputs", name="files").find("://") > -1
+        self.sep = "/" if self.sep is True or os.sep == "/" else "\\"
 
     @property
     def ref(self) -> ReferenceParser:
@@ -186,21 +193,23 @@ class FilesReferenceFinder2:
         root_major = results.ref.root_major if results is not None else named_file_name
         if root_major is None:
             root_major = self.ref.root_major
-        # inputs = self.csvpaths.config.get(section="inputs", name="files")
         p = root_major
-        sepped = f"{p}/"
+        sepped = f"{p}{self.sep}"
+        # sepped = f"{p}/"
         i = path.find(sepped)
         #
         # we expect either p/ or /p/ in path
         #
-        if i != 0 and path[i - 1] != "/":
+        if i != 0 and path[i - 1] != self.sep:
+            # if i != 0 and path[i - 1] != "/":
             #
             # one fallback in case we found the same name in inputs and name_one
             #
             i = path.find(sepped, i + 1)
         if i > -1:
             path = path[i + len(p) :]
-            path = path.lstrip("/")
+            path = path.lstrip(self.sep)
+            # path = path.lstrip("/")
         return path
 
     def _range_of_name_one(self, *, results, rrange: str) -> None:
@@ -302,7 +311,6 @@ class FilesReferenceFinder2:
             minus = self._path_minus_prolog(
                 named_file_name=self.ref.root_major, path=path
             )
-            # pp = path[px + 1 :]
             if self._starts_with(minus, nameone):
                 dat = exut.to_datetime(_["time"])
                 if lt and dat < thedate:
@@ -466,20 +474,6 @@ class FilesReferenceFinder2:
         #
         del tokens[0]
         return True
-
-    """
-    def _create_inputs_path(self, results, path) -> str:
-        d = os.path.join(results.ref.root_major, path)
-        inputs = self.csvpaths.config.get(section="inputs", name="files")
-        i = inputs.find("://")
-        if i > -1:
-            inputs = inputs[i+3:]
-            inputs = inputs.lstrip("/")
-            inputs = inputs[inputs.find("/"):]
-            inputs = inputs.lstrip("/")
-        d = os.path.join(inputs, d )
-        return d
-    """
 
     # ==============================================
 

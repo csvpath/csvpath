@@ -10,12 +10,16 @@ class GcsDo:
         self._path = path
 
     @property
+    def sep(self) -> str:
+        return "/"
+
+    @property
     def path(self) -> str:
         return self._path
 
     @path.setter
     def path(self, path: str) -> None:
-        path = pathu.resep(path)
+        path = pathu.resep(path, hint="posix")
         self._path = path
 
     def remove(self) -> None:
