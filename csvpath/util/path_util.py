@@ -12,6 +12,12 @@ class PathUtility:
         if stripp is True:
             apath = cls.stripp(apath)
         apath = os.path.normpath(os.path.normcase(apath))
+        #
+        # exp!
+        #
+        from pathlib import PurePosixPath
+
+        apath = str(PurePosixPath(apath))
         return apath
 
     @classmethod

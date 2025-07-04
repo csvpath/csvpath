@@ -5,6 +5,7 @@ from csvpath.managers.registrar import Registrar
 from csvpath import CsvPaths
 from csvpath.util.config import Config
 from tests.csvpaths.builder import Builder
+from csvpath.util.path_util import PathUtility as pathu
 
 TINI = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
 
@@ -61,4 +62,4 @@ class TestCsvPathsManagersListeners(unittest.TestCase):
             if iii is not None:
                 os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = iii
                 config = Config()
-                assert config.config_path == iii
+                assert pathu.equal(config.config_path, iii)
