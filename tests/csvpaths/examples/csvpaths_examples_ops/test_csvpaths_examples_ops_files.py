@@ -116,6 +116,7 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # the extension left off.
         #
         reference = "$invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv"
+        reference = pathu.resep(reference)
         ref = ReferenceParser(reference)
         finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
         lst = finder.resolve()

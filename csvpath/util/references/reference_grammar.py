@@ -298,7 +298,7 @@ REFERENCE_GRAMMAR = r"""
     root_names: root_name ("#" root_minor_name)?
     root_name: IDENTIFIER
     root_minor_name: IDENTIFIER
-    path: PATH_SEGMENT ("/" PATH_SEGMENT?)*
+    path: PATH_SEGMENT (("\\"|"/") PATH_SEGMENT?)*
 
     // Terminals - PATH_SEGMENT now excludes dots to enforce two-dot limit
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_# \-]*/

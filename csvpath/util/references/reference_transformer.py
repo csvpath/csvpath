@@ -456,7 +456,12 @@ class ReferenceTransformer(Transformer):
             self.ref.name_three = items[0].value
 
     def path(self, items):
-        p = "/".join(str(item.value) for item in items)
+        #
+        # could there be a way that we could get a windows path when we don't want? or 
+        # a posix path in error when we don't know what to return? can't think of a way.
+        #
+        sep = "\\" if self.ref.reference and self.ref.reference.find("\\") else "/"
+        p = sep.join(str(item.value) for item in items)
         self.ref.name_one = p
         return p
 

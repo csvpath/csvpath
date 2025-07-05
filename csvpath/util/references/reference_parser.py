@@ -53,7 +53,6 @@ class ReferenceParser:
         self._name_three_tokens = []
         self._name_four_tokens = []
         #
-        # exp!!
         # self.next holds hints for what more you could do with this query
         # e.g. $agroup.results.2025-01:after would return:
         #   :index, :first, :last

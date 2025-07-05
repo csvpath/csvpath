@@ -64,23 +64,23 @@ class FilesReferenceFinder2:
         # we'll work off a shared copy of the name_one tokens
         #
         tokens = self.ref.name_one_tokens[:]
-        # print(f"57: results: {len(results)}")
+        #print(f"57: results: {len(results)}")
         #
         # if range exists it impacts everything except an ordinal.
         # otherwise, path or date may exist and if either does, it
         # disallows the other.
         #
         if not self._range_if_name_one(results=results, tokens=tokens):
-            # print(f"65: results: {len(results)}")
+            #print(f"65: results: {len(results)}")
             if not self._date_if_name_one(results=results, tokens=tokens):
-                # print(f"66: results: {len(results)}")
+                #print(f"66: results: {len(results)}")
                 self._path_if_name_one(results=results, tokens=tokens)
-        # print(f"69: results: {len(results)}")
+        #print(f"69: results: {len(results)}")
         #
         # ordinals simply pickout an item in results.files, if possible
         #
         self._ordinal_if_name_one(results=results, tokens=tokens)
-        # print(f"73: results: {len(results)}")
+        #print(f"73: results: {len(results)}")
         #
         # name_two stuff
         #
@@ -367,7 +367,7 @@ class FilesReferenceFinder2:
         #
         # we have to account for path>:date>:ordinal. ordinal is separate and comes after.
         # here we need to either limit by path and then by date, if needed, or do both at
-        # once if both a called for.
+        # once if both are called for.
         #
         first, last = None, None
         if len(tokens) > 0 and DateCompleter.is_date_or_date_prefix(tokens[0]):
