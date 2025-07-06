@@ -298,7 +298,7 @@ REFERENCE_GRAMMAR = r"""
     root_names: root_name ("#" root_minor_name)?
     root_name: IDENTIFIER
     root_minor_name: IDENTIFIER
-    path: PATH_SEGMENT (("\\"|"/") PATH_SEGMENT?)*
+    path: PATH_SEGMENT (("\\" | "/") PATH_SEGMENT?)*
 
     // Terminals - PATH_SEGMENT now excludes dots to enforce two-dot limit
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_# \-]*/
@@ -337,16 +337,6 @@ class QueryParser:
         """Parse a CsvPath query string and return structured representation"""
         if self.ref is None:
             raise RuntimeError("A reference object must be available for parsing")
-        """
-        try:
-            result = self.parser.parse(query)
-            ReferenceTransformer(self.ref).transform(result)
-            return self.ref
-        except Exception as e:
-            # from csvpath.util.log_utility import LogUtility
-            # LogUtility.log_brief_trace()
-            raise ValueError(f"Failed to parse query '{query}': {e}")
-        """
         result = self.parser.parse(query)
         ReferenceTransformer(self.ref).transform(result)
         return self.ref

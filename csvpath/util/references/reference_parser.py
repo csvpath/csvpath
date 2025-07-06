@@ -1,3 +1,4 @@
+import os
 from csvpath.util.path_util import PathUtility as pathu
 from .reference_grammar import QueryParser
 from .reference_exceptions import ReferenceException
@@ -42,11 +43,16 @@ class ReferenceParser:
     RESULTS = "results"
     FILES = "files"
 
-    def __init__(self, string: str = None) -> None:
+    def __init__(self, string: str = None, *, csvpaths=None) -> None:
+        self._csvpaths = csvpaths
         self._root_major = None
         self._root_minor = None
         self._datatype = None
-        self._names = []
+        self._name_one = None
+        self._name_two = None
+        self._name_three = None
+        self._name_four = None
+        
         self._name_one_is_fingerprint = False
         self._name_one_tokens = []
         self._name_two_tokens = []
@@ -64,26 +70,38 @@ class ReferenceParser:
         #
         #
         #
-        self._marker = None
-        self._separator = None
+        self._marker = "#"
+        self._name_separator = "."
+        self._sep = None
         self._reference = string
         self.parser = None
         self.sequence = []
         if string is not None:
             self.parser = QueryParser(ref=self)
             self.parser.parse(self._reference)
-
+        
     def __str__(self) -> str:
         return f"""
         root major:{self._root_major}
         root minor:{self._root_minor}
         datatype:{self._datatype}
-        names:{self._names}
+        name one: {self._name_one}
+        name two: {self._name_two}
+        name three: {self._name_three}
+        name four: {self._name_four}
         name one tokens: {self._name_one_tokens}
         name two tokens: {self._name_two_tokens}
         name three tokens: {self._name_three_tokens}
         name four tokens: {self._name_four_tokens}
         """
+
+    @property
+    def csvpaths(self):
+        return self._csvpaths
+        
+    @csvpaths.setter
+    def csvpaths(self, csvpaths) -> None:
+        self._csvpaths = csvpaths
 
     @property
     def next(self) -> list[str]:
@@ -102,7 +120,7 @@ class ReferenceParser:
         marker = self.marker
         if marker is None:
             marker = "#"
-        separator = self.separator
+        separator = self.name_separator
         if separator is None:
             separator = "."
         ret = f"${self.root_major}"
@@ -160,9 +178,55 @@ class ReferenceParser:
     def marker(self) -> str:
         return self._marker
 
+    #
+    # name_separator is the character that goes between root_major/root_minor and datatype 
+    # and between data type and name_one/name_two and between that and name_three/name_four.
+    # i.e. typically the ".". we no longer expect name_separator will change, but if it
+    # did that would happen here.
+    #
     @property
-    def separator(self) -> str:
-        return self._separator
+    def name_separator(self) -> str:
+        return self._name_separator
+
+    @name_separator.setter
+    def name_separator(self, s:str) -> None:
+        self._name_separator = s
+
+    @property
+    def sep(self) -> str:
+        if self._sep is None:
+            #
+            # this is unlikely today. we would not expect an absolute path in a reference
+            #
+            #self.sep = os.sep if self.reference is None or self.reference.find("://") > -1 else "/"
+            #
+            if self.datatype is not None and self.csvpaths is not None:
+                uri = None
+                if self.datatype == "files" or self.datatype == "csvpaths":
+                    uri = self.csvpaths.config.get(section="inputs", name=self.datatype)
+                elif self.datatype == "results":
+                    uri = self.csvpaths.config.get(section="results", name="archive")
+                if uri is None:
+                    uri = self.name_one
+                if uri is not None:
+                    if uri.find("://") > -1:
+                        self._sep = "/"
+                    elif uri.find("\\") > -1: 
+                        self._sep = "\\"
+                    else:
+                        self._sep = os.sep
+                else:
+                    self._sep = os.sep
+            else:
+                if self.name_one is not None and self.name_one.find("\\") > -1: 
+                    self._sep = "\\"
+                else:
+                    self._sep = os.sep
+        return self._sep
+
+    @sep.setter
+    def sep(self, s:str) -> None:
+        self._sep = s
 
     @root_minor.setter
     def root_minor(self, r: str) -> None:
@@ -171,42 +235,18 @@ class ReferenceParser:
     def _set_root(self, r) -> None:
         if r is None:
             raise ReferenceException("Root cannot be none")
-        t = self._names_from_name(r)
+        t = self._split(r)
         self.root_minor = t[1]
         self.root_major = t[0]
-
-    def _set_names(self, string) -> None:
-        self._names = []
-        t = self._separate_names(string, separator=".")
-
-        major = self._names_from_name(t[0])
-        self._names.append(major[0])
-        self._names.append(major[1])
-
-        minor = self._names_from_name(t[1])
-        self._names.append(minor[0])
-        self._names.append(minor[1])
-
-    def _separate_names(self, r, separator: str = ".") -> list:
-        if self._separator is not None and self._separator != separator:
-            raise ValueError(
-                f"Separator is already set to {self._separator} so {separator} is not valid"
-            )
-        self._separator = separator
-        return self._split(r, marker=separator)
-
-    def _names_from_name(self, r, marker: str = "#") -> list:
-        if self._marker is not None and self._marker != marker:
-            raise ValueError(
-                f"Marker is already set to {self._marker} so {marker} is not valid"
-            )
-        self._marker = marker
-        return self._split(r, marker=marker)
-
-    def _split(self, r, marker: str = "#") -> list:
+    
+    def _split(self, r) -> list:
+        #
+        # splits a name into two parts. the value passed in is either root_major/root_minor
+        # or name_one/name_two or name_three/name_four
+        #
         names = []
         if r is not None:
-            i = r.find(marker)
+            i = r.find(self.marker)
             if i > -1:
                 m1 = r[i + 1 :]
                 names.append(r[0:i])
@@ -245,61 +285,47 @@ class ReferenceParser:
 
     @property
     def name_one(self) -> str:
-        return self._names[0] if len(self._names) > 0 else None
+        return self._name_one
 
     @name_one.setter
     def name_one(self, n: str) -> str:
-        self._assure_names()
         if not n:
-            #
-            # why might we want to preserve 2 and 3 if we
-            # don't have 0 and 1?
-            #
-            self._names[0] = None
-            self._names[1] = None
+            self._name_one = None
+            self._name_two = None
             return
-        i = f"{n}".find("#")
+        i = n.find(self.marker)
         if i > -1:
-            self._names[0] = n[0:i]
-            self._names[1] = n[i + 1 :]
+            self._name_one = n[0:i]
+            self._name_two = n[i + 1 :]
             return
-        if len(self.names) == 0:
-            self.names.append(n)
-        else:
-            self.names[0] = n
-
-    def _assure_names(self) -> None:
-        if self._names is None:
-            self._names = []
-        while len(self._names) < 4:
-            self._names.append(None)
-
+        self._name_one = n
+        
     @property
     def name_two(self) -> str:
-        return self._names[1] if len(self._names) > 1 else None
+        return self._name_two
 
     @property
     def name_three(self) -> str:
-        return self._names[2] if len(self._names) > 2 else None
+        return self._name_three
 
     @name_three.setter
     def name_three(self, n: str) -> str:
-        self._assure_names()
+        #self._assure_names()
         if not n:
-            self._names[2] = None
-            self._names[3] = None
+            self._name_three = None
+            self._name_four = None
             return
-        i = n.find("#")
+        i = n.find(self.marker)
         if i > -1:
-            self._names[2] = n[0:i]
-            self._names[3] = n[i + 1 :]
+            self._name_three = n[0:i]
+            self._name_four = n[i + 1 :]
         else:
-            self._names[2] = n
-            self._names[3] = None
+            self._name_three = n
+            self._name_four = None
 
     @property
     def name_four(self) -> str:
-        return self._names[3] if len(self._names) > 3 else None
+        return self._name_four
 
     @classmethod
     def find_int_token(cls, tokens: list) -> int | None:
@@ -400,44 +426,8 @@ class ReferenceParser:
         if self._name_four_tokens is None:
             self._name_four_tokens = []
         self._add_tokens(self._name_four_tokens, t)
-
-    @property
-    def names(self) -> list[str]:
-        return self._names
-
-    @names.setter
-    def names(self, ns: str) -> None:
-        self._names = ns
-
+    
     def parse(self, string: str) -> None:
         self.parser = QueryParser(ref=self)
         self.parser.parse(string)
-        #
-        # the old way:
-        #
-        """
-        if string is None:
-            raise ReferenceException("Reference string cannot be None")
-        if string[0] != "$":
-            raise ReferenceException("Reference string must start with a root '$'")
-        string = pathu.resep(string)
-        self._original = string
-        root = None
-        #
-        # TODO: use self.separator
-        #
-        if string[1] == ".":
-            root = ReferenceParser.LOCAL
-            string = string[2:]
-        else:
-            dot = string.find(".")
-            root = string[1:dot]
-            string = string[dot + 1 :]
-        self._set_root(root)
 
-        dot = string.find(".")
-        self.datatype = string[0:dot]
-
-        string = string[dot + 1 :]
-        self._set_names(string)
-        """

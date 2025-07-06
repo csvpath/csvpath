@@ -409,6 +409,34 @@ shell = /bin/bash
             if not path.exists(self.archive_path):
                 os.makedirs(self.archive_path)
 
+    @property
+    def archive_sep(self) -> None:
+        if self.archive_path is None or self.archive_path.strip() == "":
+            return os.sep
+        a = self.archive_path.strip().lower()
+        if a.find("://") > -1:
+            return "/"
+        return os.sep
+
+    @property
+    def files_sep(self) -> None:
+        if self.inputs_files_path is None or self.inputs_files_path.strip() == "":
+            return os.sep
+        a = self.inputs_files_path.strip().lower()
+        if a.find("://") > -1:
+            return "/"
+        return os.sep
+
+    @property
+    def csvpaths_sep(self) -> None:
+        if self._assure_inputs_csvpaths_path is None or self._assure_inputs_csvpaths_path.strip() == "":
+            return os.sep
+        a = self._assure_inputs_csvpaths_path.strip().lower()
+        if a.find("://") > -1:
+            return "/"
+        return os.sep
+
+
     def _assure_transfer_root(self) -> None:
         if self.load:
             if self.transfer_root is None or self.transfer_root.strip() == "":
@@ -646,7 +674,8 @@ shell = /bin/bash
     @property
     def archive_name(self) -> str:
         p = self.archive_path
-        if p.find(os.sep) > -1:
+        if p.find(self.archive_sep) > -1:
+        #if p.find(os.sep) > -1:
             p = p[p.rfind(os.sep) + 1 :]
         return p
 

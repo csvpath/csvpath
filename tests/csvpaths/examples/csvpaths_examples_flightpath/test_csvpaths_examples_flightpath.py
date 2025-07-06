@@ -7,7 +7,7 @@ from csvpath.util.references.files_reference_finder_2 import (
 )
 
 
-FILES = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_flightpath{os.sep}references"
+FILES = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_flightpath{os.sep}{'windows' if os.sep=='\\' else 'posix'}_references"
 
 
 class TestCsvPathsExamplesFlightPathRefs(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestCsvPathsExamplesFlightPathRefs(unittest.TestCase):
         ref = "$test.files.tms_bars4:all"
         finder = FilesReferenceFinder(paths, reference=ref)
         res = finder.resolve()
-        assert res
+        assert res is not None
         assert isinstance(res, list)
         assert len(res) == 2
 

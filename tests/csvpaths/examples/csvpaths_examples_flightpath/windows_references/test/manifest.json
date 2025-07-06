@@ -1,0 +1,52 @@
+[
+  {
+    "type": "csv",
+    "file": "tests\\csvpaths\\examples\\csvpaths_examples_flightpath\\windows_references\\test\\tms_bars5.csv\\649982d21400610a5d14bee3eaaeff3abb652aeb1acdafa4b0972537085a2608.csv",
+    "file_home": "tests\\examples\\flightpath_1\\windows_references\\test\\tms_bars5.csv",
+    "fingerprint": "649982d21400610a5d14bee3eaaeff3abb652aeb1acdafa4b0972537085a2608",
+    "uuid": "3f6220a3-7701-4eaa-8964-6913e559a2a5",
+    "time": "2025-05-07T16:14:14.420979+00:00",
+    "from": "c:\\dev\\csvpath\\marketing\\examples and how-tos\\flightpath\\csvs\\tms_bars5.csv",
+    "template": ""
+  },
+  {
+    "type": "csv",
+    "file": "tests\\csvpaths\\examples\\csvpaths_examples_flightpath\\windows_references\\test\\trademarks.csv\\4aee93de4851e6cf325ab3dd223b5236f1cffdce06535c03068899b3de08a3d6.csv",
+    "file_home": "tests\\examples\\flightpath_1\\windows_references\\test\\trademarks.csv",
+    "fingerprint": "4aee93de4851e6cf325ab3dd223b5236f1cffdce06535c03068899b3de08a3d6",
+    "uuid": "9cf149b4-7184-440c-b5ea-f276f46b197c",
+    "time": "2025-05-07T17:08:03.417462+00:00",
+    "from": "c:\\dev\\csvpath\\marketing\\examples and how-tos\\flightpath\\csvs\\trademarks.csv",
+    "template": ""
+  },
+  {
+    "type": "csv",
+    "file": "tests\\csvpaths\\examples\\csvpaths_examples_flightpath\\windows_references\\test\\tms_bars5.csv\\3a1b746945da5f9144723d38b8ba68c6211e607b1aed21caaad7c570d96c7e0e.csv",
+    "file_home": "tests\\examples\\flightpath_1\\windows_references\\test\\tms_bars5.csv",
+    "fingerprint": "3a1b746945da5f9144723d38b8ba68c6211e607b1aed21caaad7c570d96c7e0e",
+    "uuid": "d2f94dac-9c63-455e-8ee5-10a401dc8b5b",
+    "time": "2025-05-09T23:57:30.628684+00:00",
+    "from": "c:\\dev\\csvpath\\marketing\\examples and how-tos\\flightpath\\csvs\\tms_bars5.csv",
+    "template": ""
+  },
+  {
+    "type": "csv",
+    "file": "tests\\csvpaths\\examples\\csvpaths_examples_flightpath\\windows_references\\test\\tms_bars4.csv\\b3d9bad0fe5ca563e79c8f6f8aaead50ce12631448f8aa6ce6cf0209d7cb7e97.csv",
+    "file_home": "tests\\examples\\flightpath_1\\windows_references\\test\\tms_bars4.csv",
+    "fingerprint": "b3d9bad0fe5ca563e79c8f6f8aaead50ce12631448f8aa6ce6cf0209d7cb7e97",
+    "uuid": "f33d002f-591f-4ac6-a679-18f977726224",
+    "time": "2025-05-09T23:58:02.771770+00:00",
+    "from": "c:\\dev\\csvpath\\marketing\\examples and how-tos\\flightpath\\csvs\\tms_bars4.csv",
+    "template": ""
+  },
+  {
+    "type": "csv",
+    "file": "tests\\csvpaths\\examples\\csvpaths_examples_flightpath\\windows_references\\test\\tms_bars4.csv\\f82048b1d62f7584b419d479d4c24a755da324810d6bccbc0998ec0efa2242b4.csv",
+    "file_home": "tests\\examples\\flightpath_1\\windows_references\\test\\tms_bars4.csv",
+    "fingerprint": "f82048b1d62f7584b419d479d4c24a755da324810d6bccbc0998ec0efa2242b4",
+    "uuid": "c5a8fa50-c83f-49c3-9c97-4189c360fe67",
+    "time": "2025-05-10T01:00:28.596373+00:00",
+    "from": "c:\\dev\\csvpath\\marketing\\examples and how-tos\\flightpath\\csvs\\tms_bars4.csv",
+    "template": ""
+  }
+]

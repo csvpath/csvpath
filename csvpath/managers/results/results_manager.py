@@ -153,7 +153,7 @@ class ResultsManager:  # pylint: disable=C0115
             raise ValueError("Name cannot be none")
         if name_or_id is None:
             if name.startswith("$"):
-                ref = ReferenceParser(name)
+                ref = ReferenceParser(name, csvpaths=self.csvpaths)
                 if ref.root_minor is not None:
                     name_or_id = ref.root_minor
                 elif ref.name_three is not None:
@@ -457,7 +457,7 @@ class ResultsManager:  # pylint: disable=C0115
         #
         # $mygroup.results.orders/acme/2025:first.myinstance
         #
-        ref = ReferenceParser(name)
+        ref = ReferenceParser(name, csvpaths=self.csvpaths)
         if ref.datatype == ref.RESULTS:
             reff = ResultsReferenceFinder(self.csvpaths, reference=name)
             #

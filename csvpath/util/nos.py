@@ -80,6 +80,10 @@ class Nos:
                     args=[self.path],
                 )
                 self._do = instance
+            #
+            # we don't have an https backend at this time, just support for reading files from https.
+            # that means we don't have a backend way to find sep. there may be other impacts too.
+            #
             else:
                 self._do = FileDo(self.path)
         return self._do

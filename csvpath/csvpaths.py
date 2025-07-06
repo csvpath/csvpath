@@ -427,7 +427,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             # resman should get the whole reference
             #
             if pathsname.startswith("$"):
-                ref = ReferenceParser(pathsname)
+                ref = ReferenceParser(pathsname, csvpaths=self)
                 idname = self.paths_manager._get_from_names(ref.root_major, identity)[0]
                 idnames = self.paths_manager.get_identified_path_names_in(pathsname)
                 i = idnames.index(idname)

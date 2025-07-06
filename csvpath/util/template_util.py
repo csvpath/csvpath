@@ -36,7 +36,7 @@ class TemplateUtility:
 
     @classmethod
     def find_template(cls, csvpaths, ref: str) -> str:
-        ref = ReferenceParser(ref)
+        ref = ReferenceParser(ref, csvpaths=self.csvpaths)
         paths = ref.root_major
         #
         # TODO: a reference could be FILES not just CSVPATHS.

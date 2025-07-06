@@ -45,7 +45,7 @@ class TestFilesCsvPathsReferenceFinder(unittest.TestCase):
             manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}named_files{os.sep}many_two{os.sep}manifest.json",
             is_instance=True,
         )
-        ref = ReferenceParser(refstr)
+        ref = ReferenceParser(refstr, csvpaths=None)
         assert ref.root_major == "many"
         assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three == "many_two"
@@ -57,7 +57,7 @@ class TestFilesCsvPathsReferenceFinder(unittest.TestCase):
             manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}manifest.json",
             is_instance=False,
         )
-        ref = ReferenceParser(refstr)
+        ref = ReferenceParser(refstr, csvpaths=None)
         assert ref.root_major == "many"
         assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three is None
@@ -70,7 +70,7 @@ class TestFilesCsvPathsReferenceFinder(unittest.TestCase):
             manipath=f"archive{os.sep}many{os.sep}test_resources{os.sep}2025-03-27_01-16-05{os.sep}sub{os.sep}myinstance{os.sep}manifest.json",
             is_instance=True,
         )
-        ref = ReferenceParser(refstr)
+        ref = ReferenceParser(refstr, csvpaths=None)
         assert ref.root_major == "many"
         assert ref.name_one == f"test_resources{os.sep}2025-03-27_01-16-05"
         assert ref.name_three == "myinstance"

@@ -30,7 +30,7 @@ class ResultsReferenceFinder2:
         if reference is not None:
             if ref is not None:
                 raise ValueError("Cannot provide both ref and name")
-            self._ref = ReferenceParser(reference)
+            self._ref = ReferenceParser(reference, csvpaths=self.csvpaths)
         #
         # we need to know the os path segment separator to use. if
         # we're working on a config.ini that points to a cloud service
@@ -65,7 +65,7 @@ class ResultsReferenceFinder2:
             #
             #
             #
-            self._ref = ReferenceParser(refstr)
+            self._ref = ReferenceParser(refstr, csvpaths=self.csvpaths)
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         #
         # find possibles based on path, date, index

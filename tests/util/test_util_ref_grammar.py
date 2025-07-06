@@ -15,7 +15,7 @@ class TestUtilReferenceGrammar(unittest.TestCase):
         # is a no-go. fingerprints are exact references, not points in time/sequence. the
         # grammar will allow it, tho, so up to the RP and finders to control for that.
         #
-        parser = QueryParser(ref=ReferenceParser())
+        parser = QueryParser(ref=ReferenceParser(csvpaths=None))
         file_queries = [
             "$mydata.files.abc123abc123abc123abc123abc123abc123abc123abc123",  # fingerprint
             "$mydata.files.data/input-csv",  # path only
@@ -34,7 +34,7 @@ class TestUtilReferenceGrammar(unittest.TestCase):
             parser.parse(query)
 
     def test_reference_grammar_results(self):
-        parser = QueryParser(ref=ReferenceParser())
+        parser = QueryParser(ref=ReferenceParser(csvpaths=None))
         results_queries = [
             "$job.results.process_data",  # identity only
             "$job.results.:today",  # today reference
@@ -52,11 +52,11 @@ class TestUtilReferenceGrammar(unittest.TestCase):
 
     def test_reference_grammar_results_2(self):
         q = "$job.results.analysis/monthly/work/papers/:today:last.summary:unmatched"  # path range ordinal identity
-        parser = QueryParser(ref=ReferenceParser())
+        parser = QueryParser(ref=ReferenceParser(csvpaths=None))
         parser.parse(q)
 
     def test_reference_grammar_csvpaths(self):
-        parser = QueryParser(ref=ReferenceParser())
+        parser = QueryParser(ref=ReferenceParser(csvpaths=None))
         csvpaths_queries = [
             "$mypaths.csvpaths.apathname:to",
             "$mypaths.csvpaths.apathname:from",

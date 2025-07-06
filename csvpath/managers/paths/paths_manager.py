@@ -78,7 +78,7 @@ class PathsManager:
 
     def get_manifest_for_name(self, name: str) -> dict:
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype != ref.CSVPATHS:
                 raise ValueError(f"Reference datatype is not valid: {ref.datatype}")
             name = ref.root_major
@@ -109,7 +109,7 @@ class PathsManager:
         if name.find("#") > -1:
             name = name[0 : name.find("#")]
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype != ReferenceParser.CSVPATHS:
                 raise ValueError(
                     "Must be a reference of type {ReferenceParser.CSVPATHS}"
@@ -322,7 +322,7 @@ class PathsManager:
         npn = None
         identity = None
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype != ReferenceParser.CSVPATHS:
                 raise InputException(
                     f"Reference datatype must be {ReferenceParser.CSVPATHS}"
@@ -389,7 +389,7 @@ class PathsManager:
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         nos = Nos(jsonpath)
         if nos.exists():
@@ -405,7 +405,7 @@ class PathsManager:
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         home = self.named_paths_home(name)
         p = os.path.join(home, "definition.json")
@@ -416,7 +416,7 @@ class PathsManager:
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         home = self.named_paths_home(name)
         path = os.path.join(home, "definition.json")
@@ -434,7 +434,7 @@ class PathsManager:
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         definition = self.get_json_paths_file(name)
         if "_config" not in definition:
@@ -453,7 +453,7 @@ class PathsManager:
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         definition = self.get_json_paths_file(name)
         config = definition.get("_config")
@@ -469,7 +469,7 @@ class PathsManager:
 
     def get_config_for_paths(self, name: NamedPathsName) -> dict:
         if name.startswith("$"):
-            name = ReferenceParser(name).root_major
+            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
         definition = self.get_json_paths_file(name)
         config = definition.get("_config")
         if config is None:
@@ -481,7 +481,7 @@ class PathsManager:
 
     def store_config_for_paths(self, name: NamedPathsName, cfg: dict) -> None:
         if name.startswith("$"):
-            name = ReferenceParser(name).root_major
+            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
         j = self.get_json_paths_file(name)
         j["_config"] = cfg
         d = json.dumps(j, indent=2)
@@ -514,7 +514,7 @@ class PathsManager:
             script_type = f"on_complete_{when}_script"
 
         if name.startswith("$"):
-            ref = ReferenceParser(name)
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         # check this creates if not found
         definition = self.get_json_paths_file(name)

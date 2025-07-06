@@ -25,17 +25,18 @@ CSV = f"{INVOICES}{os.sep}2025{os.sep}Feb{os.sep}Acme_invoices_2025-01-25.csv"
 # ACME=      f"{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme"
 
 
+PATHS = CsvPaths()
+
 class TestCsvPathsExamplesFileOps(unittest.TestCase):
 
-    PATHS = CsvPaths()
 
     @classmethod
     def setup_class(cls):
         os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = INI
-        TestCsvPathsExamplesFileOps.PATHS.config.add_to_config(
+        PATHS.config.add_to_config(
             "errors", "csvpath", "raise, collect, print"
         )
-        TestCsvPathsExamplesFileOps.PATHS.config.add_to_config(
+        PATHS.config.add_to_config(
             "errors", "csvpaths", "raise, collect, print"
         )
         #
@@ -43,7 +44,7 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # second between the rest and the last.
         #
         dirname = MAR
-        TestCsvPathsExamplesFileOps.PATHS.file_manager.add_named_files_from_dir(
+        PATHS.file_manager.add_named_files_from_dir(
             dirname,
             name="invoices",
             template=":6/:8/:9/:filename"
@@ -52,19 +53,19 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         time.sleep(0.25)
 
         dirname = JAN
-        TestCsvPathsExamplesFileOps.PATHS.file_manager.add_named_files_from_dir(
+        PATHS.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
         time.sleep(0.25)
 
         dirname = FEB
-        TestCsvPathsExamplesFileOps.PATHS.file_manager.add_named_files_from_dir(
+        PATHS.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
         time.sleep(0.25)
 
         dirname = FEB
-        TestCsvPathsExamplesFileOps.PATHS.file_manager.add_named_files_from_dir(
+        PATHS.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
 
@@ -117,8 +118,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         reference = "$invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv"
         reference = pathu.resep(reference)
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst = finder.resolve()
         assert lst is not None
         assert isinstance(lst, list)
@@ -130,8 +131,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # progressive match
         #
         reference = "$invoices.files.acme/2025"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst = finder.resolve()
         assert lst is not None
         assert isinstance(lst, list)
@@ -142,8 +143,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # first all. should be the same as no fillters
         #
         reference = "$invoices.files.acme/2025:all"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -156,8 +157,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # :first. should be the first file registered
         #
         reference = "$invoices.files.acme/2025:first"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -166,8 +167,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
 
     def test_files_reference_2_filename_match_05(self):
         reference = "$invoices.files.acme/2025:last"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -176,8 +177,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
 
     def test_files_reference_2_filename_match_06(self):
         reference = "$invoices.files.acme/2025:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -190,8 +191,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -202,8 +203,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:first"
         ref = None
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -216,8 +217,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:before"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         # assert lst2
         assert len(lst2) == 0
@@ -227,8 +228,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # index w/o anything else
         #
         reference = "$invoices.files.:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -240,8 +241,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # day
         #
         reference = "$invoices.files.:today:1"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -250,8 +251,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
 
     def test_files_reference_2_filename_match_12(self):
         reference = "$invoices.files.:yesterday"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -263,8 +264,8 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.{d.strftime('%Y-%m-%d_')}:first"
-        ref = ReferenceParser(reference)
-        finder = FilesReferenceFinder(TestCsvPathsExamplesFileOps.PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=PATHS)
+        finder = FilesReferenceFinder(PATHS, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)

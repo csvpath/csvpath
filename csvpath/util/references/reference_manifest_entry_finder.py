@@ -22,7 +22,7 @@ class ReferenceManifestEntryFinder:
         if self._name is not None:
             if ref is not None:
                 raise ValueError("Cannot provide both ref and name")
-            self._ref = ReferenceParser(name)
+            self._ref = ReferenceParser(name, csvpaths=self.csvpaths)
         if self._ref is None:
             self._ref = ref
         self.reference = name
@@ -67,7 +67,7 @@ class ReferenceManifestEntryFinder:
             file = mani["actual_data_file"]
         nfn = mani["named_file_name"]
         if nfn.startswith("$"):
-            ref = ReferenceParser(nfn)
+            ref = ReferenceParser(nfn, csvpaths=self._csvpaths)
             if ref.datatype == ref.FILES:
                 # file ref? use files_refer_finder.get_manifest_entry_for_reference
                 return self.get_file_manifest_entry_for_reference(ref=ref)

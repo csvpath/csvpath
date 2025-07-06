@@ -71,7 +71,7 @@ class RunHomeMaker:
             # plain named-file name
             #
             mani = self._csvpaths.file_manager.get_manifest(filename)
-            ref = ReferenceParser(filename)
+            ref = ReferenceParser(filename, csvpaths=self._csvpaths)
             datatype = ref.datatype
             if datatype == ReferenceParser.RESULTS:
                 if ref.name_three is None:
@@ -178,7 +178,7 @@ class RunHomeMaker:
         # get the pathsname
         #
         if paths_name.startswith("$"):
-            ref = ReferenceParser(paths_name)
+            ref = ReferenceParser(paths_name, csvpaths=self._csvpaths)
             paths_name = ref.root_major
         file = None
         #
@@ -189,7 +189,7 @@ class RunHomeMaker:
         #
 
         if file_name.startswith("$"):
-            ref = ReferenceParser(file_name)
+            ref = ReferenceParser(file_name, csvpaths=self._csvpaths)
             if ref.datatype == ref.FILES:
                 mani = ReferenceManifestEntryFinder(
                     self._csvpaths, ref=ref
