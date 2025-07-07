@@ -25,8 +25,8 @@ set OTEL_RESOURCE_ATTRIBUTES=""
 
 
 echo %CSVPATH_CONFIG_PATH%
-call c:\\dev\exports.bat
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe install
-cmd.exe /C c:\\Users\python\.local\bin\poetry.exe run pytest
+call c:\dev\exports.bat
+cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
+cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
 
