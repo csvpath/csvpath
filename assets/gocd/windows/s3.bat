@@ -26,7 +26,7 @@ set OTEL_SERVICE_NAME=""
 set OTEL_RESOURCE_ATTRIBUTES=""
 
 
-call c:\dev\exports.bat
+call c:\dev\win-exports.bat
 cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
 cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 

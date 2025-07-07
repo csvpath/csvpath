@@ -33,7 +33,7 @@ set OTEL_SERVICE_NAME=""
 set OTEL_RESOURCE_ATTRIBUTES=""
 
 
-call c:\dev\exports.bat
+call c:\dev\win-exports.bat
 
 ::cmd.exe /C set > gocd_env.txt
 echo(
