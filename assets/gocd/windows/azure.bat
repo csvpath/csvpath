@@ -1,4 +1,4 @@
-set CSVPATH_CONFIG_PATH=assets\config\jenkins-local-azure.ini
+set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-azure.ini
 
 set AWS_ACCESS_KEY_ID=""
 set AWS_SECRET_ACCESS_KEY=""
