@@ -106,7 +106,6 @@ class Config:
             if path == "":
                 path = None
             if path is None:
-                print(f"configpath 3: {self._configpath}, path: {path}")
                 path = Config.CONFIG
         self._configpath = path
         self._load_config()
@@ -429,13 +428,15 @@ shell = /bin/bash
 
     @property
     def csvpaths_sep(self) -> None:
-        if self._assure_inputs_csvpaths_path is None or self._assure_inputs_csvpaths_path.strip() == "":
+        if (
+            self._assure_inputs_csvpaths_path is None
+            or self._assure_inputs_csvpaths_path.strip() == ""
+        ):
             return os.sep
         a = self._assure_inputs_csvpaths_path.strip().lower()
         if a.find("://") > -1:
             return "/"
         return os.sep
-
 
     def _assure_transfer_root(self) -> None:
         if self.load:
@@ -675,7 +676,7 @@ shell = /bin/bash
     def archive_name(self) -> str:
         p = self.archive_path
         if p.find(self.archive_sep) > -1:
-        #if p.find(os.sep) > -1:
+            # if p.find(os.sep) > -1:
             p = p[p.rfind(os.sep) + 1 :]
         return p
 
