@@ -57,6 +57,24 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         if grps is not None and isinstance(grps, str):
             paths.add_to_config("listeners", "groups", grps)
 
+    def test_paths_create_definition_by_default(self):
+        paths = Builder().build()
+        paths.config.get(section="listeners", name="groups")
+        paths.add_to_config("listeners", "groups", "default")
+        name = "aname"
+        p = "$[*][yes()]"
+        paths.paths_manager.add_named_paths(name=name, paths=[p])
+        definition = paths.paths_manager.get_json_paths_file(name)
+        assert definition is not None
+        assert isinstance(definition, dict)
+        assert len(definition) == 1
+        assert name in definition
+        lst = definition[name]
+        assert lst is not None
+        assert isinstance(lst, list)
+        assert len(lst) == 1
+        assert lst[0].strip() == p.strip()
+
     def test_paths_manager_append_1(self):
         paths = Builder().build()
         paths.config.get(section="listeners", name="groups")

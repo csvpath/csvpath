@@ -275,6 +275,8 @@ class CsvDataReader(DataFileReader):
         quotechar=None,
     ) -> None:
         super().__init__()
+        if path is None:
+            raise ValueError("Path cannot be None")
         try:
             self.path = path
             if sheet is not None or path.find("#") > -1:
@@ -286,15 +288,27 @@ class CsvDataReader(DataFileReader):
             self.mode = mode
             self.encoding = encoding
         except Exception as e:
-            print(f"Error: cannot init reader: {type(e)}: {e}")
+            print(f"Error: cannot init CsvDataReader: {type(e)}: {e}")
+            raise
 
     def next(self) -> list[str]:
-        with open(self.path, self.mode, encoding=self.encoding) as file:
-            reader = csv.reader(
-                file, delimiter=self._delimiter, quotechar=self._quotechar
-            )
-            for line in reader:
-                yield line
+        try:
+            with open(self.path, self.mode, encoding=self.encoding) as file:
+                reader = csv.reader(
+                    file, delimiter=self._delimiter, quotechar=self._quotechar
+                )
+                for line in reader:
+                    yield line
+        except UnicodeDecodeError:
+            #
+            # this may not be the best way to handle this problem
+            #
+            with open(self.path, self.mode, encoding="latin-1") as file:
+                reader = csv.reader(
+                    file, delimiter=self._delimiter, quotechar=self._quotechar
+                )
+                for line in reader:
+                    yield line
 
     def file_info(self) -> dict[str, str | int | float]:
         return FileInfo.info(self.path)

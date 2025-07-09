@@ -259,6 +259,10 @@ class PathsManager:
         source_path: str = None,
         template: str = None,
         append: bool = False,
+        #
+        # exp. added for FP
+        #
+        assure_definition: bool = True,
     ) -> None:
         if template is not None:
             #
@@ -298,6 +302,18 @@ class PathsManager:
                 ids[i] = f"{i}"
         if template is not None:
             self.store_template_for_paths(name, template)
+        #
+        # exp.
+        # added for FP
+        #
+        # make sure there is a json definition file?
+        # if true, just ask for the file and it will be created if not found.
+        #
+        if assure_definition is True:
+            self.get_json_paths_file(name)
+        #
+        # end exp
+        #
         mdata = PathsMetadata(self.csvpaths.config)
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_paths_name = name
@@ -421,14 +437,23 @@ class PathsManager:
         home = self.named_paths_home(name)
         path = os.path.join(home, "definition.json")
         nos = Nos(path)
-
+        definition = None
         if nos.exists():
             with DataFileReader(path) as file:
-                return json.load(file.source)
+                definition = json.load(file.source)
         else:
+            definition = {}
+            #
+            # exp. improved for FP
+            #
+            paths = self._get_named_paths(name)
+            definition[name] = paths
+            #
+            # end exp.
+            #
             with DataFileWriter(path=path, mode="w") as writer:
-                json.dump({}, writer.sink, indent=2)
-        return {}
+                json.dump(definition, writer.sink, indent=2)
+        return definition
 
     def get_template_for_paths(self, name: NamedPathsName) -> str:
         if name is None:
@@ -544,6 +569,9 @@ class PathsManager:
                 dfw = DataFileWriter(path=script_file, mode="wb")
                 dfw.write(text)
             except Exception as e:
+                #
+                # TODO: handle better! log, error obj, etc.
+                #
                 print(f"error! {type(e)}: {e}")
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
@@ -806,18 +834,6 @@ class PathsManager:
             MetadataParser(c).extract_metadata(instance=c, csvpath=path)
             idps.append((c.identity, path))
         return idps
-
-    """
-    def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
-        if npn is not None:
-            paths = self.get_identified_paths_in(npn)
-            for path in paths:
-                if path[0] == identity:
-                    return path[1]
-        raise InputException(
-            f"Path identified as '{identity}' must be in the group identitied as '{npn}'"
-        )
-    """
 
     def _find_one(self, npn: NamedPathsName, identity: Identity) -> Csvpath:
         #
