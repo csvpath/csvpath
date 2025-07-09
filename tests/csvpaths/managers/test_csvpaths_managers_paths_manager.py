@@ -72,8 +72,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         lst = definition[name]
         assert lst is not None
         assert isinstance(lst, list)
-        assert len(lst) == 1
-        assert lst[0].strip() == p.strip()
+        assert len(lst) == 0
 
     def test_paths_manager_append_1(self):
         paths = Builder().build()

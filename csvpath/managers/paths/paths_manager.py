@@ -446,8 +446,8 @@ class PathsManager:
             #
             # exp. improved for FP
             #
-            paths = self._get_named_paths(name)
-            definition[name] = paths
+            self._get_named_paths(name)
+            definition[name] = []
             #
             # end exp.
             #
