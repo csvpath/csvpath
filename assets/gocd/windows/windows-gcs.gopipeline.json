@@ -23,7 +23,7 @@
   ],
   "stages": [
     {
-      "name": "csvpath-windows-azure",
+      "name": "csvpath-windows-gcs",
       "fetch_materials": true,
       "never_cleanup_artifacts": false,
       "clean_working_directory": false,
@@ -48,7 +48,7 @@
               "timeout": -1.0,
               "arguments": [
                 "/C",
-                "assets\\gocd\\windows\\azure.bat"
+                "assets\\gocd\\windows\\gcs.bat"
               ],
               "run_if": "passed",
               "type": "exec"
