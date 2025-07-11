@@ -6,8 +6,8 @@ from tests.csvpaths.kit.tracking_paths_manager import TrackingPathsManager
 class Builder:
     def build(self) -> CsvPaths:
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
         #
         # swap in tracking paths and files managers
         #

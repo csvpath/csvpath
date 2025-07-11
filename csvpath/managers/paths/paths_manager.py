@@ -665,7 +665,8 @@ class PathsManager:
 
     def number_of_named_paths(self, name: NamedPathsName) -> int:
         """@private"""
-        return len(self._get_named_paths(name))
+        paths = self._get_named_paths(name)
+        return 0 if not paths else len(paths)
 
     def total_named_paths(self) -> int:
         """@private"""

@@ -1,33 +1,44 @@
 import datetime
-from datetime import timedelta, timezone
+from datetime import timedelta, timezone, date
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
+from csvpath.util.nos import Nos
+from dateutil.relativedelta import relativedelta
 
 
 class DateFilter:
     @classmethod
     def update(
-        cls, results: ReferenceResults, *, token: str = None, tokens: list[str] = None
+        cls,
+        results: ReferenceResults,
+        *,
+        name_or_token: str = None,
+        tokens: list[str] = None
     ) -> None:
+        if tokens is None or len(tokens) == 0 and name_or_token is None:
+            name_or_token = results.ref.name_one
         ref = results.ref
         #
         # if we have a date and no tokens we return the range
         #
-        if not tokens or len(tokens) == 0:
+        if not tokens or len(tokens) == 0 or (len(tokens) == 1 and "all" in tokens):
             #
             # if name_one is not a date this will fail quietly
             #
-            cls._possibles_for_range(results, token)
+            cls._possibles_for_range(results, name_or_token)
             return
-        if cls.is_date(ref.name_one) and cls.has_date(tokens):
-            cls._possibles_between_name_and_token(results)
-            return
+        #
+        # rightly or wrongly this isn't possible. see the excalidraw schematic.
+        #
+        # if cls.is_date(ref.name_one) and cls.has_date(tokens):
+        #    cls._possibles_between_name_and_token(results)
+        #    return
         if cls.is_date(ref.name_one) and "before" in tokens or "to" in tokens:
-            cls.everything_before(results)
+            cls.everything_before(results, name_or_token)
             return
         if cls.is_date(ref.name_one) and "after" in tokens or "from" in tokens:
-            cls.everything_after(results)
+            cls.everything_after(results, name_or_token)
             return
         #
         # we're done. if name_one is not a date we'll call the below methods
@@ -90,7 +101,26 @@ class DateFilter:
         mani = results.runs_manifest
         possibles = [m for m in mani if m["named_paths_name"] == results.ref.root_major]
         reals = []
+        #
+        # the manifest has one entry for every instance in a run, so we need to track the
+        # run_uuids so we don't over count.
+        #
         for _ in possibles:
+            #
+            # we check for deleted runs because we're looking at the manifest. deleted are
+            # no longer available, but they still exist in the manifest, as well as any
+            # databases. this will be expensive in some backends, but unless we want to
+            # remove the record or update the entries to mark deleted we have to do it. since
+            # end up doing this check multiple places (here, possibles, end) we need a
+            # better solution like that.
+            #
+            rh = _["run_home"]
+            nos = Nos(rh)
+            if not nos.dir_exists():
+                continue
+            #
+            #
+            #
             dat = exut.to_datetime(_["time"])
             #
             # because of how we setup begin and end, begin is within the
@@ -102,18 +132,19 @@ class DateFilter:
             last = last.astimezone(timezone.utc) if last else None
             first = first.astimezone(timezone.utc) if first else None
             add = False
-            if last is not None and dat < last:
+            if first and last and first <= dat < last:
                 add = True
-            elif first is not None and dat >= first:
+            elif first is None and dat < last:
                 add = True
-            elif first <= dat < last:
+            elif last is None and dat >= first:
                 add = True
-            if add:
-                reals.append(_["run_home"])
+            if add is True:
+                if _["run_home"] not in reals:
+                    reals.append(_["run_home"])
         if filter:
             fs = []
             for _ in results.files:
-                if _ in reals:
+                if _ in reals and _ not in fs:
                     fs.append(_)
             results.files = fs
         else:
@@ -131,6 +162,8 @@ class DateFilter:
 
     @classmethod
     def _possibles_for_range(cls, results, name_or_token: str) -> None:
+        if name_or_token is None:
+            return
         t = cls.range(name_or_token)
         if t is None:
             return
@@ -141,30 +174,31 @@ class DateFilter:
 
     @classmethod
     def range(cls, datestr) -> tuple[datetime, datetime]:
-        date = cls.to_date(datestr)
-        if date is None:
+        adate = cls.to_date(datestr)
+        if adate is None:
             return None
-        date = date.replace(tzinfo=timezone.utc)
+        adate = adate.replace(tzinfo=timezone.utc)
         #
         # date is the earliest moment in the most specific unit so we
         # need to find the next one of that unit to make our range.
         #
         dashes = datestr.count("-")
-        if dashes == 4 and not datestr.endswith("-"):
-            return (date, date)
-        end = None
-        # removed datetime.datetime.now(timezone.utc) replaced with date
+        if datestr.endswith("-"):
+            dashes -= 1
         if dashes == 4:
-            end = date + timedelta(minute=1)
+            return (adate, adate)
+        end = None
+        if dashes == 4:
+            end = adate + timedelta(minute=1)
         elif dashes == 3:
-            end = date + timedelta(hour=1)
+            end = adate + timedelta(hour=1)
         elif dashes == 2:
-            end = date + timedelta(day=1)
+            end = adate + timedelta(days=1)
         elif dashes == 1:
-            end = date + timedelta(month=1)
+            end = adate + relativedelta(months=1)
         elif dashes == 0:
-            end = date + timedelta(year=1)
-        return date, end
+            end = adate + relativedelta(years=1)
+        return adate, end
 
     @classmethod
     def is_date(cls, name: str) -> bool:

@@ -240,7 +240,7 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
                 assert r.csvpath.data_from_preceding is True
 
     def test_csvpaths_replay(self):
-        os.environ["CSVPATH_CONFIG_PATH"] = "config/config.ini"
+        # os.environ["CSVPATH_CONFIG_PATH"] = "config/config.ini"
         paths = self.load()
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.paths_manager.remove_named_paths("sourcemode")

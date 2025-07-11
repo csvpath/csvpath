@@ -2,6 +2,8 @@ import os
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.reference_parser import ReferenceParser
 
+from csvpath.util.nos import Nos
+
 
 class PossiblesResolver:
     @classmethod
@@ -34,4 +36,11 @@ class PossiblesResolver:
             else:
                 ...
 
+        if possibles:
+            __ = []
+            for _ in possibles:
+                nos = Nos(_)
+                if nos.dir_exists():
+                    __.append(_)
+            possibles = __
         results.files = possibles

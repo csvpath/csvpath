@@ -65,13 +65,15 @@ class ResultsReferenceFinder2:
             #
             #
             #
+            # print(f"ResultsRefFinder: query: 1")
             self._ref = ReferenceParser(refstr, csvpaths=self.csvpaths)
+        # print(f"ResultsRefFinder: query: 2")
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         #
         # find possibles based on path, date, index
         #
+        # print(f"ResultsRefFinder: query: 3: results: {len(results)}")
         PossiblesResolver.update(results=results)
-        # print(f"ResultsRefFinder: resolve: 2: results: {len(results)}")
         #
         # at this point we have paths that include the archive?
         #
@@ -80,34 +82,60 @@ class ResultsReferenceFinder2:
         # 2. path. with templates the path to the run dir can vary
         # 3. date string
         #
-        PathFilter.update(results)
-        # print(f"ResultsRefFinder: resolve: 3: results: {len(results)}")
+        # if the path matches anyting we don't use the date. but if the
+        # path doesn't match and the date isn't a date the query found
+        # nothing. if the path finds nothing but the date is a date
+        # DateFilter trims the possibles.
         #
-        # checking for date in name_one
-        #
-        # print(f"ResultsRefFinder: resolve: 4: results: {len(results)}")
-        DateFilter.update(results)
+        # print(f"ResultsRefFinder: query: 4: results: {len(results)}")
+        if PathFilter.update(results) is False:
+            # print(f"ResultsRefFinder: query: 5: results: {len(results)}")
+            DateFilter.update(
+                results,
+                name_or_token=results.ref.name_one,
+                tokens=results.ref.name_one_tokens,
+            )
         #
         # filter using name_one's up to 2 tokens
         #
-        # print(f"ResultsRefFinder: resolve: 5: results: {len(results)}")
+        # _ = self.ref if self.reference is None else self.reference
+        # print(f"ResultsRefFinder: query: 6: results: {len(results)}: {_}")
         TokenFilters.update(results=results, tokens=self.ref.name_one_tokens)
         #
         # point to csvpath identity
         #
-        # print(f"ResultsRefFinder: resolve: 6: results: {len(results)}")
+        # print(f"ResultsRefFinder: query: 7: results: {len(results)}")
         if self.ref.name_three is not None:
             IdentityFinder.update(results=results)
-            print(f"ResultsRefFinder: resolve: 7: results: {len(results)}")
+            # print(f"ResultsRefFinder: query: 8: results: {len(results)}")
             DataFinder.update(results=results)
         #
         # point to output file
         #
         # STOP HERE for finding data files using this class
         #
-        # print(f"ResultsRefFinder: resolve: 8: results: {len(results)}")
         self._assure_archive_root(results)
-        # print(f"ResultsRefFinder: resolve: 9: results: {results.files}")
+        #
+        # because files can be deleted while the manifest stays the same we
+        # have to double check results. this is expensive. in the future we might
+        # update the manifest entries to mark them deleted, thereby avoiding
+        # the double check.
+        #
+        # we do this in find possibles and date filter. we shouldn't need to do
+        # it again here.
+        #
+        """
+        __ = []
+        if results.files:
+            for _ in results.files:
+                nos = Nos(_)
+                if nos.dir_exists():
+                    print(f" ... {_} exists")
+                    __.append(_)
+                else:
+                    print(f" ... {_} does not exist")
+            results.files = __
+        """
         return results
         #
         #

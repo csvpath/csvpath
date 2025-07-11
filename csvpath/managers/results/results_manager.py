@@ -421,14 +421,17 @@ class ResultsManager:  # pylint: disable=C0115
 
     def remove_named_results(self, name: str) -> None:
         """@private"""
-        #
-        # TODO: does not get rid of results on disk
-        #
         if name in self.named_results:
             del self.named_results[name]
             self._variables = None
         else:
             self.csvpaths.logger.warning(f"Results '{name}' not found")
+        path = self.get_named_results_home(name)
+        if path is None:
+            return
+        nos = Nos(path)
+        if nos.dir_exists():
+            nos.remove()
 
     #
     # @deprecated. use remove_named_results
@@ -506,6 +509,8 @@ class ResultsManager:  # pylint: disable=C0115
     #
     # effectively, get last named results. use reference for anything more specific.
     #
+    # this gets the results of a run. it does not get the runs under the name.
+    #
     def get_named_results(self, name) -> List[List[Any]]:
         #
         # as it turns out, references are (finally!) the easiest, so let's do that
@@ -520,6 +525,7 @@ class ResultsManager:  # pylint: disable=C0115
         # agents. for each new run, unless there is a reason to not create a new
         # CsvPaths instance, we would create a new one.
         #
+        """ """
         if name in self.named_results:
             #
             # exp. removed 4 May.
@@ -528,7 +534,9 @@ class ResultsManager:  # pylint: disable=C0115
             # seems to be important for a handful of unit tests.
             #
             rs = self.named_results[name]
+            # print(f"resultsmgr: returning named results from cache: {rs}")
             return rs
+        """ """
         #
         # find and load the result, if exists. we find results home with the name. run_home is the
         # last run dir. the results we're looking for are the instance dirs in the run dir.
@@ -621,15 +629,21 @@ class ResultsManager:  # pylint: disable=C0115
         msg = (
             f"Results '{name}' does not exist. Has has that named-paths group been run?"
         )
-        self.csvpaths.logger.error(msg)
-        if self.csvpaths.ecoms.do_i_raise():
-            raise InputException(msg)
+        self.csvpaths.logger.warning(msg)
+        #
+        # it seems reasonable to request results that don't exist, if not ideal. a warn
+        # should be good enough, probably.
+        #
+        # if self.csvpaths.ecoms.do_i_raise():
+        #    raise InputException(msg)
 
     def get_named_results_home(self, name: str) -> str:
         path = os.path.join(self.csvpaths.config.archive_path, name)
         return path
 
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
+        if run is None:
+            return None
         path = os.path.join(self.csvpaths.config.archive_path, name)
         path = os.path.join(path, run)
         return self._get_named_results_for_run(name=name, run=run, path=path)

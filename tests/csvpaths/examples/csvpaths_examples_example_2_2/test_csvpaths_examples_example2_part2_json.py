@@ -60,11 +60,15 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         #
         # setup
         #
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.add_to_config("errors", "csvpaths", "raise, print")
         paths.add_to_config("errors", "csvpath", "raise, print")
+
+        # tests/csvpaths/examples/csvpaths_examples_example_2_2/csvs
+
         paths.file_manager.add_named_files_from_dir(
-            f"tests{os.sep}examples{os.sep}example_2_2{os.sep}csvs"
+            f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_2_2{os.sep}csvs"
         )
+        assert paths.file_manager.get_named_file("March-2024") is not None
         paths.paths_manager.add_named_paths_from_json(EJSON)
         paths.collect_paths(filename="March-2024", pathsname="expected_files")
         #

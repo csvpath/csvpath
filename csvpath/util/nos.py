@@ -203,6 +203,12 @@ class FileDo:
     ) -> list[str]:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
+        if not self.dir_exists():
+            #
+            # this seems odd. an error or None seems better for a missing dir.
+            # however, this is the way it has always been so better to continue.
+            #
+            return []
         if recurse is True:
             lst = []
             for root, dirs, files in os.walk(self.path):

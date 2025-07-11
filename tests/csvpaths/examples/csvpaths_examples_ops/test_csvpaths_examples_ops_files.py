@@ -8,7 +8,6 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
 )
-from csvpath.util.config import Config
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 
@@ -19,93 +18,64 @@ ASSETS = (
 MAR = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Mar"
 JAN = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Jan"
 FEB = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Feb"
-INI = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-config.ini"
-OINI = f"config{os.sep}config.ini"
 CSV = f"{INVOICES}{os.sep}2025{os.sep}Feb{os.sep}Acme_invoices_2025-01-25.csv"
-# ACME=      f"{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme"
 
-
-PATHS = CsvPaths()
 
 class TestCsvPathsExamplesFileOps(unittest.TestCase):
-
-
     @classmethod
     def setup_class(cls):
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = INI
-        PATHS.config.add_to_config(
-            "errors", "csvpath", "raise, collect, print"
-        )
-        PATHS.config.add_to_config(
-            "errors", "csvpaths", "raise, collect, print"
-        )
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # five files, seven registrations. 1 second between first and rest. another
         # second between the rest and the last.
         #
         dirname = MAR
-        PATHS.file_manager.add_named_files_from_dir(
-            dirname,
-            name="invoices",
-            template=":6/:8/:9/:filename"
-            # dirname, name="invoices", template=":5/:7/:8/:filename"
+        paths.file_manager.add_named_files_from_dir(
+            dirname, name="invoices", template=":6/:8/:9/:filename"
         )
         time.sleep(0.25)
 
         dirname = JAN
-        PATHS.file_manager.add_named_files_from_dir(
+        paths.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
         time.sleep(0.25)
 
         dirname = FEB
-        PATHS.file_manager.add_named_files_from_dir(
+        paths.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
         time.sleep(0.25)
 
         dirname = FEB
-        PATHS.file_manager.add_named_files_from_dir(
+        paths.file_manager.add_named_files_from_dir(
             dirname, name="invoices", template=":6/:8/:9/:filename"
         )
 
-    @classmethod
-    def teardown_class(cls):
-        os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = OINI
-
-    def top(self):
-        try:
-            cfg = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = INI
-            paths = CsvPaths()
-            paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-            paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
-            paths.file_manager.add_named_file(
-                name="acme-invoices",
-                path=CSV,
-            )
-            #
-            # we don't know the order the files returned from the dirname pointer.
-            # that makes a diffence in some tests below.
-            #
-            paths.file_manager.add_named_files_from_dir(
-                name="acme-invoices", dirname=f"{INVOICES}"
-            )
-            #
-            # but because we don't necessarily want all the files under 1 named-path name we can use a
-            # named-paths template. the template will create a results tree like:
-            #
-            #   archive/acme/invoices/2025/feb/2025-03-21_12-24-48/data.csv
-            #
-            paths.paths_manager.add_named_paths_from_file(
-                name="clean-invoices",
-                file_path=f"{ASSETS}{os.sep}clean-invoices.csvpath",
-                template=":5/invoices/:7/:8/:run_dir",
-            )
-            return paths, cfg
-        except Exception as e:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = OINI
-            raise e
+        paths.file_manager.add_named_file(
+            name="acme-invoices",
+            path=CSV,
+        )
+        #
+        # we don't know the order the files returned from the dirname pointer.
+        # that makes a diffence in some tests below.
+        #
+        paths.file_manager.add_named_files_from_dir(
+            name="acme-invoices", dirname=f"{INVOICES}"
+        )
+        #
+        # but because we don't necessarily want all the files under 1 named-path name we can use a
+        # named-paths template. the template will create a results tree like:
+        #
+        #   archive/acme/invoices/2025/feb/2025-03-21_12-24-48/data.csv
+        #
+        paths.paths_manager.add_named_paths_from_file(
+            name="clean-invoices",
+            file_path=f"{ASSETS}{os.sep}clean-invoices.csvpath",
+            template=":5/invoices/:7/:8/:run_dir",
+        )
 
     # ===============================================
     #
@@ -116,10 +86,13 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         # exact match. beware the '.' extension. must be changed to '_' or
         # the extension left off.
         #
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.acme/2025/Jan/Acme_invoices_2025-01-31_csv"
         reference = pathu.resep(reference)
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst = finder.resolve()
         assert lst is not None
         assert isinstance(lst, list)
@@ -130,9 +103,12 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         # progressive match
         #
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.acme/2025"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst = finder.resolve()
         assert lst is not None
         assert isinstance(lst, list)
@@ -142,9 +118,10 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         # first all. should be the same as no fillters
         #
+        paths = CsvPaths()
         reference = "$invoices.files.acme/2025:all"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -156,9 +133,12 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         #
         # :first. should be the first file registered
         #
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.acme/2025:first"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -166,9 +146,12 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Mar") > -1
 
     def test_files_reference_2_filename_match_05(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.acme/2025:last"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -176,9 +159,12 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Feb") > -1
 
     def test_files_reference_2_filename_match_06(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.acme/2025:1"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -186,13 +172,16 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Jan") > -1
 
     def test_files_reference_2_filename_match_07(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # date filter *
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:after"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -200,11 +189,14 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Mar") > -1
 
     def test_files_reference_2_filename_match_08(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}_:first"
         ref = None
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -212,24 +204,30 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Mar") > -1
 
     def test_files_reference_2_filename_match_09(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # not 100% sure this should raise an error, but today it does.
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.acme/2025:all.{d.strftime('%Y-%m-%d')}:before"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         # assert lst2
         assert len(lst2) == 0
 
     def test_files_reference_2_filename_match_10(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # index w/o anything else
         #
         reference = "$invoices.files.:1"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -237,12 +235,15 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Jan") > -1
 
     def test_files_reference_2_filename_match_11(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # day
         #
         reference = "$invoices.files.:today:1"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -250,22 +251,28 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Jan") > -1
 
     def test_files_reference_2_filename_match_12(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         reference = "$invoices.files.:yesterday"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
         assert len(lst2) == 0
 
     def test_files_reference_2_filename_match_13(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         #
         # date
         #
         d = datetime.now().astimezone(timezone.utc)
         reference = f"$invoices.files.{d.strftime('%Y-%m-%d_')}:first"
-        ref = ReferenceParser(reference, csvpaths=PATHS)
-        finder = FilesReferenceFinder(PATHS, ref=ref)
+        ref = ReferenceParser(reference, csvpaths=paths)
+        finder = FilesReferenceFinder(paths, ref=ref)
         lst2 = finder.resolve()
         assert lst2 is not None
         assert isinstance(lst2, list)
@@ -273,59 +280,56 @@ class TestCsvPathsExamplesFileOps(unittest.TestCase):
         assert lst2[0].find("Mar") > -1
 
     def test_files_references_can_run_1(self):
-        paths, cfg = self.top()
-        try:
-            # most basic run; tho, it will use the paths template, so the signature doesn't
-            # change but it's not completely stock.
-            #
-            paths.collect_paths(pathsname="clean-invoices", filename="acme-invoices")
-            arc = paths.config.archive_path
-            arc = os.path.join(arc, "clean-invoices")
-            arc = os.path.join(arc, "acme/invoices/2025/Jan/")
-            arc = pathu.resep(arc)
-            mani = paths.file_manager.get_manifest("acme-invoices")
-            rmani = paths.results_manager.get_last_named_result(
-                name="clean-invoices"
-            ).run_manifest
-            assert mani
-            assert mani[len(mani) - 1]["file"] == rmani["named_file_path"]
-            #
-            # nos does resep itself.
-            #
-            # we don't know which file is last from the filesystem so we cannot just say
-            # arc should exist. we can read the manifest to see what last should be.
-            #
-            # nos = Nos(arc)
-            # assert nos.dir_exists()
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = OINI
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
+        # most basic run; tho, it will use the paths template, so the signature doesn't
+        # change but it's not completely stock.
+        #
+        paths.collect_paths(pathsname="clean-invoices", filename="acme-invoices")
+        arc = paths.config.archive_path
+        arc = os.path.join(arc, "clean-invoices")
+        arc = os.path.join(arc, "acme/invoices/2025/Jan/")
+        arc = pathu.resep(arc)
+        mani = paths.file_manager.get_manifest("acme-invoices")
+        rmani = paths.results_manager.get_last_named_result(
+            name="clean-invoices"
+        ).run_manifest
+        assert mani
+        assert mani[len(mani) - 1]["file"] == rmani["named_file_path"]
+        #
+        # nos does resep itself.
+        #
+        # we don't know which file is last from the filesystem so we cannot just say
+        # arc should exist. we can read the manifest to see what last should be.
+        #
+        # nos = Nos(arc)
+        # assert nos.dir_exists()
 
     def test_files_references_can_run_7(self):
-        paths, cfg = self.top()
-        try:
-            #
-            # run the clean-invoices named-paths group against the 4th version of
-            # bytes registered under 'acme-invoices' that came from a file named 2025-02-28-invoices.csv
-            #
-            paths.collect_paths(
-                pathsname="clean-invoices",
-                filename="$acme-invoices.files.Acme_invoices_2025-01-25_csv:0",
-            )
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = OINI
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
+        #
+        # run the clean-invoices named-paths group against the 4th version of
+        # bytes registered under 'acme-invoices' that came from a file named 2025-02-28-invoices.csv
+        #
+        paths.collect_paths(
+            pathsname="clean-invoices",
+            filename="$acme-invoices.files.Acme_invoices_2025-01-25_csv:0",
+        )
 
     def test_files_references_can_run_8(self):
-        paths, cfg = self.top()
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
         d = datetime.now().astimezone(timezone.utc)
         datestr = d.strftime("%Y-%m-%d")
-        try:
-            #
-            # run the clean-invoices named-paths group against the bytes registered under
-            # 'acme-invoices' that came from a file named 2025-02-invoices.csv on or after 2025-02-15
-            #
-            paths.collect_paths(
-                pathsname="clean-invoices",
-                filename=f"$acme-invoices.files.Acme_invoices_2025-01-25_csv.{datestr}:after",
-            )
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = OINI
+        #
+        # run the clean-invoices named-paths group against the bytes registered under
+        # 'acme-invoices' that came from a file named 2025-02-invoices.csv on or after 2025-02-15
+        #
+        paths.collect_paths(
+            pathsname="clean-invoices",
+            filename=f"$acme-invoices.files.Acme_invoices_2025-01-25_csv.{datestr}:after",
+        )

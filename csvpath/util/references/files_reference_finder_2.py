@@ -31,7 +31,7 @@ class FilesReferenceFinder2:
         #
         self.sep = csvpaths.config.get(section="inputs", name="files").find("://") > -1
         self.sep = "/" if self.sep is True else os.sep
-        #self.sep = "/" if self.sep is True or os.sep == "/" else "\\"
+        # self.sep = "/" if self.sep is True or os.sep == "/" else "\\"
 
     @property
     def ref(self) -> ReferenceParser:
@@ -52,7 +52,7 @@ class FilesReferenceFinder2:
         return lst
 
     def query(self) -> ReferenceResults:
-        print(f"starting to find files: {self.csvpaths.config.get(section='inputs', name='files')}")
+        # print(f"starting to find files: {self.csvpaths.config.get(section='inputs', name='files')}")
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         #
         # if we find fingerprint we are done
@@ -66,23 +66,23 @@ class FilesReferenceFinder2:
         # we'll work off a shared copy of the name_one tokens
         #
         tokens = self.ref.name_one_tokens[:]
-        print(f"57: results: {len(results)}")
+        # print(f"57: results: {len(results)}")
         #
         # if range exists it impacts everything except an ordinal.
         # otherwise, path or date may exist and if either does, it
         # disallows the other.
         #
         if not self._range_if_name_one(results=results, tokens=tokens):
-            print(f"65: results: {len(results)}")
+            # print(f"65: results: {len(results)}")
             if not self._date_if_name_one(results=results, tokens=tokens):
-                print(f"66: results: {len(results)}")
+                # print(f"66: results: {len(results)}")
                 self._path_if_name_one(results=results, tokens=tokens)
-        print(f"69: results: {len(results)}")
+        # print(f"69: results: {len(results)}")
         #
         # ordinals simply pickout an item in results.files, if possible
         #
         self._ordinal_if_name_one(results=results, tokens=tokens)
-        print(f"73: results: {len(results)}")
+        # print(f"73: results: {len(results)}")
         #
         # name_two stuff
         #
@@ -224,11 +224,12 @@ class FilesReferenceFinder2:
         # gets the range of files that are after a point.
         # the point is a date or the first match of a path prefix.
         #
-        print(f"_do_range_of_name_one: results: {results}, rrange: {rrange}, results.ref.name_one: {results.ref.name_one}")
+        print(
+            f"_do_range_of_name_one: results: {results}, rrange: {rrange}, results.ref.name_one: {results.ref.name_one}"
+        )
         for _ in mani:
             print(f"   ...{_['file']}")
-        
-        
+
         date = DateCompleter.to_date(results.ref.name_one)
         px = -1
         if date is None:

@@ -101,7 +101,11 @@ class FileManager:
         if name is None:
             raise ValueError("File can be None but named-file name must be passed")
 
-        ref = ReferenceParser(name, csvpaths=self.csvpaths) if name.startswith("$") else None
+        ref = (
+            ReferenceParser(name, csvpaths=self.csvpaths)
+            if name.startswith("$")
+            else None
+        )
         if ref is not None and file is None:
             if ref.datatype != ref.RESULTS:
                 raise ValueError("Reference must be results, not {ref.datatype}")
@@ -263,11 +267,15 @@ class FileManager:
         # nos sep is backend aware. it doesn't know what backend is handling
         # files, only what backend it is itself.
         #
-        #sep = self.csvpaths.config.files_sep
+        # sep = self.csvpaths.config.files_sep
         #
         # sadly we don't have an https backend at this time. so we have to test for the protocol.
         #
-        sep = '/' if path.startswith("https://") or path.startswith("http://") else nos.sep
+        sep = (
+            "/"
+            if path.startswith("https://") or path.startswith("http://")
+            else nos.sep
+        )
         f = path.rfind(sep)
         fname = path if f == -1 else path[f + 1 :]
         fname = self._clean_file_name(fname)
@@ -449,6 +457,7 @@ class FileManager:
         nos = self.nos
         nos.path = dirname
         dlist = nos.listdir(files_only=True, recurse=recurse)
+        # print(f"add_named_files_from_dir: dirname: {dirname}, dlist: {dlist}")
         base = dirname
         #
         # collect all full paths that are files and have correct extensions
@@ -556,7 +565,7 @@ class FileManager:
         nos = self.nos
         nos.path = path
         sep = nos.sep
-        sep = '/' if path.startswith("https://") or path.startswith("http://") else sep
+        sep = "/" if path.startswith("https://") or path.startswith("http://") else sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         #
         # creates

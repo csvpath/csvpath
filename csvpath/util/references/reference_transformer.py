@@ -163,65 +163,71 @@ class ReferenceTransformer(Transformer):
     def results_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("results_ordinal")
-        self.ref.next = []
+        self.ref.next = ["results_ordinal_instance"]
 
     def results_range(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("results_range")
-        self.ref.next = []
+        self.ref.next = ["results_range_ordinal"]
 
     def results_range_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("results_range_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "results_range_ordinal_instance_data",
+            "results_range_ordinal_instance_unmatched",
+        ]
 
     def results_range_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("results_range_ordinal_instance_data")
         self.ref.next = []
 
     def results_range_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("results_range_ordinal_instance_unmatched")
         self.ref.next = []
 
     def results_range_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("results_range_ordinal")
-        self.ref.next = []
+        self.ref.next = ["results_range_ordinal_instance"]
 
     def results_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("results_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "results_ordinal_instance_data",
+            "results_ordinal_instance_unmatched",
+        ]
 
     def results_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("results_ordinal_instance_data")
         self.ref.next = []
 
     def results_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("results_ordinal_instance_unmatched")
         self.ref.next = []
 
     def run_date(self, items):
         self.ref.name_one = items[0]
         self.seq.append("run_date")
-        self.ref.next = []
+        self.ref.next = ["run_date_instance"]
 
     def run_date_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_date_instance")
-        self.ref.next = []
+        self.ref.next = ["run_date_instance_data", "run_date_instance_unmatched"]
 
     def run_date_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_date_instance_data")
         self.ref.next = []
 
     def run_date_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_date_instance_unmatched")
         self.ref.next = []
 
@@ -243,32 +249,35 @@ class ReferenceTransformer(Transformer):
     def run_date_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_date_ordinal")
-        self.ref.next = []
+        self.ref.next = ["run_date_ordinal_instance"]
 
     def run_date_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_date_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "run_date_ordinal_instance_data",
+            "run_date_ordinal_instance_unmatched",
+        ]
 
     def run_date_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_date_ordinal_instance_data")
         self.ref.next = []
 
     def run_date_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_date_ordinal_instance_unmatched")
         self.ref.next = []
 
     def run_date_range(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_date_range")
-        self.ref.next = []
+        self.ref.next = ["run_date_range_ordinal", "run_date_range_date"]
 
     def run_date_range_date(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_date_range_date")
-        self.ref.next = []
+        self.ref.next = ["run_date_range_date_range"]
 
     def run_date_range_date_range(self, items):
         self.ref.append_name_three_token(items[0])
@@ -278,60 +287,73 @@ class ReferenceTransformer(Transformer):
     def run_date_range_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_date_range_ordinal")
-        self.ref.next = []
+        self.ref.next = ["run_date_range_ordinal_instance"]
 
     def run_date_range_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_date_range_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "run_date_range_ordinal_instance_data",
+            "run_date_range_ordinal_instance_unmatched",
+        ]
 
     def run_date_range_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_date_range_ordinal_instance_data")
         self.ref.next = []
 
     def run_date_range_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_date_range_ordinal_instance_unmatched")
         self.ref.next = []
 
     def run_path(self, items):
         self.ref.name_one = items[0]
         self.seq.append("run_path")
-        self.ref.next = []
+        self.ref.next = [
+            "run_path_ordinal",
+            "run_path_date",
+            "run_path_range",
+            "run_path_instance",
+        ]
 
     def run_path_date(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_date")
-        self.ref.next = []
+        self.ref.next = ["run_path_date_range", "run_path_date_ordinal"]
 
     def run_path_date_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_date_ordinal")
-        self.ref.next = []
+        self.ref.next = ["run_path_date_ordinal_instance"]
 
     def run_path_date_range(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_date_range")
-        self.ref.next = []
+        self.ref.next = [
+            "run_path_date_range_date",
+        ]
 
     def run_path_date_range_date(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_path_date_range_date")
-        self.ref.next = []
+        self.ref.next = ["run_path_date_range_date_range"]
 
     def run_path_date_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_path_date_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "run_path_date_ordinal_instance_data",
+            "run_path_date_ordinal_instance_unmatched",
+        ]
 
     def run_path_date_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_path_date_ordinal_instance_data")
         self.ref.next = []
 
     def run_path_date_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_path_date_ordinal_instance_unmatched")
         self.ref.next = []
 
@@ -343,17 +365,20 @@ class ReferenceTransformer(Transformer):
     def run_path_range(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_range")
-        self.ref.next = []
+        self.ref.next = ["run_path_range_ordinal"]
 
     def run_path_range_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_range_ordinal")
-        self.ref.next = []
+        self.ref.next = ["run_path_range_ordinal_instance"]
 
     def run_path_range_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_path_range_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "run_path_range_ordinal_instance_data",
+            "run_path_range_ordinal_instance_unmatched",
+        ]
 
     def run_path_range_ordinal_instance_data(self, items):
         self.ref.append_name_three_token("data")
@@ -368,42 +393,45 @@ class ReferenceTransformer(Transformer):
     def run_path_ordinal(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("run_path_ordinal")
-        self.ref.next = []
+        self.ref.next = ["run_path_ordinal_instance"]
 
     def run_path_ordinal_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_path_ordinal_instance")
-        self.ref.next = []
+        self.ref.next = [
+            "run_path_ordinal_instance_data",
+            "run_path_ordinal_instance_unmatched",
+        ]
 
     def run_path_ordinal_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_path_ordinal_instance_data")
         self.ref.next = []
 
     def run_path_ordinal_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_path_ordinal_instance_unmatched")
         self.ref.next = []
 
     def run_path_instance(self, items):
         self.ref.name_three = items[0]
         self.seq.append("run_path_instance")
-        self.ref.next = []
+        self.ref.next = ["run_path_instance_data", "run_path_instance_unmatched"]
 
     def run_path_instance_data(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("data")
         self.seq.append("run_path_instance_data")
         self.ref.next = []
 
     def run_path_instance_unmatched(self, items):
-        self.ref.append_name_three_token(items[0])
+        self.ref.append_name_three_token("unmatched")
         self.seq.append("run_path_instance_unmatched")
         self.ref.next = []
 
     def csvpaths_instance_name_one_range(self, items):
         self.ref.append_name_one_token(items[0])
         self.seq.append("csvpaths_instance_name_one_range")
-        self.ref.next = []
+        self.ref.next = ["csvpaths_instance_name_three"]
 
     def csvpaths_instance_name_three_range(self, items):
         self.ref.append_name_three_token(items[0])
@@ -414,7 +442,7 @@ class ReferenceTransformer(Transformer):
         #: IDENTIFIER | /\d{1,3}/ | ":" /\d{1,3}/
         self.ref.name_one = items[0].value
         self.seq.append("csvpaths_instance_name_one")
-        self.ref.next = []
+        self.ref.next = ["csvpaths_instance_name_one_range"]
 
     def csvpaths_instance_name_three(self, items):
         #: IDENTIFIER | /\d{1,3}/ | ":" /\d{1,3}/
@@ -457,7 +485,7 @@ class ReferenceTransformer(Transformer):
 
     def path(self, items):
         #
-        # could there be a way that we could get a windows path when we don't want? or 
+        # could there be a way that we could get a windows path when we don't want? or
         # a posix path in error when we don't know what to return? can't think of a way.
         #
         sep = self.ref.sep

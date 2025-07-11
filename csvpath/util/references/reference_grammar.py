@@ -95,8 +95,8 @@ REFERENCE_GRAMMAR = r"""
                  | run_date run_date_range run_date_range_ordinal ("." run_date_range_ordinal_instance) run_date_range_ordinal_instance_data
                  | run_date run_date_range run_date_range_ordinal ("." run_date_range_ordinal_instance) run_date_range_ordinal_instance_unmatched
                  | run_date run_date_range ("." run_date_range_date) run_date_range_date_range
-                 | run_path
 
+                 | run_path
                  | run_path run_path_ordinal
                  | run_path run_path_ordinal ("." run_path_ordinal_instance)
                  | run_path run_path_ordinal ("." run_path_ordinal_instance) run_path_ordinal_instance_data

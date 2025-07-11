@@ -20,15 +20,37 @@ FILES = {
 NAMED_PATHS_DIR = (
     f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}"
 )
+FOOD = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths"
 
 
 class TestResultsCsvPathsReferenceFinder(unittest.TestCase):
     def setup(self):
         paths = Builder().build()
-        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
+        #
+        # remove everything
+        #
+        paths.results_manager.remove_named_results("food")
+        paths.paths_manager.remove_named_paths("food")
+        paths.file_manager.remove_named_file("food")
+        paths.file_manager.remove_named_file("test")
+        #
+        # check that we're cleaned out
+        #
+        assert paths.results_manager.get_number_of_results("food") == 0
+        assert paths.paths_manager.number_of_named_paths("food") == 0
+        assert not paths.file_manager.has_named_file("food")
+        assert not paths.file_manager.has_named_file("test")
+        #
+        # re-add
+        #
+        paths.paths_manager.add_named_paths(name="food", from_file=FOOD)
         paths.file_manager.set_named_files(FILES)
-        paths.fast_forward_paths(filename="food", pathsname="food")
+        #
+        # run once with 2 results collected
+        #
+        paths.collect_paths(filename="food", pathsname="food")
+        assert paths.results_manager.get_number_of_results("food") == 2
         return paths
 
     def test_results_ref_finder_num_pos(self):
@@ -36,73 +58,130 @@ class TestResultsCsvPathsReferenceFinder(unittest.TestCase):
         results1 = ResultsReferenceFinder(
             paths, reference="$food.results.:today"
         ).query()
-        print(f"test_files_ref_finder_num_pos: results1: {results1.files}")
-
         psi = len(results1)
         paths.fast_forward_paths(filename="food", pathsname="food")
         results2 = ResultsReferenceFinder(
             paths, reference="$food.results.:today"
         ).query()
-        print(f"test_files_ref_finder_num_pos: results2: {results2.files}")
+        results2.ref.next == ["results_range_ordinal"]
         assert psi + 1 == len(results2)
 
-    def test_files_ref_finder_last_changes(self):
+    def test_results_ref_finder_date(self):
         paths = self.setup()
+        #
+        # the test above, and possibly others, runs food. we clear that and expect 1 result.
+        #
+        paths.results_manager.remove_named_results("food")
+        assert paths.results_manager.get_number_of_results("food") == 0
+        paths.fast_forward_paths(filename="food", pathsname="food")
 
+        r = "$food.results.:all"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 1
+
+        adate = datetime.now(timezone.utc)
+        adatestr = adate.strftime("%Y")
+        r = f"$food.results.{adatestr}"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 1
+
+        r = "$food.results.2024-:after"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 1
+
+        adate = datetime.now(timezone.utc)
+        adatestr = adate.strftime("%Y-%m-%d")
+        r = f"$food.results.{adatestr}:all"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 1
+
+        r = "$food.results.2025-07-07:all"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 0
+
+        r = "$food.results.2025-07-07:after"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 1
+
+        r = "$food.results.2025-07-07:before"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        print(f">> test_results_ref_finder_date: r: {r}, results: {results.files}\n")
+        assert len(results.files) == 0
+
+    def test_results_ref_finder_instance(self):
+        paths = self.setup()
         i = paths.results_manager.get_number_of_results("food")
+        assert i > 0
+        r = "$food.results.:today:last"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        assert len(results.files) > 0
+
+        r = "$food.results.:today:last.candy check"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        assert len(results.files) > 0
+        assert results.files[0].endswith("candy check")
+
+        r = "$food.results.:today:last.ca"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        assert len(results.files) == 0
+
+        r = "$food.results.:today:last.candy check:data"
+        results = ResultsReferenceFinder(paths, reference=r).query()
+        assert len(results.files) == 1
+        assert results.files[0].endswith("data.csv")
+
+    def test_results_ref_finder_last_changes(self):
+        paths = self.setup()
+        assert paths.results_manager.get_number_of_results("food") == 2
+
         results = ResultsReferenceFinder(
             paths, reference="$food.results.:today:last"
         ).query()
-        results1 = results.files[0]
-        iminus = i - 1
-        chk = ResultsReferenceFinder(
-            paths, reference=f"$food.results.:{iminus}"
-        ).query()
-        chk = results.files[0]
-        assert results1 == chk
+        assert len(results) == 1
+
+        file1 = results.files[0]
+        chk = ResultsReferenceFinder(paths, reference="$food.results.:0").query()
+        assert len(chk) == 1
+        assert results.files[0] == chk.files[0]
+        assert results.ref.next == ["results_range_ordinal_instance"]
 
         paths.fast_forward_paths(filename="food", pathsname="food")
 
         results = ResultsReferenceFinder(
             paths, reference="$food.results.:today:last"
         ).query()
-        results2 = results.files[0]
-        assert results1 != results2
-        chk = ResultsReferenceFinder(paths, reference=f"$food.results.:{i}").query()
+        assert len(results.files) == 1
+        file2 = results.files[0]
+        assert file1 != file2
+        chk = ResultsReferenceFinder(paths, reference="$food.results.:1").query()
+        assert len(results.files) == 1
         chk = results.files[0]
-        assert results2 == chk
+        assert file2 == chk
 
-        last = (
-            ResultsReferenceFinder(paths, reference="$food.results.:today:last")
-            .query()
-            .files[0]
-        )
-        assert results2 == last
-        files = (
-            ResultsReferenceFinder(paths, reference="$food.results.:today")
-            .query()
-            .files
-        )
-        assert results1 in files
-        assert results1 == files[-2]
-        index1 = files.index(results1)
-        index2 = files.index(
-            ResultsReferenceFinder(paths, reference="$food.results.:today:first")
-            .query()
-            .files[0]
-        )
-        assert index2 <= index1
-        assert index2 == 0
+        results = ResultsReferenceFinder(
+            paths, reference="$food.results.:today"
+        ).query()
+
+        assert file1 in results.files
+        assert file1 == results.files[0]
+
+        results = ResultsReferenceFinder(
+            paths, reference="$food.results.:today:first"
+        ).query()
+        assert len(results.files) == 1
+        file3 = results.files[0]
+        assert file3 == file1
 
     def test_results_ref_finder_today(self):
         paths = self.setup()
-        starting = 0
-        try:
-            ps = ResultsReferenceFinder(paths, reference="$food.results.:today").query()
-            starting = len(ps)
-        except Exception:
-            # we get here if this test is run stand-alone
-            ...
+        ps = ResultsReferenceFinder(paths, reference="$food.results.:today").query()
+        assert len(ps) == 1
         paths.fast_forward_paths(filename="food", pathsname="food")
         paths.fast_forward_paths(filename="food", pathsname="food")
         paths.fast_forward_paths(filename="food", pathsname="food")
@@ -110,37 +189,31 @@ class TestResultsCsvPathsReferenceFinder(unittest.TestCase):
         # should have three more results
         #
         ps = ResultsReferenceFinder(paths, reference="$food.results.:today").query()
-        plusthree = len(ps)
-        assert plusthree == starting + 3
-        #
-        # check results by index
-        #
-        starting1 = starting + 1
-        starting2 = starting + 2
-        ref1 = f"$food.results.:{starting}"
-        ref2 = f"$food.results.:{starting1}"
-        ref3 = f"$food.results.:{starting2}"
+        assert len(ps) == 4
+
         #
         # first a baseline default-last
         #
         resultsA = paths.results_manager.get_named_results("food")
         assert resultsA
         assert len(resultsA) == 2
+
+        """ """
         maniA = resultsA[0].run_manifest
         #
         #
         #
-        resultsB = paths.results_manager.get_named_results(ref1)
+        resultsB = paths.results_manager.get_named_results("$food.results.:1")
         assert resultsB
         assert len(resultsB) == 2
         maniB = resultsB[0].run_manifest
 
-        resultsC = paths.results_manager.get_named_results(ref2)
+        resultsC = paths.results_manager.get_named_results("$food.results.:2")
         assert resultsC
         assert len(resultsC) == 2
         maniC = resultsC[0].run_manifest
 
-        resultsD = paths.results_manager.get_named_results(ref3)
+        resultsD = paths.results_manager.get_named_results("$food.results.:3")
         assert resultsD
         assert len(resultsD) == 2
         maniD = resultsD[0].run_manifest
@@ -150,14 +223,12 @@ class TestResultsCsvPathsReferenceFinder(unittest.TestCase):
         #
         #
         #
-        # dtB = datetime.fromisoformat(maniB["time"])
         B = exut.to_datetime(maniB["time"])
-        # dtC = datetime.fromisoformat(maniC["time"])
         C = exut.to_datetime(maniC["time"])
-        # dtD = datetime.fromisoformat(maniD["time"])
         D = exut.to_datetime(maniD["time"])
         assert B < C
         assert C < D
+        """ """
 
     def test_results_ref_finder_manifest_2(self):
         paths = self.setup()
