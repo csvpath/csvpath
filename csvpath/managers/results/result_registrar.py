@@ -3,8 +3,10 @@ import json
 from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
+
 from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
@@ -66,7 +68,15 @@ class ResultRegistrar(Registrar, Listener):
             mdata = ResultMetadata(config=self.csvpaths.config)
         mdata.from_manifest(m)
         mdata.archive_name = self.archive_name
-        mdata.named_results_name = self.result.paths_name
+        #
+        # if the paths_name has a $ we need to be more general
+        #
+        if "$" in self.result.paths_name:
+            ref = ReferenceParser(self.result.paths_name)
+            mdata.named_results_name = ref.root_major
+        else:
+            mdata.named_results_name = self.result.paths_name
+
         mdata.named_paths_name = self.result.paths_name
         mdata.named_paths_uuid_string = self.csvpaths.run_metadata.named_paths_uuid
         mdata.named_file_name = self.result.file_name

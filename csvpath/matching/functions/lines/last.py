@@ -17,13 +17,16 @@ class Last(MatchDecider):
                 """\
                     Evaluates True on the last line to be scanned.
 
-                    last() will always run, even if its line turns out to be
-                    blank and would otherwise be skipped.
+                    last() used by itself will always run, even if its line turns out to be
+                    blank and would otherwise be skipped. When last() is composed within other
+                    functions it loses that ability to run no matter what. For e.g.
+                    last() -> print("will always run")
+                    vs.
+                    and(yes(), last()) -> print("runs if the last scanned line is not blank")
 
-                    Optionally, last() can take a function that will be
-                    evaluated when last() evaluates to True. This function, if provided,
-                    will not necessarily be the last evaluation of the run, but will happen
-                    only on the last line.
+                    Optionally, last() can take a function that will be evaluated when last()
+                    evaluates to True. This function, if provided, will not necessarily be the
+                    last evaluation of the run, but will happen only on the last line.
             """
             ),
         ]

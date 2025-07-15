@@ -19,16 +19,24 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
         mani = []
         mani.append({})
-        mani[0]["file"] = "inputs/named_files/test/a/b/c/data.csv".replace("/", paths.config.files_sep)
+        mani[0]["file"] = "inputs/named_files/test/a/b/c/data.csv".replace(
+            "/", paths.config.files_sep
+        )
         mani[0]["time"] = f"{two_days_ago}"
         mani.append({})
-        mani[1]["file"] = "inputs/named_files/test/a/e/f/data.csv".replace("/", paths.config.files_sep)
+        mani[1]["file"] = "inputs/named_files/test/a/e/f/data.csv".replace(
+            "/", paths.config.files_sep
+        )
         mani[1]["time"] = f"{yesterday}"
         mani.append({})
-        mani[2]["file"] = "inputs/named_files/test/a/i/j/data.csv".replace("/", paths.config.files_sep)
+        mani[2]["file"] = "inputs/named_files/test/a/i/j/data.csv".replace(
+            "/", paths.config.files_sep
+        )
         mani[2]["time"] = f"{today}"
         mani.append({})
-        mani[3]["file"] = "inputs/named_files/test/a/k/l/data.csv".replace("/", paths.config.files_sep)
+        mani[3]["file"] = "inputs/named_files/test/a/k/l/data.csv".replace(
+            "/", paths.config.files_sep
+        )
         mani[3]["time"] = f"{tomorrow}"
         return (mani, two_days_ago, yesterday, today)
 
@@ -89,12 +97,14 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         ref = ReferenceParser(string=reference, csvpaths=paths)
         print(f"test_do_range_of_name_one_1a: ref: {ref}")
         results = ReferenceResults(csvpaths=paths, ref=ref)
-        print(f"test_do_range_of_name_one_1a: {paths.config.get(section='inputs', name='files')}")        
+        print(
+            f"test_do_range_of_name_one_1a: {paths.config.get(section='inputs', name='files')}"
+        )
         finder = FilesReferenceFinder2(csvpaths=paths, ref=ref)
         finder._do_range_of_name_one(results=results, rrange="before", mani=mani)
         #
         # =============
-        #        
+        #
         assert results.files is not None
         assert len(results.files) == 2
         assert mani[0]["file"].endswith(results.files[0])
@@ -337,16 +347,27 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         #
         mani, two_days_ago, yesterday, today = self._mani(csvpaths)
 
-
         ttostr = today.strftime("%Y-%m-%d")
         reference = f"$test.files.a/e:from.{ttostr}:first"
 
         ref = ReferenceParser(string=reference, csvpaths=csvpaths)
         results = ReferenceResults(csvpaths=csvpaths, ref=ref)
 
-        results.files.append("inputs/named_files/test/a/e/f/data.csv".replace("/", csvpaths.config.files_sep))
-        results.files.append("inputs/named_files/test/a/i/j/data.csv".replace("/", csvpaths.config.files_sep))
-        results.files.append("inputs/named_files/test/a/k/l/data.csv".replace("/", csvpaths.config.files_sep))
+        results.files.append(
+            "inputs/named_files/test/a/e/f/data.csv".replace(
+                "/", csvpaths.config.files_sep
+            )
+        )
+        results.files.append(
+            "inputs/named_files/test/a/i/j/data.csv".replace(
+                "/", csvpaths.config.files_sep
+            )
+        )
+        results.files.append(
+            "inputs/named_files/test/a/k/l/data.csv".replace(
+                "/", csvpaths.config.files_sep
+            )
+        )
 
         finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
         finder._do_arrival_ordinal_if_name_three(

@@ -16,6 +16,7 @@ from csvpath.util.references.results_reference_finder_2 import (
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
+
 from csvpath.scanning.scanner import Scanner
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
@@ -71,7 +72,10 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_file_path = m["named_file_path"]
         mdata.run_home = run_dir
         mdata.named_paths_name = pathsname
-        mdata.named_results_name = pathsname
+        if "$" in pathsname:
+            mdata.named_results_name = ReferenceParser(pathsname).root_major
+        else:
+            mdata.named_results_name = pathsname
         mdata.number_of_files_expected = -1
         mdata.number_of_files_generated = -1
 
@@ -534,7 +538,6 @@ class ResultsManager:  # pylint: disable=C0115
             # seems to be important for a handful of unit tests.
             #
             rs = self.named_results[name]
-            # print(f"resultsmgr: returning named results from cache: {rs}")
             return rs
         """ """
         #

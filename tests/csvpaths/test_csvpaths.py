@@ -271,3 +271,13 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         for i, r in enumerate(results):
             if i > 0:
                 assert r.csvpath.data_from_preceding is True
+        #
+        # manifests must point to the actual named_paths_name as named_results_name, not a reference
+        #
+        assert "named_results_name" in results[0].run_manifest
+        assert results[0].run_manifest["named_results_name"] == "sourcemode"
+        #
+        #
+        #
+        assert "named_results_name" in results[0].manifest
+        assert results[0].manifest["named_results_name"] == "sourcemode"

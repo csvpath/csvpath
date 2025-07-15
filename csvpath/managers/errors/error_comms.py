@@ -60,6 +60,13 @@ class ErrorCommunications:
         return ret
 
     def do_i_stop(self) -> bool:
+        #
+        # stop is having problems. copying raise, which works fine.
+        #
+        if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
+            return self._csvpath.stop_on_validation_errors
+        return self.in_policy(OnError.STOP.value)
+        """
         mode = None
         if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
             #
@@ -73,6 +80,7 @@ class ErrorCommunications:
             # return self._csvpath.stop_on_validation_errors
         policy = self.in_policy(OnError.STOP.value)
         return mode is True or policy is True
+        """
 
     def do_i_fail(self) -> bool:
         if self._csvpath and self._csvpath.fail_on_validation_errors is not None:

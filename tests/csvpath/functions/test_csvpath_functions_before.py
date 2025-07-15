@@ -175,3 +175,51 @@ class TestCsvPathFunctionsBefore(unittest.TestCase):
         )
         path.fast_forward()
         assert path.variables["s"] is False
+
+    def test_function_before_float_int_1(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+            ~ string < string == True ~
+            ${DATES}[1-3][
+                @s = below( 100.0, 90 )
+                @t = below( 100, 90 )
+            ]
+            """
+        )
+        path.fast_forward()
+        assert path.variables["s"] is False
+        assert path.variables["t"] is False
+
+    def test_function_before_float_int_2(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+            ~ string < string == True ~
+            ${DATES}[1-3][
+                @s = below( 80.0, 90 )
+                @t = below( 80, 90 )
+                @u = below( 80, 90.5 )
+                @v = below( 80.5, 90.5 )
+            ]
+            """
+        )
+        path.fast_forward()
+        assert path.variables["s"] is True
+        assert path.variables["t"] is True
+        assert path.variables["u"] is True
+        assert path.variables["v"] is True
+
+    def test_function_before_float_str(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+            ~ string < string == True ~
+            ${DATES}[1][
+                @s = below( 12.1, "24" ) ]"""
+        )
+        path.fast_forward()
+        assert path.variables["s"] is True

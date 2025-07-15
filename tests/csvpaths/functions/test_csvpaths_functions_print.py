@@ -76,7 +76,7 @@ class TestCsvPathsFunctionsPrint(unittest.TestCase):
         assert "candy check" in data["stopped"]
         assert isinstance(data["stopped"]["candy check"], bool)
         assert data["stopped"]["candy check"] is True
-        assert data["stopped"]["candy check"] == data["stopped"]["first type"]
+        assert data["stopped"]["candy check"] != data["stopped"]["first type"]
 
     def test_print_header_ref(self):
         paths = Builder().build()
