@@ -189,7 +189,9 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.all([]) is True
         assert ExpressionUtility.all(CsvPath) is True
         assert ExpressionUtility.all(False) is True
-        assert ExpressionUtility.all([CsvPath, True]) is False
+        assert ExpressionUtility.all([CsvPath, True]) is True
+        # this makes no sense!
+        # assert ExpressionUtility.all([CsvPath, True]) is False
         assert ExpressionUtility.all([CsvPath, True], classlist=[str, int]) is False
         assert ExpressionUtility.all([CsvPath, True], classlist=(str, int)) is False
         assert ExpressionUtility.all([True, CsvPath], classlist=[bool, int]) is False

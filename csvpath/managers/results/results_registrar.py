@@ -107,6 +107,7 @@ class ResultsRegistrar(Registrar, Listener):
         m["status"] = mdata.status
         m["run_home"] = mdata.run_home
         m["named_results_name"] = mdata.named_results_name
+
         #
         m["named_paths_name"] = mdata.named_paths_name
         m["named_paths_uuid"] = mdata.named_paths_uuid

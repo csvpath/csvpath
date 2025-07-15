@@ -52,7 +52,6 @@ class FilesReferenceFinder2:
         return lst
 
     def query(self) -> ReferenceResults:
-        # print(f"starting to find files: {self.csvpaths.config.get(section='inputs', name='files')}")
         results = ReferenceResults(ref=self.ref, csvpaths=self.csvpaths)
         #
         # if we find fingerprint we are done
@@ -72,12 +71,17 @@ class FilesReferenceFinder2:
         # otherwise, path or date may exist and if either does, it
         # disallows the other.
         #
+        # print(f"75: starting name one")
         if not self._range_if_name_one(results=results, tokens=tokens):
             # print(f"65: results: {len(results)}")
             if not self._date_if_name_one(results=results, tokens=tokens):
-                # print(f"66: results: {len(results)}")
+                print(f"66: results: {len(results)}")
                 self._path_if_name_one(results=results, tokens=tokens)
         # print(f"69: results: {len(results)}")
+        #
+        # we need a date token filter here!
+        #
+
         #
         # ordinals simply pickout an item in results.files, if possible
         #
@@ -119,7 +123,6 @@ class FilesReferenceFinder2:
         rrange = self._get_range_from_tokens(results, tokens)
         if rrange is None:
             return False
-        print(f"_range_if_name_one: results: {results}, tokens: {tokens}")
         #
         # a 3-parts range where the range tells the date which way to look:
         #   path >> date >> range
@@ -224,17 +227,10 @@ class FilesReferenceFinder2:
         # gets the range of files that are after a point.
         # the point is a date or the first match of a path prefix.
         #
-        print(
-            f"_do_range_of_name_one: results: {results}, rrange: {rrange}, results.ref.name_one: {results.ref.name_one}"
-        )
-        for _ in mani:
-            print(f"   ...{_['file']}")
-
         date = DateCompleter.to_date(results.ref.name_one)
         px = -1
         if date is None:
             prefix, px = self._prefix(results)  # os.path.join(inputs, named_file)
-            print(f"_do_range_of_name_one: prefix: {prefix}, px: {px}")
         before = rrange in ["before", "to"]
         after = rrange in ["after", "from"]
         nameone = results.ref.name_one
@@ -247,8 +243,6 @@ class FilesReferenceFinder2:
         for i, _ in enumerate(mani):
             if date is None:
                 path = _["file"]
-                print(f"_do_range_of_name_one: path: {path}, nameone: {nameone}")
-                # minus = self._path_minus_prolog(named_file_name=self.ref.root_major, path=path)
                 sw = self._starts_with(path, nameone)
                 if rrange == "all":
                     if sw:
@@ -383,6 +377,11 @@ class FilesReferenceFinder2:
         first, last = None, None
         if len(tokens) > 0 and DateCompleter.is_date_or_date_prefix(tokens[0]):
             first, last = DateCompleter.get_bracket_dates(tokens[0])
+            #
+            # need to remove token[0] here, right? we consume tokens. if there is an ordinal and it doesn't
+            # move up into [0] we ignore it.
+            #
+            del tokens[0]
         #
         #
         #
@@ -405,7 +404,6 @@ class FilesReferenceFinder2:
 
     def _starts_with(self, path, prefix) -> bool:
         path = self._path_minus_prolog(path=path)
-        print(f"_starts_with: path: {path}, prefix: {prefix}")
         if path.startswith(prefix):
             return True
         i = path.rfind(".")

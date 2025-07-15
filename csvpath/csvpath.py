@@ -1222,10 +1222,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                     "CsvPath.matches:703: %s: matches: %s", self.identity, matches
                 )
             #
-            # if we are done scanning we can stop
+            # if we are done scanning we can stop. however, if the file is ending on its own
+            # -- we are scanning right to the last line -- we don't call stop because we aren't
+            # actively stopping the run, we're just letting it run out.
             #
             if self.scanner.is_last(self.line_monitor.physical_line_number):
-                self.stop()
+                if not self.line_monitor.is_last_line():
+                    self.stop()
             if matches is True:
                 #
                 # _current_match_count is a placeholder that

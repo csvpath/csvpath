@@ -1,0 +1,29 @@
+[
+  {
+    "type": "csv",
+    "file": "inputs\\named_files\\Cars\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv\\787ae932520ea16bb822c30d1dea9733f633b0579819acd411ed92cdefab5d78.csv",
+    "file_home": "inputs\\named_files\\Cars\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv",
+    "fingerprint": "787ae932520ea16bb822c30d1dea9733f633b0579819acd411ed92cdefab5d78",
+    "uuid": "ded3d853-213c-4ae7-bcbc-adb6599566e0",
+    "time": "2025-07-09T22:00:15.485838+00:00",
+    "from": "C:\\Users\\python\\FlightPath\\windows testing\\examples\\math\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv"
+  },
+  {
+    "type": "csv",
+    "file": "inputs\\named_files\\Cars\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv\\efc2791fd4205668576b41f39d693aadbd60798ffec9dcc5452b74bce200b9bd.csv",
+    "file_home": "inputs\\named_files\\Cars\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv",
+    "fingerprint": "efc2791fd4205668576b41f39d693aadbd60798ffec9dcc5452b74bce200b9bd",
+    "uuid": "67bfcc18-bbee-420f-bd52-bd64ee6dda49",
+    "time": "2025-07-14T13:10:13.420888+00:00",
+    "from": "C:\\Users\\python\\FlightPath\\windows testing\\examples\\math\\Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv"
+  },
+  {
+    "type": "csv",
+    "file": "inputs\\named_files\\Cars\\Automobiles - Annual_Imports_and_Exports_Port_Authority_of_NY.csv\\efc2791fd4205668576b41f39d693aadbd60798ffec9dcc5452b74bce200b9bd.csv",
+    "file_home": "inputs\\named_files\\Cars\\Automobiles - Annual_Imports_and_Exports_Port_Authority_of_NY.csv",
+    "fingerprint": "efc2791fd4205668576b41f39d693aadbd60798ffec9dcc5452b74bce200b9bd",
+    "uuid": "a9df270d-1d24-4531-a0bb-ab0f1eea686b",
+    "time": "2025-07-14T13:13:31.120730+00:00",
+    "from": "C:\\Users\\python\\FlightPath\\windows testing\\examples\\math\\Automobiles - Annual_Imports_and_Exports_Port_Authority_of_NY.csv"
+  }
+]

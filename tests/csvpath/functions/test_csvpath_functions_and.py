@@ -6,7 +6,7 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathFunctionsAnd(unittest.TestCase):
-    def test_function_and1(self):
+    def test_function_and_1(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][
@@ -36,3 +36,27 @@ class TestCsvPathFunctionsAnd(unittest.TestCase):
         assert "c" in path.variables
         assert path.variables["c2"] == 2
         assert len(lines) == 2
+
+    def test_function_and_2(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[1*][
+                and( yes(), yes() ) ->
+                    @check1 = true()
+                and( yes(), no() ) ->
+                    @check2 = true()
+                and( yes(), last() ) ->
+                    @check3 = true()
+                and( yes(), last() ) ->
+                    push("check3s", @check3)
+            ]"""
+        ).fast_forward()
+
+        assert "check1" in path.variables
+        assert "check2" not in path.variables
+        assert "check3" in path.variables
+        assert "check3s" in path.variables
+
+        assert path.variables["check1"] is True
+        assert path.variables["check3"] is True
+        assert len(path.variables["check3s"]) == 1

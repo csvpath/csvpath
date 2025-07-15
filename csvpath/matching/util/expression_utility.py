@@ -30,33 +30,97 @@ class ExpressionUtility:
         else:
             return f"{i}th"
 
+    #
+    # this uses to_bool so it will translate "true" to True.
+    #
     @classmethod
     def all(cls, objects: List, classlist: tuple = None) -> bool:
+        #
+        # we don't match None isa None
+        #
+        if objects is None and classlist is None:
+            return False
         if objects is None:
-            return False
-        if not isinstance(objects, (list, tuple)):
-            return True
-        if len(objects) == 0:
-            return True
+            objects = [None]
+        if not isinstance(objects, list):
+            objects = [objects]
         #
-        # check first item
+        # if we don't pass a list of types or [], just None, we're
+        # True if all items in objects are non-None.
         #
-        if classlist is not None:
-            tup = classlist
-            if not isinstance(classlist, tuple):
-                tup = tuple(classlist)
-            if not isinstance(objects[0], tup):
+        if classlist is None:
+            for o in objects:
+                if o is None:
+                    return False
+            return True
+        for o in objects:
+            if not cls.isa(o, classlist):
                 return False
-        #
-        # check all items against each other
-        #
-        for i, o in enumerate(objects):
-            if i == 0:
-                continue
-            if isinstance(o, type(objects[i - 1])):
-                continue
-            return False
         return True
+
+    @classmethod
+    def safe_isinstance(cls, obj, classes: type[type]) -> bool:
+        try:
+            if isinstance(obj, classes):
+                return True
+        except Exception:
+            ...
+        return False
+
+    #
+    # this uses to_bool so it will translate "true" to True.
+    #
+    @classmethod
+    def isa(cls, obj: List, classes: tuple = None) -> bool:
+        if obj is None and classes is None:
+            return True
+        if classes is None:
+            classes = []
+        #
+        # make sure we have a tuple of types
+        #
+        lst = []
+        for t in classes:
+            if t is None:
+                if obj is None:
+                    return True
+            elif cls.safe_isinstance(t, type):
+                lst.append(t)
+            else:
+                lst.append(type(t))
+        classes = lst
+        #
+        # isinstance
+        #
+        if cls.safe_isinstance(obj, classes):
+            return True
+        #
+        # cross-class cast
+        #
+        if f"{obj}".strip() == "":
+            return False
+        for t in classes:
+            if t == int:
+                o = cls.to_int(obj)
+                if cls.safe_isinstance(o, int):
+                    return True
+            if t == float:
+                o = cls.to_float(obj)
+                if cls.safe_isinstance(o, float):
+                    return True
+            if t == datetime:
+                o = cls.to_datetime(obj)
+                if cls.safe_isinstance(o, datetime):
+                    return True
+            elif t == datetime.date:
+                o = cls.to_date(obj)
+                if cls.safe_isinstance(o, datetime.date):
+                    return True
+            elif t == bool:
+                o = cls.to_bool(obj)
+                if cls.safe_isinstance(o, bool):
+                    return True
+        return False
 
     @classmethod
     def is_number(cls, v: Any) -> bool:

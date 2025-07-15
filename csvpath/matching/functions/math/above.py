@@ -99,6 +99,8 @@ class AboveBelow(MatchDecider):
 
     def _try_dates(self, a, b) -> bool:
         if ExpressionUtility.all([a, b], [datetime]):
+            a = ExpressionUtility.to_datetime(a)
+            b = ExpressionUtility.to_datetime(b)
             if self._above() and self.name != "gte":
                 return a.timestamp() > b.timestamp()
             elif self._above():
@@ -107,6 +109,8 @@ class AboveBelow(MatchDecider):
                 a.timestamp() < b.timestamp()
             return a.timestamp() <= b.timestamp()
         if ExpressionUtility.all([a, b], [date]):
+            a = ExpressionUtility.to_date(a)
+            b = ExpressionUtility.to_date(b)
             if self._above() and self.name != "gte":
                 return a > b
             elif self._above():

@@ -230,13 +230,14 @@ class FunctionFactory:
         fs["alter"] = Alter
         fs["percent"] = Percent
         #
-        # aliases
+        # less than
         #
         fs["below"] = AboveBelow
         fs["lt"] = AboveBelow
         fs["before"] = AboveBelow
         fs["lte"] = AboveBelow
         fs["le"] = AboveBelow
+        # greater than
         fs["above"] = AboveBelow
         fs["gt"] = AboveBelow
         fs["after"] = AboveBelow
