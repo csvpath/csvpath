@@ -16,7 +16,9 @@ from .util.file_readers import DataFileReader
 from .util.line_spooler import LineSpooler, ListLineSpooler
 from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
-from .scanning.scanner import Scanner
+
+# from .scanning.scanner import Scanner
+from .scanning.scanner2 import Scanner2 as Scanner
 from .util.metadata_parser import MetadataParser
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
@@ -628,7 +630,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self.update_settings_from_metadata()
         #
         #
-        # exp!
+        #
         if disposably is False:
             csvpath = self._update_file_path(csvpath)
         #
@@ -1486,72 +1488,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         return thevalue
 
     def line_numbers(self) -> Iterator[int | str]:
-        """@private
-        returns all the line numbers the scanner will scan during
-        the run of a csvpath"""
-        these = self.scanner.these
-        from_line = self.scanner.from_line
-        to_line = self.scanner.to_line
-        all_lines = self.scanner.all_lines
-        return self._line_numbers(
-            these=these, from_line=from_line, to_line=to_line, all_lines=all_lines
-        )
-
-    def _line_numbers(
-        self,
-        *,
-        these: List[int] = None,
-        from_line: int = None,
-        to_line: int = None,
-        all_lines: bool = None,
-    ) -> Iterator[int | str]:
-        """@private"""
-        if these is None:
-            these = []
-        if len(these) > 0:
-            yield from these
-        else:
-            if from_line is not None and to_line is not None and from_line > to_line:
-                yield from range(to_line, from_line + 1)
-            elif from_line is not None and to_line is not None:
-                yield from range(from_line, to_line + 1)
-            elif from_line is not None:
-                if all_lines:
-                    yield f"{from_line}..."
-                else:
-                    yield from_line
-            elif to_line is not None:
-                yield f"0..{to_line}"
-
-    def collect_line_numbers(self) -> List[int | str]:  # pylint: disable=C0116
-        """@private"""
-        if self.scanner is None:
-            raise ParsingException("No scanner available. Have you parsed a csvpath?")
-        these = self.scanner.these
-        from_line = self.scanner.from_line
-        to_line = self.scanner.to_line
-        all_lines = self.scanner.all_lines
-        return self._collect_line_numbers(
-            these=these, from_line=from_line, to_line=to_line, all_lines=all_lines
-        )
-
-    def _collect_line_numbers(
-        self,
-        *,
-        these: List[int] = None,
-        from_line: int = None,
-        to_line: int = None,
-        all_lines: bool = None,
-    ) -> List[int | str]:
-        """@private"""
-        collect = []
-        if these is None:
-            these = []
-        for i in self._line_numbers(
-            these=these, from_line=from_line, to_line=to_line, all_lines=all_lines
-        ):
-            collect.append(i)
-        return collect
+        return self.scanner.these
 
     def header_index(self, name: str) -> int:  # pylint: disable=C0116
         """@private"""

@@ -130,14 +130,6 @@ class TestCsvPath(unittest.TestCase):
         # 5 is not in 0 - 4
         assert not scanner.includes(5, to_line=4)
 
-    def test_acsvpath_line_numbers(self):
-        csvpath = CsvPath()
-        assert [1, 2, 3] == csvpath._collect_line_numbers(these=[1, 2, 3])
-        assert [1, 2, 3] == csvpath._collect_line_numbers(from_line=1, to_line=3)
-        assert ["3..."] == csvpath._collect_line_numbers(from_line=3, all_lines=True)
-        assert [3] == csvpath._collect_line_numbers(from_line=3)
-        assert ["0..3"] == csvpath._collect_line_numbers(to_line=3)
-
     def test_acsvpath_collect_when_not_matched1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
@@ -182,28 +174,6 @@ class TestCsvPath(unittest.TestCase):
         assert path.matcher.header_index("1") == 1
         assert path.matcher.header_index(1) == 1
         assert path.matcher.header_index("foo") is None
-
-    def test_acsvpath_collect_line_numbers(self):
-        path = CsvPath()
-        path.config.add_to_config("errors", "csvpath", "raise")
-        path.parse(f"${PATH}[2-4][@me = count()]")
-        lns = path.collect_line_numbers()
-        assert lns == [2, 3, 4]
-
-        path = CsvPath()
-        path.parse(f"${PATH}[2*][@me = count()]")
-        lns = path.collect_line_numbers()
-        assert lns == ["2..."]
-
-        path = CsvPath()
-        path.parse(f"${PATH}[3-0][@me = count()]")
-        lns = path.collect_line_numbers()
-        assert lns == [0, 1, 2, 3]
-
-        path = CsvPath()
-        path.parse(f"${PATH}[3+0+5+1][@me = count()]")
-        lns = path.collect_line_numbers()
-        assert lns == [3, 0, 5, 1]
 
     def test_acsvpath_ff(self):
         path = CsvPath()
