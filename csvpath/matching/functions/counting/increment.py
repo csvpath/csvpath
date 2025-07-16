@@ -91,4 +91,6 @@ class Increment(ValueProducer):
 
     def matches(self, *, skip=None) -> bool:
         self.to_value(skip=skip)
+        if self.nocontrib:
+            return self.default_match()
         return self.match

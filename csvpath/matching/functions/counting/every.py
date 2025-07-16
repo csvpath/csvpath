@@ -49,7 +49,9 @@ class Every(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         cnt = self.to_value(skip=skip)
-        if cnt == 0:
+        if self.nocontrib:
+            self.match = self.default_match()
+        elif cnt == 0:
             self.match = True
         else:
             self.match = False
