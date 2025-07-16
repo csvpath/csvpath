@@ -17,7 +17,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
-from csvpath.scanning.scanner import Scanner
+from csvpath.scanning.scanner2 import Scanner2 as Scanner
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
 from .results_metadata import ResultsMetadata

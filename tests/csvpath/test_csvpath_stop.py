@@ -2,7 +2,7 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPath
-from csvpath.scanning.scanner import Scanner
+from csvpath.scanning.scanner2 import Scanner2 as Scanner
 from csvpath.util.config import OnError
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"

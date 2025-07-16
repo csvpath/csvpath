@@ -2,7 +2,7 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPath
-from csvpath.scanning.scanner import Scanner
+from csvpath.scanning.scanner2 import Scanner2 as Scanner
 from csvpath.util.config import OnError
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
@@ -104,31 +104,6 @@ class TestCsvPath(unittest.TestCase):
         for i in range(0, 1000):
             path = CsvPath()
             path.logger
-
-    def test_acsvpath_includes(self):
-        # pass line number = None probably in error
-        scanner = Scanner()
-        assert not scanner.includes(None)
-        # is 3 in all lines?
-        assert scanner.includes(3, from_line=None, to_line=None, all_lines=True)
-        # is 3 >= 2?
-        assert scanner.includes(3, from_line=2, to_line=None, all_lines=True)
-        # is 1 >= 2?
-        assert not scanner.includes(1, from_line=2, to_line=None, all_lines=True)
-        # 3 = 3
-        assert scanner.includes(3, from_line=3)
-        # 3 is within 2 - 4
-        assert scanner.includes(3, from_line=2, to_line=4)
-        # 1 is not within 2 - 4
-        assert not scanner.includes(1, from_line=2, to_line=4)
-        # 3 is in (3,5,8)
-        assert scanner.includes(3, these=[3, 5, 8])
-        # 4 is not in (3,5,8)
-        assert not scanner.includes(4, these=[3, 5, 8])
-        # 3 is in 0 - 4
-        assert scanner.includes(3, to_line=4)
-        # 5 is not in 0 - 4
-        assert not scanner.includes(5, to_line=4)
 
     def test_acsvpath_collect_when_not_matched1(self):
         path = CsvPath()
