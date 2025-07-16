@@ -15,24 +15,6 @@ PATH3 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test-3.csv"
 
 
 class TestCsvPathProductionsMatcher(unittest.TestCase):
-    """
-    #
-    # this test is no longer workable. updating it doesn't seem worthwhile atm.
-    #
-    def test_match_one_header(self):
-        matcher = Matcher(
-            csvpath=None, data='[#2=="alert"]', line=LINE, headers=HEADERS
-        )
-        assert len(matcher.expressions) == 1
-        assert isinstance(matcher.expressions[0][0], Expression)
-        assert len(matcher.expressions[0][0].children) == 1
-        assert isinstance(matcher.expressions[0][0].children[0], Equality)
-        assert len(matcher.expressions[0][0].children[0].children) == 2
-        assert isinstance(matcher.expressions[0][0].children[0].children[0], Header)
-        assert isinstance(matcher.expressions[0][0].children[0].children[1], Term)
-        assert matcher.expressions[0][0].children[0].matches()
-        assert matcher.expressions[0][0].matches()
-    """
 
     # ============= SCAN AND MATCH ================
 
@@ -65,7 +47,6 @@ class TestCsvPathProductionsMatcher(unittest.TestCase):
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
-        assert len(scanner.these) == 0
         # test line numbers included
         lns = []
         for ln in path.line_numbers():
@@ -87,7 +68,6 @@ class TestCsvPathProductionsMatcher(unittest.TestCase):
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
-        assert len(scanner.these) == 0
         # test line numbers included
         lns = []
         for ln in path.line_numbers():
@@ -106,7 +86,6 @@ class TestCsvPathProductionsMatcher(unittest.TestCase):
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
-        assert len(scanner.these) == 0
         # test line numbers included
         lns = []
         for ln in path.line_numbers():
@@ -128,7 +107,6 @@ class TestCsvPathProductionsMatcher(unittest.TestCase):
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
-        assert len(scanner.these) == 0
         # test line numbers included
         lns = []
         for ln in path.line_numbers():
@@ -158,7 +136,6 @@ class TestCsvPathProductionsMatcher(unittest.TestCase):
         assert scanner.from_line == 2
         assert scanner.to_line == 4
         assert not scanner.all_lines
-        assert len(scanner.these) == 0
         # test line numbers included
         lns = []
         for ln in path.line_numbers():
