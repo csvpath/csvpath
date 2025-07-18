@@ -903,7 +903,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         return f"""
             path: {self.scanner.path if self.scanner else None}
             identity: {self.identity}
-            parsers: [scanner=Ply, matcher=Lark, print=Lark]
+            parsers: [scanner=Lark, matcher=Lark, print=Lark, references=Lark]
             from_line: {self.scanner.from_line if self.scanner else None}
             to_line: {self.scanner.to_line if self.scanner else None}
             all_lines: {self.scanner.all_lines if self.scanner else None}
