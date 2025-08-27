@@ -33,6 +33,10 @@ class LogUtility:
 
     @classmethod
     def logger(cls, component, level: str = None):
+        #
+        # TODO: allow a config obj to be passed in with an indicator of csvpaths or csvpath log
+        # so that we can pass in other components w/o having one of those two instances.
+        #
         if component is None:
             raise LogException("component must be a CsvPaths or CsvPath instance")
         #

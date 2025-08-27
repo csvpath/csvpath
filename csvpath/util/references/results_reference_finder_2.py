@@ -75,6 +75,20 @@ class ResultsReferenceFinder2:
         # print(f"ResultsRefFinder: query: 3: results: {len(results)}")
         PossiblesResolver.update(results=results)
         #
+        # if we found 1 result it's possible we have an exact match.
+        #
+        # we know that by checking if the result path ends and the reference end with
+        # the same path segment, the run_dir. we check for an identical run_dir using
+        # the 1 possible result's last segment to check because we know it must end
+        # in a run_dir.
+        #
+        if len(results.files) == 1:
+            nos = Nos(results.files[0])
+            sep = nos.sep
+            pos = results.files[0]
+            if self.ref.ref_string.endswith(pos[pos.rfind(sep) :]):
+                return results
+        #
         # at this point we have paths that include the archive?
         #
         ...

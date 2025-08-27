@@ -491,8 +491,6 @@ class FileManager:
         self, *, name: NamedFileName, path: str, template: str = None
     ) -> None:
         self.legal_name(name)
-        # if name is None or name.strip() == "":
-        #    raise ValueError("Name cannot be None or empty")
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
         if template is not None:

@@ -6,6 +6,8 @@ from typing import Dict, List
 from enum import Enum
 import logging
 from ..util.config_exception import ConfigurationException
+from .config_env import ConfigEnv
+from csvpath.util.nos import Nos
 
 #
 #   1 csvpaths & csvpath own their own config
@@ -69,8 +71,9 @@ class Config:
     CONFIG: str = f"config{os.sep}config.ini"
     CSVPATH_CONFIG_FILE_ENV: str = "CSVPATH_CONFIG_PATH"
 
-    def __init__(self, *, load=True):
+    def __init__(self, *, load=True, config_env: ConfigEnv = None):
         self.load = load
+        self._config_env = config_env
         self._config = RawConfigParser()
         self.log_file_handler = None
         self._configpath = None
@@ -85,11 +88,24 @@ class Config:
         self.configpath = None
 
     @property
+    def config_env(self) -> ConfigEnv:
+        if self._config_env is None:
+            self._config_env = ConfigEnv(config=self, nos=Nos())
+        return self._config_env
+
+    @config_env.setter
+    def config_env(self, e: ConfigEnv) -> None:
+        self._config_env = e
+
+    @property
     def configpath(self) -> str:
         if self._configpath is None:
             self.configpath = None
         return self._configpath
 
+    #
+    # setting configpath triggers a reload
+    #
     @configpath.setter
     def configpath(self, path: str) -> None:
         #
@@ -163,9 +179,9 @@ class Config:
                 ret = s.strip()
             else:
                 ret = s
-
             if ret and isinstance(ret, str) and ret.isupper():
-                v2 = os.getenv(ret)
+                v2 = self.config_env.get(name=ret, default=default)
+                # v2 = os.getenv(ret)
                 if v2 is not None:
                     ret = v2.strip()
             return ret
@@ -178,6 +194,13 @@ class Config:
             except KeyError:
                 ...
             return default
+
+    #
+    # set() and _set() do not call refresh(). add_to_config() calls _set() and refresh().
+    # using "name" as the key param because get() uses name and that method is used everywhere.
+    #
+    def set(self, *, section, name, value) -> None:
+        self._set(section, name, value)
 
     def _set(self, section, key, value) -> None:
         if isinstance(value, list):
@@ -245,6 +268,8 @@ handler = file
 
 [config]
 path =
+allow_var_sub = True
+var_sub_source = env
 
 [functions]
 imports =
@@ -377,7 +402,8 @@ shell = /bin/bash
             self._assure_cache_path()
             self._assure_inputs_csvpaths_path()
 
-            print(f"Created a default config file at {directory} with name {name}.")
+            print("Created a default config file at: ")
+            print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
             print("If you want your config to be somewhere else remember to")
             print("update the path in the default config.ini")
 

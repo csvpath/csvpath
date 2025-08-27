@@ -128,9 +128,12 @@ class ResultsManager:  # pylint: disable=C0115
     # this new version gets all the metadata from first through last member of the
     # named-paths group. last key added wins. if you need to be sure one csvpath
     # doesn't stomp on the last iterate the result objects yourself.
+    # if there is no run results for name, returns None
     #
-    def get_metadata(self, name: str) -> bool:
+    def get_metadata(self, name: str) -> dict:
         results = self.get_named_results(name)
+        if results is None:
+            return None
         vs = {}
         for r in results:
             vs = {**r.csvpath.metadata, **vs}
@@ -138,21 +141,46 @@ class ResultsManager:  # pylint: disable=C0115
 
     #
     # unlike get_variables and get_metadata, get_errors adds lists with no chance for loss.
+    # if there is no run results for name, returns None
     #
-    def get_errors(self, name: str) -> bool:
+    def get_errors(self, name: str) -> list | None:
         results = self.get_named_results(name)
+        if results is None:
+            return None
         es = []
         for r in results:
             es += r.csvpath.errors
         return es
 
+    #
+    # get printouts adds the lists of printed lines across the results of a run.
+    # if printstream isn't passed the "default" printouts are returned.
+    # if there is no run results for name, returns None
+    #
+    # note, this method is limited, similar to get_variables and get_metadata.
+    # it doesn't separate printouts from different Result objects. a better way
+    # to go might be to iterate the results and pull the printouts you need.
+    #
+    def get_printouts(self, name: str, printstream: str = "default") -> dict:
+        results = self.get_named_results(name)
+        if results is None:
+            return None
+        ps = []
+        for r in results:
+            ps += r.csvpath.get_printouts(printstream)
+        return ps
+
     def get_specific_named_result(self, name: str, name_or_id: str = None) -> Result:
         #
-        # ideally we need to handle two things:
+        # gets a Result for a single csvpath instance from a run.
+        #
+        # name can be a reference
+        # name_or_id is the identity of an instance
+        #
+        # we need to handle two possible cases:
         #   1: name=mygroup, name_or_id=myinstance
         #   2: $mygroup.results.path-to-run_dir.myinstance#[variables|headers|csvpath|metadata|errors|printouts]
         #
-
         if name is None:
             raise ValueError("Name cannot be none")
         if name_or_id is None:
@@ -195,7 +223,7 @@ class ResultsManager:  # pylint: disable=C0115
 
     #
     # returns the last run of name's last csvpath instance result object.
-    # seems like an odd use case to support with its own method. needed?
+    # seems like a very odd use case to support with its own method. needed?
     #
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
         results = self.get_named_results(name)
@@ -511,9 +539,10 @@ class ResultsManager:  # pylint: disable=C0115
             raise ValueError(f"Unexpected reference datatype in: {ref}")
 
     #
-    # effectively, get last named results. use reference for anything more specific.
+    # unless using a reference, effectively this method gets the last run's named results.
+    # use reference for anything more specific.
     #
-    # this gets the results of a run. it does not get the runs under the name.
+    # this gets the results of a single run. it does not get all runs under the name.
     #
     def get_named_results(self, name) -> List[List[Any]]:
         #
