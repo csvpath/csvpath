@@ -6,6 +6,7 @@ from typing import Dict, List
 from enum import Enum
 import logging
 from ..util.config_exception import ConfigurationException
+from ..util.log_utility import LogUtility as lout
 from .config_env import ConfigEnv
 
 # from csvpath.util.nos import Nos
@@ -182,19 +183,25 @@ class Config:
                 ret = s
             if ret and isinstance(ret, str) and ret.isupper():
                 v2 = self.config_env.get(name=ret, default=default)
-                # v2 = os.getenv(ret)
                 if v2 is not None:
                     ret = v2.strip()
             return ret
         except KeyError:
             try:
-                if self._config["logging"]["csvpath"] == LogLevels.DEBUG:
-                    print(
-                        f"WARNING: Check config at {self.config_path} for [{section}][{name}]"
+                if LogLevels.DEBUG in [
+                    self._config["logging"]["csvpath"],
+                    self._config["logging"]["csvpaths"],
+                ]:
+                    self._logger.warning(
+                        f"Check config file {self.config_path} for [{section}][{name}]"
                     )
             except KeyError:
                 ...
             return default
+
+    @property
+    def _logger(self):
+        return lout.config_logger(config=self, level="debug")
 
     #
     # set() and _set() do not call refresh(). add_to_config() calls _set() and refresh().
@@ -403,10 +410,18 @@ shell = /bin/bash
             self._assure_cache_path()
             self._assure_inputs_csvpaths_path()
 
+            self._logger.debug("Created a default config file at: ")
+            self._logger.debug(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
+            self._logger.debug(
+                "If you want your config to be somewhere else remember to"
+            )
+            self._logger.debug("update the path in the default config.ini")
+            """
             print("Created a default config file at: ")
             print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
             print("If you want your config to be somewhere else remember to")
             print("update the path in the default config.ini")
+            """
 
     def _assure_logs_path(self) -> None:
         if self.load:
@@ -506,14 +521,17 @@ shell = /bin/bash
                 os.makedirs(self.inputs_csvpaths_path)
 
     def _assure_cache_path(self) -> None:
-        uc = self.get(section="cache", name="use_cache")
-        if uc and uc.strip().lower() == "no":
-            return
         if self.load:
             p = self._get("cache", "path", "cache")
             if p:
                 p = p.strip()
-            if p == "":
+            if not p or p == "":
+                uc = self.get(section="cache", name="use_cache")
+                if uc and uc.strip().lower() == "no":
+                    return
+                self._logger.warning(
+                    f"Cannot assure cache path {p} because there is no path in config"
+                )
                 self._set("cache", "use_cache", "no")
                 return
             if p.find("://") > -1:
@@ -532,8 +550,8 @@ shell = /bin/bash
 
     def _load_config(self, norecurse=False):
         if self._load is False:
-            print(
-                "WARNING: _load_config called on a config instance that is set to not load"
+            self._logger.warning(
+                "_load_config called on a config instance that is set to not load"
             )
             return
         self._assure_config_file_path()

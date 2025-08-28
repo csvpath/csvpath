@@ -22,8 +22,16 @@ class Cache:
 
     def cached_text(self, filename: str, type: str) -> str:
         fn = self._cache_name(filename)
-        cachepath = os.path.join(self._cachedir(), fn)
-        keypath = f"{cachepath}.{type}"
+        cachedir = self._cachedir()
+        cachepath = None
+        keypath = None
+        if cachedir is None:
+            self.csvpaths.logger.debug(
+                "No cache path available for file: {filename} of type: {type}"
+            )
+        else:
+            cachepath = os.path.join(cachedir, fn)
+            keypath = f"{cachepath}.{type}"
         res = None
         try:
             with open(keypath, "r", encoding="utf-8") as file:
@@ -40,14 +48,19 @@ class Cache:
                     for line in file:
                         res += line
         except Exception:
-            self.csvpaths.logger.warning(
-                f"Could not read {cachepath} for {filename}. This may be fine, if the cache is empty. Otherwise, check your config.ini for the cache path."
+            self.csvpaths.logger.debug(
+                f"Could not read {cachepath} for {filename}. Check config.ini for the cache path."
             )
         return res
 
     def cache_text(self, filename, strtype: str, data: str) -> None:
         filename = pathu.resep(filename)
         cachedir = self._cachedir()
+        if cachedir is None:
+            self.csvpaths.logger.debug(
+                "No cache dir available. Cannot cache {filename} with {strtype}"
+            )
+            return
         cachedir = pathu.resep(cachedir)
         cn = self._cache_name(filename)
         cachepath = os.path.join(cachedir, f"{cn}.{strtype}")

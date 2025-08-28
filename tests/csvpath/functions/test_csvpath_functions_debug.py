@@ -89,8 +89,7 @@ class TestCsvPathFunctionsDebug(unittest.TestCase):
         path = CsvPath()
         path.logger.level = logging.DEBUG
         assert path.logger.level == logging.DEBUG
-        if path.logger.level == logging.DEBUG:
-            path.logger.level = logging.INFO
+        path.logger.level = logging.INFO
         assert path.logger.level != logging.DEBUG
         path.parse(
             f"""
