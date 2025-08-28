@@ -407,7 +407,8 @@ class ResultsManager:  # pylint: disable=C0115
         f = result.csvpath.variables[t]
         if f.find("..") != -1:
             raise InputException("Transfer path cannot include '..': {f}")
-        rp = os.path.join(p, f)
+        rp = Nos(p).join(f)
+        # rp = os.path.join(p, f)
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
         if not Nos(rd).exists():
@@ -417,7 +418,8 @@ class ResultsManager:  # pylint: disable=C0115
     def _path_to_result(self, result, t) -> str:
         """@private"""
         d = result.instance_dir
-        o = os.path.join(d, t)
+        o = Nos(d).join(t)
+        # o = os.path.join(d, t)
         sep = Nos(o).sep
         r = o[0 : o.rfind(sep)]
         if not Nos(r).exists():
@@ -577,7 +579,8 @@ class ResultsManager:  # pylint: disable=C0115
         # use r̶u̶n̶_̶h̶o̶m̶e̶_̶m̶a̶k̶e̶r̶.r̶u̶n̶s̶_̶h̶o̶m̶e̶_̶f̶r̶o̶m̶_̶t̶e̶m̶p̶l̶a̶t̶e̶ OR an index.json in the named-results root to
         # find the parent of the runs do the join below with that.
         #
-        path = os.path.join(self.csvpaths.config.archive_path, name)
+        path = Nos(self.csvpaths.config.archive_path).join(name)
+        # path = os.path.join(self.csvpaths.config.archive_path, name)
         self.csvpaths.logger.debug(
             "Attempting to load results for %s from %s", name, path
         )
@@ -670,14 +673,17 @@ class ResultsManager:  # pylint: disable=C0115
         #    raise InputException(msg)
 
     def get_named_results_home(self, name: str) -> str:
-        path = os.path.join(self.csvpaths.config.archive_path, name)
+        path = Nos(self.csvpaths.config.archive_path).join(name)
+        # path = os.path.join(self.csvpaths.config.archive_path, name)
         return path
 
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
         if run is None:
             return None
-        path = os.path.join(self.csvpaths.config.archive_path, name)
-        path = os.path.join(path, run)
+        path = Nos(self.csvpaths.config.archive_path).join(name)
+        # path = os.path.join(self.csvpaths.config.archive_path, name)
+        path = Nos(path).join(run)
+        # path = os.path.join(path, run)
         return self._get_named_results_for_run(name=name, run=run, path=path)
 
     #
@@ -716,7 +722,8 @@ class ResultsManager:  # pylint: disable=C0115
         if run_dir.endswith(f"/{instance}") or run_dir.endswith(f"\\{instance}"):
             instance_dir = run_dir
         else:
-            instance_dir = os.path.join(run_dir, instance)
+            instance_dir = Nos(run_dir).join(instance)
+            # instance_dir = os.path.join(run_dir, instance)
         mani = ResultFileReader.manifest(instance_dir)
         #
         # csvpath needs to be loaded with all meta.json->metadata and some/most of runtime_data

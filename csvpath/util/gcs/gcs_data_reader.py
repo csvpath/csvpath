@@ -30,6 +30,15 @@ class GcsDataReader(CsvDataReader):
             for line in reader:
                 yield line
 
+    def next_raw(self) -> list[str]:
+        with open(
+            uri=self.path,
+            mode=self.mode,
+            transport_params={"client": GcsUtility.make_client()},
+        ) as file:
+            for line in file:
+                yield line
+
     def fingerprint(self) -> str:
         self.load_if()
         h = GcsFingerprinter().fingerprint(self.path)

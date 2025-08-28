@@ -159,6 +159,9 @@ class FileDo:
     def path(self, p: str) -> None:
         self._path = pathu.resep(p)
 
+    def join(self, name: str) -> str:
+        return os.path.join(self.path, name)
+
     def remove(self) -> None:
         isf = os.path.isfile(self.path)
         if isf:

@@ -20,7 +20,10 @@ BAD_INI = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}bad_config.ini"
 class TestCsvPathConfig(unittest.TestCase):
     def test_config_env(self):
         #
-        # setup a config.ini for this test
+        # this tests the ability to allow or disallow var sub of all caps var values
+        # in system env vars or a vars json dict.
+        #
+        # setup a config.ini for the test
         #
         path = os.path.join("tests", "test_resources", "temp", "config.ini")
         nos = Nos(path)

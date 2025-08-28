@@ -1,8 +1,10 @@
 import json
 import os
 from typing import Optional, Any
-from csvpath.util.file_readers import DataFileReader
-from csvpath.util.file_writers import DataFileWriter
+
+# from csvpath.util.file_readers import DataFileReader
+# from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.class_loader import ClassLoader
 
 
 class ConfigEnv:
@@ -10,7 +12,10 @@ class ConfigEnv:
         if config is None:
             raise ValueError("Config cannot be None")
         self._config = config
-        self._nos = nos
+        #
+        # giving Nos "" makes us have to set Nos.path = ...; but otherwise, not a problem.
+        #
+        self._nos = ClassLoader.load("from csvpath.util.nos import Nos", [""])
         self._env = None
         self._var_sub_source = None
         self._allow = None
@@ -48,13 +53,29 @@ class ConfigEnv:
         if self._env is None:
             try:
                 if not self.nos(self.var_sub_source).exists():
-                    with DataFileWriter(path=self.var_sub_source) as file:
-                        json.dump({}, file.sink, indent=4)
-                with DataFileReader(self.var_sub_source) as file:
-                    self._env = json.load(file.source)
+                    # cannot use DataFileWriter and DataFileReader because that would create a circular import.
+                    # with DataFileWriter(path=self.var_sub_source) as file:
+                    file = ClassLoader.load(
+                        "from csvpath.util.file_writers import DataFileWriter",
+                        [],
+                        {"path": self.var_sub_source},
+                    )
+                    file.__enter__()
+                    json.dump({}, file.sink, indent=4)
+                    file.__exit__(None, None, None)
+
+                # with DataFileReader(self.var_sub_source) as file:
+                file = ClassLoader.load(
+                    "from csvpath.util.file_readers import DataFileReader",
+                    [self.var_sub_source],
+                )
+                file.__enter__()
+                self._env = json.load(file.source)
+                file.__exit__(None, None, None)
             except Exception:
-                ...
-                # print(f"ConfigEnv: self.env: ex: {ex}")
+                import traceback
+
+                print(traceback.format_exc())
         return self._env
 
     #

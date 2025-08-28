@@ -7,7 +7,8 @@ from enum import Enum
 import logging
 from ..util.config_exception import ConfigurationException
 from .config_env import ConfigEnv
-from csvpath.util.nos import Nos
+
+# from csvpath.util.nos import Nos
 
 #
 #   1 csvpaths & csvpath own their own config
@@ -90,7 +91,7 @@ class Config:
     @property
     def config_env(self) -> ConfigEnv:
         if self._config_env is None:
-            self._config_env = ConfigEnv(config=self, nos=Nos())
+            self._config_env = ConfigEnv(config=self)
         return self._config_env
 
     @config_env.setter

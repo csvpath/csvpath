@@ -1,6 +1,9 @@
 import importlib
 from typing import Any
-from csvpath.util.config_exception import ConfigurationException
+
+
+class ClassLoadingError(RuntimeError):
+    ...
 
 
 class ClassLoader:
@@ -22,7 +25,5 @@ class ClassLoader:
                 instance = class_(*args, **kwargs)
                 return instance
             else:
-                raise ConfigurationException(
-                    f"Unclear class loading import statement: {s}"
-                )
+                raise ClassLoadingError(f"Unclear class loading import statement: {s}")
         return None
