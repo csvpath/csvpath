@@ -183,7 +183,8 @@ class ResultRegistrar(Registrar, Listener):
     # gets the manifest for the named_paths as a whole from the run dir
     @property
     def named_paths_manifest_path(self) -> str:
-        return os.path.join(self.result.run_dir, "manifest.json")
+        return Nos(self.result.run_dir).join("manifest.json")
+        # return os.path.join(self.result.run_dir, "manifest.json")
 
     #
     # switch to use ResultManifestReader.manifest
@@ -204,7 +205,8 @@ class ResultRegistrar(Registrar, Listener):
 
     @property
     def manifest_path(self) -> str:
-        h = os.path.join(self.result_path, "manifest.json")
+        h = Nos(self.result_path).join("manifest.json")
+        # h = os.path.join(self.result_path, "manifest.json")
         return h
 
     @property
@@ -284,7 +286,8 @@ class ResultRegistrar(Registrar, Listener):
     def has_file(self, t: str) -> bool:
         r = self.result_path
         nos = self.nos
-        nos.path = os.path.join(r, t)
+        nos.path = Nos(r).join(t)
+        # nos.path = os.path.join(r, t)
         return nos.exists()
 
     @property
@@ -299,7 +302,7 @@ class ResultRegistrar(Registrar, Listener):
             "errors.json",
             "vars.json",
         ]:
-            f = self._fingerprint(os.path.join(r, t))
+            f = self._fingerprint(Nos(r).join(t))
             if f is None:
                 continue
             fps[t] = f

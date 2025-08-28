@@ -103,7 +103,8 @@ class CsvLineSpooler(LineSpooler):
     def __len__(self) -> int:
         if self._count is None or self._count <= 0:
             if self.result is not None and self.result.instance_dir:
-                d = os.path.join(self.result.instance_dir, "meta.json")
+                d = Nos(self.result.instance_dir).join("meta.json")
+                # d = os.path.join(self.result.instance_dir, "meta.json")
                 if Nos(d).exists() is True:
                     with DataFileReader(d) as file:
                         j = json.load(file.source)

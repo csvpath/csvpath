@@ -10,7 +10,8 @@ class IdentityFinder:
             results.files[0] if results.files and len(results.files) == 1 else None
         )
         if resolved is not None and results.ref.name_three is not None:
-            resolved = os.path.join(resolved, results.ref.name_three)
+            resolved = Nos(resolved).join(results.ref.name_three)
+            # resolved = os.path.join(resolved, results.ref.name_three)
             nos = Nos(resolved)
             if nos.exists():
                 results.files[0] = resolved

@@ -5,6 +5,7 @@ from .reference_results import ReferenceResults
 from .files_tools.fingerprint_finder import FingerprintFinder
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.references.tools.date_completer import DateCompleter
+from csvpath.util.nos import Nos
 
 
 class FilesReferenceFinder2:
@@ -611,7 +612,8 @@ class FilesReferenceFinder2:
     def _prefix(self, results) -> tuple[str, int]:
         inputs = self.csvpaths.config.get(section="inputs", name="files")
         named_file = results.ref.root_major
-        prefix = os.path.join(inputs, named_file)
+        prefix = Nos(inputs).join(named_file)
+        # prefix = os.path.join(inputs, named_file)
         return (prefix, len(prefix))
 
     def _get_range_from_tokens(self, results, tokens) -> str:

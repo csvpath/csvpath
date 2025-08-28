@@ -43,7 +43,8 @@ class PathsListener(Listener):
 
     @property
     def manifest_path(self) -> None:
-        mf = os.path.join(self.csvpaths.config.inputs_csvpaths_path, "manifest.json")
+        mf = Nos(self.csvpaths.config.inputs_csvpaths_path).join("manifest.json")
+        # mf = os.path.join(self.csvpaths.config.inputs_csvpaths_path, "manifest.json")
         if not Nos(mf).exists():
             with DataFileWriter(path=mf) as file:
                 file.append("[]")

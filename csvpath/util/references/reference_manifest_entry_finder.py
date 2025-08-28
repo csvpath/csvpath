@@ -12,6 +12,7 @@ from csvpath.util.references.reference_exceptions import ReferenceException
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
 )
+from csvpath.util.nos import Nos
 
 
 class ReferenceManifestEntryFinder:
@@ -50,7 +51,8 @@ class ReferenceManifestEntryFinder:
             #
             return None
         home = results.files[0]
-        mpath = os.path.join(home, "manifest.json")
+        mpath = Nos(home).join("manifest.json")
+        # mpath = os.path.join(home, "manifest.json")
         mani = None
         with DataFileReader(mpath) as reader:
             mani = json.load(reader.source)

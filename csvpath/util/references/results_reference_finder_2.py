@@ -170,13 +170,16 @@ class ResultsReferenceFinder2:
         archive = self.csvpaths.config.get(section="results", name="archive")
         resname = self.ref.root_major
 
-        ar = os.path.join(archive, resname)
+        ar = Nos(archive).join(resname)
+        # ar = os.path.join(archive, resname)
 
         for _ in results.files:
             if not _.startswith(ar):
                 if _.startswith(self.ref.root_major):
-                    _ = os.path.join(archive, _)
+                    _ = Nos(archive).join(_)
+                    # _ = os.path.join(archive, _)
                 else:
-                    _ = os.path.join(ar, _)
+                    _ = Nos(ar).join(_)
+                    # _ = os.path.join(ar, _)
             assured.append(_)
         results.files = assured

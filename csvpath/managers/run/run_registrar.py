@@ -21,7 +21,8 @@ class RunRegistrar(Registrar, Listener):
 
     @property
     def manifest_path(self) -> str:
-        return os.path.join(self.archive, "manifest.json")
+        return Nos(self.archive).join("manifest.json")
+        # return os.path.join(self.archive, "manifest.json")
 
     @property
     def manifest(self) -> list:
