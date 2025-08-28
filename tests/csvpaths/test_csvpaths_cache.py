@@ -20,8 +20,9 @@ class TestCsvPathsCache(unittest.TestCase):
     def test_cache_files(self):
         paths = Builder().build()
         v = paths.config.get(section="cache", name="use_cache")
+        paths.config.add_to_config("cache", "path", "cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cachedir = paths.file_manager.lines_and_headers_cacher.cache._cachedir()
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
@@ -39,30 +40,34 @@ class TestCsvPathsCache(unittest.TestCase):
 
     def test_cache_dir(self):
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        v = paths.config.get(section="cache", name="use_cache")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cachedir = paths.file_manager.lines_and_headers_cacher.cache._cachedir()
         assert cachedir
+        assert cachedir == "cache"
         assert os.path.exists(cachedir)
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         paths = Builder().build()
         paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cachedir = paths.file_manager.lines_and_headers_cacher.cache._cachedir()
         assert os.path.exists(cachedir)
-        paths.config.add_to_config("cache", "use_cache", v)
 
     def test_cache_csv(self):
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         v = paths.config.get(section="cache", name="use_cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = "/a/file/name"
         headers = ["a", "header", "row"]
         cache.cache_text(filename, "csv", ",".join(headers))
         paths = Builder().build()
+        paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = pathu.resep(filename)
         cheaders = cache.cached_text(filename, "csv")
@@ -72,9 +77,10 @@ class TestCsvPathsCache(unittest.TestCase):
 
     def test_cache_line_mon1(self):
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         v = paths.config.get(section="cache", name="use_cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = PATH
         lm = LineMonitor()
@@ -97,9 +103,10 @@ class TestCsvPathsCache(unittest.TestCase):
 
     def test_cache_line_mon2(self):
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         v = paths.config.get(section="cache", name="use_cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = PATH
         lm = LineMonitor()
@@ -111,6 +118,8 @@ class TestCsvPathsCache(unittest.TestCase):
         cache.cache_text(filename, "json", jstr)
         # new csvpaths, new cache object
         paths = Builder().build()
+        paths.config.add_to_config("cache", "use_cache", "yes")
+        paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
         jstr2 = cache.cached_text(filename, "json")
         assert jstr == jstr2

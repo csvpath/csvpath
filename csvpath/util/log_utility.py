@@ -31,6 +31,91 @@ class LogUtility:
             ret = f"{ret}{aline}\n"
         return ret
 
+    #
+    # component must be either a CsvPath or CsvPaths
+    #
+    @classmethod
+    def logger(cls, component, level: str = None):
+        #
+        # TODO: allow a config obj to be passed in with an indicator of csvpaths or csvpath log
+        # so that we can pass in other components w/o having one of those two instances.
+        #
+        if component is None:
+            raise LogException("component must be a CsvPaths or CsvPath instance")
+        #
+        # component name
+        #
+        name = None
+        c = f"{component.__class__}"
+        if c.find("CsvPaths") > -1:
+            name = "csvpaths"
+        elif c.find("CsvPath") > -1:
+            name = "csvpath"
+        else:
+            raise LogException("component must be a CsvPaths or CsvPath instance")
+        config = component.config
+        level = (
+            level
+            if level
+            else (
+                config.csvpaths_log_level
+                if name == "csvpaths"
+                else config.csvpath_log_level
+            )
+        )
+        return cls.config_logger(config=config, name=name, level=level)
+
+    @classmethod
+    def config_logger(cls, *, config, name: str = None, level: str = None):
+        if config is None:
+            raise ValueError("Config cannot be None")
+        if name is None:
+            name = "config"
+        if level is None:
+            level = "info"
+        if level == "error":
+            level = logging.ERROR  # pragma: no cover
+        elif level in ["warn", "warning"]:
+            level = logging.WARNING  # pragma: no cover
+        elif level == "debug":
+            level = logging.DEBUG
+        elif level == "info":
+            level = logging.INFO
+        else:
+            raise LogException(f"Unknown log level '{level}'")
+        logger = None
+        if name in LogUtility.LOGGERS:
+            logger = LogUtility.LOGGERS[name]
+        else:
+            log_file_handler = None
+            handler_type = config.get(section="logging", name="handler", default="file")
+            log_file_handler = None
+            if handler_type == "file":
+                log_file_handler = logging.FileHandler(
+                    filename=config.log_file,
+                    encoding="utf-8",
+                )
+            elif handler_type == "rotating":
+                log_file_handler = RotatingFileHandler(
+                    filename=config.log_file,
+                    maxBytes=config.log_file_size,
+                    backupCount=config.log_files_to_keep,
+                    encoding="utf-8",
+                )
+            else:
+                raise ValueError(f"Unknown type of log file handler: {handler_type}")
+            formatter = logging.Formatter(
+                "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+            )
+            log_file_handler.setFormatter(formatter)
+            logger = None
+            logger = logging.getLogger(name)
+            logger.addHandler(log_file_handler)
+            LogUtility.LOGGERS[name] = logger
+        logger.setLevel(level)
+        return logger
+
+    """
     @classmethod
     def logger(cls, component, level: str = None):
         #
@@ -105,3 +190,4 @@ class LogUtility:
             LogUtility.LOGGERS[name] = logger
         logger.setLevel(level)
         return logger
+    """
