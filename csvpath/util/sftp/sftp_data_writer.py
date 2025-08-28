@@ -44,7 +44,6 @@ class SftpDataWriter(DataFileWriter):
     def write(self, data) -> None:
         config = self._config
         c = SftpConfig(config)
-        print(f"ftpdatawr: appending: {self.path}, {self.mode}")
         with open(
             self.path,
             self.mode,

@@ -9,10 +9,6 @@ from .s3_fingerprinter import S3Fingerprinter
 from csvpath.util.box import Box
 from csvpath.util.hasher import Hasher
 
-#
-# TODO: next only works with CSV atm. need Excel.
-#
-
 
 class S3DataReader(CsvDataReader):
     def load_if(self) -> None:

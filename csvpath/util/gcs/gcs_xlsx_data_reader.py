@@ -18,6 +18,9 @@ class GcsXlsxDataReader(XlsxDataReader):
             for row in db.ws(ws=self._sheet).rows:
                 yield [f"{datum}" for datum in row]
 
+    def next_raw(self, mode: str = None) -> list[str]:
+        raise NotImplementedError("Xlsx files cannot be read line by line")
+
     def load_if(self) -> None:
         if self.source is None:
             client = GcsUtility.make_client()

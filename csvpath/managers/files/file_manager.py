@@ -84,7 +84,8 @@ class FileManager:
     @property
     def files_root_manifest_path(self) -> dict:
         """@private"""
-        return os.path.join(self.named_files_dir, "manifest.json")
+        return Nos(self.named_files_dir).join("manifest.json")
+        # return os.path.join(self.named_files_dir, "manifest.json")
 
     #
     # namedfile: a NamedFileName (name or reference)
@@ -129,7 +130,8 @@ class FileManager:
             # we should be more defensive, yes?
             #
             path = lst[0]
-            path = os.path.join(path, "manifest.json")
+            path = Nos(path).join("manifest.json")
+            # path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
             if nos.exists():
@@ -178,7 +180,8 @@ class FileManager:
                 # what about if not found?
                 #
                 path = lst[0]
-                path = os.path.join(path, "manifest.json")
+                path = Nos(path).join("manifest.json")
+                # path = os.path.join(path, "manifest.json")
                 nos = self.nos
                 nos.path = path
                 if nos.exists():
@@ -203,7 +206,8 @@ class FileManager:
             # find a file manifest
             #
             path = self.named_file_home(name)
-            path = os.path.join(path, "manifest.json")
+            path = Nos(path).join("manifest.json")
+            # path = os.path.join(path, "manifest.json")
             nos = self.nos
             nos.path = path
             if nos.exists():
@@ -226,7 +230,8 @@ class FileManager:
         #
         if name.find("://") > -1:
             return name
-        home = os.path.join(self.named_files_dir, name)
+        home = Nos(self.named_files_dir).join(name)
+        # home = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = home
         if nos.isfile():
@@ -285,7 +290,8 @@ class FileManager:
         # why is named file home giving a long name when no template?
         #
         home = self.named_file_home(name)
-        home = os.path.join(home, fname)
+        home = Nos(home).join(fname)
+        # home = os.path.join(home, fname)
         nos.path = home
         if not nos.exists():
             nos.makedirs()
@@ -331,7 +337,8 @@ class FileManager:
         nos.path = b
         lst = nos.listdir()
         for n in lst:
-            nos.path = os.path.join(b, n)
+            nos.path = Nos(b).join(n)
+            # nos.path = os.path.join(b, n)
             if not nos.isfile():
                 ns.append(n)
         return ns
@@ -372,7 +379,8 @@ class FileManager:
         # and we expect it to happen rarely in a production env.
         #
         self.legal_name(name)
-        p = os.path.join(self.named_files_dir, name)
+        p = Nos(self.named_files_dir).join(name)
+        # p = os.path.join(self.named_files_dir, name)
         nos = self.nos
         nos.path = p
         if nos.dir_exists():
@@ -479,20 +487,19 @@ class FileManager:
                 if recurse is True:
                     path = p
                 else:
-                    path = os.path.join(base, p)
+                    # path = os.path.join(base, p)
+                    path = Nos(base).join(p)
 
                 self.add_named_file(name=n, path=path, template=template)
             else:
                 self._csvpaths.logger.debug(
-                    "%s is not in accept list", os.path.join(base, p)
+                    "%s is not in accept list", Nos(base).join(p)
                 )
 
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
     ) -> None:
         self.legal_name(name)
-        # if name is None or name.strip() == "":
-        #    raise ValueError("Name cannot be None or empty")
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
         if template is not None:
@@ -565,6 +572,9 @@ class FileManager:
         nos = self.nos
         nos.path = path
         sep = nos.sep
+        #
+        # TODO: why wouldn't nos.sep cover http? Nos is not used in http. probably should be.
+        #
         sep = "/" if path.startswith("https://") or path.startswith("http://") else sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]
         #
@@ -575,7 +585,8 @@ class FileManager:
         # name is changed.
         #
         fname = self._clean_file_name(fname)
-        temp = os.path.join(home, fname)
+        temp = f"{home}{sep}{fname}"
+        # temp = os.path.join(home, fname)
         if pathu.parts(path)[0] == pathu.parts(home)[0]:
             nos.path = path
             nos.copy(temp)
@@ -657,7 +668,8 @@ class FileManager:
                 lst = reff.resolve()
                 if len(lst) > 0:
                     ret = lst[0]
-                    ret = os.path.join(ret, "data.csv")
+                    ret = Nos(ret).join("data.csv")
+                    # ret = os.path.join(ret, "data.csv")
         else:
             if not self.has_named_file(name):
                 return None
@@ -711,7 +723,8 @@ class FileManager:
         #
         # creating the initial file name, where the file starts
         #
-        fpath = os.path.join(path, fname)
+        fpath = Nos(path).join(fname)
+        # fpath = os.path.join(path, fname)
         h = None
         #
         # this version should work local and minimize traffic when in S3
@@ -723,7 +736,8 @@ class FileManager:
             #
             # creating the new path using the fingerprint as filename
             #
-            hpath = os.path.join(path, h)
+            hpath = Nos(path).join(h)
+            # hpath = os.path.join(path, h)
             if t is not None:
                 hpath = f"{hpath}.{t}"
             #

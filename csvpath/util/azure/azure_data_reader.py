@@ -32,6 +32,18 @@ class AzureDataReader(CsvDataReader):
             for line in reader:
                 yield line
 
+    def next_raw(self) -> list[str]:
+        if self.is_binary:
+            raise ValueError("CSV files must be opened in text mode, not binary.")
+        with open(
+            uri=self.path,
+            mode=self.mode,
+            encoding=self.encoding,
+            transport_params={"client": AzureUtility.make_client()},
+        ) as file:
+            for line in file:
+                yield line
+
     def fingerprint(self) -> str:
         self.load_if()
         h = AzureFingerprinter().fingerprint(self.path)

@@ -1,9 +1,13 @@
 import unittest
 import pytest
 import os
+import json
 from csvpath import CsvPath
 from csvpath.util.config import Config
 from csvpath.util.config_exception import ConfigurationException
+from csvpath.util.nos import Nos
+
+from csvpath.util.config_env import ConfigEnv
 
 TEST_INI = (
     f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
@@ -14,6 +18,84 @@ BAD_INI = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}bad_config.ini"
 
 
 class TestCsvPathConfig(unittest.TestCase):
+    def test_config_env(self):
+        #
+        # this tests the ability to allow or disallow var sub of all caps var values
+        # in system env vars or a vars json dict.
+        #
+        # setup a config.ini for the test
+        #
+        path = os.path.join("tests", "test_resources", "temp", "config.ini")
+        nos = Nos(path)
+        #
+        # the ini should be generated when not found, we'll remove it if it already exists
+        #
+        assert Nos(path).exists()
+        if nos.exists():
+            nos.remove()
+        assert not nos.exists()
+        csvpath = CsvPath()
+        config = csvpath.config
+        config.set_config_path_and_reload(path)
+        #
+        # we should allow var sub by default
+        #
+        t = config.get(section="config", name="allow_var_sub")
+        assert t == "True"
+        #
+        # we expect to get var sub from the user's env by default
+        #
+        e = config.get(section="config", name="var_sub_source")
+        assert e == "env"
+        #
+        # when not found, we default to returning the name
+        #
+        configenv = ConfigEnv(config=config, nos=Nos(""))
+        v = configenv.get(name="SFTPPLUS_SERVER")
+        assert v == "SFTPPLUS_SERVER"
+        #
+        # but we can return a default value
+        #
+        v = configenv.get(name="SFTPPLUS_SERVER", default="ha")
+        assert v == "ha"
+        #
+        # we make a dir for the env file, if needed, but it never be..?
+        #
+        path = os.path.dirname(path)
+        if not Nos(path).dir_exists():
+            raise RuntimeError(
+                f"Why doesn't path {path} exist when we had to generate a config.ini?"
+            )
+        path = os.path.join(path, "env.json")
+        #
+        # configenv will create an empty env.json when it doesn't find it
+        #
+        if Nos(path).exists():
+            Nos(path).remove()
+        #
+        # update the config so configenv knows to look to the path
+        #
+        config.set(section="config", name="var_sub_source", value=path)
+        configenv.refresh()
+        #
+        # we should get our default back because the env.json file is created empty
+        #
+        v = configenv.get(name="SFTPPLUS_SERVER", default="ha")
+        assert v == "ha"
+        assert Nos(path).exists()
+        #
+        # add our env var name
+        #
+        with open(path, "w") as file:
+            json.dump({"SFTPPLUS_SERVER": "ha"}, file, indent=4)
+        assert Nos(path).exists()
+        configenv.refresh()
+        #
+        # passing no default value we should still get the desired sub value
+        #
+        v = configenv.get(name="SFTPPLUS_SERVER")
+        assert v == "ha"
+
     def test_config_no_load(self):
         config = Config(load=False)
         assert config.csvpaths_log_level is None

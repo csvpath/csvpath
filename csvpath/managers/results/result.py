@@ -332,7 +332,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
             self._printouts = self._readers_facade.printouts
         return self._printouts
 
-    def get_printouts(self, name="default") -> dict[str, list[str]]:
+    def get_printouts(self, name="default") -> list[str]:
         if self.printouts and name in self.printouts:
             return self.printouts[name]
         return []

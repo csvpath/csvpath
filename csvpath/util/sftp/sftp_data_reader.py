@@ -65,6 +65,25 @@ class SftpDataReader(CsvDataReader):
             for line in reader:
                 yield line
 
+    def next_raw(self) -> list[str]:
+        config = self._config
+        c = SftpConfig(config)
+        with open(
+            self.path,
+            self.mode,
+            encoding=self.encoding,
+            transport_params={
+                "connect_kwargs": {
+                    "username": c.username,
+                    "password": c.password,
+                    "look_for_keys": False,
+                    "allow_agent": False,
+                }
+            },
+        ) as file:
+            for line in file:
+                yield line
+
     def fingerprint(self) -> str:
         self.load_if()
         h = SftpFingerprinter().fingerprint(self.path)

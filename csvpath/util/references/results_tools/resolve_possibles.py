@@ -24,6 +24,13 @@ class PossiblesResolver:
         #
         possibles = []
         for m in mani:
+
+            if m["run_home"] == ref.name_one:
+                possibles.clear()
+                possibles.append(ref.name_one)
+                results.files = possibles
+                return
+
             npn = m["named_paths_name"]
             if npn.startswith("$"):
                 ref_x = ReferenceParser(string=npn, csvpaths=results.csvpaths)

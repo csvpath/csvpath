@@ -58,7 +58,8 @@ class PathsManager:
     def paths_root_manifest_path(self) -> str:
         """@private"""
         r = self.csvpaths.config.get(section="inputs", name="csvpaths")
-        p = os.path.join(r, "manifest.json")
+        p = Nos(r).join("manifest.json")
+        # p = os.path.join(r, "manifest.json")
         nos = self.nos
         nos.path = r
         if not nos.dir_exists():
@@ -83,7 +84,8 @@ class PathsManager:
                 raise ValueError(f"Reference datatype is not valid: {ref.datatype}")
             name = ref.root_major
         home = self.named_paths_home(name)
-        home = os.path.join(home, "manifest.json")
+        home = Nos(home).join("manifest.json")
+        # home = os.path.join(home, "manifest.json")
         return self.registrar.get_manifest(home)
 
     @property
@@ -95,7 +97,8 @@ class PathsManager:
 
     def named_paths_home(self, name: NamedPathsName) -> str:
         """@private"""
-        home = os.path.join(self.named_paths_dir, name)
+        home = Nos(self.named_paths_dir).join(name)
+        # home = os.path.join(self.named_paths_dir, name)
         nos = self.nos
         nos.path = home
         b = nos.dir_exists()
@@ -117,7 +120,8 @@ class PathsManager:
             name = ref.root_major
 
         path = self.named_paths_home(name)
-        path = os.path.join(path, "manifest.json")
+        path = Nos(path).join("manifest.json")
+        # path = os.path.join(path, "manifest.json")
         nos = self.nos
         nos.path = path
         if nos.exists():
@@ -165,7 +169,8 @@ class PathsManager:
                 ext = p[p.rfind(".") + 1 :].strip().lower()
                 if ext not in self.csvpaths.config.csvpath_file_extensions:
                     continue
-                path = os.path.join(base, p)
+                path = Nos(base).join(p)
+                # path = os.path.join(base, p)
                 if name is None:
                     #
                     # add files one by one under their own names
@@ -424,7 +429,7 @@ class PathsManager:
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         home = self.named_paths_home(name)
-        p = os.path.join(home, "definition.json")
+        p = Nos(home).join("definition.json")
         with DataFileWriter(path=p) as writer:
             writer.sink.write(definition)
 
@@ -435,7 +440,8 @@ class PathsManager:
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             name = ref.root_major
         home = self.named_paths_home(name)
-        path = os.path.join(home, "definition.json")
+        path = Nos(home).join("definition.json")
+        # path = os.path.join(home, "definition.json")
         nos = Nos(path)
         definition = None
         if nos.exists():
@@ -564,7 +570,8 @@ class PathsManager:
                 s = self.csvpaths.config.get(section="scripts", name="shell")
                 if s is not None:
                     text = f"#!{s}\n{text}"
-            script_file = os.path.join(self.named_paths_home(name), script_name)
+            script_file = Nos(self.named_paths_home(name)).join(script_name)
+            # script_file = os.path.join(self.named_paths_home(name), script_name)
             try:
                 dfw = DataFileWriter(path=script_file, mode="wb")
                 dfw.write(text)
@@ -609,7 +616,8 @@ class PathsManager:
         if cfg is None:
             raise ValueError(f"Script {script_type} is not configured")
         script_name = cfg.get(script_type)
-        return os.path.join(self.named_paths_home(name), script_name)
+        return Nos(self.named_paths_home(name)).join(script_name)
+        # return os.path.join(self.named_paths_home(name), script_name)
 
     #
     # gets the text of the script indicated by named-paths name and script type
@@ -634,7 +642,8 @@ class PathsManager:
         nos.path = path
         lst = nos.listdir()
         for n in lst:
-            nos.path = os.path.join(path, n)
+            nos.path = Nos(path).join(n)
+            # nos.path = os.path.join(path, n)
             if not nos.isfile():
                 names.append(n)
         return names
@@ -658,7 +667,8 @@ class PathsManager:
 
     def has_named_paths(self, name: NamedPathsName) -> bool:
         """@private"""
-        path = os.path.join(self.named_paths_dir, name)
+        path = Nos(self.named_paths_dir).join(name)
+        # path = os.path.join(self.named_paths_dir, name)
         nos = self.nos
         nos.path = path
         return nos.dir_exists()
@@ -688,7 +698,8 @@ class PathsManager:
             return None
         s = ""
         path = self.named_paths_home(name)
-        grp = os.path.join(path, "group.csvpaths")
+        grp = Nos(path).join("group.csvpaths")
+        # grp = os.path.join(path, "group.csvpaths")
         nos = self.nos
         nos.path = grp
         if nos.exists():
@@ -742,7 +753,8 @@ class PathsManager:
         return temp
 
     def _group_file_path(self, name: NamedPathsName) -> str:
-        temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
+        temp = Nos(self.named_paths_home(name)).join("group.csvpaths")
+        # temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
         return temp
 
     def _get_csvpaths_from_file(self, file_path: str) -> list[Csvpath]:
