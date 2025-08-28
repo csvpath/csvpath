@@ -100,7 +100,8 @@ class RunHomeMaker:
                     # should we be more defensive?
                     #
                     mpath = lst[0]
-                    mpath = os.path.join(mpath, "manifest.json")
+                    mpath = Nos(mpath).join("manifest.json")
+                    # mpath = os.path.join(mpath, "manifest.json")
                     nos = Nos(mpath)
                     if nos.exists():
                         with DataFileReader(mpath) as file:
@@ -224,11 +225,13 @@ class RunHomeMaker:
         #
         # TODO: check for an assure_paths_home type method in paths mgr
         #
-        run_dir = os.path.join(self.base_dir, paths_name)
+        run_dir = Nos(self.base_dir).join(paths_name)
+        # run_dir = os.path.join(self.base_dir, paths_name)
         nos = Nos(run_dir)
         if not nos.dir_exists():
             nos.makedirs()
-        run_dir = os.path.join(run_dir, f"{prefix}{run_time}")
+        run_dir = Nos(run_dir).join(f"{prefix}{run_time}")
+        # run_dir = os.path.join(run_dir, f"{prefix}{run_time}")
         #
         # the path existing for a different named-paths run in progress
         # or having completed less than 1000ms ago. CsvPaths are single-user,

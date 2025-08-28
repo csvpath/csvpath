@@ -7,6 +7,7 @@ from csvpath.managers.metadata import Metadata
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.box import Box
+from csvpath.util.nos import Nos
 
 
 class ScriptsResultsListener(Listener, threading.Thread):
@@ -93,7 +94,8 @@ class ScriptsResultsListener(Listener, threading.Thread):
                 name=mdata.named_paths_name, script_type=script_type
             )
             path = os.path.dirname(mdata.manifest_path)
-            path = os.path.join(path, script_name)
+            path = Nos(path).join(script_name)
+            # path = os.path.join(path, script_name)
             dfw = DataFileWriter(path=path)
             dfw.write(b)
             #
@@ -111,7 +113,8 @@ class ScriptsResultsListener(Listener, threading.Thread):
             n = datetime.now(timezone.utc)
             script_out_name = f"{script_name}-{n.strftime('%Y-%m-%d_%H-%M-%S_%f')}.txt"
             script_out_path = mdata.run_home
-            script_out_path = os.path.join(script_out_path, script_out_name)
+            script_out_path = Nos(script_out_path).join(script_out_name)
+            # script_out_path = os.path.join(script_out_path, script_out_name)
             dfw = DataFileWriter(path=script_out_path)
             dfw.write(out)
         except Exception as e:

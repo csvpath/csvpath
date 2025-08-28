@@ -1,6 +1,7 @@
 import os
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.reference_exceptions import ReferenceException
+from csvpath.util.nos import Nos
 
 
 class DataFinder:
@@ -25,4 +26,5 @@ class DataFinder:
         if len(results.files) == 0:
             return
         n = results.ref.name_three_tokens[0]
-        results.files = [os.path.join(results.files[0], f"{n}.csv")]
+        results.files = [Nos(results.files[0]).join(f"{n}.csv")]
+        # results.files = [os.path.join(results.files[0], f"{n}.csv")]

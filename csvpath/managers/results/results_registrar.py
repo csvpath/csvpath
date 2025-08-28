@@ -184,5 +184,6 @@ class ResultsRegistrar(Registrar, Listener):
     def manifest_path(self) -> str:
         if not Nos(self.run_dir).exists():
             Nos(self.run_dir).makedir()
-        mp = os.path.join(self.run_dir, "manifest.json")
+        mp = Nos(self.run_dir).join("manifest.json")
+        # mp = os.path.join(self.run_dir, "manifest.json")
         return mp

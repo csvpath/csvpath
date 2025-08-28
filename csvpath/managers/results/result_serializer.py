@@ -91,11 +91,14 @@ class ResultSerializer:
         }
         run_dir = self.get_instance_dir(run_dir=run_dir, identity=identity)
         # Save the JSON files
-        with DataFileWriter(path=os.path.join(run_dir, "meta.json")) as f:
+        with DataFileWriter(path=Nos(run_dir).join("meta.json")) as f:
+            # with DataFileWriter(path=os.path.join(run_dir, "meta.json")) as f:
             json.dump(meta, f.sink, indent=2)
-        with DataFileWriter(path=os.path.join(run_dir, "errors.json")) as f:
+        with DataFileWriter(path=Nos(run_dir).join("errors.json")) as f:
+            # with DataFileWriter(path=os.path.join(run_dir, "errors.json")) as f:
             json.dump(errors, f.sink, indent=2)
-        with DataFileWriter(path=os.path.join(run_dir, "vars.json")) as f:
+        with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
+            # with DataFileWriter(path=os.path.join(run_dir, "vars.json")) as f:
             json.dump(variables, f.sink, indent=2)
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
@@ -117,7 +120,8 @@ class ResultSerializer:
                 # poor indicator of the method anyway.
                 #
                 if lines is not None and len(lines) > 0:
-                    with DataFileWriter(path=os.path.join(run_dir, "data.csv")) as f:
+                    with DataFileWriter(path=Nos(run_dir).join("data.csv")) as f:
+                        # with DataFileWriter(path=os.path.join(run_dir, "data.csv")) as f:
                         writer = csv.writer(f.sink)
                         writer.writerows(lines)
         #
@@ -130,13 +134,15 @@ class ResultSerializer:
             and not isinstance(unmatched, LineSpooler)
             and len(unmatched) > 0
         ):
-            with DataFileWriter(path=os.path.join(run_dir, "unmatched.csv")) as f:
+            with DataFileWriter(path=Nos(run_dir).join("unmatched.csv")) as f:
+                # with DataFileWriter(path=os.path.join(run_dir, "unmatched.csv")) as f:
                 writer = csv.writer(f.sink)
                 writer.writerows(unmatched)
 
         # Save the printout lines
         if self._has_printouts(printouts):
-            with DataFileWriter(path=os.path.join(run_dir, "printouts.txt")) as f:
+            with DataFileWriter(path=Nos(run_dir).join("printouts.txt")) as f:
+                # with DataFileWriter(path=os.path.join(run_dir, "printouts.txt")) as f:
                 for k, v in printouts.items():
                     f.sink.write(f"---- PRINTOUT: {k}\n")
                     for _ in v:
@@ -153,7 +159,8 @@ class ResultSerializer:
         return False
 
     def get_instance_dir(self, run_dir, identity) -> str:
-        run_dir = os.path.join(run_dir, identity)
+        run_dir = Nos(run_dir).join(identity)
+        # run_dir = os.path.join(run_dir, identity)
         nos = self.nos
         nos.path = run_dir
         if not nos.exists():

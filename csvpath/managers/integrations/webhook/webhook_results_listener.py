@@ -127,7 +127,8 @@ class WebhookResultsListener(WebhookListener):
         lst = nos.listdir()
         homes = []
         for f in lst:
-            f = os.path.join(p, f)
+            f = Nos(p).join(f)
+            # f = os.path.join(p, f)
             nos.path = f
             if nos.isfile():
                 continue
@@ -138,7 +139,8 @@ class WebhookResultsListener(WebhookListener):
         m = {}
         homes = self.instance_homes(mdata)
         for f in homes:
-            f = os.path.join(f, filename)
+            f = Nos(f).join(filename)
+            # f = os.path.join(f, filename)
             nos = Nos(f)
             if nos.exists():
                 with DataFileReader(f) as file:

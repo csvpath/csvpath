@@ -17,6 +17,7 @@ from .result_serializer import ResultSerializer
 from .readers.readers import ResultReadersFacade
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
 
 
 class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
@@ -157,7 +158,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     @property
     def run_manifest(self) -> dict:
         p = self.run_dir
-        p = os.path.join(p, "manifest.json")
+        p = Nos(p).join("manifest.json")
+        # p = os.path.join(p, "manifest.json")
         with DataFileReader(p) as reader:
             return json.load(reader.source)
 
@@ -173,7 +175,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     @property
     def data_file_path(self) -> str:
-        return os.path.join(self.instance_dir, "data.csv")
+        return Nos(self.instance_dir).join("data.csv")
+        # return os.path.join(self.instance_dir, "data.csv")
 
     @property
     def instance_dir(self) -> str:
@@ -188,7 +191,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     @property
     def manifest(self) -> dict:
         p = self.instance_dir
-        p = os.path.join(p, "manifest.json")
+        p = Nos(p).join("manifest.json")
+        # p = os.path.join(p, "manifest.json")
         with DataFileReader(p) as reader:
             return json.load(reader.source)
 
