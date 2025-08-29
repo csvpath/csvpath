@@ -293,6 +293,8 @@ transfers = transfers
 files = inputs{os.sep}named_files
 csvpaths = inputs{os.sep}named_paths
 on_unmatched_file_fingerprints = halt
+allow_http_files=True
+allow_local_files=True
 
 [listeners]
 # add listener group names to send events to the channel they represent
