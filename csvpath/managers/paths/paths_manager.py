@@ -155,6 +155,8 @@ class PathsManager:
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
+        if self.can_load(directory) is not True:
+            return
         nos = self.nos
         nos.path = directory
         if not nos.isfile():
@@ -210,6 +212,8 @@ class PathsManager:
         template=None,
         append: bool = False,
     ) -> None:
+        if self.can_load(file_path) is not True:
+            return
         #
         # change for FP: added append as a pass-through
         #
@@ -221,6 +225,8 @@ class PathsManager:
 
     def add_named_paths_from_json(self, file_path: str) -> None:
         try:
+            if self.can_load(file_path) is not True:
+                return
             self.csvpaths.logger.debug("Opening JSON file at %s", file_path)
             with open(file_path, encoding="utf-8") as f:
                 j = json.load(f)
@@ -252,6 +258,25 @@ class PathsManager:
             self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
                 raise
+
+    def can_load(self, path: str) -> bool:
+        config = self.csvpaths.config
+        http = config.get(section="inputs", name="allow_http_files", default=False)
+        http = str(http).strip().lower() == "true"
+        local = config.get(section="inputs", name="allow_local_files", default=False)
+        local = str(local).strip().lower() == "true"
+        nos = Nos(path)
+        if nos.is_http and http is not True:
+            self.csvpaths.logger.warning(
+                "Cannot add {path} as {name} because loading files over HTTP is not allowed"
+            )
+            return False
+        if nos.is_local and local is not True:
+            self.csvpaths.logger.warning(
+                "Cannot add {path} as {name} because loading local files is not allowed"
+            )
+            return False
+        return True
 
     def add_named_paths(
         self,
@@ -699,7 +724,6 @@ class PathsManager:
         s = ""
         path = self.named_paths_home(name)
         grp = Nos(path).join("group.csvpaths")
-        # grp = os.path.join(path, "group.csvpaths")
         nos = self.nos
         nos.path = grp
         if nos.exists():
@@ -754,10 +778,11 @@ class PathsManager:
 
     def _group_file_path(self, name: NamedPathsName) -> str:
         temp = Nos(self.named_paths_home(name)).join("group.csvpaths")
-        # temp = os.path.join(self.named_paths_home(name), "group.csvpaths")
         return temp
 
     def _get_csvpaths_from_file(self, file_path: str) -> list[Csvpath]:
+        if self.can_load(file_path) is not True:
+            return []
         with DataFileReader(file_path) as reader:
             cp = reader.read()
             _ = [

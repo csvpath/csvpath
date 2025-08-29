@@ -18,6 +18,49 @@ class Nos:
         return f"{type(self)}: do: {self.do}, path: {self.path}"
 
     @property
+    def backend(self) -> str | None:
+        if self._path is None or self._do is None:
+            return None
+        if self._do.__class__.__name__.find("s3") > -1:
+            return "s3"
+        if self._do.__class__.__name__.find("azure") > -1:
+            return "azure"
+        if self._do.__class__.__name__.find("gcs") > -1:
+            return "gcs"
+        if self._do.__class__.__name__.find("sftp") > -1:
+            return "sftp"
+        if self._path.find("http") > -1:
+            return "http"
+        return "local"
+
+    @property
+    def is_local(self) -> bool:
+        return self.backend == "local"
+
+    @property
+    def is_sftp(self) -> bool:
+        return self.backend == "sftp"
+
+    @property
+    def is_s3(self) -> bool:
+        return self.backend == "s3"
+
+    @property
+    def is_azure(self) -> bool:
+        return self.backend == "azure"
+
+    @property
+    def is_gcs(self) -> bool:
+        return self.backend == "gcs"
+
+    #
+    # Nos doesn't support HTTP for the most part, but it can identify an http path.
+    #
+    @property
+    def is_http(self) -> bool:
+        return self.backend == "http"
+
+    @property
     def path(self) -> str:
         return self._path
 

@@ -505,6 +505,22 @@ class FileManager:
         if template is not None:
             temu.valid(template, file=True)
         path = pathu.resep(path)
+        config = self.csvpaths.config
+        http = config.get(section="inputs", name="allow_http_files", default=False)
+        http = str(http).strip().lower() == "true"
+        local = config.get(section="inputs", name="allow_local_files", default=False)
+        local = str(local).strip().lower() == "true"
+        nos = Nos(path)
+        if nos.is_http and http is not True:
+            self.csvpaths.logger.warning(
+                "Cannot add {path} as {name} because loading files over HTTP is not allowed"
+            )
+            return
+        if nos.is_local and local is not True:
+            self.csvpaths.logger.warning(
+                "Cannot add {path} as {name} because loading local files is not allowed"
+            )
+            return
         #
         # path must end up with only legal filesystem chars.
         # the read-only http backend will have ? and possibly other
