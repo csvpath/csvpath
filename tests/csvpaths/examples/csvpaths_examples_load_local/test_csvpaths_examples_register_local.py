@@ -9,7 +9,7 @@ class TestLocalRegister(unittest.TestCase):
     def test_register_local_file(self):
         paths = CsvPaths()
         paths.config.set_config_path_and_reload(
-            "tests/csvpaths/examples/csvpaths_examples_sftp/sftpgo_config.ini"
+            "tests/csvpaths/examples/csvpaths_examples_load_local/reg_local_config.ini"
         )
         paths.config.add_to_config("inputs", "allow_local_files", False)
         name = "local_file"
@@ -35,3 +35,33 @@ class TestLocalRegister(unittest.TestCase):
         assert paths.file_manager.has_named_file(name)
 
         paths.file_manager.remove_named_file(name)
+
+    def test_register_local_named_paths(self):
+        paths = CsvPaths()
+        paths.config.set_config_path_and_reload(
+            "tests/csvpaths/examples/csvpaths_examples_load_local/reg_local_config.ini"
+        )
+        paths.config.add_to_config("inputs", "allow_local_files", False)
+        name = "local_paths"
+        local = paths.config.get(section="inputs", name="allow_local_files")
+        assert local is False
+
+        path = os.path.join(
+            "tests",
+            "csvpaths",
+            "examples",
+            "csvpaths_examples_load_local",
+            "csvpaths",
+            "sku_upc.csvpath",
+        )
+        paths.paths_manager.remove_named_paths(name)
+        assert not paths.paths_manager.has_named_paths(name)
+
+        paths.paths_manager.add_named_paths_from_file(name=name, file_path=path)
+        assert not paths.paths_manager.has_named_paths(name)
+
+        paths.config.add_to_config("inputs", "allow_local_files", True)
+        paths.paths_manager.add_named_paths_from_file(name=name, file_path=path)
+        assert paths.paths_manager.has_named_paths(name)
+
+        paths.paths_manager.remove_named_paths(name)
