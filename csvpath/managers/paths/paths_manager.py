@@ -149,7 +149,12 @@ class PathsManager:
 
     def add_named_paths_from_dir(
         self, *, directory: str, name: NamedPathsName = None, template=None
-    ) -> None:
+    ) -> list[str]:
+        #
+        # we return a list of references to the loaded paths. these are not
+        # references to a particular version of the paths, as would be the case,
+        # with files, because we don't store versions, only track them.
+        #
         if directory is None:
             msg = "Named paths collection name needed"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -157,6 +162,7 @@ class PathsManager:
                 raise InputException(msg)
         if self.can_load(directory) is not True:
             return
+        lst = []
         nos = self.nos
         nos.path = directory
         if not nos.isfile():
@@ -178,9 +184,10 @@ class PathsManager:
                     # add files one by one under their own names
                     #
                     aname = self._name_from_name_part(p)
-                    self.add_named_paths_from_file(
+                    ref = self.add_named_paths_from_file(
                         name=aname, file_path=path, template=template
                     )
+                    lst.append(ref)
                 else:
                     #
                     # if a name, aggregate all the files
@@ -195,9 +202,10 @@ class PathsManager:
                     #
                     agg += _
             if len(agg) > 0:
-                self.add_named_paths(
+                ref = self.add_named_paths(
                     name=name, paths=agg, source_path=directory, template=template
                 )
+                lst.append(ref)
         else:
             msg = "Dirname must point to a directory"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -211,19 +219,31 @@ class PathsManager:
         file_path: str,
         template=None,
         append: bool = False,
-    ) -> None:
+    ) -> str:
         if self.can_load(file_path) is not True:
-            return
+            return None
         #
         # change for FP: added append as a pass-through
         #
         self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
         _ = self._get_csvpaths_from_file(file_path)
-        self.add_named_paths(
+        ref = self.add_named_paths(
             name=name, paths=_, source_path=file_path, template=template, append=append
         )
+        #
+        # absolute ref to the named-paths group in its present form.
+        #
+        return ref
 
-    def add_named_paths_from_json(self, file_path: str) -> None:
+    def add_named_paths_from_json(self, file_path: str) -> list[str]:
+        #
+        # we return a list of references to the loaded paths. these are not
+        # references to a particular version of the paths, as would be the case,
+        # with files, because we don't store versions, only track them. with
+        # JSON the working assumption has been that you usually create one JSON
+        # per named-paths group; however, that won't always be the case.
+        #
+        lst = []
         try:
             if self.can_load(file_path) is not True:
                 return
@@ -251,13 +271,15 @@ class PathsManager:
                         if k in c:
                             template = c[k].get("template")
 
-                    self.add_named_paths(
+                    ref = self.add_named_paths(
                         name=k, paths=paths, source_path=file_path, template=template
                     )
+                    lst.append(ref)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
             self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
                 raise
+        return lst
 
     def can_load(self, path: str) -> bool:
         config = self.csvpaths.config
@@ -293,7 +315,7 @@ class PathsManager:
         # exp. added for FP
         #
         assure_definition: bool = True,
-    ) -> None:
+    ) -> str:
         if template is not None:
             #
             # this will raise an error. if that's a problem use temu.validate
@@ -303,9 +325,10 @@ class PathsManager:
             #
             # change for FP. added append as a pass-through
             #
-            return self.add_named_paths_from_file(
+            ref = self.add_named_paths_from_file(
                 name=name, file_path=from_file, template=template, append=append
             )
+            return ref
         elif from_dir is not None:
             return self.add_named_paths_from_dir(
                 name=name, directory=from_dir, template=template
@@ -358,6 +381,13 @@ class PathsManager:
         mdata.source_path = source_path
         mdata.template = template
         self.registrar.register_complete(mdata)
+        #
+        # with named-paths we don't keep separate versions of the group, so
+        # we don't include dates in references. the versions can be "easily"
+        # compiled from metadata, fwiw.
+        #
+        ref = f"${name}.csvpaths.0:from"
+        return ref
 
     #
     # adding ref handling for the form: $many.csvpaths.food
@@ -604,7 +634,7 @@ class PathsManager:
                 #
                 # TODO: handle better! log, error obj, etc.
                 #
-                print(f"error! {type(e)}: {e}")
+                self.csvpaths.logger.error(e)
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
         config = self.get_config_for_paths(name)

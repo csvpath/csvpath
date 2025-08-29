@@ -89,7 +89,7 @@ class ResultsManager:  # pylint: disable=C0115
     #
     def start_run(
         self, *, run_dir, pathsname, filename, file: str = None, run_uuid: UUID
-    ) -> None:
+    ) -> ResultsMetadata:
         """@private"""
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
@@ -539,6 +539,10 @@ class ResultsManager:  # pylint: disable=C0115
             return self.get_named_results(ref.root_major)
         else:
             raise ValueError(f"Unexpected reference datatype in: {ref}")
+
+    def has_named_results(self, name: str) -> bool:
+        lst = self.get_named_results(name)
+        return lst and len(lst) > 0
 
     #
     # unless using a reference, effectively this method gets the last run's named results.
