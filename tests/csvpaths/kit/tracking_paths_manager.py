@@ -35,7 +35,7 @@ class TrackingPathsManager(PathsManager):
         if not append and self._loaded(name, paths):
             ...
         else:
-            self.mgr.add_named_paths(
+            ref = self.mgr.add_named_paths(
                 name=name,
                 paths=paths,
                 from_file=from_file,
@@ -46,6 +46,7 @@ class TrackingPathsManager(PathsManager):
                 append=append,
             )
             TrackingPathsManager.ADDED[name] = paths
+            return ref
 
     def _loaded(self, name, paths):
         _ = TrackingPathsManager.ADDED.get(name)

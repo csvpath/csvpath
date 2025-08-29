@@ -347,10 +347,20 @@ class FileManager:
     # this feels like the better sig.
     #
     def has_named_file(self, name: NamedFileName) -> bool:
+        if name is None:
+            raise ValueError("Name cannot be None")
         #
         # cannot be a reference or part of a reference. has to just
-        # be the simple name of the named file.
+        # be the simple name of the named file, but we can fix that.
         #
+        # if we're a reference we still only check for the existance of the
+        # name as a whole, not an instance registered under the name. that
+        # means there could be a True result on a named-file with no
+        # instances, technically. not sure how that would happen, tho.
+        #
+        if name.startswith("$"):
+            ref = ReferenceParser(name)
+            name = ref.root_major
         try:
             self.legal_name(name)
         except Exception:
@@ -577,6 +587,11 @@ class FileManager:
         # TODO: add file_size. move FileInfo into Nos. for now it is 0.
         #
         self.registrar.register_complete(mdata)
+        #
+        # the fingerprint is the most precise way of referencing a particular
+        # named-file version.
+        #
+        return f"${name}.files.{h}"
 
     def _clean_file_name(self, fname: str) -> str:
         fname = fname.replace("?", "_")

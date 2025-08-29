@@ -20,8 +20,9 @@ class TrackingFileManager(FileManager):
             ...
             # print(f"tracking file mgr: skipping file add: {name} is in {TrackingFileManager.ADDED}")
         else:
-            self.mgr.add_named_file(name=name, path=path, template=template)
+            ref = self.mgr.add_named_file(name=name, path=path, template=template)
             TrackingFileManager.ADDED[name] = path
+            return ref
 
     def remove_named_file(self, name: NamedFileName) -> bool:
         if name is not None and name in TrackingFileManager.ADDED:

@@ -5,7 +5,7 @@ import os
 import traceback
 from uuid import uuid4, UUID
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List, Any, NewType
 from datetime import datetime, timezone
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
@@ -23,6 +23,10 @@ from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
 from . import CsvPath
+
+
+# types for clarity
+Reference = NewType("Reference", str)
 
 
 class CsvPathsCoordinator(ABC):
@@ -500,7 +504,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
 
     def collect_paths(
         self, *, pathsname: str, filename: str, template: str = None
-    ) -> None:
+    ) -> Reference:
         """
         Sequentially does a CsvPath.collect() on filename for every named-path in the
         specified named-paths group. if a file reference is passed in, we iterate on
@@ -513,17 +517,21 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             raise InputException(f"No named-file found for {filename}")
         if isinstance(files, list):
             for file in files:
-                self._collect_paths(
+                ref = self._collect_paths(
                     pathsname=pathsname, filename=filename, template=template, file=file
                 )
         else:
-            self._collect_paths(
+            ref = self._collect_paths(
                 pathsname=pathsname, filename=filename, template=template, file=files
             )
+        #
+        # absolute reference to the results
+        #
+        return ref
 
     def _collect_paths(
         self, *, pathsname: str, file: str, filename: str, template: str = None
-    ) -> None:
+    ) -> Reference:
         #
         # if template is None we need to go find any template that was given when
         # the named-paths were loaded.
@@ -647,29 +655,35 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         )
         if self.wrap_up_automatically:
             self.wrap_up()
+        #
+        # the run home is the most specific reference we can return
+        #
+        return f"${pathsname}.results.{crt}"
 
     def fast_forward_paths(
         self, *, pathsname: str, filename: str, template: str = None
-    ) -> None:
+    ) -> Reference:
         """
         Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected.
         """
         files = self.file_manager.get_named_file(filename)
         if files is None:
             raise InputException(f"No named-file found for {filename}")
+        ref = None
         if isinstance(files, list):
             for file in files:
-                self._fast_forward_paths(
+                ref = self._fast_forward_paths(
                     pathsname=pathsname, filename=filename, template=template, file=file
                 )
         else:
-            self._fast_forward_paths(
+            ref = self._fast_forward_paths(
                 pathsname=pathsname, filename=filename, template=template, file=files
             )
+        return ref
 
     def _fast_forward_paths(
         self, *, pathsname: str, file: str, filename: str, template: str = None
-    ) -> None:
+    ) -> Reference:
         """Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected."""
         paths = self._get_named_paths(pathsname)
         if template is None:
@@ -768,6 +782,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         )
         if self.wrap_up_automatically:
             self.wrap_up()
+        return f"${pathsname}.results.{crt}"
 
     def next_paths(
         self,
@@ -776,7 +791,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         filename: str,
         collect: bool = False,
         template: str = None,
-    ):  # pylint: disable=R0914
+    ) -> List[Any]:  # pylint: disable=R0914
         """
         Does a CsvPath.next() on filename for every line against every named path in sequence
         """
@@ -891,6 +906,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.clear_run_coordination()
         if self.wrap_up_automatically:
             self.wrap_up()
+        return f"${pathsname}.results.{crt}"
 
     # =============== breadth first processing ================
 
@@ -902,11 +918,13 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
-    ):
+    ) -> Reference:
         """
         Does a CsvPath.collect() on filename where each row is considered by
         every named path before the next row starts next_by_line for if_all_agree
         and collect_when_not_matched.
+
+        The lines collected are streamed to data.csv files, not returned at the end of the run to the caller.
         """
         files = self.file_manager.get_named_file(filename)
         if isinstance(files, str):
@@ -934,13 +952,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             "Completed collect_by_line for paths: %s and file: %s", pathsname, filename
         )
         #
-        # the results have all the lines according to what CsvPath captured them, but
-        # since we're doing if_all_agree T/F we should return the union here. for some
-        # files this obviously makes the data in memory problem even bigger, but it's
-        # operator's responsibility to know if that will be a problem for their use
-        # case.
+        # we just return the absolute path to the results, not the lines. you
+        # can get the lines from each of the results objects or the data.csv files
+        # generated by the run.
         #
-        return lines
+        return f"${pathsname}.results.{self.run_metadata.run_home}"
 
     def fast_forward_by_line(
         self,
@@ -950,7 +966,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
-    ):
+    ) -> Reference:
         """
         Does a CsvPath.fast_forward() on filename where each row is considered by
         every named path before the next row starts next_by_line for if_all_agree
@@ -983,6 +999,10 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename,
             template,
         )
+        #
+        # return a fully qualified reference to the results.
+        #
+        return f"${pathsname}.results.{self.run_metadata.run_home}"
 
     def next_by_line(  # pylint: disable=R0912,R0915,R0914
         self,
