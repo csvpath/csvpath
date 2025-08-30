@@ -1,8 +1,10 @@
 import unittest
+import pytest
 import os
 from csvpath import CsvPaths
 from csvpath.util.backend_check import BackendCheck
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.exceptions import FileException
 
 
 class TestLocalRegister(unittest.TestCase):
@@ -27,7 +29,8 @@ class TestLocalRegister(unittest.TestCase):
         paths.file_manager.remove_named_file(name)
         assert not paths.file_manager.has_named_file(name)
 
-        paths.file_manager.add_named_file(name=name, path=path)
+        with pytest.raises(FileException):
+            paths.file_manager.add_named_file(name=name, path=path)
         assert not paths.file_manager.has_named_file(name)
 
         paths.config.add_to_config("inputs", "allow_local_files", True)
@@ -45,7 +48,6 @@ class TestLocalRegister(unittest.TestCase):
         name = "local_paths"
         local = paths.config.get(section="inputs", name="allow_local_files")
         assert local is False
-
         path = os.path.join(
             "tests",
             "csvpaths",
@@ -54,10 +56,13 @@ class TestLocalRegister(unittest.TestCase):
             "csvpaths",
             "sku_upc.csvpath",
         )
+
         paths.paths_manager.remove_named_paths(name)
         assert not paths.paths_manager.has_named_paths(name)
 
-        paths.paths_manager.add_named_paths_from_file(name=name, file_path=path)
+        with pytest.raises(FileException):
+            paths.paths_manager.add_named_paths_from_file(name=name, file_path=path)
+
         assert not paths.paths_manager.has_named_paths(name)
 
         paths.config.add_to_config("inputs", "allow_local_files", True)

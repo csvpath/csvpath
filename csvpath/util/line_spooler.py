@@ -77,9 +77,11 @@ class CsvLineSpooler(LineSpooler):
     def __iter__(self):
         return self
 
+    """
     def __next__(self):
         for _ in self.next():
             yield _
+    """
 
     def to_list(self) -> list[str]:
         if self.path is None:

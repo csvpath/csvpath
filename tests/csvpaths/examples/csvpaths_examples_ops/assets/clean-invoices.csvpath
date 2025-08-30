@@ -1,17 +1,20 @@
 ~
     Id: step-one
+    unmatched-mode:keep
 ~
 $[*][ yes()]
 
 ---- CSVPATH ----
 ~
     Id: step-two
+    unmatched-mode:keep
 ~
 $[*][ yes()]
 
 ---- CSVPATH ----
 ~
     Id: step-three
+    unmatched-mode:keep
 ~
 $[*][ yes()]
 

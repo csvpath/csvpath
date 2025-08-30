@@ -3,6 +3,10 @@ import unittest
 import os
 import pytest
 from csvpath import CsvPaths
+from csvpath.util.references.results_reference_finder_2 import (
+    ResultsReferenceFinder2 as ResultsReferenceFinder,
+)
+
 
 INVOICES = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices"
 ASSETS = (
@@ -20,6 +24,7 @@ class TestCsvPathsExamplesResultsOps_2(unittest.TestCase):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, print")
+        print(f"config path: {paths.config.configpath}")
         #
         # five files, seven registrations. 1 second between first and rest. another
         # second between the rest and the last.
@@ -93,11 +98,19 @@ class TestCsvPathsExamplesResultsOps_2(unittest.TestCase):
         #
         # run the clean-invoices named-paths group against the data generated in the last run
         # by the second step -- its data.csv. i don't need to deal with the template because i'm
-        # identifying the run using 'today:last'.
+        # identifying the run using ':last'.
+        # (originally ':today:last' works fine w/o :today too)
+        #
+        # first let's check the ref
+        ref = f"$clean-invoices.results.acme/invoices/2025/{month}/:today:last.step-two:data"
+        results = ResultsReferenceFinder(paths, reference=ref).query()
+        assert len(results.files) == 1
+        #
+        #
         #
         paths.collect_paths(
             pathsname="clean-invoices",
-            filename=f"$clean-invoices.results.acme/invoices/2025/{month}/:today:last.step-two",
+            filename=ref,
         )
         #
         # the above will fail with e.g. vvvv if the file is not found:

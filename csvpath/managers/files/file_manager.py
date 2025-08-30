@@ -6,13 +6,9 @@ from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.references.reference_parser import ReferenceParser
-
-# from csvpath.util.references.files_reference_finder import FilesReferenceFinder
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
 )
-
-# from csvpath.util.references.results_reference_finder import ResultsReferenceFinder
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
@@ -522,15 +518,16 @@ class FileManager:
         local = str(local).strip().lower() == "true"
         nos = Nos(path)
         if nos.is_http and http is not True:
-            self.csvpaths.logger.warning(
-                "Cannot add {path} as {name} because loading files over HTTP is not allowed"
-            )
-            return
+            msg = f"Cannot add {path} as {name} because loading files over HTTP is not allowed"
+            self.csvpaths.logger.warning(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
+
         if nos.is_local and local is not True:
-            self.csvpaths.logger.warning(
-                "Cannot add {path} as {name} because loading local files is not allowed"
-            )
-            return
+            msg = f"Cannot add {path} as {name} because loading local files is not allowed"
+            self.csvpaths.logger.warning(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
         #
         # path must end up with only legal filesystem chars.
         # the read-only http backend will have ? and possibly other
@@ -699,8 +696,10 @@ class FileManager:
                 lst = reff.resolve()
                 if len(lst) > 0:
                     ret = lst[0]
-                    ret = Nos(ret).join("data.csv")
-                    # ret = os.path.join(ret, "data.csv")
+                    if not ret.endswith("data.csv") and not ret.endswith(
+                        "unmatched.csv"
+                    ):
+                        ret = Nos(ret).join("data.csv")
         else:
             if not self.has_named_file(name):
                 return None

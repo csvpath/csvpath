@@ -19,6 +19,18 @@ FILES_DIR = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
 
 
 class TestCsvPathsManagersResultsManager(unittest.TestCase):
+    def test_unknown_results(self) -> None:
+        paths = Builder().build()
+        name = "unknown__"
+        r = paths.results_manager.get_errors(name)
+        assert not r
+        r = paths.results_manager.get_metadata(name)
+        assert not r
+        r = paths.results_manager.get_variables(name)
+        assert not r
+        r = paths.results_manager.get_printouts(name)
+        assert not r
+
     def test_results_mgr1(self):
         paths = Builder().build()
         paths.add_to_config("results", "archive", "this doesn't exist")
@@ -31,7 +43,7 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
     def test_results_print_to_printouts(self):
         paths = Builder().build()
         paths.file_manager.add_named_files_from_dir(
-            f"tests{os.sep}test_resources{os.sep}named_files"
+            f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files"
         )
         paths.paths_manager.add_named_paths(
             name="print_test",
@@ -39,6 +51,7 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
                 """$[3][
                         print("my msg", "error")
                         print("my other msg", "foo-bar")
+                        print("hello world")
                    ]"""
             ],
         )
@@ -53,6 +66,9 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         ps = results[0].get_printouts("foo-bar")
         assert len(ps) == 1
         assert ps[0].find("my other msg") > -1
+        printouts = paths.results_manager.get_printouts("print_test")
+        assert printouts
+        assert len(printouts) == len(results[0].get_printouts())
 
     def test_results_save_1(self):
         # archive dir in cwd. we'll put it in directly below because

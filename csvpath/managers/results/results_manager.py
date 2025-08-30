@@ -124,52 +124,6 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_start(mdata)
         return mdata
 
-    #
-    # this new version gets all the metadata from first through last member of the
-    # named-paths group. last key added wins. if you need to be sure one csvpath
-    # doesn't stomp on the last iterate the result objects yourself.
-    # if there is no run results for name, returns None
-    #
-    def get_metadata(self, name: str) -> dict:
-        results = self.get_named_results(name)
-        if results is None:
-            return None
-        vs = {}
-        for r in results:
-            vs = {**r.csvpath.metadata, **vs}
-        return vs
-
-    #
-    # unlike get_variables and get_metadata, get_errors adds lists with no chance for loss.
-    # if there is no run results for name, returns None
-    #
-    def get_errors(self, name: str) -> list | None:
-        results = self.get_named_results(name)
-        if results is None:
-            return None
-        es = []
-        for r in results:
-            es += r.csvpath.errors
-        return es
-
-    #
-    # get printouts adds the lists of printed lines across the results of a run.
-    # if printstream isn't passed the "default" printouts are returned.
-    # if there is no run results for name, returns None
-    #
-    # note, this method is limited, similar to get_variables and get_metadata.
-    # it doesn't separate printouts from different Result objects. a better way
-    # to go might be to iterate the results and pull the printouts you need.
-    #
-    def get_printouts(self, name: str, printstream: str = "default") -> dict:
-        results = self.get_named_results(name)
-        if results is None:
-            return None
-        ps = []
-        for r in results:
-            ps += r.csvpath.get_printouts(printstream)
-        return ps
-
     def get_specific_named_result(self, name: str, name_or_id: str = None) -> Result:
         #
         # gets a Result for a single csvpath instance from a run.
@@ -222,56 +176,120 @@ class ResultsManager:  # pylint: disable=C0115
         return rr.manifest
 
     #
+    # named-results can come back None or singley. we
+    # create a list, if needed, and put any non-list in it.
+    #
+    def _get_results_list(self, name: str) -> list:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        results = self.get_named_results(name)
+        if results is None:
+            return []
+        # a reference can return a single csvpath result from a run. perhaps
+        # not ideal.
+        if not isinstance(results, list):
+            results = [results]
+        return results
+
+    #
+    # this new version gets all the metadata from first through last member of the
+    # named-paths group. last key added wins. if you need to be sure one csvpath
+    # doesn't stomp on the last iterate the result objects yourself.
+    # if there is no run results for name, returns None
+    #
+    def get_metadata(self, name: str) -> dict:
+        results = self._get_results_list(name)
+        vs = {}
+        for r in results:
+            vs = {**r.csvpath.metadata, **vs}
+        return vs
+
+    #
+    # get printouts adds the lists of printed lines across the results of a run.
+    # if printstream isn't passed the "default" printouts are returned.
+    # if there is no run results for name, returns None
+    #
+    # note, this method is limited, similar to get_variables and get_metadata.
+    # it doesn't separate printouts from different Result objects. a better way
+    # to go might be to iterate the results and pull the printouts you need.
+    #
+    def get_printouts(self, name: str, printstream: str = "default") -> dict:
+        results = self._get_results_list(name)
+        ps = []
+        for r in results:
+            _ps = r.get_printouts(printstream)
+            ps += _ps if _ps else []
+        return ps
+
+    #
     # returns the last run of name's last csvpath instance result object.
     # seems like a very odd use case to support with its own method. needed?
     #
     def get_last_named_result(self, *, name: str, before: str = None) -> Result:
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         if results and len(results) > 0:
             return results[len(results) - 1]
         return None
 
     def is_valid(self, name: str) -> bool:
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         for r in results:
             if not r.is_valid:
                 return False
         return True
 
     def get_variables(self, name: str) -> bool:
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         vs = {}
         for r in results:
             vs = {**r.csvpath.variables, **vs}
         return vs
 
+    def get_lines(self, name: str) -> bool:
+        results = self._get_results_list(name)
+        lines = []
+        for r in results:
+            rlines = r.lines
+            for _ in rlines.next():
+                if _ not in lines:
+                    lines.append(_)
+        return lines
+
     def has_lines(self, name: str) -> bool:
-        """@private"""
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         for r in results:
             if r.lines and len(r.lines) > 0:
                 return True
         return False
 
-    def get_number_of_results(self, name: str) -> int:
-        nr = self.get_named_results(name)
-        if nr is None:
-            return 0
-        return len(nr)
+    #
+    # unlike get_variables and get_metadata, get_errors adds lists with no chance for loss.
+    # if there is no run results for name, returns None
+    #
+    def get_errors(self, name: str) -> list | None:
+        results = self._get_results_list(name)
+        es = []
+        for r in results:
+            es += r.errors
+        return es
 
     def has_errors(self, name: str) -> bool:
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         for r in results:
             if r.has_errors():
                 return True
         return False
 
     def get_number_of_errors(self, name: str) -> bool:
-        results = self.get_named_results(name)
+        results = self._get_results_list(name)
         errors = 0
         for r in results:
             errors += r.errors_count()
         return errors
+
+    def get_number_of_results(self, name: str) -> int:
+        results = self._get_results_list(name)
+        return len(results)
 
     def add_named_result(self, result: Result) -> None:
         """@private"""

@@ -132,7 +132,6 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         # skip_all() is not usable in serial runs (_paths methods)
         # it does the same as skip()
         #
-        #
         cs = Builder().build()
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)

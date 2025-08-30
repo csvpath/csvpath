@@ -191,12 +191,19 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         #   - 3 from 9 because both agree
         #   - 6 from 9 because just one agrees
         #
-        lines = paths.collect_by_line(
-            filename="test", pathsname="all_agree", if_all_agree=True
+        lines = []
+        ref = paths.collect_by_line(
+            filename="test", pathsname="all_agree", if_all_agree=True, lines=lines
         )
+        lines2 = paths.results_manager.get_lines(ref)
+        # all lines selected by all csvpaths
         assert len(lines) == 3
-        lines = paths.collect_by_line(
-            filename="test", pathsname="all_agree", if_all_agree=False
+        # all lines selected by any csvpaths
+        assert len(lines2) == 6
+
+        lines = []
+        paths.collect_by_line(
+            filename="test", pathsname="all_agree", if_all_agree=False, lines=lines
         )
         assert len(lines) == 6
 
@@ -207,21 +214,25 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         #   - 3 of 9 returned because both agree
         #   - 6 of 9 returned because just one
         #
-        lines = paths.collect_by_line(
+        lines = []
+        paths.collect_by_line(
             filename="test",
             pathsname="all_agree",
             if_all_agree=True,
             collect_when_not_matched=True,
+            lines=lines,
         )
         assert len(lines) == 3
         assert lines[0] == ["Ants", "Bat", "skriffle..."]
         assert lines[1] == ["Slug", "Bat", "oozeeee..."]
         assert lines[2] == ["Frog", "Bat", "growl"]
-        lines = paths.collect_by_line(
+        lines = []
+        paths.collect_by_line(
             filename="test",
             pathsname="all_agree",
             if_all_agree=False,
             collect_when_not_matched=True,
+            lines=lines,
         )
         assert len(lines) == 6
         assert lines[0] == ["Frog", "Bat", "ribbit..."]
