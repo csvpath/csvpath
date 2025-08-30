@@ -21,13 +21,13 @@ class Nos:
     def backend(self) -> str | None:
         if self._path is None or self._do is None:
             return None
-        if self._do.__class__.__name__.find("s3") > -1:
+        if self._do.__class__.__name__.lower().find("s3") > -1:
             return "s3"
-        if self._do.__class__.__name__.find("azure") > -1:
+        if self._do.__class__.__name__.lower().find("azure") > -1:
             return "azure"
-        if self._do.__class__.__name__.find("gcs") > -1:
+        if self._do.__class__.__name__.lower().find("gcs") > -1:
             return "gcs"
-        if self._do.__class__.__name__.find("sftp") > -1:
+        if self._do.__class__.__name__.lower().find("sftp") > -1:
             return "sftp"
         if self._path.find("http") > -1:
             return "http"

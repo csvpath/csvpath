@@ -4,7 +4,7 @@ import json
 from typing import NewType
 from json import JSONDecodeError
 from csvpath import CsvPath
-from csvpath.util.exceptions import InputException
+from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
@@ -248,6 +248,9 @@ class PathsManager:
             if self.can_load(file_path) is not True:
                 return
             self.csvpaths.logger.debug("Opening JSON file at %s", file_path)
+            #
+            # FlightPath - should not be tied to the local file system.
+            #
             with open(file_path, encoding="utf-8") as f:
                 j = json.load(f)
                 self.csvpaths.logger.debug("Found JSON file with %s keys", len(j))
@@ -282,6 +285,11 @@ class PathsManager:
         return lst
 
     def can_load(self, path: str) -> bool:
+        #
+        # in multi-user envs, e.g. flightpath server, we may not want a user to
+        # be able to register files from anywhere on the local machine or an
+        # unrestricted HTTP server.
+        #
         config = self.csvpaths.config
         http = config.get(section="inputs", name="allow_http_files", default=False)
         http = str(http).strip().lower() == "true"
@@ -289,14 +297,16 @@ class PathsManager:
         local = str(local).strip().lower() == "true"
         nos = Nos(path)
         if nos.is_http and http is not True:
-            self.csvpaths.logger.warning(
-                "Cannot add {path} as {name} because loading files over HTTP is not allowed"
-            )
+            msg = f"Cannot add {path} because loading files over HTTP is not allowed"
+            self.csvpaths.logger.warning(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
             return False
         if nos.is_local and local is not True:
-            self.csvpaths.logger.warning(
-                "Cannot add {path} as {name} because loading local files is not allowed"
-            )
+            msg = f"Cannot add {path} because loading local files is not allowed"
+            self.csvpaths.logger.warning(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
             return False
         return True
 

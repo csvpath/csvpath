@@ -102,6 +102,13 @@ class DateFilter:
         possibles = [m for m in mani if m["named_paths_name"] == results.ref.root_major]
         reals = []
         #
+        # keep an eye on this. it is fine, empirically, but doesn't feel like it should
+        # be needed... and it's not. phew. leaving for now, just to help guide if anything
+        # comes up. feel free to delete.
+        #
+        # last = last.astimezone(timezone.utc) if last else None
+        # first = first.astimezone(timezone.utc) if first else None
+        #
         # the manifest has one entry for every instance in a run, so we need to track the
         # run_uuids so we don't over count.
         #
@@ -129,8 +136,6 @@ class DateFilter:
             # outside
             #
             dat = dat.astimezone(timezone.utc) if dat else None
-            last = last.astimezone(timezone.utc) if last else None
-            first = first.astimezone(timezone.utc) if first else None
             add = False
             if first and last and first <= dat < last:
                 add = True
@@ -209,6 +214,7 @@ class DateFilter:
         try:
             s = DateCompleter.get(datestr)
             dat = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
+            dat = dat.replace(tzinfo=datetime.timezone.utc)
             return dat
         except Exception:
             ...

@@ -36,7 +36,8 @@ class TokenFilters:
 
     @classmethod
     def first_moment(cls, dt: datetime) -> datetime:
-        return datetime.datetime.combine(dt.date(), time.min)
+        ndt = datetime.datetime.combine(dt.date(), time.min)
+        return ndt.replace(tzinfo=datetime.timezone.utc)
 
     @classmethod
     def filter(cls, results: ReferenceResults, tokens: list[str], token: str) -> None:

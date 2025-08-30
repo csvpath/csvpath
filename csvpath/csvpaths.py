@@ -502,6 +502,13 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     # main functions
     # =========================
 
+    #
+    # a filename pointer is typically a named-file name. however, it can be a reference.
+    # when it is a reference it will typically be to a specific csvpath's output, data.csv.
+    # it can also be to unmatched.csv. the reference can end in :data or :unmatched to
+    # specifically require those files. it can also just point to the csvpath, in which
+    # case data.csv is the default.
+    #
     def collect_paths(
         self, *, pathsname: str, filename: str, template: str = None
     ) -> Reference:
@@ -515,6 +522,16 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         files = self.file_manager.get_named_file(filename)
         if files is None:
             raise InputException(f"No named-file found for {filename}")
+
+        #
+        # if we came in with a specific file pointer we want to strip it down
+        # the more generic form now that we have the file.
+        #
+        if filename.endswith(":data"):
+            filename = filename[0:-5]
+        elif filename.endswith(":unmatched"):
+            filename = filename[0:-10]
+
         if isinstance(files, list):
             for file in files:
                 ref = self._collect_paths(
@@ -918,6 +935,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
+        lines: list = None,
     ) -> Reference:
         """
         Does a CsvPath.collect() on filename where each row is considered by
@@ -935,7 +953,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename,
             template,
         )
-        lines = []
+        lines = lines if lines is not None else []
         for file in files:
             for line in self._next_by_line(  # pylint: disable=W0612
                 pathsname=pathsname,
