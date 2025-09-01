@@ -4,6 +4,8 @@ import shutil
 from csvpath import CsvPaths
 from csvpath.util.line_monitor import LineMonitor
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.nos import Nos
+from csvpath.util.file_writers import DataFileWriter
 from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
@@ -62,9 +64,15 @@ class TestCsvPathsCache(unittest.TestCase):
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("cache", "path", "cache")
         cache = paths.file_manager.lines_and_headers_cacher.cache
-        filename = "/a/file/name"
+        filename = os.path.join("tests", "csvpath", "test_resources", "deleteme.csv")
+        nos = Nos(filename)
         headers = ["a", "header", "row"]
-        cache.cache_text(filename, "csv", ",".join(headers))
+        txt = ",".join(headers)
+        if nos.exists():
+            nos.remove()
+        with DataFileWriter(path=filename) as file:
+            file.write(txt)
+        cache.cache_text(filename, "csv", txt)
         paths = Builder().build()
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("cache", "path", "cache")
@@ -74,6 +82,7 @@ class TestCsvPathsCache(unittest.TestCase):
         assert cheaders == headers
         assert len(cheaders) == len(headers)
         paths.config.add_to_config("cache", "use_cache", v)
+        nos.remove()
 
     def test_cache_line_mon1(self):
         paths = Builder().build()

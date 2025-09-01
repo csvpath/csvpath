@@ -4,7 +4,9 @@ from csvpath import CsvPaths
 from csvpath.util.line_monitor import LineMonitor
 from tests.csvpaths.builder import Builder
 
-
+FOODX = (
+    f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}foodx.csv"
+)
 FILES = {
     "food": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",
     "test": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}test.csv",
@@ -17,7 +19,7 @@ NAMED_PATHS_DIR = (
 class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
     def test_csvpaths_line_numbers_and_headers(self):
         paths = Builder().build()
-        paths.file_manager.set_named_files(FILES)
+        paths.file_manager.add_named_file(name="food", path=FOODX)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.fast_forward_paths(filename="food", pathsname="food")
         # all we need to see is that the new object has the data/objects
@@ -35,6 +37,8 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         path2.headers[0] = "fish"
         assert path.headers[0] != "fish"
         assert path2.line_monitor.physical_line_count is None
+
+    """ """
 
     def test_csvpaths_stop_all_by_line(self):
         cs = Builder().build()
@@ -61,9 +65,11 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         assert i == 3
         assert vs["one"] == [0, 1, 2]
 
+    """ """
+
     def test_csvpaths_fail_all_by_line(self):
         cs = Builder().build()
-        cs.file_manager.set_named_files(FILES)
+        cs.file_manager.add_named_file(name="food", path=FOODX)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="failing"):
@@ -76,7 +82,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_fail_all_paths(self):
         cs = Builder().build()
-        cs.file_manager.set_named_files(FILES)
+        cs.file_manager.add_named_file(name="food", path=FOODX)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="failing"):
@@ -152,7 +158,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_advance_all_by_line(self):
         cs = Builder().build()
-        cs.file_manager.set_named_files(FILES)
+        cs.file_manager.add_named_file(name="food", path=FOODX)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_by_line(filename="food", pathsname="advancing"):
@@ -167,7 +173,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
 
     def test_csvpaths_advance_all_paths(self):
         cs = Builder().build()
-        cs.file_manager.set_named_files(FILES)
+        cs.file_manager.add_named_file(name="food", path=FOODX)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
         for line in cs.next_paths(filename="food", pathsname="advancing", collect=True):

@@ -180,7 +180,6 @@ class LineMonitor:
         self._physical_end_line_number = self._physical_line_number
         self._data_end_line_count = self._data_line_count
         self._data_end_line_number = self._data_line_number
-
         self._physical_line_count = None
         self._physical_line_number = None
         self._data_line_count = None
