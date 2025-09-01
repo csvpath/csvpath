@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta, timezone
+from dateutil.relativedelta import relativedelta
 
 
 class DateCompleter:
@@ -22,40 +23,27 @@ class DateCompleter:
             tto = datetime.datetime(
                 d.year, d.month + 1, 1, 0, 0, 0, tzinfo=timezone.utc
             )
+            tto = ffrom + relativedelta(months=1)
         elif unit == "day":
             ffrom = datetime.datetime(
                 d.year, d.month, d.day, 0, 0, 0, tzinfo=timezone.utc
             )
-            tto = datetime.datetime(
-                d.year, d.month, d.day + 1, 0, 0, 0, tzinfo=timezone.utc
-            )
+            tto = ffrom + timedelta(days=1)
         elif unit == "hour":
             ffrom = datetime.datetime(
                 d.year, d.month, d.day, d.hour, 0, 0, tzinfo=timezone.utc
             )
-            tto = datetime.datetime(
-                d.year, d.month, d.day, d.hour + 1, 0, 0, tzinfo=timezone.utc
-            )
+            tto = ffrom + timedelta(hours=1)
         elif unit == "minute":
             ffrom = datetime.datetime(
                 d.year, d.month, d.day, d.hour, d.minute, 0, tzinfo=timezone.utc
             )
-            tto = datetime.datetime(
-                d.year, d.month, d.day, d.hour, d.minute + 1, 0, tzinfo=timezone.utc
-            )
+            tto = ffrom + timedelta(minutes=1)
         elif unit == "second":
             ffrom = datetime.datetime(
                 d.year, d.month, d.day, d.hour, d.minute, d.second, tzinfo=timezone.utc
             )
-            tto = datetime.datetime(
-                d.year,
-                d.month,
-                d.day,
-                d.hour,
-                d.minute,
-                d.second + 1,
-                tzinfo=timezone.utc,
-            )
+            tto = ffrom + timedelta(seconds=1)
         else:
             raise ValueError(f"Unknown unit: {unit}")
         return (ffrom, tto)

@@ -43,10 +43,9 @@ class LinesAndHeadersCacher:
             raise ValueError("Filename cannot be None")
         lm = LineMonitor()
         json = self.cache.cached_text(filename, "json")
-        if json is not None and not json.strip() == "":
-            lm.load(json)
-        else:
+        if json is None or json.strip() == "":
             return (None, None)
+        lm.load(json)
         headers = self.cache.cached_text(filename, "csv")
         return (lm, headers)
 

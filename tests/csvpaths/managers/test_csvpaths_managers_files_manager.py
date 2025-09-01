@@ -186,7 +186,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         fm = paths.file_manager
         fm.remove_all_named_files()
         fm.add_named_files_from_dir(DIR)
-        assert fm.named_files_count == 4
+        assert fm.named_files_count == 5
 
     def test_file_mgr_json1(self):
         paths = Builder().build()

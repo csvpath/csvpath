@@ -265,6 +265,49 @@ class TestCsvPathsReferencesFilesReferenceFinder2(unittest.TestCase):
         assert results.files is not None
         assert len(results.files) == 1
         assert results.files[0] == mani[1]["file"]
+        #
+        # run through month, other units, also just to check for blowups
+        #
+        y = yesterday.strftime("%Y-%m-")
+        reference = f"$test.files.{y}"
+        ref = ReferenceParser(string=reference, csvpaths=csvpaths)
+        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder._do_date_if_name_one(
+            results=results, tokens=ref.name_one_tokens, mani=mani
+        )
+        y = yesterday.strftime("%Y-")
+        reference = f"$test.files.{y}"
+        ref = ReferenceParser(string=reference, csvpaths=csvpaths)
+        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder._do_date_if_name_one(
+            results=results, tokens=ref.name_one_tokens, mani=mani
+        )
+        y = yesterday.strftime("%Y-%m-%d_%H-")
+        reference = f"$test.files.{y}"
+        ref = ReferenceParser(string=reference, csvpaths=csvpaths)
+        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder._do_date_if_name_one(
+            results=results, tokens=ref.name_one_tokens, mani=mani
+        )
+        y = yesterday.strftime("%Y-%m-%d_%H-%M-")
+        reference = f"$test.files.{y}"
+        ref = ReferenceParser(string=reference, csvpaths=csvpaths)
+        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder._do_date_if_name_one(
+            results=results, tokens=ref.name_one_tokens, mani=mani
+        )
+        y = yesterday.strftime("%Y-%m-%d_%H-%M-%S")
+        reference = f"$test.files.{y}"
+        ref = ReferenceParser(string=reference, csvpaths=csvpaths)
+        results = ReferenceResults(csvpaths=csvpaths, ref=ref)
+        finder = FilesReferenceFinder2(csvpaths=csvpaths, ref=ref)
+        finder._do_date_if_name_one(
+            results=results, tokens=ref.name_one_tokens, mani=mani
+        )
 
     def test_do_ordinal_if(self):
         csvpaths = Builder().build()
