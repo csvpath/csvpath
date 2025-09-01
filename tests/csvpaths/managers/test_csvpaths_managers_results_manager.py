@@ -9,6 +9,9 @@ from csvpath.managers.results.result_serializer import ResultSerializer
 from tests.csvpaths.builder import Builder
 
 
+FOODX = (
+    f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}foodx.csv"
+)
 FILES = {
     "food": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv"
 }
@@ -115,6 +118,29 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         paths.fast_forward_paths(pathsname="print_test", filename="food")
         results = paths.results_manager.get_named_results("print_test")
         assert results
+
+    def test_results_named_results_home(self):
+        paths = Builder().build()
+        paths.file_manager.add_named_file(name="foodx", path=FOODX)
+        paths.paths_manager.add_named_paths(
+            name="print_test",
+            paths=[
+                """ ~ validation-mode: print
+                        $[3][ add( 3, 3 ) ]"""
+            ],
+        )
+        ref = paths.fast_forward_paths(pathsname="print_test", filename="foodx")
+        assert ref
+        assert isinstance(ref, str)
+        results = paths.results_manager.get_named_results("print_test")
+        assert results
+        path = paths.results_manager.get_named_results_home(ref)
+        assert path
+        assert path.find(ref) == -1
+        results2 = paths.results_manager.get_named_results(ref)
+        assert results2
+        assert len(results2) == len(results)
+        assert str(results2[0].run_uuid) == str(results[0].run_uuid)
 
     def test_results_mgr_specific_named_result(self):
         paths = Builder().build()

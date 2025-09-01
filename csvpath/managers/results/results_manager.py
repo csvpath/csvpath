@@ -695,6 +695,13 @@ class ResultsManager:  # pylint: disable=C0115
         #    raise InputException(msg)
 
     def get_named_results_home(self, name: str) -> str:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if name.find("$") > -1 and not name[0:1] == "$":
+            raise ValueError(f"reference must start with $: {name}")
+        if name[0:1] == "$":
+            ref = ReferenceParser(name)
+            name = ref.root_major
         path = Nos(self.csvpaths.config.archive_path).join(name)
         # path = os.path.join(self.csvpaths.config.archive_path, name)
         return path
