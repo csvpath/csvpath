@@ -236,6 +236,10 @@ class PathsManager:
         return ref
 
     def add_named_paths_from_json(self, file_path: str) -> list[str]:
+        if file_path is None:
+            raise ValueError(
+                "Named-paths group definition JSON file path cannot be None"
+            )
         #
         # we return a list of references to the loaded paths. these are not
         # references to a particular version of the paths, as would be the case,
@@ -251,8 +255,13 @@ class PathsManager:
             #
             # FlightPath - should not be tied to the local file system.
             #
-            with open(file_path, encoding="utf-8") as f:
-                j = json.load(f)
+            nos = Nos(file_path)
+            if not nos.exists():
+                raise ValueError(
+                    f"{file_path} is not a JSON named-paths group definition file"
+                )
+            with DataFileReader(file_path) as f:
+                j = json.load(f.source)
                 self.csvpaths.logger.debug("Found JSON file with %s keys", len(j))
                 for k in j:
                     #

@@ -166,6 +166,14 @@ class RuntimeDataCollector:
             local,
             False,
         )
+        cls._set(
+            runtime,
+            identity,
+            "errors_count",
+            csvpath.errors_count,
+            local,
+            False,
+        )
 
     @classmethod
     def _set(
