@@ -18,29 +18,32 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_paths_listener_1(self):
         paths = Builder().build()
+
+        paths.config.set_config_path_and_reload( os.path.join("assets", "config", "jenkins-windows-local.ini") )
+
         reg = PathsListener(paths)
         mdata = PathsMetadata(paths.config)
         mdata.named_paths_name = "aname"
-        mdata.named_paths_home = "root/aname"
-        mdata.group_file_path = "root/aname/group.csvpaths"
+        mdata.named_paths_home = os.path.join("root","aname")
+        mdata.group_file_path = os.path.join("root","aname","group.csvpaths")
         mdata.source_path = "a/b/c"
         mdata.fingerprint = "123"
-        mdata.manifest_path = "root/aname/manifest.json"
+        mdata.manifest_path = os.path.join("root","aname","manifest.json")
         #
         # check mdata to mani transfer
         #
         mani = reg._prep_update(mdata)
-        assert mani["paths_manifest"] == "root/aname/manifest.json"
+        assert mani["paths_manifest"] == os.path.join("root","aname","manifest.json")
         assert mani["manifest_path"] == os.path.join(
             paths.config.get(section="inputs", name="csvpaths"), "manifest.json"
         )
         assert mani["uuid"] is not None
         assert mani["time"] is not None
-        assert mani["paths_manifest"] == "root/aname/manifest.json"
+        assert mani["paths_manifest"] == os.path.join("root","aname","manifest.json")
         assert mani["fingerprint"] == "123"
         assert mani["named_paths_name"] == "aname"
-        assert mani["named_paths_home"] == "root/aname"
-        assert mani["group_file_path"] == "root/aname/group.csvpaths"
+        assert mani["named_paths_home"] == os.path.join("root","aname")
+        assert mani["group_file_path"] == os.path.join("root","aname","group.csvpaths")
         assert mani["source_path"] == "a/b/c"
         assert mani["fingerprint"] == "123"
 

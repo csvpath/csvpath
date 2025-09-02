@@ -20,7 +20,15 @@ ACME = f"{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}da
 
 
 class TestCsvPathsExamplesResultsOps_4(unittest.TestCase):
+    
     def test_results_references_ops_4(cls):
+        #
+        # this test does not play well with others. clearing the archive
+        # is required and isn't a big ask.
+        #
+        from tests.conftest import _clear_files
+        _clear_files()
+        
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpath", "raise, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, print")

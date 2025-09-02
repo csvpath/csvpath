@@ -50,7 +50,7 @@ class TestCsvPathConfig(unittest.TestCase):
         #
         # when not found, we default to returning the name
         #
-        configenv = ConfigEnv(config=config, nos=Nos(""))
+        configenv = ConfigEnv(config=config)
         v = configenv.get(name="SFTPPLUS_SERVER")
         assert v == "SFTPPLUS_SERVER"
         #
