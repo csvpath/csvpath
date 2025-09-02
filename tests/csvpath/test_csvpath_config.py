@@ -51,12 +51,12 @@ class TestCsvPathConfig(unittest.TestCase):
         # when not found, we default to returning the name
         #
         configenv = ConfigEnv(config=config)
-        v = configenv.get(name="SFTPPLUS_SERVER")
-        assert v == "SFTPPLUS_SERVER"
+        v = configenv.get(name="BLUEFISH")
+        assert v == "BLUEFISH"
         #
         # but we can return a default value
         #
-        v = configenv.get(name="SFTPPLUS_SERVER", default="ha")
+        v = configenv.get(name="BLUEFISH", default="ha")
         assert v == "ha"
         #
         # we make a dir for the env file, if needed, but it never be..?
@@ -80,20 +80,20 @@ class TestCsvPathConfig(unittest.TestCase):
         #
         # we should get our default back because the env.json file is created empty
         #
-        v = configenv.get(name="SFTPPLUS_SERVER", default="ha")
+        v = configenv.get(name="BLUEFISH", default="ha")
         assert v == "ha"
         assert Nos(path).exists()
         #
         # add our env var name
         #
         with open(path, "w") as file:
-            json.dump({"SFTPPLUS_SERVER": "ha"}, file, indent=4)
+            json.dump({"BLUEFISH": "ha"}, file, indent=4)
         assert Nos(path).exists()
         configenv.refresh()
         #
         # passing no default value we should still get the desired sub value
         #
-        v = configenv.get(name="SFTPPLUS_SERVER")
+        v = configenv.get(name="BLUEFISH")
         assert v == "ha"
 
     def test_config_no_load(self):
