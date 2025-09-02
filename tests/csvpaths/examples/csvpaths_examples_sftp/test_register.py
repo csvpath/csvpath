@@ -1,4 +1,5 @@
 import unittest
+import os
 from csvpath import CsvPaths
 from csvpath.util.backend_check import BackendCheck
 from csvpath.util.file_writers import DataFileWriter
@@ -10,9 +11,9 @@ class TestSftpRegister(unittest.TestCase):
         #
         # this test is setup for sftpgo on localhost:2022 (the sftpgo default)
         #
-        paths.config.set_config_path_and_reload(
-            "tests/csvpaths/examples/csvpaths_examples_sftp/sftpgo_config.ini"
-        )
+        configpath = os.path.join("tests","csvpaths","examples","csvpaths_examples_sftp")
+        configpath = os.path.join(configpath, "sftpgo_config.ini" if os.sep == "/" else "sftpgo_config_win.ini")
+        paths.config.set_config_path_and_reload(configpath)
         if BackendCheck.sftp_available(paths.config):
             name = "sftp_reg"
             server = paths.config.get(section="sftp", name="server")
