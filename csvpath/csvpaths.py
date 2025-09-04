@@ -90,6 +90,16 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._config = Config()  # if config is None else config
         #
+        # if we set this to a project name it will be used in metrics and possible
+        # other places. the archive is also effectively a namespace, but it only matters
+        # for its own purposes. this is an independent project name that can be synced
+        # by the FlightPath frontend and/or server based on their similar concept of
+        # projects.
+        #
+        # for most other purposes it can just be ignored
+        #
+        self._project = "CsvPath"
+        #
         # in a few cases, mainly s3 and sftp connection or config sharing
         # we need to pass some state around. it's ugly, but logically not
         # terrible and better than other options bar major refactoring.
@@ -180,6 +190,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.results_manager = ResultsManager(csvpaths=self)
         self.ecoms = ErrorCommunications(csvpaths=self)
         self.error_manager = ErrorManager(csvpaths=self)
+
+    @property
+    def project(self) -> str:
+        return self._project
+
+    @project.setter
+    def project(self, name: str) -> None:
+        self._project = name
 
     @property
     def wrap_up_automatically(self) -> bool:
@@ -366,6 +384,36 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 self.error_manager.handle_error(source=self, msg=msg)
                 if self.ecoms.do_i_raise():
                     raise CsvPathsException(msg)
+        #
+        # if we have metrics we need to tear them down
+        #
+        if self.metrics:
+            try:
+                self.logger.debug(
+                    f"csvpaths.wrapping up: shutting down metrics: {self.metrics}"
+                )
+                self.metrics.provider.shutdown()
+                self.metrics = None
+            except Exception as ex:
+                self.logger.warning(f"Could not shutdown metrics provider: {ex}")
+        if self.error_manager.error_metrics:
+            try:
+                self.logger.debug(
+                    f"csvpaths.wrapping up: shutting down error metrics: {self.error_manager.error_metrics}"
+                )
+                self.error_manager.error_metrics.provider.shutdown()
+                self.error_manager.error_metrics = None
+            except Exception as ex:
+                self.logger.warning(f"Could not shutdown error metrics provider: {ex}")
+
+    def __del__(self) -> None:
+        #
+        # in most cases we're already wrapped up, but double checking is cheap
+        #
+        try:
+            self.wrap_up()
+        except Exception:
+            ...
 
     def _trim_archive_if(self, home: str) -> str:
         archive = self.config.get(section="results", name="archive")

@@ -183,6 +183,10 @@ class ResultsManager:  # pylint: disable=C0115
         if name is None:
             raise ValueError("Name cannot be None")
         results = self.get_named_results(name)
+        #
+        # should we be making noise if there are no results for name/ref?
+        # seems like that would be an error.
+        #
         if results is None:
             return []
         # a reference can return a single csvpath result from a run. perhaps

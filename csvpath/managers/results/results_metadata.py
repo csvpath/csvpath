@@ -26,7 +26,7 @@ class ResultsMetadata(Metadata):
         self.status: str = None
         self.all_completed: bool = None
         self.all_valid: bool = None
-        self.error_count: int = None
+        self.error_count: int = 0
         self.all_expected_files: bool = None
         self.by_line: bool = False
         self._run_uuid: UUID = None

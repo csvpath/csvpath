@@ -22,6 +22,22 @@ class OpenTelemetryErrorListener(OtlpListener):
                 metrics = ErrorMetrics(self)
             self.csvpath.error_manager.error_metrics = metrics
 
+    def send_metrics(self) -> None:
+        #
+        # send all the metrics updated to oltp now. we only complete once, so
+        # this is only going to happen once per csvpath.
+        #
+        try:
+            if self.csvpaths:
+                self.csvpaths.error_manager.error_metrics.reader.collect()
+                self.csvpaths.error_manager.error_metrics.provider.force_flush()
+            if self.csvpath:
+                self.csvpath.error_manager.error_metrics.reader.collect()
+                self.csvpath.error_manager.error_metrics.provider.force_flush()
+        except Exception as ex:
+            logger = self.csvpaths.logger if self.csvpaths else self.csvpath.logger
+            logger.error(ex)
+
     def error_meta(self, mdata: Metadata) -> dict:
         emeta = {}
         if mdata.archive_name:
@@ -66,3 +82,4 @@ class OpenTelemetryErrorListener(OtlpListener):
         self.csvpaths.error_manager.error_metrics.error_events.add(
             1, self.error_meta(mdata)
         )
+        self.send_metrics()

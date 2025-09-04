@@ -10,6 +10,17 @@ class OtlpListener(Listener):
         self.csvpaths = None
         self.result = None
 
+    def send_metrics(self) -> None:
+        #
+        # send all the metrics updated to oltp now. we only complete once, so
+        # this is only going to happen once per csvpath.
+        #
+        self.csvpaths.metrics.reader.collect()
+        # make sure all were actually sent
+        self.csvpaths.metrics.provider.force_flush()
+        self.csvpaths.logger.debug(f"Sent OTLP metrics from {self}")
+        print(f"Sent OTLP metrics from {self}")
+
     def core_meta(self, mdata: Metadata) -> dict:
         cmeta = {}
         if mdata.named_file_name:

@@ -18,15 +18,24 @@ class OpenTelemetryResultListener(OtlpListener):
             )
         if self.csvpaths.metrics is None:
             self.csvpaths.metrics = Metrics(self)
-        if mdata.error_count:
+        #
+        # metrics:
+        #   error count
+        #   valid
+        #   files generated
+        #   files are expected
+        #
+        if mdata.error_count and int(mdata.error_count) != -1:
             self.csvpaths.metrics.errors.add(mdata.error_count, self.core_meta(mdata))
         if mdata.valid:
             v = 0
             if mdata.valid is True:
                 v = 1
             self.csvpaths.metrics.valid.add(v, self.core_meta(mdata))
-        if mdata.file_count:
-            self.csvpaths.metrics.files.add(mdata.file_count, self.core_meta(mdata))
+        if mdata.number_of_files_generated:
+            self.csvpaths.metrics.files.add(
+                mdata.number_of_files_generated, self.core_meta(mdata)
+            )
         yn = mdata.files_expected
         if yn and not isinstance(yn, bool):
             raise ValueError("Files expected must convert to bool")
@@ -35,6 +44,11 @@ class OpenTelemetryResultListener(OtlpListener):
         else:
             yn = 0
         self.csvpaths.metrics.files_expected.add(yn, self.core_meta(mdata))
+        self.send_metrics()
+        print(f"sent is valid: {mdata.valid}")
+        print(f"sent files expected: {yn}")
+        print(f"sent files generated: {mdata.number_of_files_generated}")
+        print(f"sent error count: {mdata.error_count}")
 
     def core_meta(self, mdata):
         cmeta = super().core_meta(mdata)

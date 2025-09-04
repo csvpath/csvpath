@@ -264,6 +264,15 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
 
+    def __del__(self) -> None:
+        try:
+            if self.error_manager and self.error_manager.error_metrics:
+                self.error_manager.error_metrics.provider.shutdown()
+                self.error_manager.error_metrics = None
+        except Exception as ex:
+            if self.logger:
+                self.logger.error(ex)
+
     #
     # this method saves and reloads the config. if you don't want that use
     # CsvPath.config.save_to_config().

@@ -52,12 +52,12 @@ class ResultMetadata(Metadata):
         # there can be more files present than listed.
         #
         self.files_expected = True
-        self.number_of_files_expected: int = -1
+        self.number_of_files_expected: int = 0
         self.number_of_files_generated: int = 0
-        self.error_count: int = -1
-        self.lines_scanned: int = -1
-        self.lines_total: int = -1
-        self.lines_matched: int = -1
+        self.error_count: int = 0
+        self.lines_scanned: int = 0
+        self.lines_total: int = 0
+        self.lines_matched: int = 0
         #
         # why do we need this here? the run knows.
         #

@@ -30,3 +30,4 @@ class OpenTelemetryResultsListener(OtlpListener):
         if size is not None:
             self.csvpaths.metrics.bytes.add(size, self.core_meta(mdata))
             self.csvpaths.metrics.size.record(size, self.core_meta(mdata))
+        self.send_metrics()

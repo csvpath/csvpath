@@ -15,4 +15,12 @@ class Builder:
         paths.paths_manager = TrackingPathsManager(
             csvpaths=paths, mgr=paths.paths_manager
         )
+        #
+        # put any custom stuff here
+        #
+        # paths.config.set(section="listeners", name="groups", value="default,otlp")
+
+        #
+        # end custom
+        #
         return paths

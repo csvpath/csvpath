@@ -209,6 +209,16 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
 
     def test_csvpaths_correct_lines_returned2(self):
         paths = self.load()
+        print(
+            f"test_csvpaths_correct_lines_returned2: config 1: {paths.config.configpath}"
+        )
+        paths.config.set_config_path_and_reload("config/config.ini")
+        print(
+            f"test_csvpaths_correct_lines_returned2: config 2: {paths.config.configpath}"
+        )
+        print(
+            f"test_csvpaths_correct_lines_returned2: {paths.config.get(section='listeners', name='groups')}"
+        )
         #
         # from 2 csvpaths we want to see:
         #   - 3 of 9 returned because both agree

@@ -1,3 +1,4 @@
+import math
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
@@ -13,7 +14,10 @@ class ErrorMetrics:
         self.provider = None
         self.meter = None
         if exporting:
-            self.reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+            # self.reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+            self.reader = PeriodicExportingMetricReader(
+                OTLPMetricExporter(), export_interval_millis=math.inf
+            )
             self.provider = MeterProvider(metric_readers=[self.reader])
             metrics.set_meter_provider(self.provider)
         else:
@@ -21,7 +25,10 @@ class ErrorMetrics:
             self.provider = MeterProvider(metric_readers=[self.reader])
             metrics.set_meter_provider(self.provider)
 
-        self.meter = metrics.get_meter("runtime_errors")
+        # self.meter = metrics.get_meter("runtime_errors")
+        self.meter = metrics.get_meter(
+            self.listener.csvpaths.project if self.listener.csvpaths else "CsvPath"
+        )
 
         self.error_events = self.meter.create_counter(
             "runtime_errors",
