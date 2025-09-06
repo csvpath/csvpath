@@ -8,13 +8,9 @@ class ResultsMetadata(Metadata):
 
     def __init__(self, config):
         super().__init__(config)
-        #
-        # time_completed is in the Metadata parent
-        #
-        # self.time_completed: datetime = None
         self.run_home: str = None
         self.named_paths_name: str = None
-        self.named_paths_uuid: str = None
+        self.named_paths_uuid: UUID = None
         self.named_results_name: str = None
         self.named_file_uuid: str = None
         self.named_file_name: str = None
@@ -49,6 +45,42 @@ class ResultsMetadata(Metadata):
     def run_uuid_string(self, u: str) -> None:
         self._run_uuid = UUID(u)
 
+    @property
+    def named_paths_uuid(self) -> UUID:
+        return self._named_paths_uuid
+
+    @named_paths_uuid.setter
+    def named_paths_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError("Must be a UUID")
+        self._named_paths_uuid = u
+
+    @property
+    def named_paths_uuid_string(self) -> str:
+        return str(self._named_paths_uuid)
+
+    @named_paths_uuid_string.setter
+    def named_paths_uuid_string(self, u: str) -> None:
+        self._named_paths_uuid = UUID(u)
+
+    @property
+    def named_file_uuid(self) -> UUID:
+        return self._named_file_uuid
+
+    @named_file_uuid.setter
+    def named_file_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError("Must be a UUID")
+        self._named_file_uuid = u
+
+    @property
+    def named_file_uuid_string(self) -> str:
+        return str(self._named_file_uuid)
+
+    @named_file_uuid_string.setter
+    def named_file_uuid_string(self, u: str) -> None:
+        self._named_file_uuid = UUID(u)
+
     def from_manifest(self, m) -> None:
         if m is None:
             return
@@ -56,9 +88,9 @@ class ResultsMetadata(Metadata):
         self.run_home = m["run_home"]
         self.run_uuid_string = m.get("run_uuid")
         self.named_paths_name = m.get("named_paths_name")
-        self.named_paths_uuid = m.get("named_paths_uuid")
+        self.named_paths_uuid_string = m.get("named_paths_uuid")
         self.named_file_name = m.get("named_file_name")
-        self.named_file_uuid = m.get("named_file_uuid")
+        self.named_file_uuid_string = m.get("named_file_uuid")
         self.named_file_path = m.get("named_file_path")
         self.named_file_fingerprint = m.get("named_file_fingerprint")
         self.named_file_fingerprint_on_file = m.get("")

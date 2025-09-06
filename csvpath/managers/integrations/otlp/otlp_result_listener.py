@@ -1,13 +1,19 @@
+import logging
+import traceback
+
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
-from csvpath.managers.results.results_registrar import ResultsRegistrar
 from .otlp_listener import OtlpListener
 from .metrics import Metrics
 
 
 class OpenTelemetryResultListener(OtlpListener):
     def __init__(self, config=None):
-        super().__init__(config=config)
+        super().__init__()
         self.csvpaths = None
         self.result = None
 
@@ -16,47 +22,33 @@ class OpenTelemetryResultListener(OtlpListener):
             raise RuntimeError(
                 "OTLP listener cannot continue without a CsvPaths instance"
             )
-        if self.csvpaths.metrics is None:
-            self.csvpaths.metrics = Metrics(self)
-        #
-        # metrics:
-        #   error count
-        #   valid
-        #   files generated
-        #   files are expected
-        #
-        if mdata.error_count and int(mdata.error_count) != -1:
-            self.csvpaths.metrics.errors.add(mdata.error_count, self.core_meta(mdata))
-        if mdata.valid:
-            v = 0
-            if mdata.valid is True:
-                v = 1
-            self.csvpaths.metrics.valid.add(v, self.core_meta(mdata))
-        if mdata.number_of_files_generated:
-            self.csvpaths.metrics.files.add(
-                mdata.number_of_files_generated, self.core_meta(mdata)
+        self.assure_metrics()
+        try:
+            etype = (
+                "csvpath run result" if mdata.time_completed else "csvpath run start"
             )
-        yn = mdata.files_expected
-        if yn and not isinstance(yn, bool):
-            raise ValueError("Files expected must convert to bool")
-        if yn is True:
-            yn = 1
-        else:
-            yn = 0
-        self.csvpaths.metrics.files_expected.add(yn, self.core_meta(mdata))
-        self.send_metrics()
-        print(f"sent is valid: {mdata.valid}")
-        print(f"sent files expected: {yn}")
-        print(f"sent files generated: {mdata.number_of_files_generated}")
-        print(f"sent error count: {mdata.error_count}")
+            extra = {
+                "event_type": etype,
+                "event_listener": "result",
+                "error_count": mdata.error_count,
+                "valid": bool(mdata.valid) if mdata is not None else "",
+                "files_generated": mdata.number_of_files_generated,
+                "files_expected": bool(mdata.files_expected),
+                **self.core_meta(mdata),
+            }
+            self.csvpaths.__class__.METRICS.logger().debug(
+                "Csvpath completed", extra=extra
+            )
+        except Exception as ex:
+            print(traceback.format_exc())
+            self.csvpath.logger.error(ex)
 
     def core_meta(self, mdata):
         cmeta = super().core_meta(mdata)
+        if mdata.time_completed:
+            cmeta["time_completed"] = mdata.time_completed_string
         if mdata.instance_identity:
             cmeta["instance"] = mdata.instance_identity
-        #
-        # named_paths_uuid_string should be on results as well
-        #
         if mdata.named_paths_uuid_string:
             cmeta["named_paths_uuid_string"] = mdata.named_paths_uuid_string
         return cmeta

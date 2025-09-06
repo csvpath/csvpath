@@ -3,6 +3,8 @@
 
 import os
 import traceback
+import atexit
+
 from uuid import uuid4, UUID
 from abc import ABC, abstractmethod
 from typing import List, Any, NewType
@@ -23,6 +25,7 @@ from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
 from . import CsvPath
+from .managers.integrations.otlp.metrics import Metrics
 
 
 # types for clarity
@@ -65,6 +68,25 @@ class CsvPathsCoordinator(ABC):
 
 
 class CsvPaths(CsvPathsCoordinator, ErrorCollector):
+    #
+    # METRICS supports OTLP. it will often not be used, but
+    # we'll check it at shutdown just in case.
+    #
+    METRICS = None
+    METRICS_WRAP_REG = False
+
+    @classmethod
+    def _wrap_up_metrics(cls) -> None:
+        if cls.METRICS:
+            try:
+                cls.METRICS.logger().debug(
+                    f"csvpaths.wrapping up: shutting down metrics: {cls.METRICS}"
+                )
+                cls.METRICS.provider.force_flush()
+                cls.METRICS = None
+            except Exception:
+                print(traceback.print_exc())
+
     """
     a CsvPaths instance manages applying any number of csvpaths
     to any number of files. CsvPaths applies sets of csvpaths
@@ -85,6 +107,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         print_default=True
         # config: Config = None,
     ):
+        if CsvPaths.METRICS_WRAP_REG is False:
+            atexit.register(CsvPaths._wrap_up_metrics)
+            CsvPaths.METRICS_WRAP_REG = True
         #
         # we gain nothing by allowing the config to be passed in. and it adds complexity.
         #
@@ -94,11 +119,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # other places. the archive is also effectively a namespace, but it only matters
         # for its own purposes. this is an independent project name that can be synced
         # by the FlightPath frontend and/or server based on their similar concept of
-        # projects.
+        # projects. FlightPath Server needs the project_context to further segment by
+        # API key.
         #
-        # for most other purposes it can just be ignored
-        #
-        self._project = "CsvPath"
+        self._project = "CsvPaths"
+        self._project_context = "CsvPath Framework"
         #
         # in a few cases, mainly s3 and sftp connection or config sharing
         # we need to pass some state around. it's ugly, but logically not
@@ -154,17 +179,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.named_file_name = None
         """ @private """
         #
-        # metrics is for OTLP OpenTelemetry. it should only
-        # be used by the OTLP listener. it is here because
-        # the integration may need a long-lived presence. if
-        # needed, the first OTLP listener will set it up
-        # before spinning up a thread. any other OTLP
-        # listener threads that need to use a long-lived metric
-        # will work with this property.
-        #
-        self.metrics = None
-        """ @private """
-        #
         # this metadata is generated at the run start. it is
         # the coordinating metadata for the run in the sense
         # that its UUID is the correlation ID all metadata
@@ -182,6 +196,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._wrap_up_automatically = True
         """ @private """
+
         self.logger.info("initialized CsvPaths")
 
     def _set_managers(self) -> None:
@@ -198,6 +213,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     @project.setter
     def project(self, name: str) -> None:
         self._project = name
+
+    @property
+    def project_context(self) -> str:
+        return self._project_context
+
+    @project_context.setter
+    def project_context(self, name: str) -> None:
+        self._project_context = name
 
     @property
     def wrap_up_automatically(self) -> bool:
@@ -384,27 +407,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 self.error_manager.handle_error(source=self, msg=msg)
                 if self.ecoms.do_i_raise():
                     raise CsvPathsException(msg)
-        #
-        # if we have metrics we need to tear them down
-        #
-        if self.metrics:
-            try:
-                self.logger.debug(
-                    f"csvpaths.wrapping up: shutting down metrics: {self.metrics}"
-                )
-                self.metrics.provider.shutdown()
-                self.metrics = None
-            except Exception as ex:
-                self.logger.warning(f"Could not shutdown metrics provider: {ex}")
-        if self.error_manager.error_metrics:
-            try:
-                self.logger.debug(
-                    f"csvpaths.wrapping up: shutting down error metrics: {self.error_manager.error_metrics}"
-                )
-                self.error_manager.error_metrics.provider.shutdown()
-                self.error_manager.error_metrics = None
-            except Exception as ex:
-                self.logger.warning(f"Could not shutdown error metrics provider: {ex}")
 
     def __del__(self) -> None:
         #

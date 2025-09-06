@@ -59,7 +59,6 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         # the config.ini file loaded as a ConfigParser instance
         #
-
         """
         #
         # passing in the config actually nets us nothing but a little unnecessary complexity that we don't use.

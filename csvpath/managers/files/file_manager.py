@@ -471,7 +471,6 @@ class FileManager:
         nos = self.nos
         nos.path = dirname
         dlist = nos.listdir(files_only=True, recurse=recurse)
-        # print(f"add_named_files_from_dir: dirname: {dirname}, dlist: {dlist}")
         base = dirname
         #
         # collect all full paths that are files and have correct extensions

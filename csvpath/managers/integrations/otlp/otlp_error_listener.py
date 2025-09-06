@@ -1,8 +1,8 @@
+import logging
+import traceback
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
-from csvpath.managers.results.results_registrar import ResultsRegistrar
 from .otlp_listener import OtlpListener
-from .error_metrics import ErrorMetrics
 
 
 class OpenTelemetryErrorListener(OtlpListener):
@@ -11,35 +11,10 @@ class OpenTelemetryErrorListener(OtlpListener):
         self.csvpaths = None
         self.csvpath = None
 
-    def assure_metrics(self) -> None:
-        metrics = None
-        if self.csvpaths and self.csvpaths.error_manager.error_metrics is None:
-            if metrics is None:
-                metrics = ErrorMetrics(self)
-            self.csvpaths.error_manager.error_metrics = metrics
-        if self.csvpath and self.csvpath.error_manager.error_metrics is None:
-            if not metrics:
-                metrics = ErrorMetrics(self)
-            self.csvpath.error_manager.error_metrics = metrics
-
-    def send_metrics(self) -> None:
-        #
-        # send all the metrics updated to oltp now. we only complete once, so
-        # this is only going to happen once per csvpath.
-        #
-        try:
-            if self.csvpaths:
-                self.csvpaths.error_manager.error_metrics.reader.collect()
-                self.csvpaths.error_manager.error_metrics.provider.force_flush()
-            if self.csvpath:
-                self.csvpath.error_manager.error_metrics.reader.collect()
-                self.csvpath.error_manager.error_metrics.provider.force_flush()
-        except Exception as ex:
-            logger = self.csvpaths.logger if self.csvpaths else self.csvpath.logger
-            logger.error(ex)
-
     def error_meta(self, mdata: Metadata) -> dict:
         emeta = {}
+        emeta["event_type"] = "error"
+        emeta["event_listener"] = "error"
         if mdata.archive_name:
             emeta["archive_name"] = mdata.archive_name
         if mdata.archive_path:
@@ -78,8 +53,16 @@ class OpenTelemetryErrorListener(OtlpListener):
         return emeta
 
     def metadata_update(self, mdata: Metadata) -> None:
-        self.assure_metrics()
-        self.csvpaths.error_manager.error_metrics.error_events.add(
-            1, self.error_meta(mdata)
-        )
-        self.send_metrics()
+        if self.csvpaths:
+            self.assure_metrics()
+        else:
+            return
+        try:
+            emeta = self.error_meta(mdata)
+            msg = emeta.get("message")
+            if msg is None or msg.strip() == "":
+                msg = "Unknown error"
+            self.csvpaths.__class__.METRICS.logger().debug(msg, extra=emeta)
+        except Exception as ex:
+            print(traceback.format_exc())
+            self.csvpath.logger.error(ex)
