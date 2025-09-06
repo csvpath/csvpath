@@ -1,7 +1,6 @@
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
-from csvpath.managers.results.results_registrar import ResultsRegistrar
-from .metrics import Metrics
+from csvpath.managers.integrations.otlp.metrics import Metrics
 
 
 class OtlpListener(Listener):
@@ -10,19 +9,23 @@ class OtlpListener(Listener):
         self.csvpaths = None
         self.result = None
 
-    def send_metrics(self) -> None:
-        #
-        # send all the metrics updated to oltp now. we only complete once, so
-        # this is only going to happen once per csvpath.
-        #
-        self.csvpaths.metrics.reader.collect()
-        # make sure all were actually sent
-        self.csvpaths.metrics.provider.force_flush()
-        self.csvpaths.logger.debug(f"Sent OTLP metrics from {self}")
-        print(f"Sent OTLP metrics from {self}")
+    def assure_metrics(self) -> Metrics:
+        if self.csvpaths is None:
+            raise RuntimeError("There must be a CsvPaths instance")
+        if self.csvpaths.__class__.METRICS is None:
+            self.csvpaths.__class__.METRICS = Metrics()
+        return self.csvpaths.__class__.METRICS
 
     def core_meta(self, mdata: Metadata) -> dict:
         cmeta = {}
+        cmeta["time"] = mdata.time_string
+        #
+        # project_context is a grouper that will hold the API key hash for
+        # flightpath server. other users can use it other ways as needed.
+        #
+        cmeta["project_context"] = self.csvpaths.project_context
+        cmeta["project"] = self.csvpaths.project
+
         if mdata.named_file_name:
             cmeta["file"] = mdata.named_file_name
         if mdata.named_results_name:

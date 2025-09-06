@@ -117,9 +117,9 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.run_home = run_dir
         mdata.run_uuid = run_uuid
         mdata.named_file_name = filename
-        mdata.named_file_uuid = f"{f_uuid}"
+        mdata.named_file_uuid_string = f_uuid
         mdata.named_paths_name = pathsname
-        mdata.named_paths_uuid = f"{np_uuid}"
+        mdata.named_paths_uuid_string = np_uuid
         mdata.named_results_name = pathsname
         rr.register_start(mdata)
         return mdata

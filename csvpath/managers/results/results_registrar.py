@@ -110,10 +110,10 @@ class ResultsRegistrar(Registrar, Listener):
 
         #
         m["named_paths_name"] = mdata.named_paths_name
-        m["named_paths_uuid"] = mdata.named_paths_uuid
+        m["named_paths_uuid"] = mdata.named_paths_uuid_string
         #
         m["named_file_name"] = mdata.named_file_name
-        m["named_file_uuid"] = mdata.named_file_uuid
+        m["named_file_uuid"] = mdata.named_file_uuid_string
         m["named_file_path"] = mdata.named_file_path
         m["named_file_size"] = mdata.named_file_size
         m["named_file_last_change"] = mdata.named_file_last_change

@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC
 from csvpath.util.exceptions import InputException
 from .metadata import Metadata
@@ -40,6 +41,7 @@ class Registrar(ABC):
     def distribute_update(self, mdata: Metadata) -> None:
         """any Listener will recieve a copy of a metadata that describes a
         change to a named-file, named-paths, named-results, etc."""
+
         if mdata is None:
             raise InputException("Metadata cannot be None")
         listeners = [self] + self._internal_listeners
@@ -49,9 +51,19 @@ class Registrar(ABC):
         # notable exception of errors, errors are not thrown in non-CsvPaths code.
         #
         if self.csvpaths is not None:
-            self.load_additional_listeners(self.type_name, listeners)
+            try:
+                self.load_additional_listeners(self.type_name, listeners)
+            except Exception as ex:
+                print(traceback.format_exc())
+                if self.csvpaths:
+                    self.csvpaths.logger(f"Error in loading listeners: {ex}")
         for lst in listeners:
-            lst.metadata_update(mdata)
+            try:
+                lst.metadata_update(mdata)
+            except Exception as ex:
+                print(traceback.format_exc())
+                if self.csvpaths:
+                    self.csvpaths.logger.error(f"Error in distributing an update: {ex}")
 
     def load_additional_listeners(
         self, listener_type_name: str, listeners: list
@@ -67,7 +79,13 @@ class Registrar(ABC):
                 ss = [ss]
             if ss and len(ss) > 0:
                 for lst in ss:
-                    self.load_additional_listener(lst, listeners)
+                    try:
+                        self.load_additional_listener(lst, listeners)
+                    except Exception as ex:
+                        print(traceback.format_exc())
+                        self.csvpaths.logger.error(
+                            f"Failed to load listener {lst}: {ex}"
+                        )
 
     def load_additional_listener(self, load_cmd: str, listeners: list) -> None:
         loader = ClassLoader()

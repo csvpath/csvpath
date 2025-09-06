@@ -9,28 +9,4 @@ from csvpath.managers.listener import Listener
 
 class ErrorMetrics:
     def __init__(self, listener: Listener, exporting=True):
-        self.listener = listener
-        self.reader = None
-        self.provider = None
-        self.meter = None
-        if exporting:
-            # self.reader = PeriodicExportingMetricReader(OTLPMetricExporter())
-            self.reader = PeriodicExportingMetricReader(
-                OTLPMetricExporter(), export_interval_millis=math.inf
-            )
-            self.provider = MeterProvider(metric_readers=[self.reader])
-            metrics.set_meter_provider(self.provider)
-        else:
-            self.reader = InMemoryMetricReader()
-            self.provider = MeterProvider(metric_readers=[self.reader])
-            metrics.set_meter_provider(self.provider)
-
-        # self.meter = metrics.get_meter("runtime_errors")
-        self.meter = metrics.get_meter(
-            self.listener.csvpaths.project if self.listener.csvpaths else "CsvPath"
-        )
-
-        self.error_events = self.meter.create_counter(
-            "runtime_errors",
-            description="Error events during a csvpath run or a csvpaths load",
-        )
+        ...

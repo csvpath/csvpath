@@ -98,6 +98,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         # this test is the proof of the expected behavior without skip_all()
         #
         cs = Builder().build()
+        cs.wrap_up_automatically = False
         cs.file_manager.set_named_files(FILES)
         cs.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         i = 0
@@ -114,6 +115,7 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
         assert results[1].csvpath.variables["two"] == _2
         assert cs.results_manager.get_variables("skipping_baseline")["one"] == _1
         assert cs.results_manager.get_variables("skipping_baseline")["two"] == _2
+        cs.wrap_up()
 
     def test_csvpaths_skip_all_by_line(self):
         cs = Builder().build()

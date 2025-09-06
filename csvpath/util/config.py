@@ -9,8 +9,6 @@ from ..util.config_exception import ConfigurationException
 from ..util.log_utility import LogUtility as lout
 from .config_env import ConfigEnv
 
-# from csvpath.util.nos import Nos
-
 #
 #   1 csvpaths & csvpath own their own config
 #   2 start up to sensible defaults in config.ini
@@ -557,7 +555,8 @@ shell = /bin/bash
             )
             return
         self._assure_config_file_path()
-        self._config.read(self.configpath)
+        path = self.configpath
+        self._config.read(path)
         self.refresh()
 
     #

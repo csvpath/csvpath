@@ -11,9 +11,9 @@ class LogUtility:
     LOGGERS = {}
 
     @classmethod
-    def log_brief_trace(cls, *, logger=None, printer=None) -> str:
+    def log_brief_trace(cls, *, logger=None, printer=None, depth=30) -> str:
         trace = "".join(traceback.format_stack())
-        i = 20
+        i = depth
         lines = trace.split("\n")
         ret = ""
         while i > 0:

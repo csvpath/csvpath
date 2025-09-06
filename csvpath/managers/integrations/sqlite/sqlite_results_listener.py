@@ -39,13 +39,13 @@ class SqliteResultsListener(Listener):
                     # paths
                     #
                     "named_results_name": mdata.named_results_name,
-                    "named_paths_uuid": mdata.named_paths_uuid,
+                    "named_paths_uuid": mdata.named_paths_uuid_string,
                     "named_paths_name": mdata.named_paths_name,
                     "named_paths_home": f"{mdata.named_paths_root}{psep}{mdata.named_paths_name}",
                     #
                     # file
                     #
-                    "named_file_uuid": mdata.named_file_uuid,
+                    "named_file_uuid": mdata.named_file_uuid_string,
                     "named_file_name": mdata.named_file_name,
                     "named_file_home": f"{mdata.named_files_root}{fsep}{mdata.named_file_name}",
                     "named_file_path": mdata.named_file_path,

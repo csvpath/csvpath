@@ -54,6 +54,7 @@ class ResultRegistrar(Registrar, Listener):
             )
         else:
             mdata.named_paths_uuid_string = p["uuid"]
+        mdata.valid = None
         self.distribute_update(mdata)
 
     def register_complete(self, mdata: Metadata = None) -> None:
@@ -66,6 +67,7 @@ class ResultRegistrar(Registrar, Listener):
         m = self.manifest
         if mdata is None:
             mdata = ResultMetadata(config=self.csvpaths.config)
+        mdata.set_time_completed()
         mdata.from_manifest(m)
         mdata.archive_name = self.archive_name
         #
@@ -78,9 +80,11 @@ class ResultRegistrar(Registrar, Listener):
             mdata.named_results_name = self.result.paths_name
 
         mdata.named_paths_name = self.result.paths_name
-        mdata.named_paths_uuid_string = self.csvpaths.run_metadata.named_paths_uuid
+        mdata.named_paths_uuid_string = (
+            self.csvpaths.run_metadata.named_paths_uuid_string
+        )
         mdata.named_file_name = self.result.file_name
-        mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid
+        mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid_string
         #
         # exp. swapping for the original above. no negative impact. logically it's the better way.
         #
@@ -143,7 +147,7 @@ class ResultRegistrar(Registrar, Listener):
         m["files_expected"] = mdata.files_expected
         m["number_of_files_expected"] = mdata.number_of_files_expected
         m["number_of_files_generated"] = mdata.number_of_files_generated
-        m["valid"] = mdata.valid
+        m["valid"] = mdata.valid if mdata.valid is not None else ""
         m["completed"] = mdata.completed
         m["source_mode_preceding"] = mdata.source_mode_preceding
         if mdata.source_mode_preceding:
