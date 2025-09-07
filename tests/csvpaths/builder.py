@@ -18,7 +18,8 @@ class Builder:
         #
         # put any custom stuff here
         #
-        paths.config.set(section="listeners", name="groups", value="default,otlp")
+        paths.config.set(section="listeners", name="groups", value="default")
+        # paths.config.set(section="listeners", name="groups", value="default,otlp")
 
         #
         # end custom
