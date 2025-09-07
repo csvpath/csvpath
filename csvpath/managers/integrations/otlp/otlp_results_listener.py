@@ -8,8 +8,6 @@ from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 
-logger = logging.getLogger("csvpath.otlp")
-
 
 class OpenTelemetryResultsListener(OtlpListener):
     def __init__(self, config=None):

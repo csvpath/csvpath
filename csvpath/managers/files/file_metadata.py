@@ -24,3 +24,4 @@ class FileMetadata(Metadata):
         self.type: str = None
         self.file_size = 0
         self.template: str = None
+        self.fingerprint = None

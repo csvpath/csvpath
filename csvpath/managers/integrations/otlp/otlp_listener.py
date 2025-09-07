@@ -26,9 +26,9 @@ class OtlpListener(Listener):
         cmeta["project_context"] = self.csvpaths.project_context
         cmeta["project"] = self.csvpaths.project
 
-        if mdata.named_file_name:
+        if hasattr(mdata, "named_file_name"):
             cmeta["file"] = mdata.named_file_name
-        if mdata.named_results_name:
+        if hasattr(mdata, "named_results_name"):
             cmeta["paths"] = mdata.named_results_name
         if mdata.archive_name:
             cmeta["archive"] = mdata.archive_name
@@ -40,7 +40,7 @@ class OtlpListener(Listener):
             cmeta["named_paths_root"] = mdata.named_paths_root
         if mdata.uuid_string:
             cmeta["uuid"] = mdata.uuid_string
-        if mdata.run_home:
+        if hasattr(mdata, "run_home"):
             cmeta["run_home"] = mdata.run_home
         if mdata.hostname:
             cmeta["hostname"] = mdata.hostname
