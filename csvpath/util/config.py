@@ -160,7 +160,7 @@ class Config:
     def sections(self) -> list[str]:
         return self._config.sections()
 
-    def get(self, *, section: str, name: str, default=None):
+    def get(self, *, section: str = None, name: str, default=None):
         return self._get(section, name, default)
 
     def _get(self, section: str, name: str, default=None):
@@ -168,6 +168,14 @@ class Config:
         # TODO: we should swap all uppercase values for env var values if we find a
         # matching env var. same as we do for metadata values
         #
+        if name is None:
+            raise ConfigurationException("Name cannot be None")
+        if section is None:
+            #
+            # if section is none we're just looking at the OS env vars or the project
+            # env vars, if the project is configured to hold vars in a JSON file.
+            #
+            return self.config_env.get(name=name, default=default)
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
@@ -297,7 +305,7 @@ allow_local_files=True
 [listeners]
 # add listener group names to send events to the channel they represent
 groups = default
-#slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
+#slack, openlineage, ckan, sftp, sftpplus, otlp, sqlite, sql
 
 # general purpose webhook caller
 webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultsListener
@@ -336,17 +344,29 @@ sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener i
 # add ckan to the list of groups above to push content and metadata to CKAN
 ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
 
-#add marquez to the list of groups above for OpenLineage events to a Marquez server
-marquez.file = from csvpath.managers.integrations.ol.file_listener_ol import OpenLineageFileListener
-marquez.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
-marquez.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
-marquez.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
+#add openlineage to the list of groups above for OpenLineage events to a Marquez server
+openlineage.file = from csvpath.managers.integrations.ol.file_listener_ol import OpenLineageFileListener
+openlineage.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
+openlineage.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
+openlineage.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
 
 # add slack to the list of groups above for alerts to slack webhooks
 slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
+
+[otlp]
+# add OTLP config here if not relying directly on the env vars
+
+[aws]
+#
+
+[azure]
+#
+
+[gcs]
+#
 
 [sqlite]
 db = archive/csvpath.db
@@ -380,7 +400,7 @@ port = SFTPPLUS_PORT
 server = http://localhost:80
 api_token =
 
-[marquez]
+[openlineage]
 base_url = http://localhost:5000
 endpoint = api/v1/lineage
 api_key = "none"

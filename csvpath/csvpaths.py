@@ -111,9 +111,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             atexit.register(CsvPaths._wrap_up_metrics)
             CsvPaths.METRICS_WRAP_REG = True
         #
-        # we gain nothing by allowing the config to be passed in. and it adds complexity.
         #
-        self._config = Config()  # if config is None else config
+        #
+        self._config = Config()
         #
         # if we set this to a project name it will be used in metrics and possible
         # other places. the archive is also effectively a namespace, but it only matters
