@@ -17,19 +17,49 @@ class Metrics:
             raise ValueError("Csvpaths cannot be None")
         self._csvpaths = csvpaths
 
-    def _get(self, *, key: str, section: str = None) -> str:
-        if key is None:
-            raise ValueError("Key cannot be None")
+    def _get(self, *, name: str, section: str = None) -> str:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        #
+        # we expect people to usually config OTLP using env vars. however,
+        # in some cases env var substitution may be configured to look at env.json
+        # rather than the OS env vars.
+        #
+        # in the case of FlightPath Server, FlightPath Data may copy OS env vars
+        # into the serverside env.json, potentially leaving out of config.ini and
+        # just act similar to how the OS env vars configure OTLP in the background.
+        #
+        # sounds complicated, but imagine the user sets the OS env vars, configs
+        # their FlightPath Server project, pushes it to FPS and FlightPath Data
+        # either transparently or through a form copies OS env vars when the proj
+        # config is pushed. that would be simpler for the user. and it keeps them
+        # from having to put the info in the config.ini as values (not ideal
+        # security) or OS env var pointers (requiring double entry and/or a change
+        # when the project config is pushed to FPS).
+        #
         c = self._csvpaths.config
-        ret = None
-        if section is not None:
-            try:
-                ret = c.get(section=section, name=key)
-            except Exception:
-                ...
+        ret = c.get(section=section, name=name)
         if ret is None:
-            ret = c.config_env.get(name=key)
+            self._csvpaths.logger.warning(
+                f"No OTLP config value found for [{section}] {name} in config.ini or env.json"
+            )
         return ret
+        #
+        # moved this into Config
+        #
+        """
+        ret = None
+            if section is not None:
+                try:
+                    ret = c.get(section=section, name=name)
+                except Exception:
+                    ...
+            if ret is None:
+                ret = c.config_env.get(name=name)
+            if ret is None:
+                self._csvpaths.logger.warning(f"No OTLP config value found for [{section}] {name} in config.ini or env.json")
+            return ret
+        """
 
     @property
     def provider(self) -> LoggerProvider:
@@ -40,10 +70,6 @@ class Metrics:
             )
             self._provider = LoggerProvider(resource=resource)
             set_logger_provider(self._provider)
-
-            # endpoint=None, certificate_file=None, client_key_file=None, client_certificate_file=None, headers=None, timeout=None, compression=None, session=None
-
-            endpoint = self._get()
             #
             # these were working values for openobserve. I don't think we need
             # OTEL_EXPORTER_OTLP_PROTOCOL  since we are programmatically instantiating
@@ -62,22 +88,14 @@ class Metrics:
             #
             # in CsvPath and FlightPath Data these can come from regular env vars
             # but in FlightPath Server they must come from var_sub_source=config/env.json
-            # because we plan to allow projects to push data to their own choice of OTLLP
+            # because we plan to allow projects to push data to their own choice of OTLP
             # platform. FlightPath Data will have to provide an API for setting env.json
             # and assistence in copying its own env vars and the OS env vars to env.json
             # on the server.
             #
-            endpoint = self._get("OTEL_EXPORTER_OTLP_ENDPOINT")
-            headers = self._get("OTEL_EXPORTER_OTLP_HEADERS")
+            endpoint = self._get(name="OTEL_EXPORTER_OTLP_ENDPOINT")
+            headers = self._get(name="OTEL_EXPORTER_OTLP_HEADERS")
             exporter = OTLPLogExporter(endpoint=endpoint, headers=headers)
-            """
-            #
-            # we may need to allow for programmatic set of endpoint for FlightPath Server
-            #
-            exporter = OTLPLogExporter(
-                endpoint="http://localhost:5080/api/default/v1/logs"  # More specific endpoint
-            )
-            """
             self._provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
         return self._provider
 
