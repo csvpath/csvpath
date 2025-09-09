@@ -42,7 +42,7 @@ class ConfigEnv:
     def allow_var_sub(self) -> bool:
         if self._allow is None:
             a = self.config.get(section="config", name="allow_var_sub", default=False)
-            self._allow = a and str(a).strip().lower() == "true"
+            self._allow = a and str(a).strip().lower() in ["true", "yes"]
         return self._allow
 
     @property

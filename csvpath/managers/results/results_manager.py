@@ -580,6 +580,10 @@ class ResultsManager:  # pylint: disable=C0115
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
+            if name.endswith(":data") or name.endswith(":unmatched"):
+                raise ValueError(
+                    "Reference must be to a run, or an instance within a run, not to a result's data file"
+                )
             return self._get_named_results_for_reference(name)
         #
         # CsvPaths instances should not be long lived. they are not servers or

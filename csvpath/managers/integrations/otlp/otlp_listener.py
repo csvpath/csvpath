@@ -13,7 +13,7 @@ class OtlpListener(Listener):
         if self.csvpaths is None:
             raise RuntimeError("There must be a CsvPaths instance")
         if self.csvpaths.__class__.METRICS is None:
-            self.csvpaths.__class__.METRICS = Metrics()
+            self.csvpaths.__class__.METRICS = Metrics(self.csvpaths)
         return self.csvpaths.__class__.METRICS
 
     def core_meta(self, mdata: Metadata) -> dict:
