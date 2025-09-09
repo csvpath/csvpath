@@ -21,10 +21,15 @@ class Metrics:
         if key is None:
             raise ValueError("Key cannot be None")
         c = self._csvpaths.config
+        ret = None
         if section is not None:
-            return c.get(section=section, name=key)
-        else:
-            return c.config_env.get(name=key)
+            try:
+                ret = c.get(section=section, name=key)
+            except Exception:
+                ...
+        if ret is None:
+            ret = c.config_env.get(name=key)
+        return ret
 
     @property
     def provider(self) -> LoggerProvider:
