@@ -95,7 +95,7 @@ class Decimal(Type):
         dmax: int | float,
         dmin: int | float,
         strict: str,
-    ):
+    ) -> tuple[bool, str | None]:
         ret = self._dot(name=self.name, h=value, strict=self.has_qualifier("strict"))
         if ret[0] is False:
             return ret

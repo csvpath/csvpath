@@ -26,6 +26,14 @@ class Boolean(ValueProducer, Type):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    def _decide_match(self, skip=None) -> None:
+        # we need to make sure a value is produced so that we see
+        # any errors. when we stand alone we're just checking our
+        # boolean-iness. when we're producing a value we're checking
+        # boolean-iness and casting and raising errors.
+        v = self.to_value(skip=skip)
+        self.match = v in [True, False]  # pragma: no cover
+
     def _produce_value(self, skip=None) -> None:
         c = self._child_one()
         v = None
@@ -44,23 +52,21 @@ class Boolean(ValueProducer, Type):
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
         else:
-            v = ExpressionUtility.to_bool(v)
-            if v in [True, False]:
-                self.value = v
+            ret = self._is_match(v)
+            if ret[0] is True:
+                self.value = True
             else:
                 self.value = CheckedUnset()
-                #
-                # pretty sure this none should also be caught by Args
-                #
-                msg = f"Not a boolean value in {self.my_chain}: '{v}'"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=ret[1])
                 if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
+                    raise MatchException(ret[1])
+                self.value = False
 
-    def _decide_match(self, skip=None) -> None:
-        # we need to make sure a value is produced so that we see
-        # any errors. when we stand alone we're just checking our
-        # boolean-iness. when we're producing a value we're checking
-        # boolean-iness and casting and raising errors.
-        v = self.to_value(skip=skip)
-        self.match = v in [True, False]  # pragma: no cover
+    def _is_match(
+        self,
+        value: str,
+    ) -> tuple[bool, str | None]:
+        b = ExpressionUtility.to_bool(value)
+        if b in [True, False]:
+            return (True, None)
+        return (False, "Not a boolean value")

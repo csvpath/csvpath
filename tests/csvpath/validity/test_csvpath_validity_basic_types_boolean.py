@@ -90,9 +90,11 @@ class TestCsvPathValidityValidBasicTypesBoolean(unittest.TestCase):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            f""" ${PATH}[*][
+            f"""
+            ~ validation-mode:no-raise~
+            ${PATH}[1][
                 ~ yes, it's a bool ~
-                @b = boolean(no())
+                @b = boolean("say")
                 ~ yes, it exists ~
                 @b
                 ~ no, it is not True ~
@@ -106,8 +108,25 @@ class TestCsvPathValidityValidBasicTypesBoolean(unittest.TestCase):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            f""" ${PATH}[*][
+            f""" ${PATH}[1][
+                ~ yes, it's a bool ~
+                @b = boolean(no())
+                ~ yes, it exists ~
+                @b
+                ~ we can make it not True ~
+                not( @b.asbool )
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
+
+    def test_validity_boolean10(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f""" ${PATH}[1][
                 @b.asbool = boolean(false())
+                not( @b.asbool )
             ]"""
         )
         lines = path.collect()
