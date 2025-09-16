@@ -93,12 +93,12 @@ class Decimal(Type):
         *,
         name: str,
         value: str,
-        dmax: int | float,
-        dmin: int | float,
         strict: bool,
+        dmax: int | float = None,
+        dmin: int | float = None,
     ) -> tuple[bool, str | None]:
-        if value is False:
-            return False
+        if value is False or value is None or value.strip() == "":
+            return (False, "Value is not a number")
         ret = cls._dot(name=name, h=value, strict=strict)
         if ret[0] is False:
             return ret
@@ -125,7 +125,7 @@ class Decimal(Type):
                     return (False, msg)
                 i = ExpressionUtility.to_int(h)
                 f = ExpressionUtility.to_float(h)
-                if i == f:
+                if i == f and i != h:
                     # the fractional part is 0, so we'll allow it
                     return (True, None)
                 else:

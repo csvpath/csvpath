@@ -98,6 +98,7 @@ from .types.datef import Date
 from .types.email import Email
 from .types.url import Url
 from .types.string import String
+from .types.datatype import Datatype
 
 
 class UnknownFunctionException(Exception):
@@ -281,6 +282,7 @@ class FunctionFactory:
         fs["add"] = Add
         fs["string"] = String
         fs["boolean"] = Boolean
+        fs["datatype"] = Datatype
         #
         # aliases
         #
