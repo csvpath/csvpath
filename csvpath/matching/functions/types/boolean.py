@@ -68,8 +68,13 @@ class Boolean(ValueProducer, Type):
         value: str,
     ) -> tuple[bool, str | None]:
         if value is None:
-            return False
-        b = ExpressionUtility.to_bool(value)
+            return (False, "Not a boolean value")
+        #
+        # checks: True, False, true, false
+        # to_simple_bool doesn't convert: 1, 0, None, "on", "off"
+        # to include those we would need to use to_bool().
+        #
+        b = ExpressionUtility.to_simple_bool(value)
         if b in [True, False]:
             return (True, None)
         return (False, "Not a boolean value")

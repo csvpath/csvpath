@@ -95,7 +95,7 @@ class Decimal(Type):
         value: str,
         dmax: int | float,
         dmin: int | float,
-        strict: str,
+        strict: bool,
     ) -> tuple[bool, str | None]:
         if value is False:
             return False
