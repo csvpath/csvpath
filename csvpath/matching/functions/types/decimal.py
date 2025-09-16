@@ -64,96 +64,80 @@ class Decimal(Type):
                 return
             self.match = True
             return
+
+        dmax = self._value_two(skip=skip)
+        if dmax is not None:
+            dmax = self._to(name=self.name, n=dmax)
+        dmin = self._value_three(skip=skip)
+        if dmin is not None:
+            dmin = self._to(name=self.name, n=dmin)
+
+        ret = self._is_match(
+            name=self.name,
+            value=h,
+            dmax=dmax,
+            dmin=dmin,
+            strict=self.has_qualifier("strict"),
+        )
+        if ret[0] is False:
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=ret[1])
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(ret[1])
+            self.match = False
+            return
+        self.match = True
+
+    def _is_match(
+        self,
+        *,
+        name: str,
+        value: str,
+        dmax: int | float,
+        dmin: int | float,
+        strict: str,
+    ):
+        ret = self._dot(name=self.name, h=value, strict=self.has_qualifier("strict"))
+        if ret[0] is False:
+            return ret
+        val = self._to(name=self.name, n=value)
+        if isinstance(val, str):
+            return (False, val)
+        m = self._val_in_bounds(val=val, dmax=dmax, dmin=dmin)
+        if m is False:
+            return (False, "Value is out of bounds")
+        return (True, None)
+
+    def _dot(self, *, name: str, h: str, strict: bool) -> tuple[bool, str | None]:
         if self.name == "decimal":
-            #
-            # we know this value is a number because Args checked it.
-            # but would a user know from looking at it that it was a float?
-            # if strict, we require the fractional part. if not strict any
-            # whole number can be a decimal with an unwritten .0 so we
-            # allow it.
-            #
-            if self.has_qualifier("strict"):
+            if strict:
                 if f"{h}".strip().find(".") == -1:
-                    self.match = False
-                    n = self._value_one()
-                    msg = f"'{n}' has 'strict' but value does not have a '.'"
-                    self.matcher.csvpath.error_manager.handle_error(
-                        source=self, msg=msg
-                    )
-                    if self.matcher.csvpath.do_i_raise():
-                        raise MatchException(msg)
-                    self.match = False
-                    return
-            self.match = True
+                    msg = f"'{h}' has 'strict' but value does not have a '.'"
+                    return (False, msg)
+            return (True, None)
         else:
             if f"{h}".find(".") > -1:
                 msg = "Integers cannot have a fractional part"
-                if self.has_qualifier("strict"):
-                    self.matcher.csvpath.error_manager.handle_error(
-                        source=self, msg=msg
-                    )
-                    if self.matcher.csvpath.do_i_raise():
-                        raise MatchException(msg)
-                    self.match = False
-                    return
+                if strict:
+                    return (False, msg)
                 i = ExpressionUtility.to_int(h)
                 f = ExpressionUtility.to_float(h)
                 if i == f:
                     # the fractional part is 0, so we'll allow it
-                    self.match = True
+                    return (True, None)
                 else:
-                    self.matcher.csvpath.error_manager.handle_error(
-                        source=self, msg=msg
-                    )
-                    if self.matcher.csvpath.do_i_raise():
-                        raise MatchException(msg)
-                    self.match = False
-                    return
-            self.match = True
-        #
-        # validate min and max
-        #
-        val = self._to(h)
-        self._val_in_bounds(val, skip=skip)
+                    return (False, msg)
 
-    def _val_in_bounds(self, val, skip=None) -> None:
-        # find max
-        dmax = self._value_two(skip=skip)
-        if dmax is not None:
-            dmax = self._to(dmax)
-        # find min
-        dmin = self._value_three(skip=skip)
-        if dmin is not None:
-            dmin = self._to(dmin)
-        # get result
+    def _val_in_bounds(self, *, val, dmax, dmin) -> None:
+        return (dmax is None or val <= dmax) and (dmin is None or val >= dmin)
 
-        if (dmax is None or val <= dmax) and (dmin is None or val >= dmin):
-            self.match = True
-        else:
-            self.match = False
-
-    def _to(self, n):
+    def _to(self, *, name: str, n: str):
         if self.name == "decimal":
             f = ExpressionUtility.to_float(n)
             if not isinstance(f, float):
-                msg = f"Cannot convert {n} to float"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-                if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
+                return f"Cannot convert {n} to float"
             return f
         if self.name == "integer":
             i = ExpressionUtility.to_int(n)
             if not isinstance(i, int):
-                msg = f"Cannot convert {n} to int"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-                if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
+                return f"Cannot convert {n} to int"
             return i
-        #
-        #
-        #
-        msg = f"Unknown name: {self.name}"
-        self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-        if self.matcher.csvpath.do_i_raise():
-            raise MatchException(msg)
-        return None

@@ -8,6 +8,7 @@ from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers3.csv"
+NUMBERS5 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers5.csv"
 DELETEME = (
     f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
 )
@@ -28,7 +29,8 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            f""" ${NUMBERS}[1] [
+            f""" ~ validation-mode:no-raise ~
+                ${NUMBERS}[1] [
                 ~ too high 3.52 ~
                 push("a", decimal.one(#numbers31, 1, 1) )
                 ~ too high 3.52 ~
@@ -93,3 +95,22 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
             assert len(lines) == 7
         finally:
             os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = iii
+
+    def test_function_decimal5(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: no-raise, no-stop, collect
+                  explain-mode:no-explain ~
+                ${NUMBERS5}[1*] [
+                        decimal.strict(#0)
+                        decimal.strict(#1)
+                        decimal.strict(#2)
+                ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
+        assert len(path.errors) == 2
+        # assert path.is_valid is False
