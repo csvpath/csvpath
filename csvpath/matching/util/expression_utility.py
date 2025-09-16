@@ -147,7 +147,7 @@ class ExpressionUtility:
     def is_none(cls, v: Any) -> bool:
         if v is None:
             return True
-        elif v == "None":
+        elif str(v).lower() == "none":
             return True
         elif cls.isnan(v) or v == "nan":
             return True
@@ -291,11 +291,43 @@ class ExpressionUtility:
         return v
 
     @classmethod
+    def is_date_or_datetime_str(cls, s: str) -> str:
+        try:
+            parsed_dt = dateutil.parser.parse(s)
+            return cls.is_date_or_datetime_obj(parsed_dt)
+        except ValueError:
+            return "unknown"
+
+    @classmethod
+    def is_date_or_datetime_obj(cls, o) -> str:
+        if isinstance(o, datetime.datetime):
+            if o.hour != 0 or o.minute != 0 or o.second != 0 or o.microsecond != 0:
+                return "datetime"
+            else:
+                return "date"
+        elif isinstance(o, datetime.date):
+            return "date"
+        else:
+            return "unknown"
+
+    @classmethod
     def is_date_type(cls, v) -> bool:
         v = cls.to_date(v)
         if isinstance(v, (datetime.date, datetime.datetime)):
             return True
         return False
+
+    @classmethod
+    def to_simple_bool(cls, v: Any) -> bool:
+        if v is True:
+            return True
+        if v is False:
+            return False
+        if f"{v}".strip().lower() == "true":
+            return True
+        if f"{v}".strip().lower() == "false":
+            return False
+        return v
 
     @classmethod
     def to_bool(cls, v: Any) -> bool:

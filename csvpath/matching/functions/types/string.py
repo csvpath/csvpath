@@ -47,6 +47,13 @@ class String(Type):
         else:
             self._check_length_if(val)
 
+    @classmethod
+    def _is_match(
+        cls,
+        value: str,
+    ) -> tuple[bool, str | None]:
+        return isinstance(value, str) and value.strip() != ""
+
     def _check_length_if(self, value, skip=None) -> None:
         maxlen = self._value_two(skip=skip)
         minlen = self._value_three(skip=skip)

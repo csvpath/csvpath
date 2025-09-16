@@ -47,6 +47,13 @@ class Nonef(ValueProducer, Type):
         else:
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 
+    @classmethod
+    def _is_match(
+        cls,
+        value: str,
+    ) -> tuple[bool, str | None]:
+        return ExpressionUtility.is_none(value)
+
 
 class Blank(ValueProducer, Type):
     """returns True to match, returns its child's value or None. represents any value"""
