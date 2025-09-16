@@ -2,6 +2,7 @@
 from email_validator import validate_email, EmailNotValidError
 from csvpath.matching.productions import Term, Header, Variable, Reference
 from csvpath.matching.functions.function import Function
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..args import Args
 from .type import Type
 
@@ -38,8 +39,14 @@ class Email(Type):
         elif val is None or f"{val}".strip() == "":
             self.match = True
         else:
-            try:
-                validate_email(val, check_deliverability=False)
-                self.match = True
-            except EmailNotValidError:
-                self.match = False
+            self.match = Email._is_match(val)
+
+    @classmethod
+    def _is_match(cls, value: str) -> bool:
+        if value is None:
+            return False
+        try:
+            validate_email(value, check_deliverability=False)
+            return True
+        except EmailNotValidError:
+            return False

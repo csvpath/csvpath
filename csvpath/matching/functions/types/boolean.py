@@ -52,7 +52,7 @@ class Boolean(ValueProducer, Type):
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
         else:
-            ret = self._is_match(v)
+            ret = Boolean._is_match(v)
             if ret[0] is True:
                 self.value = True
             else:
@@ -62,10 +62,13 @@ class Boolean(ValueProducer, Type):
                     raise MatchException(ret[1])
                 self.value = False
 
+    @classmethod
     def _is_match(
-        self,
+        cls,
         value: str,
     ) -> tuple[bool, str | None]:
+        if value is None:
+            return False
         b = ExpressionUtility.to_bool(value)
         if b in [True, False]:
             return (True, None)

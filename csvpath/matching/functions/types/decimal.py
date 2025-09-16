@@ -55,7 +55,7 @@ class Decimal(Type):
 
     def _decide_match(self, skip=None) -> None:
         h = self._value_one(skip=skip)
-        if h is None:
+        if h is None or (isinstance(h, str) and h.strip() == ""):
             #
             # Matcher via Type will take care of mismatches and Nones. Args handles nonnone
             #
@@ -72,7 +72,7 @@ class Decimal(Type):
         if dmin is not None:
             dmin = self._to(name=self.name, n=dmin)
 
-        ret = self._is_match(
+        ret = Decimal._is_match(
             name=self.name,
             value=h,
             dmax=dmax,
@@ -87,8 +87,9 @@ class Decimal(Type):
             return
         self.match = True
 
+    @classmethod
     def _is_match(
-        self,
+        cls,
         *,
         name: str,
         value: str,
@@ -96,19 +97,22 @@ class Decimal(Type):
         dmin: int | float,
         strict: str,
     ) -> tuple[bool, str | None]:
-        ret = self._dot(name=self.name, h=value, strict=self.has_qualifier("strict"))
+        if value is False:
+            return False
+        ret = cls._dot(name=name, h=value, strict=strict)
         if ret[0] is False:
             return ret
-        val = self._to(name=self.name, n=value)
+        val = cls._to(name=name, n=value)
         if isinstance(val, str):
             return (False, val)
-        m = self._val_in_bounds(val=val, dmax=dmax, dmin=dmin)
+        m = cls._val_in_bounds(val=val, dmax=dmax, dmin=dmin)
         if m is False:
             return (False, "Value is out of bounds")
         return (True, None)
 
-    def _dot(self, *, name: str, h: str, strict: bool) -> tuple[bool, str | None]:
-        if self.name == "decimal":
+    @classmethod
+    def _dot(cls, *, name: str, h: str, strict: bool) -> tuple[bool, str | None]:
+        if name == "decimal":
             if strict:
                 if f"{h}".strip().find(".") == -1:
                     msg = f"'{h}' has 'strict' but value does not have a '.'"
@@ -126,17 +130,20 @@ class Decimal(Type):
                     return (True, None)
                 else:
                     return (False, msg)
+        return (True, None)
 
-    def _val_in_bounds(self, *, val, dmax, dmin) -> None:
+    @classmethod
+    def _val_in_bounds(cls, *, val, dmax, dmin) -> None:
         return (dmax is None or val <= dmax) and (dmin is None or val >= dmin)
 
-    def _to(self, *, name: str, n: str):
-        if self.name == "decimal":
+    @classmethod
+    def _to(cls, *, name: str, n: str):
+        if name == "decimal":
             f = ExpressionUtility.to_float(n)
             if not isinstance(f, float):
                 return f"Cannot convert {n} to float"
             return f
-        if self.name == "integer":
+        if name == "integer":
             i = ExpressionUtility.to_int(n)
             if not isinstance(i, int):
                 return f"Cannot convert {n} to int"

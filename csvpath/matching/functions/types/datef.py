@@ -16,8 +16,8 @@ class Date(ValueProducer, Type):
         self.value_qualifiers.append("notnone")
         self.match_qualifiers.append("notnone")
         self.description = [
-            "Date",
-            "date() has two purposes.",
+            self.name,
+            f"{self.name}() has two purposes.",
             "First, it may indicate that a value must be a string to be valid. To do this, it must be an argument to a line() and have a header argument.",
             "Alternatively, it may generate a date from a string.",
         ]
@@ -126,6 +126,24 @@ class Date(ValueProducer, Type):
         else:
             ret = ExpressionUtility.to_datetime(v)
         return ret
+
+    @classmethod
+    def _is_match(
+        cls,
+        *,
+        datetime: bool,
+        value: str,
+    ) -> tuple[bool, str | None]:
+        if value is None:
+            return False
+        d = (
+            ExpressionUtility.to_datetime(value)
+            if datetime is True
+            else ExpressionUtility.to_date(value)
+        )
+        if d != value:
+            return True
+        return False
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip) is not None
