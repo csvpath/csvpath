@@ -8,8 +8,11 @@ from csvpath.util.nos import Nos
 
 
 class Cache:
-    def __init__(self, csvpaths):
-        self.csvpaths = csvpaths
+    #
+    # csvpathx can be either CsvPath or CsvPaths
+    #
+    def __init__(self, csvpathx):
+        self.csvpathx = csvpathx
 
     def _cache_name(self, filename: str) -> str:
         if filename is None:
@@ -22,23 +25,23 @@ class Cache:
                 filename = f"{filename}{os.path.getmtime(filename)}"
                 return hashlib.sha256(filename.encode("utf-8")).hexdigest()
             except (FileNotFoundError, IsADirectoryError):
-                self.csvpaths.logger.debug("{filename} is not available or not a file")
+                self.csvpathx.logger.debug("{filename} is not available or not a file")
         return None
 
     def _cachedir(self) -> str:
-        self.csvpaths.config._assure_cache_path()
-        return self.csvpaths.config.cache_dir_path
+        self.csvpathx.config._assure_cache_path()
+        return self.csvpathx.config.cache_dir_path
 
     def cached_text(self, filename: str, type: str) -> str:
         fn = self._cache_name(filename)
         if fn is None:
-            self.csvpaths.logger.debug("No cache file: {filename} of type: {type}")
+            self.csvpathx.logger.debug("No cache file: {filename} of type: {type}")
             return None
         cachedir = self._cachedir()
         cachepath = None
         keypath = None
         if cachedir is None:
-            self.csvpaths.logger.debug(
+            self.csvpathx.logger.debug(
                 "No cache path available for file: {filename} of type: {type}"
             )
             return None
@@ -61,7 +64,7 @@ class Cache:
                         for line in file:
                             res += line
             except Exception:
-                self.csvpaths.logger.debug(
+                self.csvpathx.logger.debug(
                     f"Could not read {cachepath} for {filename}. Check config.ini for the cache path."
                 )
             return res
@@ -70,7 +73,7 @@ class Cache:
         filename = pathu.resep(filename)
         cachedir = self._cachedir()
         if cachedir is None:
-            self.csvpaths.logger.debug(
+            self.csvpathx.logger.debug(
                 "No cache dir available. Cannot cache {filename} with {strtype}"
             )
             return
