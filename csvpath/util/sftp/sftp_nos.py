@@ -36,6 +36,7 @@ class SftpDo:
 
     def __init__(self, path):
         self._path = None
+        self._orig_path = None
         self._server_part = None
         self._config = None
         self.setup(path)
@@ -60,6 +61,11 @@ class SftpDo:
 
     @path.setter
     def path(self, p) -> None:
+        #
+        # keep the orig because we strip off the protocol.
+        # this could become a problem.
+        #
+        self._orig_path = p
         p = pathu.resep(p, hint="posix")
         p = pathu.stripp(p)
         #
@@ -72,7 +78,8 @@ class SftpDo:
         self._path = p
 
     def join(self, name: str) -> str:
-        return f"{self.path}/{name}"
+        return f"{self._orig_path}/{name}"
+        # return f"{self.path}/{name}"
 
     def remove(self) -> None:
         if self.path == "/":
