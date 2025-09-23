@@ -575,6 +575,7 @@ class FileManager:
         #
         #
         home = self.assure_file_home(name, path, template)
+
         file_home = home
         mark = None
         #
