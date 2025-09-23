@@ -71,6 +71,9 @@ class SftpDo:
             p = f"/{p}"
         self._path = p
 
+    def join(self, name: str) -> str:
+        return f"{self.path}/{name}"
+
     def remove(self) -> None:
         if self.path == "/":
             raise ValueError("Cannot remove the root")
