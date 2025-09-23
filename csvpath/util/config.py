@@ -98,6 +98,10 @@ class Config:
         self._config_env = e
 
     @property
+    def config_parser(self) -> RawConfigParser:
+        return self._config
+
+    @property
     def configpath(self) -> str:
         if self._configpath is None:
             self.configpath = None

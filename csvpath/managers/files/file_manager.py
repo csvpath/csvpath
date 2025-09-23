@@ -501,9 +501,45 @@ class FileManager:
                     "%s is not in accept list", Nos(base).join(p)
                 )
 
+    def can_load(self, path: str) -> bool:
+        #
+        # in multi-user envs, e.g. flightpath server, we may not want a user to
+        # be able to register files from anywhere on the local machine or an
+        # unrestricted HTTP server.
+        #
+        config = self.csvpaths.config
+        http = config.get(section="inputs", name="allow_http_files", default=False)
+        http = str(http).strip().lower() in ["true", "yes"]
+        local = config.get(section="inputs", name="allow_local_files", default=False)
+        local = str(local).strip().lower() in ["true", "yes"]
+        nos = Nos(path)
+        if nos.is_http and http is not True:
+            msg = f"Cannot add {path} because loading files over HTTP is not allowed"
+            self.csvpaths.logger.error(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
+            return False
+        if nos.is_local and local is not True:
+            msg = f"Cannot add {path} because loading local files is not allowed"
+            self.csvpaths.logger.error(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise FileException(msg)
+            return False
+        return True
+
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
     ) -> None:
+        if not self.can_load(path):
+            #
+            # if False, can_load() will have already raised an error and/or, minimally,
+            # logged an error. in principle we shouldn't have to further make noise here.
+            #
+            # also remember that if we're loading files using JSON or dict structures we
+            # will load any allowed files, even if some are not allowed -- but with the
+            # caveat that if an exception is raised we may stop in the middle of the load.
+            #
+            return
         self.legal_name(name)
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")

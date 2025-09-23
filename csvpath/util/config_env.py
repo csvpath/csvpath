@@ -92,6 +92,7 @@ class ConfigEnv:
         if self.var_sub_source == "env":
             v = os.getenv(name)
             return v if v else default if default else name
-        if name in self.env:
+
+        if self.env and name in self.env:
             return self.env.get(name)
         return default if default else name

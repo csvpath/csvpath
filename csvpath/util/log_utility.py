@@ -13,8 +13,8 @@ class LogUtility:
     @classmethod
     def log_brief_trace(cls, *, logger=None, printer=None, depth=30) -> str:
         trace = "".join(traceback.format_stack())
-        i = depth
         lines = trace.split("\n")
+        i = depth if depth < len(lines) else len(lines)
         ret = ""
         while i > 0:
             i = i - 1

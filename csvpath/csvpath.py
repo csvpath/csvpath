@@ -16,8 +16,6 @@ from .util.file_readers import DataFileReader
 from .util.line_spooler import LineSpooler, ListLineSpooler
 from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
-
-# from .scanning.scanner import Scanner
 from .scanning.scanner2 import Scanner2 as Scanner
 from .util.metadata_parser import MetadataParser
 from .managers.errors.error import Error

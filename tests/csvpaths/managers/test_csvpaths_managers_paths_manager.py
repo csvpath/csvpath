@@ -94,6 +94,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=False,
         )
+        mdata1 = paths.paths_manager.last_add_metadata
         assert paths.paths_manager.has_named_paths("aname")
         assert len(paths.paths_manager.get_named_paths("aname")) == 2
         paths.paths_manager.add_named_paths_from_file(
@@ -101,8 +102,13 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=True,
         )
+        mdata2 = paths.paths_manager.last_add_metadata
         assert paths.paths_manager.has_named_paths("aname")
         assert len(paths.paths_manager.get_named_paths("aname")) == 4
+        #
+        # we include all csvpaths in metadata when we append, not just the appended csvpaths
+        #
+        assert len(mdata2.named_paths) == 2 * len(mdata1.named_paths)
 
     def test_named_paths_add_and_external_change(self):
         name = f"{uuid4()}"
