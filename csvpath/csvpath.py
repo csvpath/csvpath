@@ -16,8 +16,6 @@ from .util.file_readers import DataFileReader
 from .util.line_spooler import LineSpooler, ListLineSpooler
 from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
-
-# from .scanning.scanner import Scanner
 from .scanning.scanner2 import Scanner2 as Scanner
 from .util.metadata_parser import MetadataParser
 from .managers.errors.error import Error
@@ -33,6 +31,7 @@ from .util.exceptions import (
     ProcessingException,
     CsvPathsException,
 )
+from csvpath.managers.files.lines_and_headers_cacher import LinesAndHeadersCacher
 from .matching.util.exceptions import MatchException
 from .managers.errors.error_collector import ErrorCollector
 
@@ -1324,16 +1323,23 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.get_total_lines_and_headers()
         return self.line_monitor.physical_end_line_number
 
-    def get_total_lines_and_headers(self) -> None:  # pylint: disable=C0116
+    def get_total_lines_and_headers(
+        self, *, filename: str = None
+    ) -> None:  # pylint: disable=C0116
+        #
+        # filename is an option for certain needs but in the usual case
+        # we expect scanner.filename, and if both are available for some
+        # reason, the scanner wins.
+        #
         """@private"""
-        if not self.scanner or not self.scanner.filename:
+        if not filename and (not self.scanner or not self.scanner.filename):
             self.logger.error(
                 "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
                 self.identity,
             )
-            # exp
             return
-            # end exp
+        if self.scanner or self.scanner.filename:
+            filename = self.scanner.filename
         #
         # there are times, e.g. when using Lambda, when it may be better to
         # not use a cache. in the case of Lambda the reason is to avoid working
@@ -1343,20 +1349,21 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         if use_cache:
             uc = self.csvpaths.config.get(section="cache", name="use_cache")
             use_cache = uc is None or uc.strip().lower() != "no"
-        #
-        # do we really want to only use cache if we're running a named-paths group?
-        # users may want to run one-offs repeatedly, particularly in FP. otoh, we
-        # don't have a file_manager and its a big change for probably a small number of
-        # bad cases and it can be worked around by simply using a CsvPaths.
-        #
-        if self.csvpaths and use_cache is True:
-            self.line_monitor = self.csvpaths.file_manager.lines_and_headers_cacher.get_new_line_monitor(
-                self.scanner.filename
+        if use_cache is True:
+            self.logger.debug(
+                f"Using cache to get total lines and headers for {filename}"
             )
-            self.headers = self.csvpaths.file_manager.lines_and_headers_cacher.get_original_headers(
-                self.scanner.filename
+            lahc = (
+                self.csvpaths.file_manager.lines_and_headers_cacher
+                if self.csvpaths
+                else LinesAndHeadersCacher(self, line_counter=LineCounter(self))
             )
+            self.line_monitor = lahc.get_new_line_monitor(filename)
+            self.headers = lahc.get_original_headers(filename)
         else:
+            self.logger.debug(
+                f"Not using cache to get total lines and headers for {filename}"
+            )
             lc = LineCounter(self)
             lm, headers = lc.get_lines_and_headers(self.scanner.filename)
             self.line_monitor = lm
