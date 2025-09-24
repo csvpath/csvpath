@@ -81,14 +81,12 @@ class ConfigEnv:
     # original name.
     #
     def get(self, *, name: str, default: Optional[Any] = None):
-        print(f"ConfigEnv: get: name: {name}, default: {default}")
         if name is None:
             raise ValueError("Name cannot be None")
         if not name.isupper():
             return default if default else name
         if not self.allow_var_sub:
             return default if default else name
-        print(f"ConfigEnv: getting name via: {self.var_sub_source}")
         if self.var_sub_source == "env":
             v = os.getenv(name)
             return v if v else default if default else name

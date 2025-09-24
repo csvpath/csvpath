@@ -4,6 +4,15 @@ from csvpath.util.box import Box
 from csvpath.util.config import Config
 
 
+class MyClose:
+    def __init__(self, m) -> None:
+        self.m = m
+
+    def close(self) -> None:
+        self.m()
+        Box().remove(Box.AZURE_BLOB_CLIENT)
+
+
 class AzureUtility:
     _client_count = 0
     AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING"
@@ -45,6 +54,10 @@ class AzureUtility:
                     f"{cls.AZURE_STORAGE_CONNECTION_STRING} environment variable not set."
                 )
             client = BlobServiceClient.from_connection_string(connection_string)
+            #
+            # exp!
+            #
+            client.close = MyClose(client.close).close
             box.add(Box.AZURE_BLOB_CLIENT, client)
         return client
 

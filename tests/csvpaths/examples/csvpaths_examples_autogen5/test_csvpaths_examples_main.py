@@ -7,6 +7,7 @@ from csvpath.managers.integrations.sqlite.sqlite_result_listener import (
     SqliteResultListener,
 )
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.box import Box
 
 FILE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_autogen5{os.sep}assets{os.sep}Washington_State_Certified_Public_Accountants.csv"
 PATH = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_autogen5{os.sep}assets{os.sep}accountants.csvpath"
@@ -21,6 +22,8 @@ class TestCsvPathsExamplesAutogen(unittest.TestCase):
         paths.paths_manager.add_named_paths_from_file(name="autogen5", file_path=PATH)
         paths.file_manager.add_named_file(name="accounts", path=f"{FILE}")
         paths.fast_forward_paths(pathsname="autogen5", filename="accounts")
+        paths.wrap_up()
+        paths = None
 
     def test_autogen5_paths_load_only(self):
         paths = CsvPaths()
@@ -49,6 +52,11 @@ class TestCsvPathsExamplesAutogen(unittest.TestCase):
         # use config direct so no save happens
         #
         paths.config.add_to_config("listeners", "groups", "sqlite")
+        #
+        #
+        # exp! <<< didn't help
+        paths.paths_manager.remove_named_paths("autogen5")
+        paths.file_manager.remove_named_file("accounts")
         #
         #
         #
@@ -87,13 +95,11 @@ class TestCsvPathsExamplesAutogen(unittest.TestCase):
                     rows[0]["named_file_home"],
                     f"{paths.config.get(section='inputs', name='files')}{os.sep}accounts",
                 )
-
-                rows = cursor.execute(
-                    f"""
+                sql = f"""
                     select *
                     from instance_run ir, named_paths_group_run gr
-                    where gr.uuid = '{uuid}' and ir.group_run_uuid = gr.uuid"""
-                )
+                    where gr.uuid = '{uuid}' and ir.group_run_uuid = gr.uuid order by at desc"""
+                rows = cursor.execute(sql)
                 rows = rows.fetchmany()
                 assert len(rows) == 1
                 assert rows[0]["instance_identity"] == "General data integrity checks"

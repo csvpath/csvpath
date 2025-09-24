@@ -4,6 +4,7 @@
 import os
 import traceback
 import atexit
+import threading
 
 from uuid import uuid4, UUID
 from abc import ABC, abstractmethod
@@ -74,6 +75,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     #
     METRICS = None
     METRICS_WRAP_REG = False
+    WRAPPED_UP = False
 
     @classmethod
     def _wrap_up_metrics(cls) -> None:
@@ -197,7 +199,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._wrap_up_automatically = True
         """ @private """
 
-        self.logger.info("initialized CsvPaths")
+        self.logger.info(
+            "Initialized CsvPaths: {self} in thread: {threading.currentThread()}"
+        )
 
     def _set_managers(self) -> None:
         self.paths_manager = PathsManager(csvpaths=self)
@@ -391,6 +395,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # cleanup shared connections, etc.
         #
+        # CsvPaths.WRAPPED_UP is needed because if we call wrap_up()
+        # twice on the same thread another CsvPaths may have been
+        # started and cleaning up the contents of the thread's box
+        # could remove their stuff, no longer ours. We see this in
+        # unit tests, but in principle we could see it anywhere.
+        #
+        if CsvPaths.WRAPPED_UP is True:
+            return
+        CsvPaths.WRAPPED_UP = True
         box = Box()
         ds = []
         for k, v in box.get_my_stuff().items():
@@ -412,6 +425,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # in most cases we're already wrapped up, but double checking is cheap
         #
+        self.logger.debug(f"__del__ CsvPaths: {self}")
         try:
             self.wrap_up()
         except Exception:

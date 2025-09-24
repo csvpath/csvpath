@@ -23,6 +23,12 @@ class Box:
 
     STUFF = {}
 
+    def __str__(self) -> str:
+        s = "Box: "
+        for k, v in Box.STUFF.items():
+            s = f"{s}\n  {k}={v}"
+        return s
+
     @property
     def _thread(self) -> str:
         current_thread = threading.current_thread()
@@ -46,6 +52,7 @@ class Box:
         s = Box.STUFF.get(self._thread)
         if s is None:
             return
+        s = list(s.keys())[:]
         for key in s:
             self.remove(key)
 

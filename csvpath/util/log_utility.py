@@ -1,6 +1,9 @@
 import traceback
 from logging.handlers import RotatingFileHandler
 import logging
+import threading
+import gc
+import sys
 
 
 class LogException(Exception):
@@ -14,8 +17,18 @@ class LogUtility:
     def log_brief_trace(cls, *, logger=None, printer=None, depth=30) -> str:
         trace = "".join(traceback.format_stack())
         lines = trace.split("\n")
-        i = depth if depth < len(lines) else len(lines)
-        ret = ""
+        if depth in [-1, 0, "all"]:
+            depth = len(lines)
+        i = depth if depth <= len(lines) else len(lines)
+        ret = f"Brief trace in thread: {threading.current_thread()}"
+
+        if logger:
+            logger.debug(ret)
+        elif printer:
+            printer.print(ret)
+        else:
+            print(ret)
+
         while i > 0:
             i = i - 1
             aline = lines[len(lines) - i - 1]
@@ -30,6 +43,33 @@ class LogUtility:
                 print(f"{aline}")
             ret = f"{ret}{aline}\n"
         return ret
+
+    @classmethod
+    def log_refs(cls, obj, *, logger=None, printer=None) -> str:
+        refs = sys.getrefcount(obj)
+        s = f"Reference count for {obj}: {refs}"
+        if logger:
+            logger.debug(s)
+        elif printer:
+            printer.print(s)
+        else:
+            print(s)
+        referrers = gc.get_referrers(obj)
+        s = f"Listing {len(referrers)} referrers:"
+        if logger:
+            logger.debug(s)
+        elif printer:
+            printer.print(s)
+        else:
+            print(s)
+        for ref in referrers:
+            s = f"  {type(ref)}: {ref}"
+            if logger:
+                logger.debug(s)
+            elif printer:
+                printer.print(s)
+            else:
+                print(s)
 
     #
     # component must be either a CsvPath or CsvPaths
