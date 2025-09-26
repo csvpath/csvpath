@@ -62,10 +62,19 @@ class S3DataReader(CsvDataReader):
         return S3Utils.rename(bucket, key, new_key)
 
     #
-    # TODO: are read() and raw_read() incorrect because not S3, like open() above?
+    # TODO: is read() incorrect because not S3, like open() above?
     #
     def read(self) -> str:
-        with open(uri=self.path, mode=self.mode, encoding=self.encoding) as file:
+        #
+        # make a test that fails to read because not using env vars
+        # then uncomment this instead:
+        #
+        with open(
+            uri=self.path,
+            mode="r",
+            encoding=self.encoding,
+            transport_params={"client": S3Utils.make_client()},
+        ) as file:
             return file.read()
 
     #
