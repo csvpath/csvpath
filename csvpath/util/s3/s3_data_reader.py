@@ -75,9 +75,6 @@ class S3DataReader(CsvDataReader):
             encoding=self.encoding,
             transport_params={"client": S3Utils.make_client()},
         ) as file:
-            """
-            with open(uri=self.path, mode=self.mode, encoding=self.encoding) as file:
-            """
             return file.read()
 
     #
