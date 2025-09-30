@@ -1338,7 +1338,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 self.identity,
             )
             return
-        if self.scanner or self.scanner.filename:
+        if self.scanner and self.scanner.filename:
             filename = self.scanner.filename
         #
         # there are times, e.g. when using Lambda, when it may be better to
@@ -1365,7 +1365,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 f"Not using cache to get total lines and headers for {filename}"
             )
             lc = LineCounter(self)
-            lm, headers = lc.get_lines_and_headers(self.scanner.filename)
+            lm, headers = lc.get_lines_and_headers(filename)
             self.line_monitor = lm
             self.headers = headers
 
