@@ -217,7 +217,7 @@ class ResultsManager:  # pylint: disable=C0115
     # it doesn't separate printouts from different Result objects. a better way
     # to go might be to iterate the results and pull the printouts you need.
     #
-    def get_printouts(self, name: str, printstream: str = "default") -> dict:
+    def get_printouts(self, name: str, printstream: str = "default") -> list[str]:
         results = self._get_results_list(name)
         ps = []
         for r in results:
@@ -534,6 +534,13 @@ class ResultsManager:  # pylint: disable=C0115
                 self.csvpaths.logger.error(msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise InputException(msg)
+                return []
+            if len(results.files) > 1:
+                self.csvpaths.logger.warning(
+                    "Referance found multiple runs (%s) when only one was expected and only one will be used: %s",
+                    len(results.files),
+                    name,
+                )
             path = results.files[0]
             run = path[len(self.csvpaths.config.archive_name) :]
             nos = Nos(path)
