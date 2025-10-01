@@ -39,6 +39,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         runtime_data: dict = None,
         by_line: bool = False,
         run_uuid: UUID,
+        method: str = None,
     ):
         """@private"""
         ErrorCollector.__init__(self)
@@ -63,6 +64,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         self._actual_data_file = None
         self._origin_data_file = None
         self._by_line = by_line
+        self._method = method
         #
         # data_file_path is the path to data.csv of this result
         #
@@ -166,6 +168,10 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     @property
     def by_line(self) -> bool:
         return self._by_line
+
+    @property
+    def method(self) -> bool:
+        return self._method
 
     @property
     def source_mode_preceding(self) -> bool:
