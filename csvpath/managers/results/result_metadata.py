@@ -58,10 +58,8 @@ class ResultMetadata(Metadata):
         self.lines_scanned: int = 0
         self.lines_total: int = 0
         self.lines_matched: int = 0
-        #
-        # why do we need this here? the run knows.
-        #
         self.by_line: bool = False
+        self.method: str = None
         #
         # transfer tuples:
         # 1: filename, no extension needed: data | unmatched
@@ -79,6 +77,7 @@ ResultMetadata(
   {self.run_home},{self.instance_home},
   {self.input_data_file},
   {self.file_fingerprints},
+  {self.method},
   {self.valid},{self.completed},{self.files_expected},{self.error_count},
   {self.transfers}
 )"""  # {self.file_count},
@@ -98,6 +97,7 @@ ResultMetadata(
         #
         #
         self.run = m.get("run")
+        self.method = m.get("method")
         self.run_uuid_string = m.get("run_uuid")
         self.run_home = m.get("run_home")
         self.instance_home = m.get("instance_home")

@@ -88,7 +88,14 @@ class ResultsManager:  # pylint: disable=C0115
     # and return that uuid.
     #
     def start_run(
-        self, *, run_dir, pathsname, filename, file: str = None, run_uuid: UUID
+        self,
+        *,
+        run_dir: str,
+        pathsname: str,
+        filename: str,
+        file: str = None,
+        run_uuid: UUID,
+        method: str,
     ) -> ResultsMetadata:
         """@private"""
         rr = ResultsRegistrar(
@@ -121,6 +128,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_paths_name = pathsname
         mdata.named_paths_uuid_string = np_uuid
         mdata.named_results_name = pathsname
+        mdata.method = method
         rr.register_start(mdata)
         return mdata
 
@@ -323,6 +331,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.identity = result.identity_or_index
         mdata.named_paths_name = result.paths_name
         mdata.named_file_name = result.file_name
+        mdata.method = result.method
         rr = RunRegistrar(self.csvpaths)
         rr.register_start(mdata)
         #
@@ -330,6 +339,10 @@ class ResultsManager:  # pylint: disable=C0115
         #
         # we use the same UUID for both metadata updates because the
         # UUID represents the run, not the metadata object
+        #
+        #
+        # collect_paths and collect_by_line expect a data.csv file, even if it has 0-bytes.
+        # we make sure of that here.
         #
         mdata = ResultMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
@@ -341,6 +354,18 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.run = result.run_dir[result.run_dir.rfind(sep) + 1 :]
         mdata.run_home = result.run_dir
         mdata.instance_home = result.instance_dir
+        mdata.method = result.method
+        #
+        # for the two CsvPaths methods that result in data.csv we want to make
+        # sure there is a data.csv, even if it ends up empty. we don't make this
+        # effort for unmatched.csv. perhaps we should but atm seems ok to pass.
+        #
+        if mdata.method in ["collect_paths", "collect_by_line"]:
+            path = Nos(mdata.instance_home).join("data.csv")
+            nos = Nos(path)
+            if not nos.exists():
+                with DataFileWriter(path=path) as file:
+                    file.write("")
         mdata.instance_identity = result.identity_or_index
         mdata.input_data_file = result.file_name
         rs = ResultSerializer(self._csvpaths.config.archive_path)

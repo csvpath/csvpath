@@ -200,7 +200,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """ @private """
 
         self.logger.info(
-            "Initialized CsvPaths: {self} in thread: {threading.currentThread()}"
+            f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
         )
 
     def _set_managers(self) -> None:
@@ -670,6 +670,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename=filename,
             file=file,
             run_uuid=run_uuid,
+            method="collect_paths",
         )
         #
         #
@@ -686,6 +687,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="collect_paths",
             )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
@@ -813,7 +815,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="fast_forward_paths",
         )
         #
         #
@@ -830,6 +836,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="fast_forward_paths",
             )
             try:
                 self._load_csvpath(
@@ -923,7 +930,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="next_paths",
         )
         #
         #
@@ -956,6 +967,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="next_paths",
             )
             if self._fail_all:
                 self.logger.warning(
@@ -1043,6 +1055,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 collect_when_not_matched=collect_when_not_matched,
                 file=file,
                 template=template,
+                method="collect_by_line",
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 lines.append(line)
@@ -1091,6 +1104,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 collect_when_not_matched=collect_when_not_matched,
                 file=file,
                 template=template,
+                method="fast_forward_by_line",
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 pass
@@ -1117,6 +1131,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
+        method: str = None,
     ) -> List[Any]:
         #
         # we're doing a programmatic use when we use next_by_line() so we don't allow
@@ -1147,6 +1162,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         collect_when_not_matched=False,
         template: str = None,
         file: str,
+        method: str = "next_by_line",
     ) -> List[Any]:
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts.
@@ -1200,6 +1216,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename=filename,
             pathsname=pathsname,
             crt=crt,
+            method=method,
         )
         #
         # setting file into the csvpath is less obviously useful at CsvPaths
@@ -1370,7 +1387,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
         return csvpath_objects
 
-    def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname, crt: str):
+    def _prep_csvpath_results(
+        self, *, csvpath_objects, filename, pathsname, crt: str, method: str
+    ):
         """@private"""
         #
         #
@@ -1380,7 +1399,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="next_paths",
         )
         #
         #
@@ -1400,6 +1423,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     run_dir=crt,
                     by_line=True,
                     run_uuid=run_uuid,
+                    method=method,
                 )
                 csvpath[1] = result
                 #

@@ -26,6 +26,15 @@ class ResultsMetadata(Metadata):
         self.all_expected_files: bool = None
         self.by_line: bool = False
         self._run_uuid: UUID = None
+        self._method: str = None
+
+    @property
+    def method(self) -> str:
+        return self._method
+
+    @method.setter
+    def method(self, m: str) -> None:
+        self._method = m
 
     @property
     def run_uuid(self) -> UUID:
@@ -101,3 +110,4 @@ class ResultsMetadata(Metadata):
         self.all_valid = m.get("all_valid")
         self.error_count = m.get("error_count")
         self.all_expected_files = m.get("all_expected_files")
+        self.method = m.get("method")

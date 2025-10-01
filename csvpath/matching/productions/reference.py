@@ -198,7 +198,7 @@ class Reference(Matchable):
             else:
                 ret = v
         else:
-            msg = f"Results exist but the {ref['name']} variable is unknown: {self.my_chain}"
+            msg = f"The {ref['name']} variable is unknown: {self.my_chain}"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise DataException(msg)
