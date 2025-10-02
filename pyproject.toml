@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.559"
+version = "0.0.560"
 description = "A data preboarding framework for managing and validating CSV, Excel, and other tabular data files using a Collect, Store, Validate, Publish pattern to create a trusted publisher for downstream data consumers."
 authors = ["David Kershaw <dk107dk@hotmail.com>"]
 readme = "README.md"
@@ -57,6 +57,7 @@ google-cloud-storage = "^3.1.0"
 sqlalchemy = "^2.0.38"
 mysqlclient = "^2.2.7"
 psycopg2-binary = "^2.9.10"
+pandas = "^2.2.2"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
