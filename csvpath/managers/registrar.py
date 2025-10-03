@@ -51,13 +51,18 @@ class Registrar(ABC):
         # notable exception of errors, errors are not thrown in non-CsvPaths code.
         #
         if self.csvpaths is not None:
+            self.csvpaths.logger.info("Distributing updates to listeners")
             try:
                 self.load_additional_listeners(self.type_name, listeners)
             except Exception as ex:
                 print(traceback.format_exc())
                 if self.csvpaths:
-                    self.csvpaths.logger(f"Error in loading listeners: {ex}")
+                    self.csvpaths.logger.error(f"Error in loading listeners: {ex}")
         for lst in listeners:
+            if self.csvpaths:
+                self.csvpaths.logger.debug(
+                    "Updating listener %s with metadata %s", lst, mdata
+                )
             try:
                 lst.metadata_update(mdata)
             except Exception as ex:
@@ -75,27 +80,27 @@ class Registrar(ABC):
         """
         if self.csvpaths:
             ss = self.csvpaths.config.additional_listeners(listener_type_name)
+            self.csvpaths.logger.info("Loading additional listener type(s) %s", ss)
             if ss and not isinstance(ss, list):
                 ss = [ss]
             if ss and len(ss) > 0:
                 for lst in ss:
-                    try:
-                        self.load_additional_listener(lst, listeners)
-                    except Exception as ex:
-                        print(traceback.format_exc())
-                        self.csvpaths.logger.error(
-                            f"Failed to load listener {lst}: {ex}"
-                        )
+                    self.load_additional_listener(lst, listeners)
 
     def load_additional_listener(self, load_cmd: str, listeners: list) -> None:
-        loader = ClassLoader()
-        alistener = loader.load(load_cmd)
-        if alistener is not None:
-            if hasattr(alistener, "csvpaths"):
-                setattr(alistener, "csvpaths", self.csvpaths)
-            if hasattr(alistener, "result"):
-                setattr(alistener, "result", self.result)
-            if hasattr(self, "csvpath") and hasattr(alistener, "csvpath"):
-                alistener.csvpath = self.csvpath
-            alistener.config = self.csvpaths.config
-            listeners.append(alistener)
+        self.csvpaths.logger.info("Loading additional listener %s", load_cmd)
+        try:
+            loader = ClassLoader()
+            alistener = loader.load(load_cmd)
+            if alistener is not None:
+                if hasattr(alistener, "csvpaths"):
+                    setattr(alistener, "csvpaths", self.csvpaths)
+                if hasattr(alistener, "result"):
+                    setattr(alistener, "result", self.result)
+                if hasattr(self, "csvpath") and hasattr(alistener, "csvpath"):
+                    alistener.csvpath = self.csvpath
+                alistener.config = self.csvpaths.config
+                listeners.append(alistener)
+        except Exception as e:
+            print(traceback.format_exc())
+            self.csvpaths.logger.error(e)

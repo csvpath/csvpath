@@ -21,6 +21,13 @@ class OpenTelemetryPathsListener(OtlpListener):
             )
         self.assure_metrics()
         try:
+            ids = []
+            #
+            # otlp doesn't like Nones. should there not be any?
+            #
+            for _ in mdata.named_paths_identities:
+                if _:
+                    ids.append(_)
             etype = "named-paths group load"
             extra = {
                 "event_type": etype,
@@ -29,7 +36,7 @@ class OpenTelemetryPathsListener(OtlpListener):
                 "named_paths_home": mdata.named_paths_home,
                 "group_file_path": mdata.group_file_path,
                 "named_paths_count": mdata.named_paths_count,
-                "named_paths_identities": mdata.named_paths_identities,
+                "named_paths_identities": ids,
                 "source_path": mdata.source_path,
                 "template": mdata.template if mdata.template else "",
                 **self.core_meta(mdata),

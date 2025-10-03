@@ -160,6 +160,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """ @private """
         self._config._assure_logs_path()
         self.logger = LogUtility.logger(self)
+        self.info_dump()
         """ @private """
         self._errors = []
         # coordinator attributes
@@ -202,6 +203,17 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.info(
             f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
         )
+
+    def info_dump(self) -> None:
+        self.logger.info(
+            "Initated logging on log path: %s",
+            self.config.get(section="logging", name="log_file"),
+        )
+        self.logger.info("Config file is at: %s", self.config.configpath)
+        intgs = self.config.get(section="listeners", name="groups")
+        self.logger.debug("Active integrations:")
+        for _ in intgs:
+            self.logger.debug("  - %s", _)
 
     def _set_managers(self) -> None:
         self.paths_manager = PathsManager(csvpaths=self)
