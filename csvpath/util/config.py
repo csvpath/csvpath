@@ -338,7 +338,8 @@ shell = /bin/bash
             # if section is none we're just looking at the OS env vars or the project
             # env vars, if the project is configured to hold vars in a JSON file.
             #
-            return self.config_env.get(name=name, default=default)
+            ret = self.config_env.get(name=name, default=default)
+            return ret
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:

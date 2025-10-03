@@ -32,13 +32,11 @@ class S3Utils:
             if config is None:
                 config = Config()
             ak = config.get(section="s3", name=cls.AWS_ACCESS_KEY_ID)
-            if ak is None:
+            if ak is None or ak == cls.AWS_ACCESS_KEY_ID:
                 ak = config.get(section=None, name=cls.AWS_ACCESS_KEY_ID)
-
             sk = config.get(section="s3", name=cls.AWS_SECRET_ACCESS_KEY)
-            if sk is None:
+            if sk is None or sk == cls.AWS_SECRET_ACCESS_KEY:
                 sk = config.get(section=None, name=cls.AWS_SECRET_ACCESS_KEY)
-
             session = boto3.Session(
                 aws_access_key_id=ak,
                 aws_secret_access_key=sk,
