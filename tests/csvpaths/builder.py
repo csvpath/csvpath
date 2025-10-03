@@ -18,6 +18,9 @@ class Builder:
         #
         # put any custom stuff here
         #
+        print(
+            "\n==================\nBuilder.build: setting minimal integrations. Check here if you don't see what you expect\n==================\n"
+        )
         paths.config.set(section="listeners", name="groups", value="default")
         # paths.config.set(section="listeners", name="groups", value="default,otlp")
 

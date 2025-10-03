@@ -64,39 +64,57 @@ class Metrics:
     @property
     def provider(self) -> LoggerProvider:
         if self._provider is None:
-            # Add resource information
-            resource = Resource.create(
-                {"service.name": "CsvPath", "service.version": "1.0.0"}
-            )
-            self._provider = LoggerProvider(resource=resource)
-            set_logger_provider(self._provider)
-            #
-            # these were working values for openobserve. I don't think we need
-            # OTEL_EXPORTER_OTLP_PROTOCOL  since we are programmatically instantiating
-            # the protobuf
-            #
-            # OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-            # OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5080/api/default
-            # OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic ZGsxMDdka0Bob3RtYWlsLmNvbTpoYW5nemhvdQ==,stream-name=FlightPath
-            #
-            # certificate_file=None,
-            # client_key_file=None,
-            # client_certificate_file=None,
-            # timeout=None,
-            # compression=None,
-            # session=None
-            #
-            # in CsvPath and FlightPath Data these can come from regular env vars
-            # but in FlightPath Server they must come from var_sub_source=config/env.json
-            # because we plan to allow projects to push data to their own choice of OTLP
-            # platform. FlightPath Data will have to provide an API for setting env.json
-            # and assistence in copying its own env vars and the OS env vars to env.json
-            # on the server.
-            #
-            endpoint = self._get(name="OTEL_EXPORTER_OTLP_ENDPOINT")
-            headers = self._get(name="OTEL_EXPORTER_OTLP_HEADERS")
-            exporter = OTLPLogExporter(endpoint=endpoint, headers=headers)
-            self._provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+            try:
+                # Add resource information
+                resource = Resource.create(
+                    {"service.name": "CsvPath", "service.version": "1.0.0"}
+                )
+                self._provider = LoggerProvider(resource=resource)
+                set_logger_provider(self._provider)
+                #
+                # these were working values for a local openobserve.
+                #
+                # OTEL_EXPORTER_OTLP_ENDPOINT=http://0.0.0.0:5080/api/default/v1/logs
+                # OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic ZGsxMDdka0Bob3RtYWlsLmNvbTpoYW5nemhvdQ==,stream-name=flightpath
+                #
+                # certificate_file=None,
+                # client_key_file=None,
+                # client_certificate_file=None,
+                # timeout=None,
+                # compression=None,
+                # session=None
+                #
+                # in CsvPath and FlightPath Data these can come from regular env vars
+                # but in FlightPath Server they must come from var_sub_source=config/env.json
+                # because we plan to allow projects to push data to their own choice of OTLP
+                # platform. FlightPath Data will have to provide an API for setting env.json
+                # and assistence in copying its own env vars and the OS env vars to env.json
+                # on the server.
+                #
+                endpoint = self._get(name="OTEL_EXPORTER_OTLP_LOGS_ENDPOINT")
+                if endpoint is None or endpoint == "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT":
+                    endpoint = self._get(name="OTEL_EXPORTER_OTLP_ENDPOINT")
+                if endpoint is None or endpoint == "OTEL_EXPORTER_OTLP_ENDPOINT":
+                    raise ValueError(
+                        "You must pass either OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, the latter preferred"
+                    )
+                headers = self._get(name="OTEL_EXPORTER_OTLP_HEADERS")
+                if headers is None or headers == "OTEL_EXPORTER_OTLP_HEADERS":
+                    raise ValueError("OTEL_EXPORTER_OTLP_HEADERS cannot be None")
+                headers = headers.split(",")
+                d = {}
+                for _ in headers:
+                    k = _[0 : _.find("=")]
+                    v = _[_.find("=") + 1 :]
+                    d[k] = v
+                exporter = OTLPLogExporter(endpoint=endpoint, headers=d)
+                self._provider.add_log_record_processor(
+                    BatchLogRecordProcessor(exporter)
+                )
+            except Exception as ex:
+                if self._csvpaths:
+                    self._csvpaths.logger.error("Cannot configure OTLP")
+                    self._csvpaths.logger.error(ex)
         return self._provider
 
     def logger(self, project: str = "csvpath") -> Logger:
@@ -114,4 +132,5 @@ class Metrics:
             # Prevent propagation to avoid duplicate logs
             logger.propagate = False
             Metrics.LOGGERS[project] = logger
+            # logging.basicConfig(level=logging.DEBUG)
         return logger

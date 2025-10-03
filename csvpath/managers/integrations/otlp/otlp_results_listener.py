@@ -49,6 +49,7 @@ class OpenTelemetryResultsListener(OtlpListener):
             self.csvpaths.__class__.METRICS.logger().debug(
                 "Csvpath completed", extra=extra
             )
+            self.csvpaths.logger.info("Csvpath shipped log entry to OTLP integration")
         except Exception as ex:
             print(traceback.format_exc())
             self.csvpaths.logger.error(ex)
