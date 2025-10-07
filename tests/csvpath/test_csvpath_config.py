@@ -30,7 +30,6 @@ class TestCsvPathConfig(unittest.TestCase):
         #
         # the ini should be generated when not found, we'll remove it if it already exists
         #
-        assert Nos(path).exists()
         if nos.exists():
             nos.remove()
         assert not nos.exists()

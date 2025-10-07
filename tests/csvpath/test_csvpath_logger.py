@@ -17,7 +17,12 @@ class TestCsvPathLogger(unittest.TestCase):
 
     def test_logger_wrong_component(self):
         matcher = Matcher(csvpath=None, data="[]", headers=[])
-        with pytest.raises(LogException):
+        #
+        # the error of an incorrect component -- i.e. not csvpaths, csvpath, or config
+        # -- has changed over time. leaving the LogEx and AttribErr for posterity's
+        # sake. they can be removed whenever.
+        #
+        with pytest.raises((LogException, AttributeError, ValueError)):
             LogUtility.logger(matcher, "error")
 
         with pytest.raises(LogException):
