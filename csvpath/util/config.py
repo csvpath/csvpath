@@ -1,5 +1,4 @@
 from configparser import RawConfigParser
-from dataclasses import dataclass
 from os import path, environ
 import os
 import traceback
@@ -234,7 +233,6 @@ shell = /bin/bash
         self.load = load
         self._config_env = config_env
         self._config = RawConfigParser()
-        self.log_file_handler = None
         self._configpath = None
         #
         # if env is set it is over anything else. However, the config.ini
@@ -363,16 +361,6 @@ shell = /bin/bash
                     ret = v2.strip()
             return ret
         except KeyError:
-            try:
-                if LogLevels.DEBUG in [
-                    self._config["logging"]["csvpath"],
-                    self._config["logging"]["csvpaths"],
-                ]:
-                    self._logger.warning(
-                        f"Check config file {self.config_path} for [{section}][{name}]"
-                    )
-            except KeyError:
-                ...
             return default
 
     @property
@@ -442,39 +430,33 @@ shell = /bin/bash
             #
             try:
                 self._assure_logs_path()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create logs path: {e}")
             try:
                 self._assure_archive_path()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create archive path: {e}")
             try:
                 self._assure_transfer_root()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create transfer path: {e}")
             try:
                 self._assure_inputs_files_path()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create input files path: {e}")
             try:
                 self._assure_cache_path()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create cache path: {e}")
             try:
                 self._assure_inputs_csvpaths_path()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
-                self._logger.error(f"Cannot create input csvpaths path: {e}")
 
-            self._logger.debug("Created a default config file at: ")
-            self._logger.debug(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
-            self._logger.debug("If you want your config somewhere else remember to")
-            self._logger.debug("update the path in the default config.ini")
+            print("Created a default config file at: ")
+            print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
+            print("If you want your config somewhere else remember to")
+            print("update the [config] path key in the default config.ini")
 
     def _assure_logs_path(self) -> None:
         if self.load:
@@ -585,9 +567,6 @@ shell = /bin/bash
                 uc = self.get(section="cache", name="use_cache")
                 if uc and uc.strip().lower() == "no":
                     return
-                self._logger.warning(
-                    f"Cannot assure cache path {p} because there is no path in config"
-                )
                 self._set("cache", "use_cache", "no")
                 return
             if p.find("://") > -1:
@@ -609,18 +588,6 @@ shell = /bin/bash
 
     def _load_config(self, norecurse=False):
         if self._load is False:
-            msg = "_load_config called on a config instance that is set to not load"
-            if self.log_file:
-                self._logger.warning(msg)
-            else:
-                try:
-                    self.log_file = "logs/csvpath.log"
-                    self._logger.warning(
-                        f"\n===========\n{msg}. only default log_file available.\n===========\n"
-                    )
-                except Exception:
-                    print(traceback.format_exc())
-                    self.log_file = None
             return
         self._assure_config_file_path()
         path = self.configpath
@@ -663,7 +630,6 @@ shell = /bin/bash
         if path:
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
-            print(f"config.revfresh: {path} != {self.configpath}")
             Config.PATH_ERR_COUNT += 1
             if Config.PATH_ERR_COUNT > 30:
                 raise Exception("PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high")

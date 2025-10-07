@@ -88,7 +88,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # your component instance and the logging level. e.g.:
         # LogUtility.logger(csvpath, "debug")
         #
-        self.logger = lout.logger(self)
+        self._logger = None
         """ @private """
         self.logger.info("initialized CsvPath")
         #
@@ -263,22 +263,24 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
 
+    @property
     def logger(self):
         if self._logger is None:
             self._logger = lout.logger(self)
         return self._logger
 
+    @logger.setter
+    def logger(self, ler) -> None:
+        self._logger = ler
+
     def __del__(self) -> None:
         try:
-            self.logger.debug(f"Doing __del__ CsvPath: {self}")
             if self.error_manager and self.error_manager.error_metrics:
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
             lout.release_logger(self)
-        except Exception as ex:
+        except Exception:
             print(traceback.format_exc())
-            if self.logger:
-                self.logger.error(ex)
 
     #
     # this method saves and reloads the config. if you don't want that use
@@ -1144,6 +1146,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 self.logger.error(e, exc_info=True)
             if self.ecoms.do_i_raise():
                 raise
+        finally:
+            self._logger = None
 
     def _next_line(self) -> List[Any]:
         """@private"""

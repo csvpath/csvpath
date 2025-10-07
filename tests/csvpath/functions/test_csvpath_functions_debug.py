@@ -87,6 +87,7 @@ class TestCsvPathFunctionsDebug(unittest.TestCase):
 
     def test_function_debug(self):
         path = CsvPath()
+        path.config.add_to_config("logging", "csvpath", "info")
         path.logger.level = logging.DEBUG
         assert path.logger.level == logging.DEBUG
         path.logger.level = logging.INFO
@@ -97,7 +98,13 @@ class TestCsvPathFunctionsDebug(unittest.TestCase):
             [ debug( "error") ]"""
         )
         path.collect()
-        assert path.logger.level == logging.ERROR
+        #
+        # the original test is no good now because at the end of collect
+        # we null out the logger so it and path can be collected. that
+        # means that the new logger that is created goes back to the config
+        # to find its level.
+        #
+        assert path.logger.level == logging.INFO
 
     def test_function_debug_2(self):
         # debug was not returning default match and so was

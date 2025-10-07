@@ -191,6 +191,14 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         #
         assert len(m) == 1
 
+    def test_file_mgr_1x(self):
+        paths = Builder().build()
+        m = paths.file_manager
+        m.remove_all_named_files()
+        m.add_named_file(name="testx", path=FILE)
+        assert m.named_files_count == 1
+        m.remove_all_named_files()
+
     def test_file_mgr_dir1(self):
         paths = Builder().build()
         fm = paths.file_manager

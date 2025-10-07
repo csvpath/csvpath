@@ -168,6 +168,11 @@ class LogUtility:
             else:
                 del Logger.manager.loggerDict[name]
             names.remove(name)
+            #
+            # the other concerning thing: there was a statement online that log handlers are
+            # also held forever in a dict in logging. a quick look suggests only two lists of
+            # weak refs, so not a big problem. something to remember, tho.
+            #
         del cls.LOGGERS[iid]
 
     #
@@ -243,6 +248,14 @@ class LogUtility:
         log_file_handler.setFormatter(formatter)
         logger = logging.getLogger(name)
         logger.setLevel(level)
+        #
+        # there will be 0, 1, or 2 handlers. we clear them and start fresh.
+        #
+        for _ in logger.handlers:
+            _.flush()
+            _.close()
+            logger.removeHandler(_)
+            _ = None
         logger.addHandler(log_file_handler)
         logger.propagate = False
         return logger
