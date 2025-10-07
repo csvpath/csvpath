@@ -4,13 +4,14 @@
 import time
 import os
 import hashlib
+import traceback
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from .util.config import Config
 from .util.line_monitor import LineMonitor
-from .util.log_utility import LogUtility
+from .util.log_utility import LogUtility as lout
 from .util.printer import Printer
 from .util.file_readers import DataFileReader
 from .util.line_spooler import LineSpooler, ListLineSpooler
@@ -87,7 +88,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # your component instance and the logging level. e.g.:
         # LogUtility.logger(csvpath, "debug")
         #
-        self.logger = LogUtility.logger(self)
+        self.logger = lout.logger(self)
         """ @private """
         self.logger.info("initialized CsvPath")
         #
@@ -262,12 +263,20 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
 
+    def logger(self):
+        if self._logger is None:
+            self._logger = lout.logger(self)
+        return self._logger
+
     def __del__(self) -> None:
         try:
+            self.logger.debug(f"Doing __del__ CsvPath: {self}")
             if self.error_manager and self.error_manager.error_metrics:
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
+            lout.release_logger(self)
         except Exception as ex:
+            print(traceback.format_exc())
             if self.logger:
                 self.logger.error(ex)
 

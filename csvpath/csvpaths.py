@@ -15,7 +15,7 @@ from .managers.errors.error_comms import ErrorCommunications
 from .managers.errors.error_manager import ErrorManager
 from .managers.errors.error_collector import ErrorCollector
 from .util.config import Config
-from .util.log_utility import LogUtility
+from .util.log_utility import LogUtility as lout
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException, CsvPathsException
 from .util.references.reference_parser import ReferenceParser
@@ -106,7 +106,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         delimiter=",",
         quotechar='"',
         skip_blank_lines=True,
-        print_default=True
+        print_default=True,
+        project_name=None,
+        project_context=None
         # config: Config = None,
     ):
         if CsvPaths.METRICS_WRAP_REG is False:
@@ -117,15 +119,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._config = Config()
         #
-        # if we set this to a project name it will be used in metrics and possible
-        # other places. the archive is also effectively a namespace, but it only matters
-        # for its own purposes. this is an independent project name that can be synced
-        # by the FlightPath frontend and/or server based on their similar concept of
-        # projects. FlightPath Server needs the project_context to further segment by
-        # API key.
+        # the project and project context disambiguate loggers in a static multi-thread/
+        # multi-user env. they are also used in metrics other places. if the context isn't
+        # we use a uuid to make sure we have a unique name until hopefully we get a more
+        # specific name. when we reset the project or project context we'll reup the logger
         #
-        self._project = "CsvPaths"
-        self._project_context = "CsvPath Framework"
+        # the expectation is that FlightPath Server will use API key as project context.
+        #
+        self._project = project_name if project_name else "project"
+        self._project_context = project_context if project_context else "csvpaths"
         #
         # in a few cases, mainly s3 and sftp connection or config sharing
         # we need to pass some state around. it's ugly, but logically not
@@ -158,8 +160,19 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """ @private """
         self.current_matcher: CsvPath = None
         """ @private """
+        #
+        # all logs in a project (or stand-alone csvpaths) have the same
+        # log file path, as configured in config/config.ini. however, they
+        # have different names for the logger instances they use because
+        # it is possible, and happens in FlightPath Server, that the loggers
+        # are held by name in a static context that has multiple projects
+        # and so needs multiple file paths held by individual loggers.
+        #
         self._config._assure_logs_path()
-        self.logger = LogUtility.logger(self)
+        self.logger = lout.logger(self)
+        #
+        #
+        #
         self.info_dump()
         """ @private """
         self._errors = []
@@ -204,6 +217,66 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
         )
 
+    def set_config_path_and_reload(self, config_path: str) -> None:
+        self.config.set_config_path_and_reload(config_path)
+        #
+        # update anything we need to, e.g. logs. that may be all for now.
+        #
+        self.config._assure_logs_path()
+        self.logger = lout.logger(self)
+
+    def info_dump(self) -> None:
+        string = self.info_dump_string
+        self.logger.info(string)
+
+    @property
+    def info_dump_string(self) -> str:
+        lstrs = "Active integrations:"
+        intgs = self.config.get(section="listeners", name="groups")
+        if not isinstance(intgs, list):
+            intgs = intgs.split(",")
+        for i, _ in enumerate(intgs):
+            lstrs = f"{lstrs}\n - {_}"
+        subs = self.config.get(section="config", name="allow_var_sub")
+        subs = (
+            self.config.get(section="config", name="var_sub_source")
+            if str(subs).strip().lower() in ["yes", "true"]
+            else "none"
+        )
+        if subs not in ["env", "none"]:
+            subs = f"{subs} with keys:"
+            e = self.config.config_env.env
+            for k, v in e.items():
+                subs = f"{subs}\n - {k}"
+        cache = self.config.get(section="cache", name="path")
+        cache = cache if self.config.get(section="cache", name="use_cache") else "none"
+        logstr = self.logger if self.logger else "pending"
+        logpath = ""
+        for h in self.logger.handlers:
+            try:
+                logpath = f"{logpath}\n {self.logger} - {h.baseFilename}"
+            except Exception:
+                ...
+
+        return f"""
+Context: {self.project_context}.{self.project}
+Logger: {logstr}
+Configured log path: {self.config.get(section='logging', name='log_file')}
+Current log paths: {logpath}
+Config file: {self.config.configpath}
+Var sub source: {self.config.get(section='config', name='var_sub_source')}
+Var subs: {subs}
+Errors:
+ - csvpath: {self.config.get(section='errors', name='csvpath')}
+ - csvpaths: {self.config.get(section='errors', name='csvpaths')}
+Named-files: {self.config.get(section='inputs', name='files')}
+Named-paths: {self.config.get(section='inputs', name='files')}
+Archive: {self.config.get(section='results', name='archive')}
+Cache: {cache}
+{lstrs}
+        """
+
+    """
     def info_dump(self) -> None:
         self.logger.info(
             "Initated logging on log path: %s",
@@ -214,6 +287,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.logger.debug("Active integrations:")
         for _ in intgs:
             self.logger.debug("  - %s", _)
+    """
 
     def _set_managers(self) -> None:
         self.paths_manager = PathsManager(csvpaths=self)
@@ -228,7 +302,16 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
 
     @project.setter
     def project(self, name: str) -> None:
+        #
+        # when we change projects we need to change names. we don't
+        # expect to do this much because we don't expect csvpaths to be
+        # long-lived. nevertheless.
+        #
+        cname = lout.logger_name(self)
         self._project = name
+        new_cname = lout.logger_name(self)
+        if cname != new_cname:
+            self.logger = lout.logger(self)
 
     @property
     def project_context(self) -> str:
@@ -236,7 +319,16 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
 
     @project_context.setter
     def project_context(self, name: str) -> None:
+        #
+        # when we change projects we need to change names. we don't
+        # expect to do this much because we don't expect csvpaths to be
+        # long-lived. nevertheless.
+        #
+        cname = lout.logger_name(self)
         self._project_context = name
+        new_cname = lout.logger_name(self)
+        if cname != new_cname:
+            self.logger = lout.logger(self)
 
     @property
     def wrap_up_automatically(self) -> bool:
@@ -437,11 +529,12 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # in most cases we're already wrapped up, but double checking is cheap
         #
-        self.logger.debug(f"__del__ CsvPaths: {self}")
+        self.logger.debug(f"Doing __del__ CsvPaths: {self}")
         try:
             self.wrap_up()
+            lout.release_logger(self)
         except Exception:
-            ...
+            print(traceback.format_exc())
 
     def _trim_archive_if(self, home: str) -> str:
         archive = self.config.get(section="results", name="archive")

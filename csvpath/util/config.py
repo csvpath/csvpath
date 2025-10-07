@@ -246,6 +246,12 @@ shell = /bin/bash
         # pass in None to trigger a configpath load
         self.configpath = None
 
+    def __del__(self) -> None:
+        try:
+            lout.release_logger(self)
+        except Exception:
+            print(traceback.format_exc())
+
     @property
     def config_env(self) -> ConfigEnv:
         if self._config_env is None:
@@ -371,7 +377,8 @@ shell = /bin/bash
 
     @property
     def _logger(self):
-        return lout.config_logger(config=self, level="debug")
+        name = lout.logger_name(self)
+        return lout.config_logger(config=self, name=name, level="debug")
 
     #
     # set() and _set() do not call refresh(). add_to_config() calls _set() and refresh().
@@ -602,9 +609,18 @@ shell = /bin/bash
 
     def _load_config(self, norecurse=False):
         if self._load is False:
-            self._logger.warning(
-                "_load_config called on a config instance that is set to not load"
-            )
+            msg = "_load_config called on a config instance that is set to not load"
+            if self.log_file:
+                self._logger.warning(msg)
+            else:
+                try:
+                    self.log_file = "logs/csvpath.log"
+                    self._logger.warning(
+                        f"\n===========\n{msg}. only default log_file available.\n===========\n"
+                    )
+                except Exception:
+                    print(traceback.format_exc())
+                    self.log_file = None
             return
         self._assure_config_file_path()
         path = self.configpath
@@ -616,6 +632,8 @@ shell = /bin/bash
     # object, if that has been updated or loaded. this method doesn't load from
     # file, it just gathers and translates settings for external use.
     #
+    PATH_ERR_COUNT = 0
+
     def refresh(self) -> None:
         #
         # the sections: csv_files and csvpath_files are deprecated in favor of
@@ -645,6 +663,10 @@ shell = /bin/bash
         if path:
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
+            print(f"config.revfresh: {path} != {self.configpath}")
+            Config.PATH_ERR_COUNT += 1
+            if Config.PATH_ERR_COUNT > 30:
+                raise Exception("PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high")
             self.configpath = path
             self.reload()
             return
@@ -774,7 +796,6 @@ shell = /bin/bash
     def archive_name(self) -> str:
         p = self.archive_path
         if p.find(self.archive_sep) > -1:
-            # if p.find(os.sep) > -1:
             p = p[p.rfind(os.sep) + 1 :]
         return p
 
@@ -887,32 +908,26 @@ shell = /bin/bash
     @property
     def csvpath_log_level(self) -> str:
         return self._get("logging", "csvpath")
-        # return self._csvpath_log_level
 
     @csvpath_log_level.setter
     def csvpath_log_level(self, s: str) -> None:
         self._set("logging", "csvpath", s)
-        # self._csvpath_log_level = s
 
     @property
     def csvpaths_log_level(self) -> str:
         return self._get("logging", "csvpaths")
-        # return self._csvpaths_log_level
 
     @csvpaths_log_level.setter
     def csvpaths_log_level(self, s: str) -> None:
         self._set("logging", "csvpaths", s)
-        # self._csvpaths_log_level = s
 
     @property
     def log_file(self) -> str:
         return self.get(section="logging", name="log_file")
-        # return self._log_file
 
     @log_file.setter
     def log_file(self, s: str) -> None:
         self._set("logging", "log_file", s)
-        # self._log_file = s
 
     @property
     def log_files_to_keep(self) -> int:
