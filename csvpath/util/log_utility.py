@@ -211,42 +211,38 @@ class LogUtility:
             raise LogException(f"Unknown log level '{level}'")
         logger = None
         filename = config.log_file
-        if name in LogUtility.LOGGERS:
-            logger = LogUtility.LOGGERS[name]
-            logger.setLevel(level)
-        else:
-            parentdir = os.path.dirname(filename)
+        parentdir = os.path.dirname(filename)
+        if not os.path.exists(parentdir):
+            os.makedirs(parentdir)
+            #
+            # this is a bit paranoid
+            #
             if not os.path.exists(parentdir):
-                os.makedirs(parentdir)
-                #
-                # this is a bit paranoid
-                #
-                if not os.path.exists(parentdir):
-                    raise RuntimeError("Cannot create logging directory: {parentdir}")
-            log_file_handler = None
-            handler_type = config.get(section="logging", name="handler", default="file")
-            log_file_handler = None
-            if handler_type == "file":
-                log_file_handler = logging.FileHandler(
-                    filename=filename,
-                    encoding="utf-8",
-                )
-            elif handler_type == "rotating":
-                log_file_handler = RotatingFileHandler(
-                    filename=filename,
-                    maxBytes=config.log_file_size,
-                    backupCount=config.log_files_to_keep,
-                    encoding="utf-8",
-                )
-            else:
-                raise ValueError(f"Unknown type of log file handler: {handler_type}")
-            formatter = logging.Formatter(
-                "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+                raise RuntimeError("Cannot create logging directory: {parentdir}")
+        log_file_handler = None
+        handler_type = config.get(section="logging", name="handler", default="file")
+        log_file_handler = None
+        if handler_type == "file":
+            log_file_handler = logging.FileHandler(
+                filename=filename,
+                encoding="utf-8",
             )
-            log_file_handler.setLevel(level)
-            log_file_handler.setFormatter(formatter)
-            logger = logging.getLogger(name)
-            logger.setLevel(level)
-            logger.addHandler(log_file_handler)
-            logger.propagate = False
+        elif handler_type == "rotating":
+            log_file_handler = RotatingFileHandler(
+                filename=filename,
+                maxBytes=config.log_file_size,
+                backupCount=config.log_files_to_keep,
+                encoding="utf-8",
+            )
+        else:
+            raise ValueError(f"Unknown type of log file handler: {handler_type}")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+        )
+        log_file_handler.setLevel(level)
+        log_file_handler.setFormatter(formatter)
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+        logger.addHandler(log_file_handler)
+        logger.propagate = False
         return logger

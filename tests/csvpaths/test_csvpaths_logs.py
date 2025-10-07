@@ -34,7 +34,8 @@ class TestCsvPathsLogs(unittest.TestCase):
         assert paths.logger
         assert Nos(parent).exists()
         lst = Nos(parent).listdir()
-        lst.remove(".DS_Store")
+        if ".DS_Store" in lst:
+            lst.remove(".DS_Store")
         assert len(lst) == 1
         size = os.path.getsize(path)
         #
@@ -48,7 +49,8 @@ class TestCsvPathsLogs(unittest.TestCase):
         assert Nos(parent).exists()
 
         lst = Nos(parent).listdir()
-        lst.remove(".DS_Store")
+        if ".DS_Store" in lst:
+            lst.remove(".DS_Store")
         assert len(lst) == 1
         size2 = os.path.getsize(path)
         assert size < size2
