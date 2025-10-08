@@ -127,7 +127,6 @@ class PathsManager:
 
         path = self.named_paths_home(name)
         path = Nos(path).join("manifest.json")
-        # path = os.path.join(path, "manifest.json")
         nos = self.nos
         nos.path = path
         if nos.exists():
