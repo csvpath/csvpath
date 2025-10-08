@@ -275,7 +275,9 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
 
     def __del__(self) -> None:
         try:
-            if self.error_manager and self.error_manager.error_metrics:
+            # in a test on windows 0.0.570 we see self has no error_manager attribute
+            # that is surprising since there is one ^^^^. no idea. this test is cheap tho.
+            if hasattr(self, "error_manager") and self.error_manager and self.error_manager.error_metrics:
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
             lout.release_logger(self)

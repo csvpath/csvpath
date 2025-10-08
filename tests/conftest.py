@@ -1,6 +1,7 @@
 import pytest
 import os
 import shutil
+import traceback
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
@@ -23,6 +24,11 @@ def clear_files(request):
 
 
 def _clear_files():
+    try: 
+        e = os.environ["CSVPATH_CONFIG_PATH"]
+        print(f"\nEnvironment-set config path: {e}")
+    except Exception:
+        print(traceback.format_exc())
     """
     if os.sep == "\\":
 
