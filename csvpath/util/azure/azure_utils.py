@@ -1,6 +1,16 @@
 import os
 from azure.storage.blob import BlobServiceClient, BlobClient
 from csvpath.util.box import Box
+from csvpath.util.config import Config
+
+
+class MyClose:
+    def __init__(self, m) -> None:
+        self.m = m
+
+    def close(self) -> None:
+        self.m()
+        Box().remove(Box.AZURE_BLOB_CLIENT)
 
 
 class AzureUtility:
@@ -13,13 +23,41 @@ class AzureUtility:
         box = Box()
         client = box.get(Box.AZURE_BLOB_CLIENT)
         if client is None:
+            # for debugging/metrics, not reference counting
             cls._client_count += 1
-            connection_string = os.getenv(cls.AZURE_STORAGE_CONNECTION_STRING)
+            #
+            # this needs to come through config, even if configured in OS env vars
+            # because in FlightPath Server the OS env is replaced by env.json.
+            #
+            # atm, we may not have access to a Config obj.
+            #
+            config = box.get(Box.CSVPATHS_CONFIG)
+            if config is None:
+                config = Config()
+            #
+            # originally we only expected the OS env var would be set. however, with FlightPath Data
+            # and FlightPath Server there are other factors. if we pass in section=None we go directly
+            # to either the OS env, if that is where lookups happen for substitution or to the proj's
+            # env.json. in that case we're not doing var substitution the way we do when you call get
+            # with section and name.
+            #
+            connection_string = config.get(
+                section="azure", name=cls.AZURE_STORAGE_CONNECTION_STRING
+            )
+            if connection_string is None:
+                connection_string = config.get(
+                    section=None, name=cls.AZURE_STORAGE_CONNECTION_STRING
+                )
+            # connection_string = os.getenv(cls.AZURE_STORAGE_CONNECTION_STRING)
             if not connection_string:
                 raise ValueError(
                     f"{cls.AZURE_STORAGE_CONNECTION_STRING} environment variable not set."
                 )
             client = BlobServiceClient.from_connection_string(connection_string)
+            #
+            # exp!
+            #
+            client.close = MyClose(client.close).close
             box.add(Box.AZURE_BLOB_CLIENT, client)
         return client
 

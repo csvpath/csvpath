@@ -1,15 +1,13 @@
 from configparser import RawConfigParser
-from dataclasses import dataclass
 from os import path, environ
 import os
+import traceback
 from typing import Dict, List
 from enum import Enum
 import logging
 from ..util.config_exception import ConfigurationException
 from ..util.log_utility import LogUtility as lout
 from .config_env import ConfigEnv
-
-# from csvpath.util.nos import Nos
 
 #
 #   1 csvpaths & csvpath own their own config
@@ -73,11 +71,168 @@ class Config:
     CONFIG: str = f"config{os.sep}config.ini"
     CSVPATH_CONFIG_FILE_ENV: str = "CSVPATH_CONFIG_PATH"
 
+    DEFAULT_CONFIG = f"""
+[extensions]
+csvpath_files = csvpath, csvpaths
+csv_files = csv, tsv, dat, tab, psv, ssv
+
+[errors]
+csvpath = collect, fail, print
+csvpaths = print, collect
+use_format = full
+pattern = {{time}}:{{file}}:{{line}}:{{paths}}:{{instance}}:{{chain}}:  {{message}}
+
+[logging]
+csvpath = info
+csvpaths = info
+log_file = logs{os.sep}csvpath.log
+log_files_to_keep = 100
+log_file_size = 50000000
+# file or rotating
+handler = file
+
+[config]
+path =
+allow_var_sub = True
+var_sub_source = env
+
+[functions]
+imports =
+
+[cache]
+path =
+
+[results]
+archive = archive
+transfers = transfers
+
+[inputs]
+files = inputs{os.sep}named_files
+csvpaths = inputs{os.sep}named_paths
+on_unmatched_file_fingerprints = halt
+allow_http_files=True
+allow_local_files=True
+
+[listeners]
+# add listener group names to send events to the channel they represent
+groups = default
+#slack, openlineage, ckan, sftp, sftpplus, otlp, sqlite, sql
+
+# general purpose webhook caller
+webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultsListener
+
+# add a listener to exec scripts at the end of named-paths group runs
+scripts.results = from csvpath.managers.integrations.scripts.scripts_results_listener import ScriptsResultsListener
+
+# add sql to capture results in mysql, postgres, ms sql server, or sqlite
+sql.file = from csvpath.managers.integrations.sql.sql_file_listener import SqlFileListener
+sql.paths = from csvpath.managers.integrations.sql.sql_paths_listener import SqlPathsListener
+sql.result = from csvpath.managers.integrations.sql.sql_result_listener import SqlResultListener
+sql.results = from csvpath.managers.integrations.sql.sql_results_listener import SqlResultsListener
+
+# add sqlite to capture results in a local sqlite file
+sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
+sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener import SqliteResultListener
+
+# add to capture a history of all named-file stagings and all named-paths loads in
+# an [inputs] files and an[inputs] paths root manifest.json
+default.file = from csvpath.managers.files.files_listener import FilesListener
+default.paths = from csvpath.managers.paths.paths_listener import PathsListener
+
+# add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint
+otlp.result = from csvpath.managers.integrations.otlp.otlp_result_listener import OpenTelemetryResultListener
+otlp.results = from csvpath.managers.integrations.otlp.otlp_results_listener import OpenTelemetryResultsListener
+otlp.errors = from csvpath.managers.integrations.otlp.otlp_error_listener import OpenTelemetryErrorListener
+otlp.paths = from csvpath.managers.integrations.otlp.otlp_paths_listener import OpenTelemetryPathsListener
+otlp.file = from csvpath.managers.integrations.otlp.otlp_file_listener import OpenTelemetryFileListener
+
+# add sftp to the list of groups above to push content and metadata to an SFTP account
+sftp.results = from csvpath.managers.integrations.sftp.sftp_sender import SftpSender
+
+# add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
+sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener
+
+# add ckan to the list of groups above to push content and metadata to CKAN
+ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
+
+#add openlineage to the list of groups above for OpenLineage events to a Marquez server
+openlineage.file = from csvpath.managers.integrations.ol.file_listener_ol import OpenLineageFileListener
+openlineage.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
+openlineage.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
+openlineage.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
+
+# add slack to the list of groups above for alerts to slack webhooks
+slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
+slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
+
+[otlp]
+# add OTLP config here if not relying directly on the env vars
+
+[aws]
+#
+
+[azure]
+#
+
+[gcs]
+#
+
+[sqlite]
+db = archive/csvpath.db
+
+[sql]
+# mysql, postgres, sql_server, or sqlite
+dialect = sqlite
+connection_string = sqlite:///archive/csvpath-sqlite.db
+
+[sftp]
+server = localhost
+port = 22
+username =
+password =
+
+[sftpplus]
+# these are only needed on the server
+admin_username = SFTPPLUS_ADMIN_USERNAME
+admin_password = SFTPPLUS_ADMIN_PASSWORD
+api_url = https://localhost:10020/json
+scripts_dir =
+execute_timeout = 300
+
+# these are only needed by the csvpath writer
+mailbox_user = mailbox
+mailbox_password = SFTPPLUS_MAILBOX_PASSWORD
+server = SFTPPLUS_SERVER
+port = SFTPPLUS_PORT
+
+[ckan]
+server = http://localhost:80
+api_token =
+
+[openlineage]
+base_url = http://localhost:5000
+endpoint = api/v1/lineage
+api_key = "none"
+timeout = 5
+verify = False
+
+[slack]
+# add your main webhook here. to set webhooks on a csvpath-by-csvpath basis add
+# on-valid-slack: webhook-minus-'https://' and/or
+# on-invalid-slack: webhook-minus-'https://'
+webhook_url =
+
+[scripts]
+run_scripts = no
+shell = /bin/bash
+"""
+
     def __init__(self, *, load=True, config_env: ConfigEnv = None):
         self.load = load
         self._config_env = config_env
         self._config = RawConfigParser()
-        self.log_file_handler = None
         self._configpath = None
         #
         # if env is set it is over anything else. However, the config.ini
@@ -89,6 +244,12 @@ class Config:
         # pass in None to trigger a configpath load
         self.configpath = None
 
+    def __del__(self) -> None:
+        try:
+            lout.release_logger(self)
+        except Exception:
+            print(traceback.format_exc())
+
     @property
     def config_env(self) -> ConfigEnv:
         if self._config_env is None:
@@ -98,6 +259,10 @@ class Config:
     @config_env.setter
     def config_env(self, e: ConfigEnv) -> None:
         self._config_env = e
+
+    @property
+    def config_parser(self) -> RawConfigParser:
+        return self._config
 
     @property
     def configpath(self) -> str:
@@ -162,7 +327,7 @@ class Config:
     def sections(self) -> list[str]:
         return self._config.sections()
 
-    def get(self, *, section: str, name: str, default=None):
+    def get(self, *, section: str = None, name: str, default=None):
         return self._get(section, name, default)
 
     def _get(self, section: str, name: str, default=None):
@@ -170,6 +335,15 @@ class Config:
         # TODO: we should swap all uppercase values for env var values if we find a
         # matching env var. same as we do for metadata values
         #
+        if name is None:
+            raise ConfigurationException("Name cannot be None")
+        if section is None:
+            #
+            # if section is none we're just looking at the OS env vars or the project
+            # env vars, if the project is configured to hold vars in a JSON file.
+            #
+            ret = self.config_env.get(name=name, default=default)
+            return ret
         if self._config is None:
             raise ConfigurationException("No config object available")
         try:
@@ -187,21 +361,12 @@ class Config:
                     ret = v2.strip()
             return ret
         except KeyError:
-            try:
-                if LogLevels.DEBUG in [
-                    self._config["logging"]["csvpath"],
-                    self._config["logging"]["csvpaths"],
-                ]:
-                    self._logger.warning(
-                        f"Check config file {self.config_path} for [{section}][{name}]"
-                    )
-            except KeyError:
-                ...
             return default
 
     @property
     def _logger(self):
-        return lout.config_logger(config=self, level="debug")
+        name = lout.logger_name(self)
+        return lout.config_logger(config=self, name=name, level="debug")
 
     #
     # set() and _set() do not call refresh(). add_to_config() calls _set() and refresh().
@@ -241,7 +406,7 @@ class Config:
         with open(self.configpath, "w", encoding="utf-8") as f:
             self._config.write(f)
 
-    def _create_default_config(self) -> None:
+    def _create_default_config(self) -> None | str:
         directory = ""
         name = ""
         if self.configpath is None or self.configpath.strip() == "":
@@ -252,178 +417,46 @@ class Config:
             name = self.configpath[s + 1 :]
         if directory != "":
             if not path.exists(directory):
-                os.makedirs(directory)
+                try:
+                    os.makedirs(directory)
+                except Exception:
+                    print(traceback.format_exc())
+
         with open(self.configpath, "w", encoding="utf-8") as file:
-            c = f"""
-[extensions]
-csvpath_files = csvpath, csvpaths
-csv_files = csv, tsv, dat, tab, psv, ssv
-
-[errors]
-csvpath = collect, fail, print
-csvpaths = print, collect
-use_format = full
-pattern = {{time}}:{{file}}:{{line}}:{{paths}}:{{instance}}:{{chain}}:  {{message}}
-
-[logging]
-csvpath = info
-csvpaths = info
-log_file = logs{os.sep}csvpath.log
-log_files_to_keep = 100
-log_file_size = 50000000
-# file or rotating
-handler = file
-
-[config]
-path =
-allow_var_sub = True
-var_sub_source = env
-
-[functions]
-imports =
-
-[cache]
-path =
-
-[results]
-archive = archive
-transfers = transfers
-
-[inputs]
-files = inputs{os.sep}named_files
-csvpaths = inputs{os.sep}named_paths
-on_unmatched_file_fingerprints = halt
-allow_http_files=True
-allow_local_files=True
-
-[listeners]
-# add listener group names to send events to the channel they represent
-groups = default
-#slack, marquez, ckan, sftp, sftpplus, otlp, sqlite, sql
-
-# general purpose webhook caller
-webhook.results = from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultsListener
-
-# add a listener to exec scripts at the end of named-paths group runs
-scripts.results = from csvpath.managers.integrations.scripts.scripts_results_listener import ScriptsResultsListener
-
-# add sql to capture results in mysql, postgres, ms sql server, or sqlite
-sql.file = from csvpath.managers.integrations.sql.sql_file_listener import SqlFileListener
-sql.paths = from csvpath.managers.integrations.sql.sql_paths_listener import SqlPathsListener
-sql.result = from csvpath.managers.integrations.sql.sql_result_listener import SqlResultListener
-sql.results = from csvpath.managers.integrations.sql.sql_results_listener import SqlResultsListener
-
-# add sqlite to capture results in a local sqlite file
-sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
-sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener import SqliteResultListener
-
-# add to capture a history of all named-file stagings and all named-paths loads in
-# an [inputs] files and an[inputs] paths root manifest.json
-default.file = from csvpath.managers.files.files_listener import FilesListener
-default.paths = from csvpath.managers.paths.paths_listener import PathsListener
-
-# add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint
-otlp.result = from csvpath.managers.integrations.otlp.otlp_result_listener import OpenTelemetryResultListener
-otlp.results = from csvpath.managers.integrations.otlp.otlp_results_listener import OpenTelemetryResultsListener
-otlp.errors = from csvpath.managers.integrations.otlp.otlp_error_listener import OpenTelemetryErrorListener
-
-# add sftp to the list of groups above to push content and metadata to an SFTP account
-sftp.results = from csvpath.managers.integrations.sftp.sftp_sender import SftpSender
-
-# add sftpplus to the list of groups above to automate registration and named-paths group runs on file arrival at an SFTPPlus server
-sftpplus.paths = from csvpath.managers.integrations.sftpplus.sftpplus_listener import SftpPlusListener
-
-# add ckan to the list of groups above to push content and metadata to CKAN
-ckan.results = from csvpath.managers.integrations.ckan.ckan_listener import CkanListener
-
-#add marquez to the list of groups above for OpenLineage events to a Marquez server
-marquez.file = from csvpath.managers.integrations.ol.file_listener_ol import OpenLineageFileListener
-marquez.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
-marquez.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
-marquez.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
-
-# add slack to the list of groups above for alerts to slack webhooks
-slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
-slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
-slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
-slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
-
-[sqlite]
-db = archive/csvpath.db
-
-[sql]
-# mysql, postgres, sql_server, or sqlite
-dialect = sqlite
-connection_string = sqlite:///archive/csvpath-sqlite.db
-
-[sftp]
-server = localhost
-port = 22
-username =
-password =
-
-[sftpplus]
-# these are only needed on the server
-admin_username = SFTPPLUS_ADMIN_USERNAME
-admin_password = SFTPPLUS_ADMIN_PASSWORD
-api_url = https://localhost:10020/json
-scripts_dir =
-execute_timeout = 300
-
-# these are only needed by the csvpath writer
-mailbox_user = mailbox
-mailbox_password = SFTPPLUS_MAILBOX_PASSWORD
-server = SFTPPLUS_SERVER
-port = SFTPPLUS_PORT
-
-[ckan]
-server = http://localhost:80
-api_token =
-
-[marquez]
-base_url = http://localhost:5000
-endpoint = api/v1/lineage
-api_key = "none"
-timeout = 5
-verify = False
-
-[slack]
-# add your main webhook here. to set webhooks on a csvpath-by-csvpath basis add
-# on-valid-slack: webhook-minus-'https://' and/or
-# on-invalid-slack: webhook-minus-'https://'
-webhook_url =
-
-[scripts]
-run_scripts = no
-shell = /bin/bash
-
-
-            """
-
-            file.write(c)
+            file.write(Config.DEFAULT_CONFIG)
             #
             # writing a new config means we want to immediately load it?
             # possibly not.
             #
-            self._assure_logs_path()
-            self._assure_archive_path()
-            self._assure_transfer_root()
-            self._assure_inputs_files_path()
-            self._assure_cache_path()
-            self._assure_inputs_csvpaths_path()
+            try:
+                self._assure_logs_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_archive_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_transfer_root()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_inputs_files_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_cache_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_inputs_csvpaths_path()
+            except Exception:
+                print(traceback.format_exc())
 
-            self._logger.debug("Created a default config file at: ")
-            self._logger.debug(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
-            self._logger.debug(
-                "If you want your config to be somewhere else remember to"
-            )
-            self._logger.debug("update the path in the default config.ini")
-            """
             print("Created a default config file at: ")
             print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
-            print("If you want your config to be somewhere else remember to")
-            print("update the path in the default config.ini")
-            """
+            print("If you want your config somewhere else remember to")
+            print("update the [config] path key in the default config.ini")
 
     def _assure_logs_path(self) -> None:
         if self.load:
@@ -520,7 +553,10 @@ shell = /bin/bash
             if self.inputs_csvpaths_path.strip().lower().startswith("gs://"):
                 return
             if not path.exists(self.inputs_csvpaths_path):
-                os.makedirs(self.inputs_csvpaths_path)
+                try:
+                    os.makedirs(self.inputs_csvpaths_path)
+                except Exception:
+                    print(traceback.format_exc())
 
     def _assure_cache_path(self) -> None:
         if self.load:
@@ -531,9 +567,6 @@ shell = /bin/bash
                 uc = self.get(section="cache", name="use_cache")
                 if uc and uc.strip().lower() == "no":
                     return
-                self._logger.warning(
-                    f"Cannot assure cache path {p} because there is no path in config"
-                )
                 self._set("cache", "use_cache", "no")
                 return
             if p.find("://") > -1:
@@ -541,7 +574,10 @@ shell = /bin/bash
                     f"Cache dir must be on the local drive, not {p}"
                 )
             if not os.path.exists(p):
-                os.makedirs(p)
+                try:
+                    os.makedirs(p)
+                except Exception:
+                    print(traceback.format_exc())
 
     def _assure_config_file_path(self) -> None:
         if self.load:
@@ -552,12 +588,10 @@ shell = /bin/bash
 
     def _load_config(self, norecurse=False):
         if self._load is False:
-            self._logger.warning(
-                "_load_config called on a config instance that is set to not load"
-            )
             return
         self._assure_config_file_path()
-        self._config.read(self.configpath)
+        path = self.configpath
+        self._config.read(path)
         self.refresh()
 
     #
@@ -565,6 +599,8 @@ shell = /bin/bash
     # object, if that has been updated or loaded. this method doesn't load from
     # file, it just gathers and translates settings for external use.
     #
+    PATH_ERR_COUNT = 0
+
     def refresh(self) -> None:
         #
         # the sections: csv_files and csvpath_files are deprecated in favor of
@@ -594,6 +630,9 @@ shell = /bin/bash
         if path:
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
+            Config.PATH_ERR_COUNT += 1
+            if Config.PATH_ERR_COUNT > 30:
+                raise Exception("PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high")
             self.configpath = path
             self.reload()
             return
@@ -723,7 +762,6 @@ shell = /bin/bash
     def archive_name(self) -> str:
         p = self.archive_path
         if p.find(self.archive_sep) > -1:
-            # if p.find(os.sep) > -1:
             p = p[p.rfind(os.sep) + 1 :]
         return p
 
@@ -836,32 +874,26 @@ shell = /bin/bash
     @property
     def csvpath_log_level(self) -> str:
         return self._get("logging", "csvpath")
-        # return self._csvpath_log_level
 
     @csvpath_log_level.setter
     def csvpath_log_level(self, s: str) -> None:
         self._set("logging", "csvpath", s)
-        # self._csvpath_log_level = s
 
     @property
     def csvpaths_log_level(self) -> str:
         return self._get("logging", "csvpaths")
-        # return self._csvpaths_log_level
 
     @csvpaths_log_level.setter
     def csvpaths_log_level(self, s: str) -> None:
         self._set("logging", "csvpaths", s)
-        # self._csvpaths_log_level = s
 
     @property
     def log_file(self) -> str:
         return self.get(section="logging", name="log_file")
-        # return self._log_file
 
     @log_file.setter
     def log_file(self, s: str) -> None:
         self._set("logging", "log_file", s)
-        # self._log_file = s
 
     @property
     def log_files_to_keep(self) -> int:

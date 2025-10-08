@@ -24,6 +24,9 @@ class S3Do:
         path = pathu.resep(path, hint="posix")
         self._path = path
 
+    def join(self, name: str) -> str:
+        return f"{self.path}/{name}"
+
     def remove(self) -> None:
         bucket, key = S3Utils.path_to_parts(self.path)
         lst = self.listdir()

@@ -25,3 +25,9 @@ repos:
 #          "-sn", # Don't display the score
 #          "--rcfile=.pylintrc", # Use your pylint config file
 #        ]
+
+-   repo: https://github.com/python-poetry/poetry
+    rev: '2.1.4'  # add version here
+    hooks:
+    -   id: poetry-check
+    -   id: poetry-lock

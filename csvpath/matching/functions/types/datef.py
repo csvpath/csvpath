@@ -1,5 +1,6 @@
 # pylint: disable=C0114
 import datetime
+import dateutil.parser
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import MatchException
@@ -16,9 +17,9 @@ class Date(ValueProducer, Type):
         self.value_qualifiers.append("notnone")
         self.match_qualifiers.append("notnone")
         self.description = [
-            "Date",
-            "date() has two purposes.",
-            "First, it may indicate that a value must be a string to be valid. To do this, it must be an argument to a line() and have a header argument.",
+            self._cap_name(),
+            f"{self.name}() has two purposes.",
+            "First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.",
             "Alternatively, it may generate a date from a string.",
         ]
 
@@ -129,3 +130,30 @@ class Date(ValueProducer, Type):
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip) is not None
+
+    #
+    # we don't support the strict qualifier in the regular function, but for
+    # testing values against types here we do. might be something to add.
+    # strict == a date must not have time or a datetime must have a non-00:00:00z000 time
+    #
+    @classmethod
+    def _is_match(
+        cls, *, is_datetime: bool, value: str, strict: bool = True
+    ) -> tuple[bool, str | None]:
+        if value is None:
+            return False
+        d = None
+        try:
+            d = dateutil.parser.parse(value)
+        except Exception:
+            # import traceback
+            # print(traceback.format_exc())
+            return False
+        d1 = ExpressionUtility.is_date_or_datetime_obj(d)
+        if d1 == "unknown":
+            return False
+        elif (is_datetime is True and d1 != "datetime") and strict:
+            return False
+        elif (is_datetime is False and d1 != "date") and strict:
+            return False
+        return True

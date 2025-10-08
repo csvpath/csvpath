@@ -11,6 +11,7 @@ class RunMetadata(Metadata):
         self.named_file_name: str = None
         self.identity: str = None
         self._run_uuid: UUID = None
+        self._method: str = None
 
     @property
     def run_uuid(self) -> UUID:
@@ -29,3 +30,11 @@ class RunMetadata(Metadata):
     @run_uuid_string.setter
     def run_uuid_string(self, u: str) -> None:
         self._run_uuid = UUID(u)
+
+    @property
+    def method(self) -> str:
+        return self._method
+
+    @method.setter
+    def method(self, m: str) -> None:
+        self._method = m

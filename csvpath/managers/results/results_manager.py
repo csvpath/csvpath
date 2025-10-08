@@ -88,7 +88,14 @@ class ResultsManager:  # pylint: disable=C0115
     # and return that uuid.
     #
     def start_run(
-        self, *, run_dir, pathsname, filename, file: str = None, run_uuid: UUID
+        self,
+        *,
+        run_dir: str,
+        pathsname: str,
+        filename: str,
+        file: str = None,
+        run_uuid: UUID,
+        method: str,
     ) -> ResultsMetadata:
         """@private"""
         rr = ResultsRegistrar(
@@ -117,10 +124,11 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.run_home = run_dir
         mdata.run_uuid = run_uuid
         mdata.named_file_name = filename
-        mdata.named_file_uuid = f"{f_uuid}"
+        mdata.named_file_uuid_string = f_uuid
         mdata.named_paths_name = pathsname
-        mdata.named_paths_uuid = f"{np_uuid}"
+        mdata.named_paths_uuid_string = np_uuid
         mdata.named_results_name = pathsname
+        mdata.method = method
         rr.register_start(mdata)
         return mdata
 
@@ -183,6 +191,10 @@ class ResultsManager:  # pylint: disable=C0115
         if name is None:
             raise ValueError("Name cannot be None")
         results = self.get_named_results(name)
+        #
+        # should we be making noise if there are no results for name/ref?
+        # seems like that would be an error.
+        #
         if results is None:
             return []
         # a reference can return a single csvpath result from a run. perhaps
@@ -213,7 +225,7 @@ class ResultsManager:  # pylint: disable=C0115
     # it doesn't separate printouts from different Result objects. a better way
     # to go might be to iterate the results and pull the printouts you need.
     #
-    def get_printouts(self, name: str, printstream: str = "default") -> dict:
+    def get_printouts(self, name: str, printstream: str = "default") -> list[str]:
         results = self._get_results_list(name)
         ps = []
         for r in results:
@@ -319,6 +331,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.identity = result.identity_or_index
         mdata.named_paths_name = result.paths_name
         mdata.named_file_name = result.file_name
+        mdata.method = result.method
         rr = RunRegistrar(self.csvpaths)
         rr.register_start(mdata)
         #
@@ -326,6 +339,10 @@ class ResultsManager:  # pylint: disable=C0115
         #
         # we use the same UUID for both metadata updates because the
         # UUID represents the run, not the metadata object
+        #
+        #
+        # collect_paths and collect_by_line expect a data.csv file, even if it has 0-bytes.
+        # we make sure of that here.
         #
         mdata = ResultMetadata(self.csvpaths.config)
         mdata.uuid = result.uuid
@@ -337,6 +354,18 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.run = result.run_dir[result.run_dir.rfind(sep) + 1 :]
         mdata.run_home = result.run_dir
         mdata.instance_home = result.instance_dir
+        mdata.method = result.method
+        #
+        # for the two CsvPaths methods that result in data.csv we want to make
+        # sure there is a data.csv, even if it ends up empty. we don't make this
+        # effort for unmatched.csv. perhaps we should but atm seems ok to pass.
+        #
+        if mdata.method in ["collect_paths", "collect_by_line"]:
+            path = Nos(mdata.instance_home).join("data.csv")
+            nos = Nos(path)
+            if not nos.exists():
+                with DataFileWriter(path=path) as file:
+                    file.write("")
         mdata.instance_identity = result.identity_or_index
         mdata.input_data_file = result.file_name
         rs = ResultSerializer(self._csvpaths.config.archive_path)
@@ -530,6 +559,13 @@ class ResultsManager:  # pylint: disable=C0115
                 self.csvpaths.logger.error(msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise InputException(msg)
+                return []
+            if len(results.files) > 1:
+                self.csvpaths.logger.warning(
+                    "Referance found multiple runs (%s) when only one was expected and only one will be used: %s",
+                    len(results.files),
+                    name,
+                )
             path = results.files[0]
             run = path[len(self.csvpaths.config.archive_name) :]
             nos = Nos(path)
@@ -576,6 +612,10 @@ class ResultsManager:  # pylint: disable=C0115
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
+            if name.endswith(":data") or name.endswith(":unmatched"):
+                raise ValueError(
+                    "Reference must be to a run, or an instance within a run, not to a result's data file"
+                )
             return self._get_named_results_for_reference(name)
         #
         # CsvPaths instances should not be long lived. they are not servers or

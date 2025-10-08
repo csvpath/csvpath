@@ -40,6 +40,12 @@ class PathsManager:
         """@private"""
         self._registrar = None
         self._nos = None
+        #
+        # this property is set after a metadata update is distributed from adding
+        # a named-paths group. it is only reset at the next add. if the next add
+        # fails before completing this value will be None.
+        #
+        self.last_add_metadata = None
 
     @property
     def nos(self) -> Nos:
@@ -121,7 +127,6 @@ class PathsManager:
 
         path = self.named_paths_home(name)
         path = Nos(path).join("manifest.json")
-        # path = os.path.join(path, "manifest.json")
         nos = self.nos
         nos.path = path
         if nos.exists():
@@ -301,19 +306,19 @@ class PathsManager:
         #
         config = self.csvpaths.config
         http = config.get(section="inputs", name="allow_http_files", default=False)
-        http = str(http).strip().lower() == "true"
+        http = str(http).strip().lower() in ["true", "yes"]
         local = config.get(section="inputs", name="allow_local_files", default=False)
-        local = str(local).strip().lower() == "true"
+        local = str(local).strip().lower() in ["true", "yes"]
         nos = Nos(path)
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} because loading files over HTTP is not allowed"
-            self.csvpaths.logger.warning(msg)
+            self.csvpaths.logger.error(msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return False
         if nos.is_local and local is not True:
             msg = f"Cannot add {path} because loading local files is not allowed"
-            self.csvpaths.logger.warning(msg)
+            self.csvpaths.logger.error(msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return False
@@ -335,6 +340,7 @@ class PathsManager:
         #
         assure_definition: bool = True,
     ) -> str:
+        self.last_add_metadata = None
         if template is not None:
             #
             # this will raise an error. if that's a problem use temu.validate
@@ -366,7 +372,12 @@ class PathsManager:
         for _ in paths:
             self.csvpaths.logger.debug("Adding %s to %s", _, name)
         s = self._str_from_list(paths)
-        t = self._copy_in(name, s, append=append)
+        group_file_path = self._copy_in(name, s, append=append)
+        #
+        # need paths to be the full set of csvpaths in the named-paths group
+        # from this point down.
+        #
+        paths = self._get_csvpaths_from_file(group_file_path)
         grp_paths = self.get_identified_paths_in(name, paths=paths)
         ids = [t[0] for t in grp_paths]
         for i, t in enumerate(ids):
@@ -394,12 +405,21 @@ class PathsManager:
         sep = nos.sep
         mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
         mdata.group_file_path = f"{mdata.named_paths_home}{sep}group.csvpaths"
+        #
+        # even when appending we need paths, ids, and len(ids) to be the complete set
+        # so that the metadata represents the named-paths group, not just the append
+        # action.
+        #
         mdata.named_paths = paths
         mdata.named_paths_identities = ids
         mdata.named_paths_count = len(ids)
+        #
+        #
+        #
         mdata.source_path = source_path
         mdata.template = template
         self.registrar.register_complete(mdata)
+        self.last_add_metadata = mdata
         #
         # with named-paths we don't keep separate versions of the group, so
         # we don't include dates in references. the versions can be "easily"
@@ -801,7 +821,7 @@ class PathsManager:
             f = f"{f}\n\n---- CSVPATH ----\n\n{_}"
         return f
 
-    def _copy_in(self, name: NamedPathsName, csvpathstr: Csvpath, append=False) -> None:
+    def _copy_in(self, name: NamedPathsName, csvpathstr: Csvpath, append=False) -> str:
         #
         # if we have a set of paths we append these new paths
         #

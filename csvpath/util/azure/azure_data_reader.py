@@ -20,6 +20,9 @@ class AzureDataReader(CsvDataReader):
     def next(self) -> list[str]:
         if self.is_binary:
             raise ValueError("CSV files must be opened in text mode, not binary.")
+        #
+        #
+        #
         with open(
             uri=self.path,
             mode=self.mode,

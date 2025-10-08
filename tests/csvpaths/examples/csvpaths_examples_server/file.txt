@@ -1,0 +1,4 @@
+> We are going to make a very simple FastAPI REST+JSON API for the CsvPath library. It will allow an MFT (managed file transfer) system to make an API call to CsvPath Framework when a file arrives so it can be processed.
+  There will be two methods: register and run. The register endpoint will call CsvPath's FileManager.add_named_file() method. The run endpoint will call the CsvPaths.collect_paths() method. The API will be protected by an
+  API key. There won't be a username/password or oauth/OIDC auth at this time. Generating API keys will be by a python method, not an API call. A key will simply be a UUID. How does that sound?
+

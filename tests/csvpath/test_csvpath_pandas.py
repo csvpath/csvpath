@@ -20,11 +20,11 @@ class TestCsvPathPandas(unittest.TestCase):
               id: pandas test
               validation-mode: no-raise, print
             ~
-            $pandastest[1*][
+            $pandastest[*][
                 line(
-                    string.notnone("firstname"),
-                    string.notnone("lastname"),
-                    string("say")
+                    string.notnone(#firstname),
+                    string.notnone(#lastname),
+                    string(#say)
                 )
                 #lastname == "Bat"
             ] """

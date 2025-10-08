@@ -3,6 +3,9 @@
 
 import os
 import traceback
+import atexit
+import threading
+
 from uuid import uuid4, UUID
 from abc import ABC, abstractmethod
 from typing import List, Any, NewType
@@ -12,7 +15,7 @@ from .managers.errors.error_comms import ErrorCommunications
 from .managers.errors.error_manager import ErrorManager
 from .managers.errors.error_collector import ErrorCollector
 from .util.config import Config
-from .util.log_utility import LogUtility
+from .util.log_utility import LogUtility as lout
 from .util.metadata_parser import MetadataParser
 from .util.exceptions import InputException, CsvPathsException
 from .util.references.reference_parser import ReferenceParser
@@ -23,6 +26,7 @@ from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
 from . import CsvPath
+from .managers.integrations.otlp.metrics import Metrics
 
 
 # types for clarity
@@ -65,6 +69,26 @@ class CsvPathsCoordinator(ABC):
 
 
 class CsvPaths(CsvPathsCoordinator, ErrorCollector):
+    #
+    # METRICS supports OTLP. it will often not be used, but
+    # we'll check it at shutdown just in case.
+    #
+    METRICS = None
+    METRICS_WRAP_REG = False
+    WRAPPED_UP = False
+
+    @classmethod
+    def _wrap_up_metrics(cls) -> None:
+        if cls.METRICS:
+            try:
+                cls.METRICS.logger().debug(
+                    f"csvpaths.wrapping up: shutting down metrics: {cls.METRICS}"
+                )
+                cls.METRICS.provider.force_flush()
+                cls.METRICS = None
+            except Exception:
+                print(traceback.print_exc())
+
     """
     a CsvPaths instance manages applying any number of csvpaths
     to any number of files. CsvPaths applies sets of csvpaths
@@ -82,13 +106,28 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         delimiter=",",
         quotechar='"',
         skip_blank_lines=True,
-        print_default=True
+        print_default=True,
+        project_name=None,
+        project_context=None
         # config: Config = None,
     ):
+        if CsvPaths.METRICS_WRAP_REG is False:
+            atexit.register(CsvPaths._wrap_up_metrics)
+            CsvPaths.METRICS_WRAP_REG = True
         #
-        # we gain nothing by allowing the config to be passed in. and it adds complexity.
         #
-        self._config = Config()  # if config is None else config
+        #
+        self._config = Config()
+        #
+        # the project and project context disambiguate loggers in a static multi-thread/
+        # multi-user env. they are also used in metrics other places. if the context isn't
+        # we use a uuid to make sure we have a unique name until hopefully we get a more
+        # specific name. when we reset the project or project context we'll reup the logger
+        #
+        # the expectation is that FlightPath Server will use API key as project context.
+        #
+        self._project = project_name if project_name else "project"
+        self._project_context = project_context if project_context else "csvpaths"
         #
         # in a few cases, mainly s3 and sftp connection or config sharing
         # we need to pass some state around. it's ugly, but logically not
@@ -121,8 +160,20 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         """ @private """
         self.current_matcher: CsvPath = None
         """ @private """
+        #
+        # all logs in a project (or stand-alone csvpaths) have the same
+        # log file path, as configured in config/config.ini. however, they
+        # have different names for the logger instances they use because
+        # it is possible, and happens in FlightPath Server, that the loggers
+        # are held by name in a static context that has multiple projects
+        # and so needs multiple file paths held by individual loggers.
+        #
         self._config._assure_logs_path()
-        self.logger = LogUtility.logger(self)
+        self._logger = None
+        #
+        #
+        #
+        self.info_dump()
         """ @private """
         self._errors = []
         # coordinator attributes
@@ -144,17 +195,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.named_file_name = None
         """ @private """
         #
-        # metrics is for OTLP OpenTelemetry. it should only
-        # be used by the OTLP listener. it is here because
-        # the integration may need a long-lived presence. if
-        # needed, the first OTLP listener will set it up
-        # before spinning up a thread. any other OTLP
-        # listener threads that need to use a long-lived metric
-        # will work with this property.
-        #
-        self.metrics = None
-        """ @private """
-        #
         # this metadata is generated at the run start. it is
         # the coordinating metadata for the run in the sense
         # that its UUID is the correlation ID all metadata
@@ -172,7 +212,92 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._wrap_up_automatically = True
         """ @private """
-        self.logger.info("initialized CsvPaths")
+
+        self.logger.info(
+            f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
+        )
+
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = lout.logger(self)
+        return self._logger
+
+    @logger.setter
+    def logger(self, ler) -> None:
+        self._logger = ler
+
+    def set_config_path_and_reload(self, config_path: str) -> None:
+        self.config.set_config_path_and_reload(config_path)
+        #
+        # update anything we need to, e.g. logs. that may be all for now.
+        #
+        self.config._assure_logs_path()
+        self.logger = lout.logger(self)
+
+    def info_dump(self) -> None:
+        string = self.info_dump_string
+        self.logger.info(string)
+
+    @property
+    def info_dump_string(self) -> str:
+        lstrs = "Active integrations:"
+        intgs = self.config.get(section="listeners", name="groups")
+        if not isinstance(intgs, list):
+            intgs = intgs.split(",")
+        for i, _ in enumerate(intgs):
+            lstrs = f"{lstrs}\n - {_}"
+        subs = self.config.get(section="config", name="allow_var_sub")
+        subs = (
+            self.config.get(section="config", name="var_sub_source")
+            if str(subs).strip().lower() in ["yes", "true"]
+            else "none"
+        )
+        if subs not in ["env", "none"]:
+            subs = f"{subs} with keys:"
+            e = self.config.config_env.env
+            for k, v in e.items():
+                subs = f"{subs}\n - {k}"
+        cache = self.config.get(section="cache", name="path")
+        cache = cache if self.config.get(section="cache", name="use_cache") else "none"
+        logstr = self.logger if self.logger else "pending"
+        logpath = ""
+        for h in self.logger.handlers:
+            try:
+                logpath = f"{logpath}\n {self.logger} - {h.baseFilename}"
+            except Exception:
+                ...
+
+        return f"""
+Context: {self.project_context}.{self.project}
+Logger: {logstr}
+Configured log path: {self.config.get(section='logging', name='log_file')}
+Current log paths: {logpath}
+Config file: {self.config.configpath}
+Var sub source: {self.config.get(section='config', name='var_sub_source')}
+Var subs: {subs}
+Errors:
+ - csvpath: {self.config.get(section='errors', name='csvpath')}
+ - csvpaths: {self.config.get(section='errors', name='csvpaths')}
+Named-files: {self.config.get(section='inputs', name='files')}
+Named-paths: {self.config.get(section='inputs', name='files')}
+Archive: {self.config.get(section='results', name='archive')}
+Cache: {cache}
+{lstrs}
+        """
+
+    """
+    def info_dump(self) -> None:
+        self.logger.info(
+            "Initated logging on log path: %s",
+            self.config.get(section="logging", name="log_file"),
+        )
+        self.logger.info("Config file is at: %s", self.config.configpath)
+        intgs = self.config.get(section="listeners", name="groups")
+        self.logger.debug("Active integrations:")
+        for _ in intgs:
+            self.logger.debug("  - %s", _)
+    """
 
     def _set_managers(self) -> None:
         self.paths_manager = PathsManager(csvpaths=self)
@@ -180,6 +305,40 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.results_manager = ResultsManager(csvpaths=self)
         self.ecoms = ErrorCommunications(csvpaths=self)
         self.error_manager = ErrorManager(csvpaths=self)
+
+    @property
+    def project(self) -> str:
+        return self._project
+
+    @project.setter
+    def project(self, name: str) -> None:
+        #
+        # when we change projects we need to change names. we don't
+        # expect to do this much because we don't expect csvpaths to be
+        # long-lived. nevertheless.
+        #
+        cname = lout.logger_name(self)
+        self._project = name
+        new_cname = lout.logger_name(self)
+        if cname != new_cname:
+            self.logger = lout.logger(self)
+
+    @property
+    def project_context(self) -> str:
+        return self._project_context
+
+    @project_context.setter
+    def project_context(self, name: str) -> None:
+        #
+        # when we change projects we need to change names. we don't
+        # expect to do this much because we don't expect csvpaths to be
+        # long-lived. nevertheless.
+        #
+        cname = lout.logger_name(self)
+        self._project_context = name
+        new_cname = lout.logger_name(self)
+        if cname != new_cname:
+            self.logger = lout.logger(self)
 
     @property
     def wrap_up_automatically(self) -> bool:
@@ -258,6 +417,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             print_default=self.print_default,
             error_manager=self.error_manager,
         )
+        if path.config.configpath != self.config.configpath:
+            path.config.set_config_path_and_reload(self.config.configpath)
+            path.logger = None
         return path
 
     def stop_all(self) -> None:  # pragma: no cover
@@ -341,6 +503,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.current_matcher = None
         self.named_paths_name = None
         self.run_metadata = None
+        self._logger = None
 
     def wrap_up(self) -> None:
         #
@@ -350,6 +513,15 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # cleanup shared connections, etc.
         #
+        # CsvPaths.WRAPPED_UP is needed because if we call wrap_up()
+        # twice on the same thread another CsvPaths may have been
+        # started and cleaning up the contents of the thread's box
+        # could remove their stuff, no longer ours. We see this in
+        # unit tests, but in principle we could see it anywhere.
+        #
+        if CsvPaths.WRAPPED_UP is True:
+            return
+        CsvPaths.WRAPPED_UP = True
         box = Box()
         ds = []
         for k, v in box.get_my_stuff().items():
@@ -366,6 +538,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 self.error_manager.handle_error(source=self, msg=msg)
                 if self.ecoms.do_i_raise():
                     raise CsvPathsException(msg)
+        self._logger = None
+
+    def __del__(self) -> None:
+        try:
+            self.wrap_up()
+            lout.release_logger(self)
+        except Exception:
+            print(traceback.format_exc())
 
     def _trim_archive_if(self, home: str) -> str:
         archive = self.config.get(section="results", name="archive")
@@ -606,6 +786,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename=filename,
             file=file,
             run_uuid=run_uuid,
+            method="collect_paths",
         )
         #
         #
@@ -622,6 +803,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="collect_paths",
             )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
@@ -690,7 +872,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # the run home is the most specific reference we can return
         #
         # return f"${pathsname}.results.{crt}"
-        return self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        return ret
 
     def fast_forward_paths(
         self, *, pathsname: str, filename: str, template: str = None
@@ -749,7 +932,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="fast_forward_paths",
         )
         #
         #
@@ -766,6 +953,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="fast_forward_paths",
             )
             try:
                 self._load_csvpath(
@@ -814,7 +1002,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         )
         if self.wrap_up_automatically:
             self.wrap_up()
-        return self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        return ret
 
     def next_paths(
         self,
@@ -859,7 +1048,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="next_paths",
         )
         #
         #
@@ -892,6 +1085,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 run_time=self.current_run_time,
                 run_dir=crt,
                 run_uuid=run_uuid,
+                method="next_paths",
             )
             if self._fail_all:
                 self.logger.warning(
@@ -938,8 +1132,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self.clear_run_coordination()
         if self.wrap_up_automatically:
             self.wrap_up()
-        # return f"${pathsname}.results.{crt}"
-        return self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        return ret
 
     # =============== breadth first processing ================
 
@@ -979,6 +1173,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 collect_when_not_matched=collect_when_not_matched,
                 file=file,
                 template=template,
+                method="collect_by_line",
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 lines.append(line)
@@ -991,9 +1186,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # generated by the run.
         #
         # return f"${pathsname}.results.{self.run_metadata.run_home}"
-        return self._make_run_reference(
+        ret = self._make_run_reference(
             pathsname=pathsname, crt=self.run_metadata.run_home
         )
+        self._logger = None
+        return ret
 
     def fast_forward_by_line(
         self,
@@ -1027,6 +1224,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 collect_when_not_matched=collect_when_not_matched,
                 file=file,
                 template=template,
+                method="fast_forward_by_line",
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 pass
@@ -1040,9 +1238,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # return a fully qualified reference to the results.
         #
         # return f"${pathsname}.results.{self.run_metadata.run_home}"
-        return self._make_run_reference(
+        ret = self._make_run_reference(
             pathsname=pathsname, crt=self.run_metadata.run_home
         )
+        self._logger = None
+        return ret
 
     def next_by_line(  # pylint: disable=R0912,R0915,R0914
         self,
@@ -1053,6 +1253,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
+        method: str = None,
     ) -> List[Any]:
         #
         # we're doing a programmatic use when we use next_by_line() so we don't allow
@@ -1083,6 +1284,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         collect_when_not_matched=False,
         template: str = None,
         file: str,
+        method: str = "next_by_line",
     ) -> List[Any]:
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts.
@@ -1136,6 +1338,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
             filename=filename,
             pathsname=pathsname,
             crt=crt,
+            method=method,
         )
         #
         # setting file into the csvpath is less obviously useful at CsvPaths
@@ -1306,7 +1509,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
         return csvpath_objects
 
-    def _prep_csvpath_results(self, *, csvpath_objects, filename, pathsname, crt: str):
+    def _prep_csvpath_results(
+        self, *, csvpath_objects, filename, pathsname, crt: str, method: str
+    ):
         """@private"""
         #
         #
@@ -1316,7 +1521,11 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # run starts here
         #
         self.run_metadata = self.results_manager.start_run(
-            run_dir=crt, pathsname=pathsname, filename=filename, run_uuid=run_uuid
+            run_dir=crt,
+            pathsname=pathsname,
+            filename=filename,
+            run_uuid=run_uuid,
+            method="next_paths",
         )
         #
         #
@@ -1336,6 +1545,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
                     run_dir=crt,
                     by_line=True,
                     run_uuid=run_uuid,
+                    method=method,
                 )
                 csvpath[1] = result
                 #

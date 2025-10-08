@@ -3,6 +3,7 @@ import boto3
 import uuid
 from botocore.exceptions import ClientError
 from csvpath.util.box import Box
+from csvpath.util.config import Config
 
 
 class S3Utils:
@@ -21,10 +22,31 @@ class S3Utils:
             warnings.filterwarnings(
                 action="ignore", message=r"datetime.datetime.utcnow"
             )
+            #
+            # changing this to allow for lookups using the var sub env.json instead
+            # of doing an OS env var lookup directly. we'll check the config.ini first
+            # do var sub, if needed. fall back to direct env lookup using OS or env.json
+            # depending which is configured.
+            #
+            config = box.get(Box.CSVPATHS_CONFIG)
+            if config is None:
+                config = Config()
+            ak = config.get(section="s3", name=cls.AWS_ACCESS_KEY_ID)
+            if ak is None or ak == cls.AWS_ACCESS_KEY_ID:
+                ak = config.get(section=None, name=cls.AWS_ACCESS_KEY_ID)
+            sk = config.get(section="s3", name=cls.AWS_SECRET_ACCESS_KEY)
+            if sk is None or sk == cls.AWS_SECRET_ACCESS_KEY:
+                sk = config.get(section=None, name=cls.AWS_SECRET_ACCESS_KEY)
+            session = boto3.Session(
+                aws_access_key_id=ak,
+                aws_secret_access_key=sk,
+            )
+            """
             session = boto3.Session(
                 aws_access_key_id=os.environ[cls.AWS_ACCESS_KEY_ID],
                 aws_secret_access_key=os.environ[cls.AWS_SECRET_ACCESS_KEY],
             )
+            """
             client = session.client("s3")
             box.add(Box.BOTO_S3_CLIENT, client)
         return client

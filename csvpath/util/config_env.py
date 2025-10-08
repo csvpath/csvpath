@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from typing import Optional, Any
 from csvpath.util.class_loader import ClassLoader
 
@@ -42,7 +43,7 @@ class ConfigEnv:
     def allow_var_sub(self) -> bool:
         if self._allow is None:
             a = self.config.get(section="config", name="allow_var_sub", default=False)
-            self._allow = a and str(a).strip().lower() == "true"
+            self._allow = a and str(a).strip().lower() in ["true", "yes"]
         return self._allow
 
     @property
@@ -70,8 +71,6 @@ class ConfigEnv:
                 self._env = json.load(file.source)
                 file.__exit__(None, None, None)
             except Exception:
-                import traceback
-
                 print(traceback.format_exc())
         return self._env
 
@@ -81,17 +80,15 @@ class ConfigEnv:
     # original name.
     #
     def get(self, *, name: str, default: Optional[Any] = None):
-        print(f"ConfigEnv: get: name: {name}, default: {default}")
         if name is None:
             raise ValueError("Name cannot be None")
         if not name.isupper():
             return default if default else name
         if not self.allow_var_sub:
             return default if default else name
-        print(f"ConfigEnv: getting name via: {self.var_sub_source}")
         if self.var_sub_source == "env":
             v = os.getenv(name)
             return v if v else default if default else name
-        if name in self.env:
+        if self.env and name in self.env:
             return self.env.get(name)
         return default if default else name

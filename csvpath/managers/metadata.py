@@ -32,7 +32,12 @@ class Metadata(ABC):
         self.ip_address = None
         try:
             self.hostname = socket.gethostname()
-            self.ip_address = socket.gethostbyname(self.hostname)
+            #
+            # in some cases this call will block multiple seconds. setting defaulttimeout
+            # doesn't fix the problem. for now disabling the field. not sure it's that
+            # important to find a fix.
+            #
+            # self.ip_address = socket.gethostbyname(self.hostname)
         except Exception:
             ...
         if config:

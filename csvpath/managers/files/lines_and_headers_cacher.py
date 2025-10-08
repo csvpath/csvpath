@@ -9,9 +9,12 @@ from csvpath.util.exceptions import InputException, FileException
 class LinesAndHeadersCacher:
     """@private"""
 
-    def __init__(self, csvpaths=None):
-        self.csvpaths = csvpaths
-        self.cache = Cache(self.csvpaths)
+    #
+    # csvpathx can be either CsvPath or CsvPaths
+    #
+    def __init__(self, csvpathx=None):
+        self.csvpathx = csvpathx
+        self.cache = Cache(self.csvpathx)
         self.pathed_lines_and_headers = {}
 
     def get_new_line_monitor(self, filename: str) -> LineMonitor:
@@ -33,7 +36,7 @@ class LinesAndHeadersCacher:
             raise ValueError("Filename cannot be None")
         lm, headers = self._cached_lines_and_headers(filename)
         if lm is None or headers is None:
-            lc = LineCounter(self.csvpaths)
+            lc = LineCounter(self.csvpathx)
             lm, headers = lc.get_lines_and_headers(filename)
             self._cache_lines_and_headers(filename, lm, headers)
         self.pathed_lines_and_headers[filename] = (lm, headers)

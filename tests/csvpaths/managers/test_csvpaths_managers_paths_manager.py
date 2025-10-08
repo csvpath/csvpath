@@ -19,31 +19,39 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_paths_listener_1(self):
         paths = Builder().build()
 
-        paths.config.set_config_path_and_reload( os.path.join("assets", "config", "jenkins-windows-local.ini") )
+        paths.config.set_config_path_and_reload(
+            os.path.join(
+                "assets",
+                "config",
+                "jenkins-windows-local.ini" if os.sep == "\\" else "config.ini",
+            )
+        )
 
         reg = PathsListener(paths)
         mdata = PathsMetadata(paths.config)
         mdata.named_paths_name = "aname"
-        mdata.named_paths_home = os.path.join("root","aname")
-        mdata.group_file_path = os.path.join("root","aname","group.csvpaths")
+        mdata.named_paths_home = os.path.join("root", "aname")
+        mdata.group_file_path = os.path.join("root", "aname", "group.csvpaths")
         mdata.source_path = "a/b/c"
         mdata.fingerprint = "123"
-        mdata.manifest_path = os.path.join("root","aname","manifest.json")
+        mdata.manifest_path = os.path.join("root", "aname", "manifest.json")
         #
         # check mdata to mani transfer
         #
         mani = reg._prep_update(mdata)
-        assert mani["paths_manifest"] == os.path.join("root","aname","manifest.json")
+        assert mani["paths_manifest"] == os.path.join("root", "aname", "manifest.json")
         assert mani["manifest_path"] == os.path.join(
             paths.config.get(section="inputs", name="csvpaths"), "manifest.json"
         )
         assert mani["uuid"] is not None
         assert mani["time"] is not None
-        assert mani["paths_manifest"] == os.path.join("root","aname","manifest.json")
+        assert mani["paths_manifest"] == os.path.join("root", "aname", "manifest.json")
         assert mani["fingerprint"] == "123"
         assert mani["named_paths_name"] == "aname"
-        assert mani["named_paths_home"] == os.path.join("root","aname")
-        assert mani["group_file_path"] == os.path.join("root","aname","group.csvpaths")
+        assert mani["named_paths_home"] == os.path.join("root", "aname")
+        assert mani["group_file_path"] == os.path.join(
+            "root", "aname", "group.csvpaths"
+        )
         assert mani["source_path"] == "a/b/c"
         assert mani["fingerprint"] == "123"
 
@@ -86,6 +94,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=False,
         )
+        mdata1 = paths.paths_manager.last_add_metadata
         assert paths.paths_manager.has_named_paths("aname")
         assert len(paths.paths_manager.get_named_paths("aname")) == 2
         paths.paths_manager.add_named_paths_from_file(
@@ -93,8 +102,13 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=True,
         )
+        mdata2 = paths.paths_manager.last_add_metadata
         assert paths.paths_manager.has_named_paths("aname")
         assert len(paths.paths_manager.get_named_paths("aname")) == 4
+        #
+        # we include all csvpaths in metadata when we append, not just the appended csvpaths
+        #
+        assert len(mdata2.named_paths) == 2 * len(mdata1.named_paths)
 
     def test_named_paths_add_and_external_change(self):
         name = f"{uuid4()}"

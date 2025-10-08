@@ -7,6 +7,7 @@ from tests.csvpaths.builder import Builder
 class TestCsvPathsSingleFromGroup(unittest.TestCase):
     def test_single_from_group(self):
         paths = Builder().build()
+
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="food",
@@ -28,3 +29,5 @@ class TestCsvPathsSingleFromGroup(unittest.TestCase):
         # vars = paths.results_manager.get_variables("many#many_two")
         assert "two" in vars
         assert "one" not in vars
+
+        paths = None

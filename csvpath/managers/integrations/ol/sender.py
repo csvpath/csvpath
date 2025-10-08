@@ -20,12 +20,12 @@ class Sender(Listener):
     def client(self):
         if self._client is None:
             h = HttpConfig(
-                url=self.config._get("marquez", "base_url", "https://backend:5000"),
-                endpoint=self.config._get("marquez", "endpoint", "api/v1/lineage"),
-                timeout=int(self.config._get("marquez", "timeout", 5)),
-                verify=bool(self.config._get("marquez", "verify", False)) is True,
+                url=self.config._get("openlineage", "base_url", "https://backend:5000"),
+                endpoint=self.config._get("openlineage", "endpoint", "api/v1/lineage"),
+                timeout=int(self.config._get("openlineage", "timeout", 5)),
+                verify=bool(self.config._get("openlineage", "verify", False)) is True,
                 auth=ApiKeyTokenProvider(
-                    {"apiKey": self.config._get("marquez", "api_key", "none")}
+                    {"apiKey": self.config._get("openlineage", "api_key", "none")}
                 ),
                 compression=HttpCompression.GZIP,
             )

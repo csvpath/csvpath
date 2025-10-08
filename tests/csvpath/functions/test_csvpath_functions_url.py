@@ -46,5 +46,5 @@ class TestCsvPathFunctionsUrl(unittest.TestCase):
             path.fast_forward()
 
     def test_function_url_4(self):
-        path = CsvPath().parse(f"""${URLS}[1*][ @v = url( none() ) ]""").fast_forward()
+        path = CsvPath().parse(f"""${URLS}[1][ @v = url( none() ) ]""").fast_forward()
         assert path.variables["v"] is False

@@ -32,6 +32,7 @@ class TestCsvPathsFunctionsIn(unittest.TestCase):
 
     def test_function_new_in7(self):
         paths = Builder().build()
+
         paths.file_manager.add_named_file(name="food", path=FOOD)
         paths.paths_manager.add_named_paths_from_dir(directory=DIR)
         paths.collect_paths(pathsname="food_lookup", filename="food")
@@ -45,3 +46,4 @@ class TestCsvPathsFunctionsIn(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 10
+        path = None

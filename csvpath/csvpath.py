@@ -4,20 +4,19 @@
 import time
 import os
 import hashlib
+import traceback
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from .util.config import Config
 from .util.line_monitor import LineMonitor
-from .util.log_utility import LogUtility
+from .util.log_utility import LogUtility as lout
 from .util.printer import Printer
 from .util.file_readers import DataFileReader
 from .util.line_spooler import LineSpooler, ListLineSpooler
 from .modes.mode_controller import ModeController
 from .matching.matcher import Matcher
-
-# from .scanning.scanner import Scanner
 from .scanning.scanner2 import Scanner2 as Scanner
 from .util.metadata_parser import MetadataParser
 from .managers.errors.error import Error
@@ -33,6 +32,7 @@ from .util.exceptions import (
     ProcessingException,
     CsvPathsException,
 )
+from csvpath.managers.files.lines_and_headers_cacher import LinesAndHeadersCacher
 from .matching.util.exceptions import MatchException
 from .managers.errors.error_collector import ErrorCollector
 
@@ -59,7 +59,6 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         # the config.ini file loaded as a ConfigParser instance
         #
-
         """
         #
         # passing in the config actually nets us nothing but a little unnecessary complexity that we don't use.
@@ -89,7 +88,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # your component instance and the logging level. e.g.:
         # LogUtility.logger(csvpath, "debug")
         #
-        self.logger = LogUtility.logger(self)
+        self._logger = None
         """ @private """
         self.logger.info("initialized CsvPath")
         #
@@ -263,6 +262,25 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # by collect(), but is the lines not returned by collect().
         #
         self._unmatched = None
+
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = lout.logger(self)
+        return self._logger
+
+    @logger.setter
+    def logger(self, ler) -> None:
+        self._logger = ler
+
+    def __del__(self) -> None:
+        try:
+            if self.error_manager and self.error_manager.error_metrics:
+                self.error_manager.error_metrics.provider.shutdown()
+                self.error_manager.error_metrics = None
+            lout.release_logger(self)
+        except Exception:
+            print(traceback.format_exc())
 
     #
     # this method saves and reloads the config. if you don't want that use
@@ -1128,6 +1146,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 self.logger.error(e, exc_info=True)
             if self.ecoms.do_i_raise():
                 raise
+        finally:
+            self._logger = None
 
     def _next_line(self) -> List[Any]:
         """@private"""
@@ -1316,16 +1336,23 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.get_total_lines_and_headers()
         return self.line_monitor.physical_end_line_number
 
-    def get_total_lines_and_headers(self) -> None:  # pylint: disable=C0116
+    def get_total_lines_and_headers(
+        self, *, filename: str = None
+    ) -> None:  # pylint: disable=C0116
+        #
+        # filename is an option for certain needs but in the usual case
+        # we expect scanner.filename, and if both are available for some
+        # reason, the scanner wins.
+        #
         """@private"""
-        if not self.scanner or not self.scanner.filename:
+        if not filename and (not self.scanner or not self.scanner.filename):
             self.logger.error(
                 "Csvpath identified as %s has no filename. Since we could be error handling an exception is not raised.",
                 self.identity,
             )
-            # exp
             return
-            # end exp
+        if self.scanner and self.scanner.filename:
+            filename = self.scanner.filename
         #
         # there are times, e.g. when using Lambda, when it may be better to
         # not use a cache. in the case of Lambda the reason is to avoid working
@@ -1335,22 +1362,23 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         if use_cache:
             uc = self.csvpaths.config.get(section="cache", name="use_cache")
             use_cache = uc is None or uc.strip().lower() != "no"
-        #
-        # do we really want to only use cache if we're running a named-paths group?
-        # users may want to run one-offs repeatedly, particularly in FP. otoh, we
-        # don't have a file_manager and its a big change for probably a small number of
-        # bad cases and it can be worked around by simply using a CsvPaths.
-        #
-        if self.csvpaths and use_cache is True:
-            self.line_monitor = self.csvpaths.file_manager.lines_and_headers_cacher.get_new_line_monitor(
-                self.scanner.filename
+        if use_cache is True:
+            self.logger.debug(
+                f"Using cache to get total lines and headers for {filename}"
             )
-            self.headers = self.csvpaths.file_manager.lines_and_headers_cacher.get_original_headers(
-                self.scanner.filename
+            lahc = (
+                self.csvpaths.file_manager.lines_and_headers_cacher
+                if self.csvpaths
+                else LinesAndHeadersCacher(self, line_counter=LineCounter(self))
             )
+            self.line_monitor = lahc.get_new_line_monitor(filename)
+            self.headers = lahc.get_original_headers(filename)
         else:
+            self.logger.debug(
+                f"Not using cache to get total lines and headers for {filename}"
+            )
             lc = LineCounter(self)
-            lm, headers = lc.get_lines_and_headers(self.scanner.filename)
+            lm, headers = lc.get_lines_and_headers(filename)
             self.line_monitor = lm
             self.headers = headers
 

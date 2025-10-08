@@ -1,6 +1,7 @@
 import os
 from google.cloud import storage
 from csvpath.util.box import Box
+from csvpath.util.config import Config
 
 
 class GcsUtility:
@@ -14,7 +15,18 @@ class GcsUtility:
         client = box.get(Box.GCS_STORAGE_CLIENT)
         if client is None:
             cls._client_count += 1
-            credentials_path = os.getenv(cls.GCS_CREDENTIALS_PATH)
+
+            # credentials_path = os.getenv(cls.GCS_CREDENTIALS_PATH)
+
+            config = box.get(Box.CSVPATHS_CONFIG)
+            if config is None:
+                config = Config()
+            credentials_path = config.get(section="gcs", name=cls.GCS_CREDENTIALS_PATH)
+            if credentials_path is None:
+                credentials_path = config.get(
+                    section=None, name=cls.GCS_CREDENTIALS_PATH
+                )
+
             if not credentials_path:
                 raise ValueError(
                     f"{cls.GCS_CREDENTIALS_PATH} environment variable not set."

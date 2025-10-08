@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import validators
 from csvpath.matching.productions import Term, Header, Variable, Reference
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.functions.function import Function
 from ..args import Args
 from .type import Type
@@ -34,7 +35,13 @@ class Url(Type):
         if val == "" and self.notnone:
             self.match = False
             return
-        elif val == "":
+        elif isinstance(val, str) and val.strip() == "":
             self.match = True
             return
-        self.match = validators.url(val) is True
+        self.match = Url._is_match(val)
+
+    @classmethod
+    def _is_match(cls, value: str) -> bool:
+        if value is None:
+            return False
+        return validators.url(value) is True

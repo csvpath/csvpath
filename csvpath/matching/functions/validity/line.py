@@ -248,7 +248,8 @@ class Line(MatchDecider):
         #
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
-            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
+
+            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header '{self.matcher.csvpath.headers[i]}'"
             errors.append(msg)
         return True
 
@@ -264,6 +265,6 @@ class Line(MatchDecider):
         #
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
-            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header"
+            msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header '{self.matcher.csvpath.headers[i]}'"
             errors.append(msg)
         return True

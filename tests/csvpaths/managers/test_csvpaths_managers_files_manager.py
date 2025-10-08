@@ -69,18 +69,24 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
     def test_files_listener_1(self):
         paths = Builder().build()
         print(f"test_files_listener_1: pconfp: {paths.config.configpath}")
-        
-        paths.config.set_config_path_and_reload( os.path.join("assets", "config", "jenkins-windows-local.ini") )
-        
+
+        paths.config.set_config_path_and_reload(
+            os.path.join(
+                "assets",
+                "config",
+                "jenkins-windows-local.ini" if os.sep == "\\" else "config.ini",
+            )
+        )
+
         reg = FilesListener(paths)
         mdata = FileMetadata(paths.config)
         mdata.named_file_name = None
         mdata.fingerprint = "123"
         mdata.origin_path = "p/d/q"
-        mdata.manifest_path = os.path.join("root","name","manifest.json")
-        mdata.name_home = os.path.join("root","name")
-        mdata.file_home = os.path.join("root","name","filename")
-        mdata.file_path = os.path.join("root","name","filename","version")
+        mdata.manifest_path = os.path.join("root", "name", "manifest.json")
+        mdata.name_home = os.path.join("root", "name")
+        mdata.file_home = os.path.join("root", "name", "filename")
+        mdata.file_path = os.path.join("root", "name", "filename", "version")
         mdata.file_name = "version"
         mdata.mark = "#"
         mdata.type = "files"
@@ -91,7 +97,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         #
         # this will have been reset from the file home to the root of files
         #
-        assert mani["manifest_path"] != os.path.join("root","manifest.json")
+        assert mani["manifest_path"] != os.path.join("root", "manifest.json")
         assert mani["manifest_path"] == os.path.join(
             paths.config.get(section="inputs", name="files"), "manifest.json"
         )
@@ -101,10 +107,10 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert mani["uuid"] is not None
         assert mani["time"] is not None
         assert mani["type"] == "files"
-        assert mani["file_manifest"] == os.path.join("root","name","manifest.json")
-        assert mani["name_home"] == os.path.join("root","name")
-        assert mani["file_home"] == os.path.join("root","name","filename")
-        assert mani["file_path"] == os.path.join("root","name","filename","version")
+        assert mani["file_manifest"] == os.path.join("root", "name", "manifest.json")
+        assert mani["name_home"] == os.path.join("root", "name")
+        assert mani["file_home"] == os.path.join("root", "name", "filename")
+        assert mani["file_path"] == os.path.join("root", "name", "filename", "version")
         assert mani["file_name"] == "version"
         assert mani["fingerprint"] == "123"
         assert mani["origin_path"] == "p/d/q"
@@ -184,6 +190,14 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         # fingerprint and filename has not changed.
         #
         assert len(m) == 1
+
+    def test_file_mgr_1x(self):
+        paths = Builder().build()
+        m = paths.file_manager
+        m.remove_all_named_files()
+        m.add_named_file(name="testx", path=FILE)
+        assert m.named_files_count == 1
+        m.remove_all_named_files()
 
     def test_file_mgr_dir1(self):
         paths = Builder().build()
