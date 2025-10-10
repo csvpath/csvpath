@@ -12,7 +12,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 class TestCsvPathsFunctionsError(unittest.TestCase):
     def test_function_error_1(self):
         paths = Builder().build()
-        paths.add_to_config(
+        paths.config.add_to_config(
             "errors",
             "pattern",
             "{time}:{file}:{line}:{paths}:{instance}:{chain}:  {message}",

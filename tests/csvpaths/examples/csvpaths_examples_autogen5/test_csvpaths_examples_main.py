@@ -17,8 +17,8 @@ JSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_autogen5
 class TestCsvPathsExamplesAutogen(unittest.TestCase):
     def test_autogen5_example_run(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_file(name="autogen5", file_path=PATH)
         paths.file_manager.add_named_file(name="accounts", path=f"{FILE}")
         paths.fast_forward_paths(pathsname="autogen5", filename="accounts")
@@ -27,26 +27,26 @@ class TestCsvPathsExamplesAutogen(unittest.TestCase):
 
     def test_autogen5_paths_load_only(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_file(name="autogen5", file_path=PATH)
 
     def test_autogen5_paths_by_json(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_json(JSON)
 
     def test_autogen5_file_load_only(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(name="accounts", path=FILE)
 
     def test_autogen5_sqlite_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         groups = paths.config.get(section="listeners", name="groups")
         #
         # use config direct so no save happens

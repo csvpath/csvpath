@@ -14,8 +14,8 @@ FILES = (
 class TestCsvPathsExamplesCkan(unittest.TestCase):
     def test_ckan_visibility(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         #
         #
@@ -37,8 +37,8 @@ class TestCsvPathsExamplesCkan(unittest.TestCase):
 
     def test_ckan_group(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
@@ -76,8 +76,8 @@ class TestCsvPathsExamplesCkan(unittest.TestCase):
 
     def test_ckan_publish(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
@@ -131,8 +131,8 @@ class TestCsvPathsExamplesCkan(unittest.TestCase):
     #
     def test_ckan_dataset_name(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
@@ -173,8 +173,8 @@ class TestCsvPathsExamplesCkan(unittest.TestCase):
 
     def test_ckan_tags(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #
@@ -208,8 +208,8 @@ class TestCsvPathsExamplesCkan(unittest.TestCase):
 
     def test_ckan_fields(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         print(f"config path: {os.getenv('CSVPATH_CONFIG_PATH')}")
         #
         #

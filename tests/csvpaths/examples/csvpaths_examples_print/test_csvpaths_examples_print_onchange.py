@@ -11,8 +11,8 @@ ONCE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_print{os
 class TestCsvPathsExamplesPrint(unittest.TestCase):
     def test_print_onchange_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(name="people", path=FILE)
         paths.paths_manager.add_named_paths_from_file(name="oc", file_path=PATH)
         paths.collect_paths(filename="people", pathsname="oc")
@@ -24,8 +24,8 @@ class TestCsvPathsExamplesPrint(unittest.TestCase):
 
     def test_print_once_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         print(f"inputs.files: {paths.config.config_path}")
         print(f"inputs.paths: {paths.config.get(section='inputs', name='csvpaths')}")
         print(f"inputs.paths: {paths.config.get(section='inputs', name='csvpaths')}")

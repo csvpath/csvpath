@@ -46,7 +46,12 @@ class PathsRegistrar(Registrar, Listener):
         f = self._fingerprint(group_file_path=group_file_path)
         mpath = self.manifest_path(name)
         cf = self._most_recent_fingerprint(mpath)
-        if f != cf:
+        #
+        # 10/10/25: adding the None test. if we don't have a last fingerprint lets
+        # not assume that means we should do an update here. if we're doing a regular
+        # add we have our own update elsewhere.
+        #
+        if cf is not None and f != cf:
             mdata = PathsMetadata(self.csvpaths.config)
             mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name

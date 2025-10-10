@@ -12,8 +12,8 @@ class TestCsvPathsFunctionsMetaphone(unittest.TestCase):
     def test_function_metaphone2(self):
         # load the lookup table
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(name="lookups", path=LOOKUP_FILE)
         paths.paths_manager.add_named_paths_from_file(
             name="meta", file_path=LOOKUP_PATH

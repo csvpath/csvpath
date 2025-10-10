@@ -21,8 +21,8 @@ class TestCsvPathsExamplesSftpPlus(unittest.TestCase):
             return
         paths = CsvPaths()
         self._clear(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftpplus")
         paths.config.add_to_config(
             "listeners",
@@ -63,8 +63,8 @@ class TestCsvPathsExamplesSftpPlus(unittest.TestCase):
             return
         paths = CsvPaths()
         self._clear(paths)
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "sftpplus")
         paths.config.add_to_config(
             "listeners",

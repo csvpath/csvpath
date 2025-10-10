@@ -7,19 +7,25 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.nos import Nos
 
-CARS = os.path.join("tests", "csvpaths", "test_resources", "Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv")
+CARS = os.path.join(
+    "tests",
+    "csvpaths",
+    "test_resources",
+    "Automobiles_Annual_Imports_and_Exports_Port_Authority_of_NY.csv",
+)
+
 
 class TestCsvPathsReferencesFilesReferences(unittest.TestCase):
     def test_csvpaths_references_files_path_date_ordinal(self) -> None:
         paths = CsvPaths()
         #
-        # config.add_to_config doesn't save. paths.add_to_config does save. if
+        # config.add_to_config doesn't save. paths.config.add_to_config does save. if
         # we save here we both screw up which ever ini is being used and also delete our test files
         #
-        inputs = os.path.join("tests","csvpaths","test_resources","temp", "inputs","named_files")
-        paths.config.add_to_config(
-            "inputs", "files", inputs
+        inputs = os.path.join(
+            "tests", "csvpaths", "test_resources", "temp", "inputs", "named_files"
         )
+        paths.config.add_to_config("inputs", "files", inputs)
         paths.file_manager.add_named_file(name="Cars", path=CARS)
         ref = "$Cars.files.Autom:2025-:last"
         # ref = "$Cars.files.Autom:2025-:all"
@@ -29,9 +35,9 @@ class TestCsvPathsReferencesFilesReferences(unittest.TestCase):
         results = finder.query()
         files = results.files
         assert len(files) == 1
-        
+
         Nos(inputs).remove()
-        
+
     def test_csvpaths_references_files_extended(self) -> None:
         #
         # this test is in reponse to a concern from FlightPath: NOT A BUG > "Cannot be extended" with: 2024-:all.2025-
@@ -41,13 +47,13 @@ class TestCsvPathsReferencesFilesReferences(unittest.TestCase):
         #
         paths = CsvPaths()
         #
-        # config.add_to_config doesn't save. paths.add_to_config does save. if
+        # config.add_to_config doesn't save. paths.config.add_to_config does save. if
         # we save here we both screw up which ever ini is being used and also delete our test files
         #
-        inputs = os.path.join("tests","csvpaths","test_resources","temp", "inputs","named_files")
-        paths.config.add_to_config(
-            "inputs", "files", inputs
+        inputs = os.path.join(
+            "tests", "csvpaths", "test_resources", "temp", "inputs", "named_files"
         )
+        paths.config.add_to_config("inputs", "files", inputs)
         paths.file_manager.add_named_file(name="Cars", path=CARS)
 
         ref = "$Cars.files.2024-:all.2025-"

@@ -2,12 +2,18 @@ from typing import Any
 import threading
 
 #
-# just a box to put shared things in. separates things in the box
-# by thread using thread name. use CsvPaths.wrap_up() to clear the
-# box for the thread calling the method. remember that CsvPaths adds
-# its config to the box, but may clear it out while others are still
-# interested in it if its thread finishes before another box user.
-# new threads should consider readding it as part of their own namespace.
+# just a box to put shared things in.
+#
+# Box is a simple thread-safe way to separate/collect things in that need to
+# be reused within the thread by name. to clear, use Box.empty_my_stuff(). this
+# removes everything the calling thread added to the box. CsvPaths.wrap_up()
+# calls empty_my_stuff().
+#
+# in a server-like context threads are reused across user contexts. e.g.
+# a user could fill the box in a thread, release the thread, and have the next
+# unrelated user pickup the thread with all the box stuff still available, even
+# though the two users shouldn't see each others stuff. that makes it important
+# to remember to clear the box -- ideally before and after use.
 #
 
 

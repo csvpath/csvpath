@@ -57,21 +57,20 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
 
     def test_paths_listener_2(self):
         paths = Builder().build()
-        grps = paths.config.get(section="listeners", name="groups")
-        paths.add_to_config("listeners", "groups", "default")
+        paths.config.add_to_config("listeners", "groups", "default")
         mani = paths.paths_manager.paths_root_manifest
+        import time
+
         paths.paths_manager.add_named_paths(
-            name="aname", paths=["$[*][yes()]"], source_path="a/b/c"
+            name="aname", paths=[f"""$[*][@t = "{time.time()}"]"""], source_path="a/b/c"
         )
         mani2 = paths.paths_manager.paths_root_manifest
         assert len(mani) + 1 == len(mani2)
-        if grps is not None and isinstance(grps, str):
-            paths.add_to_config("listeners", "groups", grps)
 
     def test_paths_create_definition_by_default(self):
         paths = Builder().build()
         paths.config.get(section="listeners", name="groups")
-        paths.add_to_config("listeners", "groups", "default")
+        paths.config.add_to_config("listeners", "groups", "default")
         name = "aname"
         p = "$[*][yes()]"
         paths.paths_manager.add_named_paths(name=name, paths=[p])
@@ -88,23 +87,30 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     def test_paths_manager_append_1(self):
         paths = Builder().build()
         paths.config.get(section="listeners", name="groups")
-        paths.add_to_config("listeners", "groups", "default")
-        paths.paths_manager.add_named_paths_from_file(
+        paths.config.add_to_config("listeners", "groups", "default")
+
+        pathmgr = paths.paths_manager
+
+        pathmgr.add_named_paths_from_file(
             name="aname",
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=False,
         )
-        mdata1 = paths.paths_manager.last_add_metadata
-        assert paths.paths_manager.has_named_paths("aname")
-        assert len(paths.paths_manager.get_named_paths("aname")) == 2
-        paths.paths_manager.add_named_paths_from_file(
+        mdata1 = pathmgr.last_add_metadata
+        assert mdata1 is not None
+
+        assert pathmgr.has_named_paths("aname")
+        assert len(pathmgr.get_named_paths("aname")) == 2
+        pathmgr.add_named_paths_from_file(
             name="aname",
             file_path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}people.csvpaths",
             append=True,
         )
-        mdata2 = paths.paths_manager.last_add_metadata
-        assert paths.paths_manager.has_named_paths("aname")
-        assert len(paths.paths_manager.get_named_paths("aname")) == 4
+        mdata2 = pathmgr.last_add_metadata
+        assert mdata2 is not None
+
+        assert pathmgr.has_named_paths("aname")
+        assert len(pathmgr.get_named_paths("aname")) == 4
         #
         # we include all csvpaths in metadata when we append, not just the appended csvpaths
         #

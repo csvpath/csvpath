@@ -14,8 +14,8 @@ PURCHASES_PATH = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_example
 class TestCsvPathsExamplesCli(unittest.TestCase):
     def test_cli_example_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(name="purchases", path=PURCHASES_DATA)
         paths.paths_manager.add_named_paths_from_file(
             name="purchases", file_path=PURCHASES_PATH_NO_RUN
@@ -31,8 +31,8 @@ class TestCsvPathsExamplesCli(unittest.TestCase):
 
     def test_cli_example_2(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "collect, print")
-        paths.add_to_config("errors", "csvpaths", "collect, print")
+        paths.config.add_to_config("errors", "csvpath", "collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "collect, print")
         paths.file_manager.add_named_file(name="purchases", path=PURCHASES_DATA)
         paths.paths_manager.add_named_paths_from_file(
             name="purchases", file_path=PURCHASES_PATH

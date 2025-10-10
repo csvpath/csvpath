@@ -11,8 +11,8 @@ FILE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_referenc
 class TestCsvPathsExamplesRefs(unittest.TestCase):
     def test_rewind(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="people",
             path=FILE,
@@ -28,8 +28,8 @@ class TestCsvPathsExamplesRefs(unittest.TestCase):
         # do the refs
         #
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.paths_manager.add_named_paths_from_file(
             name="sourcemode",
             file_path=PATH2,

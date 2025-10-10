@@ -8,7 +8,7 @@ class TestCsvPathsSingleFromGroup(unittest.TestCase):
     def test_single_from_group(self):
         paths = Builder().build()
 
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="food",
             path=f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv",

@@ -12,7 +12,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 class TestCsvPathsComments(unittest.TestCase):
     def test_comment_settings_affecting_multiple_paths(self):
         paths = Builder().build()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         """~ 3 paths:
                 - AND no matches all returned
                 - OR all match all returned

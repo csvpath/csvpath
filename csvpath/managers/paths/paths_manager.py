@@ -45,7 +45,22 @@ class PathsManager:
         # a named-paths group. it is only reset at the next add. if the next add
         # fails before completing this value will be None.
         #
-        self.last_add_metadata = None
+        self._last_add_metadata = None
+
+    @property
+    def last_add_metadata(self) -> PathsMetadata:
+        #
+        # BIG CAVEAT: this breaks the statelessness we're trying to trend towards.
+        # admittedly the original PathsManager was stateful, but that was long ago.
+        # this should only be used if really needed.
+        #
+        # TODO: verify there are no good uses and remove
+        #
+        return self._last_add_metadata
+
+    @last_add_metadata.setter
+    def last_add_metadata(self, mdata: PathsMetadata) -> None:
+        self._last_add_metadata = mdata
 
     @property
     def nos(self) -> Nos:
@@ -441,13 +456,13 @@ class PathsManager:
             mdata.source_path = source_path
             mdata.template = template
             self.registrar.register_complete(mdata)
-            self.last_add_metadata = mdata
             #
             # with named-paths we don't keep separate versions of the group, so
             # we don't include dates in references. the versions can be "easily"
             # compiled from metadata, fwiw.
             #
             ref = f"${name}.csvpaths.0:from"
+            self.last_add_metadata = mdata
             return ref
         except Exception as ex:
             msg = f"Error adding named-paths list to named-paths group: {ex}"

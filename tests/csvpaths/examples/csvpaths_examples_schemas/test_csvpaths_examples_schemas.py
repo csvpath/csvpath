@@ -10,7 +10,7 @@ class TestCsvPathsExamplesSchemas(unittest.TestCase):
     @classmethod
     def setup_class(cls):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="schemas",
@@ -27,7 +27,7 @@ class TestCsvPathsExamplesSchemas(unittest.TestCase):
 
     def test_line_schemas_1(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "collect,print")
+        paths.config.add_to_config("errors", "csvpath", "collect,print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.collect_paths(filename="schemas", pathsname="$schemas.csvpaths.one")
         results = paths.results_manager.get_named_results("schemas")
@@ -38,7 +38,7 @@ class TestCsvPathsExamplesSchemas(unittest.TestCase):
 
     def test_line_schemas_2(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "collect, print")
+        paths.config.add_to_config("errors", "csvpath", "collect, print")
         paths.collect_paths(filename="schemas", pathsname="$schemas.csvpaths.two")
         results = paths.results_manager.get_named_results("schemas")
         assert len(results) == 1
@@ -48,7 +48,7 @@ class TestCsvPathsExamplesSchemas(unittest.TestCase):
 
     def test_line_schemas_3(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(filename="schemas", pathsname="$schemas.csvpaths.three")
         results = paths.results_manager.get_named_results("schemas")
         assert len(results) == 1
@@ -58,7 +58,7 @@ class TestCsvPathsExamplesSchemas(unittest.TestCase):
 
     def test_line_schemas_4(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.collect_paths(filename="schemas", pathsname="$schemas.csvpaths.four")
         results = paths.results_manager.get_named_results("schemas")
         assert len(results) == 1

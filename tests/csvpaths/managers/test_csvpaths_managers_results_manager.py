@@ -36,12 +36,12 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
 
     def test_results_mgr1(self):
         paths = Builder().build()
-        paths.add_to_config("results", "archive", "this doesn't exist")
+        paths.config.add_to_config("results", "archive", "this doesn't exist")
         #
         # this method must return an empty list and write a log warning. it cannot blowup.
         #
         paths.results_manager.list_named_results()
-        paths.add_to_config("results", "archive", "archive")
+        paths.config.add_to_config("results", "archive", "archive")
 
     def test_results_print_to_printouts(self):
         paths = Builder().build()

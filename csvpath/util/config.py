@@ -666,7 +666,9 @@ shell = /bin/bash
                 print(
                     f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"
                 )
-                raise Exception(f"PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high")
+                raise Exception(
+                    f"PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high. Check that [config] path matches CSVPATH_CONFIG_PATH."
+                )
             self.configpath = path
             self.reload()
             return

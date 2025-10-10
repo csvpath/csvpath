@@ -70,6 +70,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         lst = paths.paths_manager.get_scripts_for_paths("many")
         assert lst
         assert len(lst) == 1
+        print(f"lstscripts: {lst}")
         #
         # check script exists
         #
@@ -87,8 +88,11 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         # check for output
         #
         p = os.path.join(out, lst[0][1])
+        print(
+            f"test_paths_mgr_script_run_1: p: {p}, {paths.config.get(section='scripts', name='run_scripts')}"
+        )
         exists = Nos(p).exists()
-        print(f"test_paths_mgr_script_run_1: p: {p}")
+        print(f"test_paths_mgr_script_run_1: p: {p}: {exists}")
         assert exists
         found = False
         files = Nos(out).listdir()

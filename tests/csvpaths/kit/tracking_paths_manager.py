@@ -46,6 +46,7 @@ class TrackingPathsManager(PathsManager):
                 append=append,
             )
             TrackingPathsManager.ADDED[name] = paths
+            self.last_add_metadata = self.mgr.last_add_metadata
             return ref
 
     def _loaded(self, name, paths):

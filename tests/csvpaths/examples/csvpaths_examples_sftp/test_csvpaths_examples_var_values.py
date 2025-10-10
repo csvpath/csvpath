@@ -10,8 +10,8 @@ from csvpath.util.var_utility import VarUtility
 class TestCsvPathsExamplesSftpVarValues(unittest.TestCase):
     def test_sftp_var_values(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
 
         paths.file_manager.add_named_files_from_dir(
             f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_sftp{os.sep}csvs"

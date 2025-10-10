@@ -29,8 +29,12 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         # this was seen to break in flightpath server with:
         #   FileNotFoundError: [Errno 2] No such file or directory: 'archive/test/2025-10-01_20-02-02/capitalization/data.csv'
         paths = Builder().build()
-        paths.add_to_config(section="errors", key="csvpath", value="print,fail,collect")
-        paths.add_to_config(section="errors", key="csvpaths", value="print,collect")
+        paths.config.add_to_config(
+            section="errors", key="csvpath", value="print,fail,collect"
+        )
+        paths.config.add_to_config(
+            section="errors", key="csvpaths", value="print,collect"
+        )
 
         print(f"paths.config.configpath: {paths.config.configpath}")
 

@@ -12,7 +12,7 @@ TJSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example
 class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
     def test_named_paths_json_load_only(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         #
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
@@ -21,7 +21,7 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
 
     def test_json_named_file_load_only(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         #
         # adding files and paths more than 1x is optional, but a good idea for tests because
         # the source test files and dirs could change.
@@ -30,8 +30,8 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
 
     def test_json_named_paths(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         #
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
@@ -60,8 +60,8 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         #
         # setup
         #
-        paths.add_to_config("errors", "csvpaths", "raise, print")
-        paths.add_to_config("errors", "csvpath", "raise, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, print")
 
         # tests/csvpaths/examples/csvpaths_examples_example_2_2/csvs
 
@@ -98,8 +98,8 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
 
     def test_transfer_mode(self):
         paths = CsvPaths()
-        paths.add_to_config("errors", "csvpaths", "raise, collect, print")
-        paths.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         try:
             os.remove(f"transfers{os.sep}transfer.txt")
         except FileNotFoundError:
