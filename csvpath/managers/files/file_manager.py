@@ -557,74 +557,80 @@ class FileManager:
             self.csvpaths.logger.warning(msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
-
+            return
         if nos.is_local and local is not True:
             msg = f"Cannot add {path} as {name} because loading local files is not allowed"
             self.csvpaths.logger.warning(msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
-        #
-        # path must end up with only legal filesystem chars.
-        # the read-only http backend will have ? and possibly other
-        # chars that are not legal in some contexts. we have to
-        # convert those, but obviously only after obtaining the
-        # bytes.
-        #
-        #
-        # create folder tree in inputs/named_files/name/filename
-        #
-        #
-        home = self.assure_file_home(name, path, template)
-
-        file_home = home
-        mark = None
-        #
-        # find mark if there. mark indicates a sheet. it is found
-        # as the trailing word after a # at the end of the path e.g.
-        # my-xlsx.xlsx#sheet2
-        #
-        hm = home.find("#")
-        if hm > -1:
-            mark = home[hm + 1 :]
-            home = home[0:hm]
-        pm = path.find("#")
-        if pm > -1:
-            mark = path[pm + 1 :]
-            path = path[0:pm]
-        #
-        # copy file to its home location
-        #
-        self._copy_in(path, home, template)
-        name_home = self.named_file_home(name)
-        rpath, h = self._fingerprint(home)
-        mdata = FileMetadata(self.csvpaths.config)
-        mdata.named_file_name = name
-        #
-        # we need the declared path, incl. any extra path info, in order
-        # to know if we are being pointed at a sub-portion of the data, e.g.
-        # an excel worksheet.
-        #
-        path = f"{path}#{mark}" if mark else path
-        mdata.origin_path = path
-        mdata.archive_name = self._csvpaths.config.archive_name
-        mdata.fingerprint = h
-        mdata.file_path = rpath
-        mdata.file_home = file_home
-        nos = self.nos
-        nos.path = file_home
-        mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
-        mdata.name_home = name_home
-        mdata.mark = mark
-        mdata.template = template
-        #
-        # TODO: add file_size. move FileInfo into Nos. for now it is 0.
-        #
-        self.registrar.register_complete(mdata)
-        #
-        # the fingerprint is the most precise way of referencing a particular
-        # named-file version.
-        #
-        return f"${name}.files.{h}"
+            return
+        try:
+            #
+            # path must end up with only legal filesystem chars.
+            # the read-only http backend will have ? and possibly other
+            # chars that are not legal in some contexts. we have to
+            # convert those, but obviously only after obtaining the
+            # bytes.
+            #
+            #
+            # create folder tree in inputs/named_files/name/filename
+            #
+            #
+            home = self.assure_file_home(name, path, template)
+            file_home = home
+            mark = None
+            #
+            # find mark if there. mark indicates a sheet. it is found
+            # as the trailing word after a # at the end of the path e.g.
+            # my-xlsx.xlsx#sheet2
+            #
+            hm = home.find("#")
+            if hm > -1:
+                mark = home[hm + 1 :]
+                home = home[0:hm]
+            pm = path.find("#")
+            if pm > -1:
+                mark = path[pm + 1 :]
+                path = path[0:pm]
+            #
+            # copy file to its home location
+            #
+            self._copy_in(path, home, template)
+            name_home = self.named_file_home(name)
+            rpath, h = self._fingerprint(home)
+            mdata = FileMetadata(self.csvpaths.config)
+            mdata.named_file_name = name
+            #
+            # we need the declared path, incl. any extra path info, in order
+            # to know if we are being pointed at a sub-portion of the data, e.g.
+            # an excel worksheet.
+            #
+            path = f"{path}#{mark}" if mark else path
+            mdata.origin_path = path
+            mdata.archive_name = self._csvpaths.config.archive_name
+            mdata.fingerprint = h
+            mdata.file_path = rpath
+            mdata.file_home = file_home
+            nos = self.nos
+            nos.path = file_home
+            mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
+            mdata.name_home = name_home
+            mdata.mark = mark
+            mdata.template = template
+            #
+            # TODO: add file_size. move FileInfo into Nos. for now it is 0.
+            #
+            self.registrar.register_complete(mdata)
+            #
+            # the fingerprint is the most precise way of referencing a particular
+            # named-file version.
+            #
+            return f"${name}.files.{h}"
+        except Exception as ex:
+            msg = f"Error in loading named-file: {ex}"
+            self.csvpaths.logger.error(msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise
 
     def _clean_file_name(self, fname: str) -> str:
         fname = fname.replace("?", "_")
