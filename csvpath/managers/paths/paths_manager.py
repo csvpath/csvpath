@@ -171,51 +171,58 @@ class PathsManager:
         nos = self.nos
         nos.path = directory
         if not nos.isfile():
-            dlist = nos.listdir()
-            base = directory
-            agg = []
-            for p in dlist:
-                if p[0] == ".":
-                    continue
-                if p.find(".") == -1:
-                    continue
-                ext = p[p.rfind(".") + 1 :].strip().lower()
-                if ext not in self.csvpaths.config.csvpath_file_extensions:
-                    continue
-                path = Nos(base).join(p)
-                # path = os.path.join(base, p)
-                if name is None:
-                    #
-                    # add files one by one under their own names
-                    #
-                    aname = self._name_from_name_part(p)
-                    ref = self.add_named_paths_from_file(
-                        name=aname, file_path=path, template=template
+            try:
+                dlist = nos.listdir()
+                base = directory
+                agg = []
+                for p in dlist:
+                    if p[0] == ".":
+                        continue
+                    if p.find(".") == -1:
+                        continue
+                    ext = p[p.rfind(".") + 1 :].strip().lower()
+                    if ext not in self.csvpaths.config.csvpath_file_extensions:
+                        continue
+                    path = Nos(base).join(p)
+                    # path = os.path.join(base, p)
+                    if name is None:
+                        #
+                        # add files one by one under their own names
+                        #
+                        aname = self._name_from_name_part(p)
+                        ref = self.add_named_paths_from_file(
+                            name=aname, file_path=path, template=template
+                        )
+                        lst.append(ref)
+                    else:
+                        #
+                        # if a name, aggregate all the files
+                        #
+                        _ = self._get_csvpaths_from_file(path)
+                        #
+                        # try to find a run-index: N metadata and use it
+                        # to try to impose order? we could do this, but it would
+                        # be messy and a work-around to avoid making people
+                        # use the ordered ways of creating named-paths that
+                        # already exist: JSON and all-in-ones
+                        #
+                        agg += _
+                if len(agg) > 0:
+                    ref = self.add_named_paths(
+                        name=name, paths=agg, source_path=directory, template=template
                     )
                     lst.append(ref)
-                else:
-                    #
-                    # if a name, aggregate all the files
-                    #
-                    _ = self._get_csvpaths_from_file(path)
-                    #
-                    # try to find a run-index: N metadata and use it
-                    # to try to impose order? we could do this, but it would
-                    # be messy and a work-around to avoid making people
-                    # use the ordered ways of creating named-paths that
-                    # already exist: JSON and all-in-ones
-                    #
-                    agg += _
-            if len(agg) > 0:
-                ref = self.add_named_paths(
-                    name=name, paths=agg, source_path=directory, template=template
-                )
-                lst.append(ref)
+            except Exception as ex:
+                msg = f"Error adding named-paths from directory: {ex}"
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                if self.csvpaths.ecoms.do_i_raise():
+                    raise
         else:
             msg = "Dirname must point to a directory"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
+        return lst
 
     def add_named_paths_from_file(
         self,
@@ -227,18 +234,29 @@ class PathsManager:
     ) -> str:
         if self.can_load(file_path) is not True:
             return None
-        #
-        # change for FP: added append as a pass-through
-        #
-        self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
-        _ = self._get_csvpaths_from_file(file_path)
-        ref = self.add_named_paths(
-            name=name, paths=_, source_path=file_path, template=template, append=append
-        )
-        #
-        # absolute ref to the named-paths group in its present form.
-        #
-        return ref
+        try:
+            #
+            # change for FP: added append as a pass-through
+            #
+            self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
+            _ = self._get_csvpaths_from_file(file_path)
+            ref = self.add_named_paths(
+                name=name,
+                paths=_,
+                source_path=file_path,
+                template=template,
+                append=append,
+            )
+            #
+            # absolute ref to the named-paths group in its present form.
+            #
+            return ref
+        except Exception as ex:
+            msg = f"Error adding named-paths from file: {ex}"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise
+            return None
 
     def add_named_paths_from_json(self, file_path: str) -> list[str]:
         if file_path is None:
@@ -369,64 +387,74 @@ class PathsManager:
                 raise InputException(msg)
             return
         self.csvpaths.logger.debug("Adding csvpaths to named-paths group %s", name)
-        for _ in paths:
-            self.csvpaths.logger.debug("Adding %s to %s", _, name)
-        s = self._str_from_list(paths)
-        group_file_path = self._copy_in(name, s, append=append)
-        #
-        # need paths to be the full set of csvpaths in the named-paths group
-        # from this point down.
-        #
-        paths = self._get_csvpaths_from_file(group_file_path)
-        grp_paths = self.get_identified_paths_in(name, paths=paths)
-        ids = [t[0] for t in grp_paths]
-        for i, t in enumerate(ids):
-            if t is None or t.strip() == "":
-                ids[i] = f"{i}"
-        if template is not None:
-            self.store_template_for_paths(name, template)
-        #
-        # exp.
-        # added for FP
-        #
-        # make sure there is a json definition file?
-        # if true, just ask for the file and it will be created if not found.
-        #
-        if assure_definition is True:
-            self.get_json_paths_file(name)
-        #
-        # end exp
-        #
-        mdata = PathsMetadata(self.csvpaths.config)
-        mdata.archive_name = self.csvpaths.config.archive_name
-        mdata.named_paths_name = name
-        nos = self.nos
-        nos.path = mdata.named_paths_root
-        sep = nos.sep
-        mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
-        mdata.group_file_path = f"{mdata.named_paths_home}{sep}group.csvpaths"
-        #
-        # even when appending we need paths, ids, and len(ids) to be the complete set
-        # so that the metadata represents the named-paths group, not just the append
-        # action.
-        #
-        mdata.named_paths = paths
-        mdata.named_paths_identities = ids
-        mdata.named_paths_count = len(ids)
-        #
-        #
-        #
-        mdata.source_path = source_path
-        mdata.template = template
-        self.registrar.register_complete(mdata)
-        self.last_add_metadata = mdata
-        #
-        # with named-paths we don't keep separate versions of the group, so
-        # we don't include dates in references. the versions can be "easily"
-        # compiled from metadata, fwiw.
-        #
-        ref = f"${name}.csvpaths.0:from"
-        return ref
+        try:
+            for _ in paths:
+                self.csvpaths.logger.debug("Adding %s to %s", _, name)
+            s = self._str_from_list(paths)
+            group_file_path = self._copy_in(name, s, append=append)
+            #
+            # the paths have to be reacquired because we might be appending.
+            #
+            # need paths to be the full set of csvpaths in the named-paths group
+            # from this point down.
+            #
+            paths = self._get_csvpaths_from_file(group_file_path)
+            #
+            grp_paths = self.get_identified_paths_in(name, paths=paths)
+            ids = [t[0] for t in grp_paths]
+            for i, t in enumerate(ids):
+                if t is None or t.strip() == "":
+                    ids[i] = f"{i}"
+            if template is not None:
+                self.store_template_for_paths(name, template)
+            #
+            # exp.
+            # added for FP
+            #
+            # make sure there is a json definition file?
+            # if true, just ask for the file and it will be created if not found.
+            #
+            if assure_definition is True:
+                self.get_json_paths_file(name)
+            #
+            # end exp
+            #
+            mdata = PathsMetadata(self.csvpaths.config)
+            mdata.archive_name = self.csvpaths.config.archive_name
+            mdata.named_paths_name = name
+            nos = self.nos
+            nos.path = mdata.named_paths_root
+            sep = nos.sep
+            mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
+            mdata.group_file_path = f"{mdata.named_paths_home}{sep}group.csvpaths"
+            #
+            # even when appending we need paths, ids, and len(ids) to be the complete set
+            # so that the metadata represents the named-paths group, not just the append
+            # action.
+            #
+            mdata.named_paths = paths
+            mdata.named_paths_identities = ids
+            mdata.named_paths_count = len(ids)
+            #
+            #
+            #
+            mdata.source_path = source_path
+            mdata.template = template
+            self.registrar.register_complete(mdata)
+            self.last_add_metadata = mdata
+            #
+            # with named-paths we don't keep separate versions of the group, so
+            # we don't include dates in references. the versions can be "easily"
+            # compiled from metadata, fwiw.
+            #
+            ref = f"${name}.csvpaths.0:from"
+            return ref
+        except Exception as ex:
+            msg = f"Error adding named-paths list to named-paths group: {ex}"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            if self.csvpaths.ecoms.do_i_raise():
+                raise
+            return None
 
     #
     # adding ref handling for the form: $many.csvpaths.food

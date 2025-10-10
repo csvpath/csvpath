@@ -558,6 +558,7 @@ shell = /bin/bash
                 except Exception:
                     print(traceback.format_exc())
 
+    """
     def _assure_cache_path(self) -> None:
         if self.load:
             p = self._get("cache", "path", "cache")
@@ -569,6 +570,35 @@ shell = /bin/bash
                     return
                 self._set("cache", "use_cache", "no")
                 return
+            if p.find("://") > -1:
+                raise ConfigurationException(
+                    f"Cache dir must be on the local drive, not {p}"
+                )
+            if not os.path.exists(p):
+                try:
+                    os.makedirs(p)
+                except Exception:
+                    print(traceback.format_exc())
+    """
+
+    def _assure_cache_path(self) -> None:
+        if self.load:
+            p = self._get("cache", "path", "cache")
+            if p:
+                p = p.strip()
+            if not p or p == "":
+                #
+                # the default is the relative path 'cache'
+                #
+                p = "cache"
+                uc = self.get(section="cache", name="use_cache")
+                #
+                # if we aren't using cache we shouldn't create the unused dir, if it doesn't exist.
+                #
+                if uc and uc.strip().lower() in ["no", "false"]:
+                    return
+                else:
+                    self._set("cache", "path", "cache")
             if p.find("://") > -1:
                 raise ConfigurationException(
                     f"Cache dir must be on the local drive, not {p}"
@@ -633,7 +663,9 @@ shell = /bin/bash
             Config.PATH_ERR_COUNT += 1
             print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT}")
             if Config.PATH_ERR_COUNT > 30:
-                print(f"Config: refresh: path: {path} != {self.configpath.strip().lower()}")
+                print(
+                    f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"
+                )
                 raise Exception(f"PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high")
             self.configpath = path
             self.reload()
