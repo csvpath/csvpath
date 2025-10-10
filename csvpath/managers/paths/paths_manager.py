@@ -393,10 +393,13 @@ class PathsManager:
             s = self._str_from_list(paths)
             group_file_path = self._copy_in(name, s, append=append)
             #
+            # the paths have to be reacquired because we might be appending.
+            #
             # need paths to be the full set of csvpaths in the named-paths group
             # from this point down.
             #
             paths = self._get_csvpaths_from_file(group_file_path)
+            #
             grp_paths = self.get_identified_paths_in(name, paths=paths)
             ids = [t[0] for t in grp_paths]
             for i, t in enumerate(ids):

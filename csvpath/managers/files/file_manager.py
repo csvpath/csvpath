@@ -530,6 +530,7 @@ class FileManager:
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
     ) -> None:
+        self.csvpaths.logger.info("Adding named file %s from %s", name, path)
         if not self.can_load(path):
             #
             # if False, can_load() will have already raised an error and/or, minimally,
@@ -546,11 +547,12 @@ class FileManager:
         if template is not None:
             temu.valid(template, file=True)
         path = pathu.resep(path)
+        self.csvpaths.logger.debug("Path after resep %s", path)
         config = self.csvpaths.config
         http = config.get(section="inputs", name="allow_http_files", default=False)
-        http = str(http).strip().lower() == "true"
+        http = str(http).strip().lower() in ["on", "yes", "true"]
         local = config.get(section="inputs", name="allow_local_files", default=False)
-        local = str(local).strip().lower() == "true"
+        local = str(local).strip().lower() in ["on", "yes", "true"]
         nos = Nos(path)
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} as {name} because loading files over HTTP is not allowed"
@@ -565,6 +567,7 @@ class FileManager:
                 raise FileException(msg)
             return
         try:
+            self.csvpaths.logger.debug("Ready to register %s", path)
             #
             # path must end up with only legal filesystem chars.
             # the read-only http backend will have ? and possibly other
@@ -595,9 +598,11 @@ class FileManager:
             #
             # copy file to its home location
             #
+            self.csvpaths.logger.debug("Path after removing mark, if any: %s", path)
             self._copy_in(path, home, template)
             name_home = self.named_file_home(name)
             rpath, h = self._fingerprint(home)
+            self.csvpaths.logger.debug("Fingerprint of %s: %s", path, h)
             mdata = FileMetadata(self.csvpaths.config)
             mdata.named_file_name = name
             #
@@ -625,7 +630,9 @@ class FileManager:
             # the fingerprint is the most precise way of referencing a particular
             # named-file version.
             #
-            return f"${name}.files.{h}"
+            ret = f"${name}.files.{h}"
+            self.csvpaths.logger.debug("Registered %s", ret)
+            return ret
         except Exception as ex:
             msg = f"Error in loading named-file: {ex}"
             self.csvpaths.logger.error(msg)
