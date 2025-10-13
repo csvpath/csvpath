@@ -5,4 +5,4 @@ doskey set_s3=set CSVPATH_CONFIG_PATH=assets\config\jenkins-local-s3.ini
 doskey set_azure=set CSVPATH_CONFIG_PATH=assets\config\jenkins-local-azure.ini
 doskey set_gcs=set CSVPATH_CONFIG_PATH=assets\config\jenkins-local-gcs.ini
 
-
+doskey config=echo %CSVPATH_CONFIG_PATH%

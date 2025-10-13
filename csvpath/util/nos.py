@@ -258,6 +258,7 @@ class FileDo:
         if recurse is True:
             lst = []
             for root, dirs, files in os.walk(self.path):
+
                 troot = root[len(self.path) :]
                 troot = troot.lstrip("/").lstrip("\\")
                 if dirs_only is False:
