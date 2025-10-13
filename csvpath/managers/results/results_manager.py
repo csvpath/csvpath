@@ -443,8 +443,8 @@ class ResultsManager:  # pylint: disable=C0115
             pathfrom = t[2]
             pathto = t[3]
             with DataFileReader(pathfrom) as pf:
-                dfw = DataFileWriter(path=pathto, mode="w")
-                dfw.write(pf.read())
+                with DataFileWriter(path=pathto, mode="w") as file:
+                    file.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
         """@private"""
@@ -528,6 +528,7 @@ class ResultsManager:  # pylint: disable=C0115
             nos = Nos(path)
             dirs = nos.listdir(dirs_only=True, recurse=True)
             for d in dirs:
+                d = nos.join(d)
                 m = re.search(r"^.*\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d)?", d)
                 if m is not None:
                     d = m.group(0)

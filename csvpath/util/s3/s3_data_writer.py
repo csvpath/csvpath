@@ -24,13 +24,16 @@ class S3DataWriter(DataFileWriter):
         #
         if data is None:
             raise ValueError("Data cannot be None")
-        if not isinstance(data, bytes):
-            data = data.encode("utf-8")
+        if isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        """
         client = S3Utils.make_client()
         with open(self.path, "wb", transport_params={"client": client}) as file:
             file.write(data)
             file.flush()
             file.close()
+        """
+        self.sink.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

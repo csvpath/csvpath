@@ -14,6 +14,12 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
     def test_paths_mgr_script_run_1(self) -> None:
         paths = CsvPaths()
+        arch = paths.config.get(section="results", name="archive")
+        if Nos(arch).backend != "local":
+            print(
+                "script running is only supported with local archives. skipping test."
+            )
+            return
         #
         # set up config
         #
@@ -39,6 +45,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
                 script_name="run.sh",
                 text="echo 'hello world!'",
             )
+
         #
         # set up file
         #
@@ -92,7 +99,6 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
             f"test_paths_mgr_script_run_1: p: {p}, {paths.config.get(section='scripts', name='run_scripts')}"
         )
         exists = Nos(p).exists()
-        print(f"test_paths_mgr_script_run_1: p: {p}: {exists}")
         assert exists
         found = False
         files = Nos(out).listdir()

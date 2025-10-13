@@ -20,15 +20,9 @@ class GcsDataWriter(DataFileWriter):
             GcsDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
-        """This is a one-and-done write. For multiple write calls to the same
-        file handle, use append().
-        """
-        client = GcsUtility.make_client()
-        #
-        # always use "wb"?
-        #
-        with open(self.path, "wb", transport_params={"client": client}) as file:
-            file.write(data.encode(self.encoding))
+        if isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        self.sink.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

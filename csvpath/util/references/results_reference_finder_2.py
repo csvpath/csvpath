@@ -55,6 +55,7 @@ class ResultsReferenceFinder2:
         return lst
 
     def query(self) -> ReferenceResults:
+        # print(f"ResultsRefFinder: query: 0: {self.ref}, {self.reference}")
         if self.ref is None:
             refstr = self.reference
             #
@@ -102,6 +103,7 @@ class ResultsReferenceFinder2:
         # DateFilter trims the possibles.
         #
         # print(f"ResultsRefFinder: query: 4: results: {len(results)}")
+        # print(f"ResultsRefFinder: query: 4: {results.files}")
         if PathFilter.update(results) is False:
             # print(f"ResultsRefFinder: query: 5: results: {len(results)}")
             DateFilter.update(
@@ -113,7 +115,7 @@ class ResultsReferenceFinder2:
         # filter using name_one's up to 2 tokens
         #
         # _ = self.ref if self.reference is None else self.reference
-        # print(f"ResultsRefFinder: query: 6: results: {len(results)}: {_}")
+        # print(f"ResultsRefFinder: query: 6: results: {len(results)} ")
         TokenFilters.update(results=results, tokens=self.ref.name_one_tokens)
         #
         # point to csvpath identity

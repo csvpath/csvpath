@@ -101,29 +101,21 @@ class SftpDo:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
         walk = SftpWalk(self._config)
-        #
-        # TODO: walk reads the whole tree under self.path, regardless if we want recursion
-        # or not. we can obviously do better! this is just a simple first pass.
-        #
         path = self.path
-        lst = walk.listdir(path=path, default=[])
+        lst = walk.listdir(path=path, default=[], recurse=recurse)
         if files_only is True:
             lst = [_ for _ in lst if _[1] is True]
         if dirs_only is True:
             lst = [_ for _ in lst if _[1] is False]
         if recurse is True:
             lst = [_[0] for _ in lst]
-        else:  #
+        else:
             lst2 = []
-            if path.startswith("/"):
-                path = path[1:]
+            path = path.lstrip("/")
             for _ in lst:
                 t = _[0]
-                if t.startswith("/"):
-                    t = t[1:]
-                if path != "" and not t.startswith(path):
-                    raise ValueError("Expecting contents to start with base path")
-                if path != "":
+                t = t.lstrip("/")
+                if t.startswith(path):
                     t = t[len(path) + 1 :]
                 if t.count("/") > 0:
                     continue
@@ -163,7 +155,6 @@ class SftpDo:
             return self.isdir(self.path)
             """
             ld = self.listdir(default=None)
-            print(f"sftpnos: dir_exists: path: {self.path}: ld: {ld}: is dir: {self._isdir(self.path)}")
             return ld is not None
             """
         except FileNotFoundError:

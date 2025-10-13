@@ -42,6 +42,7 @@ class SftpDataWriter(DataFileWriter):
             )
 
     def write(self, data) -> None:
+        """
         config = self._config
         c = SftpConfig(config)
         with open(
@@ -58,3 +59,7 @@ class SftpDataWriter(DataFileWriter):
             },
         ) as sink:
             sink.write(data)
+        """
+        if isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        self.sink.write(data)

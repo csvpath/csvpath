@@ -87,8 +87,8 @@ class PathsManager:
             nos.makedirs()
         nos.path = p
         if not nos.exists():
-            dfw = DataFileWriter(path=p)
-            dfw.write("[]")
+            with DataFileWriter(path=p) as file:
+                file.write("[]")
         return p
 
     @property
@@ -568,7 +568,7 @@ class PathsManager:
         home = self.named_paths_home(name)
         p = Nos(home).join("definition.json")
         with DataFileWriter(path=p) as writer:
-            writer.sink.write(definition)
+            writer.write(definition)
 
     def get_json_paths_file(self, name: NamedPathsName) -> dict:
         if name is None:
@@ -699,6 +699,7 @@ class PathsManager:
         #
         # if we have the text of the script, store that too
         #
+        script_file = None
         if text is not None:
             #
             # if the user configured a shell we'll use it to add a shebang.
@@ -710,13 +711,15 @@ class PathsManager:
             script_file = Nos(self.named_paths_home(name)).join(script_name)
             # script_file = os.path.join(self.named_paths_home(name), script_name)
             try:
-                dfw = DataFileWriter(path=script_file, mode="wb")
-                dfw.write(text)
+                with DataFileWriter(path=script_file, mode="wb") as file:
+                    file.write(text)
             except Exception as e:
-                #
-                # TODO: handle better! log, error obj, etc.
-                #
+                msg = "Could not store script at {script_file}: {e}"
                 self.csvpaths.logger.error(e)
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                if self.csvpaths.ecoms.do_i_raise():
+                    raise RuntimeError(msg)
+                return
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
         config = self.get_config_for_paths(name)

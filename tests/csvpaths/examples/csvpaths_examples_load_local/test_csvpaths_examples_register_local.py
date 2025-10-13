@@ -2,8 +2,6 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPaths
-from csvpath.util.backend_check import BackendCheck
-from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.exceptions import FileException
 
 
