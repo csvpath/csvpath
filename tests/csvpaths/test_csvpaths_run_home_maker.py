@@ -3,6 +3,7 @@ import os
 from csvpath import CsvPaths
 from csvpath.util.run_home_maker import RunHomeMaker
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.nos import Nos
 from tests.csvpaths.builder import Builder
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
@@ -23,4 +24,10 @@ class TestCsvPathsRunHome(unittest.TestCase):
         assert run_dir is not None
         assert run_dir.startswith(paths.config.archive_path)
         parts = pathu.parts(run_dir)
-        assert len(parts) == 3
+        expected = (
+            3
+            if Nos(paths.config.get(section="results", name="archive")).backend
+            == "local"
+            else 5
+        )
+        assert len(parts) == expected

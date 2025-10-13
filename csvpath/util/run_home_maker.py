@@ -43,7 +43,11 @@ class RunHomeMaker:
 
     def __init__(self, csvpaths) -> None:
         self._csvpaths = csvpaths
-        self.base_dir = csvpaths.config.archive_path
+        # self.base_dir = csvpaths.config.archive_path
+
+    @property
+    def base_dir(self) -> str:
+        return self._csvpaths.config.archive_path
 
     #
     # runs_home is the parent dir of the run_dirs. e.g. in: archive/food/2025-03.../categories
@@ -226,7 +230,6 @@ class RunHomeMaker:
         # TODO: check for an assure_paths_home type method in paths mgr
         #
         run_dir = Nos(self.base_dir).join(paths_name)
-        # run_dir = os.path.join(self.base_dir, paths_name)
         nos = Nos(run_dir)
         if not nos.dir_exists():
             nos.makedirs()

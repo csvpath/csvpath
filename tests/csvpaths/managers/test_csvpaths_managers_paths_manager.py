@@ -138,11 +138,11 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert nos.dir_exists()
         nos.path = os.path.join(home, "group.csvpaths")
         assert nos.exists()
-        with DataFileReader(nos.path) as read:
-            dfw = DataFileWriter(path=nos.path)
-            t = read.read()
-            t += " ~ test ~ "
-            dfw.write(t)
+        with DataFileReader(nos.path) as reader:
+            with DataFileWriter(path=nos.path) as writer:
+                t = reader.read()
+                t += " ~ test ~ "
+                writer.write(t)
         #
         # get paths to trigger the catch-up mani write. this is what
         # we're testing.

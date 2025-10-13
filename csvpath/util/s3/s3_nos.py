@@ -48,6 +48,7 @@ class S3Do:
         lst = self.listdir()
         if lst and len(lst) > 0:
             return True
+        return False
 
     def physical_dirs(self) -> bool:
         return False
@@ -110,6 +111,7 @@ class S3Do:
         files_only: bool = False,
         recurse: bool = False,
         dirs_only: bool = False,
+        top: bool = True,
     ) -> list:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
@@ -169,5 +171,12 @@ class S3Do:
                             files_only=files_only,
                             recurse=recurse,
                             dirs_only=dirs_only,
+                            top=False,
                         )
+
+        if top is True:
+            for i, name in enumerate(names):
+                if name.startswith(key):
+                    names[i] = name[len(key) :]
+
         return names

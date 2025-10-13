@@ -24,7 +24,7 @@ def clear_files(request):
 
 
 def _clear_files():
-    try: 
+    try:
         e = os.environ["CSVPATH_CONFIG_PATH"]
         print(f"\nEnvironment-set config path: {e}")
     except Exception:
@@ -44,7 +44,7 @@ def _clear_files():
     """
     paths = CsvPaths()
     config = paths.config
-    print(f"CONFIG PATH IS: {config.config_path}")
+    print(f"LOADED CONFIG PATH IS: {config.config_path}")
     archive = config.archive_path
     files = config.inputs_files_path
     paths = config.inputs_csvpaths_path

@@ -62,6 +62,13 @@ class PathUtility:
             parts.append(s)
         return parts
 
+    """
+    @classmethod
+    def root_and_branch(cls, apath:str) -> tuple[str,str]:
+        parts = cls.parts(apath)
+        return (parts[0], "/".join(parts[1:]))
+    """
+
     @classmethod
     def stripp(cls, apath: str) -> str:
         i = apath.find("://")

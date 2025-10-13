@@ -95,10 +95,13 @@ class AzureDo:
         files_only: bool = False,
         recurse: bool = False,
         dirs_only: bool = False,
+        top: bool = True,
     ) -> list[str]:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
         container, blob = AzureUtility.path_to_parts(path)
+
+        # listed = os.path.basename(self.path)
         if not blob.endswith("/"):
             blob = f"{blob}/"
         if blob == "/":
@@ -116,30 +119,42 @@ class AzureDo:
                     path = f"{container}/{item.name}"
                     path = path.replace("//", "/")
                     path = f"azure://{path}"
-                    names += self._listdir(
+                    _ = self._listdir(
                         path=path,
                         files_only=files_only,
                         recurse=recurse,
                         dirs_only=dirs_only,
+                        top=False,
                     )
+                    for name in _:
+                        names.append(name)
                 elif files_only is False and recurse is False:
                     name = item.name[len(blob) :]
                     names.append(name.rstrip("/"))
                 elif files_only is False and recurse is True:
+                    #
+                    #
+                    #
                     names.append(item.name.rstrip("/"))
                     path = f"{container}/{item.name}"
                     path = path.replace("//", "/")
                     path = f"azure://{path}"
-                    names += self._listdir(
+                    _ = self._listdir(
                         path=path,
                         files_only=files_only,
                         recurse=recurse,
                         dirs_only=dirs_only,
+                        top=False,
                     )
+                    for name in _:
+                        names.append(name)
             elif dirs_only is False:
                 name = item.name
                 if recurse is False:
                     name = name[len(blob) :]
                 names.append(name)
-
+            if top is True:
+                for i, name in enumerate(names):
+                    if name.startswith(blob):
+                        names[i] = name[len(blob) :]
         return names

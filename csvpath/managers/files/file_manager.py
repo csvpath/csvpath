@@ -471,12 +471,16 @@ class FileManager:
         nos = self.nos
         nos.path = dirname
         dlist = nos.listdir(files_only=True, recurse=recurse)
+        for i, _ in enumerate(dlist):
+            dlist[i] = f"{nos.join(_)}"
+
         base = dirname
         #
         # collect all full paths that are files and have correct extensions
         #
         for p in dlist:
-            _ = p.lower()
+            # _ = p.lower()
+            # p = nos.join(p)
             ext = p[p.rfind(".") + 1 :].strip().lower()
             if ext in self._csvpaths.config.csv_file_extensions:
                 if name is None:
@@ -663,8 +667,8 @@ class FileManager:
         #
         fname = self._clean_file_name(fname)
         temp = f"{home}{sep}{fname}"
-        # temp = os.path.join(home, fname)
-        if pathu.parts(path)[0] == pathu.parts(home)[0]:
+        copy = pathu.parts(path)[0] == pathu.parts(home)[0]
+        if copy:
             nos.path = path
             nos.copy(temp)
         else:
@@ -730,6 +734,7 @@ class FileManager:
         #       $orders.files.2025/mar:all
         #
         #
+
         if name.startswith("$"):
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype == ref.FILES:

@@ -20,15 +20,9 @@ class AzureDataWriter(DataFileWriter):
             AzureDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
-        """this is a one-and-done write. for multiple write calls to the same
-        file handle use append().
-        """
-        client = AzureUtility.make_client()
-        #
-        # should this always be "wb"?
-        #
-        with open(self.path, "wb", transport_params={"client": client}) as file:
-            file.write(data.encode("utf-8"))
+        if isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        self.sink.write(data)
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

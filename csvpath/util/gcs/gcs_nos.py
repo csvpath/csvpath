@@ -94,6 +94,7 @@ class GcsDo:
         files_only: bool = False,
         recurse: bool = False,
         dirs_only: bool = False,
+        top: bool = True,
     ) -> list[str]:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
@@ -127,6 +128,7 @@ class GcsDo:
                     files_only=files_only,
                     recurse=recurse,
                     dirs_only=dirs_only,
+                    top=False,
                 )
             if files_only is True and recurse is False:
                 continue
@@ -140,9 +142,15 @@ class GcsDo:
                     files_only=files_only,
                     recurse=recurse,
                     dirs_only=dirs_only,
+                    top=False,
                 )
             if files_only is False and recurse is False:
                 prefix = prefix[len(blob) :]
                 names.append(prefix.rstrip("/"))
+
+        if top is True:
+            for i, name in enumerate(names):
+                if name.startswith(blob):
+                    names[i] = name[len(blob) :]
 
         return names
