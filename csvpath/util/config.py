@@ -661,7 +661,7 @@ shell = /bin/bash
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
             Config.PATH_ERR_COUNT += 1
-            print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT}")
+            print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} on {path} != {self.configpath.strip().lower()}")
             if Config.PATH_ERR_COUNT > 30:
                 print(
                     f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"

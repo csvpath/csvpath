@@ -9,26 +9,9 @@ from csvpath.util.nos import Nos
 BUCKET = "csvpath"
 DIR = "testdir"
 
-TEMP_FILE_1 = "abc_1.txt"
-TEMP_FILE_2 = "xyz/abc_2.txt"
-TEMP_FILE_3 = "pdq/abc_3.txt"
-TEMP_FILE_4 = "xyz/ijk/abc_4.txt"
 
-DIR_1 = "xyz"
-DIR_2 = "pdq"
-DIR_3 = "xyz/ijk"
 
-PATHS = []
-PATHS.append(f"azure://{BUCKET}/{TEMP_FILE_1}")
-PATHS.append(f"azure://{BUCKET}/{TEMP_FILE_2}")
-PATHS.append(f"azure://{BUCKET}/{TEMP_FILE_3}")
-PATHS.append(f"azure://{BUCKET}/{TEMP_FILE_4}")
 
-NAMES = []
-NAMES.append(TEMP_FILE_1)
-NAMES.append(TEMP_FILE_2)
-NAMES.append(TEMP_FILE_3)
-NAMES.append(TEMP_FILE_4)
 
 
 class TestCsvPathsBackendDirs(unittest.TestCase):
@@ -53,7 +36,6 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         if len(backend) == 3:
             bucket = f"{bucket}:{backend[2]}"
         dirpath = None
-
         if protocol == "":
             dirpath = f"{bucket}{os.sep}{DIR}"
         else:
@@ -61,8 +43,14 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         nos = Nos(dirpath)
         sep = nos.sep
 
-        print("")
-        print(f"dirpath: {dirpath}")
+        TEMP_FILE_1 = "abc_1.txt"
+        TEMP_FILE_2 = f"xyz{sep}abc_2.txt"
+        TEMP_FILE_3 = f"pdq{sep}abc_3.txt"
+        TEMP_FILE_4 = f"xyz{sep}ijk{sep}abc_4.txt"
+
+        DIR_1 = "xyz"
+        DIR_2 = "pdq"
+        DIR_3 = f"xyz{sep}ijk"
 
         if nos.exists():
             nos.remove()
@@ -70,10 +58,10 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
 
         text = "this is the text"
         paths = [
-            f"{dirpath}{sep}{TEMP_FILE_1}",
-            f"{dirpath}{sep}{TEMP_FILE_2}",
-            f"{dirpath}{sep}{TEMP_FILE_3}",
-            f"{dirpath}{sep}{TEMP_FILE_4}",
+            Nos(dirpath).join(TEMP_FILE_1),
+            Nos(dirpath).join(TEMP_FILE_2),
+            Nos(dirpath).join(TEMP_FILE_3),
+            Nos(dirpath).join(TEMP_FILE_4)
         ]
 
         requires_dir = protocol == "sftp" or protocol == ""
@@ -94,10 +82,10 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
 
         lst = Nos(dirpath).listdir(recurse=True, files_only=False)
         assert lst is not None
-        assert f"{TEMP_FILE_1}" in lst
-        assert f"{TEMP_FILE_2}" in lst
-        assert f"{TEMP_FILE_3}" in lst
-        assert f"{TEMP_FILE_4}" in lst
+        assert TEMP_FILE_1 in lst
+        assert TEMP_FILE_2 in lst
+        assert TEMP_FILE_3 in lst
+        assert TEMP_FILE_4 in lst
         assert "xyz" in lst
         assert "pdq" in lst
         assert f"xyz{sep}ijk" in lst
@@ -112,9 +100,9 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
 
         lst = Nos(dirpath).listdir(recurse=True, files_only=False, dirs_only=True)
         assert lst is not None
-        assert f"{DIR_1}" in lst
-        assert f"{DIR_2}" in lst
-        assert f"{DIR_3}" in lst
+        assert DIR_1 in lst
+        assert DIR_2 in lst
+        assert DIR_3 in lst
         # these are definitely not there, but should we be asking for DIR+file?
         assert TEMP_FILE_1 not in lst
         assert TEMP_FILE_2 not in lst
@@ -146,10 +134,10 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
 
         lst = Nos(dirpath).listdir(recurse=True, files_only=True)
         assert lst is not None
-        assert f"{TEMP_FILE_1}" in lst
-        assert f"{TEMP_FILE_2}" in lst
-        assert f"{TEMP_FILE_3}" in lst
-        assert f"{TEMP_FILE_4}" in lst
+        assert TEMP_FILE_1 in lst
+        assert TEMP_FILE_2 in lst
+        assert TEMP_FILE_3 in lst
+        assert TEMP_FILE_4 in lst
 
         # these are definitely not there, but should we be asking for DIR+file?
         assert "xyz" not in lst

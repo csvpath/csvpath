@@ -212,7 +212,10 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
         print(
             f"test_csvpaths_correct_lines_returned2: config 1: {paths.config.configpath}"
         )
-        paths.config.set_config_path_and_reload("config/config.ini")
+        #
+        # config/config.ini is not controlled. this cannot work reliably on both win and mac.
+        #
+        #paths.config.set_config_path_and_reload("config/config.ini")
         print(
             f"test_csvpaths_correct_lines_returned2: config 2: {paths.config.configpath}"
         )

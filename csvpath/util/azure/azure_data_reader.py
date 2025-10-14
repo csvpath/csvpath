@@ -12,7 +12,7 @@ class AzureDataReader(CsvDataReader):
             client = AzureUtility.make_client()
             try:
                 self.source = open(
-                    self.path, self.mode, transport_params={"client": client}
+                    self.path, self.mode, transport_params={"client": client}, newline=''
                 )
             except DeprecationWarning:
                 ...
@@ -28,6 +28,7 @@ class AzureDataReader(CsvDataReader):
             mode=self.mode,
             encoding=self.encoding,
             transport_params={"client": AzureUtility.make_client()},
+            newline=''
         ) as file:
             reader = csv.reader(
                 file, delimiter=self._delimiter, quotechar=self._quotechar
@@ -42,7 +43,7 @@ class AzureDataReader(CsvDataReader):
             uri=self.path,
             mode=self.mode,
             encoding=self.encoding,
-            transport_params={"client": AzureUtility.make_client()},
+            transport_params={"client": AzureUtility.make_client()}, newline=''
         ) as file:
             for line in file:
                 yield line

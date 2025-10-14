@@ -121,13 +121,9 @@ class CsvLineSpooler(LineSpooler):
             self.writer = csv.writer(self.sink)
 
     def _open_file(self, path: str):
-        # TODO: set this up better for other protocols besides s3
-        if path.find("://") > -1:
-            dw = DataFileWriter(path=path, mode="w")
-            dw.load_if()
-            return dw.sink
-        file = open(path, "a", newline="", encoding="utf-8")
-        return file
+        dw = DataFileWriter(path=path, mode="w")
+        dw.load_if()
+        return dw.sink
 
     def next(self):
         if self.path is None:

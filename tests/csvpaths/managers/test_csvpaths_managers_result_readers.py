@@ -7,6 +7,7 @@ from csvpath.managers.results.result_file_reader import ResultFileReader
 from csvpath.util.file_readers import FileInfo
 from csvpath.util.line_spooler import CsvLineSpooler
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.nos import Nos
 from tests.csvpaths.builder import Builder
 from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
 from tests.csvpaths.kit.tracking_paths_manager import TrackingPathsManager
@@ -76,13 +77,15 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         # paths.paths_manager = TrackingPathsManager(csvpaths=paths, mgr=paths.paths_manager)
         results = paths.results_manager.get_named_results("food")
         result = results[0]
-        result_dir = os.path.join(result.run_dir, result.identity_or_index)
+        result_dir = Nos(result.run_dir).join(result.identity_or_index)
+        #result_dir = os.path.join(result.run_dir, result.identity_or_index)
         m = ResultFileReader.meta(result_dir)
         assert m is not None
         assert len(m) > 0
         assert "runtime_data" in m
         assert m["runtime_data"]["delimiter"] == ","
 
+        print(f"result_dir: {result_dir}")
         m = ResultFileReader.manifest(result_dir)
         assert m is not None
         assert len(m) > 0

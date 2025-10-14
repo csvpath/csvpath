@@ -16,11 +16,12 @@ class AzureDataWriter(DataFileWriter):
                 self.path,
                 self.mode,
                 transport_params={"client": client},
+                newline=''
             )
             AzureDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
-        if isinstance(data, bytes):
+        if self.is_binary and not isinstance(data, bytes):
             data = data.encode(self.encoding)
         self.sink.write(data)
 

@@ -53,8 +53,9 @@ class TestCsvPathsFunctionsImport(unittest.TestCase):
         paths.file_manager.add_named_file(name="test", path=FILE)
         paths.paths_manager.add_named_paths_from_file(name="paths", file_path=PATH)
 
-        paths.collect_paths(filename="test", pathsname="paths")
+        ref = paths.collect_paths(filename="test", pathsname="paths")
         pvars = paths.results_manager.get_variables("paths")
+
         assert "hey" in pvars
         results = paths.results_manager.get_named_results("paths")
         #
