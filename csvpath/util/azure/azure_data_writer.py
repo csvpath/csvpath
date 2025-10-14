@@ -20,7 +20,7 @@ class AzureDataWriter(DataFileWriter):
             AzureDataWriter._write_file_count += 1
 
     def write(self, data) -> None:
-        if isinstance(data, bytes):
+        if self.is_binary and not isinstance(data, bytes):
             data = data.encode(self.encoding)
         self.sink.write(data)
 

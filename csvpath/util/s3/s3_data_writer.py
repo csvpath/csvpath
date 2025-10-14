@@ -24,7 +24,7 @@ class S3DataWriter(DataFileWriter):
         #
         if data is None:
             raise ValueError("Data cannot be None")
-        if isinstance(data, bytes):
+        if self.is_binary and not isinstance(data, bytes):
             data = data.encode(self.encoding)
         """
         client = S3Utils.make_client()

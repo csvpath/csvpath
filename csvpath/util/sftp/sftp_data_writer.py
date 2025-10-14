@@ -60,6 +60,6 @@ class SftpDataWriter(DataFileWriter):
         ) as sink:
             sink.write(data)
         """
-        if isinstance(data, bytes):
+        if self.is_binary and not isinstance(data, bytes):
             data = data.encode(self.encoding)
         self.sink.write(data)

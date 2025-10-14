@@ -712,9 +712,13 @@ class PathsManager:
             # script_file = os.path.join(self.named_paths_home(name), script_name)
             try:
                 with DataFileWriter(path=script_file, mode="wb") as file:
+                    print(f"textx: text: {text} {type(text)}")
+                    #bs = text.encode("utf-8")
                     file.write(text)
             except Exception as e:
-                msg = "Could not store script at {script_file}: {e}"
+                import traceback
+                print(traceback.format_exc())
+                msg = f"Could not store script at {script_file}: {e}"
                 self.csvpaths.logger.error(e)
                 self.csvpaths.error_manager.handle_error(source=self, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
