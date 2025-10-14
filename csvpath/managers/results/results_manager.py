@@ -260,9 +260,12 @@ class ResultsManager:  # pylint: disable=C0115
     def get_lines(self, name: str) -> bool:
         results = self._get_results_list(name)
         lines = []
-        for r in results:
+        for j, r in enumerate(results):
             rlines = r.lines
-            for _ in rlines.next():
+            for i, _ in enumerate( rlines.next()):
+                #
+                # next line makes no sense!
+                #
                 if _ not in lines:
                     lines.append(_)
         return lines

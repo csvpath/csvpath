@@ -16,6 +16,7 @@ class AzureDataWriter(DataFileWriter):
                 self.path,
                 self.mode,
                 transport_params={"client": client},
+                newline=''
             )
             AzureDataWriter._write_file_count += 1
 

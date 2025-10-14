@@ -4,6 +4,7 @@ import time
 import paramiko
 import stat
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
 
 
@@ -17,6 +18,7 @@ class TestCsvPathsExamplesSftpVarValues(unittest.TestCase):
             f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_sftp{os.sep}csvs"
         )
         path = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_sftp{os.sep}group.json"
+
         paths.paths_manager.add_named_paths_from_json(path)
         paths.collect_paths(filename="March-2024", pathsname="sftptest")
         r = paths.results_manager.get_specific_named_result("sftptest", "upc-sku")
