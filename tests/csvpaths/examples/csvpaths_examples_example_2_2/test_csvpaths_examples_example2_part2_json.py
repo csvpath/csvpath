@@ -36,15 +36,29 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
         #
+        import time
+
+        # t1 = time.perf_counter()
         paths.file_manager.add_named_files_from_dir(CSVS)
+        # t2 = time.perf_counter()
+        # print(f"1: {t2-t1}")
+
         paths.paths_manager.add_named_paths_from_json(JSON)
+        # t3 = time.perf_counter()
+        # print(f"2: {t3-t2}")
+
         paths.collect_paths(filename="March-2024", pathsname="orders")
+        # t4 = time.perf_counter()
+        # print(f"3: {t4-t3}")
+
         #
         #
         #
         result = paths.results_manager.get_specific_named_result("orders", "prices")
         valid = paths.results_manager.is_valid("orders")
         assert not valid
+        # t5 = time.perf_counter()
+        # print(f"4: {t5-t4}")
 
         a = f"{paths.config.archive_path}{os.sep}orders"
         assert Nos(a).dir_exists()
@@ -54,6 +68,8 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         ]
         file = f"{result.run_dir}{os.sep}prices{os.sep}unmatched.csv"
         assert Nos(file).exists()
+        # t6 = time.perf_counter()
+        # print(f"5: {t6-t5}")
 
     def test_result_manifest(self):
         paths = CsvPaths()

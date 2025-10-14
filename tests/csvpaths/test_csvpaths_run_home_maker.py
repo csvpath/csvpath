@@ -24,10 +24,8 @@ class TestCsvPathsRunHome(unittest.TestCase):
         assert run_dir is not None
         assert run_dir.startswith(paths.config.archive_path)
         parts = pathu.parts(run_dir)
-        expected = (
-            3
-            if Nos(paths.config.get(section="results", name="archive")).backend
-            == "local"
-            else 5
-        )
+        archive = paths.config.get(section="results", name="archive")
+        cnt = len(pathu.parts(archive))
+
+        expected = 3 + (cnt - 1) if Nos(archive).backend == "local" else 5 + (cnt - 1)
         assert len(parts) == expected

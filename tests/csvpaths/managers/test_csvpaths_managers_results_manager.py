@@ -41,7 +41,6 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         # this method must return an empty list and write a log warning. it cannot blowup.
         #
         paths.results_manager.list_named_results()
-        paths.config.add_to_config("results", "archive", "archive")
 
     def test_results_print_to_printouts(self):
         paths = Builder().build()
