@@ -15,11 +15,13 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
     def test_paths_mgr_script_run_1(self) -> None:
         paths = CsvPaths()
         arch = paths.config.get(section="results", name="archive")
-        if Nos(arch).backend != "local":
+        backend = Nos(arch).backend
+        if backend != "local":
             print(
                 "script running is only supported with local archives. skipping test."
             )
             return
+
         #
         # set up config
         #
@@ -27,6 +29,8 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("listeners", "groups", "scripts")
         paths.config.add_to_config("scripts", "run_scripts", "yes")
+
+        print(f"archive backend: {backend}, config: {paths.config.configpath}, {paths.config.get(section='listeners', name='groups')}")
         #
         # setup paths
         #
@@ -77,7 +81,6 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         lst = paths.paths_manager.get_scripts_for_paths("many")
         assert lst
         assert len(lst) == 1
-        print(f"lstscripts: {lst}")
         #
         # check script exists
         #
@@ -95,9 +98,6 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         # check for output
         #
         p = os.path.join(out, lst[0][1])
-        print(
-            f"test_paths_mgr_script_run_1: p: {p}, {paths.config.get(section='scripts', name='run_scripts')}"
-        )
         exists = Nos(p).exists()
         assert exists
         found = False

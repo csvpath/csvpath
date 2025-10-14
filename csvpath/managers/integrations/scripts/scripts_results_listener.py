@@ -23,13 +23,18 @@ class ScriptsResultsListener(Listener, threading.Thread):
         #
 
         #
-        # exp! replace Csvpaths so we have all new everything. we didn't need the old
+        # exp: replace Csvpaths so we have all new everything. we didn't need the old
         # one's state and its state may have poluted threads.
         #
-        from csvpath import CsvPaths
-
-        self.csvpaths = CsvPaths()
-
+        # update: this experiment is not ok for a server env. the only way we know where
+        # we are is by looking at config.configpath. creating a new csvpaths obj breaks
+        # that. we don't need to do it, but if ever needed we can copy configpath into a
+        # new csvpaths obj.
+        #
+        #from csvpath import CsvPaths
+        #
+        #self.csvpaths = CsvPaths()
+        #
         Box().add(Box.CSVPATHS_CONFIG, self.csvpaths.config)
         self._metadata_update(self.metadata)
         self.csvpaths.wrap_up()
@@ -41,14 +46,12 @@ class ScriptsResultsListener(Listener, threading.Thread):
         # we should be doing this here because why create a thread if not needed
         # but atm debugging something else.
         #
-        """
         run = self.csvpaths.config.get(section="scripts", name="run_scripts")
         if run is None or run.strip() not in ["on", "true", "yes"]:
             self.csvpaths.logger.info(
                 "Not running completion scripts, if any, because run_scripts is not yes"
             )
             return
-        """
         self.start()
 
     def _metadata_update(self, mdata: Metadata) -> None:
