@@ -42,7 +42,7 @@ class TestCsvPathsExamplesSftpVarValues(unittest.TestCase):
         assert v == "auser"
 
         v = VarUtility.get_int(m, v, "sftp-port")
-        assert v == 10022
+        assert v == 2022
 
         v = VarUtility.get_bool(m, v, "sftp-original")
         v is False
