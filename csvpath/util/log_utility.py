@@ -147,6 +147,10 @@ class LogUtility:
             return
         for name in names[:]:
             loggerx = logging.getLogger(name)
+
+            # from .code import Code
+            # print( Code.get_source_path(loggerx.__class__) )
+
             for handler in loggerx.handlers[:]:
                 try:
                     handler.flush()
@@ -166,7 +170,15 @@ class LogUtility:
                     f"===============\n Lout Error: logger {name} not held by logging\n==============="
                 )
             else:
-                del Logger.manager.loggerDict[name]
+                #
+                # this use of the lock is stepping over a line. but we saw occasional instances
+                # of collection change while iterating. this should fix that. also added
+                # try to our setLevel call below, which was one trigger of the iterations.
+                # TODO: this part is sketchy. it probably won't break, but we should think
+                # on it more.
+                #
+                with logging._lock:
+                    del Logger.manager.loggerDict[name]
             names.remove(name)
             #
             # the other concerning thing: there was a statement online that log handlers are
@@ -247,7 +259,14 @@ class LogUtility:
         log_file_handler.setLevel(level)
         log_file_handler.setFormatter(formatter)
         logger = logging.getLogger(name)
-        logger.setLevel(level)
+        #
+        # try shouldn't be needed, but we do some things with the logger cache that
+        # can be a problem if we didn't do them right.
+        #
+        try:
+            logger.setLevel(level)
+        except Exception:
+            ...
         #
         # there will be 0, 1, or 2 handlers. we clear them and start fresh.
         #

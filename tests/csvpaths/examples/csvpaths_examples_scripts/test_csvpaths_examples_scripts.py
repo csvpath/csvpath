@@ -30,7 +30,9 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         paths.config.add_to_config("listeners", "groups", "scripts")
         paths.config.add_to_config("scripts", "run_scripts", "yes")
 
-        print(f"archive backend: {backend}, config: {paths.config.configpath}, {paths.config.get(section='listeners', name='groups')}")
+        print(
+            f"archive backend: {backend}, config: {paths.config.configpath}, {paths.config.get(section='listeners', name='groups')}"
+        )
         #
         # setup paths
         #
@@ -47,7 +49,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
                 name="many",
                 when="all",
                 script_name="run.sh",
-                text="echo 'hello world!'",
+                text="#!/bin/bash\necho 'hello world!'",
             )
 
         #
@@ -158,7 +160,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
                 name=name,
                 when="after",
                 script_name=script_name,
-                text="echo 'hello world'",
+                text="#!/bin/bash\necho 'hello world'",
             )
 
     def test_paths_mgr_add_script_3(self) -> None:

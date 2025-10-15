@@ -31,9 +31,9 @@ class ScriptsResultsListener(Listener, threading.Thread):
         # that. we don't need to do it, but if ever needed we can copy configpath into a
         # new csvpaths obj.
         #
-        #from csvpath import CsvPaths
+        # from csvpath import CsvPaths
         #
-        #self.csvpaths = CsvPaths()
+        # self.csvpaths = CsvPaths()
         #
         Box().add(Box.CSVPATHS_CONFIG, self.csvpaths.config)
         self._metadata_update(self.metadata)
@@ -129,6 +129,7 @@ class ScriptsResultsListener(Listener, threading.Thread):
                 os.chmod(path, 0o755)
             except Exception:
                 ...
+            print(f"runningx: path: {[path]}")
             result = subprocess.run([path], capture_output=True, text=True, check=True)
             out = result.stdout
             err = result.stderr
