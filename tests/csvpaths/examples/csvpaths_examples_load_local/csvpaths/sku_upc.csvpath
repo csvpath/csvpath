@@ -7,7 +7,7 @@
 
     sftp-user:tinpenny
     sftp-password:tinpenny
-    sftp-server: localhost
+    sftp-server: . . .
     sftp-port: 10022
     sftp-target-path: var|name
     sftp-files: data.csv > data.csv, errors.json > foo.json, meta.json > var|name
