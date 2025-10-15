@@ -31,6 +31,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
             self.do_test_dirs(_)
 
     def do_test_dirs(self, backend):
+        print(f"doing backend {backend}")
         protocol = backend[0]
         bucket = backend[1]
         if len(backend) == 3:
@@ -41,6 +42,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         else:
             dirpath = f"{protocol}://{bucket}/{DIR}"
         nos = Nos(dirpath)
+        print(f"dirpath: {dirpath}")
         sep = nos.sep
 
         TEMP_FILE_1 = "abc_1.txt"
@@ -52,8 +54,11 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         DIR_2 = "pdq"
         DIR_3 = f"xyz{sep}ijk"
 
+        print(f"checking if {nos} exists")
         if nos.exists():
+            print(f"removing {nos}")
             nos.remove()
+        print(f"rechecking if {nos} exists")
         assert nos.exists() is False
 
         text = "this is the text"
@@ -63,6 +68,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
             Nos(dirpath).join(TEMP_FILE_3),
             Nos(dirpath).join(TEMP_FILE_4)
         ]
+        print(f"paths are {paths}")
 
         requires_dir = protocol == "sftp" or protocol == ""
         if requires_dir:
@@ -78,8 +84,10 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
                 if dpath and not Nos(dpath).exists():
                     Nos(dpath).makedirs()
             with DataFileWriter(path=_) as file:
+                print(f"writing {text}")
                 file.write(text)
 
+        print(f"1. listing {dirpath}")
         lst = Nos(dirpath).listdir(recurse=True, files_only=False)
         assert lst is not None
         assert TEMP_FILE_1 in lst
@@ -90,6 +98,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         assert "pdq" in lst
         assert f"xyz{sep}ijk" in lst
 
+        print(f"2. listing {dirpath}")
         lst = Nos(dirpath).listdir(recurse=False, files_only=True)
         assert lst is not None
         assert TEMP_FILE_1 in lst
@@ -98,6 +107,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         assert TEMP_FILE_4 not in lst
         assert "xyz" not in lst
 
+        print(f"3. listing {dirpath}")
         lst = Nos(dirpath).listdir(recurse=True, files_only=False, dirs_only=True)
         assert lst is not None
         assert DIR_1 in lst
@@ -109,29 +119,34 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         assert TEMP_FILE_3 not in lst
         assert TEMP_FILE_4 not in lst
 
+        print(f"4. listing {dirpath}")
         lst = Nos(f"{dirpath}{sep}xyz").listdir(recurse=False)
         assert lst is not None
         assert len(lst) == 2
         assert "abc_2.txt" in lst
         assert "ijk" in lst
 
+        print(f"5. listing {dirpath}")
         lst = Nos(f"{dirpath}{sep}xyz").listdir(recurse=False, files_only=True)
         assert lst is not None
         assert "abc_2.txt" in lst
         assert "ijk" not in lst
 
         _ = f"{dirpath}{sep}xyz"
+        print(f"6. listing {dirpath}")
         lst = Nos(_).listdir(recurse=True, files_only=True)
         assert lst is not None
         assert len(lst) == 2
         assert f"{TEMP_FILE_4[4:]}" in lst
         assert f"{TEMP_FILE_2[4:]}" in lst
 
+        print(f"7. listing {dirpath}")
         lst = Nos(f"{dirpath}{sep}xyz{sep}ijk").listdir(recurse=True)
         assert lst is not None
         assert len(lst) == 1
         assert f"{TEMP_FILE_4[8:]}" in lst
 
+        print(f"8. listing {dirpath}")
         lst = Nos(dirpath).listdir(recurse=True, files_only=True)
         assert lst is not None
         assert TEMP_FILE_1 in lst

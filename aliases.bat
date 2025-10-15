@@ -6,3 +6,4 @@ doskey set_azure=set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-azure.ini
 doskey set_gcs=set CSVPATH_CONFIG_PATH=assets\config\jenkins-windows-gcs.ini
 
 doskey config=echo %CSVPATH_CONFIG_PATH%
+doskey textpad="c:\Program Files\TextPad\TextPad.exe" 
