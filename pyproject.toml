@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.570"
-description = "A data preboarding framework for managing and validating CSV, Excel, and other tabular data files using a Collect, Store, Validate, Publish pattern to create a trusted publisher for downstream data consumers."
-authors = ["David Kershaw <dk107dk@hotmail.com>"]
+version = "0.0.571"
+description = "A data preboarding framework for ingesting, managing, and validating CSV, Excel, and other tabular data files using a Collect, Store, Validate, Publish architecture to create a trusted publisher for downstream data consumers."
+authors = ["David Kershaw <info@csvpath.org>"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 3 - Alpha",

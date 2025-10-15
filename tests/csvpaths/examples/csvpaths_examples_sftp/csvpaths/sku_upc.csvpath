@@ -5,10 +5,10 @@
   validation-mode: no-raise, no-stop
   unmatched-mode: keep
 
-    sftp-user:tinpenny
-    sftp-password:tinpenny
-    sftp-server: localhost
-    sftp-port: 10022
+    sftp-user:python
+    sftp-password:hangzhou
+    sftp-server: 192.168.1.152
+    sftp-port: 2022
     sftp-target-path: var|name
     sftp-files: data.csv > data.csv, errors.json > foo.json, meta.json > var|name
     sftp-original: send
