@@ -134,14 +134,15 @@ class TestCsvPathConfig(unittest.TestCase):
         config = path.config
         assert config is not None
         assert config.CONFIG == OINI
-        assert config.csv_file_extensions
-        assert len(config.csv_file_extensions) == 6
-        assert "csv" in config.csv_file_extensions
+        assert config.get(section="extensions", name="csv_files")
+        assert len(config.get(section="extensions", name="csv_files")) == 6
+        assert "csv" in config.get(section="extensions", name="csv_files")
         config.set_config_path_and_reload(TINI)
         assert config.config_path == TINI
-        assert config.csv_file_extensions
-        assert len(config.csv_file_extensions) == 3
-        assert "before" in config.csv_file_extensions
+        print(f"cfgasd: {config.configpath}")
+        assert config.get(section="extensions", name="csv_files")
+        assert len(config.get(section="extensions", name="csv_files")) == 3
+        assert "before" in config.get(section="extensions", name="csv_files")
         assert "quiet" in config.csvpaths_errors_policy
         assert len(config.csvpath_errors_policy) == 1
         assert config is path.config
@@ -154,18 +155,12 @@ class TestCsvPathConfig(unittest.TestCase):
         #
         # CSVPATH FILES
         #
-        #
-        # should work because the @property will list it
-        #
-        config.csvpath_file_extensions = "txt"
+        config.set(section="extensions", name="csvpath_files", value="txt")
         config.validate_config()
         #
         # CSV FILES
         #
-        #
-        # should work because the @property will list it
-        #
-        config.csv_file_extensions = "txt"
+        assert config.get(section="extensions", name="csv_files")
         config.validate_config()
         #
         # CSVPATH ERROR POLICY

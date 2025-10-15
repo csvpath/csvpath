@@ -27,7 +27,9 @@ class DrillDown:
         #
         # get path
         #
-        p = self._get_path(t, self._cli.csvpaths.config.csv_file_extensions)
+        p = self._get_path(
+            t, self._cli.csvpaths.config.get(section="extensions", name="csv_files")
+        )
         if p is False:
             return
         #
@@ -79,7 +81,7 @@ class DrillDown:
         #
         # get path
         #
-        exts = self._cli.csvpaths.config.csvpath_file_extensions
+        exts = self._cli.csvpaths.config.get(section="extensions", name="csvpath_files")
         p = self._get_path(t, exts)
         if p is False:
             return

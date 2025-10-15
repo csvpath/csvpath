@@ -399,6 +399,7 @@ shell = /bin/bash
         #
         # why would we not use _set(section, key, value)?
         #
+
         self._set(section, key, value)
         self.refresh()
 
@@ -639,13 +640,6 @@ shell = /bin/bash
         # for a release or two, but should be retired soon.
         #
         #
-        # file extensions will reload themselves as long as we clear them
-        #
-        self.csvpath_file_extensions = None
-        self.csv_file_extensions = None
-        #
-        #
-        #
         self.csvpath_log_level = self._get(Sections.LOGGING.value, "csvpath")
         self.csvpaths_log_level = self._get(Sections.LOGGING.value, "csvpaths")
 
@@ -661,11 +655,11 @@ shell = /bin/bash
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
             Config.PATH_ERR_COUNT += 1
-            print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} on {path} != {self.configpath.strip().lower()}")
+            # print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} on {path} != {self.configpath.strip().lower()}")
             if Config.PATH_ERR_COUNT > 30:
-                print(
-                    f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"
-                )
+                # print(
+                #    f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"
+                # )
                 raise Exception(
                     f"PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high. Check that [config] path matches CSVPATH_CONFIG_PATH."
                 )
@@ -824,50 +818,6 @@ shell = /bin/bash
     @function_imports.setter
     def function_imports(self, path: str) -> None:
         self._set(Sections.FUNCTIONS.value, "imports", path)
-
-    @property
-    def csvpath_file_extensions(self) -> list[str]:
-        # if self._csvpath_file_extensions is None:
-        cs = self._get("extensions", "csvpath_files")
-        if not cs or len(cs) == 0:
-            #
-            # the old way
-            #
-            cs = self._get(Sections.CSVPATH_FILES.value, "extensions")
-            if not cs or len(cs) == 0:
-                cs = ["csvpath", "csvpaths"]
-        return cs
-        #    self._csvpath_file_extensions = cs
-        # return self._csvpath_file_extensions
-
-    @csvpath_file_extensions.setter
-    def csvpath_file_extensions(self, ss: list[str]) -> None:
-        if isinstance(ss, str):
-            ss = [ss]
-        self._set("extensions", "csvpath_files", ss)
-        # self._csvpath_file_extensions = ss
-
-    @property
-    def csv_file_extensions(self) -> list[str]:
-        # if self._csv_file_extensions is None:
-        cs = self._get("extensions", Sections.CSV_FILES.value)
-        if not cs or len(cs) == 0:
-            #
-            # the old way
-            #
-            cs = self._get(Sections.CSV_FILES.value, "extensions")
-            if not cs or len(cs) == 0:
-                cs = ["csv", "xlsx"]
-        return cs
-        #    self._csv_file_extensions = cs
-        # return self._csv_file_extensions
-
-    @csv_file_extensions.setter
-    def csv_file_extensions(self, ss: list[str]) -> None:
-        if isinstance(ss, str):
-            ss = [ss]
-        self._set("extensions", Sections.CSVPATH_FILES.value, ss)
-        # self._csv_file_extensions = ss
 
     @property
     def csvpath_errors_policy(self) -> list[str]:

@@ -39,7 +39,7 @@ class PathsManager:
         self.csvpaths = csvpaths
         """@private"""
         self._registrar = None
-        #self._nos = None
+        # self._nos = None
         #
         # this property is set after a metadata update is distributed from adding
         # a named-paths group. it is only reset at the next add. if the next add
@@ -83,7 +83,7 @@ class PathsManager:
         r = self.csvpaths.config.get(section="inputs", name="csvpaths")
         p = Nos(r).join("manifest.json")
         # p = os.path.join(r, "manifest.json")
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(r)
         if not nos.dir_exists():
             nos.makedirs()
@@ -122,7 +122,7 @@ class PathsManager:
         """@private"""
         home = Nos(self.named_paths_dir).join(name)
         # home = os.path.join(self.named_paths_dir, name)
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(home)
         b = nos.dir_exists()
         if not b:
@@ -144,8 +144,8 @@ class PathsManager:
 
         path = self.named_paths_home(name)
         path = Nos(path).join("manifest.json")
-        #nos = self.nos
-        nos  = Nos(path)
+        # nos = self.nos
+        nos = Nos(path)
         if nos.exists():
             with DataFileReader(path) as reader:
                 m = json.load(reader.source)
@@ -185,7 +185,7 @@ class PathsManager:
         if self.can_load(directory) is not True:
             return
         lst = []
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(directory)
         if not nos.isfile():
             try:
@@ -198,7 +198,9 @@ class PathsManager:
                     if p.find(".") == -1:
                         continue
                     ext = p[p.rfind(".") + 1 :].strip().lower()
-                    if ext not in self.csvpaths.config.csvpath_file_extensions:
+                    if ext not in self.csvpaths.config.get(
+                        section="extensions", name="csvpath_files"
+                    ):
                         continue
                     path = Nos(base).join(p)
                     # path = os.path.join(base, p)
@@ -439,7 +441,7 @@ class PathsManager:
             mdata = PathsMetadata(self.csvpaths.config)
             mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
-            #nos = self.nos
+            # nos = self.nos
             nos = Nos(mdata.named_paths_root)
             sep = nos.sep
             mdata.named_paths_home = f"{mdata.named_paths_root}{sep}{name}"
@@ -715,10 +717,11 @@ class PathsManager:
             try:
                 with DataFileWriter(path=script_file, mode="wb") as file:
                     print(f"textx: text: {text} {type(text)}")
-                    #bs = text.encode("utf-8")
+                    # bs = text.encode("utf-8")
                     file.write(text)
             except Exception as e:
                 import traceback
+
                 print(traceback.format_exc())
                 msg = f"Could not store script at {script_file}: {e}"
                 self.csvpaths.logger.error(e)
@@ -784,7 +787,7 @@ class PathsManager:
         """@private"""
         path = self.named_paths_dir
         names = []
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(path)
         lst = nos.listdir()
         for n in lst:
@@ -801,7 +804,7 @@ class PathsManager:
         if not self.has_named_paths(name):
             return
         home = self.named_paths_home(name)
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(home)
         nos.remove()
 
@@ -815,7 +818,7 @@ class PathsManager:
         """@private"""
         path = Nos(self.named_paths_dir).join(name)
         # path = os.path.join(self.named_paths_dir, name)
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(path)
         return nos.dir_exists()
 
@@ -845,7 +848,7 @@ class PathsManager:
         s = ""
         path = self.named_paths_home(name)
         grp = Nos(path).join("group.csvpaths")
-        #nos = self.nos
+        # nos = self.nos
         nos = Nos(grp)
         if nos.exists():
             with DataFileReader(grp) as reader:
