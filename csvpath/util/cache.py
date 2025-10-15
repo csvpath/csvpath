@@ -35,7 +35,6 @@ class Cache:
     def cached_text(self, filename: str, type: str) -> str:
         fn = self._cache_name(filename)
         if fn is None:
-            self.csvpathx.logger.debug("No cache file: {filename} of type: {type}")
             return None
         cachedir = self._cachedir()
         cachepath = None
@@ -45,29 +44,28 @@ class Cache:
                 "No cache path available for file: {filename} of type: {type}"
             )
             return None
-        else:
-            cachepath = os.path.join(cachedir, fn)
-            keypath = f"{cachepath}.{type}"
-            res = None
-            try:
-                with open(keypath, "r", encoding="utf-8") as file:
-                    if type == "csv":
-                        reader = csv.reader(file)
-                        for line in reader:
-                            if len(line) > 0:
-                                res = line
-                                break
-                        if res is None:
-                            res = []
-                    else:
-                        res = ""
-                        for line in file:
-                            res += line
-            except Exception:
-                self.csvpathx.logger.debug(
-                    f"Could not read {cachepath} for {filename}. Check config.ini for the cache path."
-                )
-            return res
+        cachepath = os.path.join(cachedir, fn)
+        keypath = f"{cachepath}.{type}"
+        res = None
+        try:
+            with open(keypath, "r", encoding="utf-8") as file:
+                if type == "csv":
+                    reader = csv.reader(file)
+                    for line in reader:
+                        if len(line) > 0:
+                            res = line
+                            break
+                    if res is None:
+                        res = []
+                else:
+                    res = ""
+                    for line in file:
+                        res += line
+        except Exception:
+            self.csvpathx.logger.debug(
+                f"Could not read {cachepath} for {filename}. Check config.ini for the cache path."
+            )
+        return res
 
     def cache_text(self, filename, strtype: str, data: str) -> None:
         filename = pathu.resep(filename)

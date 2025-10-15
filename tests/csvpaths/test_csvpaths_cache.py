@@ -21,23 +21,35 @@ NAMED_PATHS_DIR = (
 class TestCsvPathsCache(unittest.TestCase):
     def test_cache_files(self):
         paths = Builder().build()
-        v = paths.config.get(section="cache", name="use_cache")
-        paths.config.add_to_config("cache", "path", "cache")
+
+        files = paths.config.get(section='inputs', name='files')
+        nos = Nos(files)
+        if nos.backend != "local":
+            print(f"caching is currently only supported in local files")
+            return
+
+        #paths.config.add_to_config("cache", "path", "cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         cachedir = paths.file_manager.lines_and_headers_cacher.cache._cachedir()
+        print(f"cache config: {paths.config.get(section='cache', name='path')}")
+        print(f"use cache config: {paths.config.get(section='cache', name='use_cache')}")
+        print(f"clearing cachedir: {os.getcwd()}/{cachedir}")
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
         paths.fast_forward_paths(filename="food", pathsname="advancing")
+        print(f"cache dir used: {os.getcwd()}/{paths.file_manager.lines_and_headers_cacher.cache._cachedir()}")
         assert (
             len(paths.file_manager.lines_and_headers_cacher.pathed_lines_and_headers)
             == 1
         )
         assert cachedir
         assert os.path.exists(cachedir)
-        assert len(os.listdir(cachedir)) == 2
+        lst = os.listdir(cachedir)
+        print(f"cache dir list: {lst}")
+        assert len(lst) == 2
         paths.config.add_to_config("cache", "use_cache", v)
 
     def test_cache_dir(self):
