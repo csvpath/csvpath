@@ -710,6 +710,10 @@ shell = /bin/bash
             Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, 12800000
         )
         path = self._get("config", "path")
+        if isinstance(path, list):
+            raise ValueError(
+                "Config must have a single path in [config] path, not {path}"
+            )
         if path:
             path = path.strip().lower()
         if path and path != "" and path != self.configpath.strip().lower():
