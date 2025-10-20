@@ -5,6 +5,7 @@ from pathlib import Path
 from .config import Config
 from .path_util import PathUtility as pathu
 from .class_loader import ClassLoader
+from typing import Self
 
 
 class Nos:
@@ -142,6 +143,11 @@ class Nos:
 
     def join(self, name: str) -> str:
         return self.do.join(name)
+
+    def join_me(self, name: str) -> Self:
+        path = self.do.join(name)
+        self.path = path
+        return self
 
     def remove(self) -> None:
         self.do.remove()
