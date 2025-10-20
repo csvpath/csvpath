@@ -102,6 +102,7 @@ class TestCsvPathConfig(unittest.TestCase):
         assert config.csvpaths_log_level == "debug"
         if os.path.exists(TEST_INI):
             os.remove(TEST_INI)
+        print(f"setting confgipath to: {TEST_INI}")
         config.configpath = TEST_INI
         config._create_default_config
         config.reload()

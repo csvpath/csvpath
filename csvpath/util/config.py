@@ -330,7 +330,7 @@ shell = /bin/bash
     def get(self, *, section: str = None, name: str, default=None):
         return self._get(section, name, default)
 
-    def _get(self, section: str, name: str, default=None):
+    def _get(self, section: str, name: str, default=None, no_list=False):
         #
         # TODO: we should swap all uppercase values for env var values if we find a
         # matching env var. same as we do for metadata values
@@ -349,7 +349,7 @@ shell = /bin/bash
         try:
             s = self._config[section][name]
             ret = None
-            if s and isinstance(s, str) and s.find(",") > -1:
+            if no_list is False and s and isinstance(s, str) and s.find(",") > -1:
                 ret = [s.strip() for s in s.split(",")]
             elif isinstance(s, str):
                 ret = s.strip()
@@ -709,7 +709,7 @@ shell = /bin/bash
         self.log_file_size = self._get(
             Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, 12800000
         )
-        path = self._get("config", "path")
+        path = self._get("config", "path", no_list=True)
         if isinstance(path, list):
             from csvpath.util.file_readers import DataFileReader
 
