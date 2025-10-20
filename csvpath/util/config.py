@@ -293,7 +293,7 @@ shell = /bin/bash
         self._configpath = path
         self._load_config()
         # if newly loaded config path doesn't match where it was loaded from, reload w/it.
-        path = self.get(section="config", name="path")
+        path = self._get(section="config", name="path", no_list=True)
         if path is not None:
             path = path.strip()
         if path == "":
@@ -709,6 +709,11 @@ shell = /bin/bash
         self.log_file_size = self._get(
             Sections.LOGGING.value, LogFile.LOG_FILE_SIZE.value, 12800000
         )
+        #
+        # test file system paths in context of go-agent can have commas due to brew
+        # so we pass a flag to prevent comma parsing. why this didn't come up ages ago
+        # i'm not sure. puzzling.
+        #
         path = self._get("config", "path", no_list=True)
         if isinstance(path, list):
             from csvpath.util.file_readers import DataFileReader
