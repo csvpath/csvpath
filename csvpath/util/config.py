@@ -92,7 +92,7 @@ log_file_size = 50000000
 handler = file
 
 [config]
-path =
+path = XXXXXXXXXXX
 allow_var_sub = True
 var_sub_source = env
 
@@ -407,6 +407,7 @@ shell = /bin/bash
         with open(self.configpath, "w", encoding="utf-8") as f:
             self._config.write(f)
 
+    """
     def _create_default_config(self) -> None | str:
         directory = ""
         name = ""
@@ -456,6 +457,64 @@ shell = /bin/bash
 
             print("Created a default config file at: ")
             print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
+            print("If you want your config somewhere else remember to")
+            print("update the [config] path key in the default config.ini")
+    """
+
+    def _create_default_config(self) -> None | str:
+        directory = ""
+        name = ""
+        cp = self._configpath
+        if cp is None or cp.strip() == "":
+            cp = os.path.join("config", "config.ini")
+        name = os.path.basename(cp)
+        directory = os.path.dirname(cp)
+        if directory == "":
+            directory = "config"
+        if not directory.strip().startswith(os.sep):
+            directory = os.path.join(os.getcwd(), directory)
+        if directory != "":
+            if not path.exists(directory):
+                try:
+                    os.makedirs(directory)
+                except Exception:
+                    print(traceback.format_exc())
+        self._configpath = os.path.join(directory, name)
+        cfg = Config.DEFAULT_CONFIG
+        cfg = cfg.replace("XXXXXXXXXXX", self._configpath)
+        with open(self._configpath, "w", encoding="utf-8") as file:
+            file.write(cfg)
+            #
+            # writing a new config means we want to immediately load it?
+            # possibly not.
+            #
+            try:
+                self._assure_logs_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_archive_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_transfer_root()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_inputs_files_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_cache_path()
+            except Exception:
+                print(traceback.format_exc())
+            try:
+                self._assure_inputs_csvpaths_path()
+            except Exception:
+                print(traceback.format_exc())
+
+            print("Created a default config file at: ")
+            print(f"  {self._configpath}.")
             print("If you want your config somewhere else remember to")
             print("update the [config] path key in the default config.ini")
 
