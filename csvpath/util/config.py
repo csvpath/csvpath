@@ -711,8 +711,14 @@ shell = /bin/bash
         )
         path = self._get("config", "path")
         if isinstance(path, list):
+            from csvpath.util.file_readers import DataFileReader
+
+            with DataFileReader(self._configpath) as f:
+                print(
+                    f"=============================\nBAD CONFIG PATH: \n{f.read()}\n===========================\n"
+                )
             raise ValueError(
-                "Config must have a single path in [config] path, not {path}"
+                f"Config at {self._configpath} must have a single path in [config] path, not {path}"
             )
         if path:
             path = path.strip().lower()
