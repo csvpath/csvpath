@@ -649,7 +649,6 @@ shell = /bin/bash
             return
         self._assure_config_file_path()
         path = self.configpath
-        print(f"Config_loadcf: path {path}")
         self._config.read(path)
         self.refresh()
 

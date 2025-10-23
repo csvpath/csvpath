@@ -36,7 +36,4 @@ class TestCsvPathFunctionsExternals(unittest.TestCase):
         path.config.configpath = INI
         path.config.reload()
         assert path.config.function_imports is not None
-        print(f"test fun im: {path.config.function_imports}")
-        print(f"test fun IM: {IMPORTS}")
-
         assert pathu.equal(path.config.function_imports, IMPORTS)
