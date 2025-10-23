@@ -224,12 +224,26 @@ verify = False
 # on-invalid-slack: webhook-minus-'https://'
 webhook_url =
 
-[scripts]
+[scripts]
 run_scripts = no
 shell = /bin/bash
 """
 
     def __init__(self, *, load=True, config_env: ConfigEnv = None):
+        #
+        # when config is loaded it reads from config/config.ini. if that location says config lives
+        # somewhere else, config reloads from that place. that works fine.
+        #
+        # where I get paranoid is cycles. in principle, the second config could have a [config] path
+        # pointing back to the first, most likely "config/config.ini", which would then reload and
+        # repoint to the 2nd file in an infinite loop. if we see a small number of loops we raise an
+        # exception. it isn't airtight because you could have a lengthy chain of configs that
+        # eventually loop. but that would be a very unlikely unforced err. note that this var is no
+        # longer static and should never have been. cycles are only meaningful in a single instance.
+        # we expect one or even two cycles per instance in the usual case in any complex env, e.g. in
+        # FlightPath. if we counted all the cycles ever for all instances the number would go nuts.
+        #
+        self.config_path_cycle = 0
         self.load = load
         self._config_env = config_env
         self._config = RawConfigParser()
@@ -328,7 +342,16 @@ shell = /bin/bash
         return self._config.sections()
 
     def get(self, *, section: str = None, name: str, default=None):
-        return self._get(section, name, default)
+        #
+        # go-agent on Mac via Brew can have commas in paths. must be true in other cases
+        # as well. finding configpath is the only place we've seen the problem of finding
+        # a list when we expect a string. adding no_list=True is a stop-gap. a bit hacky
+        # and odd that it only shows up after months of working fine. but there it is.
+        #
+        no_list = False
+        if section == "config" and name == "path":
+            no_list = True
+        return self._get(section, name, default, no_list=no_list)
 
     def _get(self, section: str, name: str, default=None, no_list=False):
         #
@@ -399,67 +422,12 @@ shell = /bin/bash
         #
         # why would we not use _set(section, key, value)?
         #
-
         self._set(section, key, value)
         self.refresh()
 
     def save_config(self) -> None:
         with open(self.configpath, "w", encoding="utf-8") as f:
             self._config.write(f)
-
-    """
-    def _create_default_config(self) -> None | str:
-        directory = ""
-        name = ""
-        if self.configpath is None or self.configpath.strip() == "":
-            raise ConfigurationException("Config path cannot be None")
-        if self.configpath.find(os.sep) > 0:
-            s = self.configpath.rfind(os.sep)
-            directory = self.configpath[0:s]
-            name = self.configpath[s + 1 :]
-        if directory != "":
-            if not path.exists(directory):
-                try:
-                    os.makedirs(directory)
-                except Exception:
-                    print(traceback.format_exc())
-
-        with open(self.configpath, "w", encoding="utf-8") as file:
-            file.write(Config.DEFAULT_CONFIG)
-            #
-            # writing a new config means we want to immediately load it?
-            # possibly not.
-            #
-            try:
-                self._assure_logs_path()
-            except Exception:
-                print(traceback.format_exc())
-            try:
-                self._assure_archive_path()
-            except Exception:
-                print(traceback.format_exc())
-            try:
-                self._assure_transfer_root()
-            except Exception:
-                print(traceback.format_exc())
-            try:
-                self._assure_inputs_files_path()
-            except Exception:
-                print(traceback.format_exc())
-            try:
-                self._assure_cache_path()
-            except Exception:
-                print(traceback.format_exc())
-            try:
-                self._assure_inputs_csvpaths_path()
-            except Exception:
-                print(traceback.format_exc())
-
-            print("Created a default config file at: ")
-            print(f"  {os.getcwd()}{os.sep}{directory}{os.sep}{name}.")
-            print("If you want your config somewhere else remember to")
-            print("update the [config] path key in the default config.ini")
-    """
 
     def _create_default_config(self) -> None | str:
         directory = ""
@@ -681,15 +649,9 @@ shell = /bin/bash
             return
         self._assure_config_file_path()
         path = self.configpath
+        print(f"Config_loadcf: path {path}")
         self._config.read(path)
         self.refresh()
-
-    #
-    # we hold lists and such that may need refreshing from the configparser
-    # object, if that has been updated or loaded. this method doesn't load from
-    # file, it just gathers and translates settings for external use.
-    #
-    PATH_ERR_COUNT = 0
 
     def refresh(self) -> None:
         #
@@ -715,31 +677,31 @@ shell = /bin/bash
         # i'm not sure. puzzling.
         #
         path = self._get("config", "path", no_list=True)
-        if isinstance(path, list):
-            from csvpath.util.file_readers import DataFileReader
-
-            with DataFileReader(self._configpath) as f:
-                print(
-                    f"=============================\nBAD CONFIG PATH: \n{f.read()}\n===========================\n"
-                )
-            raise ValueError(
-                f"Config at {self._configpath} must have a single path in [config] path, not {path}"
-            )
-        if path:
-            path = path.strip().lower()
-        if path and path != "" and path != self.configpath.strip().lower():
-            Config.PATH_ERR_COUNT += 1
-            # print(f"Config.PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} on {path} != {self.configpath.strip().lower()}")
-            if Config.PATH_ERR_COUNT > 30:
-                # print(
-                #    f"Config: refresh: path: {path} != {self.configpath.strip().lower()}"
-                # )
+        #
+        # maybe? here if we load from self.configpath = xyz.ini and xyz.ini has [config] path=
+        # we stay with self.configpath = xyz
+        #
+        path = path.strip().lower() if path else ""
+        #
+        # current
+        # in the current case if we load from self.configpath = xyz.ini and xyz.ini has [config] path=
+        # [config] path is set to config/config.ini and we reload, which isn't what we want.
+        #
+        # path = path.strip().lower() if path else Config.CONFIG
+        #
+        if path != "" and path != self.configpath.strip().lower():
+            self.config_path_cycle += 1
+            #
+            # see note at top of class. 3 would probably do it. but 6 is fine.
+            #
+            if self.config_path_cycle > 6:
                 raise Exception(
-                    f"PATH_ERR_COUNT: {Config.PATH_ERR_COUNT} too high. Check that [config] path matches CSVPATH_CONFIG_PATH."
+                    f"Config cycle: {self.config_path_cycle}. Check [config] path {path} and {self.configpath} for cycles"
                 )
             self.configpath = path
             self.reload()
             return
+        self.config_path_cycle = 0
         self.validate_config()
 
     def validate_config(self) -> None:
