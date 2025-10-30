@@ -3,7 +3,7 @@
 
 ## Make Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
 
-#### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
+#### CsvPath Framework closes the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
