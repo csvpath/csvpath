@@ -30,7 +30,7 @@ If you need help getting started, there are lots of ways to reach us.
 - [Python Interface](#pdocs)
 - [Approach](#approach)
 - [Structure](#structure)
-- [Validating Files](#validating-files)
+- [Writing Validation Statements](#validating)
 - [Running CsvPath](#running)
 - [Grammar](#grammar)
 - [Sponsors](#sponsors)
@@ -119,6 +119,10 @@ A csvpath doesn't have to point to a specific file. It can instead simply have t
 The Framework chooses the csvpath's file at runtime.
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
+
+<a name="validation"></a>
+# Writing Validation Statements
+
 
 <a name="running"></a>
 # Running CsvPath
