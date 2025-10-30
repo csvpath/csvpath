@@ -28,7 +28,7 @@ If you need help getting started, there are lots of ways to reach us.
 - [Motivation](#motivation)
 - [Install](#install)
 - [Python Interface](#pdocs)
-- [Approach](#approach)
+- [Validation Approach](#approach)
 - [Structure](#structure)
 - [Writing Validation Statements](#validating)
 - [Running CsvPath](#running)
@@ -69,7 +69,7 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 <a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
 CsvPath Framework's public interface is streamlined. For our focus on just CsvPath Validation Language, the `csvpath.CsvPath` and `csvpath.CsvPaths` classes are where most of the magic happens. For more comprehensive information on the whole Framework head over to [csvpath.org](https://www.csvpath.org).
 
-# Approach
+# Validation Approach
 <a name="approach"></a>
 
 CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
@@ -120,8 +120,9 @@ The Framework chooses the csvpath's file at runtime.
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
 
-<a name="validation"></a>
+<a name="validating"></a>
 # Writing Validation Statements
+
 
 
 <a name="running"></a>
