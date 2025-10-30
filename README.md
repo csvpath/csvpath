@@ -32,8 +32,7 @@ If you need help getting started, there are lots of ways to reach us.
 - [Structure](#structure)
 - [Validating Files](#validating-files)
 - [Running CsvPath](#running)
-   - [Validation](#validating)
-   - [Creating new files](#newfiles)
+
 - [Comments](#top-comments)
 - [Scanning](#scanning)
 - [Matching](#matching)
