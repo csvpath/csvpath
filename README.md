@@ -94,7 +94,7 @@ For example, a csvpath statement can return all invalid lines as matches. Altern
 # Structure
 <a name="description"></a>
 A csvpath statement has three parts:
-- a root that includes a file name
+- A root that may include a file name
 - The scanning part, that says what lines to validate
 - The matching part that decides if a line is valid
 
