@@ -125,7 +125,7 @@ In this case, the Framework chooses the csvpath's file at runtime.
 # Writing Validation Statements
 
 At a high level, the functionality of a CsvPath Validation Language statement comes from:
-* [Scanning instructions](https://github.com/csvpath/csvpath/blob/main/docs/scanning.md) - determine which lines are considered
+* [Scanning instructions](https://github.com/csvpath/csvpath/blob/main/docs/scanning.md) - determine which lines the csvpath considers
 * [Match components](https://github.com/csvpath/csvpath/blob/main/docs/matching.md) - determine which lines are matched and/or trigger side-effects
 * [Comments](https://github.com/csvpath/csvpath/blob/main/docs/comments.md)
 
