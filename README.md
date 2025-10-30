@@ -85,7 +85,7 @@ A csvpath statement has three parts:
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
-A very simple csvpath might look like this:
+A trivial csvpath looks like this:
 
 ```bash
     $filename[*][yes()]
@@ -96,9 +96,9 @@ This csvpath says:
 - Scan all the lines: `*`
 - And match every line scanned: `yes()`
 
-In this case a match is considered a valid line. Treating matches as valid is a simple approach. There are <a href='https://www.csvpath.org/topics/validation' target='_blank'>many possible validation strategies</a>.
+In this case, a matching line is considered valid. Treating matches as valid is a simple approach. There are <a href='https://www.csvpath.org/topics/validation' target='_blank'>several possible validation strategies</a>.
 
-This is a more functional csvpath:
+Here is a more functional csvpath:
 
 ```bash
     $people.csv[*][
@@ -106,7 +106,7 @@ This is a more functional csvpath:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-It reads `people.csv`, counts the people without a middle name, and prints the result when the last row is read.
+It scans the lines in `people.csv`, counts lines without a middle name, and prints the result when the last row is read.
 
 A csvpath doesn't have to point to a specific file. It can instead simply have the scanning instruction come right after the root '$' like this:
 
@@ -116,11 +116,9 @@ A csvpath doesn't have to point to a specific file. It can instead simply have t
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-This csvpath has its file chosen at runtime.
+The Framework chooses the csvpath's file at runtime.
 
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
-
-CsvPath is a data automation tool. Before deploying to production, a developer or data engineer creates csvpaths and tests them. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
 
 <a name="running"></a>
 ## Running CsvPath
@@ -158,44 +156,26 @@ There are several ways to set up CSV file references. Read <a href='https://gith
 
 You also have important options for managing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named csvpaths here</a>.
 
-The simplest way to get started is using the CLI. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read about getting started with the CLI here</a>.
+CsvPath is a data automation tool. Before deploying to production, a developer or data engineer creates csvpaths and tests them. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
 
-When you're ready to think about automation, you'll want to start with a simple driver. This is a very basic programmatic use of CsvPath.
+To learn about automation, start with a simple driver. This is a basic programmatic use of CsvPath. It checks a file against a trivial schema, iterating the matching lines.
 
 ```python
     path = CsvPath().parse("""
-            $test.csv[5-25][
-                #firstname == "Frog"
-                @lastname.onmatch = "Bat"
-                count() == 2
+            $test.csv[1-25][
+                line(
+                    string.notnone(#firstname),
+                    string.notnone(#lastname)
+                )
             ]
     """)
-
     for i, line in enumerate( path.next() ):
         print(f"{i}: {line}")
-    print(f"The varibles collected are: {path.variables}")
 ```
 
-The csvpath says:
-- Open test.csv
-- Scan lines 5 through 25
-- Match the second time we see a line where the first header equals `Frog` and set the variable called  `lastname` to "Bat"
+For production operations consider using [FlightPath Server](https://www.flightpathdata.com/server.html), instead of coding your own driver scripts.
 
-Another path that does the same thing a bit more simply might look like:
-
-```bash
-    $test[5-25][
-        #firstname == "Frog"
-        @lastname.onmatch = "Bat"
-        count()==2 -> print( "$.csvpath.match_count: $.csvpath.line")
-    ]
-```
-
-In this case, we're using the "when" operator, `->`, to determine when to print.
-
-For lots more ideas see the unit tests and [more examples here](#examples).
-
-There are a small number of configuration options. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/config.md'>more about those here</a>.
+For more ideas see the [examples here](#examples) and on [csvpath.org](http://www.csvpath.org).
 
 <a name="grammar"></a>
 ## Grammars
