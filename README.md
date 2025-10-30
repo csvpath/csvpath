@@ -113,7 +113,7 @@ A csvpath doesn't have to point to a specific file. It can instead simply have t
 In this case, the Framework chooses the csvpath's file at runtime.
 
 <a name="validating"></a>
-<br/>
+<p></p>
 # Writing Validation Statements
 
 At a high level, the functionality of a CsvPath Validation Language statement comes from:
