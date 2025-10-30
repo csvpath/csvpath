@@ -76,7 +76,7 @@ CsvPath Validation Language is for creating "paths" that validate streams of tab
 
 For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead trigger side-effects, like print statements or variable changes.
 
-# Structure
+## Structure
 <a name="description"></a>
 A csvpath statement has three parts:
 - A root that may include a file name
@@ -85,6 +85,9 @@ A csvpath statement has three parts:
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
+
+
+## Simple Examples
 A trivial csvpath looks like this:
 
 ```bash
@@ -106,7 +109,7 @@ Here is a more functional csvpath:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-It scans the lines in `people.csv`, counts lines without a middle name, and prints the result when the last row is read.
+It scans the lines in `people.csv`, counts lines without a middle name, and prints the count when the last row is read.
 
 A csvpath doesn't have to point to a specific file. It can instead simply have the scanning instruction come right after the root '$' like this:
 
@@ -116,14 +119,17 @@ A csvpath doesn't have to point to a specific file. It can instead simply have t
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-The Framework chooses the csvpath's file at runtime.
-
-There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
+In this case, the Framework chooses the csvpath's file at runtime.
 
 <a name="validating"></a>
 # Writing Validation Statements
 
+At a high level, CsvPath Validation Language statements are composed of:
+* [Comments](https://github.com/csvpath/csvpath/blob/main/docs/comments.md)
+* [Scanning instructions](https://github.com/csvpath/csvpath/blob/main/docs/scanning.md) - determine which lines are considered
+* [Match components](https://github.com/csvpath/csvpath/blob/main/docs/matching.md) - determine which lines are matched and/or trigger side-effects
 
+Each of these parts of a statement make significant contributions to its functioning. This includes comments, which can have csvpath-by-csvpath configurations, integration hooks, and user-defined metadata.
 
 <a name="running"></a>
 # Running CsvPath
