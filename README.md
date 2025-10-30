@@ -1,7 +1,7 @@
 
 # <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/logo-wordmark-4.svg'/></a>
 
-## CsvPath Framework Makes Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
+## Make Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
 
 #### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
