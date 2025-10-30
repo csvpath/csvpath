@@ -27,9 +27,7 @@ If you need help getting started, there are lots of ways to reach us.
 
 - [Motivation](#motivation)
 - [Install](#install)
-- [Python Interface](#pdocs)
 - [Validation Approach](#approach)
-- [Structure](#structure)
 - [Writing Validation Statements](#validating)
 - [Running CsvPath](#running)
 - [Grammar](#grammar)
@@ -40,7 +38,7 @@ If you need help getting started, there are lots of ways to reach us.
 
 CSV and Excel files are everywhere! They are critical to successful data partnerships. They are a great example of how garbage-in-garbage-out threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
 
-We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capbilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
+We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capabilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
 
 CsvPath Validation Language adds trust to data file feeds. It is a quality management shift-left that solves problems early where they are easiest to fix.
 
@@ -62,12 +60,6 @@ CsvPath has an optional dependency on Pandas. Pandas data frames can be used as 
 ```
 
 Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward.
-
-
-<a name="pdocs"></a>
-# Python Interface
-<a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
-CsvPath Framework's public interface is streamlined. For our focus on just CsvPath Validation Language, the `csvpath.CsvPath` and `csvpath.CsvPaths` classes are where most of the magic happens. For more comprehensive information on the whole Framework head over to [csvpath.org](https://www.csvpath.org).
 
 # Validation Approach
 <a name="approach"></a>
