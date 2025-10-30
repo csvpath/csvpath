@@ -3,19 +3,22 @@
 
 ## CsvPath Framework Makes Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
 
-#### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data preboarding solution.
+#### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
-These docs focus on CsvPath Validation Language. For more documentation on the whole data preboarding solution, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com).
+These pages focus on CsvPath Validation Language. For more documentation on the whole data preboarding solution, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com).
 
 CSV and Excel Validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
 
 CsvPath Validation Language is inspired by:
-- XPath for XML files
-- The ISO standard <a href='https://schematron.com/'>Schematron validation</a>
+- XPath and ISO standard <a href='https://schematron.com/'>Schematron validation</a>
 - SQL schemas
 - And business rules engines like Jess or Drools
 
-If you need help, use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a> or the <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a> or talk to one of our [sponsors, below](#sponsors).
+If you need help, there are lots of ways to reach us.
+- Use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a>
+- The <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a>
+- Email support@csvpath.org
+- Or reach out to one of our [sponsors, below](#sponsors).
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=green&color=green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath)
 
