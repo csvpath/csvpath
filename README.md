@@ -96,9 +96,9 @@ This csvpath says:
 - Scan all the lines: `*`
 - And match every line scanned: `yes()`
 
-In this case a match is considered a valid line. Treating matches as valid is a simple approach. There are <a href='https://www.csvpath.org/topics/validation' target='_blank'>many possible validation strategies</a> when its time to be more ambitious in your validation.
+In this case a match is considered a valid line. Treating matches as valid is a simple approach. There are <a href='https://www.csvpath.org/topics/validation' target='_blank'>many possible validation strategies</a>.
 
-A slightly more functional csvpath could look like this:
+This is a more functional csvpath:
 
 ```bash
     $people.csv[*][
@@ -106,12 +106,9 @@ A slightly more functional csvpath could look like this:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-This csvpath reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
+It reads `people.csv`, counts the people without a middle name, and prints the result when the last row is read.
 
-
-# Validating Files
-<a name="validating-files"></a>
-A csvpath doesn't have to point to a specific file. As shown above, it can point to a specific file or it can instead use a logical name associated with a physical file or have no specific file indicator.
+A csvpath doesn't have to point to a specific file. It can instead simply have the scanning instruction come right after the root '$' like this:
 
 ```bash
     $[*][
@@ -119,13 +116,11 @@ A csvpath doesn't have to point to a specific file. As shown above, it can point
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-This version of the example has its file chosen at runtime.
+This csvpath has its file chosen at runtime.
 
-See [more examples in this documentation](#examples). There are also <a href='https://www.csvpath.org'>lots more examples on csvpath.org</a>.
+There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
 
-There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths.
-
-CsvPath was conceived as a data testing and extraction tool. Running it in production typically involves testing the paths in advance and automating the runs. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> that you can use to create and test csvpaths. You can <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>read more about the CLI here</a>.
+CsvPath is a data automation tool. Before deploying to production, a developer or data engineer creates csvpaths and tests them. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
 
 <a name="running"></a>
 ## Running CsvPath
