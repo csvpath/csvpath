@@ -1,40 +1,19 @@
 
 # <a href='https://www.csvpath.org/'><img src='https://github.com/csvpath/csvpath/blob/main/docs/images/logo-wordmark-4.svg'/></a>
 
-The CsvPath Framework helps you close the gap between Managed File Transfer and your data lake and/or applications. CsvPath Language is the core of the Framework. It defines a declarative syntax for inspecting and validating CSV and Excel files, and other tabular data.
+## CsvPath Framework Makes Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
 
-The CsvPath Framework makes it easy to setup a <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> flat-file landing zone that:
-- Registers files for **clear and durable identity**
-- **Validates the data** against expectations
-- Provides **operations and validity reports**
-- Shapes files with **copy-on-write canonicalization**
-- And **stages data for consistent loading** to a data lake or applications
+#### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data preboarding solution.
 
-And does it all in an automation-friendly way.
+These docs focus on CsvPath Validation Language. For more documentation on the whole data preboarding solution, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com).
 
-CsvPath Language validation is inspired by:
+CSV and Excel Validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
+
+CsvPath Validation Language is inspired by:
 - XPath for XML files
 - The ISO standard <a href='https://schematron.com/'>Schematron validation</a>
-
-The CsvPath Framework is intended to fit tightly with other DataOps and data quality tools. Files are streamed. The interface is simple. Metadata is plentiful. New functions and listeners are easy to create.
-
-CsvPath can stream lineage events to an OpenLineage server, such as the open source Marquez server. Read about <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-openlineage" target="_blank">CsvPath and OpenLineage here</a>.
-<br/><a href='https://openlineage.io' >
-<img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/openlineage-logo-sm.png" alt="OpenLineage"/></a>
-<a href='https://peppy-sprite-186812.netlify.app/' >
-<img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/marquez-logo-sm.png" alt="Marquez Server"/></a>
-
-DataOps demands observability! Pipe CsvPath events through OpenTelemetry to your APM or observability platform. Read about <a href='https://www.csvpath.org/getting-started/integrations/getting-started-with-csvpath-+-opentelemetry' target="_blank">how to get started here</a>, with an example using Grafana.
-<br/><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/opentelemetry.png" alt="OpenTelemetry Logo"/>
-
-CsvPath has multiple MFT options including SFTPPlus. <a href="https://www.csvpath.org/getting-started/dataops-integrations/getting-started-with-csvpath-+-sftpplus" target="_blank">See how SFTPPlus + CsvPath improves data onboarding</a>.
-<a href="https://sftpplus.com/" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/sftpplus-logo3.png" alt="MFT with SFTPPlus"/></a>
-
-
-Need to publish validated datasets to a CKAN data portal? <a href="https://www.csvpath.org/getting-started/getting-started-with-csvpath-+-ckan" target="_blank">Read about how CsvPath is integrated with CKAN</a>.
-<a href="https://ckan.org/" target="_blank"><img target='_blank' src="https://github.com/csvpath/csvpath/blob/main/docs/images/ckan-logo-sm.png" alt="CKAN Data Portal"/></a>
-
-Read more about CsvPath and see CSV, Excel, and Data Frames validation examples at <a href='https://www.csvpath.org'>https://www.csvpath.org</a>.
+- SQL schemas
+- And business rules engines like Jess or Drools
 
 If you need help, use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a> or the <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a> or talk to one of our [sponsors, below](#sponsors).
 
