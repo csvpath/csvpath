@@ -5,9 +5,9 @@
 
 #### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
-These pages focus on CsvPath Validation Language. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
+These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
-CSV and Excel Validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
+CSV and Excel validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
 
 CsvPath Validation Language is inspired by:
 - XPath and ISO standard <a href='https://schematron.com/'>Schematron validation</a>
@@ -53,18 +53,20 @@ If you need help getting started, there are lots of ways to reach us.
 <a name="motivation"></a>
 # Motivation
 
-CSV and Excel files are everywhere! They are critical to successful data partnerships. They are the best example of garbage-in-garbage-out that threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
+CSV and Excel files are everywhere! They are critical to successful data partnerships. They are a great example of how garbage-in-garbage-out threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
 
-We rely on CSV because it the lowest of common dominators. The majority of systems that have import/export capbilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretation of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into finding problems and fixing them.
+We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capbilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
 
-CsvPath Validation Language is how this project adds trust to data file feeds. It is a simple, function-oriented validation language for delimited data. It supports both schema definitions and rules-based validation. CsvPath Validation Language describes data declaratively so you can easily tell if a file is valid. CsvPath can also extract and upgrade data and create reports. Overall the goal is to automate human judgement and add transparency.
+CsvPath Validation Language adds trust to data file feeds. It is a quality management shift-left that solves problems early where they are easiest to fix.
+
+The Language is simple, function-oriented, and solely focused on validation of delimited data. It supports both schema definitions and rules-based validation. CsvPath Validation Language is declarative, for more concise and understandable data definitions. CsvPath can also extract and upgrade data, and create simple reports. Overall the goal is to automate human judgement and add transparency.
 
 <a name="install"></a>
 # Install
 
-<a href='https://pypi.org/project/csvpath/'>CsvPath is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13.
+<a href='https://pypi.org/project/csvpath/'>CsvPath Framework is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13.
 
-The CsvPath Framework project uses Poetry. You can also install it with:
+The project uses Poetry and works fine with Uv. You can also install it with:
 ```
     pip install csvpath
 ```
@@ -74,21 +76,27 @@ CsvPath has an optional dependency on Pandas. Pandas data frames can be used as 
     pip install csvpath[pandas]
 ```
 
-Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward. If you need the capability, though, it is easy to install.
+Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward.
 
 
 <a name="pdocs"></a>
 # Python Interface Docs
 <a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
-The CsvPath Framework's public interface is streamlined. csvpath.CsvPath and csvpath.CsvPaths are where most of the magic happens. Docs for deeper levels will be added over time.
+CsvPath Framework's public interface is streamlined. The csvpath.CsvPath and csvpath.CsvPaths classes are where most of the magic happens. Docs for deeper levels will be added over time. Again, these pages focus on Validation Language. For more comprehensive information on the Framework head over to [csvpath.org](https://www.csvpath.org).
 
 # Description
 <a name="description"></a>
 
-CsvPath Language is for creating "paths" that walk line-by-line through tabular data. They have three parts:
-- a "root" file name
-- a scanning part that says what lines to validate
-- a matching part that decides if a line is valid
+CsvPath Validation Language is for creating "paths" that walk line-by-line through tabular data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
+
+For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead have side-effects, like print statements or variable changes, that happen when a line matches.
+
+# Structure
+<a name="description"></a>
+A csvpath statement has three parts:
+- a root that includes a file name
+- The scanning part, that says what lines to validate
+- The matching part that decides if a line is valid
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
@@ -115,6 +123,9 @@ A slightly more functional csvpath could look like this:
 
 This csvpath reads `people.csv`, counting the people without a middle name and printing the result after the last row is read.
 
+
+# Validating Files
+<a name="validating-files"></a>
 A csvpath doesn't have to point to a specific file. As shown above, it can point to a specific file or it can instead use a logical name associated with a physical file or have no specific file indicator.
 
 ```bash
