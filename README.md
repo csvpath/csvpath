@@ -5,7 +5,7 @@
 
 #### Close the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
-These pages focus on CsvPath Validation Language. For more documentation on the whole data preboarding solution, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com).
+These pages focus on CsvPath Validation Language. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
 CSV and Excel Validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
 
@@ -14,7 +14,7 @@ CsvPath Validation Language is inspired by:
 - SQL schemas
 - And business rules engines like Jess or Drools
 
-If you need help, there are lots of ways to reach us.
+If you need help getting started, there are lots of ways to reach us.
 - Use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a>
 - The <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a>
 - Email support@csvpath.org
@@ -53,20 +53,11 @@ If you need help, there are lots of ways to reach us.
 <a name="motivation"></a>
 # Motivation
 
-CSV files are everywhere!
+CSV and Excel files are everywhere! They are critical to successful data partnerships. They are the best example of garbage-in-garbage-out that threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
 
-The majority of companies depend on file processing for significant revenue operations. Research organizations and archives are awash in CSVs. And everyone's favorite issue tracker, database GUI, spreadsheet, APM platform, and most any other type of tool we use spits out CSV or Excel files for sharing. Delimited and tabular files are the lowest of common dominators. Many are invalid or broken in some way. Often times a lot of manual effort goes into finding problems and fixing them.
+We rely on CSV because it the lowest of common dominators. The majority of systems that have import/export capbilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretation of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into finding problems and fixing them.
 
-This project tackles two needs:
-- A more robust validation language for delimited and tabular data
-- A systems integration framework for flat-file landing and staging
-
-CsvPath Language is the core of the CsvPath Framework. It is a simple validation language for delimited data. It supports both schema definitions and rules-based validation. CsvPath Language describes data so you can easily tell if a file is valid. CsvPath can also extract and shape data and create reports. Overall the goal is to automate human judgement out of the processing loop and instead move it to the process definition stage.
-
-The CsvPath Framework implements CsvPath Language, but goes far beyond it to provide a full <a href='https://www.atestaanalytics.com/s/The-Collect-Store-Validate-Pattern-Atesta-Analytics-88gj.pdf'>Collect, Store, Validate Pattern</a> framework for landing flat files, registering them, validating them, shaping them to a consistent and comparable form, and staging them for a data lake. In that way, CsvPath fills the gap commonly found between an organization's MFT (managed file transfer) and a typical data lake architecture.
-
-CsvPath's goal is to make simple validations almost trivial and more complex situations more manageable. It is a library and framework, not a system, so it relies on being easy to integrate with other DataOps tools.
-
+CsvPath Validation Language is how this project adds trust to data file feeds. It is a simple, function-oriented validation language for delimited data. It supports both schema definitions and rules-based validation. CsvPath Validation Language describes data declaratively so you can easily tell if a file is valid. CsvPath can also extract and upgrade data and create reports. Overall the goal is to automate human judgement and add transparency.
 
 <a name="install"></a>
 # Install
