@@ -82,7 +82,7 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 <a name="pdocs"></a>
 # Python Interface Docs
 <a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
-CsvPath Framework's public interface is streamlined. The csvpath.CsvPath and csvpath.CsvPaths classes are where most of the magic happens. Docs for deeper levels will be added over time. Again, these pages focus on Validation Language. For more comprehensive information on the Framework head over to [csvpath.org](https://www.csvpath.org).
+CsvPath Framework's public interface is streamlined. For our focus on just CsvPath Validation Language, the `csvpath.CsvPath` and `csvpath.CsvPaths` classes are where most of the magic happens. For more comprehensive information on the whole Framework head over to [csvpath.org](https://www.csvpath.org).
 
 # Description
 <a name="description"></a>
