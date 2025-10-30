@@ -6,6 +6,10 @@
 - [Error Handling](#errors)
 - [More Examples](#examples)
 
+There are several ways to set up CSV file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about managing CSV files</a>.
+
+You also have important options for managing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named csvpaths here</a>.
+
 
 
 
