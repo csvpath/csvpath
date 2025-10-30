@@ -121,13 +121,13 @@ The Framework chooses the csvpath's file at runtime.
 There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
 
 <a name="running"></a>
-## Running CsvPath
+# Running CsvPath
 
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/csvpath/csvpath'>git repo is here</a>.
 
 Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
 
-### CsvPath
+## CsvPath
 (<a href='https://github.com/csvpath/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
 The CsvPath class is the basic entry point for running csvpaths.
 |method                      |function                                                         |
@@ -137,7 +137,7 @@ The CsvPath class is the basic entry point for running csvpaths.
 | advance()                  | skips forward n rows from within a `for row in path.next()` loop|
 | collect()                  | processes n rows and collects the lines that matched as lists   |
 
-### CsvPaths
+## CsvPaths
 (<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpaths.py'>code</a>)
 The CsvPaths class helps you manage validations of multiple files and/or multiple csvpaths. It coordinates the work of multiple CsvPath instances.
 |method                  |function                                                         |
@@ -178,7 +178,7 @@ For production operations consider using [FlightPath Server](https://www.flightp
 For more ideas see the [examples here](#examples) and on [csvpath.org](http://www.csvpath.org).
 
 <a name="grammar"></a>
-## Grammars
+# Grammars
 
 CsvPath Validation Language is built up from three grammars:
 * The csvpath statement grammar - the main language
