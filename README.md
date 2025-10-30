@@ -61,8 +61,11 @@ CsvPath has an optional dependency on Pandas. Pandas data frames can be used as 
 
 Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward.
 
-# Validation Approach
 <a name="approach"></a>
+
+<p></p>
+
+# Validation Approach
 
 CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
 
