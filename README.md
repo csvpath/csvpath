@@ -5,7 +5,7 @@
 
 #### CsvPath Framework closes the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
 
-These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out https://www.csvpath.org. For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
+These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org). For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
 CSV and Excel validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
 
