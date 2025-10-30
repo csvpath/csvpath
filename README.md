@@ -87,9 +87,9 @@ CsvPath Framework's public interface is streamlined. For our focus on just CsvPa
 # Description
 <a name="description"></a>
 
-CsvPath Validation Language is for creating "paths" that walk line-by-line through tabular data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
+CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
 
-For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead have side-effects, like print statements or variable changes, that happen when a line matches.
+For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead trigger side-effects, like print statements or variable changes.
 
 # Structure
 <a name="description"></a>
