@@ -27,8 +27,10 @@ If you need help getting started, there are lots of ways to reach us.
 
 - [Motivation](#motivation)
 - [Install](#install)
-- [Python Interface Docs (pdocs)](#pdocs)
-- [High-level Description](#description)
+- [Python Interface](#pdocs)
+- [Approach](#approach)
+- [Structure](#structure)
+- [Validating Files](#validating-files)
 - [Running CsvPath](#running)
    - [Validation](#validating)
    - [Creating new files](#newfiles)
@@ -80,12 +82,12 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 
 
 <a name="pdocs"></a>
-# Python Interface Docs
+# Python Interface
 <a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
 CsvPath Framework's public interface is streamlined. For our focus on just CsvPath Validation Language, the `csvpath.CsvPath` and `csvpath.CsvPaths` classes are where most of the magic happens. For more comprehensive information on the whole Framework head over to [csvpath.org](https://www.csvpath.org).
 
-# Description
-<a name="description"></a>
+# Approach
+<a name="approach"></a>
 
 CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
 
@@ -96,7 +98,7 @@ For example, a csvpath statement can return all invalid lines as matches. Altern
 A csvpath statement has three parts:
 - A root that may include a file name
 - The scanning part, that says what lines to validate
-- The matching part that decides if a line is valid
+- The matching part, that decides if a line is valid
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
