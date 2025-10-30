@@ -30,10 +30,11 @@ If you need help getting started, there are lots of ways to reach us.
 - [Validation Approach](#approach)
 - [Writing Validation Statements](#validating)
 - [Running CsvPath](#running)
-- [Grammar](#grammar)
+- [Grammars](#grammar)
 - [Sponsors](#sponsors)
 
 <a name="motivation"></a>
+
 # Motivation
 
 CSV and Excel files are everywhere! They are critical to successful data partnerships. They are a great example of how garbage-in-garbage-out threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
@@ -45,6 +46,7 @@ CsvPath Validation Language adds trust to data file feeds. It is a quality manag
 The Language is simple, function-oriented, and solely focused on validation of delimited data. It supports both schema definitions and rules-based validation. CsvPath Validation Language is declarative, for more concise and understandable data definitions. CsvPath can also extract and upgrade data, and create simple reports. Overall the goal is to automate human judgement and add transparency.
 
 <a name="install"></a>
+
 # Install
 
 <a href='https://pypi.org/project/csvpath/'>CsvPath Framework is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13.
@@ -123,13 +125,14 @@ In this case, the Framework chooses the csvpath's file at runtime.
 # Writing Validation Statements
 
 At a high level, the functionality of a CsvPath Validation Language statement comes from:
-* [Comments](https://github.com/csvpath/csvpath/blob/main/docs/comments.md)
 * [Scanning instructions](https://github.com/csvpath/csvpath/blob/main/docs/scanning.md) - determine which lines are considered
 * [Match components](https://github.com/csvpath/csvpath/blob/main/docs/matching.md) - determine which lines are matched and/or trigger side-effects
+* [Comments](https://github.com/csvpath/csvpath/blob/main/docs/comments.md)
 
 Each of these parts of a statement make significant functional contributions. This includes comments, which can have csvpath-by-csvpath configuration settings, integration hooks, and user-defined metadata.
 
 <a name="running"></a>
+
 # Running CsvPath
 
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/csvpath/csvpath'>git repo is here</a>.
@@ -182,6 +185,7 @@ For production operations consider using [FlightPath Server](https://www.flightp
 CsvPath is primarily for data automation, not interactive use. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more dev and ops functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
 
 <a name="grammar"></a>
+
 # Grammars
 
 CsvPath Validation Language is built up from three grammars:
@@ -193,6 +197,7 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more
 
 
 <a name="more-info"></a>
+
 # More Info
 
 For more information about preboarding and the whole of CsvPath Framework, visit <a href="https://www.csvpath.org">https://www.csvpath.org</a>.
@@ -202,6 +207,7 @@ For the development and operations frontend to CsvPath Framework, take a look at
 And to learn about the backend API server, head over to <a href='https://www.flightpathdata.com/server.html'>FlightPath Server</a>.
 
 <a name="sponsors"></a>
+
 # Sponsors
 
 <a href='https://www.atestaanalytics.com/' >
