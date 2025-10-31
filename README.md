@@ -7,7 +7,7 @@
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org). For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
-CSV and Excel validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting to DataOps and BizOps teams can be as high as 50%. CsvPath Framework's automation-first approach can help scale back that unproductive and frustrating investment.
+CSV and Excel validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting CSV and Excel problems can be as high as 50% of a DataOps and BizOps team's time. CsvPath Framework's automation-first approach helps scale back that unproductive and frustrating investment.
 
 CsvPath Validation Language is inspired by:
 - XPath and ISO standard <a href='https://schematron.com/'>Schematron validation</a>
@@ -70,7 +70,7 @@ Pandas and its dependencies can make it harder to use CsvPath in certain specifi
 
 # Validation Approach
 
-CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
+CsvPath Validation Language is for creating "paths" that validate data streamed from files. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
 
 For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead trigger side-effects, like print statements or variable changes.
 
