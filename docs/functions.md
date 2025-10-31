@@ -74,9 +74,9 @@ The functions are self-documenting. Each can programmatically explain how it wor
 Each function can display:
 * A short description
 * Any aliases it has
-* It's allowable match component arguments
+* Its allowable match component arguments
 * The allowable data types that the match component arguments can evaluate to
-* If it is a schema type
+* If it is a schema type (I.e. can it be used in  a `line()` to construct a schema similar to that of a SQL table?)
 * If it produces a value, determines a match, or is a side-effect
 
 Functions can have multiple signatures. Meaning, the same function can be called with multiple types or numbers of arguments to get a different result.
