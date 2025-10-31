@@ -15,11 +15,11 @@ A match component is one of these types:
 - [Equality](#equality)
 - [Reference](#reference)
 
-These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together.
+These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together. There can be any number of match components in a csvpath statement.
 
-Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part containing two top-level match components. Each of those two components is an Equality holding two Term component literals, `"x"` and `"y"`, and `"z"` and `"z"`.
+Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part containing two top-level match components. Each of those two components is an Equality. Each equality holds two Term component literals, `"x"` and `"y"`, and `"z"` and `"z"`.
 
-In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`. The switch from AND to OR is done either programmatically or, more typically, using a mode declaration in a csvpath comment. Modes are covered in the page on comments.
+In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`. The switch from AND to OR can be done programmatically or, more typically, using a mode declaration in a csvpath comment. Modes are covered in the page on comments.
 
 There is no limit to the functionality you can include in a single csvpath. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL.
 
@@ -118,9 +118,9 @@ Two of the other types joined with an "=" or "==" or the when-do operator `->`.
 
 |Returns | Matches | Examples      |
 |--------|---------|---------------|
-|Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
-|No value | Matches when left side matches | `#area_code -> print("area code is $.headers.area_code")` |
-|No value | Always matches | `@code = #area_code` |
+|Calculated | Equivalence test match is calculated | `#area_code == 617` |
+|No value | When-do matches when left side matches | `#area_code -> print("area code is $.headers.area_code")` |
+|No value | Assignment always matches | `@code = #area_code` |
 
 
 <a name="reference"></a>
