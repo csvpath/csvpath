@@ -1,27 +1,25 @@
 # Scanning
 
-The scanning part of a csvpath enumerates selected lines. For each line returned, the line number, the scanned line count, and the match count are available.
+The scanning part of a csvpath enumerates selected lines. The selected lines are passed to the matching part for evaluation. At each line returned, the line number, the scanned line count, and the match count are available.
 
-The scan part of a csvpath starts with a dollar sign to indicate the file root. After the dollar sign comes the file path. The scanning instructions are next, in a bracket.
+The scanning part of a csvpath comes after the root. The root is a dollar sign that may be followed by a file path. The scanning instructions come next, in a bracket.
 
 The form is:
 ```
     $root[*][]
 ```
-Which can often be shortened to:
+Which is often shortened to:
 ```
     $[*][]
 ```
 The asterisk is the scanning instruction.
 
-The symbols are:
-- `*` is a wildcard that matches all lines to the end of the file. It always comes last.
-- `-` means the span between two numbers
-- `+` tells the Framework to scan exactly that line
+The scanning instruction symbols are:
+- `*` - A wildcard that matches all lines to the end of the file. It always comes last.
+- `-` - The span between two numbers
+- `+` - Scans exactly the line number following the `+`
 
-You can put these symbols together with line numbers (zero-based) in several ways.
-
-The rules are:
+You can put these symbols together with line numbers (zero-based) in several ways:
 - `[*]` means all
 - `[3*]` means starting from line 3 and going to the end of the file
 - `[3]` by itself means just line 3
