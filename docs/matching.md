@@ -8,12 +8,12 @@ Matches have space separated components that are ANDed or ORed together. The com
 
 A match component is one of these types:
 
-- Term
-- Function
-- Variable
-- Header
-- Equality
-- Reference
+- [Term](#term)
+- [Function](#function)
+- [Variable(#variable)
+- [Header(#header)
+- [Equality(#equality)
+- [Reference(#reference)
 
 These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together.
 
@@ -28,7 +28,7 @@ There is no limit to the functionality you can include in a single csvpath. Howe
 
 # Match Component Types
 
-<a name="terms"></a>
+<a name="term"></a>
 
 ## Term
 
@@ -41,7 +41,7 @@ A string, number, or regular expression value.
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/terms.md'>Read about terms here</a>.
 
 
-<a name="functions"></a>
+<a name="function"></a>
 
 ## Function
 
@@ -54,7 +54,7 @@ A composable unit of functionality called once for every row scanned. CsvPath Va
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/functions.md'>Read about functions here</a>.
 
 
-<a name="variables"></a>
+<a name="variable"></a>
 
 ## Variable
 
@@ -67,7 +67,7 @@ A stored value that is set or retrieved once per row scanned.
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/variables.md'>Read about variables here</a>.
 
 
-<a name="headers"></a>
+<a name="header"></a>
 
 ## Header
 
@@ -81,7 +81,7 @@ _(CsvPath avoids the word "column" for reasons we'll go into later in the docs).
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/headers.md'>Read about headers here</a>.
 
 
-<a name="equalities"></a>
+<a name="equality"></a>
 
 ## Equality
 
@@ -92,7 +92,7 @@ Two of the other types joined with an "=" or "==".
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
 
 
-<a name="references"></a>
+<a name="reference"></a>
 
 ## Reference
 
