@@ -1,5 +1,4 @@
 
-<a name="identity"></a>
 # A Csvpath's Identity
 
 Every csvpath has an identity. Its identity is used to point to it in references, error messages, and other places where knowing which csvpath was active is important.
@@ -17,7 +16,7 @@ If `name` and `id` are both set, `id` takes precedence. The default index is alw
 
 The most immediately important use of a csvpath's identity is typically in error messages. If your `config.ini` is set to use the default error pattern, or any error pattern that includes `{instance}`, you will see the identity of a csvpath in error messages. Within CsvPath Framework, the terms "identity" and "instance" are used interchangeably.
 
-For example, the default verbose error pattern is:
+For example, the verbose default error pattern is:
 ```
     {time}:{file}:{line}:{paths}:{instance}:{chain}:  {message}
 ```
