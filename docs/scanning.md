@@ -23,11 +23,13 @@ You can put these symbols together with line numbers (zero-based) in several way
 - `[*]` means all
 - `[3*]` means starting from line 4 and going to the end of the file
 - `[3]` by itself means just line 4
-- `[1-3]` means lines 1 through 4
-- `[1+3]` means lines 1 and line 4
-- `[1+3-8]` means line 1 and lines 4 through eight
-- `[1+3-8+100]` means line 1 and lines 4 through eight and line 100
-- `[1+3-8+100*]` means line 1 and lines 4 through eight and line 100 to the end of the file
+- `[1-3]` means lines 2 through 4
+- `[1+3]` means lines 2 and line 4
+- `[1+3-8]` means line 2 and lines 4 through eight
+- `[1+3-8+100]` means line 2 and lines 4 through eight and line 101
+- `[1+3-8+100*]` means line 2 and lines 4 through eight and line 101 to the end of the file
+
+Line numbers are zero-based, as usual in programming. When we say a csvpath starts at line 0 we mean the first line. The csvpath scanning instruction and the human-readable description are different by 1.
 
 The most common scanning instructions are:
 - `[*]` - to scan the whole file
@@ -35,11 +37,13 @@ The most common scanning instructions are:
 
 In the latter case, the Framework still recognizes the headers in the first line and uses them. It just ignores them as data.
 
-If you knew for sure there would be three blank lines at the top of every CSV sheet you handle, you could use a scanning instruction to skip to the headers, and then process the file as if the blank lines didn't exist. That would look like:
+If you knew for sure there would be three blank lines at the top of every CSV sheet you handle, you could use a scanning instruction to skip to the headers, set them, and then process the rest of the file as if the blank lines didn't exist. That would look like:
 
 ```
     $[3*][
         firstline(reset_headers(skip()))
+
+        ~ your validation goes here ~
     ]
 ```
 
