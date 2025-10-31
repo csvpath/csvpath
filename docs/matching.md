@@ -37,6 +37,7 @@ A string, number, or regular expression value.
 |Returns | Matches     | Examples        |
 |--------|-------------|-----------------|
 |A value | Always true | `"a value"`     |
+|        |             | `3`     |
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/terms.md'>Read about terms here</a>.
 
