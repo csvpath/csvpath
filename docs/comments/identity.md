@@ -6,7 +6,7 @@ Every csvpath has an identity. Its identity is used to point to it in references
 
 By default a csvpath's identity is added to the metadata as `NAME:0`, where `0` is the zero-based position of the csvpath in a set of csvpaths, referred to as a named-paths group. A csvpath writer can and should override this generic index identity with a more meaningful name. They do this by setting the identity using a special metadata field.
 
-The `identity` field is set in an outer comment. It is the word `ID` or `NAME`. Variations of those names are acceptable:
+The identity field is set in an outer comment. It is the word `ID` or `NAME`. Variations of those names are acceptable:
 * ALL CAPS, the default
 * Initial caps
 * All lowercase
