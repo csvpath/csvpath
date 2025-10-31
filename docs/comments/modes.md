@@ -12,23 +12,22 @@ Metadata fields can be used to control several run modes. These include:
 
 The values for each are:
 
-- `logic-mode` == `OR` or `AND` (`AND` is the default)
-- `return-mode` == `no-matches` or `matches` (`matches` is the default)
-- `print-mode` == `no-default` or `default` (`default` is the default)
-- `run-mode` == `no-run` or `run` (`run` is the default)
-- `explain-mode` == `no-explain` or `explain` (`no-explain` is the default)
-- `unmatched-mode` == `keep` or `no-keep` (`no-keep` is the default)
-- `validation-mode` == _(one or more of the following separated by commas)_
+- `logic-mode` = `OR` or `AND` (`AND` is the default)
+- `return-mode` = `no-matches` or `matches` (`matches` is the default)
+- `print-mode` = `no-default` or `default` (`default` is the default)
+- `run-mode` = `no-run` or `run` (`run` is the default)
+- `explain-mode` = `no-explain` or `explain` (`no-explain` is the default)
+- `unmatched-mode` = `keep` or `no-keep` (`no-keep` is the default)
+- `validation-mode` = _(one or more of the following separated by commas)_
     - `print` or `no-print` (`print` is on by default) and/or
     - `raise` or `no-raise` and/or
-    - `log` (`log` can only be turned off programmatically)
     - `stop` or `no-stop`
     - `fail` or `no-fail`
     - `collect` or `no-collect`
 
 For more modes and more details about each, see [csvpath.org](https://www.csvpath.org).
 
-The metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` evaluates the file. If neither the positive mode setting (e.g. `print`) or the negative (e.g. `no-print`) is found the fallback is the setting in config.ini, if applicable and there is one, otherwise, the default.
+The metadata settings happen after the `parse()` method and before `collect()`, `fast_forward()`, or `next()` evaluates the file. If neither the positive mode setting (e.g. `print`) or the negative (e.g. `no-print`) is found the fallback is the setting in `config.ini`, if applicable and there is one; otherwise, the default.
 
 It is also possible, though not common, to set the modes programmatically.
 

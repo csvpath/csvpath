@@ -17,12 +17,10 @@ When multiple qualifiers are used, order is not important.
 
 Qualifiers can have a large impact in variable assignments. Read  <a href='https://github.com/dk107dk/csvpath/blob/main/docs/assignment.md'>more about qualifiers and variable assignment here</a>.
 
-Qualifiers are relatively new and are being added opportunistically. Not all functions support all the qualifiers that might seem applicable. See the individual function docs for which qualifiers are available on each function.
+All functions take the `onmatch` qualifier. Not all functions support the other qualifiers that might seem applicable. See the individual function docs for which qualifiers are available on each function.
 
 
 ## Well-known Qualifiers
-At the moment there are quite a few qualifiers that are broadly available. There are a few more for specific functions. You can read about those on the individual function pages.
-
 - `asbool`
 - `decrease`
 - `increase`

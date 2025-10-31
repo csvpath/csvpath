@@ -6,7 +6,7 @@ The matching part is the third and last part of a csvpath. It comes behind the r
 
 ## Match Components
 
-The matching part is built from space separated "match components" that are ANDed or ORed together. When a match component "votes" to match its value is True. That means as far as that match component is concerned, the line matches.
+The matching part is built from space separated "match components" that are ANDed or ORed together. When a match component "votes" that a line is a match, its value is True. That means as far as that match component is concerned, the line matches.
 
 Csvpaths are configured to logically AND match components together by default. When match components are ANDed, all the components must match for the line to match as a whole. When the components are ORed, if any one match component matches the line is considered to match.
 

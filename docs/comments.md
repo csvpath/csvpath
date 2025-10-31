@@ -29,7 +29,7 @@ For example:
 
 Outer comments provide documentation, create metadata, and set settings. They do not comment out functionality, but they can comment out the entire csvpath. Inner comments provide more specific documentation and can comment-out match components.
 
-Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is an Equality match component. The Equality component includes both the left- and right-hand sides. A comment cannot sit beside an `=`, `==`, or `->` operator. Neither can a comment be within a function.
+Comments cannot live within a match component. Remember that a when/do or assignment expression is an Equality match component. The Equality component includes both the left- and right-hand sides. A comment cannot sit beside an `=`, `==`, or `->` operator. Neither can a comment be within a function.
 
 <a name="metadata"></a>
 ## Metadata Fields
