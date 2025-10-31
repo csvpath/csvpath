@@ -17,11 +17,17 @@ A match component is one of these types:
 
 These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together. There can be any number of match components in a csvpath statement.
 
-Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part containing two top-level match components. Each of those two components is an Equality. Each equality holds two Term component literals, `"x"` and `"y"`, and `"z"` and `"z"`.
+Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part containing two top-level match components. Each of those two components is an Equality. Each Equality holds two Term component literals, `"x"` and `"y"`, and `"z"` and `"z"`.
 
 In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`. The switch from AND to OR can be done programmatically or, more typically, using a mode declaration in a csvpath comment. Modes are covered in the page on comments.
 
-There is no limit to the functionality you can include in a single csvpath. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL.
+Some of these component types can be modified with qualifiers. A qualifier changes the behavior of a match component. It is set by adding a dot + a name to the match component name.
+
+For example, `count.cars(#color=="blue")` is a variation on `count(#color=="blue")`. The difference is that `count()`'s variable is named `cars`, rather than a random string. Likewise `count.cars.onmatch(#color=="blue")` increments the count of the `cars` variable only if the rest of the line matches.
+
+[Read more about qualifiers here](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md).
+
+There is no limit to the functionality you can include in a single csvpath using match components. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL.
 
 
 <a name="Components"></a>
