@@ -81,7 +81,7 @@ Each function can display:
 
 Functions can have multiple signatures. Meaning, the same function can be called with multiple types or numbers of arguments to get a different result.
 
-Many functions have aliases that are intended to help make csvpaths more readable. For example the less than test can be written:
+Many functions have aliases that are intended to help make csvpaths more readable. For example the less-than test can be written:
 * `lt(a, b)`
 * `before(a, b)`
 * `below(a, b)`
@@ -89,6 +89,8 @@ Many functions have aliases that are intended to help make csvpaths more readabl
 While that may seem confusing to some people, others appreciate having options that can make their csvpaths more sentence-like.
 
 # All the functions
+
+While this list should be up to date, for complete documentation coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window or the CLI.
 
 ## Boolean
 <table>
