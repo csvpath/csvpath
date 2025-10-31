@@ -26,7 +26,10 @@ All functions take the `onmatch` qualifier. Not all functions support the other 
 
 <a name='common-qualifiers'></a>
 
-## Commonly Used Qualifiers
+## Commonly Qualifiers
+
+The common qualifiers are available on multiple match components. In some cases coverage is universal; in others, the qualifier is available on just a few components.
+
 - `asbool`
 - `decrease`
 - `distinct`
