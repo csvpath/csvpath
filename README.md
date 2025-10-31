@@ -27,26 +27,26 @@ If you need help getting started, there are lots of ways to reach us.
 
 - [Motivation](#motivation)
 - [Install](#install)
-- [Python Interface](#pdocs)
 - [Validation Approach](#approach)
-- [Structure](#structure)
 - [Writing Validation Statements](#validating)
 - [Running CsvPath](#running)
-- [Grammar](#grammar)
+- [Grammars](#grammar)
 - [Sponsors](#sponsors)
 
 <a name="motivation"></a>
+
 # Motivation
 
 CSV and Excel files are everywhere! They are critical to successful data partnerships. They are a great example of how garbage-in-garbage-out threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
 
-We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capbilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
+We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capabilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
 
 CsvPath Validation Language adds trust to data file feeds. It is a quality management shift-left that solves problems early where they are easiest to fix.
 
 The Language is simple, function-oriented, and solely focused on validation of delimited data. It supports both schema definitions and rules-based validation. CsvPath Validation Language is declarative, for more concise and understandable data definitions. CsvPath can also extract and upgrade data, and create simple reports. Overall the goal is to automate human judgement and add transparency.
 
 <a name="install"></a>
+
 # Install
 
 <a href='https://pypi.org/project/csvpath/'>CsvPath Framework is available on PyPi</a>. It has been tested on 3.10, 3.11 and 3.13.
@@ -64,27 +64,27 @@ CsvPath has an optional dependency on Pandas. Pandas data frames can be used as 
 Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward.
 
 
-<a name="pdocs"></a>
-# Python Interface
-<a href='https://csvpath.github.io/csvpath/' target='_blank'>Python docs are here</a>.
-CsvPath Framework's public interface is streamlined. For our focus on just CsvPath Validation Language, the `csvpath.CsvPath` and `csvpath.CsvPaths` classes are where most of the magic happens. For more comprehensive information on the whole Framework head over to [csvpath.org](https://www.csvpath.org).
+<a name="approach"></a>
+
+<p></p>
 
 # Validation Approach
-<a name="approach"></a>
 
 CsvPath Validation Language is for creating "paths" that validate streams of tabular file data. A csvpath statement matches lines. A match does not mean that a line is inherently valid or invalid. That determination depends on how the csvpath statement was written.
 
 For example, a csvpath statement can return all invalid lines as matches. Alternatively, it can return all valid lines as matches. It could also return no matching lines, but instead trigger side-effects, like print statements or variable changes.
 
-# Structure
+## Structure
 <a name="description"></a>
-A csvpath statement has three parts:
+A csvpath statement has three structural parts:
 - A root that may include a file name
-- The scanning part, that says what lines to validate
-- The matching part, that decides if a line is valid
+- The scanning part, that declares what lines will be validated
+- The matching part, that declares what lines will match
 
 The root of a csvpath starts with `$`. The match and scan parts are enclosed by brackets. Newlines are ignored.
 
+
+## Simple Examples
 A trivial csvpath looks like this:
 
 ```bash
@@ -106,7 +106,7 @@ Here is a more functional csvpath:
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-It scans the lines in `people.csv`, counts lines without a middle name, and prints the result when the last row is read.
+It scans the lines in `people.csv`, counts lines without a middle name, and prints the count when the last row is read.
 
 A csvpath doesn't have to point to a specific file. It can instead simply have the scanning instruction come right after the root '$' like this:
 
@@ -116,25 +116,32 @@ A csvpath doesn't have to point to a specific file. It can instead simply have t
         last() -> print("There are $.variables.two_names people with only two names")]
 ```
 
-The Framework chooses the csvpath's file at runtime.
-
-There is no limit to the amount of functionality you can include in a single csvpath. However, different functions run with their own performance characteristics. You should plan to test both the performance and functionality of your paths, just as you would when working with SQL.
+In this case, the Framework chooses the csvpath's file at runtime.
 
 <a name="validating"></a>
+
+<p></p>
+
 # Writing Validation Statements
 
+At a high level, the functionality of a CsvPath Validation Language statement comes from:
+* [Scanning instructions](https://github.com/csvpath/csvpath/blob/main/docs/scanning.md) - determine which lines the csvpath considers
+* [Match components](https://github.com/csvpath/csvpath/blob/main/docs/matching.md) - determine which lines are matched and/or trigger side-effects
+* [Comments](https://github.com/csvpath/csvpath/blob/main/docs/comments.md)
 
+Each of these parts of a statement make significant functional contributions. This includes comments, which can have csvpath-by-csvpath configuration settings, integration hooks, and user-defined metadata.
 
 <a name="running"></a>
+
 # Running CsvPath
 
 CsvPath is <a href='https://pypi.org/project/csvpath/'>available on Pypi here</a>. The <a href='https://github.com/csvpath/csvpath'>git repo is here</a>.
 
-Two classes provide the functionality: CsvPath and CsvPaths. Each has only a few external methods.
+Two classes provide csvpath statement evaluation functionality: `CsvPath` and `CsvPaths`.
 
 ## CsvPath
 (<a href='https://github.com/csvpath/csvpath/blob/main/csvpath/csvpath.py'>code</a>)
-The CsvPath class is the basic entry point for running csvpaths.
+`CsvPath` is the most basic entry point for running csvpaths statements.
 |method                      |function                                                         |
 |----------------------------|-----------------------------------------------------------------|
 | next()                     | iterates over matched rows returning each matched row as a list |
@@ -144,7 +151,7 @@ The CsvPath class is the basic entry point for running csvpaths.
 
 ## CsvPaths
 (<a href='https://github.com/dk107dk/csvpath/blob/main/csvpath/csvpaths.py'>code</a>)
-The CsvPaths class helps you manage validations of multiple files and/or multiple csvpaths. It coordinates the work of multiple CsvPath instances.
+`CsvPaths` manages validations of multiple files and/or multiple csvpaths. It coordinates the work of multiple `CsvPath` instances.
 |method                  |function                                                         |
 |------------------------|-----------------------------------------------------------------|
 | csvpath()              | gets a CsvPath object that knows all the file names available   |
@@ -155,14 +162,9 @@ The CsvPaths class helps you manage validations of multiple files and/or multipl
 | fast_forward_by_line() | Same as CsvPath.fast_forward() but for all paths breadth first  |
 | next_by_line()         | Same as CsvPath.next() but for all paths breadth first          |
 
-To be clear, the purpose of `CsvPaths` is to apply multiple csvpaths per CSV file. Its breadth-first versions of the `collect()`, `fast_forward()`, and `next()` methods attempt to match each csvpath to each row of a CSV file before continuing to the next row.
+The purpose of `CsvPaths` is to apply multiple csvpaths per CSV file and handle multiple files in sequence. `CsvPaths` has both serial and breadth-first versions of `CsvPath`'s `collect()`, `fast_forward()`, and `next()` methods. The breadth-first versions evaluate each csvpath for every line of a CSV file before restarting the evaluations with the next line.
 
-There are several ways to set up CSV file references. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/files.md'>more about managing CSV files</a>.
-
-You also have important options for managing csvpaths. Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/paths.md'>about named csvpaths here</a>.
-
-CsvPath is a data automation tool. Before deploying to production, a developer or data engineer creates csvpaths and tests them. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
-
+## Simple Example
 To learn about automation, start with a simple driver. This is a basic programmatic use of CsvPath. It checks a file against a trivial schema, iterating the matching lines.
 
 ```python
@@ -180,9 +182,10 @@ To learn about automation, start with a simple driver. This is a basic programma
 
 For production operations consider using [FlightPath Server](https://www.flightpathdata.com/server.html), instead of coding your own driver scripts.
 
-For more ideas see the [examples here](#examples) and on [csvpath.org](http://www.csvpath.org).
+CsvPath is primarily for data automation, not interactive use. There is a simple <a href='https://github.com/csvpath/csvpath/cli'>command line interface</a> for quick dev iterations. <a href='https://www.csvpath.org/getting-started/your-first-validation-the-lazy-way'>Read more about the CLI here</a>. For more dev and ops functionality, use [FlightPath Data](https://www.flightpathdata.com/flightpath.html), the open source frontend to CsvPath Framework.
 
 <a name="grammar"></a>
+
 # Grammars
 
 CsvPath Validation Language is built up from three grammars:
@@ -194,6 +197,7 @@ Read <a href='https://github.com/dk107dk/csvpath/blob/main/docs/grammar.md'>more
 
 
 <a name="more-info"></a>
+
 # More Info
 
 For more information about preboarding and the whole of CsvPath Framework, visit <a href="https://www.csvpath.org">https://www.csvpath.org</a>.
@@ -203,6 +207,7 @@ For the development and operations frontend to CsvPath Framework, take a look at
 And to learn about the backend API server, head over to <a href='https://www.flightpathdata.com/server.html'>FlightPath Server</a>.
 
 <a name="sponsors"></a>
+
 # Sponsors
 
 <a href='https://www.atestaanalytics.com/' >
