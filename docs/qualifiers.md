@@ -19,10 +19,13 @@ Qualifiers can have a large impact in variable assignments. Read  <a href='https
 
 All functions take the `onmatch` qualifier. Not all functions support the other qualifiers that might seem applicable. See the individual function docs for which qualifiers are available on each function.
 
+
+## Types Of Qualifiers
+
 * [Common Qualifiers](#common-qualifiers)
 * [Name Qualifiers](#name-qualifiers)
 
-[csvpath.org](https://www.csvpath.org) has more details and examples of using qualifiers.
+[csvpath.org](https://www.csvpath.org) has more details and examples of using the different types of qualifiers.
 
 <a name='common-qualifiers'></a>
 
