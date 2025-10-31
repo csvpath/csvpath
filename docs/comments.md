@@ -6,7 +6,7 @@ Csvpath comments are delimited with tilde, the `~` character. They are positione
 * Between top-level match components in the matching part
 
 Comments have several closely related functions in CsvPath:
-- Presenting csvpath documentation
+- [Presenting csvpath documentation](#inner)
 - [Setting key-value user-defined metadata](#metadata)
 - [Setting the ID of the csvpath](#identity)
 - [Switching on/off settings, known as "modes"](#modes)
@@ -65,19 +65,21 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
         print(f"metadata is here: {r.csvpath.metadata} or, alternatively, here: {r.metadata}")
 ```
 
-<a name="settings"></a>
+<a name="identity"></a>
+# The Csvpath's Identity
+
+Every csvpath has an identity that is used to refer to it programmatically and from within csvpaths. Identities are set using special metadata fields.
+
+[Read more about csvpath identities here](https://github.com/csvpath/csvpath/blob/main/docs/comments/identity.md).
+
+
+<a name="modes"></a>
 # Mode Settings
 
 Mode setting are special metadata fields that apply settings for the duration of a csvpath evaluation.
 
 [Read more about the modes here](https://github.com/csvpath/csvpath/blob/main/docs/comments/modes.md).
 
-<a name="modes"></a>
-# The Csvpath's Identity
-
-Every csvpath has an identity that is used to refer to it programmatically and from within csvpaths. Identities are set using special metadata fields.
-
-[Read more about csvpath identities here](https://github.com/csvpath/csvpath/blob/main/docs/comments/identity.md).
 
 <a name="integrations"></a>
 # Integration Settings
