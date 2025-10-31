@@ -4,7 +4,7 @@
 
 The match part is the third and last part of a csvpath, behind the root and scanning part. Like the scanning part, it is bracketed.
 
-Matches have space separated components and literal values that are ANDed or ORed together. The components' order is meaningful. Generally, components are tested left to right, top to bottom.
+Matches have space separated components that are ANDed or ORed together. The components' order is meaningful. Generally, components are tested left to right, top to bottom.
 
 A match component is one of these types:
 
@@ -15,7 +15,11 @@ A match component is one of these types:
 - Equality
 - Reference
 
-These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together. Since a match component can include an equality, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part. In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`.
+These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together.
+
+Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal csvpath match part containing two top-level match components. Each of those two components is an Equality holding two Term component literals, `"x"` and `"y"`, and `"z"` and `"z"`.
+
+In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`. The switch from AND to OR is done either programmatically or, more typically, using a mode declaration in a csvpath comment. Modes are covered in the page on comments.
 
 There is no limit to the functionality you can include in a single csvpath. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL.
 
