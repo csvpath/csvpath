@@ -35,31 +35,35 @@ There is no limit to the functionality you can include in a single csvpath. Howe
 A string, number, or regular expression value.
 
 <table>
-    <tr>
-        <th>
-            Returns
-        </th>
-        <th>
-            Matches
-        </th>
-        <th>
-            Examples
-        </th>
-    </tr>
-    <tr>
-        <td>
-            A value
-        </td>
-        <td>
-            Always matches
-        </td>
-        <td>
-            <ul>
-                <li/> <code>"a value"</code>
-                <li/> <code>3</code>
-            </ul>
-        </td>
-    </tr>
+    <thead>
+        <tr>
+            <th>
+                Returns
+            </th>
+            <th>
+                Matches
+            </th>
+            <th>
+                Examples
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                A value
+            </td>
+            <td>
+                Always matches
+            </td>
+            <td>
+                <ul>
+                    <li/> <code>"a value"</code>
+                    <li/> <code>3</code>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
 </table>
 
 
