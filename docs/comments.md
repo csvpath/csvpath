@@ -34,7 +34,7 @@ Comments cannot live within a match component. Remember that a when/do or assign
 <a name="metadata"></a>
 ## Metadata Fields
 
-Outer comments can create metadata fields that live in a `CsvPath` instance. Metadata fields are accessible programmatically and within the csvpath using references. In addition, `CsvPaths` instance runs output a `metadata.json` file containing all metadata fields, among other values. There is more information on `metadata.json` on [csvpath.org](https://www.csvpath.org).
+Outer comments can create metadata fields that live in a `CsvPath` instance. Metadata fields are accessible programmatically and within the csvpath using references. In addition, `CsvPaths` instance runs output a `metadata.json` file containing all metadata fields, among other values. [csvpath.org](https://www.csvpath.org) has more information on `metadata.json`.
 
 A metadata field is created by putting a colon after a word. The word becomes the field key. Everything up to the next colon-word key, or the end of the comment, is the value of the field. Newlines are ignored but are captured to the value of the field.
 
