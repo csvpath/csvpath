@@ -85,11 +85,12 @@ _(CsvPath avoids the word "column" for reasons we'll go into later in the docs).
 
 ## Equality
 
-Two of the other types joined with an "=" or "==".
+Two of the other types joined with an "=" or "==" or the when-do operator `->`.
 
 |Returns | Matches | Examples      |
 |--------|---------|---------------|
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
+|No value | When left side has the match value True | `#area_code -> print("area code is $.headers.area_code")` |
 
 
 <a name="reference"></a>
