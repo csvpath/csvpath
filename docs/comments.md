@@ -1,21 +1,20 @@
 
 # Comments
 
-Comments are delimited with tilde, the `~` character. They have several closely related functions in CsvPath:
+Csvpath comments are delimited with tilde, the `~` character. They come:
+* Before the csvpath root, and/or
+* Between top-level match components in the matching part.
+
+Comments have several closely related functions in CsvPath:
 - Providing documentation
-- Creating referenceable metadata in well-known and/or ad hoc fields
-- Shutting down ("commenting out") functionality that is not wanted at a certain moment, but which the cvspath author doesn't want to delete
-- Switching on settings
+- For key-value user-defined metadata
+- Switching on/off settings, known as "modes"
+- For providing configuration settings to integrations
 
-All these functions are completely optional.
-
-- [Inner and outer](#inner)
-- [Metadata fields](#metadata)
-- [Settings](#settings)
-- [Identity](#identity)
+All of these functions are completely optional.
 
 <a name="inner"></a>
-## Inner and outer
+# Inner and Outer Comments
 
 There are two types of comments:
 - Outer comments that are before and/or after the cvspath
@@ -26,9 +25,9 @@ Outer comments provide documentation, create metadata, and set settings. They do
 Inner comments provide internal documentation and can comment-out match components. Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator.
 
 <a name="metadata"></a>
-## Metadata fields
+# Metadata Fields
 
-Outer comments can create metadata fields that live in a `CsvPath` instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next coloned word is the value of the field.
+Outer comments can create metadata fields that live in a `CsvPath` instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next colon-word key is the value of the field.
 
 For example, to set author, description, and date fields you would do something like:
 
@@ -60,7 +59,7 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
 ```
 
 <a name="settings"></a>
-## Settings
+# Mode Settings
 
 Metadata fields can be used to control certain run modes:
 - `logic-mode` -- sets the CsvPath instance to operate in AND or OR mode
@@ -89,7 +88,7 @@ The metadata settings happen after the `parse()` method and before `collect()`, 
 Metadata driven settings are effective only for the csvpath they are declared in. When you are using a `CsvPaths` instance to manage a multi-`CsvPath` instance run these metadata fields give you a way to configure different behavior for each `CsvPath` in the run.
 
 <a name="identity"></a>
-## Identity
+## The Csvpath's Identity
 
 Every csvpath may have an optional identity string. The `identity` property is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
 

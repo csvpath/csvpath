@@ -1,4 +1,4 @@
-# Scanning
+# The Scanning Part
 
 The scanning part of a csvpath enumerates selected lines. The selected lines are passed to the matching part for evaluation. At each line returned, the line number, the scanned line count, and the match count are available.
 
