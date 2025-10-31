@@ -25,7 +25,7 @@ All functions take the `onmatch` qualifier. Not all functions support the other 
 * [Common Qualifiers](#common-qualifiers)
 * [Name Qualifiers](#name-qualifiers)
 
-[csvpath.org](https://www.csvpath.org) has more details and examples of using the different types of qualifiers.
+There is more details and examples of using the different types of qualifiers on [csvpath.org](https://www.csvpath.org).
 
 <a name='common-qualifiers'></a>
 
