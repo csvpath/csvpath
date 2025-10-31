@@ -15,7 +15,7 @@ Comments have several closely related functions in CsvPath:
 All of these functions are completely optional.
 
 <a name="inner"></a>
-# Inner and Outer Comments
+## Inner and Outer Comments
 
 There are two types of comments:
 - Outer comments that are before and/or, less commonly, after the csvpath
@@ -32,32 +32,39 @@ Outer comments provide documentation, create metadata, and set settings. They do
 Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is an Equality match component. The Equality component includes both the left- and right-hand sides. A comment cannot sit beside an `=`, `==`, or `->` operator. Neither can a comment be within a function.
 
 <a name="metadata"></a>
-# Metadata Fields
+## Metadata Fields
 
-Outer comments can create metadata fields that live in a `CsvPath` instance and are accessible within the csvpath using references. A field is set by putting a colon after a word. The word becomes the field and everything up to the next colon-word key is the value of the field.
+Outer comments can create metadata fields that live in a `CsvPath` instance. Metadata fields are accessible programmatically and within the csvpath using references. In addition, `CsvPaths` instance runs output a `metadata.json` file containing all metadata fields, among other values. There is more information on `metadata.json` on [csvpath.org](https://www.csvpath.org).
 
-For example, to set author, description, and date fields you would do something like:
+A metadata field is created by putting a colon after a word. The word becomes the field key. Everything up to the next colon-word key, or the end of the comment, is the value of the field. Newlines are ignored but are captured to the value of the field.
+
+For example, this comment sets author, description, and date fields:
 
 ```bash
     ~ author: Anatila
-      description: This is my example csvpath. date: 1/1/2022
+      description: This is my example csvpath.
+      date: 1/1/2022
     ~
 ```
 
-As you can see, line breaks between fields are not needed. If you want to stop a metadata field but don't want to put another directly after it, add a stand-alone colon. For example:
+To stop a metadata field without putting another directly after it, add a stand-alone colon. For example:
 
 ```bash
-    ~ When in the course of human events title: Declaration : DRAFT
-    ~
+    ~ When in the course of human events title: Declaration : DRAFT ~
 ```
 
-In this example the `title` field equals `Declaration`. The word DRAFT is outside the metadata fields. However, the whole original comment is also captured as its own `original_comment` field. This need to capture a field separated from following comment content may also occur if you have comments above and below the csvpath.
+In this example:
+* `When in the course of human events` is not part of a metadata field
+* The `title` field equals `Declaration`
+* The word `DRAFT` is also not part of a metadata field
+* The whole original comment is also captured to an `original_comment` field
 
-You can use metadata field two ways:
+You can use metadata fields two ways:
 - Programmatically by referencing your `CsvPath` instance's `metadata` property
 - Within your csvpath's `print()` statements using print references in the form `$.metadata.title`
+- Programmatically through a `CsvPaths` instance's `Result` object
 
-When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances programmatic access to your CsvPath instances' metadata is through the results manager. For example:
+In the latter case, access to metadata is through the `ResultsManager`. For example:
 
 ```python
     results = csvpaths.results_manager.get_named_results("food")
@@ -65,8 +72,10 @@ When you are using a `CsvPaths` instance to manage multiple `CsvPath` instances 
         print(f"metadata is here: {r.csvpath.metadata} or, alternatively, here: {r.metadata}")
 ```
 
+Programmatic access to results metadata is covered further on [csvpath.org](https://www.csvpath.org).
+
 <a name="identity"></a>
-# The Csvpath's Identity
+## The Csvpath's Identity
 
 Every csvpath has an identity that is used to refer to it programmatically and from within csvpaths. Identities are set using special metadata fields.
 
@@ -74,7 +83,7 @@ Every csvpath has an identity that is used to refer to it programmatically and f
 
 
 <a name="modes"></a>
-# Mode Settings
+## Mode Settings
 
 Mode setting are special metadata fields that apply settings for the duration of a csvpath evaluation.
 
@@ -82,7 +91,7 @@ Mode setting are special metadata fields that apply settings for the duration of
 
 
 <a name="integrations"></a>
-# Integration Settings
+## Integration Settings
 
 CsvPath Framework comes integrated with many DataOps tools, including OpenLineage, Slack, SQL databases, OpenTelemetry, and more. Settings for these integrations is done by a combination of special metadata fields and `config.ini` file settings.
 
