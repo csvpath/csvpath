@@ -36,15 +36,15 @@ A string, number, or regular expression value.
 
 <table>
     <tr>
-        <td>
+        <th>
             Returns
-        </td>
-        <td>
+        </th>
+        <th>
             Matches
-        </td>
-        <td>
+        </th>
+        <th>
             Examples
-        </td>
+        </th>
     </tr>
     <tr>
         <td>
