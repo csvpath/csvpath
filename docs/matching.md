@@ -119,7 +119,8 @@ Two of the other types joined with an "=" or "==" or the when-do operator `->`.
 |Returns | Matches | Examples      |
 |--------|---------|---------------|
 |Calculated | True at assignment, otherwise calculated. | `#area_code == 617` |
-|No value | When left side has the match value True | `#area_code -> print("area code is $.headers.area_code")` |
+|No value | Matches when left side matches | `#area_code -> print("area code is $.headers.area_code")` |
+|No value | Always matches | `@code = #area_code` |
 
 
 <a name="reference"></a>
