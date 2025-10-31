@@ -19,10 +19,17 @@ Qualifiers can have a large impact in variable assignments. Read  <a href='https
 
 All functions take the `onmatch` qualifier. Not all functions support the other qualifiers that might seem applicable. See the individual function docs for which qualifiers are available on each function.
 
+* [Common Qualifiers](#common-qualifiers)
+* [Name Qualifiers](#name-qualifiers)
 
-## Well-known Qualifiers
+[csvpath.org](https://www.csvpath.org) has more details and examples of using qualifiers.
+
+<a name='common-qualifiers'></a>
+
+## Commonly Used Qualifiers
 - `asbool`
 - `decrease`
+- `distinct`
 - `increase`
 - `latch`
 - `nocontrib`
@@ -31,6 +38,7 @@ All functions take the `onmatch` qualifier. Not all functions support the other 
 - `onchange`
 - `onmatch`
 - `renew`
+- `strict`
 
 ### asbool
 When `asbool` is set on a variable or header its value is interpreted as a bool rather than just a simple `is not None` test
@@ -105,7 +113,10 @@ Add `onchange` to a variable to indicate that a row should only match when the v
 |----------|---------|-----------|
 | No       | No      | Yes       |
 
-## Arbitrary Names
+<a name='name-qualifiers'></a>
+
+## Arbitrary Name Qualifiers
+
 You can also add an arbitrary string to a function name or a variable.
 
 When used with functions, this additional name is for the function's internal use, typically to name a variable.
