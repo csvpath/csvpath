@@ -37,7 +37,7 @@ The most common scanning instructions are:
 
 In the latter case, the Framework still recognizes the headers in the first line and uses them. It just ignores them as data.
 
-If you knew for sure there would be three blank lines at the top of every CSV sheet you handle, you could use a scanning instruction to skip to the headers, set them, and then process the rest of the file as if the blank lines didn't exist. That would look like:
+If you knew for sure there would be three non-data, but non-blank lines at the top of every CSV sheet you handle, you could use a scanning instruction to skip to the headers, set them, and then process the rest of the file as if the non-data lines didn't exist. That would look like:
 
 ```
     $[3*][
