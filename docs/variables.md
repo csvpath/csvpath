@@ -160,7 +160,7 @@ We can add a third csvpath that references the first two like this:
             ---------
             $sharing_example.variables.first_day: Introductions and opening remarks
             $sharing_example.variables.second_day: Presentations and workgroup sessions
-        "
+        ")
     ]
 ```
 

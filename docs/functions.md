@@ -1,7 +1,7 @@
 
 # Functions
 
-Most of the work of matching is done in match component functions. There are over one hundred functions in several groups.
+Most of the work of matching is done in match component functions. There are over one hundred and fifty functions in several groups.
 
 - [Boolean](#boolean)
 - [Counting](#counting)
@@ -90,7 +90,7 @@ While that may seem confusing to some people, others appreciate having options t
 
 # All the functions
 
-While this list should be up to date, for complete documentation coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window or the CLI.
+While this list should be up to date, for complete documentation, coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window or the CLI.
 
 ## Boolean
 <table>
