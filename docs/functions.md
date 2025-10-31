@@ -18,7 +18,7 @@ Most of the work of matching is done in match component functions. There are ove
 - [Validity](#validity)
 - [Variables](#variables)
 
-## Overview
+# Overview
 
 Functions perform work within a csvpath. Some focus on creating values. Others on deciding if a line matches. And a few provide a side-effect, rather than contributing values or matching.
 
@@ -65,11 +65,30 @@ While it is quite possible to create your own function by copying one of the exi
 - `add( 5, 3, 1 )`
 - `concat( end(), regex(/[0-5]+abc/, #0))`
 
-There are lots more simple examples on the individual function pages and on [csvpath.org](https://www.csvpath.org).[FlightPath Data](https://www.flightpathdata.com) has a rich set of examples that you can run right away that are generated in each new project you create.
+There are lots more simple examples on the individual function pages, linked below, and on [csvpath.org](https://www.csvpath.org). [FlightPath Data](https://www.flightpathdata.com) has a rich set of examples that you can run right away. They are generated in and `examples` folder of each new project you create.
 
-## All the functions
+## Self-documenting
 
+The functions are self-documenting. Each can programmatically explain how it works. You can see the output in the CLI and in the language help window in [FlightPath Data](https://www.flightpathdata.com).
 
+Each function can display:
+* A short description
+* Any aliases it has
+* It's allowable match component arguments
+* The allowable data types that the match component arguments can evaluate to
+* If it is a schema type
+* If it produces a value, determines a match, or is a side-effect
+
+Functions can have multiple signatures. Meaning, the same function can be called with multiple types or numbers of arguments to get a different result.
+
+Many functions have aliases that are intended to help make csvpaths more readable. For example the less than test can be written:
+* `lt(a, b)`
+* `before(a, b)`
+* `below(a, b)`
+
+While that may seem confusing to some people, others appreciate having options that can make their csvpaths more sentence-like.
+
+# All the functions
 
 ## Boolean
 <table>
