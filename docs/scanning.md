@@ -21,13 +21,13 @@ The scanning instruction symbols are:
 
 You can put these symbols together with line numbers (zero-based) in several ways:
 - `[*]` means all
-- `[3*]` means starting from line 3 and going to the end of the file
-- `[3]` by itself means just line 3
-- `[1-3]` means lines 1 through 3
-- `[1+3]` means lines 1 and line 3
-- `[1+3-8]` means line 1 and lines 3 through eight
-- `[1+3-8+100]` means line 1 and lines 3 through eight and line 100
-- `[1+3-8+100*]` means line 1 and lines 3 through eight and line 100 to the end of the file
+- `[3*]` means starting from line 4 and going to the end of the file
+- `[3]` by itself means just line 4
+- `[1-3]` means lines 1 through 4
+- `[1+3]` means lines 1 and line 4
+- `[1+3-8]` means line 1 and lines 4 through eight
+- `[1+3-8+100]` means line 1 and lines 4 through eight and line 100
+- `[1+3-8+100*]` means line 1 and lines 4 through eight and line 100 to the end of the file
 
 The most common scanning instructions are:
 - `[*]` - to scan the whole file
