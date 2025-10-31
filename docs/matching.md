@@ -21,13 +21,17 @@ Since equalities are match components, `[ "x" == "y" "z" == "z" ]` is a legal cs
 
 In this case, if the evaluation ANDs match components, the default, this statement will never match because `"x"` never equals `"y"`. If evaluation is switched to OR, the statement will always match because `"z"` always equals `"z"`. The switch from AND to OR can be done programmatically or, more typically, using a mode declaration in a csvpath comment. Modes are covered in the page on comments.
 
+## Qualifiers
+
 Some of these component types can be modified with qualifiers. A qualifier changes the behavior of a match component. It is set by adding a dot + a name to the match component name.
 
 For example, `count.cars(#color=="blue")` is a variation on `count(#color=="blue")`. The difference is that `count()`'s variable is named `cars`, rather than a random string. Likewise `count.cars.onmatch(#color=="blue")` increments the count of the `cars` variable only if the rest of the line matches.
 
 [Read more about qualifiers here](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md).
 
-There is no limit to the functionality you can include in a single csvpath using match components. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL.
+## Testing Required
+
+There is no limit to the functionality you can include in a single csvpath using match components. However, functions have different performance characteristics. You should test both the performance and functionality of your paths, just as you would when working with SQL or another language.
 
 
 <a name="Components"></a>
