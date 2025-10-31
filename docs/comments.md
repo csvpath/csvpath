@@ -3,13 +3,14 @@
 
 Csvpath comments are delimited with tilde, the `~` character. They come:
 * Before the csvpath root, and/or
-* Between top-level match components in the matching part.
+* Between top-level match components in the matching part
 
 Comments have several closely related functions in CsvPath:
-- Providing documentation
-- For key-value user-defined metadata
+- As documentation
+- Setting key-value user-defined metadata
+- Setting the ID of the csvpath
 - Switching on/off settings, known as "modes"
-- For providing configuration settings to integrations
+- Providing configuration settings to integrations
 
 All of these functions are completely optional.
 
@@ -17,12 +18,18 @@ All of these functions are completely optional.
 # Inner and Outer Comments
 
 There are two types of comments:
-- Outer comments that are before and/or after the cvspath
-- Inner comments that sit between match components
+- Outer comments that are before and/or, less commonly, after the cvspath
+- Inner comments that sit between top-level match components
 
-Outer comments provide documentation, create metadata, and set settings. They do not comment out functionality.
+For example:
+```
+    ~ I am an outer comment ~
+    $[*][ @a = "a" ~and I am an inner comment~ @b = "b" ]
+```
 
-Inner comments provide internal documentation and can comment-out match components. Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator.
+Outer comments provide documentation, create metadata, and set settings. They do not comment out functionality. Inner comments provide more specific documentation and can comment-out match components.
+
+Comments cannot live within a match component. Remember that a when/do or assignment expression (sometimes referred to as an Equality) is a match component including both the left- and right-hand sides. A comment cannot be beside an `=`, `==`, or `->` operator, or be within a function.
 
 <a name="metadata"></a>
 # Metadata Fields
