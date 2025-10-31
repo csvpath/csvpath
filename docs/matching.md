@@ -34,10 +34,39 @@ There is no limit to the functionality you can include in a single csvpath. Howe
 
 A string, number, or regular expression value.
 
+<table>
+<tr>
+<td>
+Returns
+</td>
+<td>
+Matches
+</td>
+<td>
+Examples
+</td>
+</tr>
+<tr>
+<td>
+A value
+</td>
+<td>
+Always matches
+</td>
+<td>
+<ul>
+    <li/> `"a value"`
+    <li/> `3`
+</ul>
+</td>
+</tr>
+</table>
+
+
 |Returns | Matches     | Examples        |
 |--------|-------------|-----------------|
-|A value | Always true | `"a value"`     |
-|        |             | `3`     |
+|A value | Always true | - `"a value"`     |
+| "       | "             | - `3`          |
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/terms.md'>Read about terms here</a>.
 
