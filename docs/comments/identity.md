@@ -2,40 +2,30 @@
 <a name="identity"></a>
 # A Csvpath's Identity
 
-Every csvpath may have an optional identity string. The `identity` property is set in an outer comment using an ID or name field. The valid values of ID or name are all caps, initial caps, or all lower. For example:
+Every csvpath has an identity. Its identity is used to point to it in references, error messages, and other places where knowing which csvpath was active is important.
 
-```bash
-    ~ ID: first_experiment ~
+By default a csvpath's identity is added to the metadata as `NAME:0`, where `0` is the zero-based position of the csvpath in a set of csvpaths, referred to as a named-paths group. A csvpath writer can and should override this generic index identity with a more meaningful name. They do this by setting the identity using a special metadata field.
+
+The `identity` field is set in an outer comment. It is the word `ID` or `NAME`. Variations of those names are acceptable:
+* ALL CAPS, the default
+* Initial caps
+* All lowercase
+
+If `name` and `id` are both set, `id` takes precedence. The default index is always added as `NAME`, the lowest precedence identity field name, typically resulting in you having both your meaningful identity and the index in metadata.
+
+## Error Messages
+
+The most immediately important use of a csvpath's identity is typically in error messages. If your `config.ini` is set to use the default error pattern, or any error pattern that includes `{instance}`, you will see the identity of a csvpath in error messages. Within CsvPath Framework, the terms "identity" and "instance" are used interchangeably.
+
+For example, the default verbose error pattern is:
+```
+    {time}:{file}:{line}:{paths}:{instance}:{chain}:  {message}
 ```
 
-```bash
-    ~ Id: second_experiment ~
+If there is an error with a csvpath that has the identity `example one` it might look like:
+```
+    2025-10-31 17h24m16s-718972:people.csv:2::example one:person:  Invalid value at person.id
 ```
 
-```bash
-    ~ name: my third experiment ~
-```
-
-If each of these has its own cvspath, the paths would be programmatically identified in Python like this:
-
-```python
-    path1.identity == "first_experiment"
-```
-
-```python
-    path2.identity == "second_experiment"
-```
-
-```python
-    path3.identity == "my third experiment"
-```
-
-The identity field is used in only a few places, at this time. You may see it when making a reference between csvpaths. See the reference docs for details.
-
-You may also see `CsvPath.identity` (or a placeholder) used in argument validation error messages. This is a crucial usage. If you use `CsvPaths` instances to manage sets of csvpaths your arg validation messages can be hard to trace to the source unless you have an ID. When you add a name or id to your csvpaths' comments it will clearly point to where your problem is. Keep in mind that argument validation is not only a structure check when your csvpath is parsed, it is also a data check. Line by line, the fit of your data to your functions, or lack of fit, can tell you a lot about the validity of your file.
-
-The identity property can also be used to pull results from `CsvPath`'s `ResultsManager` instance. For that, you would use the `get_specific_named_result` method. This is potentially important because the results manager manages sets of csvpaths by name, but the results of each csvpath in the set is distinct to that csvpath run performed by a single-use `CsvPath` instance.
-
-
-
+There is more information about error patterns and error handling configuration on [csvpath.org](https://www.csvpath.org).
 
