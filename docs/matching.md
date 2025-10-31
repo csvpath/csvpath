@@ -10,10 +10,10 @@ A match component is one of these types:
 
 - [Term](#term)
 - [Function](#function)
-- [Variable(#variable)
-- [Header(#header)
-- [Equality(#equality)
-- [Reference(#reference)
+- [Variable](#variable)
+- [Header](#header)
+- [Equality](#equality)
+- [Reference](#reference)
 
 These components can be combined in endless ways. The organization of a csvpath's match part is `[x x x x]` where each `x` is a match component, with all of the match components ANDed or ORed together.
 
