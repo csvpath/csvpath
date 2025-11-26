@@ -28,7 +28,7 @@ class Get(ValueProducer):
             ),
         ]
         self.args = Args(matchable=self)
-        a = self.args.argset(2)
+        a = self.args.argset(3)
         a.arg(
             name="var name",
             types=[Header, Term, Function, Variable, Reference],
@@ -36,6 +36,11 @@ class Get(ValueProducer):
         )
         a.arg(
             name="tracking value",
+            types=[None, Header, Term, Function, Variable],
+            actuals=[None, str, int, float, bool, Args.EMPTY_STRING],
+        )
+        a.arg(
+            name="default",
             types=[None, Header, Term, Function, Variable],
             actuals=[None, str, int, float, bool, Args.EMPTY_STRING],
         )
@@ -55,17 +60,18 @@ class Get(ValueProducer):
         if isinstance(varname, dict):
             v = varname
         else:
-            v = self.matcher.get_variable(f"{varname}")
-        if v is None:
-            self.value = None
-        elif c2 is None:
+            v = self.matcher.get_variable(f"{varname}", set_if_none={})
+        if c2 is None:
             self.value = v
         else:
             t = self._value_two(skip=skip)
             if isinstance(t, int) and (isinstance(v, list) or isinstance(v, tuple)):
                 self.value = v[t] if -1 < t < len(v) else None
-            elif isinstance(v, dict) and t in v:
-                self.value = v[t]
+            elif isinstance(v, dict):
+                self.value = v.get(t)
+                c3 = self._value_three() if self._child_three() else None
+                if c3:
+                    self.value = c3
             else:
                 self.value = None
                 self.matcher.csvpath.logger.warning(

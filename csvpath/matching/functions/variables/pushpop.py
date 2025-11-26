@@ -16,6 +16,8 @@ class Push(SideEffect):
             self.wrap(
                 """\
                 Appends a value to a stack variable. The stack is created if not found.
+                If the distinct qualifier is used, the value to be pushed is ignored
+                if it is already present in the stack.
             """
             ),
         ]
@@ -49,11 +51,7 @@ class Push(SideEffect):
             self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack. The run may be ending."
             )
-        elif (
-            self.distinct
-            or self.name == "push_distinct"
-            # self.has_qualifier("distinct") or self.name == "push_distinct"
-        ) and v in stack:
+        elif (self.distinct or self.name == "push_distinct") and v in stack:
             pass
         elif self.notnone and ExpressionUtility.is_empty(v):
             pass
