@@ -7,6 +7,7 @@ JSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_
 EJSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_2_2{os.sep}expected_files.json"
 CSVS = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_2_2{os.sep}csvs"
 TJSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_2_2{os.sep}transfer.json"
+T2JSON = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_example_2_2{os.sep}csvpaths{os.sep}output2.csvpath"
 
 
 class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
@@ -112,7 +113,7 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         assert "completed" in m
         assert m["completed"] is False
 
-    def test_transfer_mode(self):
+    def test_transfer_mode_1(self):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
@@ -124,3 +125,35 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         paths.paths_manager.add_named_paths_from_json(TJSON)
         paths.collect_paths(filename="March-2024", pathsname="transfer")
         assert os.path.exists(f"transfers{os.sep}transfer.txt")
+        i = 0
+        with open(f"transfers{os.sep}transfer.txt") as file:
+            for _ in file:
+                i += 1
+                print(f"[{i}]: {_}")
+        assert i == 2
+
+    def test_transfer_mode_2(self):
+        paths = CsvPaths()
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        try:
+            os.remove(f"transfers{os.sep}transfer.txt")
+        except FileNotFoundError:
+            pass
+        try:
+            os.remove(f"transfers{os.sep}transfer2.txt")
+        except FileNotFoundError:
+            pass
+        paths.file_manager.add_named_files_from_dir(CSVS)
+        paths.paths_manager.add_named_paths_from_json(TJSON)
+        paths.paths_manager.add_named_paths_from_file(
+            name="transfer", file_path=T2JSON, append=True
+        )
+        paths.collect_paths(filename="March-2024", pathsname="transfer")
+        assert os.path.exists(f"transfers{os.sep}transfer.txt")
+        i = 0
+        with open(f"transfers{os.sep}transfer.txt") as file:
+            for _ in file:
+                i += 1
+                print(f"[{i}]: {_}")
+        assert i == 4

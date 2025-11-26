@@ -1,0 +1,8 @@
+~
+    id:output
+    transfer-mode: data > out+
+    source-mode: preceding
+~
+$[*][
+    @out = "transfer.txt"
+]

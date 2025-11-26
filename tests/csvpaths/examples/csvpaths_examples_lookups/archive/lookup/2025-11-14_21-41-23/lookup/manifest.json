@@ -1,0 +1,30 @@
+{
+  "time": "2025-11-14T21:41:23.084710+00:00",
+  "uuid": "7dff3b79-8175-4ef1-b84f-59327d9901ed",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "lookup",
+  "named_paths_uuid": "1325984e-70d2-482d-93c9-349da50bf98f",
+  "run": "2025-11-14_21-41-23",
+  "run_uuid": "a6221b4d-db56-4fea-aff3-ff92ab29e177",
+  "run_home": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/lookup/2025-11-14_21-41-23",
+  "instance_identity": "lookup",
+  "instance_index": "0",
+  "instance_home": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/lookup/2025-11-14_21-41-23/lookup",
+  "file_fingerprints": {
+    "data.csv": "6650aeeed80f2db312ae223c628c2617d7e06f6e6840d26b9d94a1ced1dec6d6",
+    "meta.json": "4c67703fca1e2ace2e44c99c9484730ae49183d79c492c19038b9c5287798dcf",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "files_expected": true,
+  "number_of_files_expected": 3,
+  "number_of_files_generated": 4,
+  "valid": true,
+  "completed": true,
+  "source_mode_preceding": false,
+  "actual_data_file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv/095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56.csv",
+  "origin_data_file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv/095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56.csv",
+  "named_file_name": "sic-codes",
+  "manifest_path": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/lookup/2025-11-14_21-41-23/lookup/manifest.json"
+}

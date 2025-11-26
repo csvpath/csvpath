@@ -1,0 +1,20 @@
+[
+  {
+    "archive_name": "archive",
+    "named_paths_name": "lookup",
+    "named_paths_home": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_paths/lookup",
+    "group_file_path": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_paths/lookup/group.csvpaths",
+    "source_path": "tests/csvpaths/examples/csvpaths_examples_lookups/sic-lookup.csvpath",
+    "named_paths": [
+      "~\n   id: lookup\n   test-data: lookups/sic-codes.csv\n~\n\n$[1*][ collect(\"SIC\") ]"
+    ],
+    "named_paths_identities": [
+      "lookup"
+    ],
+    "named_paths_count": 1,
+    "fingerprint": "f66e36ac10070d55df0c6edeeeeab1a6929e943d9d2676b5829d18bb8933f509",
+    "time": "2025-11-26T17:06:26.252302+00:00",
+    "uuid": "fcbd858c-9e40-4e1c-96ed-453a04855afe",
+    "manifest_path": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_paths/lookup/manifest.json"
+  }
+]

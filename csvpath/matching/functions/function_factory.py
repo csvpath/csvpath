@@ -99,6 +99,7 @@ from .types.email import Email
 from .types.url import Url
 from .types.string import String
 from .types.datatype import Datatype
+from .xml.xpath import XPath
 
 
 class UnknownFunctionException(Exception):
@@ -350,30 +351,15 @@ class FunctionFactory:
         fs["push_distinct"] = PushDistinct
         fs["pop"] = Pop
         fs["peek"] = Peek
-        #
-        # aliases
-        #
         fs["peek_size"] = PeekSize
         fs["size"] = PeekSize
-        #
-        # not aliases
-        #
         fs["date"] = Date
         fs["datetime"] = Date
-        #
-        # not aliases
-        #
         fs["fail"] = Fail
         fs["fail_all"] = FailAll
-        #
-        # not aliases
-        #
         fs["failed"] = Failed
         fs["valid"] = Failed
         fs["stack"] = Stack
-        #
-        # not aliases
-        #
         fs["stdev"] = Stdev
         fs["pstdev"] = Stdev
         fs["has_dups"] = HasDups
@@ -391,25 +377,16 @@ class FunctionFactory:
         fs["and"] = And
         fs["track"] = Track
         fs["sum"] = Sum
-        #
-        # not aliases
-        #
         fs["odd"] = Odd
         fs["even"] = Odd
         fs["email"] = Email
         fs["url"] = Url
         fs["subtotal"] = Subtotal
         fs["reset_headers"] = ResetHeaders
-        #
-        # aliases
-        #
         fs["starts_with"] = StartsWith
         fs["startswith"] = StartsWith
         fs["ends_with"] = StartsWith
         fs["endswith"] = StartsWith
-        #
-        # not aliases
-        #
         fs["skip"] = Skip
         fs["take"] = Skip
         fs["skip_all"] = SkipAll
@@ -420,19 +397,10 @@ class FunctionFactory:
         fs["import"] = Import
         fs["print_line"] = PrintLine
         fs["print_queue"] = PrintQueue
-        #
-        # not aliases
-        #
         fs["min_length"] = MinMaxLength
         fs["max_length"] = MinMaxLength
-        #
-        # not aliases
-        #
         fs["too_long"] = MinMaxLength
         fs["too_short"] = MinMaxLength
-        #
-        # aliases
-        #
         fs["between"] = Between
         fs["inside"] = Between
         fs["from_to"] = Between
@@ -440,7 +408,6 @@ class FunctionFactory:
         fs["beyond"] = Between
         fs["outside"] = Between
         fs["before_after"] = Between
-        #
         fs["get"] = Get
         fs["put"] = Put
         fs["debug"] = Debug
@@ -460,4 +427,6 @@ class FunctionFactory:
         fs["store_line_fingerprint"] = StoreFingerprint
         fs["count_bytes"] = CountBytes
         fs["counter"] = Counter
+        fs["xpath"] = XPath
+
         cls.MY_FUNCTIONS = fs

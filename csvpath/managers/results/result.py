@@ -68,7 +68,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         #
         # data_file_path is the path to data.csv of this result
         #
-        self._data_file_path = None
+        # self._data_file_path = None
         #
         # are set here:
         #   - error listener / error_collector

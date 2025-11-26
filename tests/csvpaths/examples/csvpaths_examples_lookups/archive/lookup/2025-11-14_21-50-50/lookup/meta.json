@@ -1,0 +1,50 @@
+{
+  "paths_name": "lookup",
+  "file_name": "sic-codes",
+  "run_time": "2025-11-14 21:50:50.679001+00:00",
+  "run_index": "0",
+  "identity": "lookup",
+  "metadata": {
+    "NAME": "0",
+    "id": "lookup",
+    "test-data": "lookups/sic-codes.csv",
+    "original_comment": "id: lookup\n   test-data: lookups/sic-codes.csv",
+    "print-mode": "default"
+  },
+  "runtime_data": {
+    "delimiter": ",",
+    "quotechar": "\"",
+    "file_name": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv/095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56.csv",
+    "lines_time": 13.411,
+    "total_lines": 1006,
+    "count_lines": 1006,
+    "line_number": 1005,
+    "identity": "lookup",
+    "count_matches": 1005,
+    "count_scans": 1005,
+    "scan_part": "$tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv/095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56.csv[1*]",
+    "match_part": "[ collect(\"SIC\") ]",
+    "last_line_time": 0.009,
+    "headers": [
+      "Division",
+      "Major Group",
+      "Industry Group",
+      "SIC",
+      "Description"
+    ],
+    "valid": true,
+    "stopped": false,
+    "unmatched-mode": null,
+    "validation-mode": null,
+    "source-mode": null,
+    "print-mode": "default",
+    "run-mode": null,
+    "logic-mode": null,
+    "explain-mode": null,
+    "return-mode": null,
+    "run_started_at": "2025-11-14 21:50:50.691514+00:00",
+    "lines_collected": 1005,
+    "errors_count": 0,
+    "run_index": "0"
+  }
+}

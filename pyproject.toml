@@ -59,6 +59,7 @@ sqlalchemy = "^2.0.38"
 mysqlclient = "^2.2.7"
 psycopg2-binary = "^2.9.10"
 pandas = "^2.2.2"
+lxml = "^6.0.2"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

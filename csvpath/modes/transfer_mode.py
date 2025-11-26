@@ -3,6 +3,13 @@ from ..util.exceptions import InputException
 
 class TransferMode:
     MODE = "transfer-mode"
+    #
+    # transfer mode is activated in the results_manager at save().
+    # a transfer is effected using DataFileWriter, so all backends
+    # are supported.
+    #
+    # provisionally, if the varname ends in + we are appending.
+    #
 
     def __init__(self, controller):
         self.controller = controller

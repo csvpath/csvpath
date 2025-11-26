@@ -1,0 +1,31 @@
+{
+  "time": "2025-11-14T21:54:06.352338+00:00",
+  "uuid": "984a4198-852a-46c2-9cce-2ce033273b9f",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "orders",
+  "named_paths_uuid": "b1bd6926-93f7-4141-bcfd-442f4ef0b152",
+  "run": "2025-11-14_21-54-06",
+  "run_uuid": "101f39ab-3fcf-4500-95d9-b489b0b411c7",
+  "run_home": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/orders/2025-11-14_21-54-06",
+  "instance_identity": "orders",
+  "instance_index": "0",
+  "instance_home": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/orders/2025-11-14_21-54-06/orders",
+  "file_fingerprints": {
+    "data.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "meta.json": "5c20ae0a2921ced5f21dd8d33952b9c665a53f9c77757804d90df7ada77e30c6",
+    "printouts.txt": "caf808253bd86a6e9e21e6f2b43e65772eea7b9515010d55163e9ca1a63cb803",
+    "errors.json": "44ae72b6d1b01ac5da0f99899ca9f43cfcd60d3b3761e71dfb3728765f4ddf2c",
+    "vars.json": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "files_expected": true,
+  "number_of_files_expected": 3,
+  "number_of_files_generated": 5,
+  "valid": true,
+  "completed": false,
+  "source_mode_preceding": false,
+  "actual_data_file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/orders/orders.csv/e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f.csv",
+  "origin_data_file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/orders/orders.csv/e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f.csv",
+  "named_file_name": "orders",
+  "manifest_path": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/orders/2025-11-14_21-54-06/orders/manifest.json"
+}

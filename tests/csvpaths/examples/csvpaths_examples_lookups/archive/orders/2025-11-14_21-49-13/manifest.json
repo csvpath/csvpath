@@ -1,0 +1,23 @@
+{
+  "time": "2025-11-14T21:49:13.917776+00:00",
+  "uuid": "e438e9fe-6803-4c37-8ff5-3eb123e28aad",
+  "run_uuid": "7055635f-4fc8-4d05-bf8f-3ed69a2ec597",
+  "serial": true,
+  "status": "started",
+  "run_home": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/orders/2025-11-14_21-49-13",
+  "named_results_name": "orders",
+  "named_paths_name": "orders",
+  "named_paths_uuid": "4969d800-0165-4aea-aefd-8b7af73fe858",
+  "named_file_name": "orders",
+  "named_file_uuid": "dee7b152-1508-469f-9080-db72c0cce85e",
+  "named_file_path": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/orders/orders.csv/e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f.csv",
+  "named_file_size": 154,
+  "named_file_last_change": 1763156953.8208742,
+  "named_file_fingerprint": "e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f",
+  "named_file_fingerprint_on_file": "e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f",
+  "hostname": "Mac",
+  "username": "davidkershaw",
+  "ip_address": null,
+  "method": "collect_paths",
+  "manifest_path": "tests/csvpaths/examples/csvpaths_examples_lookups/archive/orders/2025-11-14_21-49-13/manifest.json"
+}

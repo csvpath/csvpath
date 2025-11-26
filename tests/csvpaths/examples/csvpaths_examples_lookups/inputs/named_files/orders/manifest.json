@@ -1,0 +1,11 @@
+[
+  {
+    "type": "csv",
+    "file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/orders/orders.csv/e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f.csv",
+    "file_home": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/orders/orders.csv",
+    "fingerprint": "e270cf0f7670b44240c24bad6b0a2ceddc9271282f7710cdc9079352ae129a0f",
+    "uuid": "6f3a76f4-69fb-4a66-bc76-510d2d442583",
+    "time": "2025-11-26T17:06:26.253914+00:00",
+    "from": "tests/csvpaths/examples/csvpaths_examples_lookups/orders.csv"
+  }
+]
