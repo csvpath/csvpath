@@ -27,7 +27,7 @@ class Concat(ValueProducer):
         a.arg(
             name="append this",
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, int, float, bool, self.args.EMPTY_STRING],
+            actuals=[str, int, float, bool, list, self.args.EMPTY_STRING],
         )
         self.args.validate(self.siblings())
         super().check_valid()
@@ -37,7 +37,11 @@ class Concat(ValueProducer):
         siblings = child.commas_to_list()
         v = ""
         for s in siblings:
-            v = f"{v}{s.to_value(skip=skip)}"
+            c = s.to_value(skip=skip)
+            if isinstance(c, list):
+                c = [str(c) for c in c]
+                c = "".join(c)
+            v = f"{v}{c}"
         self.value = v
 
     def _decide_match(self, skip=None) -> None:

@@ -105,6 +105,36 @@ class TestCsvPathFunctionsRegex(unittest.TestCase):
         )
         path.fast_forward()
 
+    def test_function_headers_regex_0(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                regex(headers(), /[ia]/)
+             ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 9
+
+    def test_function_headers_regex_1(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                regex(headers(), /[y]/)
+             ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
+
+    def test_function_headers_regex_2(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                regex(headers(), /sayx|firstx|lastx/)
+             ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 0
+
     def test_function_regex_units(self):
         #
         # The 200+ regex in tests/test_resources/regexes.txt
