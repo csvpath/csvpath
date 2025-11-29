@@ -4,6 +4,9 @@ from .function import Function
 from .function_finder import FunctionFinder
 from .dates.now import Now
 from .dates.roll import Roll
+from .dates.part import DateFormat
+from .dates.part import DatePart
+from .strings.format import Format
 from .strings.lower import Lower
 from .strings.contains import Contains
 from .strings.upper import Upper
@@ -210,15 +213,21 @@ class FunctionFactory:
         fs["regex"] = Regex
         fs["exact"] = Regex
         fs["not"] = Not
+        fs["year"] = DatePart
+        fs["month"] = DatePart
+        fs["day"] = DatePart
         fs["roll"] = Roll
         fs["now"] = Now
         fs["thisyear"] = Now
         fs["thismonth"] = Now
         fs["today"] = Now
+        fs["format_date"] = DateFormat
         fs["in"] = In
         fs["concat"] = Concat
         fs["contains"] = Contains
         fs["find"] = Contains
+        fs["format"] = Format
+        fs["interpolate"] = Format
         fs["lower"] = Lower
         fs["upper"] = Upper
         fs["caps"] = Capitalize
