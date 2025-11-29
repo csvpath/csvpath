@@ -4,6 +4,7 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.functions.headers.headers import Headers
 from ..function import Function
 from ..args import Args
 
@@ -37,6 +38,22 @@ class Regex(MatchDecider):
         self.description = [self._cap_name(), d]
         self.match_qualifiers.append("asbool")
         self.args = Args(matchable=self)
+
+        a = self.args.argset(2)
+        a.arg(
+            name="all headers",
+            types=[Headers],
+            actuals=[],
+        )
+        a.arg(
+            name="regex",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+
+        #
+        # this is the "main" argset for regex and exact
+        #
         a = self.args.argset(3)
         a.arg(
             name="str or regex",
@@ -99,27 +116,47 @@ class Regex(MatchDecider):
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         siblings = child.commas_to_list()
-        theregex, thevalue, group = self._the_regex(siblings, skip=skip)
-        if thevalue is None:
-            # this could happen if the line is blank
-            pass
+        if siblings and len(siblings) == 2 and isinstance(siblings[0], Headers):
+            self.value = self.matcher.get_variable(self.get_id())
+            # if we already checked the headers we don't need to do it again
+            if self.value is None:
+                theregex = siblings[1].to_value(skip=skip)
+                theregex = theregex.lstrip("/")
+                theregex = theregex.rstrip("/")
+                # iterate the header names to match each
+                self.value = True
+                for _ in self.matcher.csvpath.headers:
+                    m = re.search(theregex, _)
+                    if not m:
+                        self.value = False
+                        self.matcher.set_variable(self.get_id(), value=False)
+                        break
+                if self.value is True:
+                    self.matcher.set_variable(self.get_id(), value=True)
+            if self.value is False:
+                self.value = None
         else:
-            m = re.search(theregex, thevalue)
-            # in the case of no match we're going to potentially
-            # do extra regexing because self.value remains None
-            # problem? self.match will be set so that may protect
-            # us.
-            v = None
-            if m:
-                v = m.group(group)
-            if self.name == "regex":
-                self.value = v
-            elif self.name == "exact":
-                self.value = v == thevalue
-            s = "Regex.to_value: mode: %s, capture group at %s: %s, with regex: %s, original value: %s, returning: %s"
-            self.matcher.csvpath.logger.debug(
-                s, self.name, group, v, theregex, thevalue, self.value
-            )
+            theregex, thevalue, group = self._the_regex(siblings, skip=skip)
+            if thevalue is None:
+                # this could happen if the line is blank
+                pass
+            else:
+                m = re.search(theregex, thevalue)
+                # in the case of no match we're going to potentially
+                # do extra regexing because self.value remains None
+                # problem? self.match will be set so that may protect
+                # us.
+                v = None
+                if m:
+                    v = m.group(group)
+                if self.name == "regex":
+                    self.value = v
+                elif self.name == "exact":
+                    self.value = v == thevalue
+                s = "Regex.to_value: mode: %s, capture group at %s: %s, with regex: %s, original value: %s, returning: %s"
+                self.matcher.csvpath.logger.debug(
+                    s, self.name, group, v, theregex, thevalue, self.value
+                )
 
     def _decide_match(self, skip=None) -> None:
         if self.name == "regex":

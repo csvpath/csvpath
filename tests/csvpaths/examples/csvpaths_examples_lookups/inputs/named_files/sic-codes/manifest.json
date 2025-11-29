@@ -1,0 +1,11 @@
+[
+  {
+    "type": "csv",
+    "file": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv/095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56.csv",
+    "file_home": "tests/csvpaths/examples/csvpaths_examples_lookups/inputs/named_files/sic-codes/sic-codes.csv",
+    "fingerprint": "095f3d976e9677f12ac1427ec54196bd8261e89d04b85ee2185f8f0d5ecf9f56",
+    "uuid": "c74edd7e-747c-487a-926e-66ff7582a948",
+    "time": "2025-11-26T17:06:26.248094+00:00",
+    "from": "tests/csvpaths/examples/csvpaths_examples_lookups/sic-codes.csv"
+  }
+]

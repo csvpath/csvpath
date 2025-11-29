@@ -27,3 +27,20 @@ class TestCsvPathFunctionsConcat(unittest.TestCase):
         )
         path.collect()
         assert path.variables["bs"] == "Birds"
+
+    def test_function_concat3(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+                        ${PATH}[1]
+                        [
+                            push("bird", "red")
+                            push("bird", ",blue")
+                            push("bird", ",green")
+                            push("bird", ",yellow")
+                            @bs = concat("B" , "irds: ", @bird)
+                        ]
+                   """
+        )
+        path.collect()
+        assert path.variables["bs"] == "Birds: red,blue,green,yellow"

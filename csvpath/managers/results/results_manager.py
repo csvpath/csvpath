@@ -262,7 +262,7 @@ class ResultsManager:  # pylint: disable=C0115
         lines = []
         for j, r in enumerate(results):
             rlines = r.lines
-            for i, _ in enumerate( rlines.next()):
+            for i, _ in enumerate(rlines.next()):
                 #
                 # next line makes no sense!
                 #
@@ -433,11 +433,25 @@ class ResultsManager:  # pylint: disable=C0115
         transfers = result.csvpath.transfers
         tpaths = []
         for t in transfers:
-            filefrom = "data.csv" if t[0].startswith("data") else "unmatched.csv"
+            filefrom = None
+            if t[0].startswith("data"):
+                filefrom = "data.csv"
+            elif t[0].startswith("unmatched"):
+                filefrom = "unmatched.csv"
+            else:
+                raise ValueError(
+                    "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
+                )
             varname = t[1]
             pathfrom = self._path_to_result(result, filefrom)
+            if varname.endswith("+"):
+                mode = "a"
+                varname = varname[:-1]
+            else:
+                mode = "w"
             pathto = self._path_to_transfer_to(result, varname)
-            tpaths.append((filefrom, varname, pathfrom, pathto))
+
+            tpaths.append((filefrom, varname, pathfrom, pathto, mode))
         return tpaths
 
     def _do_transfers(self, tpaths) -> None:
@@ -446,12 +460,13 @@ class ResultsManager:  # pylint: disable=C0115
             pathfrom = t[2]
             pathto = t[3]
             with DataFileReader(pathfrom) as pf:
-                with DataFileWriter(path=pathto, mode="w") as file:
+                with DataFileWriter(path=pathto, mode=t[4]) as file:
                     file.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
         """@private"""
         p = result.csvpath.config.transfer_root
+
         if t not in result.csvpath.variables:
             raise InputException(f"Variable {t} not found in variables")
         f = result.csvpath.variables[t]

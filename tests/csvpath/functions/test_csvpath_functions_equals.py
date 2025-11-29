@@ -6,7 +6,7 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathFunctionsEquals(unittest.TestCase):
-    def test_function_equals(self):
+    def test_function_equals_1(self):
         path = CsvPath()
         path.parse(
             f""" ${PATH}[*] [
@@ -20,6 +20,17 @@ class TestCsvPathFunctionsEquals(unittest.TestCase):
         lines = path.collect()
         assert path.variables["c"] == 5
         assert len(lines) == 9
+
+    def test_function_equals_2(self):
+        path = CsvPath()
+        path.parse(
+            f""" ${PATH}[2] [
+               eq(none(), none())
+            ]
+            """
+        )
+        lines = path.collect()
+        assert len(lines) == 1
 
     def test_function_neq(self):
         path = (

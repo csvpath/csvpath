@@ -1,0 +1,17 @@
+$[*][
+   dup_lines.lines(#0, #1)
+   no()
+]
+---- CSVPATH ----
+~
+ validation-mode:raise, print
+~
+$[*][
+   @s = get(
+         $dups.variables.lines,
+         fingerprint(#0, #1)
+        )
+   @t = size(@s)
+   above(@t, 1)
+   append("line", line_number(), yes())
+]

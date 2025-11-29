@@ -9,7 +9,7 @@ class HeaderNamesMismatch(ValueProducer):
         self.description = [
             self._cap_name(),
             self.wrap(
-                """\
+                f"""\
                 Given a | delimited list of headers, checks that all exist and
                 are in the same order.
 
@@ -30,10 +30,16 @@ class HeaderNamesMismatch(ValueProducer):
                 If you have: header_names_mismatch.m("Alpha|Beta|Cappa|Delta")
                 and your headers are: Alpha,Delta,Beta
                 you will have @m_present == ["Alpha"], @m_unmatched == ["Cappa"], @m_misordered = ["Delta"]
-                and header_names_mismatch() will return False; i.e. not match.
+                and {self.name}() will return False; i.e. not match.
+
+                Note that the alias header_names_mismatch() is depreciated. Instead use
+                header_names_match(). The name change reflects the function's match value
+                being false if the headers do not meet expectations.
         """
             ),
         ]
+        self.aliases = ["header_names_mismatch", "header_names_match"]
+
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)

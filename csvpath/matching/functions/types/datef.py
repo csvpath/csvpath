@@ -20,7 +20,7 @@ class Date(ValueProducer, Type):
             self._cap_name(),
             f"{self.name}() has two purposes.",
             "First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.",
-            "Alternatively, it may generate a date from a string.",
+            "Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.",
         ]
 
         self.args = Args(matchable=self)
@@ -38,7 +38,7 @@ class Date(ValueProducer, Type):
         )
         a.arg(
             name="format",
-            types=[None, Term, Header, Function, Reference],
+            types=[None, Term, Header, Function, Variable, Reference],
             actuals=[str],
         )
         self.args.explain = "It must be a date object or a date string with a format."

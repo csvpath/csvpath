@@ -9,6 +9,18 @@ class LarkParser:  # pylint: disable=R0903
     intuitative way of building the parse tree. until 1.0 all of the four parsers
     in CsvPath should be considered under active development."""
 
+    #
+    # REFERENCE is underspecified. we need to get closer to the references
+    # we use in queries. this just has a $with .s and alphanums. that is
+    # so far off it gets in the way of switching to using the reference
+    # finders under the hood.
+    #
+    # as a bare start, adding : and -
+    #
+    # question is, are we going to bring the whole reference grammar in here
+    # or just add that as a post processing step, kind of like the print()
+    # parser?
+    #
     GRAMMAR = r"""
         match: _LB (expression)* _RB
         expression: left (WHEN action)?
@@ -22,7 +34,7 @@ class LarkParser:  # pylint: disable=R0903
         assignment: VARIABLE ASSIGN (left|REFERENCE|term)
         equality: left EQUALS (left|REFERENCE|term)
 
-        REFERENCE: /\$[a-zA-Z-0-9\_\.]+/
+        REFERENCE: /\$[a-zA-Z-0-9\_\.-:]+/
         HEADER: ( /#([a-zA-Z-0-9\._])+/ | /#"([a-zA-Z-0-9 \._])+"/ )
         VARIABLE: /@[a-zA-Z-0-9\_\.]+/
         function: /[a-zA-Z][a-zA-Z-0-9\._]*/ args

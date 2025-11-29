@@ -54,7 +54,7 @@ class Contains(ValueProducer):
         elif self.name == "find":
             self.value = p
         else:
-            raise ChildrenException("Unexpected name: {self.name}")
+            raise ChildrenException(f"Unexpected name: {self.name}")
 
     def _decide_match(self, skip=None) -> None:
         v = self.to_value(skip=skip)

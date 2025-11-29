@@ -55,8 +55,8 @@ class Equals(MatchDecider):
     def _decide_match(self, skip=None) -> None:
         child = self.children[0]
         ret = False
-        left = child.left.to_value()
-        right = child.right.to_value()
+        left = child.left.to_value(skip=skip)
+        right = child.right.to_value(skip=skip)
         if (left and not right) or (right and not left):
             ret = False
         elif left is None and right is None:

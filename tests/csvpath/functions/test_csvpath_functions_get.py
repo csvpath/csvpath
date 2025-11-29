@@ -74,3 +74,37 @@ class TestCsvPathFunctionsGet(unittest.TestCase):
         assert len(lines) == 1
         assert "frog" in path.variables
         assert path.variables["frog"] == 2
+
+    def test_function_get5(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                @firstname = "me"
+                @frog = get(@firstname, #firstname)
+            ]"""
+        )
+        path.collect()
+        print(f"path.variables: {path.variables}")
+        assert "frog" in path.variables
+        assert path.variables["frog"] is None
+        assert path.variables["me"] == {}
+        assert path.variables["firstname"] == "me"
+
+    def test_function_get6(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                @firstname = "me"
+                @frog = get(@firstname, #firstname, "daffy")
+            ]"""
+        )
+        path.collect()
+        print(f"path.variables: {path.variables}")
+        assert "frog" in path.variables
+        assert path.variables["frog"] == "daffy"
+        assert path.variables["me"] == {}
+        assert path.variables["firstname"] == "me"

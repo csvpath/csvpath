@@ -1,0 +1,6 @@
+~
+   id: lookup
+   test-data: lookups/sic-codes.csv
+~
+
+$[1*][ collect("SIC") ]

@@ -2,6 +2,7 @@
 from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.productions import Variable, Header, Term, Reference
+from csvpath.matching.util.exceptions import MatchException
 from ..function import Function
 from ..function_focus import SideEffect, ValueProducer
 from ..args import Args
@@ -16,6 +17,8 @@ class Push(SideEffect):
             self.wrap(
                 """\
                 Appends a value to a stack variable. The stack is created if not found.
+                If the distinct qualifier is used, the value to be pushed is ignored
+                if it is already present in the stack.
             """
             ),
         ]
@@ -49,11 +52,7 @@ class Push(SideEffect):
             self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack. The run may be ending."
             )
-        elif (
-            self.distinct
-            or self.name == "push_distinct"
-            # self.has_qualifier("distinct") or self.name == "push_distinct"
-        ) and v in stack:
+        elif (self.distinct or self.name == "push_distinct") and v in stack:
             pass
         elif self.notnone and ExpressionUtility.is_empty(v):
             pass
@@ -201,13 +200,14 @@ class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 
     def check_valid(self) -> None:
+        self.value_qualifiers.append("notnone")
         self.description = [
             self._cap_name(),
             self.wrap(
                 """\
                 Returns number of values in a stack variable.
 
-                The stack is created if not found.
+                Unless the notnone qualifier is present, the stack is created if not found.
             """
             ),
         ]
@@ -219,12 +219,36 @@ class PeekSize(ValueProducer):
             types=[Variable, Header, Function, Reference, Term],
             actuals=[str],
         )
+        a = self.args.argset(1)
+        a.arg(
+            name="stack",
+            types=[Variable, Function, Reference],
+            actuals=[list, tuple, None],
+        )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)
-        stack = self.matcher.get_variable(k, set_if_none=[])
+        if k is None and self.notnone is True:
+            msg = "Value cannot be empty because notnone is set"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+            return
+        stack = None
+        if isinstance(k, str):
+            stack = self.matcher.get_variable(k, set_if_none=[])
+        elif isinstance(k, (list, tuple)):
+            stack = k
+        if self.notnone is True and stack is None:
+            msg = "A stack name or a stack value is required"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+            return
+        elif stack is None:
+            stack = []
         self.value = len(stack)
 
     def matches(self, *, skip=None) -> bool:
