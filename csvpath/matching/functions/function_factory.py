@@ -75,7 +75,7 @@ from .print.print_queue import PrintQueue
 from .lines.stop import Stop, Skip, StopAll, SkipAll
 from .lines.first import First
 from .lines.last import Last
-from .lines.dups import HasDups, DupLines, CountDups
+from .lines.dups import HasDups, DupLines, CountDups, Fingerprint
 from .lines.first_line import FirstLine
 from .lines.advance import Advance, AdvanceAll
 from .lines.after_blank import AfterBlank
@@ -422,6 +422,7 @@ class FunctionFactory:
         fs["var_table"] = VarTable
         fs["run_table"] = RunTable
         fs["empty_stack"] = EmptyStack
+        fs["fingerprint"] = Fingerprint
         fs["line_fingerprint"] = LineFingerprint
         fs["file_fingerprint"] = FileFingerprint
         fs["store_line_fingerprint"] = StoreFingerprint

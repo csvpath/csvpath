@@ -8,6 +8,38 @@ from ..function_focus import MatchDecider, ValueProducer
 from ..args import Args
 
 
+class Fingerprint(ValueProducer):
+    def check_valid(self) -> None:
+        self.name_qualifier = True
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    Returns the fingerprint of a line or subset of a line's header
+                    values. The fingerprint is a SHA256 hash of the values. A
+                    fingerprint can be used to lookup the line numbers of dups found
+                    by has_dups(), count_dups(), and dup_lines().
+            """
+            ),
+            f"""Note that {self.name} gives the fingerprint solely from one line.
+            By contrast, line_fingerprint() progressively updates a hash value
+            line-by-line.""",
+        ]
+        self.args = Args(matchable=self)
+        self.args.argset().arg(
+            name="check this", types=[None, Header], actuals=[None, Any]
+        )
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.default_match()
+
+    def _produce_value(self, skip=None) -> None:
+        fingerprint = FingerPrinter._fingerprint(self, skip=skip)
+        self.value = fingerprint
+
+
 #
 # count dups produces a number of dups
 # dup_lines produces a stack of line numbers

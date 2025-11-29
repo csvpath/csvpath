@@ -13,7 +13,9 @@ class Get(ValueProducer):
             self._cap_name(),
             self.wrap(
                 """\
-                    Returns a variable tracking or index value.
+                    Returns a variable's tracking or index value. The variable is either:
+                    - found by name using string value of the first argument, or
+                    - a variable or reference that is a dictionary or stack
 
                     A tracking value is similar to a dictionary key, usually keying a
                     count, calculation, or transformation.
