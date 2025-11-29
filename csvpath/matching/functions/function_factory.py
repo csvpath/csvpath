@@ -305,6 +305,7 @@ class FunctionFactory:
         fs["header_name"] = HeaderName
         fs["header_index"] = HeaderName
         fs["header_names_mismatch"] = HeaderNamesMismatch
+        fs["header_names_match"] = HeaderNamesMismatch
         fs["substring"] = Substring
         #
         # not aliases
