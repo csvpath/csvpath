@@ -3,6 +3,10 @@ from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .function_finder import FunctionFinder
 from .dates.now import Now
+from .dates.roll import Roll
+from .dates.part import DateFormat
+from .dates.part import DatePart
+from .strings.format import Format
 from .strings.lower import Lower
 from .strings.contains import Contains
 from .strings.upper import Upper
@@ -206,50 +210,40 @@ class FunctionFactory:
         fs["count"] = Count
         fs["has_matches"] = HasMatches
         fs["length"] = Length
-        #
-        # not aliases
-        #
         fs["regex"] = Regex
         fs["exact"] = Regex
         fs["not"] = Not
-        #
-        # not aliases
-        #
+        fs["year"] = DatePart
+        fs["month"] = DatePart
+        fs["day"] = DatePart
+        fs["roll"] = Roll
         fs["now"] = Now
         fs["thisyear"] = Now
         fs["thismonth"] = Now
         fs["today"] = Now
+        fs["format_date"] = DateFormat
         fs["in"] = In
         fs["concat"] = Concat
-        #
-        # not aliases
-        #
         fs["contains"] = Contains
         fs["find"] = Contains
+        fs["format"] = Format
+        fs["interpolate"] = Format
         fs["lower"] = Lower
         fs["upper"] = Upper
         fs["caps"] = Capitalize
         fs["alter"] = Alter
         fs["percent"] = Percent
-        #
-        # less than
-        #
         fs["below"] = AboveBelow
         fs["lt"] = AboveBelow
         fs["before"] = AboveBelow
         fs["lte"] = AboveBelow
         fs["le"] = AboveBelow
-        # greater than
         fs["above"] = AboveBelow
         fs["gt"] = AboveBelow
         fs["after"] = AboveBelow
         fs["gte"] = AboveBelow
         fs["ge"] = AboveBelow
-        #
         fs["first"] = First
-        #
-        # aliases
-        #
         fs["firstline"] = FirstLine
         fs["firstmatch"] = FirstLine
         fs["firstscan"] = FirstLine
@@ -259,14 +253,10 @@ class FunctionFactory:
         fs["count_lines"] = CountLines
         fs["count_scans"] = CountScans
         fs["or"] = Or
-        #
-        # aliases
-        #
         fs["no"] = No
         fs["false"] = No
         fs["yes"] = Yes
         fs["true"] = Yes
-        #
         fs["max"] = Max
         fs["min"] = Min
         fs["average"] = Average
