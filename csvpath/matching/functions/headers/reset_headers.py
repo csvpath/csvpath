@@ -22,6 +22,12 @@ class ResetHeaders(SideEffect):
 
                 If a function is passed as an argument it is evaluated after the
                 header reset happens as a side-effect.
+
+                To keep track of resets, give reset_headers() a name qualifier. E.g.
+                reset_headers.myreset(). You can then look at the value of @myreset_count
+                to see the number of times that reset_headers() match component was called.
+                And you can look at @myreset_lines to see the line numbers where the reset
+                calls happened.
             """
             ),
         ]
@@ -63,11 +69,36 @@ class ResetHeaders(SideEffect):
         for key in keys:
             del self.matcher.csvpath.variables[key]
         # end exp
-
+        #
+        # track the reset count
+        #
+        name = self.first_non_term_qualifier(self.get_id())
+        name = name if name is not None else self.get_id()
+        #
+        # track the count
+        #
+        v = self.matcher.get_variable(f"{name}_count", set_if_none=0)
+        v += 1
+        self.matcher.set_variable(f"{name}_count", value=v)
+        #
+        # track the line numbers
+        #
+        v = self.matcher.get_variable(f"{name}_lines", set_if_none=[])
+        v.append(self.matcher.csvpath.line_monitor.physical_line_number)
+        self.matcher.set_variable(f"{name}_lines", value=v)
+        #
+        # let the log know
+        #
         pln = self.matcher.csvpath.line_monitor.physical_line_number
         self.matcher.csvpath.logger.warning(
-            f"Resetting headers mid run! Line number: {pln}."
+            f"Reset headers mid run! Reset #{v}. Line number: {pln}."
         )
+        #
+        # if we have a do-after function, do it using match
+        #
         if len(self.children) == 1:
             self.children[0].matches(skip=skip)
+        #
+        # done
+        #
         self.match = self.default_match()

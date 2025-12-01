@@ -71,6 +71,20 @@ class TestCsvPathFunctionsPop(unittest.TestCase):
         assert len(s2) == 1
         assert s2 == ["year"]
 
+    def test_function_push5(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                push("pushed", yes() )
+                push( @pushed, yes() )
+            ]"""
+        )
+        path.fast_forward()
+        assert "pushed" in path.variables
+        assert len(path.variables["pushed"]) == 2
+
     def test_function_peek(self):
         path = CsvPath()
         path.parse(

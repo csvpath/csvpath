@@ -17,8 +17,10 @@ class Push(SideEffect):
             self.wrap(
                 """\
                 Appends a value to a stack variable. The stack is created if not found.
+
                 If the distinct qualifier is used, the value to be pushed is ignored
-                if it is already present in the stack.
+                if it is already present in the stack. Adding the notnone qualifier
+                prevents push() from adding a None to the stack.
             """
             ),
         ]
@@ -30,7 +32,7 @@ class Push(SideEffect):
         a.arg(
             name="stack name",
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str],
+            actuals=[str, list],
         )
         a.arg(
             name="push this",
@@ -47,7 +49,11 @@ class Push(SideEffect):
         eq = self.children[0]
         k = eq.left.to_value(skip=skip)
         v = eq.right.to_value(skip=skip)
-        stack = self.matcher.get_variable(k, set_if_none=[])
+        stack = None
+        if isinstance(k, list):
+            stack = k
+        else:
+            stack = self.matcher.get_variable(k, set_if_none=[])
         if stack is None or isinstance(stack, tuple):
             self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack. The run may be ending."
