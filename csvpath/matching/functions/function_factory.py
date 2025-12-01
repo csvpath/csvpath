@@ -367,6 +367,7 @@ class FunctionFactory:
         fs["float"] = Float
         fs["and"] = And
         fs["track"] = Track
+        fs["track_any"] = Track
         fs["sum"] = Sum
         fs["odd"] = Odd
         fs["even"] = Odd
