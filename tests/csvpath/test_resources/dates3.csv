@@ -1,0 +1,10 @@
+date,format,nothing,mixed, wrong
+2024-12-02,  %Y-%m-%D,,true,
+2024-11-01,  %Y-%m-%D,,false,
+2024-11-01,  %Y-%m-%D,,true,
+3/3/23,%m/%d/%Y,,1, five
+4/4/24,%m/%d/%Y,,45, 3
+5/5/25,%m/%d/%Y,,true,
+
+
+
