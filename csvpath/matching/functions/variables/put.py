@@ -1,11 +1,11 @@
 # pylint: disable=C0114
-from ..function_focus import ValueProducer
+from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
 from ..args import Args
 
 
-class Put(ValueProducer):
+class Put(SideEffect):
     """Sets a variable with or without a tracking value"""
 
     def check_valid(self) -> None:
@@ -13,10 +13,17 @@ class Put(ValueProducer):
             self._cap_name(),
             self.wrap(
                 """\
-                    Sets a variable tracking value.
+                    Sets a variable that tracks keyed-values.
 
                     A tracking value is similar to a dictionary key. It usually keys a
                     count, calculation, or transformation.
+
+                    Calling put() with one argument, a var name, creates an empty dictionary.
+
+                    Calling put() with two arguments creates a regular named-value variable.
+
+                    Calling put() with three arguments creates a dictionary, if needed, and
+                    uses the second variable as the key to store and access the third.
 
                     While get() and put() make it possible to create and use tracking-value
                     variables in an ad hoc dict-like way, this is not recommended unless there
@@ -25,6 +32,12 @@ class Put(ValueProducer):
             ),
         ]
         self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(
+            name="new var name",
+            types=[Term],
+            actuals=[str],
+        )
         a = self.args.argset(2)
         a.arg(
             name="var name",
@@ -56,18 +69,20 @@ class Put(ValueProducer):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        sibs = self.siblings()
         varname = None
-        c1 = self._child_one()
-        varname = c1.to_value(skip=skip)
-        c2 = self._child_two()
-        key = c2.to_value(skip=skip)
-        value = None
-        if len(self.children[0].children) > 2:
-            value = self.children[0].children[2].to_value(skip=skip)
+        varname = sibs[0].to_value(skip=skip)
+        if len(sibs) == 1:
+            self.matcher.set_variable(varname, value={})
         else:
-            value = key
-            key = None
-        self.matcher.set_variable(varname, value=value, tracking=key)
+            key = sibs[1].to_value(skip=skip)
+            value = None
+            if len(sibs) > 2:
+                value = sibs[2].to_value(skip=skip)
+            else:
+                value = key
+                key = None
+            self.matcher.set_variable(varname, value=value, tracking=key)
         self.value = self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:

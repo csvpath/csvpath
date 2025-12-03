@@ -85,6 +85,33 @@ class TestCsvPathFunctionsPop(unittest.TestCase):
         assert "pushed" in path.variables
         assert len(path.variables["pushed"]) == 2
 
+    def test_function_push6(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1*]
+            [
+                push("pushed")
+            ]"""
+        )
+        path.fast_forward()
+        assert "pushed" in path.variables
+        assert path.variables["pushed"] == []
+
+    def test_function_push7(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ~ validation-mode:raise, no-print~
+            ${PATH}[1*]
+            [
+                get("pushed")
+                push("pushed")
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.fast_forward()
+
     def test_function_peek(self):
         path = CsvPath()
         path.parse(

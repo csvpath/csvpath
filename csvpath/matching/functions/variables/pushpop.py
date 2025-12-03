@@ -28,6 +28,12 @@ class Push(SideEffect):
         self.match_qualifiers.append("notnone")
 
         self.args = Args(matchable=self)
+        a = self.args.argset(1)
+        a.arg(
+            name="new stack name",
+            types=[Term],
+            actuals=[str],
+        )
         a = self.args.argset(2)
         a.arg(
             name="stack name",
@@ -46,19 +52,44 @@ class Push(SideEffect):
         self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
-        eq = self.children[0]
-        k = eq.left.to_value(skip=skip)
-        v = eq.right.to_value(skip=skip)
+        sibs = self.siblings()
+        k = sibs[0].to_value(skip=skip)
+        if len(sibs) == 1:
+            v = self.matcher.get_variable(k, set_if_none=[])
+            if not isinstance(v, (list, tuple)):
+                msg = f"Variable {k} must be a stack variable"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
+            self.match = self.default_match()
+            return
+        v = sibs[1].to_value(skip=skip)
         stack = None
         if isinstance(k, list):
             stack = k
         else:
             stack = self.matcher.get_variable(k, set_if_none=[])
+        #
+        # make sure we have a usable stack var
+        #
         if stack is None or isinstance(stack, tuple):
             self.matcher.csvpath.logger.warning(  # pragma: no cover
                 "Push cannot add to the stack. The run may be ending."
             )
-        elif (self.distinct or self.name == "push_distinct") and v in stack:
+            self.match = self.default_match()
+            return
+        elif not isinstance(stack, list):
+            msg = f"Variable {k} must be a stack variable"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
+            else:
+                self.match = self.default_match()
+                return
+        #
+        # do the push
+        #
+        if (self.distinct or self.name == "push_distinct") and v in stack:
             pass
         elif self.notnone and ExpressionUtility.is_empty(v):
             pass

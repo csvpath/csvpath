@@ -53,10 +53,23 @@ class TestCsvPathFunctionsPut(unittest.TestCase):
             f"""
             ${PATH}[1*]
             [
-                put(#firstname, #lastname, line_number() )
+                put(#firstname, #lastname, line_number())
             ]"""
         )
         path.fast_forward()
         assert "Frog" in path.variables
         assert "Bat" in path.variables["Frog"]
         assert path.variables["Frog"]["Bat"] == 8
+
+    def test_function_put5(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                put("firstname")
+            ]"""
+        )
+        path.fast_forward()
+        assert "firstname" in path.variables
+        assert path.variables["firstname"] == {}
