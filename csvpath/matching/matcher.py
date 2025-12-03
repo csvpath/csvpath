@@ -424,6 +424,9 @@ class Matcher:  # pylint: disable=R0902
             name, tracking=tracking, set_if_none=set_if_none
         )
 
+    def clear_variable(self, name: str) -> None:
+        self.csvpath.clear_variable(name)
+
     def set_variable(self, name: str, *, value: Any, tracking=None) -> None:
         """see CsvPath.set_variable"""
         return self.csvpath.set_variable(name, value=value, tracking=tracking)

@@ -12,7 +12,16 @@ class String(Type):
         self.match_qualifiers.append("notnone")
         self.description = [
             "String",
-            "string() is used to indicate that a value must be a string to be valid.",
+            self.wrap(
+                """string() indicates that a value must be a string to be valid. All CSV
+               values start as strings so this function can be expected to return True
+               unless there is a notnone or length constraint violation.
+
+               To set a min length without setting a max length use a none() argument
+               for max. E.g. to set a string of length greater than or equal to 5 do:
+               string(none(), 5).
+            """,
+            ),
         ]
         #
         #

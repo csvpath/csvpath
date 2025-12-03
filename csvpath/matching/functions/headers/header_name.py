@@ -22,25 +22,28 @@ class HeaderName(ValueProducer):
         d = None
         if self.name == "header_name":
             d = self.wrap(
-                """\
-                        Looks up a header name by index.
+                f"""\
+                        Looks up a header name by index. e.g. header_name(0, "firstname")
+                        returns True if the first header is "firstname".
 
                         If given an expected result as a 2nd argument the return is
                         True/False on the match of expected to actual
 
-                        If no value is provided, header_name() is an existance test for the
+                        If no value is provided, {self.name}() is an existance test for the
                         header, not a check for the line having a value for the header.
             """
             )
         else:
             d = self.wrap(
-                """\
-                        Looks up a header index by header name.
+                f"""\
+                        Looks up a header index by header name. e.g. header_index("firstname")
+                        returns 0 when the "firstname" header is first. header_index("lastname", 1)
+                        returns True if the "lastname" header is second.
 
                         If given an expected result as a 2nd argument the return is
                         True/False on the match of expected to actual
 
-                        If no value is provided, header_name() is an existance test for the
+                        If no value is provided, {self.name}() is an existance test for the
                         header, not a check for the line having a value for the header.
             """
             )

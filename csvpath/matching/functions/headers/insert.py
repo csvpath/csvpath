@@ -1,4 +1,3 @@
-# pylint: disable=C0114
 from typing import Any
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Header, Reference, Variable
@@ -10,10 +9,24 @@ class Insert(SideEffect):
     """inserts a header at an index"""
 
     def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                Inserts a new header-value at a certain position within the output data.
+
+                For e.g.: insert(3, @critter)
+
+                This match component creates a new header at index 3 (0-based) and sets the
+                value for each line of output to the @critter variable.
+
+            """
+            ),
+        ]
         self.args = Args(matchable=self)
         a = self.args.argset(3)
-        a.arg(name="index", types=[Term], actuals=[int])
-        a.arg(name="name", types=[Term], actuals=[str])
+        a.arg(name="insert at index", types=[Term], actuals=[int])
+        a.arg(name="insert header name", types=[Term], actuals=[str])
         a.arg(
             name="data",
             types=[Variable, Header, Function, Reference],

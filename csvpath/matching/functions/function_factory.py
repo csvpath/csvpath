@@ -31,6 +31,7 @@ from .counting.tally import Tally
 from .counting.every import Every
 from .counting.increment import Increment
 from .headers.reset_headers import ResetHeaders
+from .headers.headers_stack import HeadersStack
 from .headers.header_name import HeaderName
 from .headers.header_names_mismatch import HeaderNamesMismatch
 from .headers.collect import Collect
@@ -88,6 +89,8 @@ from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
+from .variables.clear import Clear
+from .variables.index_of import IndexOf
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
 from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
@@ -294,8 +297,15 @@ class FunctionFactory:
         #
         fs["header_name"] = HeaderName
         fs["header_index"] = HeaderName
+        #
+        # HeaderName tests for header_name_mismatch; however, it hasn't been
+        # an alias. It's not a bad feature, but the function needs a rewrite.
+        #
+        # fs["header_name_mismatch"] = HeaderName
+        #
         fs["header_names_mismatch"] = HeaderNamesMismatch
         fs["header_names_match"] = HeaderNamesMismatch
+        fs["headers_stack"] = HeadersStack
         fs["substring"] = Substring
         #
         # not aliases
@@ -368,6 +378,8 @@ class FunctionFactory:
         fs["and"] = And
         fs["track"] = Track
         fs["track_any"] = Track
+        fs["clear"] = Clear
+        fs["index_of"] = IndexOf
         fs["sum"] = Sum
         fs["odd"] = Odd
         fs["even"] = Odd
