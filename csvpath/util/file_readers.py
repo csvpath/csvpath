@@ -9,6 +9,8 @@ from .file_info import FileInfo
 from .class_loader import ClassLoader
 from .hasher import Hasher
 from .path_util import PathUtility as pathu
+from .xlsx.xlsx_reader_helper import XlsxReaderHelper
+from .json.json_reader_helper import JsonReaderHelper
 
 
 class DataFileReader(ABC):
@@ -140,57 +142,27 @@ class DataFileReader(ABC):
             #
             # how about XLSX?
             #
-            if (filetype is not None and filetype == "xlsx") or path.endswith("xlsx"):
-                if path.find("s3://") > -1:
-                    instance = ClassLoader.load(
-                        "from csvpath.util.s3.s3_xlsx_data_reader import S3XlsxDataReader",
-                        args=[path],
-                        kwargs={
-                            "sheet": sheet if sheet != path else None,
-                            "delimiter": delimiter,
-                            "quotechar": quotechar,
-                        },
-                    )
-                    return instance
-                if path.find("sftp://") > -1:
-                    instance = ClassLoader.load(
-                        "from csvpath.util.sftp.sftp_xlsx_data_reader import SftpXlsxDataReader",
-                        args=[path],
-                        kwargs={
-                            "sheet": sheet if sheet != path else None,
-                            "delimiter": delimiter,
-                            "quotechar": quotechar,
-                        },
-                    )
-                    return instance
-                if path.find("azure://") > -1:
-                    instance = ClassLoader.load(
-                        "from csvpath.util.azure.azure_xlsx_data_reader import AzureXlsxDataReader",
-                        args=[path],
-                        kwargs={
-                            "sheet": sheet if sheet != path else None,
-                            "delimiter": delimiter,
-                            "quotechar": quotechar,
-                        },
-                    )
-                    return instance
-                if path.find("gs://") > -1:
-                    instance = ClassLoader.load(
-                        "from csvpath.util.gcs.gcs_xlsx_data_reader import GcsXlsxDataReader",
-                        args=[path],
-                        kwargs={
-                            "sheet": sheet if sheet != path else None,
-                            "delimiter": delimiter,
-                            "quotechar": quotechar,
-                        },
-                    )
-                    return instance
-                return XlsxDataReader(
-                    path,
-                    sheet=sheet if sheet != path else None,
-                    delimiter=delimiter,
-                    quotechar=quotechar,
-                )
+            instance = XlsxReaderHelper._xlsx_if(
+                path=path,
+                filetype=filetype,
+                sheet=sheet,
+                delimiter=delimiter,
+                quotechar=quotechar,
+            )
+            if instance:
+                return instance
+            #
+            # maybe JSON?
+            #
+            instance = JsonReaderHelper._json_if(
+                path=path,
+                filetype=filetype,
+                sheet=sheet,
+                delimiter=delimiter,
+                quotechar=quotechar,
+            )
+            if instance:
+                return instance
             #
             # not an XLSX
             #
@@ -309,41 +281,6 @@ class CsvDataReader(DataFileReader):
                 )
                 for line in reader:
                     yield line
-
-    def file_info(self) -> dict[str, str | int | float]:
-        return FileInfo.info(self.path)
-
-
-class XlsxDataReader(DataFileReader):
-    def __init__(
-        self,
-        path: str,
-        *,
-        mode: str = "rb",  # XLSX are always binary
-        encoding: str = None,  # XLSX are always binary
-        filetype: str = None,
-        sheet=None,
-        delimiter=None,
-        quotechar=None,
-    ) -> None:
-        super().__init__()
-        self._sheet = sheet
-        self.path = path
-        self.mode = mode
-        self.encoding = encoding
-        #
-        # path should have already been trimmed in __new__ above.
-        #
-        if path.find("#") > -1:
-            self._sheet = path[path.find("#") + 1 :]
-            self.path = path[0 : path.find("#")]
-
-    def next(self) -> list[str]:
-        db = xl.readxl(fn=self.path)
-        if not self._sheet:
-            self._sheet = db.ws_names[0]
-        for row in db.ws(ws=self._sheet).rows:
-            yield [f"{datum}" for datum in row]
 
     def file_info(self) -> dict[str, str | int | float]:
         return FileInfo.info(self.path)

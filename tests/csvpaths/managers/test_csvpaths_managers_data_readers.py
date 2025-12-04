@@ -3,10 +3,8 @@ import pytest
 import os
 import shutil
 from csvpath.managers.files.file_manager import FileManager
-from csvpath.util.file_readers import (
-    CsvDataReader,
-    XlsxDataReader,
-)
+from csvpath.util.file_readers import CsvDataReader
+from csvpath.util.xlsx.xlsx_data_reader import XlsxDataReader
 from csvpath import CsvPaths
 from tests.csvpaths.builder import Builder
 from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
