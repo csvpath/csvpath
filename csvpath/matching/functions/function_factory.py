@@ -183,17 +183,22 @@ class FunctionFactory:
         f = None
         qname = name
         name, qualifier = cls.get_name_and_qualifier(name)
-        if len(cls.MY_FUNCTIONS) == 0:
+        #
+        # we check externals first, even though they will be infrequent, so that users
+        # can override existing functions with updated functionality
+        #
+        f = cls._get_external_function_if(
+            matcher=matcher,
+            child=child,
+            name=name,
+            f=f,
+            find_external_functions=find_external_functions,
+        )
+        if f is None and len(cls.MY_FUNCTIONS) == 0:
             cls.load()
-        if name in cls.MY_FUNCTIONS:
+        if f is None and name in cls.MY_FUNCTIONS:
             c = cls.MY_FUNCTIONS.get(name)
             f = c(matcher, name, child)
-        if f is None and find_external_functions:
-            if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
-                FunctionFinder().load(matcher, cls)
-            if name in FunctionFactory.NOT_MY_FUNCTION:
-                f = cls.NOT_MY_FUNCTION[name]
-                f = f(matcher, name, child)
         if f is None and not find_external_functions:
             return None
         if f is None:
@@ -211,13 +216,13 @@ class FunctionFactory:
     def _get_external_function_if(
         cls,
         *,
+        f: Function,
         name: str,
         matcher,
         child: Matchable = None,
         find_external_functions: bool = True,
     ) -> Function:
-        f = None
-        if find_external_functions is True:
+        if f is None and find_external_functions is True:
             if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
                 FunctionFinder().load(matcher, cls)
             if name in FunctionFactory.NOT_MY_FUNCTION:
