@@ -56,7 +56,8 @@ class Tally(SideEffect):
                 # goes under "tally" or the qualifier
                 tally[0 : len(tally) - 1],
             )
-        self.value = True
+        # self.value = True
+        self._apply_default_value()
 
     def _store(self, name, value):
         if name == "":
@@ -87,5 +88,5 @@ class Tally(SideEffect):
         )
 
     def _decide_match(self, skip=None) -> None:
-        # self.match = self.to_value(skip=skip)
+        self.to_value(skip=skip)
         self.match = self.default_match()

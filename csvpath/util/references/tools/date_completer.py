@@ -20,9 +20,8 @@ class DateCompleter:
             tto = datetime.datetime(d.year + 1, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
         elif unit == "month":
             ffrom = datetime.datetime(d.year, d.month, 1, 0, 0, 0, tzinfo=timezone.utc)
-            tto = datetime.datetime(
-                d.year, d.month + 1, 1, 0, 0, 0, tzinfo=timezone.utc
-            )
+            im = (d.month + 1) if d.month < 12 else 1
+            tto = datetime.datetime(d.year, im, 1, 0, 0, 0, tzinfo=timezone.utc)
             tto = ffrom + relativedelta(months=1)
         elif unit == "day":
             ffrom = datetime.datetime(

@@ -208,6 +208,24 @@ class FunctionFactory:
         return f
 
     @classmethod
+    def _get_external_function_if(
+        cls,
+        *,
+        name: str,
+        matcher,
+        child: Matchable = None,
+        find_external_functions: bool = True,
+    ) -> Function:
+        f = None
+        if find_external_functions is True:
+            if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
+                FunctionFinder().load(matcher, cls)
+            if name in FunctionFactory.NOT_MY_FUNCTION:
+                f = cls.NOT_MY_FUNCTION[name]
+                f = f(matcher, name, child)
+        return f
+
+    @classmethod
     def load(cls) -> None:
         fs = {}
         fs["count"] = Count

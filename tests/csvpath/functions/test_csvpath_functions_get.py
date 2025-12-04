@@ -19,6 +19,7 @@ class TestCsvPathFunctionsGet(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
+        print(f"vars: {path.variables}")
         assert len(lines) == 1
         assert "frog" in path.variables
         assert path.variables["frog"] == 2
