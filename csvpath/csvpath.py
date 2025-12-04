@@ -6,7 +6,7 @@ import os
 import hashlib
 import traceback
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from .util.config import Config
@@ -1417,12 +1417,15 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # and 4 parse.
         #
         if self.matcher is None:
+            self.new_matcher(line)
+            """
             h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
             self.logger.info("Loading matcher with data. match part hash: %s", h)
             self.matcher = Matcher(
                 csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
             )
             self.matcher.AND = self.AND
+            """
             #
             # we need to register all the Expressions as error listeners. not
             # sure it matters if we do it here or allow the Matcher to do it.
@@ -1436,6 +1439,15 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.matcher.line = line
         matched = self.matcher.matches()
         return matched
+
+    def new_matcher(self, line: Optional[list[str]]):
+        h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
+        self.logger.info("Loading matcher with data. match part hash: %s", h)
+        self.matcher = Matcher(
+            csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
+        )
+        self.matcher.AND = self.AND
+        return self.matcher
 
     def set_variable(self, name: str, *, value: Any, tracking: Any = None) -> None:
         """@private

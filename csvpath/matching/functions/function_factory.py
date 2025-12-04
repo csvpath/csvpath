@@ -141,16 +141,40 @@ class FunctionFactory:
         name = name.strip()
         if name == "":
             raise InvalidNameException("Name must not be an empty string")
-        if not name.isalpha():
+        if not cls.valid_function_name(name):  # name.isalpha():
             raise InvalidNameException("Name must alpha characters only")
         if cls.get_function(None, name=name, find_external_functions=False) is not None:
-            raise InvalidNameException("Built-in functions cannot be overriden")
+            function.matcher.csvpath.logger.warning(
+                "Internal function is overriden by external function: %s", name
+            )
+            # raise InvalidNameException("Built-in functions cannot be overriden")
         if not isinstance(function, Function):
             # pass as an instance, not a class, for specificity. good to do?
             raise InvalidChildException(
                 "Function being registered must be passed as an instance"
             )
         cls.NOT_MY_FUNCTION[name] = function.__class__
+
+    #
+    # valid function names start with a letter and contain only letters,
+    # numbers, periods, and/or underscores. the grammar allows '.' and '_' at the
+    # end of a function name; i don't love that.
+    #
+    @classmethod
+    def valid_function_name(cls, name: str) -> bool:
+        if name.isalpha():
+            return True
+        if not name[0].isalpha():
+            return False
+        for _ in name[1:]:
+            if _.isalnum():
+                continue
+            if _ == "_":
+                continue
+            if _ == ".":
+                continue
+            return False
+        return True
 
     @classmethod
     def get_name_and_qualifier(cls, name: str):  # pylint: disable=C0116
