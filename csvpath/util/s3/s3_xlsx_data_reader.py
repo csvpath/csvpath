@@ -3,7 +3,7 @@ import os
 import pylightxl as xl
 import boto3
 from smart_open import open
-from ..file_readers import XlsxDataReader
+from csvpath.util.xlsx.xlsx_data_reader import XlsxDataReader
 from .s3_fingerprinter import S3Fingerprinter
 from csvpath.util.box import Box
 from csvpath.util.s3.s3_utils import S3Utils

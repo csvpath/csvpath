@@ -140,7 +140,7 @@ class DataFileReader(ABC):
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)
                 return instance
             #
-            # how about XLSX?
+            # is XLSX?
             #
             instance = XlsxReaderHelper._xlsx_if(
                 path=path,
@@ -157,14 +157,13 @@ class DataFileReader(ABC):
             instance = JsonReaderHelper._json_if(
                 path=path,
                 filetype=filetype,
-                sheet=sheet,
                 delimiter=delimiter,
                 quotechar=quotechar,
             )
             if instance:
                 return instance
             #
-            # not an XLSX
+            # not an XLSX, not JSONL
             #
             if path.startswith("s3://"):
                 instance = ClassLoader.load(

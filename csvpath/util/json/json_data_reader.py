@@ -1,12 +1,18 @@
-import csv
-import importlib
-import pylightxl as xl
+import jsonlines
+from datetime import datetime
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.file_info import FileInfo
 from csvpath.util.class_loader import ClassLoader
 from csvpath.util.file_readers import DataFileReader
+from .json_reader_helper import JsonReaderHelper
 
 
 class JsonDataReader(DataFileReader):
+
+    #
+    # some classes may assume a delimiter and quotechar even though
+    # that isn't needed for Json. if passed we ignore them.
+    #
     def __init__(
         self,
         path: str,
@@ -14,28 +20,27 @@ class JsonDataReader(DataFileReader):
         mode: str = "r",
         encoding: str = "utf-8",
         filetype: str = None,
-        sheet=None,
-        delimiter=None,
-        quotechar=None,
+        delimiter: str = None,
+        quotechar: str = None
     ) -> None:
         super().__init__()
-        self._sheet = sheet
         self.path = path
         self.mode = mode
         self.encoding = encoding
-        #
-        # path should have already been trimmed in __new__ above.
-        #
-        if path.find("#") > -1:
-            self._sheet = path[path.find("#") + 1 :]
-            self.path = path[0 : path.find("#")]
 
     def next(self) -> list[str]:
-        db = xl.readxl(fn=self.path)
-        if not self._sheet:
-            self._sheet = db.ws_names[0]
-        for row in db.ws(ws=self._sheet).rows:
-            yield [f"{datum}" for datum in row]
+        with jsonlines.open(self.path) as reader:
+            i = 0
+            for obj in reader.iter(skip_invalid=True):
+                line = JsonReaderHelper.line_from_obj(obj, i)
+                if isinstance(line, tuple):
+                    headers = line[0]
+                    line = line[1]
+                    yield headers
+                    yield line
+                else:
+                    yield line
+                i += 1
 
     def file_info(self) -> dict[str, str | int | float]:
         return FileInfo.info(self.path)
