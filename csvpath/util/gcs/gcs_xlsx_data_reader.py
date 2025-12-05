@@ -4,7 +4,7 @@ import pylightxl as xl
 from smart_open import open
 from csvpath.util.box import Box
 from csvpath.util.hasher import Hasher
-from csvpath.util.file_readers import XlsxDataReader
+from csvpath.util.xlsx.xlsx_data_reader import XlsxDataReader
 from .gcs_fingerprinter import GcsFingerprinter
 from .gcs_utils import GcsUtility
 

@@ -1,8 +1,7 @@
-from abc import ABC
 from csvpath.util.class_loader import ClassLoader
 
 
-class XlsxReaderHelper(ABC):
+class XlsxReaderHelper:
     @classmethod
     def _is_xslt(cls, path, filetype) -> bool:
         if filetype == "xlsx":

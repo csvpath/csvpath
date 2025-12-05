@@ -1,0 +1,14 @@
+~
+validation-mode:raise, print
+~
+$[1*][
+    #lastname.nocontrib == "Bat" -> print("My name is: $.headers.lastname", "name_tags")
+
+    tally(#lastname)
+    in(#lastname, "Bat|Kermit") -> print("$.headers.firstname, $.headers.lastname, $.headers.say", "checklist")
+]
+
+
+
+
+

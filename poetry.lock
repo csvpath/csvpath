@@ -1598,6 +1598,21 @@ files = [
 ]
 
 [[package]]
+name = "jsonlines"
+version = "4.0.0"
+description = "Library with helpers for the jsonlines file format"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "jsonlines-4.0.0-py3-none-any.whl", hash = "sha256:185b334ff2ca5a91362993f42e83588a360cf95ce4b71a73548502bda52a7c55"},
+    {file = "jsonlines-4.0.0.tar.gz", hash = "sha256:0c6d2c09117550c089995247f605ae4cf77dd1533041d366351f6f298822ea74"},
+]
+
+[package.dependencies]
+attrs = ">=19.2.0"
+
+[[package]]
 name = "lark"
 version = "1.3.1"
 description = "a modern parsing library"
@@ -3713,4 +3728,4 @@ pandas = ["pandas"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.10,<4.0"
-content-hash = "89b51d2ff490744cd1e8bfe9c70e7d648814af995aea7308b8e72b9f86c1d04b"
+content-hash = "6d0120fa26db8c03c7a5d49aff003dc2451709f1b3b9b1ed1d8a16e071cf246f"

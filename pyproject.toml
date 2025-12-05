@@ -60,6 +60,7 @@ mysqlclient = "^2.2.7"
 psycopg2-binary = "^2.9.10"
 pandas = "^2.2.2"
 lxml = "^6.0.2"
+jsonlines = "^4.0.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
