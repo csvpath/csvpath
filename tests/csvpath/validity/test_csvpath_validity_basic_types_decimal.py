@@ -9,9 +9,6 @@ from csvpath.matching.util.exceptions import ChildrenException
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers3.csv"
 NUMBERS5 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers5.csv"
-DELETEME = (
-    f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
-)
 
 
 class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
@@ -75,26 +72,18 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         assert len(lines) == 2
 
     def test_function_decimal4(self):
-        # why use the alt ini here?
-        iii = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
-        try:
-            testini = f"tests{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = testini
-            path = CsvPath()
-            # path.config.add_to_config("errors", "csvpath", "raise")
-            path.parse(
-                f"""
-                    ~ return-mode: matches
-                      validation-mode: no-raise, no-stop ~
-                    ${NUMBERS}[1*] [
-                            decimal.weak(#1)
-                            decimal.weak.notnone(#2)
-                    ]"""
-            )
-            lines = path.collect()
-            assert len(lines) == 7
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = iii
+        path = CsvPath()
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: no-raise, no-stop ~
+                ${NUMBERS}[1*] [
+                        decimal.weak(#1)
+                        decimal.weak.notnone(#2)
+                ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 7
 
     def test_function_decimal5(self):
         path = CsvPath()

@@ -7,8 +7,6 @@ from csvpath.util.config import Config
 from tests.csvpaths.builder import Builder
 from csvpath.util.path_util import PathUtility as pathu
 
-TINI = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}deleteme{os.sep}config.ini"
-
 
 class TestCsvPathsManagersListeners(unittest.TestCase):
     def test_additional_listeners1(self):
