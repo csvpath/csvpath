@@ -114,7 +114,7 @@ class TestCsvPathConfig(unittest.TestCase):
         if os.path.exists(TEST_INI):
             os.remove(TEST_INI)
         c = Config()
-        c.configpath(TEST_INI)
+        c.configpath = TEST_INI
         assert os.path.exists(TEST_INI)
 
     def test_config_assure_log_dir(self):
