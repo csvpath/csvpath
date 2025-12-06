@@ -79,8 +79,13 @@ class S3Utils:
             )
             client.head_object(Bucket=bucket, Key=key)
         except ClientError as e:
-            assert str(e).find("404") > -1
-            return False
+            _ = str(e)
+            if _.find("404") > -1:
+                return False
+            if _.find("403") > -1:
+                return False
+            else:
+                raise ValueError("Unexpected ClientError message: {_}")
         except DeprecationWarning:
             ...
         return True

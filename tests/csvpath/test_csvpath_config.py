@@ -111,17 +111,11 @@ class TestCsvPathConfig(unittest.TestCase):
         assert os.path.exists(TEST_INI)
 
     def test_config_default_file_by_path(self):
-        oini = None
-        if Config.CSVPATH_CONFIG_FILE_ENV in os.environ:
-            oini = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
-        try:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = TEST_INI
-            if os.path.exists(TEST_INI):
-                os.remove(TEST_INI)
-            Config()
-            assert os.path.exists(TEST_INI)
-        finally:
-            os.environ[Config.CSVPATH_CONFIG_FILE_ENV] = oini
+        if os.path.exists(TEST_INI):
+            os.remove(TEST_INI)
+        c = Config()
+        c.configpath(TEST_INI)
+        assert os.path.exists(TEST_INI)
 
     def test_config_assure_log_dir(self):
         cfg = f"tests{os.sep}test_resources{os.sep}config-1"
