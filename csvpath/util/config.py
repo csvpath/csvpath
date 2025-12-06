@@ -41,8 +41,7 @@ class LogFile(Enum):
 
 
 class Sections(Enum):
-    CSVPATH_FILES = "csvpath_files"
-    CSV_FILES = "csv_files"
+    EXTENSIONS = "extensions"
     ERRORS = "errors"
     LOGGING = "logging"
     FUNCTIONS = "functions"
@@ -224,7 +223,7 @@ verify = False
 # on-invalid-slack: webhook-minus-'https://'
 webhook_url =
 
-[scripts]
+[scripts]
 run_scripts = no
 shell = /bin/bash
 """

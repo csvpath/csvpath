@@ -16,18 +16,20 @@ class Fingerprint(ValueProducer):
             self.wrap(
                 """\
                     Returns the fingerprint of a line or subset of a line's header
-                    values. The fingerprint is a SHA256 hash of the values. A
-                    fingerprint can be used to lookup the line numbers of dups found
-                    by has_dups(), count_dups(), and dup_lines().
+                    values, if headers are provided as arguments. The fingerprint is a
+                    SHA256 hash of the values. A fingerprint can be used to lookup the
+                    line numbers of dups found by has_dups(), count_dups(), and
+                    dup_lines().
+
+                    Note that {self.name} gives the fingerprint solely from one line.
+                    By contrast, line_fingerprint() progressively updates a hash value
+                    line-by-line.
             """
             ),
-            f"""Note that {self.name} gives the fingerprint solely from one line.
-            By contrast, line_fingerprint() progressively updates a hash value
-            line-by-line.""",
         ]
         self.args = Args(matchable=self)
         self.args.argset().arg(
-            name="check this", types=[None, Header], actuals=[None, Any]
+            name="include this", types=[None, Header], actuals=[None, Any]
         )
         self.args.validate(self.siblings())
         super().check_valid()
