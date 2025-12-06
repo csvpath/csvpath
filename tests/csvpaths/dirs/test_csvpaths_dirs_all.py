@@ -10,13 +10,10 @@ BUCKET = "csvpath"
 DIR = "testdir"
 
 
-
-
-
-
 class TestCsvPathsBackendDirs(unittest.TestCase):
     def test_dirs(self) -> None:
         config = CsvPaths().config
+
         for _ in [
             ("s3", "csvpath-example-1"),
             ("gs", "csvpath-testing-1"),
@@ -28,7 +25,12 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
             ),
             ("", f"tests{os.sep}test_resources"),
         ]:
-            self.do_test_dirs(_)
+            try:
+                self.do_test_dirs(_)
+            except Exception as e:
+                raise Exception(
+                    f"""ERROR: e: {type(e)}: {e}\nConfig: {config}: {config.configpath}\n_: {_}: {config.configpath}"""
+                )
 
     def do_test_dirs(self, backend):
         print(f"doing backend {backend}")
@@ -66,7 +68,7 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
             Nos(dirpath).join(TEMP_FILE_1),
             Nos(dirpath).join(TEMP_FILE_2),
             Nos(dirpath).join(TEMP_FILE_3),
-            Nos(dirpath).join(TEMP_FILE_4)
+            Nos(dirpath).join(TEMP_FILE_4),
         ]
         print(f"paths are {paths}")
 
