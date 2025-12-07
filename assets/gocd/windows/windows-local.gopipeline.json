@@ -33,7 +33,12 @@
         "roles": [],
         "allow_only_on_success": false
       },
-      "environment_variables": [],
+          "environment_variables": [
+            {
+              "name": "CSVPATH_CONFIG_PATH",
+              "value": "\"assets/config/config.ini\""
+            }
+          ],
       "jobs": [
         {
           "name": "run",
