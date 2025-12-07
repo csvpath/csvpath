@@ -124,8 +124,8 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         # 4. store the json with the updated config
         #
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "collect, print")
-        paths.config.add_to_config("errors", "csvpaths", "collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config(
             "listeners",
             "test.results",
@@ -137,6 +137,13 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
             name="hooks2",
             directory=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths",
         )
+        assert paths.paths_manager.total_named_paths() == 1
+        assert paths.paths_manager.has_named_paths("hooks2")
+        for _ in paths.paths_manager.named_paths_names:
+            print(f"...a paths: {_}")
+        for _ in paths.paths_manager.get_named_paths("hooks2"):
+            print(f"|||a hooks2 path: {_}")
+
         cfg = paths.paths_manager.get_config_for_paths("hooks2")
         hooks2 = cfg.get("hooks2")
         if hooks2 is None:
