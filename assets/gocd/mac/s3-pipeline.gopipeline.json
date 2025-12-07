@@ -37,7 +37,7 @@
       "jobs": [
         {
           "name": "unit-tests",
-          "environment_variables": [],
+          "environment_variables": [{"CSVPATH_CONFIG_PATH":"assets/config/jenkins-local-s3.ini"}],
           "tabs": [],
           "resources": ["mac"],
           "artifacts": [],
