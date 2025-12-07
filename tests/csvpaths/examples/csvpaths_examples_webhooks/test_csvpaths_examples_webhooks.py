@@ -60,6 +60,10 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
             name="hooks",
             path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvs{os.sep}hooks.csv",
         )
+        paths.paths_manager.add_named_paths_from_dir(
+            name="hooks2",
+            directory=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths",
+        )
         paths.fast_forward_paths(pathsname=paths_name, filename="hooks")
         #
         # get the metadata from ^^^^ for replay
