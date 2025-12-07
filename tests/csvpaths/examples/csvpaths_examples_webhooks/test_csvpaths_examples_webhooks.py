@@ -56,6 +56,12 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         self._do_test(paths, paths_name="hooks")
 
     def _do_test(self, paths, paths_name):
+        print(f"paths: {paths}")
+        print(f"paths.config: {paths.config}")
+        print(f"paths.config.configpath: {paths.config.configpath}")
+        print(
+            f"paths.config.namedpaths: {paths.config.get(section='inputs', name='csvpaths')}"
+        )
         paths.file_manager.add_named_file(
             name="hooks",
             path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvs{os.sep}hooks.csv",
