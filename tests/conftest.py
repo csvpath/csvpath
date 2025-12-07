@@ -21,7 +21,6 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.fixture(scope="function", autouse=True)
 def has_ini(request):
-    print("checking OINI")
     OINI = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
     if OINI is None:
         raise ValueError("OINI cannot be None")
