@@ -133,6 +133,16 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         )
         paths.config.add_to_config("listeners", "groups", "test")
 
+        print(f"paths: {paths}")
+        print(f"paths.config: {paths.config}")
+        print(f"paths.config.configpath: {paths.config.configpath}")
+        print(
+            f"paths.config.namedpaths: {paths.config.get(section='inputs', name='csvpaths')}"
+        )
+        print(
+            f"paths.config.namedpaths: {paths.config.get(section='extensions', name='csvpath_files')}"
+        )
+
         paths.paths_manager.add_named_paths_from_dir(
             name="hooks2",
             directory=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths",
