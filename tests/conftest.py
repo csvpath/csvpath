@@ -5,6 +5,7 @@ import traceback
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
+from csvpath.util.config import Config
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -16,6 +17,14 @@ def pytest_sessionfinish(session, exitstatus):
             box.remove(Box.SQL_ENGINE)
         except Exception as e:
             print(f"Error in test cleanup: {type(e)}: {e}")
+
+
+@pytest.fixture(scope="function", autouse=True)
+def has_ini(request):
+    print("checking OINI")
+    OINI = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
+    if OINI is None:
+        raise ValueError("OINI cannot be None")
 
 
 @pytest.fixture(scope="session", autouse=True)

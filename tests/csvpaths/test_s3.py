@@ -35,5 +35,6 @@ class TestS3NoEnv(unittest.TestCase):
         except Exception as e:
             print(f"error: {type(e)}: {e}")
             print("have you loaded exports.sh?")
-        os.environ["AWS_ACCESS_KEY_ID"] = ak
-        os.environ["AWS_SECRET_ACCESS_KEY"] = sk
+        finally:
+            os.environ["AWS_ACCESS_KEY_ID"] = ak
+            os.environ["AWS_SECRET_ACCESS_KEY"] = sk
