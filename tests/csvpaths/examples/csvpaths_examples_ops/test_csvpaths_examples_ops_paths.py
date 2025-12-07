@@ -16,12 +16,12 @@ ASSETS = (
 MAR = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Mar"
 JAN = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Jan"
 FEB = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme{os.sep}invoices{os.sep}2025{os.sep}Feb"
-INI = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-config.ini" if os.sep == "/" else f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-win-config.ini"
-OINI = None
-try: 
-    OINI = os.environ[Config.CSVPATH_CONFIG_FILE_ENV] 
-except Exception:
-    OINI = f"config{os.sep}config.ini"
+INI = (
+    f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-config.ini"
+    if os.sep == "/"
+    else f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-win-config.ini"
+)
+OINI = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
 ACME = f"{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme"
 
 

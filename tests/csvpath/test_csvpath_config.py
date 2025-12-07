@@ -14,7 +14,6 @@ TEST_INI = (
 )
 TINI = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}config.ini"
 OINI = os.getenv("CSVPATH_CONFIG_PATH")
-# OINI = f"config{os.sep}config.ini"
 BAD_INI = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}bad_config.ini"
 
 
