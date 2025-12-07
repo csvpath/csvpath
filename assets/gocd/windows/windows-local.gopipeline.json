@@ -36,7 +36,7 @@
           "environment_variables": [
             {
               "name": "CSVPATH_CONFIG_PATH",
-              "value": "\"assets/config/config.ini\""
+              "value": "assets\\config\\config.ini"
             }
           ],
       "jobs": [
