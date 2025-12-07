@@ -21,7 +21,7 @@ INI = (
     if os.sep == "/"
     else f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}config{os.sep}ops-win-config.ini"
 )
-OINI = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
+OINI = os.getenv(Config.CSVPATH_CONFIG_FILE_ENV)
 ACME = f"{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_ops{os.sep}data{os.sep}customers{os.sep}acme"
 
 
