@@ -70,8 +70,8 @@ class Matcher:  # pylint: disable=R0902
         if not headers:
             # this could be a dry-run or unit testing
             pass
-        if not data:
-            raise MatchException(f"Input needed: data: {data}")  # pragma: no cover
+        # if data is None:
+        #    raise MatchException(f"Input needed: data: {data}")  # pragma: no cover
         self.path = data
         self.csvpath = csvpath
         self._line = line

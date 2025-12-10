@@ -847,7 +847,7 @@ shell = /bin/bash
 
     @property
     def function_imports(self) -> str:
-        return self._get(Sections.FUNCTIONS.value, "imports", "imports")
+        return self._get(Sections.FUNCTIONS.value, "imports", "")
 
     @function_imports.setter
     def function_imports(self, path: str) -> None:

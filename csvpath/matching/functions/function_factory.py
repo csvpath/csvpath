@@ -142,7 +142,7 @@ class FunctionFactory:
         if name == "":
             raise InvalidNameException("Name must not be an empty string")
         if not cls.valid_function_name(name):  # name.isalpha():
-            raise InvalidNameException("Name must alpha characters only")
+            raise InvalidNameException(f"Name {name} is not valid")
         if cls.get_function(None, name=name, find_external_functions=False) is not None:
             function.matcher.csvpath.logger.warning(
                 "Internal function is overriden by external function: %s", name
@@ -196,7 +196,15 @@ class FunctionFactory:
         child: Matchable = None,
         find_external_functions: bool = True,
     ) -> Function:
+        if matcher is None:
+            from csvpath.util.log_utility import LogUtility as lout
 
+            lout.log_brief_trace()
+            print(f"getting function: {name}. matcher is None")
+        else:
+            print(
+                f"getting function: {name}. Config path: {matcher.csvpath.config.configpath}. Imports: {matcher.csvpath.config.function_imports}"
+            )
         #
         # matcher must be Noneable for add_function
         #
@@ -226,7 +234,15 @@ class FunctionFactory:
         if f is None and not find_external_functions:
             return None
         if f is None:
-            raise UnknownFunctionException(f"{name}")
+            if matcher is None:
+                raise UnknownFunctionException(
+                    f"Function {name} not found. Matcher is None. Config path unavailable. Function imports path unavailable."
+                )
+            else:
+                print(f"external functions: {cls.NOT_MY_FUNCTION}")
+                raise UnknownFunctionException(
+                    f"{name}. Config path: {matcher.csvpath.config.configpath}. Imports: {matcher.csvpath.config.function_imports}"
+                )
         if child:
             child.parent = f
         if qualifier:
@@ -235,6 +251,12 @@ class FunctionFactory:
         if f.matcher is None:
             f.matcher = matcher
         return f
+
+    @classmethod
+    def clear_to_reload(cls, imports_path: str) -> None:
+        e = FunctionFinder.externals_sentinel_from_path(imports_path)
+        if e in FunctionFactory.NOT_MY_FUNCTION:
+            del FunctionFactory.NOT_MY_FUNCTION[e]
 
     @classmethod
     def _get_external_function_if(
@@ -247,8 +269,9 @@ class FunctionFactory:
         find_external_functions: bool = True,
     ) -> Function:
         if f is None and find_external_functions is True:
-            if FunctionFinder.EXTERNALS not in FunctionFactory.NOT_MY_FUNCTION:
-                FunctionFinder().load(matcher, cls)
+            e = FunctionFinder.externals_sentinel(matcher)
+            if e not in FunctionFactory.NOT_MY_FUNCTION:
+                FunctionFinder.load(matcher, cls)
             if name in FunctionFactory.NOT_MY_FUNCTION:
                 f = cls.NOT_MY_FUNCTION[name]
                 f = f(matcher, name, child)

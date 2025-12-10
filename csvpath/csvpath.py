@@ -1440,9 +1440,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         matched = self.matcher.matches()
         return matched
 
-    def new_matcher(self, line: Optional[list[str]]):
-        h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
-        self.logger.info("Loading matcher with data. match part hash: %s", h)
+    def new_matcher(self, line: Optional[list[str]] = None):
+        h = None
+        if line is None:
+            line = []
+        if self.match is not None:
+            h = hashlib.sha256(self.match.encode("utf-8")).hexdigest()
+            self.logger.info("Loading matcher with data. match part hash: %s", h)
         self.matcher = Matcher(
             csvpath=self, data=self.match, line=line, headers=self.headers, myid=h
         )

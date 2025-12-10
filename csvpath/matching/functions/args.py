@@ -408,6 +408,14 @@ class Args:
         # matching. we only do this part once, so it's not a big lift.
         #
         good = False
+        _m = None
+        if len(siblings) > 0 and len(self._argsets) == 0:
+            _m = "No arguments are expected"
+        elif len(self._argsets) == 0:
+            good = True
+        #
+        # good = False
+        #
         for aset in self._argsets:
             _m = aset.validate_structure(siblings)
             if _m is None:
