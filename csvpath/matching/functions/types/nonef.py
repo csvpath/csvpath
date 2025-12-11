@@ -37,7 +37,7 @@ class Nonef(ValueProducer, Type):
             self.match = True
         if isinstance(self._child_one(), Term):
             v = self._value_one(skip=skip)
-            h = self.matcher.get_header_value(self, v)
+            h = self.matcher.get_header_value(v)
             self.match = ExpressionUtility.is_none(h)
             if self.match is False:
                 msg = f"'{v}' must be empty"

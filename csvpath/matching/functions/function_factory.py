@@ -36,12 +36,14 @@ from .headers.header_name import HeaderName
 from .headers.header_names_mismatch import HeaderNamesMismatch
 from .headers.collect import Collect
 from .headers.replace import Replace
+from .headers.rename import Rename
 from .headers.append import Append
 from .headers.insert import Insert
 from .headers.headers import Headers
 from .headers.empty_stack import EmptyStack
 from .headers.mismatch import Mismatch
 from .headers.end import End
+from .headers.line_before import LineBefore
 from .math.above import AboveBelow
 from .math.add import Add
 from .math.subtract import Subtract
@@ -196,15 +198,6 @@ class FunctionFactory:
         child: Matchable = None,
         find_external_functions: bool = True,
     ) -> Function:
-        if matcher is None:
-            from csvpath.util.log_utility import LogUtility as lout
-
-            lout.log_brief_trace()
-            print(f"getting function: {name}. matcher is None")
-        else:
-            print(
-                f"getting function: {name}. Config path: {matcher.csvpath.config.configpath}. Imports: {matcher.csvpath.config.function_imports}"
-            )
         #
         # matcher must be Noneable for add_function
         #
@@ -325,6 +318,7 @@ class FunctionFactory:
         fs["first_match"] = FirstLine
         fs["count_lines"] = CountLines
         fs["count_scans"] = CountScans
+        fs["line_before"] = LineBefore
         fs["or"] = Or
         fs["no"] = No
         fs["false"] = No
@@ -441,6 +435,7 @@ class FunctionFactory:
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect
         fs["replace"] = Replace
+        fs["rename"] = Rename
         fs["append"] = Append
         fs["insert"] = Insert
         fs["int"] = Int

@@ -16,8 +16,8 @@ class TestCsvPath(unittest.TestCase):
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[3][ yes() ]")
         path.fast_forward()
-        v1 = path.matcher.get_header_value(None, 2)
-        v2 = path.matcher.get_header_value(None, "say")
+        v1 = path.matcher.get_header_value(2)
+        v2 = path.matcher.get_header_value("say")
         assert v1 == v2
         assert v1 == "ribbit..."
 
