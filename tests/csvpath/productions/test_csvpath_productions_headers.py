@@ -16,7 +16,9 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.OR = True
         path.parse(
-            f"""${FILE}[*][
+            f"""
+                ~ validation-mode:no-raise, no-stop, print, no-fail, collect ~
+                ${FILE}[*][
                 starts_with(#0, "#") -> @runid.notnone = regex( /Run ID: ([0-9]*)/, #0, 1 )
                 starts_with(#0, "#") -> @userid.notnone = regex( /User: ([a-zA-Z0-9]*)/, #0, 1 )
 
@@ -29,21 +31,52 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
 
                 print.onchange.once(
                     "Number of headers changed by $.variables.header_change",
-                        print("See line $.csvpath.line_number", skip()))
+                        print("See line $.csvpath.line_number
+                        ", skip()))
 
-                not( in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" ) ) ->
-                    print( "Bad category $.headers.category at line $.csvpath.count_lines ", fail())
+                ~
+                    we create two vars and two header existance tests. each of these 4
+                    determins match because we are OR -- match takes just one positive.
+                    They are also used to print errors. in this case, we want the error
+                    report as our main validation. the matched lines only indicate there
+                    is some valid data per line, not that the line is fully valid. this
+                    is a very particular validation strategy. If we wanted to do it with
+                    AND we would just use .nocontrib on the left hand sides. i.e. both
+                    are pretty easy, just a bit different.
+                ~
 
-                not( exact( end(), /\\$?(\\d*\\.\\d{0, 2})/ ) ) ->
-                    print("Bad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
+                ~ 1x wrong, 2nd item ~
+                @in = in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" )
+                not( @in.asbool ) ->
+                    error.category( "Bad category $.headers.category at line $.csvpath.count_lines ", fail())
 
-                not( #SKU ) -> print("No SKU at line $.csvpath.count_lines in $.csvpath.headers", fail())
-                not( #UPC ) -> print("No UPC at line $.csvpath.count_lines", fail())
+                ~ 2x wrong, 2nd and 3rd items ~
+                @price = exact( end(), /\\$?\\d*\\.\\d{{2}}/ )
+                not( @price.asbool ) ->
+                    error.price("Bad price $.headers.'a price' at line  $.csvpath.count_lines", fail())
 
+                ~ 1x missing, 1st item ~
+                #SKU
+                not( #SKU ) ->
+                    error.sku("No SKU at line $.csvpath.count_lines in $.csvpath.headers", fail())
+
+                ~ always exists ~
+                #UPC
+                not( #UPC ) ->
+                    error.upc("No UPC at line $.csvpath.count_lines", fail())
             ]"""
         )
         lines = path.collect()
         assert len(lines) == 3
+        # print(f"stopped: {path.stopped}")
+        # print(f"valid: {path.is_valid}")
+        # print(f"errors: {path.errors_count}")
+        assert path.errors_count == 4
+        """
+        if path.errors:
+            for _ in path.errors:
+                print(f"\nerrors: {_}")
+        """
 
     def test_header_names11(self):
         path = CsvPath()

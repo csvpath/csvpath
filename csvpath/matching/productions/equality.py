@@ -422,7 +422,9 @@ class Equality(Matchable):
                     "Overriding frozen in when/do: %s", self
                 )
             self.DO_WHEN = True
-            self.right.matches(skip=skip)
+            b = self.right.matches(skip=skip)
+            if b is False:
+                b = self.right.nocontrib
             if override:
                 self.matcher.csvpath.logger.debug(
                     "Resetting frozen after when/do: %s", self
@@ -470,6 +472,7 @@ class Equality(Matchable):
                 b = self._do_when(skip=skip)
             else:
                 b = self._do_equality(skip=skip)
+
             self.match = b
             self.matching().result(b)
         return self.match

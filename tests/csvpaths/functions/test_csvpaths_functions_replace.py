@@ -19,4 +19,5 @@ class TestCsvPathsFunctionsReplace(unittest.TestCase):
 
         assert len(results) == 2
         result = results[1]
+        assert result.errors_count == 0
         assert len(result) == 8

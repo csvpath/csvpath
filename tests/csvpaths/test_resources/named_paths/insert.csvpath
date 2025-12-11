@@ -12,14 +12,31 @@
 
 
 ~
-    validation-mode:raise, no-stop, print
+    this test checks insert. it also checks nocontrib on a when/do right-hand side, and
+    by implecation when/do right-hand side matching. if you remove the first when/do
+    not()'s nocontrib, that match component determines the match. as it is, the not()
+    only determines if the error() fires or not; in this case it does not fire. the
+    not()'s contained equality is true, so the not() is false, and therefore the error()
+    does not fire.
+
+    validation-mode:raise, no-stop, print, collect
     source-mode:preceding
 ~
     ${PATH}[1*]
     [
+        ~
+          all the odd lines are sunny. the not() would raise the error
+          if it were true, but as the fact is true the not() is false
+          and the error isn't fired.
+        ~
+        odd.nocontrib(line_number()) ->
+            not.nocontrib(#weather == "sunny", error("day $.csvpath.line_number must be xsunny, not $.headers.weather"))
 
-        odd.nocontrib(line_number()) -> not(#weather == "sunny", error("day $.csvpath.line_number must be sunny, not $.headers.weather"))
-
+        ~
+          the odd sunny lines are never even and the even cloudy lines are
+          never sunny, so we would get no matches, except that and() has
+          nocontrib, so we match all 8 scanned lines.
+        ~
         and.nocontrib(
             even(line_number()),
             #weather == "sunny"
