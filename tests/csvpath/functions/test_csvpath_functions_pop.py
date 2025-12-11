@@ -57,7 +57,7 @@ class TestCsvPathFunctionsPop(unittest.TestCase):
             ~ test is a dupe from empty_stack. keeping in case the
               functions vary independently ~
             ${FOOD}[7*][
-                push.notnone("empties", empty_stack(#year, #healthy) )
+                push.skipnone("empties", empty_stack(#year, #healthy) )
             ]"""
         )
         lines = path.collect()

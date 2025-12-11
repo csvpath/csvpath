@@ -38,7 +38,7 @@ class Boolean(ValueProducer, Type):
         c = self._child_one()
         v = None
         if isinstance(c, Term):
-            v = self.matcher.get_header_value(self, c.value)
+            v = self.matcher.get_header_value(c.value)
         else:
             v = c.to_value(skip=skip)
         if v is None or f"{v}".strip() == "":

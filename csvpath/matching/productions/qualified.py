@@ -24,8 +24,10 @@ class Qualities(Enum):
     LATCH = "latch"
     # to indicate that the match component should return the default, not help decide
     NOCONTRIB = "nocontrib"
-    # indicates that the value will not be set unless to a non-none
+    # indicates that the value will not be set unless to a non-none. a None causes an error.
     NOTNONE = "notnone"
+    # for vars that can be passed values and want to ignore Nones without an error
+    SKIPNONE = "skipnone"
     # indicates that the match component is only activated one time
     ONCE = "once"
     #
@@ -72,6 +74,7 @@ class Qualified:  # pylint: disable=R0904
         Qualities.INCREASE.value,
         Qualities.DECREASE.value,
         Qualities.NOTNONE.value,
+        Qualities.SKIPNONE.value,
         Qualities.DISTINCT.value,
         Qualities.ONCE.value,
         Qualities.WEAK.value,
@@ -213,6 +216,16 @@ class Qualified:  # pylint: disable=R0904
     @notnone.setter
     def notnone(self, nn: bool) -> None:
         self._set(Qualities.NOTNONE.value, nn)
+
+    @property
+    def skipnone(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.SKIPNONE.value in self.qualifiers
+        return False
+
+    @skipnone.setter
+    def skipnone(self, sn: bool) -> None:
+        self._set(Qualities.SKIPNONE.value, sn)
 
     @property
     def renew(self) -> bool:  # pylint: disable=C0116

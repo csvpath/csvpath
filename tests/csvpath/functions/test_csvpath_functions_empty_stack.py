@@ -13,7 +13,7 @@ class TestCsvPathFunctionsEmptyStack(unittest.TestCase):
         path.parse(
             f"""
             ${FOOD}[7*][
-                push.notnone("empties", empty_stack(#year, #healthy) )
+                push.skipnone("empties", empty_stack(#year, #healthy) )
             ]"""
         )
         lines = path.collect()
@@ -47,7 +47,7 @@ class TestCsvPathFunctionsEmptyStack(unittest.TestCase):
             f"""
             ${FOOD}[1*][
                 even(line_number()) -> @a.renew = line_number()
-                push.notnone("empties", empty_stack(@a, #healthy) )
+                push.skipnone("empties", empty_stack(@a, #healthy) )
             ]"""
         )
         lines = path.collect()

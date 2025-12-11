@@ -26,6 +26,7 @@ class Push(SideEffect):
         ]
         self.match_qualifiers.append("distinct")
         self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("skipnone")
 
         self.args = Args(matchable=self)
         a = self.args.argset(1)
@@ -91,7 +92,7 @@ class Push(SideEffect):
         #
         if (self.distinct or self.name == "push_distinct") and v in stack:
             pass
-        elif self.notnone and ExpressionUtility.is_empty(v):
+        elif self.skipnone and ExpressionUtility.is_empty(v):
             pass
         else:
             stack.append(v)

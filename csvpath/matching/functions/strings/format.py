@@ -14,12 +14,14 @@ class Format(ValueProducer):
             self.wrap(
                 """\
                     Uses the Python string formatting mini language.
+
+                    E.g. to format a float to having two decimal places use a format argument of “:.2f”
                 """
             ),
         ]
         if self.name == "interpolate":
             s = self.wrap(
-                """Interpolates a complete formatting string with one replacement value.
+                """Interpolates a complete Pythonic formatting string with one replacement value.
                 Use {{ and }} to demarcate your replacement pattern."""
             )
             self.description.append(s)

@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+from typing import Any
 from ..function_focus import SideEffect
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -47,7 +48,7 @@ class Put(SideEffect):
         a.arg(
             name="var value",
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, int, bool, tuple],
+            actuals=[Any],
         )
         a = self.args.argset(3)
         a.arg(
@@ -63,7 +64,7 @@ class Put(SideEffect):
         a.arg(
             name="tracking value",
             types=[Term, Variable, Header, Function, Reference],
-            actuals=[str, int, bool, tuple],
+            actuals=[Any],
         )
         self.args.validate(self.siblings())
         super().check_valid()

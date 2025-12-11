@@ -216,7 +216,7 @@ class Matcher:  # pylint: disable=R0902
             return None
         return self.csvpath.headers[i]
 
-    def get_header_value(self, m, name_or_index, quiet=False):
+    def get_header_value(self, name_or_index, quiet=False):
         nori = ExpressionUtility.to_int(name_or_index)
         if not isinstance(nori, int):
             nori = self.header_index(name_or_index)
