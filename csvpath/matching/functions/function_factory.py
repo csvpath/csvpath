@@ -35,6 +35,7 @@ from .headers.headers_stack import HeadersStack
 from .headers.header_name import HeaderName
 from .headers.header_names_mismatch import HeaderNamesMismatch
 from .headers.collect import Collect
+from .headers.remove import Remove
 from .headers.replace import Replace
 from .headers.rename import Rename
 from .headers.append import Append
@@ -434,6 +435,7 @@ class FunctionFactory:
         fs["advance"] = Advance
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect
+        fs["remove"] = Remove
         fs["replace"] = Replace
         fs["rename"] = Rename
         fs["append"] = Append
