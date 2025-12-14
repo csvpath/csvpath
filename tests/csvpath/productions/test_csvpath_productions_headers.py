@@ -4,6 +4,7 @@ import pytest
 from lark.exceptions import VisitError, UnexpectedCharacters
 from csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.productions import Header
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
@@ -48,7 +49,7 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
                 ~ 1x wrong, 2nd item ~
                 @in = in( #category, "OFFICE|COMPUTING|FURNITURE|PRINT|FOOD|OTHER" )
                 not( @in.asbool ) ->
-                    error.category( "Bad category $.headers.category at line $.csvpath.count_lines ", fail())
+                    error.category( "Bad category $.headers.category at line $.csvpath.count_lines ")
 
                 ~ 2x wrong, 2nd and 3rd items ~
                 @price = exact( end(), /\\$?\\d*\\.\\d{{2}}/ )
@@ -68,15 +69,7 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 3
-        # print(f"stopped: {path.stopped}")
-        # print(f"valid: {path.is_valid}")
-        # print(f"errors: {path.errors_count}")
         assert path.errors_count == 4
-        """
-        if path.errors:
-            for _ in path.errors:
-                print(f"\nerrors: {_}")
-        """
 
     def test_header_names11(self):
         path = CsvPath()
@@ -129,7 +122,8 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(f"""${PATH}[*][ #.hidden ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
-        with pytest.raises(VisitError):
+        # with pytest.raises(VisitError):
+        with pytest.raises(ChildrenException):
             path.fast_forward()  # pragma: no cover
 
     def test_header_bad_names2(self):

@@ -227,15 +227,15 @@ class FunctionFactory:
         if f is None and not find_external_functions:
             return None
         if f is None:
+            msg = f"Function {name} not found"
             if matcher is None:
-                raise UnknownFunctionException(
-                    f"Function {name} not found. Matcher is None. Config path unavailable. Function imports path unavailable."
-                )
+                raise UnknownFunctionException(msg)
             else:
-                print(f"external functions: {cls.NOT_MY_FUNCTION}")
-                raise UnknownFunctionException(
-                    f"{name}. Config path: {matcher.csvpath.config.configpath}. Imports: {matcher.csvpath.config.function_imports}"
+                matcher.csvpath.error_manager.handle_error(
+                    source=FunctionFactory(), msg=msg
                 )
+                if matcher.csvpath.do_i_raise():
+                    raise UnknownFunctionException(msg)
         if child:
             child.parent = f
         if qualifier:

@@ -1,7 +1,8 @@
 # pylint: disable=C0114
+from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import ChildrenException, MatchException
-from csvpath.matching.productions import Variable, Header, Reference, Term
+from csvpath.matching.productions import Variable, Header, Reference, Term, Equality
 from csvpath.matching.functions.function import Function
 from ..args import Args
 from ..function_focus import ValueProducer
@@ -62,18 +63,54 @@ class Blank(ValueProducer, Type):
         self.aliases = ["blank", "nonspecific", "unspecified"]
         self.description = [
             self._cap_name(),
-            "A line() schema type representing an incompletely specified header.",
-            "It can take a string naming its positional header.",
+            "A line() schema type representing an incompletely known header.",
+            "Blank cannot be used outside a line()",
         ]
+        #
+        # WE DON'T WANT blank() USED IN PLACE OF none(), empty() OR AN EXISTANCE TEST
+        # WHEN NOT USED IN LINE:
+        #    x = blank() ERROR
+        #    blank(#0) ERROR
+        #    blank() -> @x = "y" ERROR
+        #    blank(#0) -> @x = "y" ERROR
+        #
+        # and actually blank() in line() now errors no matter what.
+        #
+        if (
+            self.parent is None
+            or not isinstance(self.parent, Equality)
+            or not self.parent.parent
+            or not str(type(self.parent.parent)).find(".Line'") > -1
+        ):
+            raise ChildrenException("Blank can only be used within a line schema")
+        #
+        #
+        #
         self.args = Args(matchable=self)
+        #
+        #
+        #
         self.args.argset(0)
+        #
+        #
+        #
         a = self.args.argset(1)
-        a.arg(types=[Header], actuals=[str, None, self.args.EMPTY_STRING])
+        a.arg(types=[Header], actuals=[str, None, self.args.EMPTY_STRING, Any])
+        #
+        #
+        #
         self.args.validate(self.siblings())
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
+        #
+        # this doesn't match comment above. according to comment we return the
+        # value of the header represented. calling match does nothing.
+        #
         self.value = self.matches(skip=skip)
+        #
+        #
+        #
 
     def _decide_match(self, skip=None) -> None:  # pragma: no cover
         # if we're in line, line will check that our
@@ -90,13 +127,26 @@ class Wildcard(ValueProducer, Type):
             self._cap_name(),
             f"A {self.name}() schema type represents one or more headers that are otherwise unspecified.",
             "It may take an int indicating the number of headers or a * to indicate any number of headers.",
+            """When wildcard() has no args it represents any nuber of headers, same as "*".""",
+            """Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself will not
+            invalidate a document unless it defines a specific number of headers that are not found.""",
         ]
         self.args = Args(matchable=self)
+        #
+        # 0-len argset
+        #
+        a = self.args.argset()
+        #
+        # 1-len argset
+        #
         a = self.args.argset(1)
-        a.arg(types=[None, Term], actuals=[int, str])
+        a.arg(types=[Term], actuals=[int, str, None, Any])
         self.args.validate(self.siblings())
         #
-        # should check for int or * here
+        # should check for int or * here.
+        # should we be even more perscriptive and check that this is a:
+        #    line->equality->wildcard
+        # path? as-is, it allows deeper nesting which we don't want.
         #
         if ExpressionUtility.get_ancestor(self, "Line") is None:
             msg = "Wildcard can only be used within line()"
@@ -109,6 +159,10 @@ class Wildcard(ValueProducer, Type):
         if len(self.children) == 0:
             self.value = None
             return
+        #
+        # do we really want to be returning a value from a wildcard that may represent
+        # any number of headers?
+        #
         self.value = self.children[0].to_value(skip=skip)
 
     def _decide_match(self, skip=None) -> None:  # pragma: no cover

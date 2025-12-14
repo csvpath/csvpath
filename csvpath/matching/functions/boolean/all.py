@@ -2,7 +2,6 @@
 
 from typing import Any
 from csvpath.matching.productions import Equality
-from csvpath.matching.util.exceptions import ChildrenException
 from ..function_focus import MatchDecider
 from ..variables.variables import Variables
 from ..headers.headers import Headers

@@ -12,9 +12,11 @@ FOOD = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestCsvPathValidityValidBasicTypesNone(unittest.TestCase):
-    def test_validity_none0(self):
+    def test_validity_none00(self):
         path = CsvPath().parse(
             f"""~id:validity_none0~ ${PATH}[*][
+                ~ none is not Ok because there is a value in every row ~
+                ~ wildcard is Ok because a no-arg wildcard reps any number of headers ~
                 line(
                     none(),
                     wildcard()

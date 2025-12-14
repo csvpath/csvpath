@@ -1,0 +1,88 @@
+~
+   id: strip short lines
+   test-data: demo/August_2019_Orders.csv
+~
+$[*][ 
+	above( count_headers_in_line(), 1)
+
+	last.nocontrib() -> print("See matches tab or data.csv for results")
+]
+
+
+---- CSVPATH ----
+
+~
+   id: remove orders with no items
+   source-mode: preceding
+   unmatched-mode: keep
+   validation-mode:raise
+   test-data: demo/August_2019_Orders.csv
+~
+$[*][ 
+	~ 
+	  if a new order is signaled with the H char and 
+           the last line we also set new_order we capture the line 
+	~  
+	line_before.nocontrib(#0) == "H" -> not(#0 == "H")
+	
+	#0.nocontrib == "D" -> append("blank", "")
+	
+	append("line number", line_number())
+
+	last.nocontrib() -> print("See matches tab or data.csv for results")
+
+]
+
+
+
+---- CSVPATH ----
+
+~
+   id: strip off line numbers 
+   source-mode: preceding
+   test-data: demo/August_2019_Orders.csv
+~
+$[*][ 
+
+	collect(#0,#1,#2,#3,#4,#5)
+
+
+	last.nocontrib() -> print("See matches tab or data.csv for results")
+]
+
+
+---- CSVPATH ----
+
+~
+   id: schema
+   source-mode: preceding
+   explain-mode: explain
+   test-data: demo/August_2019_Orders.csv
+~
+$[*][ 
+	@order = eq(#0, "H")
+	@item = eq(#0, "D")
+	tally.entities(@order, @item)
+	line_number.nocontrib() == 8 -> var_table("entities")
+	
+
+	@order.asbool.nocontrib -> line.orders(
+		string(#0),
+		integer.orderid( #1),
+		integer.customerid( #2),
+		string.customer(#3, 255, 3),
+		string(#4),
+		string.address(#5)
+	)
+
+	@item.asbool.nocontrib -> line.items(
+		string(#0),
+		integer.sku(#1),
+		string.description(#2,255),
+		decimal.price(#3),
+		integer.quantity(#4),
+		blank()
+	)
+
+
+]

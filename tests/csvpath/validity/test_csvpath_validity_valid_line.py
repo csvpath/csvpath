@@ -2,7 +2,7 @@ import os
 import unittest
 import pytest
 from csvpath import CsvPath
-from csvpath.matching.util.exceptions import MatchException
+from csvpath.matching.util.exceptions import MatchException, ChildrenException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 FOOD = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}food.csv"
@@ -27,10 +27,36 @@ class TestCsvPathValidityValidLine(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_valid_line2(self):
-        path = CsvPath().parse(f"""${PATH}[*][ line( blank()) ]""")
+    def test_valid_line2a(self):
+        #
+        # file has 3 headers. we declared 1.
+        #
+        path = CsvPath().parse(
+            f"""~validation-mode:print~ ${PATH}[*][ line( blank() ) ]"""
+        )
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
+            path.collect()
+
+    def test_valid_line2b(self):
+        #
+        # blank have same header, not matching the actual headers. MatchException
+        # because headers can change and line() can be skipped as needed.
+        #
+        path = CsvPath().parse(
+            f""" ~validation-mode:print ~ ${PATH}[*][ line( blank(#0), blank(#0), blank(#0) ) ]"""
+        )
+        path.config.add_to_config("errors", "csvpath", "raise")
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_valid_line2c(self):
+        #
+        # blank only live in line(). ChildrenException because this is a language use error.
+        #
+        path = CsvPath().parse(f"""${PATH}[*][ blank(#0) ]""")
+        path.config.add_to_config("errors", "csvpath", "raise")
+        with pytest.raises(ChildrenException):
             path.collect()
 
     def test_valid_line3(self):

@@ -1101,6 +1101,16 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             if self.will_run is True:
                 for line in self._next_line():
                     b = self._consider_line(line)
+                    #
+                    # exp. not workable. matcher doesn't hold the last match
+                    #  value. we cannot look at the expressions because a) encapsulation and
+                    #  b) too darn complex. so we cannot double check that b is actually the
+                    #  result and not just the instruction to not return line.
+                    #
+                    # self.matcher.
+                    #
+                    #
+                    #
                     if b:
                         line = self.limit_collection(line)
                         if line is None:
@@ -1299,15 +1309,23 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             return line
         ls = []
         for k in self.limit_collection_to:
-            if k is None or k >= len(line):
+            if k is None:
                 #
                 # FP change. didn't do do_i_raise and didn't handle w/error mgr
                 #
-                msg = f"[{self.identity}] Line {self.line_monitor.physical_line_number}: unknown header name: {k} of {self.limit_collection_to} in headers {self.headers}"
+                msg = f"[{self.identity}] Line {self.line_monitor.physical_line_number}: header index: {k} >= {len(line)}. Attempting to limit line values {line} to: {self.limit_collection_to} in headers {self.headers}"
                 self.error_manager.handle_error(source=self, msg=msg)
                 if self.ecoms.do_i_raise():
                     raise InputException(msg)
-            ls.append(line[k])
+                #
+                # should we crash out here? what would cause k to be None? would we ever be
+                # in a recoverable state that would make it better to continue iterating?
+                #
+                break
+            elif k >= len(line):
+                ls.append("")
+            else:
+                ls.append(line[k])
         return ls
 
     def advance(self, ff: int = -1) -> None:

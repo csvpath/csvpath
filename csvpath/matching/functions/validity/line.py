@@ -43,7 +43,9 @@ class Line(MatchDecider):
                 header-by-header. This also allows for more line() functions
                 to specify other structures within the same data. You could,
                 for e.g., define a person line() and an address line() that
-                lives side by side in the same rows."""
+                lives side by side in the same rows.
+
+                Note that wildcard() and wildcard("*") are functionally the same."""
             ),
         ]
 
@@ -100,12 +102,13 @@ class Line(MatchDecider):
         # here down is error handling and signaling results
         #
         if expected != found:
-            msg = f"Headers are wrong. Expected headers, including wildcards: {expected}. Found {found}."
+            msg = f"Headers are wrong. Declared headers, including wildcards: {expected}. Found {found}."
             errors.append(msg)
         for e in errors:
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=e)
         if len(errors) > 0:
             msg = f"{len(errors)} errors in line()"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
             self.match = False
@@ -246,11 +249,17 @@ class Line(MatchDecider):
         #
         # if t is a named header check that. if it is a numbered header
         #
+        if i >= len(self.matcher.csvpath.headers):
+            msg = f"Not enough headers: 0-based index {i} is too large for count {len(self.matcher.csvpath.headers)}"
+            errors.append(msg)
+            return False
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
-
             msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header '{self.matcher.csvpath.headers[i]}'"
             errors.append(msg)
+            #
+            # shouldn't we be returning False here?
+            #
         return True
 
     def _handle_types_if(
@@ -263,6 +272,10 @@ class Line(MatchDecider):
         #
         # we need i+advanced in order to pick the right header
         #
+        if i >= len(self.matcher.csvpath.headers):
+            msg = f"Not enough headers: {len(self.matcher.csvpath.headers)}"
+            errors.append(msg)
+            return False
         if t and t.name != self.matcher.csvpath.headers[i] and t.name != f"{i}":
             ii = i + 1
             msg = f"The {ExpressionUtility._numeric_string(ii)} item, {t}, does not match the current header '{self.matcher.csvpath.headers[i]}'"

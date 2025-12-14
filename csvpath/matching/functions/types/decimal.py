@@ -1,6 +1,6 @@
 # pylint: disable=C0114
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import ChildrenException, MatchException
+from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.functions.function import Function
 from .nonef import Nonef

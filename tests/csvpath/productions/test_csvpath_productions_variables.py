@@ -5,6 +5,7 @@ from lark.exceptions import VisitError
 from csvpath import CsvPath
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import MatchException
+from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
@@ -81,5 +82,6 @@ class TestCsvPathProductionsVariables(unittest.TestCase):
             ]"""
         )
         path.config.add_to_config("errors", "csvpath", "raise,print")
-        with pytest.raises(VisitError):
+        # with pytest.raises(VisitError):
+        with pytest.raises(ChildrenException):
             path.fast_forward()

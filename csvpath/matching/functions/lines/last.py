@@ -26,7 +26,10 @@ class Last(MatchDecider):
 
                     Optionally, last() can take a function that will be evaluated when last()
                     evaluates to True. This function, if provided, will not necessarily be the
-                    last evaluation of the run, but will happen only on the last line.
+                    last evaluation of the run, but will happen only on the last line. At this
+                    time a last() that has an encapsulated function will correctly run on the
+                    last line but it will not produce True in assignment. Changing that behavior
+                    is on the todo list. It should not be relied on.
             """
             ),
         ]
@@ -71,9 +74,10 @@ class Last(MatchDecider):
                 self.matcher.csvpath.logger.debug(
                     "Overriding frozen in last(): %s", self
                 )
+                # disable frozen so we can eval
                 self.matcher.csvpath.is_frozen = False
+                # we do not take any match value returned
                 self.children[0].matches(skip=[self])
+                # reset frozen
                 self.matcher.csvpath.is_frozen = True
-                self.matcher.csvpath.logger.debug(
-                    "Resetting frozen after last(): %s", self
-                )
+                self.matcher.csvpath.logger.debug("Reset frozen after last(): %s", self)

@@ -100,7 +100,15 @@ class Matcher:  # pylint: disable=R0902
             if self.csvpath:
                 self.csvpath.logger.debug("Raw parse tree: %s", tree)
             transformer = LarkTransformer(self)
-            es = transformer.transform(tree)
+            es = []
+            try:
+                es = transformer.transform(tree)
+            except Exception:
+                msg = "Error in csvpath statement"
+                self.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.csvpath.do_i_raise():
+                    raise ChildrenException(msg)
+
             # print(tree.pretty())
             expressions = []
             for e in es:
@@ -385,7 +393,7 @@ class Matcher:  # pylint: disable=R0902
         )
         # self.clear_errors()
         #
-        # exp!  do we want to keep this?
+        # exp!  do we want to keep this? yes, we have been and should.
         #
         if self.csvpath.explain:
             self.csvpath.logger.info("Dumping explanation:")

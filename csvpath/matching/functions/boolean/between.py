@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from datetime import datetime
 from datetime import date
-from csvpath.matching.util.exceptions import ChildrenException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import MatchDecider
 from csvpath.matching.productions import Term, Variable, Header, Reference
