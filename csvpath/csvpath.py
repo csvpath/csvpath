@@ -205,7 +205,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # line, a.k.a columns) then are available. limiting headers returned
         # can impact named results, reset_headers(), and other considerations.
         #
-        self._limit_collection_to = []
+        self._limit_collection_to = None  # []
         #
         # error collecting is at the CsvPath instance by default. CsvPath
         # instances that are managed by a CsvPaths have their errors collected
@@ -1001,8 +1001,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     def limit_collection_to(self, indexes: List[int]) -> None:
         """@private"""
         self._limit_collection_to = indexes
-        if self._limit_collection_to and self._limit_collection_to != indexes:
-            self.logger.info("Limiting headers collected: %s", indexes)
+        # if self._limit_collection_to and self._limit_collection_to != indexes:
+        self.logger.info("Limiting headers collected: %s", indexes)
 
     def stop(self) -> None:
         """@private"""
@@ -1117,10 +1117,18 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                             msg = "Line cannot be None"
                             self.logger.error(msg)
                             raise MatchException(msg)
+                        #
+                        # with remove() now added we're allowing [] lines. why you might want one?
+                        # maybe you're removing all the data in order to put a blank line? maybe
+                        # collecting unexpected headers only? (imagine removing known headers and
+                        # skipping if no header mismatch, maybe?)
+                        #
+                        """
                         if len(line) == 0:
                             msg = "Line cannot be len() == 0"
                             self.logger.error(msg)
                             raise MatchException(msg)
+                        """
                         yield line
                     elif self.collecting and self.unmatched_available:
                         if self.unmatched is None:
@@ -1305,7 +1313,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         that the csvpath says to collect. headers for collection are indicated using
         the collect() function.
         """
-        if len(self.limit_collection_to) == 0:
+        if self.limit_collection_to is None:  # len(self.limit_collection_to) == 0:
             return line
         ls = []
         for k in self.limit_collection_to:
