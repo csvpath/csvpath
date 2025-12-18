@@ -24,7 +24,6 @@ class FunctionDescriber:
         if function.description and len(function.description) > 0:
             for i, _ in enumerate(function.description):
                 print(_)
-                print()
         cls.print_tables(function, markdown=markdown)
 
     @classmethod
@@ -149,7 +148,6 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
-        print("")
         #
         # call sigs
         #
@@ -167,7 +165,6 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
-        print("")
         #
         # type and focus
         #
@@ -186,7 +183,6 @@ class FunctionDescriber:
             v = str(v)
             rows.append(["Aliases", v])
         if len(rows) > 0:
-            print("")
             print(
                 tabulate(
                     rows,
@@ -194,7 +190,6 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
-        print("")
         #
         # qualifiers
         #
