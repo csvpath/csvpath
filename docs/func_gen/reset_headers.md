@@ -1,4 +1,5 @@
 
+## reset_headers()
 Reset headers
 
 reset_headers() sets the headers to the values of the current row.

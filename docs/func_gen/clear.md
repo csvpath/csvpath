@@ -1,4 +1,5 @@
 
+## clear()
 Clear
 
 Clears a variable by removing it.

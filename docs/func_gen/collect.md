@@ -1,4 +1,5 @@
 
+## collect()
 Collect
 
 When collect() is used only values for the indicated headers are

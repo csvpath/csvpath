@@ -1,4 +1,5 @@
 
+## first()
 First
 
 Captures the first line a value or set of values is seen on.

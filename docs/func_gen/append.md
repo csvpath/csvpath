@@ -1,4 +1,5 @@
 
+## append()
 Append
 
 Adds the header name and a value to the end of every line. The name is

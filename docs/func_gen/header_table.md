@@ -1,4 +1,5 @@
 
+## header_table()
 Header table
 
 Prints a table with all the header names and indexes. This output is

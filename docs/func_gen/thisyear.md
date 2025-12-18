@@ -1,4 +1,5 @@
 
+## thisyear()
 Thisyear
 
 A convenience function that returns the datetime component as a

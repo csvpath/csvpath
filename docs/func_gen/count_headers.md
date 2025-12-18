@@ -1,4 +1,5 @@
 
+## count_headers()
 Count headers
 
 count_headers() returns the number of headers currently in-effect. It

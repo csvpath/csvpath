@@ -1,4 +1,5 @@
 
+## min_length()
 | Data signatures             |
 |:----------------------------|
 | min_length( str ǁ '', int ) |

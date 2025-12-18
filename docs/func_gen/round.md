@@ -1,4 +1,5 @@
 
+## round()
 Round
 
 Rounds a number, optionally to a certain number of places.

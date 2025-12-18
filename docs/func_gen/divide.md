@@ -1,4 +1,5 @@
 
+## divide()
 Divide
 
 Divides numbers. divide() can take any number of int and/or float

@@ -1,4 +1,5 @@
 
+## max_length()
 | Data signatures             |
 |:----------------------------|
 | max_length( str ǁ '', int ) |

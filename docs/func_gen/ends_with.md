@@ -1,4 +1,5 @@
 
+## ends_with()
 Ends with
 
 Matches when a string ends with another string.

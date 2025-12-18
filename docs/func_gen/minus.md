@@ -1,4 +1,5 @@
 
+## minus()
 Minus
 
 minus() subtracts two or more numbers.

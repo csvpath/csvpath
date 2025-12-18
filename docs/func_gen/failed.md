@@ -1,4 +1,5 @@
 
+## failed()
 Matches when the current file is in the failed/invalid state.
 
 | Purpose    | Value                              |

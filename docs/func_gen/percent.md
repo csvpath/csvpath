@@ -1,4 +1,5 @@
 
+## percent()
 Percent
 
 Returns the percent of scanned, matched or all lines so-far seen of

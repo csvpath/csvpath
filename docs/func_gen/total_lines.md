@@ -1,4 +1,5 @@
 
+## total_lines()
 Total lines
 
 Returns the total data lines count for the file (1-based).

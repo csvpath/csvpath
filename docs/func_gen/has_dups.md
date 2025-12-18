@@ -1,4 +1,5 @@
 
+## has_dups()
 Has dups
 
 Evaluates to True if there are duplicate lines or duplicate subsets of

@@ -1,4 +1,5 @@
 
+## increment()
 Increment
 
 increment() increases a variable tracking each match every N-matches.

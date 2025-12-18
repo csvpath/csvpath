@@ -1,4 +1,5 @@
 
+## gt()
 Greater than
 
 gt() returns true if a value is greater than another value.

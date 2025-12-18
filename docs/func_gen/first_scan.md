@@ -1,4 +1,5 @@
 
+## first_scan()
 First scan
 
 Evaluates to True on the first line scanned. A scanned line is one

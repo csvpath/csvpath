@@ -1,4 +1,5 @@
 
+## variables()
 Variables
 
 Directs certain functions, such as any() or all(), to search in the

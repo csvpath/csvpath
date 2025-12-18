@@ -1,4 +1,5 @@
 
+## average()
 average() returns the running  from the first to the current line
 
 | Data signatures                                                       |

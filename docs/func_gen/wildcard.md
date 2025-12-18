@@ -1,4 +1,5 @@
 
+## wildcard()
 Wildcard
 
 A wildcard() schema type represents one or more headers that are otherwise unspecified.

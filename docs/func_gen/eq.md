@@ -1,4 +1,5 @@
 
+## eq()
 Eq
 
 Tests the equality of two values.

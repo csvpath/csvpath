@@ -1,4 +1,5 @@
 
+## before()
 Less than
 
 before() returns true if a value is less than another value.

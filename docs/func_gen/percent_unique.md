@@ -1,4 +1,5 @@
 
+## percent_unique()
 Percent unique
 
 Returns the percent of values of a header that are unique over the

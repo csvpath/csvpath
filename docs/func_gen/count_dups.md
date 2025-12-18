@@ -1,4 +1,5 @@
 
+## count_dups()
 Count dups
 
 Produces the number of duplicate lines or the number of lines where

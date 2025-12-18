@@ -1,4 +1,5 @@
 
+## first_match()
 First match
 
 Evaluates to True at the first line matched. firstmatch() implies the

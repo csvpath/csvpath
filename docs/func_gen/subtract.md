@@ -1,4 +1,5 @@
 
+## subtract()
 Subtract
 
 subtract() subtracts two or more numbers.

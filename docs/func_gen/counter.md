@@ -1,4 +1,5 @@
 
+## counter()
 Increments a variable. The increment is 1 by default.
 
 Counters must be named using a name qualifier. Without that, the ID

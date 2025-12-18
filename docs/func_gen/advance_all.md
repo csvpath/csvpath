@@ -1,4 +1,5 @@
 
+## advance_all()
 Advance all
 
 Like advance(), advance_all() jumps processing N-lines forward. The

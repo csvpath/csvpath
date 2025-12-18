@@ -1,4 +1,5 @@
 
+## push()
 Push
 
 Appends a value to a stack variable. The stack is created if not

@@ -1,4 +1,5 @@
 
+## skip_all()
 Skip all
 
 Jumps to the next line abruptly. In a named-paths group run, where the

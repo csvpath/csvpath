@@ -1,4 +1,5 @@
 
+## today()
 Today
 
 A convenience function that returns the datetime component as a

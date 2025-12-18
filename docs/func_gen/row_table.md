@@ -1,4 +1,5 @@
 
+## row_table()
 Row table
 
 Prints a table with all the header names and values for each line. The

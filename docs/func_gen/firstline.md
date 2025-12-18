@@ -1,4 +1,5 @@
 
+## firstline()
 Firstline
 
 Evaluates to True on the first line.

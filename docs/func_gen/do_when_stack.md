@@ -1,4 +1,5 @@
 
+## do_when_stack()
 Do when stack
 
 Returns a stack of bool representing the when/do operators for each

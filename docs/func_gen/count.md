@@ -1,4 +1,5 @@
 
+## count()
 Count
 
 Returns the number of matches.

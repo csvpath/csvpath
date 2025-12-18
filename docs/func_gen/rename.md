@@ -1,4 +1,5 @@
 
+## rename()
 Rename
 
 Renames one or more headers for the duration of the run.

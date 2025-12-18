@@ -1,4 +1,5 @@
 
+## empty()
 Empty
 
 empty() checks for empty or blank header values in a given line. It

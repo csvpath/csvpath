@@ -1,4 +1,5 @@
 
+## range()
 Range
 
 Returns true if the values provided have a between relationship.

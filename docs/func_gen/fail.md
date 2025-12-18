@@ -1,4 +1,5 @@
 
+## fail()
 Indicates that a csvpath statement fails a data file. 
 
 Failures can be seen in metadata and are used in error handling.

@@ -1,4 +1,5 @@
 
+## var_table()
 Var table
 
 Prints a table with all the variable names and values at each line. If

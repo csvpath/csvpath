@@ -1,4 +1,5 @@
 
+## size()
 Size
 
 Returns number of values in a stack variable.

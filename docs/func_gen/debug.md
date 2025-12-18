@@ -1,4 +1,5 @@
 
+## debug()
 Debug
 
 Sets the CsvPath Framework log level.

@@ -1,4 +1,5 @@
 
+## line_number()
 Line number
 
 The 0-based number of data lines seen, blanks excluded. This is also

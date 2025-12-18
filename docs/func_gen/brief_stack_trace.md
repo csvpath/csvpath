@@ -1,4 +1,5 @@
 
+## brief_stack_trace()
 Brief stack trace
 
 Writes a shallow stack trace to the log or to print().

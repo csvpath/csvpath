@@ -1,4 +1,5 @@
 
+## pop()
 Pop
 
 Removes and returns the last value added to a stack variable. The

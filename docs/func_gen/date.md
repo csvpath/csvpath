@@ -1,4 +1,5 @@
 
+## date()
 Date
 
 date() has two purposes.

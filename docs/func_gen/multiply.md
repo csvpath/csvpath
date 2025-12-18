@@ -1,4 +1,5 @@
 
+## multiply()
 Multiply
 
 Multiplies numbers. Any number of arguments is acceptable.

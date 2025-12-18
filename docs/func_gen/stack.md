@@ -1,4 +1,5 @@
 
+## stack()
 Stack
 
 Returns a stack variable. The stack is created if not found.

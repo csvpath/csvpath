@@ -1,4 +1,5 @@
 
+## header_name()
 Header name
 
 Looks up a header name by index. e.g. header_name(0, "firstname")

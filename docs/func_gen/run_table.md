@@ -1,4 +1,5 @@
 
+## run_table()
 Run table
 
 Prints a table with all the metadata names and values available at

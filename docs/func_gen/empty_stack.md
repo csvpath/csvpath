@@ -1,4 +1,5 @@
 
+## empty_stack()
 Empty stack
 
 If no arguments are provided, adds the names of any headers without

@@ -1,4 +1,5 @@
 
+## count_lines()
 Count lines
 
 the count (1-based of the number of data lines seen, blanks excluded.
