@@ -1,24 +1,5 @@
 
-# Functions
-
-Most of the work of matching is done in match component functions. There are over one hundred and fifty functions in several groups.
-
-- [Boolean](#boolean)
-- [Counting](#counting)
-- [Dates](#dates)
-- [Headers](#headers)
-- [Lines](#lines)
-- [Math](#math)
-- [Misc](#misc)
-- [Print](#print)
-- [Stats](#stats)
-- [Strings](#strings)
-- [Testing](#testing)
-- [Types](#types)
-- [Validity](#validity)
-- [Variables](#variables)
-
-# Overview
+# Functions Overview
 
 Functions perform work within a csvpath. Some focus on creating values. Others on deciding if a line matches. And a few provide a side-effect, rather than contributing values or matching.
 
@@ -39,6 +20,26 @@ Many functions take qualifiers. With only a three exceptions, all functions can 
 Some functions will optionally make use of an arbitrary name qualifier to better name a tracking variable.
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
+
+Most of the work of matching is done in match component functions. There are over one hundred and fifty functions in several groups.
+
+## Function Groups
+
+- [Boolean](#boolean)
+- [Counting](#counting)
+- [Dates](#dates)
+- [Headers](#headers)
+- [Lines](#lines)
+- [Math](#math)
+- [Misc](#misc)
+- [Print](#print)
+- [Stats](#stats)
+- [Strings](#strings)
+- [Testing](#testing)
+- [Types](#types)
+- [Validity](#validity)
+- [Variables](#variables)
+
 
 ## Custom Functions
 
@@ -70,6 +71,8 @@ There are lots more simple examples on the individual function pages, linked bel
 ## Self-documenting
 
 The functions are self-documenting. Each can programmatically explain how it works. You can see the output in the CLI, in the language help window in [FlightPath Data](https://www.flightpathdata.com), and in these [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md).
+
+When in doubt, the most up to date version of the function docs can be seen in the [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md) or in the most recent release's CLI. The individual function docs pages linked directly from this page are left available for their descriptions and examples; however, they are not the most up to date information.
 
 Each function can display:
 * A short description
