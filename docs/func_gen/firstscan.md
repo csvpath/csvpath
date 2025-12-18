@@ -11,9 +11,9 @@ matches
 |:-------------------------------------|
 | firstscan( [eval this: None ǁ Any] ) |
 
-| Call signatures                               |
-|:----------------------------------------------|
-| firstscan( [eval this: Function ǁ Equality] ) |
+| Call signatures                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------|
+| firstscan( [eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

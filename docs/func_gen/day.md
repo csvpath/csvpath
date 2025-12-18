@@ -8,9 +8,9 @@ datetime as a string.
 |:------------------------------------|
 | day( date: None ǁ date ǁ datetime ) |
 
-| Call signatures                                                                                                                                                                                                                                                                                                                                                 |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| day( date: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| day( date: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

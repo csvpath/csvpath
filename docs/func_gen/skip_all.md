@@ -22,10 +22,10 @@ See skip() for more behavior details.
 | skip_all()                        |
 | skip_all( eval this: None ǁ Any ) |
 
-| Call signatures                            |
-|:-------------------------------------------|
-| skip_all()                                 |
-| skip_all( eval this: Function ǁ Equality ) |
+| Call signatures                                                                                                      |
+|:---------------------------------------------------------------------------------------------------------------------|
+| skip_all()                                                                                                           |
+| skip_all( eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|

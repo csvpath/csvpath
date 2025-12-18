@@ -12,10 +12,10 @@ empty.
 | empty( Points to the headers: )              |
 | empty( Component to check: None ǁ Any, ... ) |
 
-| Call signatures                                                                                                                                                                                                  |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| empty( Points to the headers: Headers )                                                                                                                                                                          |
-| empty( Component to check: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... ) |
+| Call signatures                                                                                                                                                                                                                                                                            |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| empty( Points to the headers: Headers )                                                                                                                                                                                                                                                    |
+| empty( Component to check: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

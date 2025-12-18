@@ -32,7 +32,7 @@ Errors are also handled in the same way as built-in errors. They are collected t
 | Call signatures                                                                                                                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | error( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [print to specific Printer stream: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
-| error( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: Function ǁ Equality] )                                                                              |
+| error( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] )    |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

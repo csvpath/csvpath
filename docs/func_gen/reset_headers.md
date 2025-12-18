@@ -24,9 +24,9 @@ line numbers where the reset calls happened.
 |:-----------------------------------|
 | reset_headers( [evaluate this: ] ) |
 
-| Call signatures                            |
-|:-------------------------------------------|
-| reset_headers( [evaluate this: Function] ) |
+| Call signatures                                                                                                      |
+|:---------------------------------------------------------------------------------------------------------------------|
+| reset_headers( [evaluate this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function)] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

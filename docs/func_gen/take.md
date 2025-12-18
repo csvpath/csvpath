@@ -6,10 +6,10 @@
 | take()                        |
 | take( eval this: None ǁ Any ) |
 
-| Call signatures                        |
-|:---------------------------------------|
-| take()                                 |
-| take( eval this: Function ǁ Equality ) |
+| Call signatures                                                                                                  |
+|:-----------------------------------------------------------------------------------------------------------------|
+| take()                                                                                                           |
+| take( eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

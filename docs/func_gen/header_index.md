@@ -18,9 +18,9 @@ header, not a check for the line having a value for the header.
 |:---------------------------------------------------------------------------|
 | header_index( header identity: str ǁ int, [value check: None ǁ Any ǁ ''] ) |
 
-| Call signatures                                                                                                                                                                                                                                                                                        |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| header_index( header identity: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable), [value check: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                  |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| header_index( header identity: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable), [value check: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
 | Purpose    | Value                                      |
 |:-----------|:-------------------------------------------|

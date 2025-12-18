@@ -10,9 +10,9 @@ matches
 |:-------------------------------------|
 | firstline( [eval this: None ǁ Any] ) |
 
-| Call signatures                               |
-|:----------------------------------------------|
-| firstline( [eval this: Function ǁ Equality] ) |
+| Call signatures                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------|
+| firstline( [eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

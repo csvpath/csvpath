@@ -31,9 +31,9 @@ csvpath will only see the even lines.
 |:-------------------------------------|
 | advance_all( lines to advance: int ) |
 
-| Call signatures                                                                                                                                                                                             |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| advance_all( lines to advance: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ) |
+| Call signatures                                                                                                                                                                                                                                                                       |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| advance_all( lines to advance: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

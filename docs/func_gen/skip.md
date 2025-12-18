@@ -17,10 +17,10 @@ has an embedded when/do operator.
 | skip()                        |
 | skip( eval this: None ǁ Any ) |
 
-| Call signatures                        |
-|:---------------------------------------|
-| skip()                                 |
-| skip( eval this: Function ǁ Equality ) |
+| Call signatures                                                                                                  |
+|:-----------------------------------------------------------------------------------------------------------------|
+| skip()                                                                                                           |
+| skip( eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

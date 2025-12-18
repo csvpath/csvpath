@@ -11,9 +11,9 @@ The table is text formatted.
 |:----------------------------------|
 | var_table( [var name: str], ... ) |
 
-| Call signatures                                                                                                                                                                                                                                                                           |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| var_table( [var name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function], ... ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                     |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| var_table( [var name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function)], ... ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

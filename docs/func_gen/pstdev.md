@@ -11,9 +11,9 @@ using push() or other functions.
 |:---------------------------------------------|
 | pstdev( stack var name: str ǁ tuple ǁ list ) |
 
-| Call signatures                                                                                                                                                                                      |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pstdev( stack var name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
+| Call signatures                                                                                                                                                                                                                                                                |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pstdev( stack var name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

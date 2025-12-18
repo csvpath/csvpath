@@ -30,7 +30,7 @@ available fields.
 | Call signatures                                                                                                                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [print to specific Printer stream: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
-| print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: Function ǁ Equality] )                                                                              |
+| print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] )    |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
