@@ -39,7 +39,7 @@ if __name__ == "__main__":
     index = f"{index}These function docs are generated from the function code. They are also available in the CsvPath Framework [CLI](https://www.csvpath.org) and [FlightPath Data](https://www.flightpathdata.com).\n"
     docdir = os.path.join(".", "docs", "func_gen")
     for _ in names:
-        index += f"* [{_}]({docdir}/{_}.md)\n"
+        index += f"* [{_}](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/{_}.md)\n"
     path = os.path.join(docdir, "index.md")
     print(f"path: {path}")
     with open(path, "w") as file:
