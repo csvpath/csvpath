@@ -20,15 +20,15 @@ the Runtime Print Fields section of the FlightPath help tabs for more
 details. The run_table() function also gives a good view of the
 available fields.
 
-| Data signatures                                                         |
-|:------------------------------------------------------------------------|
-| print( print this: strǁ'', [print to specific Printer stream: strǁ''] ) |
-| print( print this: strǁ'', [eval after: NoneǁAny] )                     |
+| Data signatures                                                             |
+|:----------------------------------------------------------------------------|
+| print( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
+| print( print this: str ǁ '', [eval after: None ǁ Any] )                     |
 
 | Call signatures                                                     |
 |:--------------------------------------------------------------------|
 | print( print this: Term, [print to specific Printer stream: Term] ) |
-| print( print this: Term, [eval after: FunctionǁEquality] )          |
+| print( print this: Term, [eval after: Function ǁ Equality] )        |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

@@ -13,9 +13,9 @@ possible special cases.
 |:-------------------------------------------------------------------|
 | caps( string to modify: str, [if true, init-cap all words: bool] ) |
 
-| Call signatures                                                                                                          |
-|:-------------------------------------------------------------------------------------------------------------------------|
-| caps( string to modify: TermǁVariableǁHeaderǁFunctionǁReference, [if true, init-cap all words: TermǁFunctionǁVariable] ) |
+| Call signatures                                                                                                                      |
+|:-------------------------------------------------------------------------------------------------------------------------------------|
+| caps( string to modify: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, [if true, init-cap all words: Term ǁ Function ǁ Variable] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

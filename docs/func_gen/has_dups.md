@@ -4,9 +4,9 @@ Has dups
 Evaluates to True if there are duplicate lines or duplicate subsets of
 header values.
 
-| Data signatures                    |
-|:-----------------------------------|
-| has_dups( [check: NoneǁAny], ... ) |
+| Data signatures                      |
+|:-------------------------------------|
+| has_dups( [check: None ǁ Any], ... ) |
 
 | Call signatures                  |
 |:---------------------------------|

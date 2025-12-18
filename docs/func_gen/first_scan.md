@@ -7,13 +7,13 @@ that has been evaluated for matching.
 Optionally, takes a function argument that is evaluated if firstscan()
 matches
 
-| Data signatures                     |
-|:------------------------------------|
-| first_scan( [eval this: NoneǁAny] ) |
+| Data signatures                       |
+|:--------------------------------------|
+| first_scan( [eval this: None ǁ Any] ) |
 
-| Call signatures                              |
-|:---------------------------------------------|
-| first_scan( [eval this: FunctionǁEquality] ) |
+| Call signatures                                |
+|:-----------------------------------------------|
+| first_scan( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

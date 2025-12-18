@@ -3,13 +3,13 @@ Length
 
 Returns the length of a string.
 
-| Data signatures                   |
-|:----------------------------------|
-| length( get length: Noneǁstrǁ'' ) |
+| Data signatures                       |
+|:--------------------------------------|
+| length( get length: None ǁ str ǁ '' ) |
 
-| Call signatures                                               |
-|:--------------------------------------------------------------|
-| length( get length: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                       |
+|:----------------------------------------------------------------------|
+| length( get length: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

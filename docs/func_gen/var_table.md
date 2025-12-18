@@ -11,9 +11,9 @@ The table is text formatted.
 |:----------------------------------|
 | var_table( [var name: str], ... ) |
 
-| Call signatures                                             |
-|:------------------------------------------------------------|
-| var_table( [var name: VariableǁHeaderǁTermǁFunction], ... ) |
+| Call signatures                                                   |
+|:------------------------------------------------------------------|
+| var_table( [var name: Variable ǁ Header ǁ Term ǁ Function], ... ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

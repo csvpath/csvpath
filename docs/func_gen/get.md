@@ -15,13 +15,13 @@ While get() and put() make it possible to create and use tracking-
 value variables in an ad hoc dict-like way, this is not recommended
 unless there is no simplier solution based on more specific functions.
 
-| Data signatures                                                                                                |
-|:---------------------------------------------------------------------------------------------------------------|
-| get( var name: strǁdict, [tracking value: Noneǁstrǁintǁfloatǁboolǁ''], [default: Noneǁstrǁintǁfloatǁboolǁ''] ) |
+| Data signatures                                                                                                                      |
+|:-------------------------------------------------------------------------------------------------------------------------------------|
+| get( var name: str ǁ dict, [tracking value: None ǁ str ǁ int ǁ float ǁ bool ǁ ''], [default: None ǁ str ǁ int ǁ float ǁ bool ǁ ''] ) |
 
-| Call signatures                                                                                                                                     |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| get( var name: HeaderǁTermǁFunctionǁVariableǁReference, [tracking value: HeaderǁTermǁFunctionǁVariable], [default: HeaderǁTermǁFunctionǁVariable] ) |
+| Call signatures                                                                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| get( var name: Header ǁ Term ǁ Function ǁ Variable ǁ Reference, [tracking value: Header ǁ Term ǁ Function ǁ Variable], [default: Header ǁ Term ǁ Function ǁ Variable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

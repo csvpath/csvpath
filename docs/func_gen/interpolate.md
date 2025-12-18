@@ -10,13 +10,13 @@ Interpolates a complete Pythonic formatting string with one
 replacement value.                 Use {{ and }} to demarcate your
 replacement pattern.
 
-| Data signatures                             |
-|:--------------------------------------------|
-| interpolate( value: NoneǁAny, format: str ) |
+| Data signatures                               |
+|:----------------------------------------------|
+| interpolate( value: None ǁ Any, format: str ) |
 
-| Call signatures                                                                                                |
-|:---------------------------------------------------------------------------------------------------------------|
-| interpolate( value: TermǁFunctionǁHeaderǁVariableǁReference, format: TermǁFunctionǁHeaderǁVariableǁReference ) |
+| Call signatures                                                                                                                |
+|:-------------------------------------------------------------------------------------------------------------------------------|
+| interpolate( value: Term ǁ Function ǁ Header ǁ Variable ǁ Reference, format: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

@@ -31,9 +31,9 @@ csvpath will only see the even lines.
 |:-------------------------------------|
 | advance_all( lines to advance: int ) |
 
-| Call signatures                                         |
-|:--------------------------------------------------------|
-| advance_all( lines to advance: TermǁVariableǁFunction ) |
+| Call signatures                                             |
+|:------------------------------------------------------------|
+| advance_all( lines to advance: Term ǁ Variable ǁ Function ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

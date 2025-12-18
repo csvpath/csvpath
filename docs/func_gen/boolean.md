@@ -9,13 +9,13 @@ As you would think, setting distinct limits the number of lines to
 four, for practical purposes. Namely: yes(), no(), none(), and a
 header name.
 
-| Data signatures                 |
-|:--------------------------------|
-| boolean( value: Noneǁboolǁstr ) |
+| Data signatures                     |
+|:------------------------------------|
+| boolean( value: None ǁ bool ǁ str ) |
 
-| Call signatures                                 |
-|:------------------------------------------------|
-| boolean( value: TermǁVariableǁHeaderǁFunction ) |
+| Call signatures                                       |
+|:------------------------------------------------------|
+| boolean( value: Term ǁ Variable ǁ Header ǁ Function ) |
 
 | Purpose    | Value                                                     |
 |:-----------|:----------------------------------------------------------|

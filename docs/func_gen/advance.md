@@ -12,9 +12,9 @@ lines after the line where it is evaluated.
 |:---------------------------------|
 | advance( lines to advance: int ) |
 
-| Call signatures                                     |
-|:----------------------------------------------------|
-| advance( lines to advance: TermǁVariableǁFunction ) |
+| Call signatures                                         |
+|:--------------------------------------------------------|
+| advance( lines to advance: Term ǁ Variable ǁ Function ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

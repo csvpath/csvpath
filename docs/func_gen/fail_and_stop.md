@@ -1,11 +1,11 @@
 
-| Data signatures                        |
-|:---------------------------------------|
-| fail_and_stop( [eval this: NoneǁAny] ) |
+| Data signatures                          |
+|:-----------------------------------------|
+| fail_and_stop( [eval this: None ǁ Any] ) |
 
-| Call signatures                                 |
-|:------------------------------------------------|
-| fail_and_stop( [eval this: FunctionǁEquality] ) |
+| Call signatures                                   |
+|:--------------------------------------------------|
+| fail_and_stop( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

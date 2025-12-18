@@ -22,15 +22,15 @@ available fields.
 
 Errors are also handled in the same way as built-in errors. They are collected to errors.json, printed with metadata, etc.
 
-| Data signatures                                                         |
-|:------------------------------------------------------------------------|
-| error( print this: strǁ'', [print to specific Printer stream: strǁ''] ) |
-| error( print this: strǁ'', [eval after: NoneǁAny] )                     |
+| Data signatures                                                             |
+|:----------------------------------------------------------------------------|
+| error( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
+| error( print this: str ǁ '', [eval after: None ǁ Any] )                     |
 
 | Call signatures                                                     |
 |:--------------------------------------------------------------------|
 | error( print this: Term, [print to specific Printer stream: Term] ) |
-| error( print this: Term, [eval after: FunctionǁEquality] )          |
+| error( print this: Term, [eval after: Function ǁ Equality] )        |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

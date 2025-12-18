@@ -12,9 +12,9 @@ counter.my_name()
 |:-----------------------------------------|
 | counter( [amount to increment by: int] ) |
 
-| Call signatures                                                                       |
-|:--------------------------------------------------------------------------------------|
-| counter( [amount to increment by: TermǁFunctionǁHeaderǁVariableǁReferenceǁEquality] ) |
+| Call signatures                                                                                 |
+|:------------------------------------------------------------------------------------------------|
+| counter( [amount to increment by: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ǁ Equality] ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

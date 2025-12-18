@@ -10,15 +10,15 @@ identified header's value is replaced.
 
 For example, $[*][@a = line_number() replace(#order_number, @a)]
 
-| Data signatures                                                       |
-|:----------------------------------------------------------------------|
-| replace( replace value: NoneǁAny, replacement: Any )                  |
-| replace( replace by header identity: intǁstr, replacement: NoneǁAny ) |
+| Data signatures                                                           |
+|:--------------------------------------------------------------------------|
+| replace( replace value: None ǁ Any, replacement: Any )                    |
+| replace( replace by header identity: int ǁ str, replacement: None ǁ Any ) |
 
-| Call signatures                                                                                   |
-|:--------------------------------------------------------------------------------------------------|
-| replace( replace value: Header, replacement: TermǁVariableǁHeaderǁFunctionǁReference )            |
-| replace( replace by header identity: Term, replacement: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                           |
+|:----------------------------------------------------------------------------------------------------------|
+| replace( replace value: Header, replacement: Term ǁ Variable ǁ Header ǁ Function ǁ Reference )            |
+| replace( replace by header identity: Term, replacement: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

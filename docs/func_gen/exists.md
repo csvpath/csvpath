@@ -8,13 +8,13 @@ existance test, exists() will return True even if there is a value
 that evaluates to False. I.e. the False is considered to exist for the
 purposes of matching.
 
-| Data signatures                        |
-|:---------------------------------------|
-| exists( Component to check: NoneǁAny ) |
+| Data signatures                          |
+|:-----------------------------------------|
+| exists( Component to check: None ǁ Any ) |
 
-| Call signatures                                                  |
-|:-----------------------------------------------------------------|
-| exists( Component to check: VariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                        |
+|:-----------------------------------------------------------------------|
+| exists( Component to check: Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

@@ -4,13 +4,13 @@ Year
 A convenience function that returns the year component of a date or
 datetime as a string.
 
-| Data signatures                  |
-|:---------------------------------|
-| year( date: Noneǁdateǁdatetime ) |
+| Data signatures                      |
+|:-------------------------------------|
+| year( date: None ǁ date ǁ datetime ) |
 
-| Call signatures                                       |
-|:------------------------------------------------------|
-| year( date: TermǁFunctionǁHeaderǁVariableǁReference ) |
+| Call signatures                                               |
+|:--------------------------------------------------------------|
+| year( date: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

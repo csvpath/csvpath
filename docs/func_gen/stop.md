@@ -18,13 +18,13 @@ the onmatch qualifier are evaluated at the end of the csvpath, and so
 might not be evaluated when stop() happens even if they come before
 stop().
 
-| Data signatures               |
-|:------------------------------|
-| stop( [eval this: NoneǁAny] ) |
+| Data signatures                 |
+|:--------------------------------|
+| stop( [eval this: None ǁ Any] ) |
 
-| Call signatures                        |
-|:---------------------------------------|
-| stop( [eval this: FunctionǁEquality] ) |
+| Call signatures                          |
+|:-----------------------------------------|
+| stop( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

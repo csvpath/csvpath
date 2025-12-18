@@ -40,9 +40,9 @@ not capture leading zeros, but track() would.
 |:------------------------------------------------------------------------------|
 | track_any( track under: str, tracking value: Any, ['collect' or 'add': Any] ) |
 
-| Call signatures                                                                                                                                        |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| track_any( track under: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference, ['collect' or 'add': Term] ) |
+| Call signatures                                                                                                                                                        |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| track_any( track under: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, tracking value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ['collect' or 'add': Term] ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

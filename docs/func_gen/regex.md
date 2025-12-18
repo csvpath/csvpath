@@ -8,15 +8,15 @@ The regular expression can be in argument one or two.
 Optionally, the third argument returns a group from the match, if any
 groups were defined.
 
-| Data signatures                                                             |
-|:----------------------------------------------------------------------------|
-| regex( all headers: , regex: str )                                          |
-| regex( str or regex: strǁ''ǁNone, str or regex: strǁ''ǁNone, [group: int] ) |
+| Data signatures                                                                     |
+|:------------------------------------------------------------------------------------|
+| regex( all headers: , regex: str )                                                  |
+| regex( str or regex: str ǁ '' ǁ None, str or regex: str ǁ '' ǁ None, [group: int] ) |
 
-| Call signatures                                                                                                                                                         |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| regex( all headers: Headers, regex: TermǁVariableǁHeaderǁFunctionǁReference )                                                                                           |
-| regex( str or regex: TermǁVariableǁHeaderǁFunctionǁReference, str or regex: TermǁVariableǁHeaderǁFunctionǁReference, [group: TermǁVariableǁHeaderǁFunctionǁReference] ) |
+| Call signatures                                                                                                                                                                                 |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| regex( all headers: Headers, regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference )                                                                                                           |
+| regex( str or regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, str or regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, [group: Term ǁ Variable ǁ Header ǁ Function ǁ Reference] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

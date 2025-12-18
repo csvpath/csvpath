@@ -6,15 +6,15 @@ characters, of a regular expression to a string.
 
 The regular expression can be in argument one or two.
 
-| Data signatures                                                             |
-|:----------------------------------------------------------------------------|
-| exact( all headers: , regex: str )                                          |
-| exact( str or regex: strǁ''ǁNone, str or regex: strǁ''ǁNone, [group: int] ) |
+| Data signatures                                                                     |
+|:------------------------------------------------------------------------------------|
+| exact( all headers: , regex: str )                                                  |
+| exact( str or regex: str ǁ '' ǁ None, str or regex: str ǁ '' ǁ None, [group: int] ) |
 
-| Call signatures                                                                                                                                                         |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| exact( all headers: Headers, regex: TermǁVariableǁHeaderǁFunctionǁReference )                                                                                           |
-| exact( str or regex: TermǁVariableǁHeaderǁFunctionǁReference, str or regex: TermǁVariableǁHeaderǁFunctionǁReference, [group: TermǁVariableǁHeaderǁFunctionǁReference] ) |
+| Call signatures                                                                                                                                                                                 |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| exact( all headers: Headers, regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference )                                                                                                           |
+| exact( str or regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, str or regex: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, [group: Term ǁ Variable ǁ Header ǁ Function ǁ Reference] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -3,13 +3,13 @@ Greater than
 
 after() returns true if a value is greater than another value.
 
-| Data signatures                                                                                   |
-|:--------------------------------------------------------------------------------------------------|
-| after( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
+| Data signatures                                                                                                       |
+|:----------------------------------------------------------------------------------------------------------------------|
+| after( relate this: None ǁ int ǁ float ǁ date ǁ datetime ǁ str, to that: None ǁ int ǁ float ǁ date ǁ datetime ǁ str ) |
 
-| Call signatures                                                                                                 |
-|:----------------------------------------------------------------------------------------------------------------|
-| after( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                 |
+|:--------------------------------------------------------------------------------------------------------------------------------|
+| after( relate this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, to that: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

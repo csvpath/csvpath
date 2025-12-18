@@ -11,13 +11,13 @@ string to int. This results in a predictable summation. If you are
 looking for a way to make sure all lines have summable values try
 using integer() or another approach.
 
-| Data signatures            |
-|:---------------------------|
-| sum( sum this: intǁfloat ) |
+| Data signatures              |
+|:-----------------------------|
+| sum( sum this: int ǁ float ) |
 
-| Call signatures                                |
-|:-----------------------------------------------|
-| sum( sum this: VariableǁFunctionǁTermǁHeader ) |
+| Call signatures                                      |
+|:-----------------------------------------------------|
+| sum( sum this: Variable ǁ Function ǁ Term ǁ Header ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -8,15 +8,15 @@ If the distinct qualifier is used, the value to be pushed is ignored
 if it is already present in the stack. Adding the notnone qualifier
 prevents push() from adding a None to the stack.
 
-| Data signatures                                            |
-|:-----------------------------------------------------------|
-| push_distinct( new stack name: str )                       |
-| push_distinct( stack name: strǁlist, push this: NoneǁAny ) |
+| Data signatures                                                |
+|:---------------------------------------------------------------|
+| push_distinct( new stack name: str )                           |
+| push_distinct( stack name: str ǁ list, push this: None ǁ Any ) |
 
-| Call signatures                                                                                                          |
-|:-------------------------------------------------------------------------------------------------------------------------|
-| push_distinct( new stack name: Term )                                                                                    |
-| push_distinct( stack name: TermǁVariableǁHeaderǁFunctionǁReference, push this: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                          |
+|:-----------------------------------------------------------------------------------------------------------------------------------------|
+| push_distinct( new stack name: Term )                                                                                                    |
+| push_distinct( stack name: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, push this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

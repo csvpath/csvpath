@@ -7,15 +7,15 @@ First, it may indicate that a value must be a {self.name} to be valid. To do thi
 
 Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.
 
-| Data signatures                              |
-|:---------------------------------------------|
-| date( date: Noneǁdatetimeǁdate )             |
-| date( date string: Noneǁstr, [format: str] ) |
+| Data signatures                                |
+|:-----------------------------------------------|
+| date( date: None ǁ datetime ǁ date )           |
+| date( date string: None ǁ str, [format: str] ) |
 
-| Call signatures                                                                                                 |
-|:----------------------------------------------------------------------------------------------------------------|
-| date( date: HeaderǁVariableǁFunctionǁReference )                                                                |
-| date( date string: TermǁHeaderǁVariableǁFunctionǁReference, [format: TermǁHeaderǁFunctionǁVariableǁReference] ) |
+| Call signatures                                                                                                                 |
+|:--------------------------------------------------------------------------------------------------------------------------------|
+| date( date: Header ǁ Variable ǁ Function ǁ Reference )                                                                          |
+| date( date string: Term ǁ Header ǁ Variable ǁ Function ǁ Reference, [format: Term ǁ Header ǁ Function ǁ Variable ǁ Reference] ) |
 
 | Purpose    | Value                                                  |
 |:-----------|:-------------------------------------------------------|

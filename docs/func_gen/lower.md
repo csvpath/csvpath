@@ -7,9 +7,9 @@ Alters a string by lower-casing it.
 |:-----------------------------|
 | lower( lowercase this: str ) |
 
-| Call signatures                                                  |
-|:-----------------------------------------------------------------|
-| lower( lowercase this: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                          |
+|:-------------------------------------------------------------------------|
+| lower( lowercase this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

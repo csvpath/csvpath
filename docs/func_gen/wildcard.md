@@ -10,10 +10,10 @@ When wildcard() has no args it represents any nuber of headers, same as "*".
 Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself will not
             invalidate a document unless it defines a specific number of headers that are not found.
 
-| Data signatures              |
-|:-----------------------------|
-| wildcard( , ... )            |
-| wildcard( intǁstrǁNoneǁAny ) |
+| Data signatures                    |
+|:-----------------------------------|
+| wildcard( , ... )                  |
+| wildcard( int ǁ str ǁ None ǁ Any ) |
 
 | Call signatures   |
 |:------------------|

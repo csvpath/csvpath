@@ -7,13 +7,13 @@ onmatch qualifier, but does not require it.
 Optionally, takes a function argument that is evaluated if
 firstmatch() matches
 
-| Data signatures                      |
-|:-------------------------------------|
-| first_match( [eval this: NoneǁAny] ) |
+| Data signatures                        |
+|:---------------------------------------|
+| first_match( [eval this: None ǁ Any] ) |
 
-| Call signatures                               |
-|:----------------------------------------------|
-| first_match( [eval this: FunctionǁEquality] ) |
+| Call signatures                                 |
+|:------------------------------------------------|
+| first_match( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

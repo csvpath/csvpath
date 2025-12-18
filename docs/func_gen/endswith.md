@@ -3,13 +3,13 @@ Endswith
 
 Matches when a string ends with another string.
 
-| Data signatures                                            |
-|:-----------------------------------------------------------|
-| endswith( check this: strǁ''ǁNone, for this: strǁ''ǁNone ) |
+| Data signatures                                                    |
+|:-------------------------------------------------------------------|
+| endswith( check this: str ǁ '' ǁ None, for this: str ǁ '' ǁ None ) |
 
-| Call signatures                                                                                                    |
-|:-------------------------------------------------------------------------------------------------------------------|
-| endswith( check this: TermǁVariableǁHeaderǁFunctionǁReference, for this: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                    |
+|:-----------------------------------------------------------------------------------------------------------------------------------|
+| endswith( check this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, for this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

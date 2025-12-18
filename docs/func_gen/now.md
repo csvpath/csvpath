@@ -4,15 +4,15 @@ Now
 Returns the current datetime. If a strftime() format is provided the
 return is a string matching the format.
 
-| Data signatures           |
-|:--------------------------|
-| now()                     |
-| now( [format: Noneǁstr] ) |
+| Data signatures             |
+|:----------------------------|
+| now()                       |
+| now( [format: None ǁ str] ) |
 
-| Call signatures                                |
-|:-----------------------------------------------|
-| now()                                          |
-| now( [format: TermǁFunctionǁHeaderǁVariable] ) |
+| Call signatures                                      |
+|:-----------------------------------------------------|
+| now()                                                |
+| now( [format: Term ǁ Function ǁ Header ǁ Variable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -4,13 +4,13 @@ Month
 A convenience function that returns the month component of a date or
 datetime as a string.
 
-| Data signatures                   |
-|:----------------------------------|
-| month( date: Noneǁdateǁdatetime ) |
+| Data signatures                       |
+|:--------------------------------------|
+| month( date: None ǁ date ǁ datetime ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| month( date: TermǁFunctionǁHeaderǁVariableǁReference ) |
+| Call signatures                                                |
+|:---------------------------------------------------------------|
+| month( date: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

@@ -23,9 +23,9 @@ variable of birds with values like blue|bluebird,red|redbird.
 |:----------------------------------|
 | tally( Value to count: Any, ... ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| tally( Value to count: HeaderǁVariableǁFunction, ... ) |
+| Call signatures                                            |
+|:-----------------------------------------------------------|
+| tally( Value to count: Header ǁ Variable ǁ Function, ... ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

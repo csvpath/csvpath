@@ -9,9 +9,9 @@ The stack is created if not found.
 |:------------------------------------|
 | peek( stack name: str, index: int ) |
 
-| Call signatures                                                          |
-|:-------------------------------------------------------------------------|
-| peek( stack name: TermǁVariableǁHeaderǁFunctionǁReference, index: Term ) |
+| Call signatures                                                                  |
+|:---------------------------------------------------------------------------------|
+| peek( stack name: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, index: Term ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

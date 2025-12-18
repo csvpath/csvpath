@@ -3,13 +3,13 @@ Multiply
 
 Multiplies numbers. Any number of arguments is acceptable.
 
-| Data signatures                                               |
-|:--------------------------------------------------------------|
-| multiply( multiply this: floatǁint, by that: floatǁint, ... ) |
+| Data signatures                                                   |
+|:------------------------------------------------------------------|
+| multiply( multiply this: float ǁ int, by that: float ǁ int, ... ) |
 
-| Call signatures                                                                                                           |
-|:--------------------------------------------------------------------------------------------------------------------------|
-| multiply( multiply this: TermǁVariableǁHeaderǁFunctionǁReference, by that: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
+| Call signatures                                                                                                                           |
+|:------------------------------------------------------------------------------------------------------------------------------------------|
+| multiply( multiply this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, by that: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

@@ -9,13 +9,13 @@ or missing.
 |:------------------------------------------------------------------|
 | missing()                                                         |
 | missing( [a function indicating all headers or all variables: ] ) |
-| missing( [one of a set of match components: NoneǁAny], ... )      |
+| missing( [one of a set of match components: None ǁ Any], ... )    |
 
-| Call signatures                                                                    |
-|:-----------------------------------------------------------------------------------|
-| missing()                                                                          |
-| missing( [a function indicating all headers or all variables: VariablesǁHeaders] ) |
-| missing( [one of a set of match components: FunctionǁVariableǁHeader], ... )       |
+| Call signatures                                                                      |
+|:-------------------------------------------------------------------------------------|
+| missing()                                                                            |
+| missing( [a function indicating all headers or all variables: Variables ǁ Headers] ) |
+| missing( [one of a set of match components: Function ǁ Variable ǁ Header], ... )     |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

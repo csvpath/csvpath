@@ -38,9 +38,9 @@ not capture leading zeros, but track() would.
 |:-----------------------------------------------------------------|
 | track( track under: str, tracking value: Any, ['collect': Any] ) |
 
-| Call signatures                                                                                                                           |
-|:------------------------------------------------------------------------------------------------------------------------------------------|
-| track( track under: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference, ['collect': Term] ) |
+| Call signatures                                                                                                                                           |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| track( track under: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, tracking value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ['collect': Term] ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

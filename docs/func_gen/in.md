@@ -9,13 +9,13 @@ named-path group runs.
 
 String terms are treated as possibly | delimited strings of values
 
-| Data signatures                                             |
-|:------------------------------------------------------------|
-| in( Value to find: NoneǁAny, Place to look: NoneǁAny, ... ) |
+| Data signatures                                                 |
+|:----------------------------------------------------------------|
+| in( Value to find: None ǁ Any, Place to look: None ǁ Any, ... ) |
 
-| Call signatures                                                                                                           |
-|:--------------------------------------------------------------------------------------------------------------------------|
-| in( Value to find: TermǁVariableǁHeaderǁFunctionǁReference, Place to look: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
+| Call signatures                                                                                                                           |
+|:------------------------------------------------------------------------------------------------------------------------------------------|
+| in( Value to find: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, Place to look: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ... ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

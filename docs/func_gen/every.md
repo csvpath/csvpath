@@ -1,9 +1,9 @@
 
 Matches every N times a value is seen.
 
-| Data signatures                                   |
-|:--------------------------------------------------|
-| every( watch: NoneǁAny, pick every N: intǁfloat ) |
+| Data signatures                                       |
+|:------------------------------------------------------|
+| every( watch: None ǁ Any, pick every N: int ǁ float ) |
 
 | Call signatures                               |
 |:----------------------------------------------|

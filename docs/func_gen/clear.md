@@ -3,10 +3,10 @@ Clear
 
 Clears a variable by removing it.
 
-| Data signatures        |
-|:-----------------------|
-| clear( var name: str ) |
-| clear( var: NoneǁAny ) |
+| Data signatures          |
+|:-------------------------|
+| clear( var name: str )   |
+| clear( var: None ǁ Any ) |
 
 | Call signatures         |
 |:------------------------|

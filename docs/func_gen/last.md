@@ -17,13 +17,13 @@ will correctly run on the last line but it will not produce True in
 assignment. Changing that behavior is on the todo list. It should not
 be relied on.
 
-| Data signatures                  |
-|:---------------------------------|
-| last( [eval on last: NoneǁAny] ) |
+| Data signatures                    |
+|:-----------------------------------|
+| last( [eval on last: None ǁ Any] ) |
 
-| Call signatures                                    |
-|:---------------------------------------------------|
-| last( [eval on last: FunctionǁVariableǁEquality] ) |
+| Call signatures                                        |
+|:-------------------------------------------------------|
+| last( [eval on last: Function ǁ Variable ǁ Equality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

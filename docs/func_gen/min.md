@@ -3,13 +3,13 @@ Min
 
 Tracks the minimum value.
 
-| Data signatures                    |
-|:-----------------------------------|
-| min( value to compare: intǁfloat ) |
+| Data signatures                      |
+|:-------------------------------------|
+| min( value to compare: int ǁ float ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| min( value to compare: VariableǁTermǁHeaderǁFunction ) |
+| Call signatures                                              |
+|:-------------------------------------------------------------|
+| min( value to compare: Variable ǁ Term ǁ Header ǁ Function ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

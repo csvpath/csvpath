@@ -10,13 +10,13 @@ on the match of expected to actual
 If no value is provided, header_name() is an existance test for the
 header, not a check for the line having a value for the header.
 
-| Data signatures                                                     |
-|:--------------------------------------------------------------------|
-| header_name( header identity: strǁint, [value check: NoneǁAnyǁ''] ) |
+| Data signatures                                                           |
+|:--------------------------------------------------------------------------|
+| header_name( header identity: str ǁ int, [value check: None ǁ Any ǁ ''] ) |
 
-| Call signatures                                                             |
-|:----------------------------------------------------------------------------|
-| header_name( header identity: TermǁFunctionǁVariable, [value check: Term] ) |
+| Call signatures                                                                 |
+|:--------------------------------------------------------------------------------|
+| header_name( header identity: Term ǁ Function ǁ Variable, [value check: Term] ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

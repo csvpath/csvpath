@@ -4,9 +4,9 @@ Count dups
 Produces the number of duplicate lines or the number of lines where
 there are duplicate subsets of header values.
 
-| Data signatures                           |
-|:------------------------------------------|
-| count_dups( [check this: NoneǁAny], ... ) |
+| Data signatures                             |
+|:--------------------------------------------|
+| count_dups( [check this: None ǁ Any], ... ) |
 
 | Call signatures                         |
 |:----------------------------------------|

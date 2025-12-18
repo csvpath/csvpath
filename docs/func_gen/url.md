@@ -3,13 +3,13 @@ Url
 
 A line() schema type indicating that the value it represents must be an URL
 
-| Data signatures         |
-|:------------------------|
-| url( url: strǁNoneǁ'' ) |
+| Data signatures             |
+|:----------------------------|
+| url( url: str ǁ None ǁ '' ) |
 
-| Call signatures                                |
-|:-----------------------------------------------|
-| url( url: HeaderǁVariableǁReferenceǁFunction ) |
+| Call signatures                                      |
+|:-----------------------------------------------------|
+| url( url: Header ǁ Variable ǁ Reference ǁ Function ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

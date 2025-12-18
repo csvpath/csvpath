@@ -9,10 +9,10 @@ duplicates.
 | shuffle()                                   |
 | shuffle( from this int: int, to this: int ) |
 
-| Call signatures                                                                                 |
-|:------------------------------------------------------------------------------------------------|
-| shuffle()                                                                                       |
-| shuffle( from this int: TermǁVariableǁHeaderǁFunction, to this: TermǁVariableǁHeaderǁFunction ) |
+| Call signatures                                                                                             |
+|:------------------------------------------------------------------------------------------------------------|
+| shuffle()                                                                                                   |
+| shuffle( from this int: Term ǁ Variable ǁ Header ǁ Function, to this: Term ǁ Variable ǁ Header ǁ Function ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

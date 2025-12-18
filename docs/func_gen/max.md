@@ -3,13 +3,13 @@ Max
 
 Tracks the maximum value.
 
-| Data signatures                    |
-|:-----------------------------------|
-| max( value to compare: intǁfloat ) |
+| Data signatures                      |
+|:-------------------------------------|
+| max( value to compare: int ǁ float ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| max( value to compare: VariableǁTermǁHeaderǁFunction ) |
+| Call signatures                                              |
+|:-------------------------------------------------------------|
+| max( value to compare: Variable ǁ Term ǁ Header ǁ Function ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

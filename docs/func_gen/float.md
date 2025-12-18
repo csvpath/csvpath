@@ -1,11 +1,11 @@
 
-| Data signatures         |
-|:------------------------|
-| float( Noneǁfloatǁint ) |
+| Data signatures             |
+|:----------------------------|
+| float( None ǁ float ǁ int ) |
 
-| Call signatures                        |
-|:---------------------------------------|
-| float( TermǁVariableǁHeaderǁFunction ) |
+| Call signatures                              |
+|:---------------------------------------------|
+| float( Term ǁ Variable ǁ Header ǁ Function ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

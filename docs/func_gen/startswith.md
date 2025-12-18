@@ -3,13 +3,13 @@ Startswith
 
 Matches when a string begins with another string.
 
-| Data signatures                                              |
-|:-------------------------------------------------------------|
-| startswith( check this: strǁ''ǁNone, for this: strǁ''ǁNone ) |
+| Data signatures                                                      |
+|:---------------------------------------------------------------------|
+| startswith( check this: str ǁ '' ǁ None, for this: str ǁ '' ǁ None ) |
 
-| Call signatures                                                                                                      |
-|:---------------------------------------------------------------------------------------------------------------------|
-| startswith( check this: TermǁVariableǁHeaderǁFunctionǁReference, for this: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                      |
+|:-------------------------------------------------------------------------------------------------------------------------------------|
+| startswith( check this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, for this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

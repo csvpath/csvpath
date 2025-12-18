@@ -8,13 +8,13 @@ append() is conditional to a when/do operator there could be lines
 that do not have the appended header; however, after the first
 appended line all lines have the appended header.
 
-| Data signatures                                                                                        |
-|:-------------------------------------------------------------------------------------------------------|
-| append( name of appended header: str, value: NoneǁAny, [append header name to header row data: bool] ) |
+| Data signatures                                                                                          |
+|:---------------------------------------------------------------------------------------------------------|
+| append( name of appended header: str, value: None ǁ Any, [append header name to header row data: bool] ) |
 
-| Call signatures                                                                                                                                 |
-|:------------------------------------------------------------------------------------------------------------------------------------------------|
-| append( name of appended header: Term, value: TermǁVariableǁHeaderǁFunctionǁReference, [append header name to header row data: TermǁFunction] ) |
+| Call signatures                                                                                                                                           |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| append( name of appended header: Term, value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, [append header name to header row data: Term ǁ Function] ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

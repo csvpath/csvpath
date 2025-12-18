@@ -4,13 +4,13 @@ Divide
 Divides numbers. divide() can take any number of int and/or float
 arguments.
 
-| Data signatures                                        |
-|:-------------------------------------------------------|
-| divide( dividend: intǁfloat, divisor: intǁfloat, ... ) |
+| Data signatures                                            |
+|:-----------------------------------------------------------|
+| divide( dividend: int ǁ float, divisor: int ǁ float, ... ) |
 
-| Call signatures                                                                                                    |
-|:-------------------------------------------------------------------------------------------------------------------|
-| divide( dividend: TermǁVariableǁHeaderǁFunctionǁReference, divisor: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
+| Call signatures                                                                                                                    |
+|:-----------------------------------------------------------------------------------------------------------------------------------|
+| divide( dividend: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, divisor: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

@@ -7,13 +7,13 @@ subtract() subtracts two or more numbers.
                 to negative or negative to positive.
             
 
-| Data signatures                  |
-|:---------------------------------|
-| subtract( term: intǁfloat, ... ) |
+| Data signatures                    |
+|:-----------------------------------|
+| subtract( term: int ǁ float, ... ) |
 
-| Call signatures                                                |
-|:---------------------------------------------------------------|
-| subtract( term: TermǁHeaderǁReferenceǁVariableǁFunction, ... ) |
+| Call signatures                                                        |
+|:-----------------------------------------------------------------------|
+| subtract( term: Term ǁ Header ǁ Reference ǁ Variable ǁ Function, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

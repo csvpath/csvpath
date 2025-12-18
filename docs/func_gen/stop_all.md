@@ -11,13 +11,13 @@ collect_by_line(), fast_forward_by_line(), and next_by_line() methods.
 
 See stop() for more behavior details.
 
-| Data signatures                   |
-|:----------------------------------|
-| stop_all( [eval this: NoneǁAny] ) |
+| Data signatures                     |
+|:------------------------------------|
+| stop_all( [eval this: None ǁ Any] ) |
 
-| Call signatures                            |
-|:-------------------------------------------|
-| stop_all( [eval this: FunctionǁEquality] ) |
+| Call signatures                              |
+|:---------------------------------------------|
+| stop_all( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|

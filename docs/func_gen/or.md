@@ -10,9 +10,9 @@ Remember that logic-mode allows you to apply OR logic to the whole
 csvpath, if that is needed. or() is of course more specific and
 composable.
 
-| Data signatures                                                    |
-|:-------------------------------------------------------------------|
-| or( First alternative: NoneǁAny, Next alternative: NoneǁAny, ... ) |
+| Data signatures                                                        |
+|:-----------------------------------------------------------------------|
+| or( First alternative: None ǁ Any, Next alternative: None ǁ Any, ... ) |
 
 | Call signatures                                                      |
 |:---------------------------------------------------------------------|

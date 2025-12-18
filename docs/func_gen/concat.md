@@ -3,13 +3,13 @@ Concat
 
 Concatenates any number of strings, numbers, or bool values.
 
-| Data signatures                                                                      |
-|:-------------------------------------------------------------------------------------|
-| concat( value: strǁintǁfloatǁboolǁ'', append this: strǁintǁfloatǁboolǁlistǁ'', ... ) |
+| Data signatures                                                                                        |
+|:-------------------------------------------------------------------------------------------------------|
+| concat( value: str ǁ int ǁ float ǁ bool ǁ '', append this: str ǁ int ǁ float ǁ bool ǁ list ǁ '', ... ) |
 
-| Call signatures                                                                                                     |
-|:--------------------------------------------------------------------------------------------------------------------|
-| concat( value: TermǁVariableǁHeaderǁFunctionǁReference, append this: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
+| Call signatures                                                                                                                     |
+|:------------------------------------------------------------------------------------------------------------------------------------|
+| concat( value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, append this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

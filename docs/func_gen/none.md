@@ -9,11 +9,11 @@ A value producer and line() schema type representing a None value.
 | none( nullable: None )        |
 | none( header reference: str ) |
 
-| Call signatures                                      |
-|:-----------------------------------------------------|
-| none()                                               |
-| none( nullable: VariableǁHeaderǁFunctionǁReference ) |
-| none( header reference: Term )                       |
+| Call signatures                                            |
+|:-----------------------------------------------------------|
+| none()                                                     |
+| none( nullable: Variable ǁ Header ǁ Function ǁ Reference ) |
+| none( header reference: Term )                             |
 
 | Purpose    | Value                                                  |
 |:-----------|:-------------------------------------------------------|

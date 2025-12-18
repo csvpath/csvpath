@@ -3,13 +3,13 @@ Substring
 
 Returns the first N-characters of a string.
 
-| Data signatures                           |
-|:------------------------------------------|
-| substring( from this: strǁ'', keep: int ) |
+| Data signatures                             |
+|:--------------------------------------------|
+| substring( from this: str ǁ '', keep: int ) |
 
-| Call signatures                                                                                                |
-|:---------------------------------------------------------------------------------------------------------------|
-| substring( from this: TermǁVariableǁHeaderǁFunctionǁReference, keep: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                |
+|:-------------------------------------------------------------------------------------------------------------------------------|
+| substring( from this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, keep: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

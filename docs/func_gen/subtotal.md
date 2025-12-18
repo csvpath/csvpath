@@ -17,13 +17,13 @@ And access the subtotal like this:
 By default subtotal() tracks its value in the variable @subtotal. Add
 a name qualifier as shown above to use another name.
 
-| Data signatures                                                      |
-|:---------------------------------------------------------------------|
-| subtotal( type to subtotal: NoneǁAny, value to subtotal: floatǁint ) |
+| Data signatures                                                          |
+|:-------------------------------------------------------------------------|
+| subtotal( type to subtotal: None ǁ Any, value to subtotal: float ǁ int ) |
 
-| Call signatures                                                                                     |
-|:----------------------------------------------------------------------------------------------------|
-| subtotal( type to subtotal: VariableǁFunctionǁHeader, value to subtotal: VariableǁFunctionǁHeader ) |
+| Call signatures                                                                                             |
+|:------------------------------------------------------------------------------------------------------------|
+| subtotal( type to subtotal: Variable ǁ Function ǁ Header, value to subtotal: Variable ǁ Function ǁ Header ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

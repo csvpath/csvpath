@@ -6,13 +6,13 @@ Evaluates to True on the first line.
 Optionally, takes a function argument that is evaluated if firstline()
 matches
 
-| Data signatures                     |
-|:------------------------------------|
-| first_line( [eval this: NoneǁAny] ) |
+| Data signatures                       |
+|:--------------------------------------|
+| first_line( [eval this: None ǁ Any] ) |
 
-| Call signatures                              |
-|:---------------------------------------------|
-| first_line( [eval this: FunctionǁEquality] ) |
+| Call signatures                                |
+|:-----------------------------------------------|
+| first_line( [eval this: Function ǁ Equality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

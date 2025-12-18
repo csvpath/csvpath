@@ -8,13 +8,13 @@ means the log level is changed for particular csvpath currently
 running, not any other csvpaths running after or along-side in a
 breadth-first configuration.
 
-| Data signatures                               |
-|:----------------------------------------------|
-| debug( [info, debug, warn, error: Noneǁstr] ) |
+| Data signatures                                 |
+|:------------------------------------------------|
+| debug( [info, debug, warn, error: None ǁ str] ) |
 
-| Call signatures                                                    |
-|:-------------------------------------------------------------------|
-| debug( [info, debug, warn, error: TermǁFunctionǁVariableǁHeader] ) |
+| Call signatures                                                          |
+|:-------------------------------------------------------------------------|
+| debug( [info, debug, warn, error: Term ǁ Function ǁ Variable ǁ Header] ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

@@ -7,9 +7,9 @@ Alters a string by trimming leading and trailing whitespace.
 |:------------------------|
 | strip( trim this: str ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| strip( trim this: VariableǁHeaderǁReferenceǁFunction ) |
+| Call signatures                                              |
+|:-------------------------------------------------------------|
+| strip( trim this: Variable ǁ Header ǁ Reference ǁ Function ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

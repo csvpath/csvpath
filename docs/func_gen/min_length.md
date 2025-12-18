@@ -1,11 +1,11 @@
 
-| Data signatures           |
-|:--------------------------|
-| min_length( strǁ'', int ) |
+| Data signatures             |
+|:----------------------------|
+| min_length( str ǁ '', int ) |
 
-| Call signatures                                             |
-|:------------------------------------------------------------|
-| min_length( TermǁVariableǁHeaderǁFunctionǁReference, Term ) |
+| Call signatures                                                     |
+|:--------------------------------------------------------------------|
+| min_length( Term ǁ Variable ǁ Header ǁ Function ǁ Reference, Term ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

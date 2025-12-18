@@ -5,13 +5,13 @@ integer() is a type function often used as an argument to line().
 
 It indicates that the value it receives must be an integer.
 
-| Data signatures                                                               |
-|:------------------------------------------------------------------------------|
-| integer( header: Noneǁstrǁint, [max: Noneǁfloatǁint], [min: Noneǁfloatǁint] ) |
+| Data signatures                                                                           |
+|:------------------------------------------------------------------------------------------|
+| integer( header: None ǁ str ǁ int, [max: None ǁ float ǁ int], [min: None ǁ float ǁ int] ) |
 
-| Call signatures                                                                                                     |
-|:--------------------------------------------------------------------------------------------------------------------|
-| integer( header: HeaderǁVariableǁFunctionǁReference, [max: TermǁFunctionǁVariable], [min: TermǁFunctionǁVariable] ) |
+| Call signatures                                                                                                                   |
+|:----------------------------------------------------------------------------------------------------------------------------------|
+| integer( header: Header ǁ Variable ǁ Function ǁ Reference, [max: Term ǁ Function ǁ Variable], [min: Term ǁ Function ǁ Variable] ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

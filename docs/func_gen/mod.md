@@ -3,13 +3,13 @@ Mod
 
 Calculates the modulo of two numbers.
 
-| Data signatures                                |
-|:-----------------------------------------------|
-| mod( dividend: intǁfloat, divisor: intǁfloat ) |
+| Data signatures                                    |
+|:---------------------------------------------------|
+| mod( dividend: int ǁ float, divisor: int ǁ float ) |
 
-| Call signatures                                                                                            |
-|:-----------------------------------------------------------------------------------------------------------|
-| mod( dividend: TermǁVariableǁHeaderǁFunctionǁReference, divisor: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                            |
+|:---------------------------------------------------------------------------------------------------------------------------|
+| mod( dividend: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, divisor: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -1,13 +1,13 @@
 
 average() returns the running  from the first to the current line
 
-| Data signatures                                                     |
-|:--------------------------------------------------------------------|
-| average( value to average: intǁfloat, [match, scan, or line: str] ) |
+| Data signatures                                                       |
+|:----------------------------------------------------------------------|
+| average( value to average: int ǁ float, [match, scan, or line: str] ) |
 
-| Call signatures                                                                                                   |
-|:------------------------------------------------------------------------------------------------------------------|
-| average( value to average: VariableǁTermǁHeaderǁFunction, [match, scan, or line: VariableǁTermǁHeaderǁFunction] ) |
+| Call signatures                                                                                                               |
+|:------------------------------------------------------------------------------------------------------------------------------|
+| average( value to average: Variable ǁ Term ǁ Header ǁ Function, [match, scan, or line: Variable ǁ Term ǁ Header ǁ Function] ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

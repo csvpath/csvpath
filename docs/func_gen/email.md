@@ -3,13 +3,13 @@ Email
 
 A line() schema type indicating that the value it represents must be an email
 
-| Data signatures               |
-|:------------------------------|
-| email( address: strǁNoneǁ'' ) |
+| Data signatures                   |
+|:----------------------------------|
+| email( address: str ǁ None ǁ '' ) |
 
-| Call signatures                                      |
-|:-----------------------------------------------------|
-| email( address: HeaderǁVariableǁReferenceǁFunction ) |
+| Call signatures                                            |
+|:-----------------------------------------------------------|
+| email( address: Header ǁ Variable ǁ Reference ǁ Function ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

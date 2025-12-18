@@ -10,13 +10,13 @@ To set a min length without setting a max length use a none() argument
 for max. E.g. to set a string of length greater than or equal to 5 do:
 string(none(), 5).
 
-| Data signatures                                              |
-|:-------------------------------------------------------------|
-| string( value: strǁNoneǁ'', [max len: int], [min len: int] ) |
+| Data signatures                                                  |
+|:-----------------------------------------------------------------|
+| string( value: str ǁ None ǁ '', [max len: int], [min len: int] ) |
 
-| Call signatures                                                                       |
-|:--------------------------------------------------------------------------------------|
-| string( value: HeaderǁVariableǁFunctionǁReference, [max len: Term], [min len: Term] ) |
+| Call signatures                                                                             |
+|:--------------------------------------------------------------------------------------------|
+| string( value: Header ǁ Variable ǁ Function ǁ Reference, [max len: Term], [min len: Term] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

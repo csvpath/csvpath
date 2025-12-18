@@ -25,11 +25,11 @@ function is often simpler.
 | put( var name: str, var value: Any )                         |
 | put( var name: str, tracking key: str, tracking value: Any ) |
 
-| Call signatures                                                                                                                                                          |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| put( new var name: Term )                                                                                                                                                |
-| put( var name: TermǁVariableǁHeaderǁFunctionǁReference, var value: TermǁVariableǁHeaderǁFunctionǁReference )                                                             |
-| put( var name: TermǁVariableǁHeaderǁFunctionǁReference, tracking key: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                                                                                  |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| put( new var name: Term )                                                                                                                                                                        |
+| put( var name: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, var value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference )                                                                     |
+| put( var name: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, tracking key: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, tracking value: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                  |
 |:-----------|:-----------------------|

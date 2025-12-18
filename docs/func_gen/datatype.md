@@ -11,9 +11,9 @@ datatype() returns the best fitting type for a header value on a given line.
 |:---------------------------------|
 | datatype( header of value: str ) |
 
-| Call signatures                                       |
-|:------------------------------------------------------|
-| datatype( header of value: VariableǁHeaderǁFunction ) |
+| Call signatures                                           |
+|:----------------------------------------------------------|
+| datatype( header of value: Variable ǁ Header ǁ Function ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

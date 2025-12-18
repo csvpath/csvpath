@@ -47,9 +47,9 @@ mode of the imported csvpaths to no-run.
 |:---------------------------|
 | import( import this: str ) |
 
-| Call signatures                       |
-|:--------------------------------------|
-| import( import this: TermǁReference ) |
+| Call signatures                         |
+|:----------------------------------------|
+| import( import this: Term ǁ Reference ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

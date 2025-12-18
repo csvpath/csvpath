@@ -13,13 +13,13 @@ address line() that lives side by side in the same rows.
 
 Note that wildcard() and wildcard("*") are functionally the same.
 
-| Data signatures                                            |
-|:-----------------------------------------------------------|
-| line( [function representing a data type: NoneǁAny], ... ) |
+| Data signatures                                              |
+|:-------------------------------------------------------------|
+| line( [function representing a data type: None ǁ Any], ... ) |
 
-| Call signatures                                                                                              |
-|:-------------------------------------------------------------------------------------------------------------|
-| line( [function representing a data type: WildcardǁStringǁBooleanǁDecimalǁDateǁNonefǁBlankǁEmailǁUrl], ... ) |
+| Call signatures                                                                                                              |
+|:-----------------------------------------------------------------------------------------------------------------------------|
+| line( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url], ... ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

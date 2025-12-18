@@ -17,15 +17,15 @@ pushes them to the back of the csvpath processing order.
 
 See skip() for more behavior details.
 
-| Data signatures                 |
-|:--------------------------------|
-| skip_all()                      |
-| skip_all( eval this: NoneǁAny ) |
+| Data signatures                   |
+|:----------------------------------|
+| skip_all()                        |
+| skip_all( eval this: None ǁ Any ) |
 
-| Call signatures                          |
-|:-----------------------------------------|
-| skip_all()                               |
-| skip_all( eval this: FunctionǁEquality ) |
+| Call signatures                            |
+|:-------------------------------------------|
+| skip_all()                                 |
+| skip_all( eval this: Function ǁ Equality ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|

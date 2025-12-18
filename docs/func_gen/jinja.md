@@ -19,9 +19,9 @@ already taxing for high print volumes and/or very large files.
 |:----------------------------------------------------------|
 | jinja( template: str, out: str, [results ref: str], ... ) |
 
-| Call signatures                                                                                                                                                       |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jinja( template: TermǁVariableǁHeaderǁFunctionǁReference, out: TermǁVariableǁHeaderǁFunctionǁReference, [results ref: TermǁVariableǁHeaderǁFunctionǁReference], ... ) |
+| Call signatures                                                                                                                                                                               |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| jinja( template: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, out: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, [results ref: Term ǁ Variable ǁ Header ǁ Function ǁ Reference], ... ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

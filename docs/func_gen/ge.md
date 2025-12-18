@@ -3,13 +3,13 @@ Greater than or equal to
 
 ge() returns true if a value is greater than or equal to another value.
 
-| Data signatures                                                                                |
-|:-----------------------------------------------------------------------------------------------|
-| ge( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
+| Data signatures                                                                                                    |
+|:-------------------------------------------------------------------------------------------------------------------|
+| ge( relate this: None ǁ int ǁ float ǁ date ǁ datetime ǁ str, to that: None ǁ int ǁ float ǁ date ǁ datetime ǁ str ) |
 
-| Call signatures                                                                                              |
-|:-------------------------------------------------------------------------------------------------------------|
-| ge( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                              |
+|:-----------------------------------------------------------------------------------------------------------------------------|
+| ge( relate this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, to that: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

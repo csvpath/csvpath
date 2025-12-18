@@ -18,9 +18,9 @@ allowed.
 |:------------------------------------------|
 | equal( is this: Any, equal to that: Any ) |
 
-| Call signatures                                                                                                   |
-|:------------------------------------------------------------------------------------------------------------------|
-| equal( is this: TermǁVariableǁHeaderǁFunctionǁReference, equal to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                                                                                   |
+|:----------------------------------------------------------------------------------------------------------------------------------|
+| equal( is this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference, equal to that: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

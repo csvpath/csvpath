@@ -7,9 +7,9 @@ Alters a string by upper-casing it.
 |:-----------------------------|
 | upper( uppercase this: str ) |
 
-| Call signatures                                                  |
-|:-----------------------------------------------------------------|
-| upper( uppercase this: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| Call signatures                                                          |
+|:-------------------------------------------------------------------------|
+| upper( uppercase this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

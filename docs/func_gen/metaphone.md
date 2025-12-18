@@ -31,9 +31,9 @@ variables generated in the results of the run.
 |:------------------------------------------------------|
 | metaphone( transform this: str, [lookup data: dict] ) |
 
-| Call signatures                                                                                |
-|:-----------------------------------------------------------------------------------------------|
-| metaphone( transform this: TermǁFunctionǁHeaderǁVariableǁReference, [lookup data: Reference] ) |
+| Call signatures                                                                                        |
+|:-------------------------------------------------------------------------------------------------------|
+| metaphone( transform this: Term ǁ Function ǁ Header ǁ Variable ǁ Reference, [lookup data: Reference] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|
