@@ -14,7 +14,6 @@ class Stdev(ValueProducer):
         self.description = None
         if self.name == "pstdev":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                        Given a stack of values returns the population standard deviation.
@@ -27,7 +26,6 @@ class Stdev(ValueProducer):
             ]
         else:
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                        Given a stack of values returns the sample standard deviation.

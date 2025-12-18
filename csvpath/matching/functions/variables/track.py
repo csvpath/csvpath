@@ -21,7 +21,6 @@ class Track(SideEffect):
             else ""
         )
         self.description = [
-            self._cap_name(),
             self.wrap(
                 f"""\
                 {self.name}() sets a variable with a tracking value that matches another value.

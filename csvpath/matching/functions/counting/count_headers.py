@@ -10,7 +10,6 @@ class CountHeaders(ValueProducer):
     def check_valid(self) -> None:
         if self.name == "count_headers":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         count_headers() returns the number of headers currently in-effect. It
@@ -24,7 +23,6 @@ class CountHeaders(ValueProducer):
             ]
         elif self.name == "count_headers_in_line":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         count_headers_in_line() returns the number of headers in the current line.

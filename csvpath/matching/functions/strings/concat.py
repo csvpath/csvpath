@@ -10,7 +10,6 @@ class Concat(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                Concatenates any number of strings, numbers, or bool values.

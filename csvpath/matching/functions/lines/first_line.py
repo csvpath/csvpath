@@ -15,7 +15,6 @@ class FirstLine(MatchDecider):
         if self.name in ["firstline", "first_line"]:
             self.aliases = ["firstline", "first_line"]
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                     Evaluates to True on the first line.
@@ -27,7 +26,6 @@ class FirstLine(MatchDecider):
         elif self.name in ["firstscan", "first_scan"]:
             self.aliases = ["firstscan", "first_scan"]
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                     Evaluates to True on the first line scanned. A scanned line is
@@ -41,7 +39,6 @@ class FirstLine(MatchDecider):
         elif self.name in ["firstmatch", "first_match"]:
             self.aliases = ["firstmatch", "first_match"]
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                     Evaluates to True at the first line matched. firstmatch() implies the

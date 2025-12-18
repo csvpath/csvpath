@@ -11,7 +11,6 @@ from ..args import Args
 class LineFingerprint(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Sets the line-by-line SHA256 hash of the current data file into a variable.
@@ -54,7 +53,6 @@ class LineFingerprint(SideEffect):
 class FileFingerprint(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Enters the SHA256 hash of the current data file into metadata.
@@ -92,7 +90,6 @@ class FileFingerprint(SideEffect):
 class StoreFingerprint(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Migrates a by-line fingerprint from its variable into run metadata. If a name

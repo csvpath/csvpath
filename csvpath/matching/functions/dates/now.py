@@ -13,7 +13,6 @@ class Now(ValueProducer):
     def check_valid(self) -> None:
         if self.name in ["thisyear", "thismonth", "today"]:
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                 A convenience function that returns the datetime component as a string.
@@ -22,7 +21,6 @@ class Now(ValueProducer):
             ]
         else:
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                 Returns the current datetime. If a strftime() format is provided the

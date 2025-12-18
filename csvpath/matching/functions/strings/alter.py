@@ -9,7 +9,6 @@ from ..args import Args
 class Alter(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Alters a string by replacing all instances of a substring.

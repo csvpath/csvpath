@@ -11,7 +11,6 @@ class Stopper(SideEffect):
         self.description = None
         if self.name == "stop":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Halts the run abruptly.
@@ -32,7 +31,6 @@ class Stopper(SideEffect):
             ]
         elif self.name == "stop_all":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Halts the containing csvpath's run abruptly and, in certain
@@ -109,7 +107,6 @@ class Skipper(SideEffect):
         self.description = None
         if self.name == "skip":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Jumps to the next line abruptly.
@@ -127,7 +124,6 @@ class Skipper(SideEffect):
             ]
         elif self.name == "skip_all":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Jumps to the next line abruptly. In a named-paths group run, where the

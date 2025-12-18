@@ -14,10 +14,8 @@ class And(MatchDecider):
 
     def check_valid(self) -> None:  # pragma: no cover
         self.description = [
-            self._cap_name(),
             self.wrap(
-                """
-                and() tests if its contained match components evaluate to True.
+                """and() tests if its contained match components evaluate to True.
 
                 Matching is ANDed by default, but it can be set to OR. And and()
                 gives you a bit more control in certain situations, such as making.

@@ -15,7 +15,6 @@ class Nonef(ValueProducer, Type):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             "A value producer and line() schema type representing a None value.",
         ]
         self.args = Args(matchable=self)
@@ -64,7 +63,6 @@ class Blank(Type):
         self.aliases = ["blank", "nonspecific", "unspecified"]
         self.match_qualifiers.append("distinct")
         self.description = [
-            self._cap_name(),
             "A line() schema type representing an incompletely known header.",
             "Blank cannot be used outside a line()",
         ]
@@ -158,7 +156,6 @@ class Wildcard(Type):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             f"A {self.name}() schema type represents one or more headers that are otherwise unspecified.",
             "It may take an int indicating the number of headers or a * to indicate any number of headers.",
             """When wildcard() has no args it represents any nuber of headers, same as "*".""",

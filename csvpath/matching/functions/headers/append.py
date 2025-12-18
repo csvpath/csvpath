@@ -12,7 +12,6 @@ class Append(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             Adds the header name and a value to the end of every line.

@@ -16,7 +16,6 @@ class Datatype(ValueProducer):
     def check_valid(self) -> None:
         # self.value_qualifiers.append("notnone")
         self.description = [
-            self._cap_name(),
             """datatype() returns the best fitting type for a header value on a given line.
               String is considered the least specific type, meaning that a type is only
               considered a string if all other types do not match. For example, "" is

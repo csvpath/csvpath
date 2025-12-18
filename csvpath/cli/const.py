@@ -14,6 +14,8 @@ For help see https://www.csvpath.org
 """
 
     ITALIC = "\033[3m"
+    BOLD = "\033[1m"
+    UNBOLD = "\033[22m"
     SIDEBAR_COLOR = "\033[36m"
     REVERT = "\033[0m"
     STOP_HERE = f"{SIDEBAR_COLOR}{ITALIC}... done picking dir{REVERT}"

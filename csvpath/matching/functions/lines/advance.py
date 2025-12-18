@@ -14,7 +14,6 @@ class Advance(SideEffect):
         self.description = None
         if self.name == "advance":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Skips processing N-lines ahead. The lines skipped
@@ -28,7 +27,6 @@ class Advance(SideEffect):
             ]
         elif self.name == "advance_all":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                         Like advance(), advance_all() jumps processing N-lines forward. The lines

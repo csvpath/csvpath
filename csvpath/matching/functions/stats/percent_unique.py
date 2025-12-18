@@ -9,7 +9,6 @@ class PercentUnique(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Returns the percent of values of a header that are unique

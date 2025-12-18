@@ -9,7 +9,6 @@ class No(MatchDecider):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     no() always evaluates to False. It is similar to yes() and none().

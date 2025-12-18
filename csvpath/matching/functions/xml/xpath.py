@@ -12,7 +12,6 @@ class XPath(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Finds the value of an XPath expression given a match component containing XML.

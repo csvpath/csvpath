@@ -7,7 +7,6 @@ from ..args import Args
 class Clear(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Clears a variable by removing it.

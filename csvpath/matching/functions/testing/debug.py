@@ -18,7 +18,6 @@ class Log(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Writes a message to the CsvPath Framework log at a certain log level.
@@ -56,7 +55,6 @@ class Debug(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Sets the CsvPath Framework log level.
@@ -95,7 +93,6 @@ class Debug(SideEffect):
 class BriefStackTrace(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                    Writes a shallow stack trace to the log or to print().
@@ -133,7 +130,6 @@ class BriefStackTrace(SideEffect):
 class VoteStack(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Returns the votes of the match components for each line as a stack.
@@ -173,7 +169,6 @@ class VoteStack(SideEffect):
 class DoWhenStack(SideEffect):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Returns a stack of bool representing the when/do operators for each line.

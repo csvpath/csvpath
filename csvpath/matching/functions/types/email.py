@@ -13,7 +13,6 @@ class Email(Type):
         self.match_qualifiers.append("distinct")
         self.value_qualifiers.append("notnone")
         self.description = [
-            self._cap_name(),
             "A line() schema type indicating that the value it represents must be an email",
         ]
         #

@@ -31,7 +31,6 @@ class Line(MatchDecider):
         # removes onmatch from list. having not looked at this for a while, why?
         self.value_qualifiers = []
         self.description = [
-            self._cap_name(),
             "line() creates structural schema definitions.",
             self.wrap(
                 """\

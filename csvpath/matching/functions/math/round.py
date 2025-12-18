@@ -12,7 +12,6 @@ class Round(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Rounds a number, optionally to a certain number of places.

@@ -13,12 +13,14 @@ class Boolean(ValueProducer, Type):
         self.value_qualifiers.append("notnone")
         self.match_qualifiers.append("distinct")
         self.description = [
-            self._cap_name(),
-            f"{self.name}() is a line() schema type representing a bool value.",
-            "To generate a particular bool value use yes() or no().",
-            """As you would think, setting distinct limits the number of lines to
-            four, for practical purposes. Namely: yes(), no(), none(), and a header
-            name.""",
+            self.wrap(
+                f"{self.name}() is a line() schema type representing a bool value."
+            ),
+            self.wrap("To generate a particular bool value use yes() or no()."),
+            self.wrap(
+                """As you would think, setting distinct limits the number of lines to
+            four, for practical purposes. Namely: yes(), no(), none(), and a header name."""
+            ),
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)

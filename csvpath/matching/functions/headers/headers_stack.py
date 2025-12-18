@@ -7,7 +7,6 @@ from ..args import Args
 class HeadersStack(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Returns the current header names as a stack variable.

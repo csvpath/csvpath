@@ -13,7 +13,6 @@ class StartsWith(ValueProducer):
         if self.name in ["startswith", "starts_with"]:
             self.aliases = ["startswith", "starts_with"]
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                        Matches when a string begins with another string.
@@ -23,7 +22,6 @@ class StartsWith(ValueProducer):
         elif self.name in ["endswith", "ends_with"]:
             self.aliases = ["endswith", "ends_with"]
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     """\
                        Matches when a string ends with another string.

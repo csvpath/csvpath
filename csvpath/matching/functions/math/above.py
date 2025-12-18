@@ -15,25 +15,21 @@ class AboveBelow(MatchDecider):
         if self.name in ["gt", "above", "after"]:
             self.aliases = ["gt", "above", "after"]
             self.description = [
-                "Greater than",
                 f"{self.name}() returns true if a value is greater than another value.",
             ]
         elif self.name in ["lt", "below", "before"]:
             self.aliases = ["lt", "below", "before"]
             self.description = [
-                "Less than",
                 f"{self.name}() returns true if a value is less than another value.",
             ]
         elif self.name in ["gte", "ge"]:
             self.aliases = ["gte", "ge"]
             self.description = [
-                "Greater than or equal to",
                 f"{self.name}() returns true if a value is greater than or equal to another value.",
             ]
         elif self.name in ["lte", "le"]:
             self.aliases = ["lte", "le"]
             self.description = [
-                "Less than or equal to",
                 f"{self.name}() returns true if a value is less than or equal to another value.",
             ]
         #

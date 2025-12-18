@@ -8,8 +8,16 @@ from .const import Const
 
 
 class FunctionDescriber:
+
+    CONST = Const
+
     @classmethod
-    def describe(cls, function: Function) -> None:
+    def const(cls):
+        return FunctionDescriber.CONST
+
+    @classmethod
+    def describe(cls, function: Function, *, markdown=False, const=None) -> None:
+        print("")
         if not function.args:
             #
             # today this will most of the time blow up because we're
@@ -21,16 +29,22 @@ class FunctionDescriber:
                 function.check_valid()
             except Exception:
                 ...
+        if markdown is True:
+            print(f"## {function.name}()\n")
+        else:
+            print(f"{cls.const().BOLD}{function.name}(){cls.const().REVERT}\n")
         if function.description and len(function.description) > 0:
             for i, _ in enumerate(function.description):
                 print(_)
-                print()
-        cls.print_tables(function)
+                print("")
+        cls.print_tables(function, markdown=markdown)
+        print("")
 
     @classmethod
-    def sigs(cls, function):
+    def sigs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
+        PIPE = " ǁ " if markdown else "|"
         if not args:
             #
             # this is possibly due to the very small number of unrefactored functions. (3?)
@@ -47,9 +61,9 @@ class FunctionDescriber:
                     an = cls._actual_name(act)
                     if an == "":
                         an = "''"
-                    t += f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{an}{Const.REVERT}"
+                    t += f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{an}{cls.const().REVERT}"
                     if j < len(_.actuals) - 1:
-                        t += "|"
+                        t += PIPE
                 if _.is_noneable:
                     pa += f"[{t}]"
                 else:
@@ -65,9 +79,12 @@ class FunctionDescriber:
         return sigs
 
     @classmethod
-    def funcs(cls, function):
+    def funcs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
+        PIPE = " ǁ " if markdown else "|"
+        if not args or not args.argsets or len(args.argsets) == 0:
+            return sigs
         argsets = args.argsets
         for ai, a in enumerate(argsets):
             pa = ""
@@ -79,9 +96,9 @@ class FunctionDescriber:
                     an = cls._actual_name(act)
                     if an == "":
                         an = "''"
-                    t += f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{an}{Const.REVERT}"
+                    t += f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{an}{cls.const().REVERT}"
                     if j < len(_.types) - 1:
-                        t += "|"
+                        t += PIPE
                 if _.is_noneable:
                     pa += f"[{t}]"
                 else:
@@ -97,7 +114,7 @@ class FunctionDescriber:
         return sigs
 
     @classmethod
-    def focus_stmt(cls, function):
+    def focus_stmt(cls, function, *, markdown=False):
         stmts = []
         vp = isinstance(function, ValueProducer)
         md = isinstance(function, MatchDecider)
@@ -114,7 +131,7 @@ class FunctionDescriber:
         return stmts
 
     @classmethod
-    def type_stmt(cls, function):
+    def type_stmt(cls, function, *, markdown=False):
         stmts = []
         if isinstance(function, Type):
             t = f"{function.name[0].upper()}{function.name[1:]}"
@@ -122,45 +139,59 @@ class FunctionDescriber:
         return stmts
 
     @classmethod
-    def aliases_stmt(cls, function):
+    def aliases_stmt(cls, function, *, markdown=False):
         stmts = []
         if len(function.aliases) > 0:
             stmts.append(", ".join(function.aliases))
         return stmts
 
     @classmethod
-    def print_tables(cls, function):
+    def print_tables(cls, function, *, markdown=False):
         #
         # data sigs
         #
         headers = ["Data signatures"]
         rows = []
-        sigs = cls.sigs(function)
+        sigs = cls.sigs(function, markdown=markdown)
         for v in sigs:
             v = str(v)
             rows.append([v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
+            print("")
         #
         # call sigs
         #
         headers = ["Call signatures"]
         rows = []
-        sigs = cls.funcs(function)
+        sigs = cls.funcs(function, markdown=markdown)
         for v in sigs:
             v = str(v)
             rows.append([v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
+            print("")
         #
         # type and focus
         #
         rows = []
-        headers = []
+        headers = ["Purpose", "Value"]
         stmts = cls.focus_stmt(function)
         for v in stmts:
             v = str(v)
-            rows.append(["Focus", v])
+            rows.append(["Main focus", v])
         stmts = cls.type_stmt(function)
         for v in stmts:
             v = str(v)
@@ -170,29 +201,49 @@ class FunctionDescriber:
             v = str(v)
             rows.append(["Aliases", v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
+            print("")
         #
         # qualifiers
         #
         rows = []
-        headers = []
+        headers = ["Context", "Qualifier"]
         stmts = function.match_qualifiers
-        stmts = [f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{s}{Const.REVERT}" for s in stmts]
+        stmts = [
+            f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{s}{cls.const().REVERT}"
+            for s in stmts
+        ]
         if len(stmts) > 0:
             rows.append(["Match qualifiers", ", ".join(stmts)])
         stmts = function.value_qualifiers
-        stmts = [f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{s}{Const.REVERT}" for s in stmts]
+        stmts = [
+            f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{s}{cls.const().REVERT}"
+            for s in stmts
+        ]
         if len(stmts) > 0:
             rows.append(["Value qualifiers", ", ".join(stmts)])
         if function.name_qualifier:
             rows.append(
                 [
                     "Name qualifier",
-                    f"{Const.SIDEBAR_COLOR}{Const.ITALIC}optionally expected{Const.REVERT}",
+                    f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}optionally expected{cls.const().REVERT}",
                 ]
             )
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
+            print("")
 
     @classmethod
     def _actual_name(cls, a) -> str:

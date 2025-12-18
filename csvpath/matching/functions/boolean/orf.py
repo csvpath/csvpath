@@ -27,7 +27,6 @@ class Or(MatchDecider):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     or() implements OR logic in a csvpath writer-directed way.

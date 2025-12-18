@@ -10,7 +10,6 @@ class Format(ValueProducer):
     def check_valid(self) -> None:
         s = ""
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Uses the Python string formatting mini language.

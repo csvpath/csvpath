@@ -11,7 +11,6 @@ class Divide(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             Divides numbers. divide() can take any number of int and/or float arguments.

@@ -10,7 +10,6 @@ class Insert(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Inserts a new header-value at a certain position within the output data.
