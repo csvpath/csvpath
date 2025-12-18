@@ -1,8 +1,6 @@
 
 ## debug()
 
-Debug
-
 Sets the CsvPath Framework log level.
 
 The level is set for the CsvPath class, not the CsvPaths class. That

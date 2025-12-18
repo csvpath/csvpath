@@ -1,8 +1,6 @@
 
 ## increment()
 
-Increment
-
 increment() increases a variable tracking each match every N-matches.
 
 For example in a file with four lines of first names where there are

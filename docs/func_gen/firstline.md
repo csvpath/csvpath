@@ -1,8 +1,6 @@
 
 ## firstline()
 
-Firstline
-
 Evaluates to True on the first line.
 
 Optionally, takes a function argument that is evaluated if firstline()

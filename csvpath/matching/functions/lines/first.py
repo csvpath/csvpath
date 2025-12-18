@@ -13,7 +13,6 @@ class First(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Captures the first line a value or set of values is seen on.

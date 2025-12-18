@@ -1,8 +1,6 @@
 
 ## append()
 
-Append
-
 Adds the header name and a value to the end of every line. The name is
 added to the headers and available for use in the csvpath. An appended
 header becomes part of the headers when it is first set. If The

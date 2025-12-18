@@ -1,8 +1,6 @@
 
 ## caps()
 
-Caps
-
 Alters a string by changing the casing. If the optional second
 argument is True the string's words will all be upper-cased.
 Otherwise, only the first letter of the string is upper-cased.

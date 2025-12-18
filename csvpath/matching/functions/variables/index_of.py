@@ -9,7 +9,6 @@ from ..args import Args
 class IndexOf(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Finds the position of a value within a stack, if present.

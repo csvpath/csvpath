@@ -11,7 +11,6 @@ from ..args import Args
 class LineBefore(ValueProducer):
     def check_valid(self) -> None:  # pylint: disable=W0246
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Tracks the most recent value of a header to enable comparison

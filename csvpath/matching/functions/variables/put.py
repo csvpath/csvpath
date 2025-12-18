@@ -11,7 +11,6 @@ class Put(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Sets a variable that tracks keyed-values.

@@ -1,8 +1,6 @@
 
 ## headers()
 
-Headers
-
 Directs certain functions, such as any(), to search in the headers.
 variables() has the same function, but directing the search to the
 variables.

@@ -1,8 +1,6 @@
 
 ## size()
 
-Size
-
 Returns number of values in a stack variable.
 
 Unless the notnone qualifier is present, the stack is created if not

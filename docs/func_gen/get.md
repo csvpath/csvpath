@@ -1,8 +1,6 @@
 
 ## get()
 
-Get
-
 Returns a variable's tracking or index value. The variable is either:
 - found by name using string value of the first argument, or - a
 variable or reference that is a dictionary or stack

@@ -11,7 +11,6 @@ from ..function_focus import ValueProducer
 class Roll(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             Rolls a date or datetime forward or backwards by a number of units.

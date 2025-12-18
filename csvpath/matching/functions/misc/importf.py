@@ -19,7 +19,6 @@ class Import(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             Imports one csvpath into another. The imported csvpath's match

@@ -13,7 +13,6 @@ class Tally(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 tally() tracks the value of a variable, function, or header.

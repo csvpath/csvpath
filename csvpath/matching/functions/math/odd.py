@@ -12,7 +12,6 @@ class Odd(MatchDecider):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 f"""\
                     Checks a contained value to see if it is {self.name}.

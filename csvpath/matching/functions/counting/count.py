@@ -14,7 +14,6 @@ class Count(ValueProducer):
         # note to self: no specific validity checks from way back
         # these args may need work
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Returns the number of matches.

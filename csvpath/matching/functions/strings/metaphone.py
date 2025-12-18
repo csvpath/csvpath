@@ -17,7 +17,6 @@ class Metaphone(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     metaphone() uses the Metaphone algorithm to generate a "sound-alike"

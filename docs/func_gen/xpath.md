@@ -1,8 +1,6 @@
 
 ## xpath()
 
-Xpath
-
 Finds the value of an XPath expression given a match component
 containing XML.
 

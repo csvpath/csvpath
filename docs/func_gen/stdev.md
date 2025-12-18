@@ -1,8 +1,6 @@
 
 ## stdev()
 
-Stdev
-
 Given a stack of values returns the sample standard deviation.
 
 This function expects a string naming a stack prepared by the csvpath

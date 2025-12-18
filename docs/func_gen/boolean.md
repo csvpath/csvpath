@@ -1,8 +1,6 @@
 
 ## boolean()
 
-Boolean
-
 boolean() is a line() schema type representing a bool value.
 
 To generate a particular bool value use yes() or no().

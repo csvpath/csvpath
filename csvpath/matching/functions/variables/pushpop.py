@@ -13,7 +13,6 @@ class Push(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Appends a value to a stack variable. The stack is created if not found.
@@ -116,7 +115,6 @@ class Pop(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Removes and returns the last value added to a stack variable.
@@ -156,7 +154,6 @@ class Stack(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Returns a stack variable.
@@ -193,7 +190,6 @@ class Peek(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Returns a value at a stack variable index, but does not remove it.
@@ -240,7 +236,6 @@ class PeekSize(ValueProducer):
     def check_valid(self) -> None:
         self.value_qualifiers.append("notnone")
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Returns number of values in a stack variable.

@@ -1,8 +1,6 @@
 
 ## count_bytes()
 
-Count bytes
-
 Returns the total data bytes written count.
 
 This function is only for named-path group runs. Individual CsvPath

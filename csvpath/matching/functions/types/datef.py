@@ -19,7 +19,6 @@ class Date(ValueProducer, Type):
         self.match_qualifiers.append("strict")
         self.match_qualifiers.append("distinct")
         self.description = [
-            self._cap_name(),
             f"{self.name}() has two purposes.",
             "First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.",
             "Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.",

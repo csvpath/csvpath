@@ -10,7 +10,6 @@ class Mod(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Calculates the modulo of two numbers.

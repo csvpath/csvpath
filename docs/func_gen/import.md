@@ -1,8 +1,6 @@
 
 ## import()
 
-Import
-
 Imports one csvpath into another. The imported csvpath's match
 components are copied into the importing csvpath. Scan instructions
 are not imported.

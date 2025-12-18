@@ -9,7 +9,6 @@ class HasMatches(ValueProducer):
 
     def check_valid(self) -> None:  # pylint: disable=W0246
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             True when the run has so far had one or more lines that matched. If a run

@@ -1,8 +1,6 @@
 
 ## datatype()
 
-Datatype
-
 datatype() returns the best fitting type for a header value on a given line.
               String is considered the least specific type, meaning that a type is only
               considered a string if all other types do not match. For example, "" is

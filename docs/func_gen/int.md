@@ -1,8 +1,6 @@
 
 ## int()
 
-Int
-
 Casts a value to an int.
 
 Note that the actuals in the data signatures are types that the value

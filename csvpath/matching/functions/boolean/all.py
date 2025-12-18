@@ -18,7 +18,6 @@ class All(MatchDecider):
 
         if self.name == "all":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     f"""\
                 Tests if all contained or referenced match components evaluate to True.
@@ -28,7 +27,6 @@ class All(MatchDecider):
             ]
         elif self.name == "missing":
             self.description = [
-                self._cap_name(),
                 self.wrap(
                     f"""\
                 Tests if any contained or referenced match components evaluate to False.

@@ -1,8 +1,6 @@
 
 ## datetime()
 
-Datetime
-
 datetime() has two purposes.
 
 First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.

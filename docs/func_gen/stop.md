@@ -1,8 +1,6 @@
 
 ## stop()
 
-Stop
-
 Halts the run abruptly.
 
 When stop() contains no other match components it simply stops the

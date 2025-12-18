@@ -1,8 +1,6 @@
 
 ## jinja()
 
-Jinja
-
 jinja() enables you to create a document using a template and tokens
 derrived from the presently executing run and any number of past
 csvpath results.

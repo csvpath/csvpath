@@ -21,7 +21,6 @@ class Jinjaf(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     jinja() enables you to create a document using a template and tokens

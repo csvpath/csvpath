@@ -13,7 +13,6 @@ class HeaderTable(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                         Prints a table with all the header names and indexes. This output
@@ -45,7 +44,6 @@ class RowTable(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                         Prints a table with all the header names and values for each line.
@@ -98,7 +96,6 @@ class VarTable(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                         Prints a table with all the variable names and values at each line. If
@@ -183,7 +180,6 @@ class RunTable(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                         Prints a table with all the metadata names and values available at each line.

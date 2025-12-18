@@ -8,7 +8,6 @@ class CountLines(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     the count (1-based of the number of data lines seen, blanks excluded.
@@ -31,7 +30,6 @@ class LineNumber(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     The 0-based number of data lines seen, blanks excluded. This is also

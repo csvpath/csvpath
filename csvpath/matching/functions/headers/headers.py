@@ -15,7 +15,6 @@ class Headers(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 Directs certain functions, such as any(), to search in the headers. variables()

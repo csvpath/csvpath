@@ -12,7 +12,6 @@ class Fingerprint(ValueProducer):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Returns the fingerprint of a line or subset of a line's header
@@ -54,7 +53,6 @@ class CountDups(ValueProducer):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Produces the number of duplicate lines or the number of
@@ -87,7 +85,6 @@ class HasDups(MatchDecider):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Evaluates to True if there are duplicate lines or duplicate
@@ -115,7 +112,6 @@ class DupLines(ValueProducer):
     def check_valid(self) -> None:
         self.name_qualifier = True
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 dups_lines() returns a list of the numbers of duplicate lines or lines

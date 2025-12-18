@@ -1,8 +1,6 @@
 
 ## roll()
 
-Roll
-
 Rolls a date or datetime forward or backwards by a number of units.
 
 The units accepted are: seconds, minutes, hours, days, months, years.

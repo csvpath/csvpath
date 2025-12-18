@@ -1,8 +1,6 @@
 
 ## line()
 
-Line
-
 line() creates structural schema definitions.
 
 Each line() function represents an entire line of the data file.

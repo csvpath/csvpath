@@ -11,7 +11,6 @@ class Collect(SideEffect):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                 When collect() is used only values for the indicated headers

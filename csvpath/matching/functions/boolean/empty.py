@@ -16,7 +16,6 @@ class Empty(MatchDecider):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     empty() checks for empty or blank header values in a given line.

@@ -1,8 +1,6 @@
 
 ## above()
 
-Greater than
-
 above() returns true if a value is greater than another value.
 
 | Data signatures                                                                                                       |

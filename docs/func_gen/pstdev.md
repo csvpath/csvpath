@@ -1,8 +1,6 @@
 
 ## pstdev()
 
-Pstdev
-
 Given a stack of values returns the population standard deviation.
 
 This function expects a string naming a stack prepared by the csvpath

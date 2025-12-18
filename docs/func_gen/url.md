@@ -1,8 +1,6 @@
 
 ## url()
 
-Url
-
 A line() schema type indicating that the value it represents must be an URL
 
 | Data signatures             |

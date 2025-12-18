@@ -1,8 +1,6 @@
 
 ## interpolate()
 
-Interpolate
-
 Uses the Python string formatting mini language.
 
 E.g. to format a float to having two decimal places use a format

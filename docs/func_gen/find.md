@@ -1,8 +1,6 @@
 
 ## find()
 
-Find
-
 Matches if the first string contains the second.
 
 | Data signatures                                                   |

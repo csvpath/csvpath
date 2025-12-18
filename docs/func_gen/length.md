@@ -1,8 +1,6 @@
 
 ## length()
 
-Length
-
 Returns the length of a string.
 
 | Data signatures                       |

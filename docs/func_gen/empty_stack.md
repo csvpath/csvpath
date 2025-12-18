@@ -1,8 +1,6 @@
 
 ## empty_stack()
 
-Empty stack
-
 If no arguments are provided, adds the names of any headers without
 values to a stack. If one or more arguments are provided and an
 argument is a variable that variable is checked for emptyness.

@@ -1,8 +1,6 @@
 
 ## advance()
 
-Advance
-
 Skips processing N-lines ahead. The lines skipped will not be
 considered or collected as matched or unmatched.
 

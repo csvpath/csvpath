@@ -7,7 +7,6 @@ from ..args import Args
 class HeaderNamesMismatch(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 f"""\
                 Given a | delimited list of headers, checks that all exist and

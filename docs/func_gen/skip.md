@@ -1,8 +1,6 @@
 
 ## skip()
 
-Skip
-
 Jumps to the next line abruptly.
 
 skip() short-circuits the full csvpath evaluation of a line. Earlier

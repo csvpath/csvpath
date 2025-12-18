@@ -1,8 +1,6 @@
 
 ## fingerprint()
 
-Fingerprint
-
 Returns the fingerprint of a line or subset of a line's header values,
 if headers are provided as arguments. The fingerprint is a SHA256 hash
 of the values. A fingerprint can be used to lookup the line numbers of

@@ -1,8 +1,6 @@
 
 ## count()
 
-Count
-
 Returns the number of matches.
 
 When used alone count() gives the total matches seen up to the current

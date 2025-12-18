@@ -16,7 +16,6 @@ class DatePart(ValueProducer):
             if self.matcher.csvpath.do_i_raise:
                 raise ChildrenException(msg)
         self.description = [
-            self._cap_name(),
             self.wrap(
                 f"""\
             A convenience function that returns the {self.name} component of a date
@@ -61,7 +60,6 @@ class DatePart(ValueProducer):
 class DateFormat(ValueProducer):
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """Outputs a date or datetime as a string using strftime formatting.
                 If a date format does not include date parts a match error is raised. """

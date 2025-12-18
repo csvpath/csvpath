@@ -1,8 +1,6 @@
 
 ## count_headers_in_line()
 
-Count headers in line
-
 count_headers_in_line() returns the number of headers in the current
 line.
 

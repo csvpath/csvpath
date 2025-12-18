@@ -1,8 +1,6 @@
 
 ## all()
 
-All
-
 Tests if all contained or referenced match components evaluate to
 True. If all() has no arguments the check is if all headers have
 values.

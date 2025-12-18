@@ -1,8 +1,6 @@
 
 ## last()
 
-Last
-
 Evaluates True on the last line to be scanned.
 
 last() used by itself will always run, even if its line turns out to

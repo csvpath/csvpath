@@ -1,8 +1,6 @@
 
 ## end()
 
-End
-
 Returns the value of the last header.
 
 If an integer argument N is given, the return is the value of the last

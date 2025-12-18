@@ -12,7 +12,6 @@ class Increment(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
               increment() increases a variable tracking each match every N-matches.

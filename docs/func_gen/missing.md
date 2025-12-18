@@ -1,8 +1,6 @@
 
 ## missing()
 
-Missing
-
 Tests if any contained or referenced match components evaluate to
 False. If missing() has no arguments, check if any headers are empty
 or missing.

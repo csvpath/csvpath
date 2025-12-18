@@ -1,8 +1,6 @@
 
 ## count_scans()
 
-Count scans
-
 Returns the current number of lines that have been scanned.
 
 Scanning predicts a specific number of lines for a given file.

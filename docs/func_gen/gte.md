@@ -1,8 +1,6 @@
 
 ## gte()
 
-Greater than or equal to
-
 gte() returns true if a value is greater than or equal to another value.
 
 | Data signatures                                                                                                     |

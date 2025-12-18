@@ -1,8 +1,6 @@
 
 ## tally()
 
-Tally
-
 tally() tracks the value of a variable, function, or header.
 
 It always matches, effectively giving it nocontrib. Tally collects its

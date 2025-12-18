@@ -1,8 +1,6 @@
 
 ## le()
 
-Less than or equal to
-
 le() returns true if a value is less than or equal to another value.
 
 | Data signatures                                                                                                    |

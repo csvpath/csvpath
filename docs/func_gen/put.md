@@ -1,8 +1,6 @@
 
 ## put()
 
-Put
-
 Sets a variable that tracks keyed-values.
 
 A tracking value is similar to a dictionary key. It usually keys a

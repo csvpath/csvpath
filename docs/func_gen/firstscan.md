@@ -1,8 +1,6 @@
 
 ## firstscan()
 
-Firstscan
-
 Evaluates to True on the first line scanned. A scanned line is one
 that has been evaluated for matching.
 

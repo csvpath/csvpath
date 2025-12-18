@@ -1,8 +1,6 @@
 
 ## alter()
 
-Alter
-
 Alters a string by replacing all instances of a substring.
 
 | Data signatures                                                               |

@@ -1,8 +1,6 @@
 
 ## track()
 
-Track
-
 track() sets a variable with a tracking value that matches another
 value. The name of the variable is either track or a non-reserved
 qualifier on the function.

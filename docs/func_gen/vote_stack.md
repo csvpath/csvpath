@@ -1,8 +1,6 @@
 
 ## vote_stack()
 
-Vote stack
-
 Returns the votes of the match components for each line as a stack.
 
 The votes are collected from the central record, not from each

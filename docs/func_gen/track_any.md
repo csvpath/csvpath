@@ -1,8 +1,6 @@
 
 ## track_any()
 
-Track any
-
 track_any() sets a variable with a tracking value that matches another
 value. The name of the variable is either track or a non-reserved
 qualifier on the function.

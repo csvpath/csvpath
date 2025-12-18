@@ -1,8 +1,6 @@
 
 ## min()
 
-Min
-
 Tracks the minimum value.
 
 | Data signatures                      |

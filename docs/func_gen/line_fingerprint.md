@@ -1,8 +1,6 @@
 
 ## line_fingerprint()
 
-Line fingerprint
-
 Sets the line-by-line SHA256 hash of the current data file into a
 variable. You can use a name qualifier to name the variable.
 Otherwise, the name will be by_line_fingerprint.

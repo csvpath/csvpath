@@ -1,8 +1,6 @@
 
 ## var_table()
 
-Var table
-
 Prints a table with all the variable names and values at each line. If
 no variable name is passed, table includes all vars. Otherwise, the
 vars identified by name are printed.

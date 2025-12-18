@@ -1,8 +1,6 @@
 
 ## percent()
 
-Percent
-
 Returns the percent of scanned, matched or all lines so-far seen of
 the total data lines in the file. Data lines have data. The total does
 not include blanks.

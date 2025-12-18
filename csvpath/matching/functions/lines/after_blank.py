@@ -9,7 +9,6 @@ class AfterBlank(MatchDecider):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
             Evaluates to True if the immediately preceding physical line was blank or had no header values.

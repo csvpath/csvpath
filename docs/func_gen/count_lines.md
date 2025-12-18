@@ -1,8 +1,6 @@
 
 ## count_lines()
 
-Count lines
-
 the count (1-based of the number of data lines seen, blanks excluded.
 
 count_lines() is similar to line_number(). The difference is that

@@ -13,7 +13,6 @@ class Boolean(ValueProducer, Type):
         self.value_qualifiers.append("notnone")
         self.match_qualifiers.append("distinct")
         self.description = [
-            self._cap_name(),
             self.wrap(
                 f"{self.name}() is a line() schema type representing a bool value."
             ),

@@ -10,7 +10,6 @@ class Get(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Returns a variable's tracking or index value. The variable is either:

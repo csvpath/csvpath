@@ -1,8 +1,6 @@
 
 ## file_fingerprint()
 
-File fingerprint
-
 Enters the SHA256 hash of the current data file into metadata.
 
 A file's hash is available in run metadata. However, this function can

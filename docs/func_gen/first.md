@@ -1,8 +1,6 @@
 
 ## first()
 
-First
-
 Captures the first line a value or set of values is seen on.
 
 first() stores the first line in a variable using the concatenation of

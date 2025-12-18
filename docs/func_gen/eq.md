@@ -1,8 +1,6 @@
 
 ## eq()
 
-Eq
-
 Tests the equality of two values.
 
 In most cases you will use == to test equality. However, in some cases

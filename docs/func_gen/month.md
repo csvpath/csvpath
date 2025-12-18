@@ -1,8 +1,6 @@
 
 ## month()
 
-Month
-
 A convenience function that returns the month component of a date or
 datetime as a string.
 

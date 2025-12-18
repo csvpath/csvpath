@@ -1,8 +1,6 @@
 
 ## variables()
 
-Variables
-
 Directs certain functions, such as any() or all(), to search in the
 variables. headers() has the same function, but directing the search
 to the headers.

@@ -1,8 +1,6 @@
 
 ## print_line()
 
-Print line
-
 Prints the current line as delimited data.
 
 print_line() only prints collected headers. That is, if you use the

@@ -1,8 +1,6 @@
 
 ## advance_all()
 
-Advance all
-
 Like advance(), advance_all() jumps processing N-lines forward. The
 lines skipped will not be considered or collected as matched or
 unmatched.

@@ -10,7 +10,6 @@ class Multiply(ValueProducer):
 
     def check_valid(self) -> None:
         self.description = [
-            self._cap_name(),
             self.wrap(
                 """\
                     Multiplies numbers. Any number of arguments is acceptable.

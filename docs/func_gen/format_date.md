@@ -1,8 +1,6 @@
 
 ## format_date()
 
-Format date
-
 Outputs a date or datetime as a string using strftime formatting.
 If a date format does not include date parts a match error is raised.
 
