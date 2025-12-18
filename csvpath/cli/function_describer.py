@@ -149,6 +149,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+        print("")
         #
         # call sigs
         #
@@ -166,6 +167,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+        print("")
         #
         # type and focus
         #
@@ -191,6 +193,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+        print("")
         #
         # qualifiers
         #
