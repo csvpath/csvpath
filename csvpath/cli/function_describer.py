@@ -172,11 +172,11 @@ class FunctionDescriber:
         # type and focus
         #
         rows = []
-        headers = []
+        headers = ["Purpose", "Value"]
         stmts = cls.focus_stmt(function)
         for v in stmts:
             v = str(v)
-            rows.append(["Focus", v])
+            rows.append(["Main focus", v])
         stmts = cls.type_stmt(function)
         for v in stmts:
             v = str(v)
@@ -186,6 +186,7 @@ class FunctionDescriber:
             v = str(v)
             rows.append(["Aliases", v])
         if len(rows) > 0:
+            print("")
             print(
                 tabulate(
                     rows,
@@ -198,7 +199,7 @@ class FunctionDescriber:
         # qualifiers
         #
         rows = []
-        headers = []
+        headers = ["Context", "Qualifier"]
         stmts = function.match_qualifiers
         stmts = [f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{s}{Const.REVERT}" for s in stmts]
         if len(stmts) > 0:
