@@ -1,8 +1,6 @@
 
 ## or()
 
-Or
-
 or() implements OR logic in a csvpath writer-directed way.
 
 Evaluation of or() completes before any errors are handled to allow

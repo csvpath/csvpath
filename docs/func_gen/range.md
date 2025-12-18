@@ -1,8 +1,6 @@
 
 ## range()
 
-Range
-
 Returns true if the values provided have a between relationship.
 
 The values can be dates, numbers, or strings. They must all be of the

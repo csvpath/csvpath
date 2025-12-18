@@ -1,8 +1,6 @@
 
 ## not()
 
-Not
-
 not() returns the boolean inverse of its argument.
 
 Optionally, if an function is provided as a second argument, not()

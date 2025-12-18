@@ -1,8 +1,6 @@
 
 ## empty()
 
-Empty
-
 empty() checks for empty or blank header values in a given line. It
 reports True only if all the places it is directed to look are empty.
 

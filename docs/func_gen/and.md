@@ -1,8 +1,6 @@
 
 ## and()
 
-And
-
  and() tests if its contained match components evaluate to True.
 
 Matching is ANDed by default, but it can be set to OR. And and() gives

@@ -1,8 +1,6 @@
 
 ## exists()
 
-Exists
-
 exist() does an existance test on match components.
 
 Unlike a simple reference to a match component, also essentially an
