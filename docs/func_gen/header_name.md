@@ -12,11 +12,11 @@ header, not a check for the line having a value for the header.
 
 | Data signatures                                                     |
 |:--------------------------------------------------------------------|
-| header_name( header identity: str|int, [value check: None|Any|''] ) |
+| header_name( header identity: strǁint, [value check: NoneǁAnyǁ''] ) |
 
 | Call signatures                                                             |
 |:----------------------------------------------------------------------------|
-| header_name( header identity: Term|Function|Variable, [value check: Term] ) |
+| header_name( header identity: TermǁFunctionǁVariable, [value check: Term] ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

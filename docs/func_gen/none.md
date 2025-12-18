@@ -12,7 +12,7 @@ A value producer and line() schema type representing a None value.
 | Call signatures                                      |
 |:-----------------------------------------------------|
 | none()                                               |
-| none( nullable: Variable|Header|Function|Reference ) |
+| none( nullable: VariableǁHeaderǁFunctionǁReference ) |
 | none( header reference: Term )                       |
 
 | Purpose    | Value                                                  |

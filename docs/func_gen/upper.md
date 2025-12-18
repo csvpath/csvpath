@@ -9,7 +9,7 @@ Alters a string by upper-casing it.
 
 | Call signatures                                                  |
 |:-----------------------------------------------------------------|
-| upper( uppercase this: Term|Variable|Header|Function|Reference ) |
+| upper( uppercase this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

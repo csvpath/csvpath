@@ -9,11 +9,11 @@ matches
 
 | Data signatures                     |
 |:------------------------------------|
-| first_scan( [eval this: None|Any] ) |
+| first_scan( [eval this: NoneǁAny] ) |
 
 | Call signatures                              |
 |:---------------------------------------------|
-| first_scan( [eval this: Function|Equality] ) |
+| first_scan( [eval this: FunctionǁEquality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

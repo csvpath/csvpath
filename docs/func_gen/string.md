@@ -12,11 +12,11 @@ string(none(), 5).
 
 | Data signatures                                              |
 |:-------------------------------------------------------------|
-| string( value: str|None|'', [max len: int], [min len: int] ) |
+| string( value: strǁNoneǁ'', [max len: int], [min len: int] ) |
 
 | Call signatures                                                                       |
 |:--------------------------------------------------------------------------------------|
-| string( value: Header|Variable|Function|Reference, [max len: Term], [min len: Term] ) |
+| string( value: HeaderǁVariableǁFunctionǁReference, [max len: Term], [min len: Term] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

@@ -12,7 +12,7 @@ composable.
 
 | Data signatures                                                    |
 |:-------------------------------------------------------------------|
-| or( First alternative: None|Any, Next alternative: None|Any, ... ) |
+| or( First alternative: NoneǁAny, Next alternative: NoneǁAny, ... ) |
 
 | Call signatures                                                      |
 |:---------------------------------------------------------------------|

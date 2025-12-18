@@ -6,7 +6,7 @@ Clears a variable by removing it.
 | Data signatures        |
 |:-----------------------|
 | clear( var name: str ) |
-| clear( var: None|Any ) |
+| clear( var: NoneǁAny ) |
 
 | Call signatures         |
 |:------------------------|

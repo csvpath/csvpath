@@ -5,11 +5,11 @@ above() returns true if a value is greater than another value.
 
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| above( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| above( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| above( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| above( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

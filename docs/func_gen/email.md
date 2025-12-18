@@ -5,11 +5,11 @@ A line() schema type indicating that the value it represents must be an email
 
 | Data signatures               |
 |:------------------------------|
-| email( address: str|None|'' ) |
+| email( address: strǁNoneǁ'' ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
-| email( address: Header|Variable|Reference|Function ) |
+| email( address: HeaderǁVariableǁReferenceǁFunction ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -20,14 +20,14 @@ configure a csvpath to use OR as the basis for matching.
 | Data signatures                                         |
 |:--------------------------------------------------------|
 | any()                                                   |
-| any( where to look: None|Any, value to find: None|Any ) |
-| any( where to look: None|Any )                          |
+| any( where to look: NoneǁAny, value to find: NoneǁAny ) |
+| any( where to look: NoneǁAny )                          |
 
 | Call signatures                                                                                          |
 |:---------------------------------------------------------------------------------------------------------|
 | any()                                                                                                    |
-| any( where to look: Variables|Headers, value to find: Term|Function|Header|Variable|Reference|Equality ) |
-| any( where to look: Variables|Headers|Term|Function|Header|Variable|Reference|Equality )                 |
+| any( where to look: VariablesǁHeaders, value to find: TermǁFunctionǁHeaderǁVariableǁReferenceǁEquality ) |
+| any( where to look: VariablesǁHeadersǁTermǁFunctionǁHeaderǁVariableǁReferenceǁEquality )                 |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

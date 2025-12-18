@@ -6,11 +6,11 @@ datetime as a string.
 
 | Data signatures                   |
 |:----------------------------------|
-| month( date: None|date|datetime ) |
+| month( date: Noneǁdateǁdatetime ) |
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| month( date: Term|Function|Header|Variable|Reference ) |
+| month( date: TermǁFunctionǁHeaderǁVariableǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

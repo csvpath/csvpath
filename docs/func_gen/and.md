@@ -12,7 +12,7 @@ that are more specific than and().
 
 | Data signatures                                          |
 |:---------------------------------------------------------|
-| and( Eval this: None|Any, And eval this: None|Any, ... ) |
+| and( Eval this: NoneǁAny, And eval this: NoneǁAny, ... ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|

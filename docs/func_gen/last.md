@@ -19,11 +19,11 @@ be relied on.
 
 | Data signatures                  |
 |:---------------------------------|
-| last( [eval on last: None|Any] ) |
+| last( [eval on last: NoneǁAny] ) |
 
 | Call signatures                                    |
 |:---------------------------------------------------|
-| last( [eval on last: Function|Variable|Equality] ) |
+| last( [eval on last: FunctionǁVariableǁEquality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

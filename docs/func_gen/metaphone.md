@@ -33,7 +33,7 @@ variables generated in the results of the run.
 
 | Call signatures                                                                                |
 |:-----------------------------------------------------------------------------------------------|
-| metaphone( transform this: Term|Function|Header|Variable|Reference, [lookup data: Reference] ) |
+| metaphone( transform this: TermǁFunctionǁHeaderǁVariableǁReference, [lookup data: Reference] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

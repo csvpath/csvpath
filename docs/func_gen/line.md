@@ -15,11 +15,11 @@ Note that wildcard() and wildcard("*") are functionally the same.
 
 | Data signatures                                            |
 |:-----------------------------------------------------------|
-| line( [function representing a data type: None|Any], ... ) |
+| line( [function representing a data type: NoneǁAny], ... ) |
 
 | Call signatures                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------|
-| line( [function representing a data type: Wildcard|String|Boolean|Decimal|Date|Nonef|Blank|Email|Url], ... ) |
+| line( [function representing a data type: WildcardǁStringǁBooleanǁDecimalǁDateǁNonefǁBlankǁEmailǁUrl], ... ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

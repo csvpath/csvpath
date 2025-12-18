@@ -9,11 +9,11 @@ minus() subtracts two or more numbers.
 
 | Data signatures               |
 |:------------------------------|
-| minus( term: int|float, ... ) |
+| minus( term: intǁfloat, ... ) |
 
 | Call signatures                                             |
 |:------------------------------------------------------------|
-| minus( term: Term|Header|Reference|Variable|Function, ... ) |
+| minus( term: TermǁHeaderǁReferenceǁVariableǁFunction, ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

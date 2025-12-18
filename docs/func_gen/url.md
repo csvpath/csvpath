@@ -5,11 +5,11 @@ A line() schema type indicating that the value it represents must be an URL
 
 | Data signatures         |
 |:------------------------|
-| url( url: str|None|'' ) |
+| url( url: strǁNoneǁ'' ) |
 
 | Call signatures                                |
 |:-----------------------------------------------|
-| url( url: Header|Variable|Reference|Function ) |
+| url( url: HeaderǁVariableǁReferenceǁFunction ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

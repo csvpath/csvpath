@@ -1,11 +1,11 @@
 
 | Data signatures          |
 |:-------------------------|
-| too_short( str|'', int ) |
+| too_short( strǁ'', int ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|
-| too_short( Term|Variable|Header|Function|Reference, Term ) |
+| too_short( TermǁVariableǁHeaderǁFunctionǁReference, Term ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

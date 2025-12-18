@@ -5,11 +5,11 @@ le() returns true if a value is less than or equal to another value.
 
 | Data signatures                                                                                |
 |:-----------------------------------------------------------------------------------------------|
-| le( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| le( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------|
-| le( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| le( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

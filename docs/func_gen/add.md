@@ -5,11 +5,11 @@ Adds numbers. add() can take any number of int and/or float arguments.
 
 | Data signatures                                               |
 |:--------------------------------------------------------------|
-| add( add this: None|int|float, to that: None|int|float, ... ) |
+| add( add this: Noneǁintǁfloat, to that: Noneǁintǁfloat, ... ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| add( add this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference, ... ) |
+| add( add this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

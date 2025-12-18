@@ -13,11 +13,11 @@ using integer() or another approach.
 
 | Data signatures            |
 |:---------------------------|
-| sum( sum this: int|float ) |
+| sum( sum this: intǁfloat ) |
 
 | Call signatures                                |
 |:-----------------------------------------------|
-| sum( sum this: Variable|Function|Term|Header ) |
+| sum( sum this: VariableǁFunctionǁTermǁHeader ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

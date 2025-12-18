@@ -5,11 +5,11 @@ Checks a contained value to see if it is odd.
 
 | Data signatures             |
 |:----------------------------|
-| odd( check this: None|int ) |
+| odd( check this: Noneǁint ) |
 
 | Call signatures                                                |
 |:---------------------------------------------------------------|
-| odd( check this: Variable|Header|Function|Reference|Equality ) |
+| odd( check this: VariableǁHeaderǁFunctionǁReferenceǁEquality ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

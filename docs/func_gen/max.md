@@ -5,11 +5,11 @@ Tracks the maximum value.
 
 | Data signatures                    |
 |:-----------------------------------|
-| max( value to compare: int|float ) |
+| max( value to compare: intǁfloat ) |
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| max( value to compare: Variable|Term|Header|Function ) |
+| max( value to compare: VariableǁTermǁHeaderǁFunction ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

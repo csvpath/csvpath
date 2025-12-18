@@ -13,7 +13,7 @@ The table is text formatted.
 
 | Call signatures                                             |
 |:------------------------------------------------------------|
-| var_table( [var name: Variable|Header|Term|Function], ... ) |
+| var_table( [var name: VariableǁHeaderǁTermǁFunction], ... ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

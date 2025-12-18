@@ -12,11 +12,11 @@ replacement pattern.
 
 | Data signatures                             |
 |:--------------------------------------------|
-| interpolate( value: None|Any, format: str ) |
+| interpolate( value: NoneǁAny, format: str ) |
 
 | Call signatures                                                                                                |
 |:---------------------------------------------------------------------------------------------------------------|
-| interpolate( value: Term|Function|Header|Variable|Reference, format: Term|Function|Header|Variable|Reference ) |
+| interpolate( value: TermǁFunctionǁHeaderǁVariableǁReference, format: TermǁFunctionǁHeaderǁVariableǁReference ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

@@ -5,11 +5,11 @@ Concatenates any number of strings, numbers, or bool values.
 
 | Data signatures                                                                      |
 |:-------------------------------------------------------------------------------------|
-| concat( value: str|int|float|bool|'', append this: str|int|float|bool|list|'', ... ) |
+| concat( value: strǁintǁfloatǁboolǁ'', append this: strǁintǁfloatǁboolǁlistǁ'', ... ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|
-| concat( value: Term|Variable|Header|Function|Reference, append this: Term|Variable|Header|Function|Reference, ... ) |
+| concat( value: TermǁVariableǁHeaderǁFunctionǁReference, append this: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

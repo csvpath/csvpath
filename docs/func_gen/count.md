@@ -44,7 +44,7 @@ that case, onmatch would add nothing.
 | Data signatures                |
 |:-------------------------------|
 | count()                        |
-| count( [eval: None|Any], ... ) |
+| count( [eval: NoneǁAny], ... ) |
 
 | Call signatures                 |
 |:--------------------------------|

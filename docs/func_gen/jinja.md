@@ -21,7 +21,7 @@ already taxing for high print volumes and/or very large files.
 
 | Call signatures                                                                                                                                                       |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jinja( template: Term|Variable|Header|Function|Reference, out: Term|Variable|Header|Function|Reference, [results ref: Term|Variable|Header|Function|Reference], ... ) |
+| jinja( template: TermǁVariableǁHeaderǁFunctionǁReference, out: TermǁVariableǁHeaderǁFunctionǁReference, [results ref: TermǁVariableǁHeaderǁFunctionǁReference], ... ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

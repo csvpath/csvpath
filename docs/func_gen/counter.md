@@ -14,7 +14,7 @@ counter.my_name()
 
 | Call signatures                                                                       |
 |:--------------------------------------------------------------------------------------|
-| counter( [amount to increment by: Term|Function|Header|Variable|Reference|Equality] ) |
+| counter( [amount to increment by: TermǁFunctionǁHeaderǁVariableǁReferenceǁEquality] ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

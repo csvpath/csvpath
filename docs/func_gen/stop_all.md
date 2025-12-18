@@ -13,11 +13,11 @@ See stop() for more behavior details.
 
 | Data signatures                   |
 |:----------------------------------|
-| stop_all( [eval this: None|Any] ) |
+| stop_all( [eval this: NoneǁAny] ) |
 
 | Call signatures                            |
 |:-------------------------------------------|
-| stop_all( [eval this: Function|Equality] ) |
+| stop_all( [eval this: FunctionǁEquality] ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|

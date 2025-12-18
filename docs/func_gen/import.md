@@ -49,7 +49,7 @@ mode of the imported csvpaths to no-run.
 
 | Call signatures                       |
 |:--------------------------------------|
-| import( import this: Term|Reference ) |
+| import( import this: TermǁReference ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

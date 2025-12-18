@@ -8,11 +8,11 @@ default is to print to the default printout stream.
 
 | Data signatures                 |
 |:--------------------------------|
-| brief_stack_trace( [None|str] ) |
+| brief_stack_trace( [Noneǁstr] ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
-| brief_stack_trace( [Term|Function|Variable|Header] ) |
+| brief_stack_trace( [TermǁFunctionǁVariableǁHeader] ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

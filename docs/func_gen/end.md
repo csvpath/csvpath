@@ -15,7 +15,7 @@ I.e., if the last header is #11, end(3) returns the value of header
 
 | Call signatures                                                                         |
 |:----------------------------------------------------------------------------------------|
-| end( [positions to the left of end: Term|Function|Header|Variable|Reference|Equality] ) |
+| end( [positions to the left of end: TermǁFunctionǁHeaderǁVariableǁReferenceǁEquality] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

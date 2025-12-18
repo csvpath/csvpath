@@ -5,11 +5,11 @@ lte() returns true if a value is less than or equal to another value.
 
 | Data signatures                                                                                 |
 |:------------------------------------------------------------------------------------------------|
-| lte( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| lte( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                               |
 |:--------------------------------------------------------------------------------------------------------------|
-| lte( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| lte( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

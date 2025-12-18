@@ -6,7 +6,7 @@ the header(s) indicated in the argument to remove().
 
 | Data signatures                           |
 |:------------------------------------------|
-| remove( header identifier: int|str, ... ) |
+| remove( header identifier: intǁstr, ... ) |
 | remove( header: Any, ... )                |
 
 | Call signatures                        |

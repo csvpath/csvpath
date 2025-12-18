@@ -11,11 +11,11 @@ header name.
 
 | Data signatures                 |
 |:--------------------------------|
-| boolean( value: None|bool|str ) |
+| boolean( value: Noneǁboolǁstr ) |
 
 | Call signatures                                 |
 |:------------------------------------------------|
-| boolean( value: Term|Variable|Header|Function ) |
+| boolean( value: TermǁVariableǁHeaderǁFunction ) |
 
 | Purpose    | Value                                                     |
 |:-----------|:----------------------------------------------------------|

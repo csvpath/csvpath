@@ -5,11 +5,11 @@ below() returns true if a value is less than another value.
 
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| below( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| below( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| below( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| below( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -12,12 +12,12 @@ The resulting stack does not persist from line to line.
 | Data signatures                               |
 |:----------------------------------------------|
 | empty_stack()                                 |
-| empty_stack( [header or var: None|Any], ... ) |
+| empty_stack( [header or var: NoneǁAny], ... ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
 | empty_stack()                                        |
-| empty_stack( [header or var: Variable|Header], ... ) |
+| empty_stack( [header or var: VariableǁHeader], ... ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

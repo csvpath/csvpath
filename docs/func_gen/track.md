@@ -40,7 +40,7 @@ not capture leading zeros, but track() would.
 
 | Call signatures                                                                                                                           |
 |:------------------------------------------------------------------------------------------------------------------------------------------|
-| track( track under: Term|Variable|Header|Function|Reference, tracking value: Term|Variable|Header|Function|Reference, ['collect': Term] ) |
+| track( track under: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference, ['collect': Term] ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

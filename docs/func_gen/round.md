@@ -5,11 +5,11 @@ Rounds a number, optionally to a certain number of places.
 
 | Data signatures                                                |
 |:---------------------------------------------------------------|
-| round( round this: None|bool|str|float|int, [to places: int] ) |
+| round( round this: Noneǁboolǁstrǁfloatǁint, [to places: int] ) |
 
 | Call signatures                                                       |
 |:----------------------------------------------------------------------|
-| round( round this: Term|Variable|Header|Function, [to places: Term] ) |
+| round( round this: TermǁVariableǁHeaderǁFunction, [to places: Term] ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

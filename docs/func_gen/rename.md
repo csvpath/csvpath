@@ -28,7 +28,7 @@ are run in serial or breadth-first.
 
 | Data signatures                            |
 |:-------------------------------------------|
-| rename( header: list|tuple )               |
+| rename( header: listǁtuple )               |
 | rename( header: Any, new name: str )       |
 | rename( header name: str, new name: str )  |
 | rename( header index: int, new name: str ) |
@@ -36,7 +36,7 @@ are run in serial or breadth-first.
 
 | Call signatures                              |
 |:---------------------------------------------|
-| rename( header: Variable|Reference )         |
+| rename( header: VariableǁReference )         |
 | rename( header: Header, new name: Term )     |
 | rename( header name: Term, new name: Term )  |
 | rename( header index: Term, new name: Term ) |

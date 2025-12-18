@@ -5,11 +5,11 @@ Returns the first N-characters of a string.
 
 | Data signatures                           |
 |:------------------------------------------|
-| substring( from this: str|'', keep: int ) |
+| substring( from this: strǁ'', keep: int ) |
 
 | Call signatures                                                                                                |
 |:---------------------------------------------------------------------------------------------------------------|
-| substring( from this: Term|Variable|Header|Function|Reference, keep: Term|Variable|Header|Function|Reference ) |
+| substring( from this: TermǁVariableǁHeaderǁFunctionǁReference, keep: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

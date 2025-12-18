@@ -9,12 +9,12 @@ found.
 | Data signatures                |
 |:-------------------------------|
 | size( stack name: str )        |
-| size( stack: list|tuple|None ) |
+| size( stack: listǁtupleǁNone ) |
 
 | Call signatures                                             |
 |:------------------------------------------------------------|
-| size( stack name: Variable|Header|Function|Reference|Term ) |
-| size( stack: Variable|Function|Reference )                  |
+| size( stack name: VariableǁHeaderǁFunctionǁReferenceǁTerm ) |
+| size( stack: VariableǁFunctionǁReference )                  |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

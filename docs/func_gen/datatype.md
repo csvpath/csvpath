@@ -13,7 +13,7 @@ datatype() returns the best fitting type for a header value on a given line.
 
 | Call signatures                                       |
 |:------------------------------------------------------|
-| datatype( header of value: Variable|Header|Function ) |
+| datatype( header of value: VariableǁHeaderǁFunction ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

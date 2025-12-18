@@ -14,7 +14,7 @@ lines after the line where it is evaluated.
 
 | Call signatures                                     |
 |:----------------------------------------------------|
-| advance( lines to advance: Term|Variable|Function ) |
+| advance( lines to advance: TermǁVariableǁFunction ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

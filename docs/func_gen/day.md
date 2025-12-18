@@ -6,11 +6,11 @@ datetime as a string.
 
 | Data signatures                 |
 |:--------------------------------|
-| day( date: None|date|datetime ) |
+| day( date: Noneǁdateǁdatetime ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
-| day( date: Term|Function|Header|Variable|Reference ) |
+| day( date: TermǁFunctionǁHeaderǁVariableǁReference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

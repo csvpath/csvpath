@@ -7,12 +7,12 @@ return is a string matching the format.
 | Data signatures           |
 |:--------------------------|
 | now()                     |
-| now( [format: None|str] ) |
+| now( [format: Noneǁstr] ) |
 
 | Call signatures                                |
 |:-----------------------------------------------|
 | now()                                          |
-| now( [format: Term|Function|Header|Variable] ) |
+| now( [format: TermǁFunctionǁHeaderǁVariable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

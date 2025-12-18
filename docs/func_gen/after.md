@@ -5,11 +5,11 @@ after() returns true if a value is greater than another value.
 
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| after( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| after( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| after( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| after( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

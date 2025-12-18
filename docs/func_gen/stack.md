@@ -9,7 +9,7 @@ Returns a stack variable. The stack is created if not found.
 
 | Call signatures                                              |
 |:-------------------------------------------------------------|
-| stack( stack name: Variable|Header|Function|Reference|Term ) |
+| stack( stack name: VariableǁHeaderǁFunctionǁReferenceǁTerm ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

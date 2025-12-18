@@ -5,11 +5,11 @@ Tracks the minimum value.
 
 | Data signatures                    |
 |:-----------------------------------|
-| min( value to compare: int|float ) |
+| min( value to compare: intǁfloat ) |
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| min( value to compare: Variable|Term|Header|Function ) |
+| min( value to compare: VariableǁTermǁHeaderǁFunction ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

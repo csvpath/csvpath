@@ -9,11 +9,11 @@ subtract() subtracts two or more numbers.
 
 | Data signatures                  |
 |:---------------------------------|
-| subtract( term: int|float, ... ) |
+| subtract( term: intǁfloat, ... ) |
 
 | Call signatures                                                |
 |:---------------------------------------------------------------|
-| subtract( term: Term|Header|Reference|Variable|Function, ... ) |
+| subtract( term: TermǁHeaderǁReferenceǁVariableǁFunction, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

@@ -15,7 +15,7 @@ possible special cases.
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|
-| caps( string to modify: Term|Variable|Header|Function|Reference, [if true, init-cap all words: Term|Function|Variable] ) |
+| caps( string to modify: TermǁVariableǁHeaderǁFunctionǁReference, [if true, init-cap all words: TermǁFunctionǁVariable] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

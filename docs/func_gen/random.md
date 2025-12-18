@@ -9,7 +9,7 @@ Generates a random number from within an integer range.
 
 | Call signatures                                                                                               |
 |:--------------------------------------------------------------------------------------------------------------|
-| random( greater than this: Term|Variable|Header|Function, and less than that: Term|Variable|Header|Function ) |
+| random( greater than this: TermǁVariableǁHeaderǁFunction, and less than that: TermǁVariableǁHeaderǁFunction ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

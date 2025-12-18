@@ -13,11 +13,11 @@ sets the value for each line of output to the @critter variable.
 
 | Data signatures                                                         |
 |:------------------------------------------------------------------------|
-| insert( insert at index: int, insert header name: str, data: None|Any ) |
+| insert( insert at index: int, insert header name: str, data: NoneǁAny ) |
 
 | Call signatures                                                                                     |
 |:----------------------------------------------------------------------------------------------------|
-| insert( insert at index: Term, insert header name: Term, data: Variable|Header|Function|Reference ) |
+| insert( insert at index: Term, insert header name: Term, data: VariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

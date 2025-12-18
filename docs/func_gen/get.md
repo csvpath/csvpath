@@ -17,11 +17,11 @@ unless there is no simplier solution based on more specific functions.
 
 | Data signatures                                                                                                |
 |:---------------------------------------------------------------------------------------------------------------|
-| get( var name: str|dict, [tracking value: None|str|int|float|bool|''], [default: None|str|int|float|bool|''] ) |
+| get( var name: strǁdict, [tracking value: Noneǁstrǁintǁfloatǁboolǁ''], [default: Noneǁstrǁintǁfloatǁboolǁ''] ) |
 
 | Call signatures                                                                                                                                     |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| get( var name: Header|Term|Function|Variable|Reference, [tracking value: Header|Term|Function|Variable], [default: Header|Term|Function|Variable] ) |
+| get( var name: HeaderǁTermǁFunctionǁVariableǁReference, [tracking value: HeaderǁTermǁFunctionǁVariable], [default: HeaderǁTermǁFunctionǁVariable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

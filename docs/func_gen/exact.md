@@ -9,12 +9,12 @@ The regular expression can be in argument one or two.
 | Data signatures                                                             |
 |:----------------------------------------------------------------------------|
 | exact( all headers: , regex: str )                                          |
-| exact( str or regex: str|''|None, str or regex: str|''|None, [group: int] ) |
+| exact( str or regex: strǁ''ǁNone, str or regex: strǁ''ǁNone, [group: int] ) |
 
 | Call signatures                                                                                                                                                         |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| exact( all headers: Headers, regex: Term|Variable|Header|Function|Reference )                                                                                           |
-| exact( str or regex: Term|Variable|Header|Function|Reference, str or regex: Term|Variable|Header|Function|Reference, [group: Term|Variable|Header|Function|Reference] ) |
+| exact( all headers: Headers, regex: TermǁVariableǁHeaderǁFunctionǁReference )                                                                                           |
+| exact( str or regex: TermǁVariableǁHeaderǁFunctionǁReference, str or regex: TermǁVariableǁHeaderǁFunctionǁReference, [group: TermǁVariableǁHeaderǁFunctionǁReference] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

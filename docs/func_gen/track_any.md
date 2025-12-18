@@ -42,7 +42,7 @@ not capture leading zeros, but track() would.
 
 | Call signatures                                                                                                                                        |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| track_any( track under: Term|Variable|Header|Function|Reference, tracking value: Term|Variable|Header|Function|Reference, ['collect' or 'add': Term] ) |
+| track_any( track under: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference, ['collect' or 'add': Term] ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

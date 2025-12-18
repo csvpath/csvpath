@@ -8,11 +8,11 @@ Both singular and plural forms are accepted.
 
 | Data signatures                                            |
 |:-----------------------------------------------------------|
-| roll( date: None|date|datetime, how_many: int, unit: str ) |
+| roll( date: Noneǁdateǁdatetime, how_many: int, unit: str ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| roll( date: Function|Header|Variable|Reference, how_many: Function|Header|Variable|Reference|Term, unit: Term ) |
+| roll( date: FunctionǁHeaderǁVariableǁReference, how_many: FunctionǁHeaderǁVariableǁReferenceǁTerm, unit: Term ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

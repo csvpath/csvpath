@@ -5,11 +5,11 @@ Returns the length of a string.
 
 | Data signatures                   |
 |:----------------------------------|
-| length( get length: None|str|'' ) |
+| length( get length: Noneǁstrǁ'' ) |
 
 | Call signatures                                               |
 |:--------------------------------------------------------------|
-| length( get length: Term|Variable|Header|Function|Reference ) |
+| length( get length: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

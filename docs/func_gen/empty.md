@@ -10,12 +10,12 @@ empty.
 | Data signatures                            |
 |:-------------------------------------------|
 | empty( Points to the headers: )            |
-| empty( Component to check: None|Any, ... ) |
+| empty( Component to check: NoneǁAny, ... ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|
 | empty( Points to the headers: Headers )                    |
-| empty( Component to check: Variable|Function|Header, ... ) |
+| empty( Component to check: VariableǁFunctionǁHeader, ... ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

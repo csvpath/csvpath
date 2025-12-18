@@ -11,15 +11,15 @@ syntactically in your use case, but they are all the same logic.
 
 | Data signatures                                                                                    |
 |:---------------------------------------------------------------------------------------------------|
-| outside( The value to test: None|datetime|date, From: None|datetime|date, To: None|datetime|date ) |
-| outside( The value to test: None|float|int, From: None|float|int, To: None|float|int )             |
-| outside( The value to test: None|str, From: None|str, To: None|str )                               |
+| outside( The value to test: Noneǁdatetimeǁdate, From: Noneǁdatetimeǁdate, To: Noneǁdatetimeǁdate ) |
+| outside( The value to test: Noneǁfloatǁint, From: Noneǁfloatǁint, To: Noneǁfloatǁint )             |
+| outside( The value to test: Noneǁstr, From: Noneǁstr, To: Noneǁstr )                               |
 
 | Call signatures                                                                                                                                                   |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| outside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
-| outside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
-| outside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
+| outside( The value to test: TermǁVariableǁHeaderǁFunctionǁReference, From: TermǁVariableǁHeaderǁFunctionǁReference, To: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| outside( The value to test: TermǁVariableǁHeaderǁFunctionǁReference, From: TermǁVariableǁHeaderǁFunctionǁReference, To: TermǁVariableǁHeaderǁFunctionǁReference ) |
+| outside( The value to test: TermǁVariableǁHeaderǁFunctionǁReference, From: TermǁVariableǁHeaderǁFunctionǁReference, To: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

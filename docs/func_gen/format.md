@@ -8,11 +8,11 @@ argument of “:.2f”
 
 | Data signatures                        |
 |:---------------------------------------|
-| format( value: None|Any, format: str ) |
+| format( value: NoneǁAny, format: str ) |
 
 | Call signatures                                                                                           |
 |:----------------------------------------------------------------------------------------------------------|
-| format( value: Term|Function|Header|Variable|Reference, format: Term|Function|Header|Variable|Reference ) |
+| format( value: TermǁFunctionǁHeaderǁVariableǁReference, format: TermǁFunctionǁHeaderǁVariableǁReference ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

@@ -5,11 +5,11 @@ Calculates the modulo of two numbers.
 
 | Data signatures                                |
 |:-----------------------------------------------|
-| mod( dividend: int|float, divisor: int|float ) |
+| mod( dividend: intǁfloat, divisor: intǁfloat ) |
 
 | Call signatures                                                                                            |
 |:-----------------------------------------------------------------------------------------------------------|
-| mod( dividend: Term|Variable|Header|Function|Reference, divisor: Term|Variable|Header|Function|Reference ) |
+| mod( dividend: TermǁVariableǁHeaderǁFunctionǁReference, divisor: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

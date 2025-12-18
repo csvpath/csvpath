@@ -7,11 +7,11 @@ It indicates that the value it receives must be a decimal.
 
 | Data signatures                                                               |
 |:------------------------------------------------------------------------------|
-| decimal( header: None|str|int, [max: None|float|int], [min: None|float|int] ) |
+| decimal( header: Noneǁstrǁint, [max: Noneǁfloatǁint], [min: Noneǁfloatǁint] ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|
-| decimal( header: Header|Variable|Function|Reference, [max: Term|Function|Variable], [min: Term|Function|Variable] ) |
+| decimal( header: HeaderǁVariableǁFunctionǁReference, [max: TermǁFunctionǁVariable], [min: TermǁFunctionǁVariable] ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

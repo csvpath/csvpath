@@ -9,11 +9,11 @@ castable using this function.
 
 | Data signatures                  |
 |:---------------------------------|
-| int( cast this: None|int|float ) |
+| int( cast this: Noneǁintǁfloat ) |
 
 | Call signatures                                 |
 |:------------------------------------------------|
-| int( cast this: Term|Variable|Header|Function ) |
+| int( cast this: TermǁVariableǁHeaderǁFunction ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

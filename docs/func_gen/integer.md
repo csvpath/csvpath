@@ -7,11 +7,11 @@ It indicates that the value it receives must be an integer.
 
 | Data signatures                                                               |
 |:------------------------------------------------------------------------------|
-| integer( header: None|str|int, [max: None|float|int], [min: None|float|int] ) |
+| integer( header: Noneǁstrǁint, [max: Noneǁfloatǁint], [min: Noneǁfloatǁint] ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|
-| integer( header: Header|Variable|Function|Reference, [max: Term|Function|Variable], [min: Term|Function|Variable] ) |
+| integer( header: HeaderǁVariableǁFunctionǁReference, [max: TermǁFunctionǁVariable], [min: TermǁFunctionǁVariable] ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

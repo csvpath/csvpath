@@ -10,11 +10,11 @@ breadth-first configuration.
 
 | Data signatures                               |
 |:----------------------------------------------|
-| debug( [info, debug, warn, error: None|str] ) |
+| debug( [info, debug, warn, error: Noneǁstr] ) |
 
 | Call signatures                                                    |
 |:-------------------------------------------------------------------|
-| debug( [info, debug, warn, error: Term|Function|Variable|Header] ) |
+| debug( [info, debug, warn, error: TermǁFunctionǁVariableǁHeader] ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

@@ -10,11 +10,11 @@ been replaced by header_name() and header_index().
 
 | Data signatures                       |
 |:--------------------------------------|
-| headers( [depreciated arg: str|int] ) |
+| headers( [depreciated arg: strǁint] ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
-| headers( [depreciated arg: Term|Variable|Function] ) |
+| headers( [depreciated arg: TermǁVariableǁFunction] ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

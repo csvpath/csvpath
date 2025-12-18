@@ -6,11 +6,11 @@ If a date format does not include date parts a match error is raised.
 
 | Data signatures                                      |
 |:-----------------------------------------------------|
-| format_date( date: None|date|datetime, format: str ) |
+| format_date( date: Noneǁdateǁdatetime, format: str ) |
 
 | Call signatures                                                                                     |
 |:----------------------------------------------------------------------------------------------------|
-| format_date( date: Term|Function|Header|Variable|Reference, format: Term|Function|Header|Variable ) |
+| format_date( date: TermǁFunctionǁHeaderǁVariableǁReference, format: TermǁFunctionǁHeaderǁVariable ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

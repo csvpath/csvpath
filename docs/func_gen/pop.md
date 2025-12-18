@@ -6,11 +6,11 @@ stack is created if not found.
 
 | Data signatures             |
 |:----------------------------|
-| pop( stack name: None|str ) |
+| pop( stack name: Noneǁstr ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|
-| pop( stack name: Variable|Header|Function|Reference|Term ) |
+| pop( stack name: VariableǁHeaderǁFunctionǁReferenceǁTerm ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

@@ -5,11 +5,11 @@ Multiplies numbers. Any number of arguments is acceptable.
 
 | Data signatures                                               |
 |:--------------------------------------------------------------|
-| multiply( multiply this: float|int, by that: float|int, ... ) |
+| multiply( multiply this: floatǁint, by that: floatǁint, ... ) |
 
 | Call signatures                                                                                                           |
 |:--------------------------------------------------------------------------------------------------------------------------|
-| multiply( multiply this: Term|Variable|Header|Function|Reference, by that: Term|Variable|Header|Function|Reference, ... ) |
+| multiply( multiply this: TermǁVariableǁHeaderǁFunctionǁReference, by that: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

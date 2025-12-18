@@ -15,12 +15,12 @@ has an embedded when/do operator.
 | Data signatures             |
 |:----------------------------|
 | skip()                      |
-| skip( eval this: None|Any ) |
+| skip( eval this: NoneǁAny ) |
 
 | Call signatures                      |
 |:-------------------------------------|
 | skip()                               |
-| skip( eval this: Function|Equality ) |
+| skip( eval this: FunctionǁEquality ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

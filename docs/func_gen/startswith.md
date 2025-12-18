@@ -5,11 +5,11 @@ Matches when a string begins with another string.
 
 | Data signatures                                              |
 |:-------------------------------------------------------------|
-| startswith( check this: str|''|None, for this: str|''|None ) |
+| startswith( check this: strǁ''ǁNone, for this: strǁ''ǁNone ) |
 
 | Call signatures                                                                                                      |
 |:---------------------------------------------------------------------------------------------------------------------|
-| startswith( check this: Term|Variable|Header|Function|Reference, for this: Term|Variable|Header|Function|Reference ) |
+| startswith( check this: TermǁVariableǁHeaderǁFunctionǁReference, for this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

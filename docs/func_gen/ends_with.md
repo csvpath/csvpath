@@ -5,11 +5,11 @@ Matches when a string ends with another string.
 
 | Data signatures                                             |
 |:------------------------------------------------------------|
-| ends_with( check this: str|''|None, for this: str|''|None ) |
+| ends_with( check this: strǁ''ǁNone, for this: strǁ''ǁNone ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|
-| ends_with( check this: Term|Variable|Header|Function|Reference, for this: Term|Variable|Header|Function|Reference ) |
+| ends_with( check this: TermǁVariableǁHeaderǁFunctionǁReference, for this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

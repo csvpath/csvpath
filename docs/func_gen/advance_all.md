@@ -33,7 +33,7 @@ csvpath will only see the even lines.
 
 | Call signatures                                         |
 |:--------------------------------------------------------|
-| advance_all( lines to advance: Term|Variable|Function ) |
+| advance_all( lines to advance: TermǁVariableǁFunction ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

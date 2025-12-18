@@ -11,7 +11,7 @@ The stack is created if not found.
 
 | Call signatures                                                          |
 |:-------------------------------------------------------------------------|
-| peek( stack name: Term|Variable|Header|Function|Reference, index: Term ) |
+| peek( stack name: TermǁVariableǁHeaderǁFunctionǁReference, index: Term ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

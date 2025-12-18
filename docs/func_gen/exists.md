@@ -10,11 +10,11 @@ purposes of matching.
 
 | Data signatures                        |
 |:---------------------------------------|
-| exists( Component to check: None|Any ) |
+| exists( Component to check: NoneǁAny ) |
 
 | Call signatures                                                  |
 |:-----------------------------------------------------------------|
-| exists( Component to check: Variable|Header|Function|Reference ) |
+| exists( Component to check: VariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

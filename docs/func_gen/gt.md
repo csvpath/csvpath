@@ -5,11 +5,11 @@ gt() returns true if a value is greater than another value.
 
 | Data signatures                                                                                |
 |:-----------------------------------------------------------------------------------------------|
-| gt( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| gt( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------|
-| gt( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| gt( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

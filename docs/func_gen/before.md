@@ -5,11 +5,11 @@ before() returns true if a value is less than another value.
 
 | Data signatures                                                                                    |
 |:---------------------------------------------------------------------------------------------------|
-| before( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
+| before( relate this: Noneǁintǁfloatǁdateǁdatetimeǁstr, to that: Noneǁintǁfloatǁdateǁdatetimeǁstr ) |
 
 | Call signatures                                                                                                  |
 |:-----------------------------------------------------------------------------------------------------------------|
-| before( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
+| before( relate this: TermǁVariableǁHeaderǁFunctionǁReference, to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

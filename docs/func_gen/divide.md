@@ -6,11 +6,11 @@ arguments.
 
 | Data signatures                                        |
 |:-------------------------------------------------------|
-| divide( dividend: int|float, divisor: int|float, ... ) |
+| divide( dividend: intǁfloat, divisor: intǁfloat, ... ) |
 
 | Call signatures                                                                                                    |
 |:-------------------------------------------------------------------------------------------------------------------|
-| divide( dividend: Term|Variable|Header|Function|Reference, divisor: Term|Variable|Header|Function|Reference, ... ) |
+| divide( dividend: TermǁVariableǁHeaderǁFunctionǁReference, divisor: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

@@ -9,11 +9,11 @@ firstmatch() matches
 
 | Data signatures                      |
 |:-------------------------------------|
-| first_match( [eval this: None|Any] ) |
+| first_match( [eval this: NoneǁAny] ) |
 
 | Call signatures                               |
 |:----------------------------------------------|
-| first_match( [eval this: Function|Equality] ) |
+| first_match( [eval this: FunctionǁEquality] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

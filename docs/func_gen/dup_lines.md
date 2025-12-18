@@ -6,7 +6,7 @@ with duplicate subsets of header values.
 
 | Data signatures                     |
 |:------------------------------------|
-| dup_lines( [check: None|Any], ... ) |
+| dup_lines( [check: NoneǁAny], ... ) |
 
 | Call signatures                   |
 |:----------------------------------|

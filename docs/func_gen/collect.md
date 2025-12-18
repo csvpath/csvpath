@@ -8,7 +8,7 @@ two values.
 
 | Data signatures                            |
 |:-------------------------------------------|
-| collect( header identifier: int|str, ... ) |
+| collect( header identifier: intǁstr, ... ) |
 | collect( header: Any, ... )                |
 
 | Call signatures                         |

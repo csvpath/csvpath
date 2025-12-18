@@ -11,11 +11,11 @@ String terms are treated as possibly | delimited strings of values
 
 | Data signatures                                             |
 |:------------------------------------------------------------|
-| in( Value to find: None|Any, Place to look: None|Any, ... ) |
+| in( Value to find: NoneǁAny, Place to look: NoneǁAny, ... ) |
 
 | Call signatures                                                                                                           |
 |:--------------------------------------------------------------------------------------------------------------------------|
-| in( Value to find: Term|Variable|Header|Function|Reference, Place to look: Term|Variable|Header|Function|Reference, ... ) |
+| in( Value to find: TermǁVariableǁHeaderǁFunctionǁReference, Place to look: TermǁVariableǁHeaderǁFunctionǁReference, ... ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|

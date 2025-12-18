@@ -13,7 +13,7 @@ Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself 
 | Data signatures              |
 |:-----------------------------|
 | wildcard( , ... )            |
-| wildcard( int|str|None|Any ) |
+| wildcard( intǁstrǁNoneǁAny ) |
 
 | Call signatures   |
 |:------------------|

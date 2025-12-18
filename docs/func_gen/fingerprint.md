@@ -12,7 +12,7 @@ by-line.
 
 | Data signatures                              |
 |:---------------------------------------------|
-| fingerprint( [include this: None|Any], ... ) |
+| fingerprint( [include this: NoneǁAny], ... ) |
 
 | Call signatures                            |
 |:-------------------------------------------|

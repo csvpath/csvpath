@@ -5,11 +5,11 @@ Alters a string by replacing all instances of a substring.
 
 | Data signatures                                                   |
 |:------------------------------------------------------------------|
-| alter( in: str|''|None, find: str|''|None, replace: str|''|None ) |
+| alter( in: strǁ''ǁNone, find: strǁ''ǁNone, replace: strǁ''ǁNone ) |
 
 | Call signatures                                                                                                                                       |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------|
-| alter( in: Term|Variable|Header|Function|Reference, find: Term|Variable|Header|Function|Reference, replace: Term|Variable|Header|Function|Reference ) |
+| alter( in: TermǁVariableǁHeaderǁFunctionǁReference, find: TermǁVariableǁHeaderǁFunctionǁReference, replace: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

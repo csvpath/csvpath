@@ -8,11 +8,11 @@ will evaluate it as a side-effect if not() evaluates to True.
 
 | Data signatures                                                                      |
 |:-------------------------------------------------------------------------------------|
-| not( value applied to: None|Any, [A function to invoke if not() is True: None|Any] ) |
+| not( value applied to: NoneǁAny, [A function to invoke if not() is True: NoneǁAny] ) |
 
 | Call signatures                                                                                                         |
 |:------------------------------------------------------------------------------------------------------------------------|
-| not( value applied to: Variable|Header|Function|Reference|Equality, [A function to invoke if not() is True: Function] ) |
+| not( value applied to: VariableǁHeaderǁFunctionǁReferenceǁEquality, [A function to invoke if not() is True: Function] ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

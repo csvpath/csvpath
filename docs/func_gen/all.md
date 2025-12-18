@@ -9,13 +9,13 @@ values.
 |:--------------------------------------------------------------|
 | all()                                                         |
 | all( [a function indicating all headers or all variables: ] ) |
-| all( [one of a set of match components: None|Any], ... )      |
+| all( [one of a set of match components: NoneǁAny], ... )      |
 
 | Call signatures                                                                |
 |:-------------------------------------------------------------------------------|
 | all()                                                                          |
-| all( [a function indicating all headers or all variables: Variables|Headers] ) |
-| all( [one of a set of match components: Function|Variable|Header], ... )       |
+| all( [a function indicating all headers or all variables: VariablesǁHeaders] ) |
+| all( [one of a set of match components: FunctionǁVariableǁHeader], ... )       |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

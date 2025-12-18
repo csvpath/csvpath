@@ -9,13 +9,13 @@ Alternatively, it may generate a date from a string. Generally, {self.name}() re
 
 | Data signatures                                  |
 |:-------------------------------------------------|
-| datetime( date: None|datetime|date )             |
-| datetime( date string: None|str, [format: str] ) |
+| datetime( date: Noneǁdatetimeǁdate )             |
+| datetime( date string: Noneǁstr, [format: str] ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|
-| datetime( date: Header|Variable|Function|Reference )                                                                |
-| datetime( date string: Term|Header|Variable|Function|Reference, [format: Term|Header|Function|Variable|Reference] ) |
+| datetime( date: HeaderǁVariableǁFunctionǁReference )                                                                |
+| datetime( date string: TermǁHeaderǁVariableǁFunctionǁReference, [format: TermǁHeaderǁFunctionǁVariableǁReference] ) |
 
 | Purpose    | Value                                                      |
 |:-----------|:-----------------------------------------------------------|

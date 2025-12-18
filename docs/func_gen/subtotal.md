@@ -19,11 +19,11 @@ a name qualifier as shown above to use another name.
 
 | Data signatures                                                      |
 |:---------------------------------------------------------------------|
-| subtotal( type to subtotal: None|Any, value to subtotal: float|int ) |
+| subtotal( type to subtotal: NoneǁAny, value to subtotal: floatǁint ) |
 
 | Call signatures                                                                                     |
 |:----------------------------------------------------------------------------------------------------|
-| subtotal( type to subtotal: Variable|Function|Header, value to subtotal: Variable|Function|Header ) |
+| subtotal( type to subtotal: VariableǁFunctionǁHeader, value to subtotal: VariableǁFunctionǁHeader ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

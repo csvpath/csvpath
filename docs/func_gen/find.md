@@ -5,11 +5,11 @@ Matches if the first string contains the second.
 
 | Data signatures                                           |
 |:----------------------------------------------------------|
-| find( does this: str|''|None, contain this: str|''|None ) |
+| find( does this: strǁ''ǁNone, contain this: strǁ''ǁNone ) |
 
 | Call signatures                                                                                                   |
 |:------------------------------------------------------------------------------------------------------------------|
-| find( does this: Term|Variable|Header|Function|Reference, contain this: Term|Variable|Header|Function|Reference ) |
+| find( does this: TermǁVariableǁHeaderǁFunctionǁReference, contain this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

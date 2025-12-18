@@ -6,11 +6,11 @@ containing XML.
 
 | Data signatures                                             |
 |:------------------------------------------------------------|
-| xpath( from this XML: str|''|None, select this XPath: str ) |
+| xpath( from this XML: strǁ''ǁNone, select this XPath: str ) |
 
 | Call signatures                                                                                                             |
 |:----------------------------------------------------------------------------------------------------------------------------|
-| xpath( from this XML: Term|Variable|Header|Function|Reference, select this XPath: Term|Variable|Header|Function|Reference ) |
+| xpath( from this XML: TermǁVariableǁHeaderǁFunctionǁReference, select this XPath: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

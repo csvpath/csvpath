@@ -20,11 +20,11 @@ stop().
 
 | Data signatures               |
 |:------------------------------|
-| stop( [eval this: None|Any] ) |
+| stop( [eval this: NoneǁAny] ) |
 
 | Call signatures                        |
 |:---------------------------------------|
-| stop( [eval this: Function|Equality] ) |
+| stop( [eval this: FunctionǁEquality] ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

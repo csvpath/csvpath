@@ -9,7 +9,7 @@ Alters a string by trimming leading and trailing whitespace.
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| strip( trim this: Variable|Header|Reference|Function ) |
+| strip( trim this: VariableǁHeaderǁReferenceǁFunction ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

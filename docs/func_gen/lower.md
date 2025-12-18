@@ -9,7 +9,7 @@ Alters a string by lower-casing it.
 
 | Call signatures                                                  |
 |:-----------------------------------------------------------------|
-| lower( lowercase this: Term|Variable|Header|Function|Reference ) |
+| lower( lowercase this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

@@ -1,11 +1,11 @@
 
 | Data signatures           |
 |:--------------------------|
-| max_length( str|'', int ) |
+| max_length( strǁ'', int ) |
 
 | Call signatures                                             |
 |:------------------------------------------------------------|
-| max_length( Term|Variable|Header|Function|Reference, Term ) |
+| max_length( TermǁVariableǁHeaderǁFunctionǁReference, Term ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

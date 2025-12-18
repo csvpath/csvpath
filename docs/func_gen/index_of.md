@@ -5,13 +5,13 @@ Finds the position of a value within a stack, if present.
 
 | Data signatures                              |
 |:---------------------------------------------|
-| index_of( stack name: str, value: Any|'' )   |
-| index_of( stack: list|tuple, value: Any|'' ) |
+| index_of( stack name: str, value: Anyǁ'' )   |
+| index_of( stack: listǁtuple, value: Anyǁ'' ) |
 
 | Call signatures                                                              |
 |:-----------------------------------------------------------------------------|
-| index_of( stack name: Term, value: Header|Term|Function|Variable|Reference ) |
-| index_of( stack: Variable, value: Header|Term|Function|Variable|Reference )  |
+| index_of( stack name: Term, value: HeaderǁTermǁFunctionǁVariableǁReference ) |
+| index_of( stack: Variable, value: HeaderǁTermǁFunctionǁVariableǁReference )  |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

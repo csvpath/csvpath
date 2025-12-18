@@ -20,7 +20,7 @@ not allowed.
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|
-| not_equal_to( is this: Term|Variable|Header|Function|Reference, equal to that: Term|Variable|Header|Function|Reference ) |
+| not_equal_to( is this: TermǁVariableǁHeaderǁFunctionǁReference, equal to that: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

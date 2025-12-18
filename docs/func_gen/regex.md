@@ -11,12 +11,12 @@ groups were defined.
 | Data signatures                                                             |
 |:----------------------------------------------------------------------------|
 | regex( all headers: , regex: str )                                          |
-| regex( str or regex: str|''|None, str or regex: str|''|None, [group: int] ) |
+| regex( str or regex: strǁ''ǁNone, str or regex: strǁ''ǁNone, [group: int] ) |
 
 | Call signatures                                                                                                                                                         |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| regex( all headers: Headers, regex: Term|Variable|Header|Function|Reference )                                                                                           |
-| regex( str or regex: Term|Variable|Header|Function|Reference, str or regex: Term|Variable|Header|Function|Reference, [group: Term|Variable|Header|Function|Reference] ) |
+| regex( all headers: Headers, regex: TermǁVariableǁHeaderǁFunctionǁReference )                                                                                           |
+| regex( str or regex: TermǁVariableǁHeaderǁFunctionǁReference, str or regex: TermǁVariableǁHeaderǁFunctionǁReference, [group: TermǁVariableǁHeaderǁFunctionǁReference] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

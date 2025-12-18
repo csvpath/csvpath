@@ -6,7 +6,7 @@ there are duplicate subsets of header values.
 
 | Data signatures                           |
 |:------------------------------------------|
-| count_dups( [check this: None|Any], ... ) |
+| count_dups( [check this: NoneǁAny], ... ) |
 
 | Call signatures                         |
 |:----------------------------------------|

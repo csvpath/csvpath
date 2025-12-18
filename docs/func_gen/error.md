@@ -24,13 +24,13 @@ Errors are also handled in the same way as built-in errors. They are collected t
 
 | Data signatures                                                         |
 |:------------------------------------------------------------------------|
-| error( print this: str|'', [print to specific Printer stream: str|''] ) |
-| error( print this: str|'', [eval after: None|Any] )                     |
+| error( print this: strǁ'', [print to specific Printer stream: strǁ''] ) |
+| error( print this: strǁ'', [eval after: NoneǁAny] )                     |
 
 | Call signatures                                                     |
 |:--------------------------------------------------------------------|
 | error( print this: Term, [print to specific Printer stream: Term] ) |
-| error( print this: Term, [eval after: Function|Equality] )          |
+| error( print this: Term, [eval after: FunctionǁEquality] )          |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

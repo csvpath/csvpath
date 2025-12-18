@@ -10,11 +10,11 @@ appended line all lines have the appended header.
 
 | Data signatures                                                                                        |
 |:-------------------------------------------------------------------------------------------------------|
-| append( name of appended header: str, value: None|Any, [append header name to header row data: bool] ) |
+| append( name of appended header: str, value: NoneǁAny, [append header name to header row data: bool] ) |
 
 | Call signatures                                                                                                                                 |
 |:------------------------------------------------------------------------------------------------------------------------------------------------|
-| append( name of appended header: Term, value: Term|Variable|Header|Function|Reference, [append header name to header row data: Term|Function] ) |
+| append( name of appended header: Term, value: TermǁVariableǁHeaderǁFunctionǁReference, [append header name to header row data: TermǁFunction] ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

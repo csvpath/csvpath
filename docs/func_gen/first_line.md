@@ -8,11 +8,11 @@ matches
 
 | Data signatures                     |
 |:------------------------------------|
-| first_line( [eval this: None|Any] ) |
+| first_line( [eval this: NoneǁAny] ) |
 
 | Call signatures                              |
 |:---------------------------------------------|
-| first_line( [eval this: Function|Equality] ) |
+| first_line( [eval this: FunctionǁEquality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

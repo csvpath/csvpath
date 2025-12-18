@@ -12,13 +12,13 @@ For example, $[*][@a = line_number() replace(#order_number, @a)]
 
 | Data signatures                                                       |
 |:----------------------------------------------------------------------|
-| replace( replace value: None|Any, replacement: Any )                  |
-| replace( replace by header identity: int|str, replacement: None|Any ) |
+| replace( replace value: NoneǁAny, replacement: Any )                  |
+| replace( replace by header identity: intǁstr, replacement: NoneǁAny ) |
 
 | Call signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| replace( replace value: Header, replacement: Term|Variable|Header|Function|Reference )            |
-| replace( replace by header identity: Term, replacement: Term|Variable|Header|Function|Reference ) |
+| replace( replace value: Header, replacement: TermǁVariableǁHeaderǁFunctionǁReference )            |
+| replace( replace by header identity: Term, replacement: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

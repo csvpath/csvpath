@@ -22,13 +22,13 @@ available fields.
 
 | Data signatures                                                         |
 |:------------------------------------------------------------------------|
-| print( print this: str|'', [print to specific Printer stream: str|''] ) |
-| print( print this: str|'', [eval after: None|Any] )                     |
+| print( print this: strǁ'', [print to specific Printer stream: strǁ''] ) |
+| print( print this: strǁ'', [eval after: NoneǁAny] )                     |
 
 | Call signatures                                                     |
 |:--------------------------------------------------------------------|
 | print( print this: Term, [print to specific Printer stream: Term] ) |
-| print( print this: Term, [eval after: Function|Equality] )          |
+| print( print this: Term, [eval after: FunctionǁEquality] )          |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

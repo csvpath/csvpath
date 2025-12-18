@@ -28,8 +28,8 @@ function is often simpler.
 | Call signatures                                                                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | put( new var name: Term )                                                                                                                                                |
-| put( var name: Term|Variable|Header|Function|Reference, var value: Term|Variable|Header|Function|Reference )                                                             |
-| put( var name: Term|Variable|Header|Function|Reference, tracking key: Term|Variable|Header|Function|Reference, tracking value: Term|Variable|Header|Function|Reference ) |
+| put( var name: TermǁVariableǁHeaderǁFunctionǁReference, var value: TermǁVariableǁHeaderǁFunctionǁReference )                                                             |
+| put( var name: TermǁVariableǁHeaderǁFunctionǁReference, tracking key: TermǁVariableǁHeaderǁFunctionǁReference, tracking value: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                  |
 |:-----------|:-----------------------|

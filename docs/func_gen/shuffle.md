@@ -12,7 +12,7 @@ duplicates.
 | Call signatures                                                                                 |
 |:------------------------------------------------------------------------------------------------|
 | shuffle()                                                                                       |
-| shuffle( from this int: Term|Variable|Header|Function, to this: Term|Variable|Header|Function ) |
+| shuffle( from this int: TermǁVariableǁHeaderǁFunction, to this: TermǁVariableǁHeaderǁFunction ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

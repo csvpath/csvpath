@@ -14,11 +14,11 @@ header, not a check for the line having a value for the header.
 
 | Data signatures                                                      |
 |:---------------------------------------------------------------------|
-| header_index( header identity: str|int, [value check: None|Any|''] ) |
+| header_index( header identity: strǁint, [value check: NoneǁAnyǁ''] ) |
 
 | Call signatures                                                              |
 |:-----------------------------------------------------------------------------|
-| header_index( header identity: Term|Function|Variable, [value check: Term] ) |
+| header_index( header identity: TermǁFunctionǁVariable, [value check: Term] ) |
 
 | Purpose    | Value                                      |
 |:-----------|:-------------------------------------------|

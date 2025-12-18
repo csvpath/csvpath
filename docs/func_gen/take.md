@@ -2,12 +2,12 @@
 | Data signatures             |
 |:----------------------------|
 | take()                      |
-| take( eval this: None|Any ) |
+| take( eval this: NoneǁAny ) |
 
 | Call signatures                      |
 |:-------------------------------------|
 | take()                               |
-| take( eval this: Function|Equality ) |
+| take( eval this: FunctionǁEquality ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|

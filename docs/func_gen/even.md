@@ -5,11 +5,11 @@ Checks a contained value to see if it is even.
 
 | Data signatures              |
 |:-----------------------------|
-| even( check this: None|int ) |
+| even( check this: Noneǁint ) |
 
 | Call signatures                                                 |
 |:----------------------------------------------------------------|
-| even( check this: Variable|Header|Function|Reference|Equality ) |
+| even( check this: VariableǁHeaderǁFunctionǁReferenceǁEquality ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

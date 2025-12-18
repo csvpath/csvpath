@@ -3,7 +3,7 @@ Matches every N times a value is seen.
 
 | Data signatures                                   |
 |:--------------------------------------------------|
-| every( watch: None|Any, pick every N: int|float ) |
+| every( watch: NoneǁAny, pick every N: intǁfloat ) |
 
 | Call signatures                               |
 |:----------------------------------------------|

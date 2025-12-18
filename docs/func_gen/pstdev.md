@@ -9,11 +9,11 @@ using push() or other functions.
 
 | Data signatures                          |
 |:-----------------------------------------|
-| pstdev( stack var name: str|tuple|list ) |
+| pstdev( stack var name: strǁtupleǁlist ) |
 
 | Call signatures                                  |
 |:-------------------------------------------------|
-| pstdev( stack var name: Variable|Function|Term ) |
+| pstdev( stack var name: VariableǁFunctionǁTerm ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

@@ -6,7 +6,7 @@ header values.
 
 | Data signatures                    |
 |:-----------------------------------|
-| has_dups( [check: None|Any], ... ) |
+| has_dups( [check: NoneǁAny], ... ) |
 
 | Call signatures                  |
 |:---------------------------------|

@@ -9,11 +9,11 @@ using push() or other functions.
 
 | Data signatures                         |
 |:----------------------------------------|
-| stdev( stack var name: str|tuple|list ) |
+| stdev( stack var name: strǁtupleǁlist ) |
 
 | Call signatures                                 |
 |:------------------------------------------------|
-| stdev( stack var name: Variable|Function|Term ) |
+| stdev( stack var name: VariableǁFunctionǁTerm ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

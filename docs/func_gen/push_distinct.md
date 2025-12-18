@@ -11,12 +11,12 @@ prevents push() from adding a None to the stack.
 | Data signatures                                            |
 |:-----------------------------------------------------------|
 | push_distinct( new stack name: str )                       |
-| push_distinct( stack name: str|list, push this: None|Any ) |
+| push_distinct( stack name: strǁlist, push this: NoneǁAny ) |
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|
 | push_distinct( new stack name: Term )                                                                                    |
-| push_distinct( stack name: Term|Variable|Header|Function|Reference, push this: Term|Variable|Header|Function|Reference ) |
+| push_distinct( stack name: TermǁVariableǁHeaderǁFunctionǁReference, push this: TermǁVariableǁHeaderǁFunctionǁReference ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

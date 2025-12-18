@@ -20,12 +20,12 @@ See skip() for more behavior details.
 | Data signatures                 |
 |:--------------------------------|
 | skip_all()                      |
-| skip_all( eval this: None|Any ) |
+| skip_all( eval this: NoneǁAny ) |
 
 | Call signatures                          |
 |:-----------------------------------------|
 | skip_all()                               |
-| skip_all( eval this: Function|Equality ) |
+| skip_all( eval this: FunctionǁEquality ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|
