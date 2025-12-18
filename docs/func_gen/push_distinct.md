@@ -22,9 +22,9 @@ prevents push() from adding a None to the stack.
 |:-----------|:---------------------------------|
 | Main focus | push_distinct() is a side-effect |
 
-| Context          | Qualifier                            |
-|:-----------------|:-------------------------------------|
-| Match qualifiers | onmatch, distinct, notnone, skipnone |
-| Value qualifiers | onmatch                              |
+| Context          | Qualifier                                                                                                                                                                                                                                                              |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), skipnone |
+| Value qualifiers | onmatch                                                                                                                                                                                                                                                                |
 
 

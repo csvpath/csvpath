@@ -25,9 +25,9 @@ string(none(), 5).
 | Main focus | string() determines if lines match |
 | Type       | String is a line() schema type     |
 
-| Context          | Qualifier                  |
-|:-----------------|:---------------------------|
-| Match qualifiers | onmatch, notnone, distinct |
-| Value qualifiers | onmatch                    |
+| Context          | Qualifier                                                                                                                                                                                                                                                    |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Value qualifiers | onmatch                                                                                                                                                                                                                                                      |
 
 

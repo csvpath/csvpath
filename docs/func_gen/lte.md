@@ -16,9 +16,9 @@ lte() returns true if a value is less than or equal to another value.
 | Main focus | lte() determines if lines match |
 | Aliases    | lte, le                         |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

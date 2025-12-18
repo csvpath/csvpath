@@ -16,9 +16,9 @@ Matches when a string ends with another string.
 | Main focus | endswith() produces a calculated value |
 | Aliases    | endswith, ends_with                    |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

@@ -15,9 +15,9 @@
 |:-----------|:------------------------|
 | Main focus | take() is a side-effect |
 
-| Context          | Qualifier     |
-|:-----------------|:--------------|
-| Match qualifiers | onmatch, once |
-| Value qualifiers | onmatch       |
+| Context          | Qualifier                                                                                                                                                        |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [once](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#once) |
+| Value qualifiers | onmatch                                                                                                                                                          |
 
 

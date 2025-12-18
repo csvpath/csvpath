@@ -7,9 +7,9 @@ Matches when the current file is in the failed/invalid state.
 |:-----------|:----------------------------------|
 | Main focus | valid() determines if lines match |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

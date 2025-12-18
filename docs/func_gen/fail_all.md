@@ -9,9 +9,9 @@ I.e., the data file triggering the failure will have failed across the board, ev
 |:-----------|:-------------------------------------|
 | Main focus | fail_all() determines if lines match |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

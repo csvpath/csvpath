@@ -25,9 +25,9 @@ Note that wildcard() and wildcard("*") are functionally the same.
 |:-----------|:---------------------------------|
 | Main focus | line() determines if lines match |
 
-| Context          | Qualifier           |
-|:-----------------|:--------------------|
-| Match qualifiers | onmatch, distinct   |
-| Name qualifier   | optionally expected |
+| Context          | Qualifier                                                                                                                                                                |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Name qualifier   | optionally expected                                                                                                                                                      |
 
 

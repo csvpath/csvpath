@@ -17,9 +17,9 @@ Returns the first N-characters of a string.
 |:-----------|:----------------------------------------|
 | Main focus | substring() produces a calculated value |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

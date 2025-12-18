@@ -18,9 +18,9 @@ It indicates that the value it receives must be a decimal.
 | Main focus | decimal() determines if lines match |
 | Type       | Decimal is a line() schema type     |
 
-| Context          | Qualifier                          |
-|:-----------------|:-----------------------------------|
-| Match qualifiers | onmatch, notnone, strict, distinct |
-| Value qualifiers | onmatch, notnone, strict           |
+| Context          | Qualifier                                                                                                                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), [strict](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#strict), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Value qualifiers | onmatch, notnone, strict                                                                                                                                                                                                                                                                                                                       |
 
 

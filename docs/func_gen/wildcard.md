@@ -25,9 +25,9 @@ Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself 
 | Main focus | wildcard() determines if lines match |
 | Type       | Wildcard is a line() schema type     |
 
-| Context          | Qualifier   |
-|:-----------------|:------------|
-| Match qualifiers | onmatch     |
-| Value qualifiers | onmatch     |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
 
 

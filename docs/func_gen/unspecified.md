@@ -11,9 +11,9 @@ Blank cannot be used outside a line()
 | Type       | Unspecified is a line() schema type     |
 | Aliases    | blank, nonspecific, unspecified         |
 
-| Context          | Qualifier         |
-|:-----------------|:------------------|
-| Match qualifiers | onmatch, distinct |
-| Value qualifiers | onmatch           |
+| Context          | Qualifier                                                                                                                                                                |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Value qualifiers | onmatch                                                                                                                                                                  |
 
 

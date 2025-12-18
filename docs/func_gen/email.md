@@ -16,9 +16,9 @@ A line() schema type indicating that the value it represents must be an email
 | Main focus | email() determines if lines match |
 | Type       | Email is a line() schema type     |
 
-| Context          | Qualifier                  |
-|:-----------------|:---------------------------|
-| Match qualifiers | onmatch, notnone, distinct |
-| Value qualifiers | onmatch, notnone           |
+| Context          | Qualifier                                                                                                                                                                                                                                                    |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Value qualifiers | onmatch, notnone                                                                                                                                                                                                                                             |
 
 

@@ -17,10 +17,10 @@ name must be used with this function.
 |:-----------|:------------------------------------------|
 | Main focus | store_line_fingerprint() is a side-effect |
 
-| Context          | Qualifier           |
-|:-----------------|:--------------------|
-| Match qualifiers | onmatch             |
-| Value qualifiers | onmatch             |
-| Name qualifier   | optionally expected |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
+| Name qualifier   | optionally expected                                                                |
 
 

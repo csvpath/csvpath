@@ -18,9 +18,9 @@ Both singular and plural forms are accepted.
 |:-----------|:-----------------------------------|
 | Main focus | roll() produces a calculated value |
 
-| Context          | Qualifier        |
-|:-----------------|:-----------------|
-| Match qualifiers | onmatch          |
-| Value qualifiers | onmatch, notnone |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch, notnone                                                                   |
 
 

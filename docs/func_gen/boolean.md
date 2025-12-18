@@ -22,9 +22,9 @@ header name.
 | Main focus | boolean() produces a calculated value and decides matches |
 | Type       | Boolean is a line() schema type                           |
 
-| Context          | Qualifier         |
-|:-----------------|:------------------|
-| Match qualifiers | onmatch, distinct |
-| Value qualifiers | onmatch, notnone  |
+| Context          | Qualifier                                                                                                                                                                |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
+| Value qualifiers | onmatch, notnone                                                                                                                                                         |
 
 

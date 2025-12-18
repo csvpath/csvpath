@@ -16,10 +16,10 @@ with duplicate subsets of header values.
 |:-----------|:----------------------------------------|
 | Main focus | dup_lines() produces a calculated value |
 
-| Context          | Qualifier           |
-|:-----------------|:--------------------|
-| Match qualifiers | onmatch             |
-| Value qualifiers | onmatch             |
-| Name qualifier   | optionally expected |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
+| Name qualifier   | optionally expected                                                                |
 
 

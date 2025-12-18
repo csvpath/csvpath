@@ -21,9 +21,9 @@ found.
 | Main focus | peek_size() produces a calculated value |
 | Aliases    | peek_size, size                         |
 
-| Context          | Qualifier        |
-|:-----------------|:-----------------|
-| Match qualifiers | onmatch          |
-| Value qualifiers | onmatch, notnone |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch, notnone                                                                   |
 
 

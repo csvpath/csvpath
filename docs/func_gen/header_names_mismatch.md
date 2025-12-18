@@ -40,10 +40,10 @@ match value being false if the headers do not meet expectations.
 | Main focus | header_names_mismatch() produces a calculated value |
 | Aliases    | header_names_mismatch, header_names_match           |
 
-| Context          | Qualifier           |
-|:-----------------|:--------------------|
-| Match qualifiers | onmatch             |
-| Value qualifiers | onmatch             |
-| Name qualifier   | optionally expected |
+| Context          | Qualifier                                                                          |
+|:-----------------|:-----------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Value qualifiers | onmatch                                                                            |
+| Name qualifier   | optionally expected                                                                |
 
 

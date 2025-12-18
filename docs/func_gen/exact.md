@@ -22,9 +22,9 @@ The regular expression can be in argument one or two.
 |:-----------|:----------------------------------|
 | Main focus | exact() determines if lines match |
 
-| Context          | Qualifier       |
-|:-----------------|:----------------|
-| Match qualifiers | onmatch, asbool |
-| Value qualifiers | onmatch         |
+| Context          | Qualifier                                                                                                                                                            |
+|:-----------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [asbool](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#asbool) |
+| Value qualifiers | onmatch                                                                                                                                                              |
 
 
