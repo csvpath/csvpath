@@ -1,4 +1,4 @@
-
+{index}
 
 [[Back to overview](https://github.com/csvpath/csvpath/blob/main/docs/functions.md)]
 
