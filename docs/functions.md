@@ -21,7 +21,7 @@ Some functions will optionally make use of an arbitrary name qualifier to better
 
 <a href='https://github.com/dk107dk/csvpath/blob/main/docs/qualifiers.md'>Read about qualifiers here.</a>
 
-Most of the work of matching is done in match component functions. There are over one hundred and fifty functions in several groups.
+Most of the work of matching is done in match component functions. There are [over one hundred and fifty functions](https://github.com/dk107dk/csvpath/blob/main/docs/func_gen/index.md) in [several groups](#groups).
 
 ## Function Groups
 
@@ -91,9 +91,10 @@ Many functions have aliases that are intended to help make csvpaths more readabl
 
 While that may seem confusing to some people, others appreciate having options that can make their csvpaths more sentence-like.
 
-# All the functions
+# Original Descriptions Of the functions
+<a name="groups">
 
-While this list should be up to date, for complete documentation, coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window or the CLI.
+This list is often not up to date. For complete documentation, coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window, the CsvPath Framework CLI, or the generated [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md).
 
 ## Boolean
 <table>
