@@ -29,6 +29,10 @@ class FunctionDescriber:
                 function.check_valid()
             except Exception:
                 ...
+        if markdown is True:
+            print(f"## {function.name}()\n")
+        else:
+            print(f"{cls.const().BOLD}{function.name}(){cls.const().REVERT}\n")
         if function.description and len(function.description) > 0:
             for i, _ in enumerate(function.description):
                 print(_)
@@ -40,7 +44,7 @@ class FunctionDescriber:
     def sigs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
-        PIPE = "|" if not markdown else "ǁ"
+        PIPE = " ǁ " if markdown else "|"
         if not args:
             #
             # this is possibly due to the very small number of unrefactored functions. (3?)
@@ -78,7 +82,7 @@ class FunctionDescriber:
     def funcs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
-        PIPE = "|" if not markdown else "ǁ"
+        PIPE = " ǁ " if markdown else "|"
         if not args or not args.argsets or len(args.argsets) == 0:
             return sigs
         argsets = args.argsets
@@ -148,7 +152,7 @@ class FunctionDescriber:
         #
         headers = ["Data signatures"]
         rows = []
-        sigs = cls.sigs(function)
+        sigs = cls.sigs(function, markdown=markdown)
         for v in sigs:
             v = str(v)
             rows.append([v])
@@ -166,7 +170,7 @@ class FunctionDescriber:
         #
         headers = ["Call signatures"]
         rows = []
-        sigs = cls.funcs(function)
+        sigs = cls.funcs(function, markdown=markdown)
         for v in sigs:
             v = str(v)
             rows.append([v])
