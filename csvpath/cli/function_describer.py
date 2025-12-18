@@ -8,8 +8,16 @@ from .const import Const
 
 
 class FunctionDescriber:
+
+    CONST = Const
+
     @classmethod
-    def describe(cls, function: Function, *, markdown=False) -> None:
+    def const(cls):
+        return FunctionDescriber.CONST
+
+    @classmethod
+    def describe(cls, function: Function, *, markdown=False, const=None) -> None:
+        print("")
         if not function.args:
             #
             # today this will most of the time blow up because we're
@@ -24,12 +32,15 @@ class FunctionDescriber:
         if function.description and len(function.description) > 0:
             for i, _ in enumerate(function.description):
                 print(_)
+                print("")
         cls.print_tables(function, markdown=markdown)
+        print("")
 
     @classmethod
     def sigs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
+        PIPE = "|" if not markdown else "ǁ"
         if not args:
             #
             # this is possibly due to the very small number of unrefactored functions. (3?)
@@ -46,9 +57,9 @@ class FunctionDescriber:
                     an = cls._actual_name(act)
                     if an == "":
                         an = "''"
-                    t += f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{an}{Const.REVERT}"
+                    t += f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{an}{cls.const().REVERT}"
                     if j < len(_.actuals) - 1:
-                        t += "|"
+                        t += PIPE
                 if _.is_noneable:
                     pa += f"[{t}]"
                 else:
@@ -67,6 +78,7 @@ class FunctionDescriber:
     def funcs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
+        PIPE = "|" if not markdown else "ǁ"
         if not args or not args.argsets or len(args.argsets) == 0:
             return sigs
         argsets = args.argsets
@@ -80,9 +92,9 @@ class FunctionDescriber:
                     an = cls._actual_name(act)
                     if an == "":
                         an = "''"
-                    t += f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{an}{Const.REVERT}"
+                    t += f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{an}{cls.const().REVERT}"
                     if j < len(_.types) - 1:
-                        t += "|"
+                        t += PIPE
                 if _.is_noneable:
                     pa += f"[{t}]"
                 else:
@@ -148,6 +160,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+            print("")
         #
         # call sigs
         #
@@ -165,6 +178,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+            print("")
         #
         # type and focus
         #
@@ -190,24 +204,31 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+            print("")
         #
         # qualifiers
         #
         rows = []
         headers = ["Context", "Qualifier"]
         stmts = function.match_qualifiers
-        stmts = [f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{s}{Const.REVERT}" for s in stmts]
+        stmts = [
+            f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{s}{cls.const().REVERT}"
+            for s in stmts
+        ]
         if len(stmts) > 0:
             rows.append(["Match qualifiers", ", ".join(stmts)])
         stmts = function.value_qualifiers
-        stmts = [f"{Const.SIDEBAR_COLOR}{Const.ITALIC}{s}{Const.REVERT}" for s in stmts]
+        stmts = [
+            f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}{s}{cls.const().REVERT}"
+            for s in stmts
+        ]
         if len(stmts) > 0:
             rows.append(["Value qualifiers", ", ".join(stmts)])
         if function.name_qualifier:
             rows.append(
                 [
                     "Name qualifier",
-                    f"{Const.SIDEBAR_COLOR}{Const.ITALIC}optionally expected{Const.REVERT}",
+                    f"{cls.const().SIDEBAR_COLOR}{cls.const().ITALIC}optionally expected{cls.const().REVERT}",
                 ]
             )
         if len(rows) > 0:
@@ -218,6 +239,7 @@ class FunctionDescriber:
                     tablefmt="pipe" if markdown else "simple_grid",
                 )
             )
+            print("")
 
     @classmethod
     def _actual_name(cls, a) -> str:
