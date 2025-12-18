@@ -1,3 +1,4 @@
+
 Header names match
 Given a | delimited list of headers, checks that all exist and are in
 the same order.
@@ -24,18 +25,24 @@ header_names_match() will return False; i.e. not match.
 Note that the alias header_names_mismatch() is depreciated. Instead
 use header_names_match(). The name change reflects the function's
 match value being false if the headers do not meet expectations.
+
 | Data signatures                                   |
 |:--------------------------------------------------|
 | header_names_match( pipe delimited headers: [36m[3mstr[0m ) |
+
 | Call signatures                                    |
 |:---------------------------------------------------|
 | header_names_match( pipe delimited headers: [36m[3mTerm[0m ) |
+
 | Purpose    | Value                                            |
 |:-----------|:-------------------------------------------------|
 | Main focus | header_names_match() produces a calculated value |
 | Aliases    | header_names_mismatch, header_names_match        |
+
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
 | Match qualifiers | [36m[3monmatch[0m             |
 | Value qualifiers | [36m[3monmatch[0m             |
 | Name qualifier   | [36m[3moptionally expected[0m |
+
+

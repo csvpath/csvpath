@@ -1,3 +1,4 @@
+
 Rename
 Renames one or more headers for the duration of the run.
 
@@ -23,6 +24,7 @@ line_number() == 6 -> rename(@headers)
 
 Note that renames do not affect other csvpaths, regardless of if they
 are run in serial or breadth-first.
+
 | Data signatures                            |
 |:-------------------------------------------|
 | rename( header: [36m[3mlist[0m|[36m[3mtuple[0m )               |
@@ -30,6 +32,7 @@ are run in serial or breadth-first.
 | rename( header name: [36m[3mstr[0m, new name: [36m[3mstr[0m )  |
 | rename( header index: [36m[3mint[0m, new name: [36m[3mstr[0m ) |
 | rename( new header name: [36m[3mstr[0m, ... )        |
+
 | Call signatures                              |
 |:---------------------------------------------|
 | rename( header: [36m[3mVariable[0m|[36m[3mReference[0m )         |
@@ -37,10 +40,14 @@ are run in serial or breadth-first.
 | rename( header name: [36m[3mTerm[0m, new name: [36m[3mTerm[0m )  |
 | rename( header index: [36m[3mTerm[0m, new name: [36m[3mTerm[0m ) |
 | rename( new header name: [36m[3mTerm[0m, ... )         |
+
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
 | Main focus | rename() is a side-effect |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

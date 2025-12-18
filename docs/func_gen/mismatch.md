@@ -1,3 +1,4 @@
+
 Mismatch
 mismatch() returns the number of headers in a row greater or less than
 the number expected. CsvPath uses the 0th row as headers; although,
@@ -33,20 +34,26 @@ fewer delimited values than the current headers.
 If a line has no delimiters but does have whitespace characters it
 technically has one header. mismatch() doesn't give credit for the
 whitespace because in reality the line is blank and has zero headers.
+
 | Data signatures                    |
 |:-----------------------------------|
 | mismatch()                         |
 | mismatch( a literal: signed: [36m[3mstr[0m ) |
 | mismatch( signed: [36m[3mbool[0m )           |
+
 | Call signatures                     |
 |:------------------------------------|
 | mismatch()                          |
 | mismatch( a literal: signed: [36m[3mTerm[0m ) |
 | mismatch( signed: [36m[3mTerm[0m )            |
+
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
 | Main focus | mismatch() produces a calculated value |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

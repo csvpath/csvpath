@@ -1,3 +1,4 @@
+
 Advance all
 Like advance(), advance_all() jumps processing N-lines forward. The
 lines skipped will not be considered or collected as matched or
@@ -24,16 +25,22 @@ For example, take two csvpaths in a named-paths group that was run
 using fast_forward_by_line(). If the first csvpath uses a when/do
 operator to evaluate advance_all() on the odd lines, the second
 csvpath will only see the even lines.
+
 | Data signatures                      |
 |:-------------------------------------|
 | advance_all( lines to advance: [36m[3mint[0m ) |
+
 | Call signatures                                         |
 |:--------------------------------------------------------|
 | advance_all( lines to advance: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mFunction[0m ) |
+
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|
 | Main focus | advance_all() is a side-effect |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

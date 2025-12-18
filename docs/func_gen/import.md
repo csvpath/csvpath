@@ -1,3 +1,4 @@
+
 Import
 Imports one csvpath into another. The imported csvpath's match
 components are copied into the importing csvpath. Scan instructions
@@ -40,16 +41,22 @@ each other as needed. When you do this you will still be running the
 whole named-paths group as a unit. Because of that, the csvpaths you
 import could be run twice. You can prevent that by setting the run-
 mode of the imported csvpaths to no-run.
+
 | Data signatures            |
 |:---------------------------|
 | import( import this: [36m[3mstr[0m ) |
+
 | Call signatures                       |
 |:--------------------------------------|
 | import( import this: [36m[3mTerm[0m|[36m[3mReference[0m ) |
+
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
 | Main focus | import() is a side-effect |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

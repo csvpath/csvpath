@@ -1,3 +1,4 @@
+
 File fingerprint
 Enters the SHA256 hash of the current data file into metadata.
 
@@ -11,17 +12,23 @@ Second and more importantly, it takes a fingerprint of a source-
 mode:preceding run's data file. This allows you to easily confirm that
 the input to the current csvpath was the exact output of the preceding
 csvpath and different from the original data file.
+
 | Data signatures    |
 |:-------------------|
 | file_fingerprint() |
+
 | Call signatures    |
 |:-------------------|
 | file_fingerprint() |
+
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
 | Main focus | file_fingerprint() is a side-effect |
+
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
 | Match qualifiers | [36m[3monmatch[0m             |
 | Value qualifiers | [36m[3monmatch[0m             |
 | Name qualifier   | [36m[3moptionally expected[0m |
+
+

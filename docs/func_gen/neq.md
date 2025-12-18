@@ -1,3 +1,4 @@
+
 Neq
 Tests the equality of two values.
 
@@ -11,17 +12,23 @@ test.
 In other words, to set @a equal to the equality test of @b to the
 string "c", you must do: @a = neq(@b, "c"). @a = @b == "c" is not
 allowed.
+
 | Data signatures                         |
 |:----------------------------------------|
 | neq( is this: [36m[3mAny[0m, equal to that: [36m[3mAny[0m ) |
+
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
 | neq( is this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, equal to that: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|
 | Main focus | neq() determines if lines match |
 | Aliases    | neq, not_equal_to               |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

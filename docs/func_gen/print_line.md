@@ -1,3 +1,4 @@
+
 Print line
 Prints the current line as delimited data.
 
@@ -17,18 +18,24 @@ use quotechars in a proactive way.
 Printing to a dedicated printer can help create stand-alone data-ready
 output. That option is mainly valuable in named-paths group runs where
 printers' printouts are more clearly separated.
+
 | Data signatures                                                |
 |:---------------------------------------------------------------|
 | print_line()                                                   |
 | print_line( printer: [36m[3mstr[0m, [delimiter: [36m[3mstr[0m], [quotechar: [36m[3mstr[0m] ) |
+
 | Call signatures                                                   |
 |:------------------------------------------------------------------|
 | print_line()                                                      |
 | print_line( printer: [36m[3mTerm[0m, [delimiter: [36m[3mTerm[0m], [quotechar: [36m[3mTerm[0m] ) |
+
 | Purpose    | Value                         |
 |:-----------|:------------------------------|
 | Main focus | print_line() is a side-effect |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

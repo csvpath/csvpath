@@ -1,3 +1,4 @@
+
 Last
 Evaluates True on the last line to be scanned.
 
@@ -14,16 +15,22 @@ the last line. At this time a last() that has an encapsulated function
 will correctly run on the last line but it will not produce True in
 assignment. Changing that behavior is on the todo list. It should not
 be relied on.
+
 | Data signatures                  |
 |:---------------------------------|
 | last( [eval on last: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+
 | Call signatures                                    |
 |:---------------------------------------------------|
 | last( [eval on last: [36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mEquality[0m] ) |
+
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|
 | Main focus | last() determines if lines match |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+

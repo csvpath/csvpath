@@ -1,3 +1,4 @@
+
 Count
 Returns the number of matches.
 
@@ -38,19 +39,25 @@ from that of other match components in that count is using onmatch to
 look inward, rather than at its siblings. Bear in mind, count()
 without a contained value only increments when the row matches. In
 that case, onmatch would add nothing.
+
 | Data signatures                |
 |:-------------------------------|
 | count()                        |
 | count( [eval: [36m[3mNone[0m|[36m[3mAny[0m], ... ) |
+
 | Call signatures                 |
 |:--------------------------------|
 | count()                         |
 | count( [eval: [36m[3mMatchable[0m], ... ) |
+
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
 | Main focus | count() produces a calculated value |
+
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
 | Match qualifiers | [36m[3monmatch[0m             |
 | Value qualifiers | [36m[3monmatch[0m             |
 | Name qualifier   | [36m[3moptionally expected[0m |
+
+

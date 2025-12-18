@@ -1,3 +1,4 @@
+
 Stop
 Halts the run abruptly.
 
@@ -15,16 +16,22 @@ the csvpath will be evaluated as normal. Match components that have
 the onmatch qualifier are evaluated at the end of the csvpath, and so
 might not be evaluated when stop() happens even if they come before
 stop().
+
 | Data signatures               |
 |:------------------------------|
 | stop( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+
 | Call signatures                        |
 |:---------------------------------------|
 | stop( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+
 | Purpose    | Value                   |
 |:-----------|:------------------------|
 | Main focus | stop() is a side-effect |
+
 | Context          | Qualifier   |
 |:-----------------|:------------|
 | Match qualifiers | [36m[3monmatch[0m     |
 | Value qualifiers | [36m[3monmatch[0m     |
+
+
