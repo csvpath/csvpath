@@ -68,6 +68,8 @@ class FunctionDescriber:
     def funcs(cls, function):
         sigs = []
         args = function.args
+        if not args or not args.argsets or len(args.argsets) == 0:
+            return sigs
         argsets = args.argsets
         for ai, a in enumerate(argsets):
             pa = ""
