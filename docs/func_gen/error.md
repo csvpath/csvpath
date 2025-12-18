@@ -24,10 +24,10 @@ available fields.
 
 Errors are also handled in the same way as built-in errors. They are collected to errors.json, printed with metadata, etc.
 
-| Data signatures                                                             |
-|:----------------------------------------------------------------------------|
-| error( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
-| error( print this: str ǁ '', [eval after: None ǁ Any] )                     |
+| Data signatures                                                                                                   |
+|:------------------------------------------------------------------------------------------------------------------|
+| error( print this: $${\color{green}str}$$ ǁ '', [print to specific Printer stream: $${\color{green}str}$$ ǁ ''] ) |
+| error( print this: $${\color{green}str}$$ ǁ '', [eval after: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] )  |
 
 | Call signatures                                                                                                                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -41,10 +41,10 @@ look inward, rather than at its siblings. Bear in mind, count()
 without a contained value only increments when the row matches. In
 that case, onmatch would add nothing.
 
-| Data signatures                  |
-|:---------------------------------|
-| count()                          |
-| count( [eval: None ǁ Any], ... ) |
+| Data signatures                                                        |
+|:-----------------------------------------------------------------------|
+| count()                                                                |
+| count( [eval: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                 |
 |:--------------------------------|

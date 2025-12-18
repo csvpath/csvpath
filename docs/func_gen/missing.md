@@ -5,11 +5,11 @@ Tests if any contained or referenced match components evaluate to
 False. If missing() has no arguments, check if any headers are empty
 or missing.
 
-| Data signatures                                                   |
-|:------------------------------------------------------------------|
-| missing()                                                         |
-| missing( [a function indicating all headers or all variables: ] ) |
-| missing( [one of a set of match components: None ǁ Any], ... )    |
+| Data signatures                                                                                      |
+|:-----------------------------------------------------------------------------------------------------|
+| missing()                                                                                            |
+| missing( [a function indicating all headers or all variables: ] )                                    |
+| missing( [one of a set of match components: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

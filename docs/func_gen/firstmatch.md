@@ -7,9 +7,9 @@ onmatch qualifier, but does not require it.
 Optionally, takes a function argument that is evaluated if
 firstmatch() matches
 
-| Data signatures                       |
-|:--------------------------------------|
-| firstmatch( [eval this: None ǁ Any] ) |
+| Data signatures                                                             |
+|:----------------------------------------------------------------------------|
+| firstmatch( [eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|

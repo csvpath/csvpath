@@ -38,11 +38,11 @@ If a line has no delimiters but does have whitespace characters it
 technically has one header. mismatch() doesn't give credit for the
 whitespace because in reality the line is blank and has zero headers.
 
-| Data signatures                    |
-|:-----------------------------------|
-| mismatch()                         |
-| mismatch( a literal: signed: str ) |
-| mismatch( signed: bool )           |
+| Data signatures                                       |
+|:------------------------------------------------------|
+| mismatch()                                            |
+| mismatch( a literal: signed: $${\color{green}str}$$ ) |
+| mismatch( signed: $${\color{green}bool}$$ )           |
 
 | Call signatures                                                                                           |
 |:----------------------------------------------------------------------------------------------------------|

@@ -4,9 +4,9 @@
 Produces the number of duplicate lines or the number of lines where
 there are duplicate subsets of header values.
 
-| Data signatures                             |
-|:--------------------------------------------|
-| count_dups( [check this: None ǁ Any], ... ) |
+| Data signatures                                                                   |
+|:----------------------------------------------------------------------------------|
+| count_dups( [check this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|

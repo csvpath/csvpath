@@ -13,9 +13,9 @@ add N each time a match component evaluates to True. increment() adds
 1 each N times a match component evaluates to True. every() adds 1
 every N-times a value is seen, matching or not.
 
-| Data signatures                               |
-|:----------------------------------------------|
-| increment( Match component: Any, Ratio: int ) |
+| Data signatures                                                                     |
+|:------------------------------------------------------------------------------------|
+| increment( Match component: $${\color{green}Any}$$, Ratio: $${\color{green}int}$$ ) |
 
 | Call signatures                                                                                                            |
 |:---------------------------------------------------------------------------------------------------------------------------|

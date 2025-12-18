@@ -4,10 +4,10 @@
 Tracks the most recent value of a header to enable comparison with the
 current value.
 
-| Data signatures                 |
-|:--------------------------------|
-| line_before( header name: str ) |
-| line_before( header: Any )      |
+| Data signatures                                    |
+|:---------------------------------------------------|
+| line_before( header name: $${\color{green}str}$$ ) |
+| line_before( header: $${\color{green}Any}$$ )      |
 
 | Call signatures                                                                                        |
 |:-------------------------------------------------------------------------------------------------------|

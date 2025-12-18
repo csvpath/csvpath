@@ -9,9 +9,9 @@ By default percent() tracks % matches of total lines in the file. If
 percent() has the onmatch qualifier it always tracks matches,
 overriding
 
-| Data signatures                      |
-|:-------------------------------------|
-| percent( scan, match, or line: str ) |
+| Data signatures                                         |
+|:--------------------------------------------------------|
+| percent( scan, match, or line: $${\color{green}str}$$ ) |
 
 | Call signatures                                                                                             |
 |:------------------------------------------------------------------------------------------------------------|

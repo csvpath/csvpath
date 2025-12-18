@@ -7,9 +7,9 @@ Note that the actuals in the data signatures are types that the value
 must convert to. A bool True would convert to 1 and would therefore be
 castable using this function.
 
-| Data signatures                      |
-|:-------------------------------------|
-| int( cast this: None ǁ int ǁ float ) |
+| Data signatures                                                                               |
+|:----------------------------------------------------------------------------------------------|
+| int( cast this: $${\color{green}None}$$ ǁ $${\color{green}int}$$ ǁ $${\color{green}float}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                         |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

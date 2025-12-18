@@ -6,9 +6,9 @@ Evaluates to True on the first line.
 Optionally, takes a function argument that is evaluated if firstline()
 matches
 
-| Data signatures                      |
-|:-------------------------------------|
-| firstline( [eval this: None ǁ Any] ) |
+| Data signatures                                                            |
+|:---------------------------------------------------------------------------|
+| firstline( [eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                         |
 |:------------------------------------------------------------------------------------------------------------------------|

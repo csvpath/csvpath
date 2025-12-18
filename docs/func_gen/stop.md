@@ -18,9 +18,9 @@ the onmatch qualifier are evaluated at the end of the csvpath, and so
 might not be evaluated when stop() happens even if they come before
 stop().
 
-| Data signatures                 |
-|:--------------------------------|
-| stop( [eval this: None ǁ Any] ) |
+| Data signatures                                                       |
+|:----------------------------------------------------------------------|
+| stop( [eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                    |
 |:-------------------------------------------------------------------------------------------------------------------|

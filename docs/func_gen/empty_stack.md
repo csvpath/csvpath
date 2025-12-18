@@ -9,10 +9,10 @@ Header and variable arguments can be mixed.
 
 The resulting stack does not persist from line to line.
 
-| Data signatures                                 |
-|:------------------------------------------------|
-| empty_stack()                                   |
-| empty_stack( [header or var: None ǁ Any], ... ) |
+| Data signatures                                                                       |
+|:--------------------------------------------------------------------------------------|
+| empty_stack()                                                                         |
+| empty_stack( [header or var: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                                                                                                          |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

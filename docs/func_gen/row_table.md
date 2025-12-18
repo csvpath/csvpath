@@ -4,9 +4,9 @@
 Prints a table with all the header names and values for each line. The
 table is text formatted.
 
-| Data signatures                                   |
-|:--------------------------------------------------|
-| row_table( [from header: int], [to header: int] ) |
+| Data signatures                                                                         |
+|:----------------------------------------------------------------------------------------|
+| row_table( [from header: $${\color{green}int}$$], [to header: $${\color{green}int}$$] ) |
 
 | Call signatures                                                                                                                                                                                 |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

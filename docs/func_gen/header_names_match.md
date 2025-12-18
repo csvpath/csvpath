@@ -27,9 +27,9 @@ Note that the alias header_names_mismatch() is depreciated. Instead
 use header_names_match(). The name change reflects the function's
 match value being false if the headers do not meet expectations.
 
-| Data signatures                                   |
-|:--------------------------------------------------|
-| header_names_match( pipe delimited headers: str ) |
+| Data signatures                                                      |
+|:---------------------------------------------------------------------|
+| header_names_match( pipe delimited headers: $${\color{green}str}$$ ) |
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|

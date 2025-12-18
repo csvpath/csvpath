@@ -9,9 +9,9 @@ the values seen as the tracking value.
 first() can use a name qualifier as its variable name; otherwise, the
 variable name is "first".
 
-| Data signatures                    |
-|:-----------------------------------|
-| first( header to track: Any, ... ) |
+| Data signatures                                       |
+|:------------------------------------------------------|
+| first( header to track: $${\color{green}Any}$$, ... ) |
 
 | Call signatures                                                                                               |
 |:--------------------------------------------------------------------------------------------------------------|

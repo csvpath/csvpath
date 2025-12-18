@@ -28,13 +28,13 @@ line_number() == 6 -> rename(@headers)
 Note that renames do not affect other csvpaths, regardless of if they
 are run in serial or breadth-first.
 
-| Data signatures                            |
-|:-------------------------------------------|
-| rename( header: list ǁ tuple )             |
-| rename( header: Any, new name: str )       |
-| rename( header name: str, new name: str )  |
-| rename( header index: int, new name: str ) |
-| rename( new header name: str, ... )        |
+| Data signatures                                                                  |
+|:---------------------------------------------------------------------------------|
+| rename( header: list ǁ tuple )                                                   |
+| rename( header: $${\color{green}Any}$$, new name: $${\color{green}str}$$ )       |
+| rename( header name: $${\color{green}str}$$, new name: $${\color{green}str}$$ )  |
+| rename( header index: $${\color{green}int}$$, new name: $${\color{green}str}$$ ) |
+| rename( new header name: $${\color{green}str}$$, ... )                           |
 
 | Call signatures                                                                                                                                                                             |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

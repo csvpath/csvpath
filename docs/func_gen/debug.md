@@ -8,9 +8,9 @@ means the log level is changed for particular csvpath currently
 running, not any other csvpaths running after or along-side in a
 breadth-first configuration.
 
-| Data signatures                                 |
-|:------------------------------------------------|
-| debug( [info, debug, warn, error: None ǁ str] ) |
+| Data signatures                                                                       |
+|:--------------------------------------------------------------------------------------|
+| debug( [info, debug, warn, error: $${\color{green}None}$$ ǁ $${\color{green}str}$$] ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                                            |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

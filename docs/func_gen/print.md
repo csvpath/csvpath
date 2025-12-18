@@ -22,10 +22,10 @@ the Runtime Print Fields section of the FlightPath help tabs for more
 details. The run_table() function also gives a good view of the
 available fields.
 
-| Data signatures                                                             |
-|:----------------------------------------------------------------------------|
-| print( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
-| print( print this: str ǁ '', [eval after: None ǁ Any] )                     |
+| Data signatures                                                                                                   |
+|:------------------------------------------------------------------------------------------------------------------|
+| print( print this: $${\color{green}str}$$ ǁ '', [print to specific Printer stream: $${\color{green}str}$$ ǁ ''] ) |
+| print( print this: $${\color{green}str}$$ ǁ '', [eval after: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] )  |
 
 | Call signatures                                                                                                                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

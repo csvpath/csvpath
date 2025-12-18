@@ -14,9 +14,9 @@ on the match of expected to actual
 If no value is provided, header_index() is an existance test for the
 header, not a check for the line having a value for the header.
 
-| Data signatures                                                            |
-|:---------------------------------------------------------------------------|
-| header_index( header identity: str ǁ int, [value check: None ǁ Any ǁ ''] ) |
+| Data signatures                                                                                                                                        |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| header_index( header identity: $${\color{green}str}$$ ǁ $${\color{green}int}$$, [value check: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ǁ ''] ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                                                  |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

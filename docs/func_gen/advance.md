@@ -8,9 +8,9 @@ advance() is similar to skip(). skip() cuts-short the processing of
 its line and jumps to the next line. advance() skips N-number of whole
 lines after the line where it is evaluated.
 
-| Data signatures                  |
-|:---------------------------------|
-| advance( lines to advance: int ) |
+| Data signatures                                     |
+|:----------------------------------------------------|
+| advance( lines to advance: $${\color{green}int}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                   |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

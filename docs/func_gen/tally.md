@@ -19,9 +19,9 @@ key tally. To use another key name add a non-keyword qualifier to
 tally. For example, tally.birds(#bird_color, #bird_name) has a tally
 variable of birds with values like blue|bluebird,red|redbird.
 
-| Data signatures                   |
-|:----------------------------------|
-| tally( Value to count: Any, ... ) |
+| Data signatures                                      |
+|:-----------------------------------------------------|
+| tally( Value to count: $${\color{green}Any}$$, ... ) |
 
 | Call signatures                                                                                                                                                                                                                                                                        |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

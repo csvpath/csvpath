@@ -6,10 +6,10 @@ Remove
 This function results in the output of collected lines not including
 the header(s) indicated in the argument to remove().
 
-| Data signatures                             |
-|:--------------------------------------------|
-| remove( header identifier: int ǁ str, ... ) |
-| remove( header: Any, ... )                  |
+| Data signatures                                                                   |
+|:----------------------------------------------------------------------------------|
+| remove( header identifier: $${\color{green}int}$$ ǁ $${\color{green}str}$$, ... ) |
+| remove( header: $${\color{green}Any}$$, ... )                                     |
 
 | Call signatures                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------|

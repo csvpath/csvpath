@@ -3,9 +3,9 @@
 
 Writes a message to the CsvPath Framework log at a certain log level.
 
-| Data signatures                                       |
-|:------------------------------------------------------|
-| log( log this: str, [info, debug, warn, error: str] ) |
+| Data signatures                                                                             |
+|:--------------------------------------------------------------------------------------------|
+| log( log this: $${\color{green}str}$$, [info, debug, warn, error: $${\color{green}str}$$] ) |
 
 | Call signatures                                                                                                                                                                                     |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -17,11 +17,11 @@ any() is similar to or() or OR logic. While any() gives you more fine-
 grained control, remember that you can also use logic-mode to
 configure a csvpath to use OR as the basis for matching.
 
-| Data signatures                                             |
-|:------------------------------------------------------------|
-| any()                                                       |
-| any( where to look: None ǁ Any, value to find: None ǁ Any ) |
-| any( where to look: None ǁ Any )                            |
+| Data signatures                                                                                                                         |
+|:----------------------------------------------------------------------------------------------------------------------------------------|
+| any()                                                                                                                                   |
+| any( where to look: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, value to find: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ) |
+| any( where to look: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ )                                                                  |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

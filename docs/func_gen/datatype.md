@@ -7,9 +7,9 @@ datatype() returns the best fitting type for a header value on a given line.
               considered a none() match and "false" is considered a boolean() match.
             
 
-| Data signatures                  |
-|:---------------------------------|
-| datatype( header of value: str ) |
+| Data signatures                                     |
+|:----------------------------------------------------|
+| datatype( header of value: $${\color{green}str}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                       |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -3,10 +3,10 @@
 
 Clears a variable by removing it.
 
-| Data signatures          |
-|:-------------------------|
-| clear( var name: str )   |
-| clear( var: None ǁ Any ) |
+| Data signatures                                                |
+|:---------------------------------------------------------------|
+| clear( var name: $${\color{green}str}$$ )                      |
+| clear( var: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ) |
 
 | Call signatures                                                                                  |
 |:-------------------------------------------------------------------------------------------------|

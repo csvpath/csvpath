@@ -17,9 +17,9 @@ will correctly run on the last line but it will not produce True in
 assignment. Changing that behavior is on the todo list. It should not
 be relied on.
 
-| Data signatures                    |
-|:-----------------------------------|
-| last( [eval on last: None ǁ Any] ) |
+| Data signatures                                                          |
+|:-------------------------------------------------------------------------|
+| last( [eval on last: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                                                                                                            |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

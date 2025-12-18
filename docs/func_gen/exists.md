@@ -8,9 +8,9 @@ existance test, exists() will return True even if there is a value
 that evaluates to False. I.e. the False is considered to exist for the
 purposes of matching.
 
-| Data signatures                          |
-|:-----------------------------------------|
-| exists( Component to check: None ǁ Any ) |
+| Data signatures                                                                |
+|:-------------------------------------------------------------------------------|
+| exists( Component to check: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                                               |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

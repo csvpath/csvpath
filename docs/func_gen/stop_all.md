@@ -11,9 +11,9 @@ collect_by_line(), fast_forward_by_line(), and next_by_line() methods.
 
 See stop() for more behavior details.
 
-| Data signatures                     |
-|:------------------------------------|
-| stop_all( [eval this: None ǁ Any] ) |
+| Data signatures                                                           |
+|:--------------------------------------------------------------------------|
+| stop_all( [eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                        |
 |:-----------------------------------------------------------------------------------------------------------------------|

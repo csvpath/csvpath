@@ -5,11 +5,11 @@ Tests if all contained or referenced match components evaluate to
 True. If all() has no arguments the check is if all headers have
 values.
 
-| Data signatures                                               |
-|:--------------------------------------------------------------|
-| all()                                                         |
-| all( [a function indicating all headers or all variables: ] ) |
-| all( [one of a set of match components: None ǁ Any], ... )    |
+| Data signatures                                                                                  |
+|:-------------------------------------------------------------------------------------------------|
+| all()                                                                                            |
+| all( [a function indicating all headers or all variables: ] )                                    |
+| all( [one of a set of match components: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                          |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

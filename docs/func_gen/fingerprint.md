@@ -10,9 +10,9 @@ Note that {self.name} gives the fingerprint solely from one line. By
 contrast, line_fingerprint() progressively updates a hash value line-
 by-line.
 
-| Data signatures                                |
-|:-----------------------------------------------|
-| fingerprint( [include this: None ǁ Any], ... ) |
+| Data signatures                                                                      |
+|:-------------------------------------------------------------------------------------|
+| fingerprint( [include this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                    |
 |:-------------------------------------------------------------------------------------------------------------------|

@@ -27,9 +27,9 @@ using fast_forward_by_line(). If the first csvpath uses a when/do
 operator to evaluate advance_all() on the odd lines, the second
 csvpath will only see the even lines.
 
-| Data signatures                      |
-|:-------------------------------------|
-| advance_all( lines to advance: int ) |
+| Data signatures                                         |
+|:--------------------------------------------------------|
+| advance_all( lines to advance: $${\color{green}int}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                       |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

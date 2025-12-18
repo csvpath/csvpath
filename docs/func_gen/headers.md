@@ -8,9 +8,9 @@ variables.
 This function can also do an existance test, but that capability has
 been replaced by header_name() and header_index().
 
-| Data signatures                         |
-|:----------------------------------------|
-| headers( [depreciated arg: str ǁ int] ) |
+| Data signatures                                                               |
+|:------------------------------------------------------------------------------|
+| headers( [depreciated arg: $${\color{green}str}$$ ǁ $${\color{green}int}$$] ) |
 
 | Call signatures                                                                                                                                                                                                                                                                    |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

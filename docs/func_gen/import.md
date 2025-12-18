@@ -43,9 +43,9 @@ whole named-paths group as a unit. Because of that, the csvpaths you
 import could be run twice. You can prevent that by setting the run-
 mode of the imported csvpaths to no-run.
 
-| Data signatures            |
-|:---------------------------|
-| import( import this: str ) |
+| Data signatures                               |
+|:----------------------------------------------|
+| import( import this: $${\color{green}str}$$ ) |
 
 | Call signatures                                                                                                                                                                          |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -7,9 +7,9 @@ This function expects a string naming a stack prepared by the csvpath
 holding the values to be assessed. The stack variable can be created
 using push() or other functions.
 
-| Data signatures                             |
-|:--------------------------------------------|
-| stdev( stack var name: str ǁ tuple ǁ list ) |
+| Data signatures                                                |
+|:---------------------------------------------------------------|
+| stdev( stack var name: $${\color{green}str}$$ ǁ tuple ǁ list ) |
 
 | Call signatures                                                                                                                                                                                                                                                               |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

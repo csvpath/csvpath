@@ -7,9 +7,9 @@ that has been evaluated for matching.
 Optionally, takes a function argument that is evaluated if firstscan()
 matches
 
-| Data signatures                      |
-|:-------------------------------------|
-| firstscan( [eval this: None ǁ Any] ) |
+| Data signatures                                                            |
+|:---------------------------------------------------------------------------|
+| firstscan( [eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$] ) |
 
 | Call signatures                                                                                                         |
 |:------------------------------------------------------------------------------------------------------------------------|

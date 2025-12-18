@@ -12,10 +12,10 @@ Like stop(), skip() can optionally take a function argument that will
 determine if skip() is triggered. In this way, skip() acts as if it
 has an embedded when/do operator.
 
-| Data signatures               |
-|:------------------------------|
-| skip()                        |
-| skip( eval this: None ǁ Any ) |
+| Data signatures                                                     |
+|:--------------------------------------------------------------------|
+| skip()                                                              |
+| skip( eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ) |
 
 | Call signatures                                                                                                  |
 |:-----------------------------------------------------------------------------------------------------------------|

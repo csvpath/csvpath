@@ -17,10 +17,10 @@ pushes them to the back of the csvpath processing order.
 
 See skip() for more behavior details.
 
-| Data signatures                   |
-|:----------------------------------|
-| skip_all()                        |
-| skip_all( eval this: None ǁ Any ) |
+| Data signatures                                                         |
+|:------------------------------------------------------------------------|
+| skip_all()                                                              |
+| skip_all( eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$ ) |
 
 | Call signatures                                                                                                      |
 |:---------------------------------------------------------------------------------------------------------------------|

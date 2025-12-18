@@ -7,9 +7,9 @@ lines seen so far.
 Uses a percent_unique variable behind the scenes. Add a name qualifier
 to allow for more than one percent unique function.
 
-| Data signatures                        |
-|:---------------------------------------|
-| percent_unique( header to watch: str ) |
+| Data signatures                                           |
+|:----------------------------------------------------------|
+| percent_unique( header to watch: $${\color{green}str}$$ ) |
 
 | Call signatures                                                                                                   |
 |:------------------------------------------------------------------------------------------------------------------|

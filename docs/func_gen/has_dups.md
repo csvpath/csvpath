@@ -4,9 +4,9 @@
 Evaluates to True if there are duplicate lines or duplicate subsets of
 header values.
 
-| Data signatures                      |
-|:-------------------------------------|
-| has_dups( [check: None ǁ Any], ... ) |
+| Data signatures                                                            |
+|:---------------------------------------------------------------------------|
+| has_dups( [check: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                          |
 |:---------------------------------------------------------------------------------------------------------|

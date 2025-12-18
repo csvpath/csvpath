@@ -20,10 +20,10 @@ Printing to a dedicated printer can help create stand-alone data-ready
 output. That option is mainly valuable in named-paths group runs where
 printers' printouts are more clearly separated.
 
-| Data signatures                                                |
-|:---------------------------------------------------------------|
-| print_line()                                                   |
-| print_line( printer: str, [delimiter: str], [quotechar: str] ) |
+| Data signatures                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------|
+| print_line()                                                                                                            |
+| print_line( printer: $${\color{green}str}$$, [delimiter: $${\color{green}str}$$], [quotechar: $${\color{green}str}$$] ) |
 
 | Call signatures                                                                                                                                                                                                                                                                     |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

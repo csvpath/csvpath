@@ -6,10 +6,10 @@ returned during the run. If there are four columns in a data file and
 two are collected each line returned by CsvPath.next() will contain
 two values.
 
-| Data signatures                              |
-|:---------------------------------------------|
-| collect( header identifier: int ǁ str, ... ) |
-| collect( header: Any, ... )                  |
+| Data signatures                                                                    |
+|:-----------------------------------------------------------------------------------|
+| collect( header identifier: $${\color{green}int}$$ ǁ $${\color{green}str}$$, ... ) |
+| collect( header: $${\color{green}Any}$$, ... )                                     |
 
 | Call signatures                                                                                               |
 |:--------------------------------------------------------------------------------------------------------------|

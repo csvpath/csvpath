@@ -13,9 +13,9 @@ string to int. This results in a predictable summation. If you are
 looking for a way to make sure all lines have summable values try
 using integer() or another approach.
 
-| Data signatures              |
-|:-----------------------------|
-| sum( sum this: int ǁ float ) |
+| Data signatures                                                    |
+|:-------------------------------------------------------------------|
+| sum( sum this: $${\color{green}int}$$ ǁ $${\color{green}float}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                                                                                        |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

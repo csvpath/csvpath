@@ -3,9 +3,9 @@
 
 Matches every N times a value is seen.
 
-| Data signatures                                       |
-|:------------------------------------------------------|
-| every( watch: None ǁ Any, pick every N: int ǁ float ) |
+| Data signatures                                                                                                                   |
+|:----------------------------------------------------------------------------------------------------------------------------------|
+| every( watch: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, pick every N: $${\color{green}int}$$ ǁ $${\color{green}float}$$ ) |
 
 | Call signatures                                                                                                     |
 |:--------------------------------------------------------------------------------------------------------------------|

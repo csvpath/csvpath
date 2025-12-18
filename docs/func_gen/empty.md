@@ -7,10 +7,10 @@ reports True only if all the places it is directed to look are empty.
 If you pass it a headers() function it checks for all headers being
 empty.
 
-| Data signatures                              |
-|:---------------------------------------------|
-| empty( Points to the headers: )              |
-| empty( Component to check: None ǁ Any, ... ) |
+| Data signatures                                                                    |
+|:-----------------------------------------------------------------------------------|
+| empty( Points to the headers: )                                                    |
+| empty( Component to check: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, ... ) |
 
 | Call signatures                                                                                                                                                                                                                                                                            |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

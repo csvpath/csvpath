@@ -10,9 +10,9 @@ when/do expression that is based on multiple match components.
 The functionality of and() overlaps with all(), but all() has powers
 that are more specific than and().
 
-| Data signatures                                              |
-|:-------------------------------------------------------------|
-| and( Eval this: None ǁ Any, And eval this: None ǁ Any, ... ) |
+| Data signatures                                                                                                                          |
+|:-----------------------------------------------------------------------------------------------------------------------------------------|
+| and( Eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, And eval this: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, ... ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|

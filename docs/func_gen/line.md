@@ -13,9 +13,9 @@ address line() that lives side by side in the same rows.
 
 Note that wildcard() and wildcard("*") are functionally the same.
 
-| Data signatures                                              |
-|:-------------------------------------------------------------|
-| line( [function representing a data type: None ǁ Any], ... ) |
+| Data signatures                                                                                    |
+|:---------------------------------------------------------------------------------------------------|
+| line( [function representing a data type: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
 | Call signatures                                                                                                              |
 |:-----------------------------------------------------------------------------------------------------------------------------|
