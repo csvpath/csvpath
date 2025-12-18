@@ -93,9 +93,9 @@ While that may seem confusing to some people, others appreciate having options t
 
 <a name="groups">
 
-# Original Descriptions Of the functions
+# Function Groups
 
-This list is often not up to date. For complete documentation, coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window, the CsvPath Framework CLI, or the generated [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md).
+*This list is often not up to date*. For complete documentation, coming from the function classes themselves, see the [FlightPath Data](https://www.flightpathdata.com) language help window, the CsvPath Framework CLI, or the generated [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md).
 
 ## Boolean
 <table>
