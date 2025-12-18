@@ -14,9 +14,9 @@ by-line.
 |:-----------------------------------------------|
 | fingerprint( [include this: None ǁ Any], ... ) |
 
-| Call signatures                            |
-|:-------------------------------------------|
-| fingerprint( [include this: Header], ... ) |
+| Call signatures                                                                                                    |
+|:-------------------------------------------------------------------------------------------------------------------|
+| fingerprint( [include this: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

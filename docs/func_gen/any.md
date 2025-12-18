@@ -23,11 +23,11 @@ configure a csvpath to use OR as the basis for matching.
 | any( where to look: None ǁ Any, value to find: None ǁ Any ) |
 | any( where to look: None ǁ Any )                            |
 
-| Call signatures                                                                                                      |
-|:---------------------------------------------------------------------------------------------------------------------|
-| any()                                                                                                                |
-| any( where to look: Variables ǁ Headers, value to find: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ǁ Equality ) |
-| any( where to look: Variables ǁ Headers ǁ Term ǁ Function ǁ Header ǁ Variable ǁ Reference ǁ Equality )               |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| any()                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| any( where to look: Variables ǁ Headers, value to find: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality ) |
+| any( where to look: Variables ǁ Headers ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality )               |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

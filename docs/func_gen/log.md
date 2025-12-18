@@ -7,9 +7,9 @@ Writes a message to the CsvPath Framework log at a certain log level.
 |:------------------------------------------------------|
 | log( log this: str, [info, debug, warn, error: str] ) |
 
-| Call signatures                                         |
-|:--------------------------------------------------------|
-| log( log this: Term, [info, debug, warn, error: Term] ) |
+| Call signatures                                                                                                                                                                                     |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| log( log this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [info, debug, warn, error: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
 | Purpose    | Value                  |
 |:-----------|:-----------------------|

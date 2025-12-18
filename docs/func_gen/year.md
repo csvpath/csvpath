@@ -8,9 +8,9 @@ datetime as a string.
 |:-------------------------------------|
 | year( date: None ǁ date ǁ datetime ) |
 
-| Call signatures                                               |
-|:--------------------------------------------------------------|
-| year( date: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                  |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| year( date: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

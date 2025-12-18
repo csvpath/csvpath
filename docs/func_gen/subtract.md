@@ -13,9 +13,9 @@ subtract() subtracts two or more numbers.
 |:-----------------------------------|
 | subtract( term: int ǁ float, ... ) |
 
-| Call signatures                                                        |
-|:-----------------------------------------------------------------------|
-| subtract( term: Term ǁ Header ǁ Reference ǁ Variable ǁ Function, ... ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                           |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| subtract( term: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

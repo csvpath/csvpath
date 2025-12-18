@@ -12,9 +12,9 @@ been replaced by header_name() and header_index().
 |:----------------------------------------|
 | headers( [depreciated arg: str ǁ int] ) |
 
-| Call signatures                                          |
-|:---------------------------------------------------------|
-| headers( [depreciated arg: Term ǁ Variable ǁ Function] ) |
+| Call signatures                                                                                                                                                                                          |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| headers( [depreciated arg: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function] ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

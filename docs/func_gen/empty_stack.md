@@ -14,10 +14,10 @@ The resulting stack does not persist from line to line.
 | empty_stack()                                   |
 | empty_stack( [header or var: None ǁ Any], ... ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| empty_stack()                                          |
-| empty_stack( [header or var: Variable ǁ Header], ... ) |
+| Call signatures                                                                                                                                                                                          |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| empty_stack()                                                                                                                                                                                            |
+| empty_stack( [header or var: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

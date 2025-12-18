@@ -7,9 +7,9 @@ Matches every N times a value is seen.
 |:------------------------------------------------------|
 | every( watch: None ǁ Any, pick every N: int ǁ float ) |
 
-| Call signatures                               |
-|:----------------------------------------------|
-| every( watch: Matchable, pick every N: Term ) |
+| Call signatures                                                                                                     |
+|:--------------------------------------------------------------------------------------------------------------------|
+| every( watch: Matchable, pick every N: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

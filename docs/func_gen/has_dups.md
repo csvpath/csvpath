@@ -8,9 +8,9 @@ header values.
 |:-------------------------------------|
 | has_dups( [check: None ǁ Any], ... ) |
 
-| Call signatures                  |
-|:---------------------------------|
-| has_dups( [check: Header], ... ) |
+| Call signatures                                                                                          |
+|:---------------------------------------------------------------------------------------------------------|
+| has_dups( [check: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

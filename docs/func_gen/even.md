@@ -7,9 +7,9 @@ Checks a contained value to see if it is even.
 |:-------------------------------|
 | even( check this: None ǁ int ) |
 
-| Call signatures                                                         |
-|:------------------------------------------------------------------------|
-| even( check this: Variable ǁ Header ǁ Function ǁ Reference ǁ Equality ) |
+| Call signatures                                                                                                                                                                                                                                                                                      |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| even( check this: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

@@ -9,10 +9,10 @@ current value.
 | line_before( header name: str ) |
 | line_before( header: Any )      |
 
-| Call signatures                  |
-|:---------------------------------|
-| line_before( header name: Term ) |
-| line_before( header: Header )    |
+| Call signatures                                                                                        |
+|:-------------------------------------------------------------------------------------------------------|
+| line_before( header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
+| line_before( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) )  |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|

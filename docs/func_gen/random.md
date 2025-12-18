@@ -7,9 +7,9 @@ Generates a random number from within an integer range.
 |:----------------------------------------------------------|
 | random( greater than this: int, and less than that: int ) |
 
-| Call signatures                                                                                                           |
-|:--------------------------------------------------------------------------------------------------------------------------|
-| random( greater than this: Term ǁ Variable ǁ Header ǁ Function, and less than that: Term ǁ Variable ǁ Header ǁ Function ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| random( greater than this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function, and less than that: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

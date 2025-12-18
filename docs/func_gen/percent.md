@@ -13,9 +13,9 @@ overriding
 |:-------------------------------------|
 | percent( scan, match, or line: str ) |
 
-| Call signatures                       |
-|:--------------------------------------|
-| percent( scan, match, or line: Term ) |
+| Call signatures                                                                                             |
+|:------------------------------------------------------------------------------------------------------------|
+| percent( scan, match, or line: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

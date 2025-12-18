@@ -15,10 +15,10 @@ Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself 
 | wildcard( , ... )                  |
 | wildcard( int ǁ str ǁ None ǁ Any ) |
 
-| Call signatures   |
-|:------------------|
-| wildcard( , ... ) |
-| wildcard( Term )  |
+| Call signatures                                                                        |
+|:---------------------------------------------------------------------------------------|
+| wildcard( , ... )                                                                      |
+| wildcard( [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

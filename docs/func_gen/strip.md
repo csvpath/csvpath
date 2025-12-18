@@ -9,9 +9,9 @@ Alters a string by trimming leading and trailing whitespace.
 |:------------------------|
 | strip( trim this: str ) |
 
-| Call signatures                                              |
-|:-------------------------------------------------------------|
-| strip( trim this: Variable ǁ Header ǁ Reference ǁ Function ) |
+| Call signatures                                                                                                                                                                                                                                                                           |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| strip( trim this: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Function ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

@@ -21,9 +21,9 @@ be relied on.
 |:-----------------------------------|
 | last( [eval on last: None ǁ Any] ) |
 
-| Call signatures                                        |
-|:-------------------------------------------------------|
-| last( [eval on last: Function ǁ Variable ǁ Equality] ) |
+| Call signatures                                                                                                                  |
+|:---------------------------------------------------------------------------------------------------------------------------------|
+| last( [eval on last: Function ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Equality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

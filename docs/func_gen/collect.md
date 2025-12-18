@@ -11,10 +11,10 @@ two values.
 | collect( header identifier: int ǁ str, ... ) |
 | collect( header: Any, ... )                  |
 
-| Call signatures                         |
-|:----------------------------------------|
-| collect( header identifier: Term, ... ) |
-| collect( header: Header, ... )          |
+| Call signatures                                                                                               |
+|:--------------------------------------------------------------------------------------------------------------|
+| collect( header identifier: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... ) |
+| collect( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... )        |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

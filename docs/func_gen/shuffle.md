@@ -9,10 +9,10 @@ duplicates.
 | shuffle()                                   |
 | shuffle( from this int: int, to this: int ) |
 
-| Call signatures                                                                                             |
-|:------------------------------------------------------------------------------------------------------------|
-| shuffle()                                                                                                   |
-| shuffle( from this int: Term ǁ Variable ǁ Header ǁ Function, to this: Term ǁ Variable ǁ Header ǁ Function ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| shuffle()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| shuffle( from this int: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function, to this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|

@@ -11,10 +11,10 @@ the header(s) indicated in the argument to remove().
 | remove( header identifier: int ǁ str, ... ) |
 | remove( header: Any, ... )                  |
 
-| Call signatures                        |
-|:---------------------------------------|
-| remove( header identifier: Term, ... ) |
-| remove( header: Header, ... )          |
+| Call signatures                                                                                              |
+|:-------------------------------------------------------------------------------------------------------------|
+| remove( header identifier: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... ) |
+| remove( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... )        |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

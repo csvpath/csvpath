@@ -13,9 +13,9 @@ variable name is "first".
 |:-----------------------------------|
 | first( header to track: Any, ... ) |
 
-| Call signatures                       |
-|:--------------------------------------|
-| first( header to track: Header, ... ) |
+| Call signatures                                                                                               |
+|:--------------------------------------------------------------------------------------------------------------|
+| first( header to track: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

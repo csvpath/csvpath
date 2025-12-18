@@ -13,9 +13,9 @@ I.e., if the last header is #11, end(3) returns the value of header
 |:-------------------------------------------|
 | end( [positions to the left of end: int] ) |
 
-| Call signatures                                                                                   |
-|:--------------------------------------------------------------------------------------------------|
-| end( [positions to the left of end: Term ǁ Function ǁ Header ǁ Variable ǁ Reference ǁ Equality] ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                      |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| end( [positions to the left of end: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

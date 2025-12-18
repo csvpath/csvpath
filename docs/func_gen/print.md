@@ -27,10 +27,10 @@ available fields.
 | print( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
 | print( print this: str ǁ '', [eval after: None ǁ Any] )                     |
 
-| Call signatures                                                     |
-|:--------------------------------------------------------------------|
-| print( print this: Term, [print to specific Printer stream: Term] ) |
-| print( print this: Term, [eval after: Function ǁ Equality] )        |
+| Call signatures                                                                                                                                                                                                 |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [print to specific Printer stream: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
+| print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: Function ǁ Equality] )                                                                              |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

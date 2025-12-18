@@ -8,10 +8,10 @@ Clears a variable by removing it.
 | clear( var name: str )   |
 | clear( var: None ǁ Any ) |
 
-| Call signatures         |
-|:------------------------|
-| clear( var name: Term ) |
-| clear( var: Variable )  |
+| Call signatures                                                                                  |
+|:-------------------------------------------------------------------------------------------------|
+| clear( var name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )    |
+| clear( var: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

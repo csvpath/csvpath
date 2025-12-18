@@ -12,9 +12,9 @@ lines after the line where it is evaluated.
 |:---------------------------------|
 | advance( lines to advance: int ) |
 
-| Call signatures                                         |
-|:--------------------------------------------------------|
-| advance( lines to advance: Term ǁ Variable ǁ Function ) |
+| Call signatures                                                                                                                                                                                         |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| advance( lines to advance: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

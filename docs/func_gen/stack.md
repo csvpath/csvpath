@@ -7,9 +7,9 @@ Returns a stack variable. The stack is created if not found.
 |:-------------------------|
 | stack( stack name: str ) |
 
-| Call signatures                                                      |
-|:---------------------------------------------------------------------|
-| stack( stack name: Variable ǁ Header ǁ Function ǁ Reference ǁ Term ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| stack( stack name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

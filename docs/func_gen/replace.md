@@ -17,10 +17,10 @@ For example, $[*][@a = line_number() replace(#order_number, @a)]
 | replace( replace value: None ǁ Any, replacement: Any )                    |
 | replace( replace by header identity: int ǁ str, replacement: None ǁ Any ) |
 
-| Call signatures                                                                                           |
-|:----------------------------------------------------------------------------------------------------------|
-| replace( replace value: Header, replacement: Term ǁ Variable ǁ Header ǁ Function ǁ Reference )            |
-| replace( replace by header identity: Term, replacement: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| replace( replace value: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), replacement: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) )          |
+| replace( replace by header identity: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), replacement: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|

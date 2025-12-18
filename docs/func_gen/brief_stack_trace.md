@@ -10,9 +10,9 @@ default is to print to the default printout stream.
 |:----------------------------------|
 | brief_stack_trace( [None ǁ str] ) |
 
-| Call signatures                                            |
-|:-----------------------------------------------------------|
-| brief_stack_trace( [Term ǁ Function ǁ Variable ǁ Header] ) |
+| Call signatures                                                                                                                                                                                                                                                                    |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| brief_stack_trace( [[Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ Function ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)] ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|

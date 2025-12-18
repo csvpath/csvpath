@@ -12,9 +12,9 @@ purposes of matching.
 |:-----------------------------------------|
 | exists( Component to check: None ǁ Any ) |
 
-| Call signatures                                                        |
-|:-----------------------------------------------------------------------|
-| exists( Component to check: Variable ǁ Header ǁ Function ǁ Reference ) |
+| Call signatures                                                                                                                                                                                                                                                                                     |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| exists( Component to check: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|

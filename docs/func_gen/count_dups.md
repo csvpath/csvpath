@@ -8,9 +8,9 @@ there are duplicate subsets of header values.
 |:--------------------------------------------|
 | count_dups( [check this: None ǁ Any], ... ) |
 
-| Call signatures                         |
-|:----------------------------------------|
-| count_dups( [check this: Header], ... ) |
+| Call signatures                                                                                                 |
+|:----------------------------------------------------------------------------------------------------------------|
+| count_dups( [check this: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|

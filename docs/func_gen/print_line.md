@@ -25,10 +25,10 @@ printers' printouts are more clearly separated.
 | print_line()                                                   |
 | print_line( printer: str, [delimiter: str], [quotechar: str] ) |
 
-| Call signatures                                                   |
-|:------------------------------------------------------------------|
-| print_line()                                                      |
-| print_line( printer: Term, [delimiter: Term], [quotechar: Term] ) |
+| Call signatures                                                                                                                                                                                                                                                                     |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| print_line()                                                                                                                                                                                                                                                                        |
+| print_line( printer: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [delimiter: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)], [quotechar: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
 | Purpose    | Value                         |
 |:-----------|:------------------------------|

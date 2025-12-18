@@ -36,13 +36,13 @@ are run in serial or breadth-first.
 | rename( header index: int, new name: str ) |
 | rename( new header name: str, ... )        |
 
-| Call signatures                              |
-|:---------------------------------------------|
-| rename( header: Variable ǁ Reference )       |
-| rename( header: Header, new name: Term )     |
-| rename( header name: Term, new name: Term )  |
-| rename( header index: Term, new name: Term ) |
-| rename( new header name: Term, ... )         |
+| Call signatures                                                                                                                                                                             |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rename( header: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
+| rename( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), new name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )      |
+| rename( header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), new name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )     |
+| rename( header index: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), new name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )    |
+| rename( new header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... )                                                                                  |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

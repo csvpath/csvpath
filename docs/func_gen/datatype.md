@@ -11,9 +11,9 @@ datatype() returns the best fitting type for a header value on a given line.
 |:---------------------------------|
 | datatype( header of value: str ) |
 
-| Call signatures                                           |
-|:----------------------------------------------------------|
-| datatype( header of value: Variable ǁ Header ǁ Function ) |
+| Call signatures                                                                                                                                                                                             |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| datatype( header of value: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

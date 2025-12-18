@@ -11,10 +11,10 @@ found.
 | peek_size( stack name: str )            |
 | peek_size( stack: list ǁ tuple ǁ None ) |
 
-| Call signatures                                                          |
-|:-------------------------------------------------------------------------|
-| peek_size( stack name: Variable ǁ Header ǁ Function ǁ Reference ǁ Term ) |
-| peek_size( stack: Variable ǁ Function ǁ Reference )                      |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                             |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| peek_size( stack name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
+| peek_size( stack: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) )                                                                                                                                                                    |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

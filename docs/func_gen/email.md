@@ -7,9 +7,9 @@ A line() schema type indicating that the value it represents must be an email
 |:----------------------------------|
 | email( address: str ǁ None ǁ '' ) |
 
-| Call signatures                                            |
-|:-----------------------------------------------------------|
-| email( address: Header ǁ Variable ǁ Reference ǁ Function ) |
+| Call signatures                                                                                                                                                                                                                                                                         |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| email( address: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Function ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|

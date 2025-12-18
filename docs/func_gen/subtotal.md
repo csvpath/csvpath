@@ -21,9 +21,9 @@ a name qualifier as shown above to use another name.
 |:-------------------------------------------------------------------------|
 | subtotal( type to subtotal: None ǁ Any, value to subtotal: float ǁ int ) |
 
-| Call signatures                                                                                             |
-|:------------------------------------------------------------------------------------------------------------|
-| subtotal( type to subtotal: Variable ǁ Function ǁ Header, value to subtotal: Variable ǁ Function ǁ Header ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                                                                 |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| subtotal( type to subtotal: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), value to subtotal: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ Function ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|

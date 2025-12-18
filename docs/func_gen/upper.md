@@ -9,9 +9,9 @@ Alters a string by upper-casing it.
 |:-----------------------------|
 | upper( uppercase this: str ) |
 
-| Call signatures                                                          |
-|:-------------------------------------------------------------------------|
-| upper( uppercase this: Term ǁ Variable ǁ Header ǁ Function ǁ Reference ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                                             |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| upper( uppercase this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

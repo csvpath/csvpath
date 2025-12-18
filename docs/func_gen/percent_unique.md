@@ -11,9 +11,9 @@ to allow for more than one percent unique function.
 |:---------------------------------------|
 | percent_unique( header to watch: str ) |
 
-| Call signatures                           |
-|:------------------------------------------|
-| percent_unique( header to watch: Header ) |
+| Call signatures                                                                                                   |
+|:------------------------------------------------------------------------------------------------------------------|
+| percent_unique( header to watch: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ) |
 
 | Purpose    | Value                                        |
 |:-----------|:---------------------------------------------|

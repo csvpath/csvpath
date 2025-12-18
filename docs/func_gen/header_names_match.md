@@ -31,9 +31,9 @@ match value being false if the headers do not meet expectations.
 |:--------------------------------------------------|
 | header_names_match( pipe delimited headers: str ) |
 
-| Call signatures                                    |
-|:---------------------------------------------------|
-| header_names_match( pipe delimited headers: Term ) |
+| Call signatures                                                                                                          |
+|:-------------------------------------------------------------------------------------------------------------------------|
+| header_names_match( pipe delimited headers: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
 | Purpose    | Value                                            |
 |:-----------|:-------------------------------------------------|

@@ -47,9 +47,9 @@ mode of the imported csvpaths to no-run.
 |:---------------------------|
 | import( import this: str ) |
 
-| Call signatures                         |
-|:----------------------------------------|
-| import( import this: Term ǁ Reference ) |
+| Call signatures                                                                                                                                                                          |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| import( import this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|

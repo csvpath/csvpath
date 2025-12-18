@@ -29,10 +29,10 @@ Errors are also handled in the same way as built-in errors. They are collected t
 | error( print this: str ǁ '', [print to specific Printer stream: str ǁ ''] ) |
 | error( print this: str ǁ '', [eval after: None ǁ Any] )                     |
 
-| Call signatures                                                     |
-|:--------------------------------------------------------------------|
-| error( print this: Term, [print to specific Printer stream: Term] ) |
-| error( print this: Term, [eval after: Function ǁ Equality] )        |
+| Call signatures                                                                                                                                                                                                 |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| error( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [print to specific Printer stream: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
+| error( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: Function ǁ Equality] )                                                                              |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|

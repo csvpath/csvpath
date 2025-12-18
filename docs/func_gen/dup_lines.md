@@ -8,9 +8,9 @@ with duplicate subsets of header values.
 |:--------------------------------------|
 | dup_lines( [check: None ǁ Any], ... ) |
 
-| Call signatures                   |
-|:----------------------------------|
-| dup_lines( [check: Header], ... ) |
+| Call signatures                                                                                           |
+|:----------------------------------------------------------------------------------------------------------|
+| dup_lines( [check: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|

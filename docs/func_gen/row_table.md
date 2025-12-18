@@ -8,9 +8,9 @@ table is text formatted.
 |:--------------------------------------------------|
 | row_table( [from header: int], [to header: int] ) |
 
-| Call signatures                                     |
-|:----------------------------------------------------|
-| row_table( [from header: Term], [to header: Term] ) |
+| Call signatures                                                                                                                                                                                 |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| row_table( [from header: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)], [to header: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|

@@ -11,11 +11,11 @@ or missing.
 | missing( [a function indicating all headers or all variables: ] ) |
 | missing( [one of a set of match components: None ǁ Any], ... )    |
 
-| Call signatures                                                                      |
-|:-------------------------------------------------------------------------------------|
-| missing()                                                                            |
-| missing( [a function indicating all headers or all variables: Variables ǁ Headers] ) |
-| missing( [one of a set of match components: Function ǁ Variable ǁ Header], ... )     |
+| Call signatures                                                                                                                                                                                                                    |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| missing()                                                                                                                                                                                                                          |
+| missing( [a function indicating all headers or all variables: Variables ǁ Headers] )                                                                                                                                               |
+| missing( [one of a set of match components: Function ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

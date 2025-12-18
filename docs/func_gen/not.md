@@ -10,9 +10,9 @@ will evaluate it as a side-effect if not() evaluates to True.
 |:-----------------------------------------------------------------------------------------|
 | not( value applied to: None ǁ Any, [A function to invoke if not() is True: None ǁ Any] ) |
 
-| Call signatures                                                                                                                 |
-|:--------------------------------------------------------------------------------------------------------------------------------|
-| not( value applied to: Variable ǁ Header ǁ Function ǁ Reference ǁ Equality, [A function to invoke if not() is True: Function] ) |
+| Call signatures                                                                                                                                                                                                                                                                                                                                              |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| not( value applied to: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ Function ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality, [A function to invoke if not() is True: Function] ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

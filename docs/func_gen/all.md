@@ -11,11 +11,11 @@ values.
 | all( [a function indicating all headers or all variables: ] ) |
 | all( [one of a set of match components: None ǁ Any], ... )    |
 
-| Call signatures                                                                  |
-|:---------------------------------------------------------------------------------|
-| all()                                                                            |
-| all( [a function indicating all headers or all variables: Variables ǁ Headers] ) |
-| all( [one of a set of match components: Function ǁ Variable ǁ Header], ... )     |
+| Call signatures                                                                                                                                                                                                                |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| all()                                                                                                                                                                                                                          |
+| all( [a function indicating all headers or all variables: Variables ǁ Headers] )                                                                                                                                               |
+| all( [one of a set of match components: Function ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|

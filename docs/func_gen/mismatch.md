@@ -44,11 +44,11 @@ whitespace because in reality the line is blank and has zero headers.
 | mismatch( a literal: signed: str ) |
 | mismatch( signed: bool )           |
 
-| Call signatures                     |
-|:------------------------------------|
-| mismatch()                          |
-| mismatch( a literal: signed: Term ) |
-| mismatch( signed: Term )            |
+| Call signatures                                                                                           |
+|:----------------------------------------------------------------------------------------------------------|
+| mismatch()                                                                                                |
+| mismatch( a literal: signed: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
+| mismatch( signed: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )            |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
