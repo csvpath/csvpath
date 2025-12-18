@@ -26,3 +26,4 @@ to allow for more than one percent unique function.
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

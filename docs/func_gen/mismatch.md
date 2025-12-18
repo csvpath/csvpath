@@ -60,3 +60,4 @@ whitespace because in reality the line is blank and has zero headers.
 | Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

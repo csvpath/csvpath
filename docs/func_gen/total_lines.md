@@ -15,3 +15,4 @@ Returns the total data lines count for the file (1-based).
 | Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

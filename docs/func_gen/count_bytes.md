@@ -16,3 +16,4 @@ instances do not write out data, so this value would be 0 for them.
 | Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

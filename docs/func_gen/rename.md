@@ -54,3 +54,4 @@ are run in serial or breadth-first.
 | Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

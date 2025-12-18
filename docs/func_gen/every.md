@@ -22,3 +22,4 @@ Matches every N times a value is seen.
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

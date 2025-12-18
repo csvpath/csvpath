@@ -38,3 +38,4 @@ variable of birds with values like blue|bluebird,red|redbird.
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

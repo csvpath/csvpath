@@ -25,3 +25,4 @@ duplicates.
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

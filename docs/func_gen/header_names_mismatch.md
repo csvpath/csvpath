@@ -47,3 +47,4 @@ match value being false if the headers do not meet expectations.
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

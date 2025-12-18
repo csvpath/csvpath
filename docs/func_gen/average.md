@@ -22,3 +22,4 @@ average() returns the running  from the first to the current line
 | Name qualifier   | optionally expected                                                                |
 
 
+[[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]
