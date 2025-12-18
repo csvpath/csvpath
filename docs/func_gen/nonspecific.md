@@ -14,6 +14,6 @@ Blank cannot be used outside a line()
 | Context          | Qualifier                                                                                                                                                                |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
-| Value qualifiers | onmatch                                                                                                                                                                  |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                       |
 
 

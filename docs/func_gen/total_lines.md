@@ -12,6 +12,6 @@ Returns the total data lines count for the file (1-based).
 | Context          | Qualifier                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | onmatch                                                                            |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 

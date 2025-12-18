@@ -28,6 +28,6 @@ Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself 
 | Context          | Qualifier                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | onmatch                                                                            |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 

@@ -13,6 +13,6 @@ line_number() is 0-based and includes blank lines.
 | Context          | Qualifier                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | onmatch                                                                            |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 

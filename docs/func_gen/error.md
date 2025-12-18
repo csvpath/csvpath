@@ -41,6 +41,6 @@ Errors are also handled in the same way as built-in errors. They are collected t
 | Context          | Qualifier                                                                                                                                                                                                                                              |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [once](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#once), [onchange](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onchange) |
-| Value qualifiers | onmatch                                                                                                                                                                                                                                                |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                                     |
 
 

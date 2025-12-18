@@ -24,6 +24,6 @@ I.e., if the last header is #11, end(3) returns the value of header
 | Context          | Qualifier                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | onmatch                                                                            |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 

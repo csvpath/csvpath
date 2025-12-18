@@ -13,6 +13,6 @@ instances do not write out data, so this value would be 0 for them.
 | Context          | Qualifier                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | onmatch                                                                            |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 

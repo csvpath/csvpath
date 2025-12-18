@@ -25,6 +25,6 @@ The regular expression can be in argument one or two.
 | Context          | Qualifier                                                                                                                                                            |
 |:-----------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [asbool](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#asbool) |
-| Value qualifiers | onmatch                                                                                                                                                              |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                   |
 
 

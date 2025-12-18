@@ -34,6 +34,6 @@ See skip() for more behavior details.
 | Context          | Qualifier                                                                                                                                                        |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [once](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#once) |
-| Value qualifiers | onmatch                                                                                                                                                          |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                               |
 
 

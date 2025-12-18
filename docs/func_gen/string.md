@@ -28,6 +28,6 @@ string(none(), 5).
 | Context          | Qualifier                                                                                                                                                                                                                                                    |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
-| Value qualifiers | onmatch                                                                                                                                                                                                                                                      |
+| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                                           |
 
 
