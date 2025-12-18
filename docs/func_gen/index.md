@@ -1,4 +1,6 @@
-{index}
+# Functions Index
+These function docs are generated from the function code. They are also available in the CsvPath Framework [CLI](https://www.csvpath.org) and [FlightPath Data](https://www.flightpathdata.com).
+
 
 [[Back to overview](https://github.com/csvpath/csvpath/blob/main/docs/functions.md)]
 
