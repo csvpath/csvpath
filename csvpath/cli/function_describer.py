@@ -9,7 +9,7 @@ from .const import Const
 
 class FunctionDescriber:
     @classmethod
-    def describe(cls, function: Function) -> None:
+    def describe(cls, function: Function, *, markdown=False) -> None:
         if not function.args:
             #
             # today this will most of the time blow up because we're
@@ -25,10 +25,10 @@ class FunctionDescriber:
             for i, _ in enumerate(function.description):
                 print(_)
                 print()
-        cls.print_tables(function)
+        cls.print_tables(function, markdown=markdown)
 
     @classmethod
-    def sigs(cls, function):
+    def sigs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
         if not args:
@@ -65,7 +65,7 @@ class FunctionDescriber:
         return sigs
 
     @classmethod
-    def funcs(cls, function):
+    def funcs(cls, function, *, markdown=False):
         sigs = []
         args = function.args
         if not args or not args.argsets or len(args.argsets) == 0:
@@ -99,7 +99,7 @@ class FunctionDescriber:
         return sigs
 
     @classmethod
-    def focus_stmt(cls, function):
+    def focus_stmt(cls, function, *, markdown=False):
         stmts = []
         vp = isinstance(function, ValueProducer)
         md = isinstance(function, MatchDecider)
@@ -116,7 +116,7 @@ class FunctionDescriber:
         return stmts
 
     @classmethod
-    def type_stmt(cls, function):
+    def type_stmt(cls, function, *, markdown=False):
         stmts = []
         if isinstance(function, Type):
             t = f"{function.name[0].upper()}{function.name[1:]}"
@@ -124,14 +124,14 @@ class FunctionDescriber:
         return stmts
 
     @classmethod
-    def aliases_stmt(cls, function):
+    def aliases_stmt(cls, function, *, markdown=False):
         stmts = []
         if len(function.aliases) > 0:
             stmts.append(", ".join(function.aliases))
         return stmts
 
     @classmethod
-    def print_tables(cls, function):
+    def print_tables(cls, function, *, markdown=False):
         #
         # data sigs
         #
@@ -142,7 +142,13 @@ class FunctionDescriber:
             v = str(v)
             rows.append([v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
         #
         # call sigs
         #
@@ -153,7 +159,13 @@ class FunctionDescriber:
             v = str(v)
             rows.append([v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
         #
         # type and focus
         #
@@ -172,7 +184,13 @@ class FunctionDescriber:
             v = str(v)
             rows.append(["Aliases", v])
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
         #
         # qualifiers
         #
@@ -194,7 +212,13 @@ class FunctionDescriber:
                 ]
             )
         if len(rows) > 0:
-            print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
+            print(
+                tabulate(
+                    rows,
+                    headers=headers,
+                    tablefmt="pipe" if markdown else "simple_grid",
+                )
+            )
 
     @classmethod
     def _actual_name(cls, a) -> str:
