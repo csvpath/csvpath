@@ -1,5 +1,6 @@
 
 ## now()
+
 Now
 
 Returns the current datetime. If a strftime() format is provided the

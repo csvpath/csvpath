@@ -1,5 +1,6 @@
 
 ## add()
+
 Add
 
 Adds numbers. add() can take any number of int and/or float arguments.

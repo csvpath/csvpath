@@ -1,5 +1,6 @@
 
 ## before_after()
+
 Before after
 
 Returns true if the values provided have a between relationship.

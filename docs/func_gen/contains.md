@@ -1,5 +1,6 @@
 
 ## contains()
+
 Contains
 
 Matches if the first string contains the second.

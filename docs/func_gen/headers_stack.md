@@ -1,5 +1,6 @@
 
 ## headers_stack()
+
 Headers stack
 
 Returns the current header names as a stack variable.

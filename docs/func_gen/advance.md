@@ -1,5 +1,6 @@
 
 ## advance()
+
 Advance
 
 Skips processing N-lines ahead. The lines skipped will not be

@@ -1,5 +1,6 @@
 
 ## fail_and_stop()
+
 | Data signatures                          |
 |:-----------------------------------------|
 | fail_and_stop( [eval this: None ǁ Any] ) |

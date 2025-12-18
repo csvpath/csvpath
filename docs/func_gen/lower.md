@@ -1,5 +1,6 @@
 
 ## lower()
+
 Lower
 
 Alters a string by lower-casing it.

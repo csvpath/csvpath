@@ -1,5 +1,6 @@
 
 ## count_bytes()
+
 Count bytes
 
 Returns the total data bytes written count.

@@ -1,5 +1,6 @@
 
 ## line_before()
+
 Line before
 
 Tracks the most recent value of a header to enable comparison with the

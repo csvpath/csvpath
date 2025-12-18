@@ -1,5 +1,6 @@
 
 ## concat()
+
 Concat
 
 Concatenates any number of strings, numbers, or bool values.

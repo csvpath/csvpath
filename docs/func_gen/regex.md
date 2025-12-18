@@ -1,5 +1,6 @@
 
 ## regex()
+
 Regex
 
 Matches a regular expression to a string.

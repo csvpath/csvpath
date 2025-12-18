@@ -1,5 +1,6 @@
 
 ## decimal()
+
 Decimal
 
 decimal() is a type function often used as an argument to line().

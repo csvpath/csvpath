@@ -1,5 +1,6 @@
 
 ## index_of()
+
 Index of
 
 Finds the position of a value within a stack, if present.

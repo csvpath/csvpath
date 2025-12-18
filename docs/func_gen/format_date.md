@@ -1,5 +1,6 @@
 
 ## format_date()
+
 Format date
 
 Outputs a date or datetime as a string using strftime formatting.

@@ -1,5 +1,6 @@
 
 ## file_fingerprint()
+
 File fingerprint
 
 Enters the SHA256 hash of the current data file into metadata.

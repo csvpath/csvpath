@@ -1,5 +1,6 @@
 
 ## not()
+
 Not
 
 not() returns the boolean inverse of its argument.

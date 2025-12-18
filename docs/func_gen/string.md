@@ -1,5 +1,6 @@
 
 ## string()
+
 String
 
 string() indicates that a value must be a string to be valid. All CSV

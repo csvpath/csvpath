@@ -1,5 +1,6 @@
 
 ## shuffle()
+
 Shuffle
 
 Generates a random number from within an integer range without

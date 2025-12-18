@@ -1,5 +1,6 @@
 
 ## peek_size()
+
 Peek size
 
 Returns number of values in a stack variable.

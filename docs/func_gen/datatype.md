@@ -1,5 +1,6 @@
 
 ## datatype()
+
 Datatype
 
 datatype() returns the best fitting type for a header value on a given line.

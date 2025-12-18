@@ -1,5 +1,6 @@
 
 ## yes()
+
 Yes
 
 yes() always evaluates to True. It is similar to no() and none().

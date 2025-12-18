@@ -1,5 +1,6 @@
 
 ## has_matches()
+
 Has matches
 
 True when the run has so far had one or more lines that matched. If a

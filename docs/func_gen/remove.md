@@ -1,5 +1,6 @@
 
 ## remove()
+
 Remove
 
 This function results in the output of collected lines not including

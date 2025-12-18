@@ -1,5 +1,6 @@
 
 ## vote_stack()
+
 Vote stack
 
 Returns the votes of the match components for each line as a stack.

@@ -1,5 +1,6 @@
 
 ## equals()
+
 Equals
 
 Tests the equality of two values.

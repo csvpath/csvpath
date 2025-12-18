@@ -1,5 +1,6 @@
 
 ## fingerprint()
+
 Fingerprint
 
 Returns the fingerprint of a line or subset of a line's header values,

@@ -1,5 +1,6 @@
 
 ## dup_lines()
+
 Dup lines
 
 dups_lines() returns a list of the numbers of duplicate lines or lines

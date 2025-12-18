@@ -1,5 +1,6 @@
 
 ## random()
+
 Random
 
 Generates a random number from within an integer range.

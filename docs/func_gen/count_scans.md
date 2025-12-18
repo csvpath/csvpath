@@ -1,5 +1,6 @@
 
 ## count_scans()
+
 Count scans
 
 Returns the current number of lines that have been scanned.

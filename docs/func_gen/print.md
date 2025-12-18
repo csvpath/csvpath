@@ -1,5 +1,6 @@
 
 ## print()
+
 print() prints to one or more default or designated Printer instances.
 
 Print can have a function or equality argument that is evaluated after

@@ -1,5 +1,6 @@
 
 ## metaphone()
+
 Metaphone
 
 metaphone() uses the Metaphone algorithm to generate a "sound-alike"

@@ -1,5 +1,6 @@
 
 ## tally()
+
 Tally
 
 tally() tracks the value of a variable, function, or header.

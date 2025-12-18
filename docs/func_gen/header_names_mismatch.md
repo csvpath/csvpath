@@ -1,5 +1,6 @@
 
 ## header_names_mismatch()
+
 Header names mismatch
 
 Given a | delimited list of headers, checks that all exist and are in

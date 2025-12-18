@@ -1,5 +1,6 @@
 
 ## every()
+
 Matches every N times a value is seen.
 
 | Data signatures                                       |

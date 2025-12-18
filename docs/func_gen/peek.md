@@ -1,5 +1,6 @@
 
 ## peek()
+
 Peek
 
 Returns a value at a stack variable index, but does not remove it.

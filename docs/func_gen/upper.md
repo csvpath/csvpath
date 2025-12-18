@@ -1,5 +1,6 @@
 
 ## upper()
+
 Upper
 
 Alters a string by upper-casing it.

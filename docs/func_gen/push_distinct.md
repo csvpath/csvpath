@@ -1,5 +1,6 @@
 
 ## push_distinct()
+
 Push distinct
 
 Appends a value to a stack variable. The stack is created if not

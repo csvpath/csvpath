@@ -1,5 +1,6 @@
 
 ## mismatch()
+
 Mismatch
 
 mismatch() returns the number of headers in a row greater or less than

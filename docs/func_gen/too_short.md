@@ -1,5 +1,6 @@
 
 ## too_short()
+
 | Data signatures            |
 |:---------------------------|
 | too_short( str ǁ '', int ) |

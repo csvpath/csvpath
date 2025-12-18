@@ -1,5 +1,6 @@
 
 ## skip()
+
 Skip
 
 Jumps to the next line abruptly.

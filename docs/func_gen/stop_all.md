@@ -1,5 +1,6 @@
 
 ## stop_all()
+
 Stop all
 
 Halts the containing csvpath's run abruptly and, in certain named-

@@ -1,5 +1,6 @@
 
 ## firstmatch()
+
 Firstmatch
 
 Evaluates to True at the first line matched. firstmatch() implies the

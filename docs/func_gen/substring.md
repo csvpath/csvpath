@@ -1,5 +1,6 @@
 
 ## substring()
+
 Substring
 
 Returns the first N-characters of a string.

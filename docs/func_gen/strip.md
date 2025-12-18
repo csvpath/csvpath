@@ -1,5 +1,6 @@
 
 ## strip()
+
 Strip
 
 Alters a string by trimming leading and trailing whitespace.

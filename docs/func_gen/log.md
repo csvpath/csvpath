@@ -1,5 +1,6 @@
 
 ## log()
+
 Log
 
 Writes a message to the CsvPath Framework log at a certain log level.

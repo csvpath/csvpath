@@ -1,5 +1,6 @@
 
 ## max()
+
 Max
 
 Tracks the maximum value.

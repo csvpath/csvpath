@@ -1,5 +1,6 @@
 
 ## store_line_fingerprint()
+
 Store line fingerprint
 
 Migrates a by-line fingerprint from its variable into run metadata. If

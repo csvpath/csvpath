@@ -1,5 +1,6 @@
 
 ## caps()
+
 Caps
 
 Alters a string by changing the casing. If the optional second

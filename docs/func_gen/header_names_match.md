@@ -1,5 +1,6 @@
 
 ## header_names_match()
+
 Header names match
 
 Given a | delimited list of headers, checks that all exist and are in

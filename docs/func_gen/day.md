@@ -1,5 +1,6 @@
 
 ## day()
+
 Day
 
 A convenience function that returns the day component of a date or

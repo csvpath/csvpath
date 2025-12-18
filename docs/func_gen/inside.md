@@ -1,5 +1,6 @@
 
 ## inside()
+
 Inside
 
 Returns true if the values provided have a between relationship.

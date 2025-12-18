@@ -1,5 +1,6 @@
 
 ## integer()
+
 Integer
 
 integer() is a type function often used as an argument to line().
