@@ -11,10 +11,11 @@ from .type import Type
 
 class Decimal(Type):
     def check_valid(self) -> None:
-        self.match_qualifiers.append("notnone")
         self.value_qualifiers.append("notnone")
-        self.match_qualifiers.append("strict")
         self.value_qualifiers.append("strict")
+        self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("strict")
+        self.match_qualifiers.append("distinct")
         self.description = [
             self._cap_name(),
             f"{self.name}() is a type function often used as an argument to line().",
@@ -63,6 +64,7 @@ class Decimal(Type):
                 self.match = False
                 return
             self.match = True
+            self._distinct_if(skip=skip)
             return
 
         dmax = self._value_two(skip=skip)
@@ -83,8 +85,10 @@ class Decimal(Type):
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=ret[1])
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(ret[1])
+            self._distinct_if(skip=skip)
             self.match = False
             return
+        self._distinct_if(skip=skip)
         self.match = True
 
     @classmethod

@@ -60,7 +60,10 @@ class PrintLine(SideEffect):
             quoted = "'"
 
         lineout = ""
-        use_limit = len(self.matcher.csvpath.limit_collection_to) > 0
+        use_limit = (
+            self.matcher.csvpath.limit_collection_to
+            and len(self.matcher.csvpath.limit_collection_to) > 0
+        )
         for i, v in enumerate(self.matcher.line):
             if not use_limit or (
                 use_limit and i in self.matcher.csvpath.limit_collection_to

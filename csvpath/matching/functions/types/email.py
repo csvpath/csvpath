@@ -10,6 +10,7 @@ from .type import Type
 class Email(Type):
     def check_valid(self) -> None:
         self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("distinct")
         self.value_qualifiers.append("notnone")
         self.description = [
             self._cap_name(),
@@ -34,6 +35,7 @@ class Email(Type):
 
     def _decide_match(self, skip=None) -> None:
         val = self._value_one(skip=skip)
+        self._distinct_if(skip=skip)
         if (val is None or f"{val}".strip() == "") and self.notnone:
             self.match = False
         elif val is None or f"{val}".strip() == "":

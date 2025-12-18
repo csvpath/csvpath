@@ -1,0 +1,17 @@
+decimal,integer,boolean,date,datetime,none,email,url,string
+5.5,5,True,2021-01-27,2021/5/29 01:01:59,None,dk@fish.com,https://www.csvpath.org,i'm a string
+0,5.5,false,23 May 2010,21/12/1995,,ba@ts.io,,catfish
+0,5.5,,23 May 2010,21/12/1995,,ba@ts.io,http://b.net,catfish
+0,5.5,False,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+0,5.5,,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+,5.5,,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+0,,true,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+0,5.5,,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+0,5.5,False,23 May 2010,,none,ba@ts.io,https://www.csvpath.org,catfish
+0,5.5,False,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+0,5.5,False,23 May 2010,21/12/1995,none,,https://www.csvpath.org,catfish
+0,5.5,False,23 May 2010,21/12/1995,none,ba@ts.io,,catfish
+0,5.5,False,23 May 2010,21/12/1995,none,ba@ts.io,https://www.csvpath.org,
+
+
+

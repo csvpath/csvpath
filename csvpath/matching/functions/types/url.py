@@ -10,6 +10,7 @@ from .type import Type
 class Url(Type):
     def check_valid(self) -> None:
         self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("distinct")
         self.value_qualifiers.append("notnone")
         self.description = [
             self._cap_name(),
@@ -32,6 +33,7 @@ class Url(Type):
     def _decide_match(self, skip=None) -> None:
         val = self._value_one()
         val = f"{val}".strip()
+        self._distinct_if(skip=skip)
         if val == "" and self.notnone:
             self.match = False
             return

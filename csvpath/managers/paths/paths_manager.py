@@ -198,9 +198,10 @@ class PathsManager:
                     if p.find(".") == -1:
                         continue
                     ext = p[p.rfind(".") + 1 :].strip().lower()
-                    if ext not in self.csvpaths.config.get(
+                    csvpathexts = self.csvpaths.config.get(
                         section="extensions", name="csvpath_files"
-                    ):
+                    )
+                    if ext not in csvpathexts:
                         continue
                     path = Nos(base).join(p)
                     # path = os.path.join(base, p)
@@ -716,13 +717,10 @@ class PathsManager:
             # script_file = os.path.join(self.named_paths_home(name), script_name)
             try:
                 with DataFileWriter(path=script_file, mode="wb") as file:
-                    print(f"textx: text: {text} {type(text)}")
-                    # bs = text.encode("utf-8")
                     file.write(text)
             except Exception as e:
-                import traceback
-
-                print(traceback.format_exc())
+                # import traceback
+                # print(traceback.format_exc())
                 msg = f"Could not store script at {script_file}: {e}"
                 self.csvpaths.logger.error(e)
                 self.csvpaths.error_manager.handle_error(source=self, msg=msg)

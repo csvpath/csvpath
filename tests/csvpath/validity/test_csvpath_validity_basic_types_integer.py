@@ -174,3 +174,18 @@ class TestCsvPathValidityValidBasicTypesInteger(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 1
+
+    def test_function_integer_8(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: raise, no-stop, collect, print
+                  explain-mode:no-explain ~
+                ${NUMBERS}[1*] [
+                        integer.distinct(#1)
+                ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()

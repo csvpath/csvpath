@@ -11,7 +11,7 @@ PEOPLE3 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}people3.csv"
 
 
 class TestCsvPathValidityValidLine(unittest.TestCase):
-    def test_valid_line1(self):
+    def test_valid_line_1(self):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         path.parse(
@@ -27,7 +27,7 @@ class TestCsvPathValidityValidLine(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_valid_line2a(self):
+    def test_valid_line_2(self):
         #
         # file has 3 headers. we declared 1.
         #
@@ -57,6 +57,18 @@ class TestCsvPathValidityValidLine(unittest.TestCase):
         path = CsvPath().parse(f"""${PATH}[*][ blank(#0) ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(ChildrenException):
+            path.collect()
+
+    def test_valid_line2d(self):
+        #
+        # blank only live in line(). ChildrenException because this is a language use error.
+        #
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path = path.parse(
+            f""" ~ validation-mode: raise ~ ${PATH}[*][ line(blank.distinct(), blank(#1), blank()) ]"""
+        )
+        with pytest.raises(MatchException):
             path.collect()
 
     def test_valid_line3(self):
@@ -245,150 +257,7 @@ class TestCsvPathValidityValidLine(unittest.TestCase):
         assert lines[0][0] == "Jimmy"
         assert lines[1][0] == "Terry"
 
-    def test_valid_line_wildcard1(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
-        path.parse(
-            f"""~ return-mode: matches
-                  logic-mode: AND
-                  validation-mode: print, raise, no-stop ~
-                ${PEOPLE}[1*][
-                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
-                line(
-                    string.notnone(#firstname, 20, 1),
-                    string        (#middlename, 20),
-                    string.notnone(#lastname, 30, 2),
-                    wildcard()
-                )
-            ]"""
-        )
-        lines = path.collect()
-        assert len(lines) == 5
-
-    def test_valid_line_wildcard2(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
-        path.parse(
-            f"""~ return-mode: matches
-                  logic-mode: AND
-                  validation-mode: print, raise, no-stop ~
-            ${PEOPLE}[1*][
-                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
-                line(
-                    string.notnone(#firstname, 20, 1),
-                    wildcard(),
-                    decimal(#height),
-                    string(#country),
-                    string(#email)
-                )
-            ]"""
-        )
-        lines = path.collect()
-        assert len(lines) == 5
-
-    def test_valid_line_wildcard3(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect"]
-        path.parse(
-            f"""~ return-mode: matches
-                  logic-mode: AND
-                  validation-mode: print, raise, no-stop ~
-                ${PEOPLE}[1*][
-                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
-                line(
-                    string.notnone(#firstname, 20, 1),
-                    wildcard("*"),
-                    decimal(#height),
-                    string(#country),
-                    string(#email)
-                )
-            ]"""
-        )
-        lines = path.collect()
-        assert len(lines) == 5
-
-    def test_valid_line_wildcard4(self):
-        path = CsvPath()
-        path.config.csvpath_errors_policy = ["print", "collect", "raise"]
-        #
-        # wildcard(4) means the wildcard itself + 3 more headers.
-        # or think of it as saying: wildcard takes 4 places,
-        # including the one where it is declared.
-        #
-        path.parse(
-            f"""~ return-mode: matches
-                  logic-mode: AND
-                  validation-mode: print, raise, no-stop ~
-                ${PEOPLE}[1*][
-                and.nocontrib( firstscan(), after_blank() ) -> reset_headers(skip())
-                line(
-                    string.notnone(#firstname, 20, 1),
-                    wildcard(4),
-                    decimal(#height),
-                    string(#country),
-                    string(#email)
-                )
-            ]"""
-        )
-        lines = path.collect()
-        assert len(lines) == 5
-
-    def test_valid_line_wildcard5(self):
-        path = CsvPath()
-        #
-        # wildcard(4) means the wildcard itself + 3 more headers.
-        # or think of it as saying: wildcard takes 4 places,
-        # including the one where it is declared.
-        #
-        path.add_to_config("errors", "csvpath", "collect, print")
-        path.parse(
-            f"""
-            ${PEOPLE}[*][
-               after_blank.nocontrib() -> reset_headers(skip())
-               line.person(
-                   string.notnone(#firstname, 25, 1),
-                   blank(#middlename),
-                   string.notnone(#lastname, 35, 2),
-                   wildcard(5)
-               )
-               line.distinct.address(
-                   wildcard(6),
-                   string.notnone.country(#country),
-                   string.notnone.email(#email)
-               )
-            ]
-            """
-        )
-        lines = path.collect()
-        assert len(lines) == 3
-
-    def test_valid_line_wildcard6(self):
-        path = CsvPath()
-        path.add_to_config("errors", "csvpath", "raise, collect, print")
-        path.parse(
-            f"""
-            ~ id:fails distinct ~
-            ${PEOPLE3}[*][
-               after_blank.nocontrib() -> reset_headers(skip())
-               line.person(
-                   string.notnone(#firstname, 25, 1),
-                   blank(#middlename),
-                   string.notnone(#lastname, 35, 2),
-                   wildcard(5)
-               )
-               ~ blows up because dup line on 5 email ~
-               line.distinct.address(
-                   wildcard(6),
-                   string.notnone(#country),
-                   string.notnone(#email)
-               )
-            ]
-            """
-        )
-        with pytest.raises(MatchException):
-            path.collect()
-
-    def test_valid_line_distinct_1(self):
+    def test_valid_line_11(self):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "collect, print")
         path.parse(
@@ -407,3 +276,48 @@ class TestCsvPathValidityValidLine(unittest.TestCase):
         assert len(lines) == 8
         assert lines[7][0] == "Slug"
         assert lines[3][0] == "Frog"
+
+    def test_valid_line_12(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""${PATH}[*][
+                line(
+                    blank(#1),
+                    blank(#2),
+                    blank(#0)
+                )
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_valid_line_13(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""${PATH}[*][
+                line(
+                    blank(#say),
+                    blank(#1),
+                    blank(#0)
+                )
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_valid_line_14(self):
+        path = CsvPath()
+        path.add_to_config("errors", "csvpath", "raise, collect, print")
+        path.parse(
+            f"""${PATH}[*][
+                line(
+                    blank(#firstname),
+                    blank(#firstname),
+                    blank(#say)
+                )
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()

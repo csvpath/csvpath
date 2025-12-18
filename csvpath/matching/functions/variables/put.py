@@ -27,8 +27,8 @@ class Put(SideEffect):
                     uses the second variable as the key to store and access the third.
 
                     While get() and put() make it possible to create and use tracking-value
-                    variables in an ad hoc dict-like way, this is not recommended unless there
-                    is no simplier solution based on more specific functions.
+                    variables in an ad hoc dict-like way, using a more specific function is often
+                    simpler.
                 """
             ),
         ]

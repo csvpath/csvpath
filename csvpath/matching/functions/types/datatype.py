@@ -30,19 +30,16 @@ class Datatype(ValueProducer):
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
-        # self.to_value(skip=skip)
         self.match = True
 
     def _produce_value(self, skip=None) -> None:
-        # c = self._child_one()
         v = self._value_one(skip=skip)
         t = "unknown"
-
         if Decimal._is_match(name="decimal", value=v, strict=True)[0]:
             t = "decimal"
         elif Decimal._is_match(name="integer", value=v, strict=True)[0]:
             t = "integer"
-        elif Boolean._is_match(v)[0]:
+        elif Boolean._is_match(value=v)[0]:
             t = "boolean"
         elif Date._is_match(is_datetime=True, value=v, strict=True):
             t = "datetime"

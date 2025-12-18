@@ -12,7 +12,7 @@ NUMBERS5 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers5.csv"
 
 
 class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
-    def test_function_decimal1(self):
+    def test_function_decimal_1(self):
         path = CsvPath().parse(
             f""" ${NUMBERS}[*] [
                 @st = decimal("abc")
@@ -22,7 +22,7 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_function_decimal2(self):
+    def test_function_decimal_2(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -53,7 +53,7 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         a = path.variables["a"]
         assert a == expected
 
-    def test_function_decimal3(self):
+    def test_function_decimal_3(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -71,7 +71,7 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 2
 
-    def test_function_decimal4(self):
+    def test_function_decimal_4(self):
         path = CsvPath()
         path.parse(
             f"""
@@ -85,7 +85,7 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 7
 
-    def test_function_decimal5(self):
+    def test_function_decimal_5(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -103,3 +103,18 @@ class TestCsvPathValidityValidBasicTypesDecimal(unittest.TestCase):
         assert len(lines) == 0
         assert len(path.errors) == 2
         # assert path.is_valid is False
+
+    def test_function_decimal_6(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f"""
+                ~ return-mode: matches
+                  validation-mode: raise, no-stop, collect
+                  explain-mode:no-explain ~
+                ${NUMBERS}[1*] [
+                        decimal.distinct(#1)
+                ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()

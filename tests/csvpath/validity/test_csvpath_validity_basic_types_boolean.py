@@ -8,6 +8,9 @@ from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers3.csv"
+TYPES = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}types2.csv"
+
+TYPES3 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}types3.csv"
 
 
 class TestCsvPathValidityValidBasicTypesBoolean(unittest.TestCase):
@@ -120,14 +123,39 @@ class TestCsvPathValidityValidBasicTypesBoolean(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_validity_boolean10(self):
+    def test_validity_boolean_10(self):
         path = CsvPath()
         path.add_to_config("errors", "csvpath", "raise")
         path.parse(
             f""" ${PATH}[1][
-                @b.asbool = boolean(false())
+                @b.asbool = boolean( false() )
                 not( @b.asbool )
             ]"""
         )
         lines = path.collect()
         assert len(lines) == 0
+
+    def test_validity_boolean_11(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f""" ${TYPES}[*][
+                boolean.distinct.morning(#2)
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_boolean_12(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f""" ${TYPES3}[1*][
+                ~ checks that false == False for purposes of distinct,
+                  and that only about 4 lines possible when distinct: true, false, empty, skipped header. ~
+                print("$.csvpath.line_number: $.headers.2")
+                boolean.distinct.morning(#2)
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()

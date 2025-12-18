@@ -10,6 +10,7 @@ from .type import Type
 class String(Type):
     def check_valid(self) -> None:
         self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("distinct")
         self.description = [
             "String",
             self.wrap(
@@ -49,6 +50,7 @@ class String(Type):
         value = self._value_one(skip=skip)
         value = f"{value}" if value is not None else None
         val = self._value_one(skip=skip)
+        self._distinct_if(skip=skip)
         if val is None and self.notnone:
             self.match = False
         elif val is None:

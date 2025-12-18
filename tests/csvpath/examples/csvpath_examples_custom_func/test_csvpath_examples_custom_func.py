@@ -7,22 +7,19 @@ from csvpath.util.class_loader import ClassLoader
 from csvpath.matching.util.exceptions import ChildrenException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
+CPATH = os.path.join(
+    "tests",
+    "csvpath",
+    "examples",
+    "csvpath_examples_custom_func",
+    "extra-functions.imports",
+)
 
 
 class TestCsvpathExamplesCustomFunc(unittest.TestCase):
     def test_csvpath_examples_custom_func_1(self):
         path = CsvPath()
-        path.config.add_to_config(
-            "functions",
-            "imports",
-            os.path.join(
-                "tests",
-                "csvpath",
-                "examples",
-                "csvpath_examples_custom_func",
-                "extra-functions.imports",
-            ),
-        )
+        path.config.add_to_config("functions", "imports", CPATH)
         #
         # this test isn't really about custom functions, it is about passing arguments that
         # aren't expected. a problem came up during these tests, so I'm testing the fix here.
@@ -34,17 +31,10 @@ class TestCsvpathExamplesCustomFunc(unittest.TestCase):
 
     def test_csvpath_examples_custom_func_2(self):
         path = CsvPath()
-        path.config.add_to_config(
-            "functions",
-            "imports",
-            os.path.join(
-                "tests",
-                "csvpath",
-                "examples",
-                "csvpath_examples_custom_func",
-                "extra-functions.imports",
-            ),
-        )
+        if not os.path.exists(CPATH):
+            raise RuntimeError(f"{CPATH} must exist")
+
+        path.config.add_to_config("functions", "imports", CPATH)
         path.parse(f"${PATH}[3][ @e = A() ]")
         path.fast_forward()
         assert "e" in path.variables

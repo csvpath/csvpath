@@ -13,19 +13,25 @@ DATES2 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}dates2.csv"
 
 
 class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
-    def test_validity_date1(self):
+    def test_validity_date_1(self):
         path = CsvPath().parse(f"""~id:date1~ ${PATH}[*][ date()]""")
         path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
 
-    def test_validity_date2(self):
+    def test_validity_date_2(self):
+        path = CsvPath().parse(f"""~id:date1~ ${DATES}[1*][ date.distinct(#0)]""")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
+        with pytest.raises(MatchException):
+            path.fast_forward()
+
+    def test_validity_date_3(self):
         path = CsvPath().parse(f"""~id:date2~ ${PATH}[*][date.notnone(none())]""")
         path.config.add_to_config("errors", "csvpath", "raise, print")
         with pytest.raises(MatchException):
             path.fast_forward()
 
-    def test_validity_date3(self):
+    def test_validity_date_4(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -36,7 +42,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_validity_date4(self):
+    def test_validity_date_5(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -47,7 +53,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 9
 
-    def test_validity_date5(self):
+    def test_validity_date_6(self):
         path = CsvPath().parse(
             f"""~id:validity_date5~ ${PATH}[*][
                 date("the 3rd of feb")
@@ -57,7 +63,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_date6(self):
+    def test_validity_date_7(self):
         path = CsvPath().parse(
             f"""~id:validity_date6~ ${PATH}[*][
                 date("the 3rd of feb", "%Y")
@@ -67,7 +73,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_date7(self):
+    def test_validity_date_8(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -79,7 +85,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
 
-    def test_validity_date8(self):
+    def test_validity_date_9(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -91,7 +97,7 @@ class TestCsvPathValidityValidBasicTypesDate(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
 
-    def test_validity_date9(self):
+    def test_validity_date_10(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(

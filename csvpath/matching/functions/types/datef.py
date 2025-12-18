@@ -16,6 +16,8 @@ class Date(ValueProducer, Type):
     def check_valid(self) -> None:
         self.value_qualifiers.append("notnone")
         self.match_qualifiers.append("notnone")
+        self.match_qualifiers.append("strict")
+        self.match_qualifiers.append("distinct")
         self.description = [
             self._cap_name(),
             f"{self.name}() has two purposes.",
@@ -129,11 +131,19 @@ class Date(ValueProducer, Type):
         return ret
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip) is not None
+        v = self.to_value(skip=skip) is not None
+        v = (
+            ExpressionUtility.to_date(v)
+            if self.name == "date"
+            else ExpressionUtility.to_datetime(v)
+        )
+        self._distinct_if(skip=skip, value=v)
+        self.match = v
 
     #
     # we don't support the strict qualifier in the regular function, but for
-    # testing values against types here we do. might be something to add.
+    # testing values against types here we do.
+    #
     # strict == a date must not have time or a datetime must have a non-00:00:00z000 time
     #
     @classmethod

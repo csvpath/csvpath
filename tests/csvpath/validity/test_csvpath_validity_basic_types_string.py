@@ -12,13 +12,24 @@ PEOPLE2 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}people2.csv"
 
 
 class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
-    def test_validity_string1(self):
+    def test_validity_string_1(self):
         path = CsvPath().parse(f"""${PATH}[*][string("I am a string")]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_string2(self):
+    def test_validity_string_2(self):
+        path = CsvPath()
+        path.config.add_to_config("errors", "csvpath", "raise")
+        path.parse(
+            f""" ${PATH}[1*][
+                string.distinct(#lastname)
+            ]"""
+        )
+        with pytest.raises(MatchException):
+            path.collect()
+
+    def test_validity_string_3(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -29,13 +40,13 @@ class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 8
 
-    def test_validity_string3(self):
+    def test_validity_string_4(self):
         path = CsvPath().parse(f"""${PATH}[*][string(#lastname, 0, 25)]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_string4(self):
+    def test_validity_string_5(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -46,13 +57,13 @@ class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_validity_string5(self):
+    def test_validity_string_6(self):
         path = CsvPath().parse(f"""${PATH}[1*][string("I am a string", 25)]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_string6(self):
+    def test_validity_string_7(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -63,13 +74,13 @@ class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
 
-    def test_validity_string7(self):
+    def test_validity_string_8(self):
         path = CsvPath().parse(f"""${PATH}[*][string.notnone(none(), 10, 0)]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_validity_string8(self):
+    def test_validity_string_9(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
@@ -82,7 +93,7 @@ class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
 
-    def test_validity_string9(self):
+    def test_validity_string_10(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "print")
         path.parse(
@@ -95,7 +106,7 @@ class TestCsvPathValidityValidBasicTypesString(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 4
 
-    def test_validity_string_line(self):
+    def test_validity_string_11(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "print, collect")
         path.parse(

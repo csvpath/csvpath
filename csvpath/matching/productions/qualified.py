@@ -31,22 +31,24 @@ class Qualities(Enum):
     # indicates that the match component is only activated one time
     ONCE = "once"
     #
-    # there are only two functions using distinct -- line & push -- it is likely we'll
-    # use it more over time.
+    # line(), push(), and most of the types offer distinct to prevent
+    # duplicate values
     #
     # indicates that the value being set must be unique in its context
     DISTINCT = "distinct"
     #
     # indicates that the value must conform to some maximally restrictive
     # interpretation of its type. e.g. a decimal that must include a
-    # decimal point, even if the fraction is 0.
+    # decimal point, even if the fraction is 0. Opposite of weak.
     #
     STRICT = "strict"
     #
     # opposite of strict (not including middle ground, if any). indicates
     # that a type should be interpreted as openly as possible without
     # losing its type-ness. e.g. a weak decimal may not have a decimal
-    # point. this is depreciated but may return.
+    # point. this qualifier may be used on decimal(), int(), date(),
+    # datetime(), and boolean(). However, in some of these cases has been
+    # disabled for the time being, pending testing. it will return.
     #
     WEAK = "weak"
     #
@@ -226,6 +228,26 @@ class Qualified:  # pylint: disable=R0904
     @skipnone.setter
     def skipnone(self, sn: bool) -> None:
         self._set(Qualities.SKIPNONE.value, sn)
+
+    @property
+    def strict(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.STRICT.value in self.qualifiers
+        return False
+
+    @strict.setter
+    def strict(self, nn: bool) -> None:
+        self._set(Qualities.STRICT.value, nn)
+
+    @property
+    def weak(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.WEAK.value in self.qualifiers
+        return False
+
+    @weak.setter
+    def weak(self, nn: bool) -> None:
+        self._set(Qualities.WEAK.value, nn)
 
     @property
     def renew(self) -> bool:  # pylint: disable=C0116

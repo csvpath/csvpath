@@ -103,8 +103,8 @@ class Matcher:  # pylint: disable=R0902
             es = []
             try:
                 es = transformer.transform(tree)
-            except Exception:
-                msg = "Error in csvpath statement"
+            except Exception as e:
+                msg = f"Error in csvpath statement: {e}"
                 self.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.csvpath.do_i_raise():
                     raise ChildrenException(msg)

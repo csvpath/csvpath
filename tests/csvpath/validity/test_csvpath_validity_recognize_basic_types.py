@@ -55,10 +55,10 @@ class TestCsvPathValidityRecognizeBasicTypes(unittest.TestCase):
         )[0]
 
     def test_validity_is_match_classes_bool(self):
-        assert not Boolean._is_match("1")[0]
-        assert not Boolean._is_match(None)[0]
-        assert not Boolean._is_match("no")[0]
-        assert not Boolean._is_match("yes")[0]
+        assert not Boolean._is_match("1", strict=True)[0]
+        assert not Boolean._is_match(None, strict=True)[0]
+        assert not Boolean._is_match("no", strict=True)[0]
+        assert not Boolean._is_match("yes", strict=True)[0]
         assert Boolean._is_match("true")[0]
         assert Boolean._is_match("True")[0]
         assert Boolean._is_match(True)[0]

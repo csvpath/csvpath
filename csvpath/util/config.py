@@ -350,7 +350,8 @@ shell = /bin/bash
         no_list = False
         if section == "config" and name == "path":
             no_list = True
-        return self._get(section, name, default, no_list=no_list)
+        ret = self._get(section, name, default, no_list=no_list)
+        return ret
 
     def _get(self, section: str, name: str, default=None, no_list=False):
         #

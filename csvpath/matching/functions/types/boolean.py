@@ -11,10 +11,14 @@ from .type import Type
 class Boolean(ValueProducer, Type):
     def check_valid(self) -> None:
         self.value_qualifiers.append("notnone")
+        self.match_qualifiers.append("distinct")
         self.description = [
             self._cap_name(),
             f"{self.name}() is a line() schema type representing a bool value.",
             "To generate a particular bool value use yes() or no().",
+            """As you would think, setting distinct limits the number of lines to
+            four, for practical purposes. Namely: yes(), no(), none(), and a header
+            name.""",
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
@@ -43,16 +47,13 @@ class Boolean(ValueProducer, Type):
             v = c.to_value(skip=skip)
         if v is None or f"{v}".strip() == "":
             self.value = CheckedUnset()
-            #
-            # pretty sure this none should be caught by the args validation
-            #
             if self.notnone is True:
                 msg = "Value cannot be empty because notnone is set"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
         else:
-            ret = Boolean._is_match(v)
+            ret = self._do_i_match(value=v, skip=skip)
             if ret[0] is True:
                 self.value = True
             else:
@@ -62,19 +63,26 @@ class Boolean(ValueProducer, Type):
                     raise MatchException(ret[1])
                 self.value = False
 
+    def _do_i_match(self, *, value=None, skip=None) -> tuple[bool, str | None]:
+        t = Boolean._is_match(value=value, strict=self.strict)
+        if t[0]:
+            self._distinct_if(skip=skip, value=value)
+        return t
+
     @classmethod
-    def _is_match(
-        cls,
-        value: str,
-    ) -> tuple[bool, str | None]:
-        if value is None:
-            return (False, "Not a boolean value")
-        #
-        # checks: True, False, true, false
-        # to_simple_bool doesn't convert: 1, 0, None, "on", "off"
-        # to include those we would need to use to_bool().
-        #
-        b = ExpressionUtility.to_simple_bool(value)
+    def _is_match(cls, value=None, strict=False) -> tuple[bool, str | None]:
+        b = None
+        if strict:
+            #
+            # checks: True, False, true, false
+            # to_simple_bool doesn't convert: 1, 0, None.
+            # to include those we would need to use to_bool().
+            # neither checks "on", "off", "yes", "no".
+            # "" has already been checked above.
+            #
+            b = ExpressionUtility.to_simple_bool(value)
+        else:
+            b = ExpressionUtility.to_bool(value)
         if b in [True, False]:
             return (True, None)
-        return (False, "Not a boolean value")
+        return (False, f"{value} is not a boolean value")
