@@ -1,5 +1,6 @@
 
 Header names mismatch
+
 Given a | delimited list of headers, checks that all exist and are in
 the same order.
 
@@ -28,11 +29,11 @@ match value being false if the headers do not meet expectations.
 
 | Data signatures                                      |
 |:-----------------------------------------------------|
-| header_names_mismatch( pipe delimited headers: [36m[3mstr[0m ) |
+| header_names_mismatch( pipe delimited headers: str ) |
 
 | Call signatures                                       |
 |:------------------------------------------------------|
-| header_names_mismatch( pipe delimited headers: [36m[3mTerm[0m ) |
+| header_names_mismatch( pipe delimited headers: Term ) |
 
 | Purpose    | Value                                               |
 |:-----------|:----------------------------------------------------|
@@ -41,8 +42,8 @@ match value being false if the headers do not meet expectations.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

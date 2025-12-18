@@ -1,5 +1,6 @@
 
 End
+
 Returns the value of the last header.
 
 If an integer argument N is given, the return is the value of the last
@@ -10,11 +11,11 @@ I.e., if the last header is #11, end(3) returns the value of header
 
 | Data signatures                            |
 |:-------------------------------------------|
-| end( [positions to the left of end: [36m[3mint[0m] ) |
+| end( [positions to the left of end: int] ) |
 
 | Call signatures                                                                         |
 |:----------------------------------------------------------------------------------------|
-| end( [positions to the left of end: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mReference[0m|[36m[3mEquality[0m] ) |
+| end( [positions to the left of end: Term|Function|Header|Variable|Reference|Equality] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -22,7 +23,7 @@ I.e., if the last header is #11, end(3) returns the value of header
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

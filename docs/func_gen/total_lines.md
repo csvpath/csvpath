@@ -1,5 +1,6 @@
 
 Total lines
+
 Returns the total data lines count for the file (1-based).
 
 | Purpose    | Value                                     |
@@ -8,7 +9,7 @@ Returns the total data lines count for the file (1-based).
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,5 +1,6 @@
 
 Empty
+
 empty() checks for empty or blank header values in a given line. It
 reports True only if all the places it is directed to look are empty.
 
@@ -9,12 +10,12 @@ empty.
 | Data signatures                            |
 |:-------------------------------------------|
 | empty( Points to the headers: )            |
-| empty( Component to check: [36m[3mNone[0m|[36m[3mAny[0m, ... ) |
+| empty( Component to check: None|Any, ... ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|
-| empty( Points to the headers: [36m[3mHeaders[0m )                    |
-| empty( Component to check: [36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mHeader[0m, ... ) |
+| empty( Points to the headers: Headers )                    |
+| empty( Component to check: Variable|Function|Header, ... ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -22,7 +23,7 @@ empty.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

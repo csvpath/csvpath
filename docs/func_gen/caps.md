@@ -1,5 +1,6 @@
 
 Caps
+
 Alters a string by changing the casing. If the optional second
 argument is True the string's words will all be upper-cased.
 Otherwise, only the first letter of the string is upper-cased.
@@ -10,11 +11,11 @@ possible special cases.
 
 | Data signatures                                                    |
 |:-------------------------------------------------------------------|
-| caps( string to modify: [36m[3mstr[0m, [if true, init-cap all words: [36m[3mbool[0m] ) |
+| caps( string to modify: str, [if true, init-cap all words: bool] ) |
 
 | Call signatures                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------|
-| caps( string to modify: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, [if true, init-cap all words: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mVariable[0m] ) |
+| caps( string to modify: Term|Variable|Header|Function|Reference, [if true, init-cap all words: Term|Function|Variable] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|
@@ -22,7 +23,7 @@ possible special cases.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

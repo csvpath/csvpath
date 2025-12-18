@@ -1,5 +1,6 @@
 
 Skip
+
 Jumps to the next line abruptly.
 
 skip() short-circuits the full csvpath evaluation of a line. Earlier
@@ -14,12 +15,12 @@ has an embedded when/do operator.
 | Data signatures             |
 |:----------------------------|
 | skip()                      |
-| skip( eval this: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| skip( eval this: None|Any ) |
 
 | Call signatures                      |
 |:-------------------------------------|
 | skip()                               |
-| skip( eval this: [36m[3mFunction[0m|[36m[3mEquality[0m ) |
+| skip( eval this: Function|Equality ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|
@@ -27,7 +28,7 @@ has an embedded when/do operator.
 
 | Context          | Qualifier     |
 |:-----------------|:--------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3monce[0m |
-| Value qualifiers | [36m[3monmatch[0m       |
+| Match qualifiers | onmatch, once |
+| Value qualifiers | onmatch       |
 
 

@@ -1,5 +1,6 @@
 
 First line
+
 Evaluates to True on the first line.
 
 Optionally, takes a function argument that is evaluated if firstline()
@@ -7,11 +8,11 @@ matches
 
 | Data signatures                     |
 |:------------------------------------|
-| first_line( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| first_line( [eval this: None|Any] ) |
 
 | Call signatures                              |
 |:---------------------------------------------|
-| first_line( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| first_line( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
@@ -20,7 +21,7 @@ matches
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

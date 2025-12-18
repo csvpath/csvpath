@@ -1,5 +1,6 @@
 
 print() prints to one or more default or designated Printer instances.
+
 Print can have a function or equality argument that is evaluated after
 printing completes.
 
@@ -21,13 +22,13 @@ available fields.
 
 | Data signatures                                                         |
 |:------------------------------------------------------------------------|
-| print( print this: [36m[3mstr[0m|[36m[3m''[0m, [print to specific Printer stream: [36m[3mstr[0m|[36m[3m''[0m] ) |
-| print( print this: [36m[3mstr[0m|[36m[3m''[0m, [eval after: [36m[3mNone[0m|[36m[3mAny[0m] )                     |
+| print( print this: str|'', [print to specific Printer stream: str|''] ) |
+| print( print this: str|'', [eval after: None|Any] )                     |
 
 | Call signatures                                                     |
 |:--------------------------------------------------------------------|
-| print( print this: [36m[3mTerm[0m, [print to specific Printer stream: [36m[3mTerm[0m] ) |
-| print( print this: [36m[3mTerm[0m, [eval after: [36m[3mFunction[0m|[36m[3mEquality[0m] )          |
+| print( print this: Term, [print to specific Printer stream: Term] ) |
+| print( print this: Term, [eval after: Function|Equality] )          |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
@@ -35,7 +36,7 @@ available fields.
 
 | Context          | Qualifier               |
 |:-----------------|:------------------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3monce[0m, [36m[3monchange[0m |
-| Value qualifiers | [36m[3monmatch[0m                 |
+| Match qualifiers | onmatch, once, onchange |
+| Value qualifiers | onmatch                 |
 
 

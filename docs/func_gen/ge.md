@@ -1,14 +1,15 @@
 
 Greater than or equal to
+
 ge() returns true if a value is greater than or equal to another value.
 
 | Data signatures                                                                                |
 |:-----------------------------------------------------------------------------------------------|
-| ge( relate this: [36m[3mNone[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mdate[0m|[36m[3mdatetime[0m|[36m[3mstr[0m, to that: [36m[3mNone[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mdate[0m|[36m[3mdatetime[0m|[36m[3mstr[0m ) |
+| ge( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
 
 | Call signatures                                                                                              |
 |:-------------------------------------------------------------------------------------------------------------|
-| ge( relate this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, to that: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| ge( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|
@@ -17,7 +18,7 @@ ge() returns true if a value is greater than or equal to another value.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

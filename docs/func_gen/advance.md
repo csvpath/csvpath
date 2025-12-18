@@ -1,5 +1,6 @@
 
 Advance
+
 Skips processing N-lines ahead. The lines skipped will not be
 considered or collected as matched or unmatched.
 
@@ -9,11 +10,11 @@ lines after the line where it is evaluated.
 
 | Data signatures                  |
 |:---------------------------------|
-| advance( lines to advance: [36m[3mint[0m ) |
+| advance( lines to advance: int ) |
 
 | Call signatures                                     |
 |:----------------------------------------------------|
-| advance( lines to advance: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mFunction[0m ) |
+| advance( lines to advance: Term|Variable|Function ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|
@@ -21,7 +22,7 @@ lines after the line where it is evaluated.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

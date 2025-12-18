@@ -1,5 +1,6 @@
 
 Peek size
+
 Returns number of values in a stack variable.
 
 Unless the notnone qualifier is present, the stack is created if not
@@ -7,13 +8,13 @@ found.
 
 | Data signatures                     |
 |:------------------------------------|
-| peek_size( stack name: [36m[3mstr[0m )        |
-| peek_size( stack: [36m[3mlist[0m|[36m[3mtuple[0m|[36m[3mNone[0m ) |
+| peek_size( stack name: str )        |
+| peek_size( stack: list|tuple|None ) |
 
 | Call signatures                                                  |
 |:-----------------------------------------------------------------|
-| peek_size( stack name: [36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m|[36m[3mTerm[0m ) |
-| peek_size( stack: [36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mReference[0m )                  |
+| peek_size( stack name: Variable|Header|Function|Reference|Term ) |
+| peek_size( stack: Variable|Function|Reference )                  |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|
@@ -22,7 +23,7 @@ found.
 
 | Context          | Qualifier        |
 |:-----------------|:-----------------|
-| Match qualifiers | [36m[3monmatch[0m          |
-| Value qualifiers | [36m[3monmatch[0m, [36m[3mnotnone[0m |
+| Match qualifiers | onmatch          |
+| Value qualifiers | onmatch, notnone |
 
 

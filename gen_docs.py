@@ -5,6 +5,12 @@ from csvpath.cli.function_describer import FunctionDescriber
 from csvpath.matching.functions.function_factory import FunctionFactory
 
 
+class MyConst:
+    ITALIC = ""
+    SIDEBAR_COLOR = ""
+    REVERT = ""
+
+
 if __name__ == "__main__":
 
     FunctionFactory.load()
@@ -14,6 +20,7 @@ if __name__ == "__main__":
             None, name=_, child=None, find_external_functions=False
         )
         ps = io.StringIO()
+        FunctionDescriber.CONST = MyConst
         with redirect_stdout(ps):
             FunctionDescriber.describe(f, markdown=True)
             docdir = os.path.join(".", "docs", "func_gen")

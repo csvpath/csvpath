@@ -1,5 +1,6 @@
 
 Debug
+
 Sets the CsvPath Framework log level.
 
 The level is set for the CsvPath class, not the CsvPaths class. That
@@ -9,11 +10,11 @@ breadth-first configuration.
 
 | Data signatures                               |
 |:----------------------------------------------|
-| debug( [info, debug, warn, error: [36m[3mNone[0m|[36m[3mstr[0m] ) |
+| debug( [info, debug, warn, error: None|str] ) |
 
 | Call signatures                                                    |
 |:-------------------------------------------------------------------|
-| debug( [info, debug, warn, error: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mHeader[0m] ) |
+| debug( [info, debug, warn, error: Term|Function|Variable|Header] ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
@@ -21,7 +22,7 @@ breadth-first configuration.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

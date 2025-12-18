@@ -1,5 +1,6 @@
 
 Rename
+
 Renames one or more headers for the duration of the run.
 
 E.g. rename(#person, "fred") would make it possible to use #fred as
@@ -27,19 +28,19 @@ are run in serial or breadth-first.
 
 | Data signatures                            |
 |:-------------------------------------------|
-| rename( header: [36m[3mlist[0m|[36m[3mtuple[0m )               |
-| rename( header: [36m[3mAny[0m, new name: [36m[3mstr[0m )       |
-| rename( header name: [36m[3mstr[0m, new name: [36m[3mstr[0m )  |
-| rename( header index: [36m[3mint[0m, new name: [36m[3mstr[0m ) |
-| rename( new header name: [36m[3mstr[0m, ... )        |
+| rename( header: list|tuple )               |
+| rename( header: Any, new name: str )       |
+| rename( header name: str, new name: str )  |
+| rename( header index: int, new name: str ) |
+| rename( new header name: str, ... )        |
 
 | Call signatures                              |
 |:---------------------------------------------|
-| rename( header: [36m[3mVariable[0m|[36m[3mReference[0m )         |
-| rename( header: [36m[3mHeader[0m, new name: [36m[3mTerm[0m )     |
-| rename( header name: [36m[3mTerm[0m, new name: [36m[3mTerm[0m )  |
-| rename( header index: [36m[3mTerm[0m, new name: [36m[3mTerm[0m ) |
-| rename( new header name: [36m[3mTerm[0m, ... )         |
+| rename( header: Variable|Reference )         |
+| rename( header: Header, new name: Term )     |
+| rename( header name: Term, new name: Term )  |
+| rename( header index: Term, new name: Term ) |
+| rename( new header name: Term, ... )         |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
@@ -47,7 +48,7 @@ are run in serial or breadth-first.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

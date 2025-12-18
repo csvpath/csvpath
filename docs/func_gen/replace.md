@@ -1,5 +1,6 @@
 
 Replace
+
 Replaces the value of the header with another value on every line.
 
 If a header is passed as the first argument its value is replaced.
@@ -11,13 +12,13 @@ For example, $[*][@a = line_number() replace(#order_number, @a)]
 
 | Data signatures                                                       |
 |:----------------------------------------------------------------------|
-| replace( replace value: [36m[3mNone[0m|[36m[3mAny[0m, replacement: [36m[3mAny[0m )                  |
-| replace( replace by header identity: [36m[3mint[0m|[36m[3mstr[0m, replacement: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| replace( replace value: None|Any, replacement: Any )                  |
+| replace( replace by header identity: int|str, replacement: None|Any ) |
 
 | Call signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| replace( replace value: [36m[3mHeader[0m, replacement: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m )            |
-| replace( replace by header identity: [36m[3mTerm[0m, replacement: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| replace( replace value: Header, replacement: Term|Variable|Header|Function|Reference )            |
+| replace( replace by header identity: Term, replacement: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|
@@ -25,7 +26,7 @@ For example, $[*][@a = line_number() replace(#order_number, @a)]
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

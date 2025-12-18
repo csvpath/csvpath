@@ -1,5 +1,6 @@
 
 Track any
+
 track_any() sets a variable with a tracking value that matches another
 value. The name of the variable is either track or a non-reserved
 qualifier on the function.
@@ -37,11 +38,11 @@ not capture leading zeros, but track() would.
 
 | Data signatures                                                               |
 |:------------------------------------------------------------------------------|
-| track_any( track under: [36m[3mstr[0m, tracking value: [36m[3mAny[0m, ['collect' or 'add': [36m[3mAny[0m] ) |
+| track_any( track under: str, tracking value: Any, ['collect' or 'add': Any] ) |
 
 | Call signatures                                                                                                                                        |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| track_any( track under: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, tracking value: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, ['collect' or 'add': [36m[3mTerm[0m] ) |
+| track_any( track under: Term|Variable|Header|Function|Reference, tracking value: Term|Variable|Header|Function|Reference, ['collect' or 'add': Term] ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|
@@ -49,8 +50,8 @@ not capture leading zeros, but track() would.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

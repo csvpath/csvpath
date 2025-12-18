@@ -1,5 +1,6 @@
 
 Any
+
 any() returns True if at least one contained match component matches a
 given value.
 
@@ -19,14 +20,14 @@ configure a csvpath to use OR as the basis for matching.
 | Data signatures                                         |
 |:--------------------------------------------------------|
 | any()                                                   |
-| any( where to look: [36m[3mNone[0m|[36m[3mAny[0m, value to find: [36m[3mNone[0m|[36m[3mAny[0m ) |
-| any( where to look: [36m[3mNone[0m|[36m[3mAny[0m )                          |
+| any( where to look: None|Any, value to find: None|Any ) |
+| any( where to look: None|Any )                          |
 
 | Call signatures                                                                                          |
 |:---------------------------------------------------------------------------------------------------------|
 | any()                                                                                                    |
-| any( where to look: [36m[3mVariables[0m|[36m[3mHeaders[0m, value to find: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mReference[0m|[36m[3mEquality[0m ) |
-| any( where to look: [36m[3mVariables[0m|[36m[3mHeaders[0m|[36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mReference[0m|[36m[3mEquality[0m )                 |
+| any( where to look: Variables|Headers, value to find: Term|Function|Header|Variable|Reference|Equality ) |
+| any( where to look: Variables|Headers|Term|Function|Header|Variable|Reference|Equality )                 |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|
@@ -34,7 +35,7 @@ configure a csvpath to use OR as the basis for matching.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

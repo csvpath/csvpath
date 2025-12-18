@@ -3,11 +3,11 @@ Matches every N times a value is seen.
 
 | Data signatures                                   |
 |:--------------------------------------------------|
-| every( watch: [36m[3mNone[0m|[36m[3mAny[0m, pick every N: [36m[3mint[0m|[36m[3mfloat[0m ) |
+| every( watch: None|Any, pick every N: int|float ) |
 
 | Call signatures                               |
 |:----------------------------------------------|
-| every( watch: [36m[3mMatchable[0m, pick every N: [36m[3mTerm[0m ) |
+| every( watch: Matchable, pick every N: Term ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -15,8 +15,8 @@ Matches every N times a value is seen.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

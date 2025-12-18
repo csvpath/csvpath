@@ -1,5 +1,6 @@
 
 First match
+
 Evaluates to True at the first line matched. firstmatch() implies the
 onmatch qualifier, but does not require it.
 
@@ -8,11 +9,11 @@ firstmatch() matches
 
 | Data signatures                      |
 |:-------------------------------------|
-| first_match( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| first_match( [eval this: None|Any] ) |
 
 | Call signatures                               |
 |:----------------------------------------------|
-| first_match( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| first_match( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|
@@ -21,7 +22,7 @@ firstmatch() matches
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

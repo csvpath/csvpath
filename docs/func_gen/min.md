@@ -1,14 +1,15 @@
 
 Min
+
 Tracks the minimum value.
 
 | Data signatures                    |
 |:-----------------------------------|
-| min( value to compare: [36m[3mint[0m|[36m[3mfloat[0m ) |
+| min( value to compare: int|float ) |
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| min( value to compare: [36m[3mVariable[0m|[36m[3mTerm[0m|[36m[3mHeader[0m|[36m[3mFunction[0m ) |
+| min( value to compare: Variable|Term|Header|Function ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -16,7 +17,7 @@ Tracks the minimum value.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

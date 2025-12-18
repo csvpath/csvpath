@@ -1,14 +1,15 @@
 
 Startswith
+
 Matches when a string begins with another string.
 
 | Data signatures                                              |
 |:-------------------------------------------------------------|
-| startswith( check this: [36m[3mstr[0m|[36m[3m''[0m|[36m[3mNone[0m, for this: [36m[3mstr[0m|[36m[3m''[0m|[36m[3mNone[0m ) |
+| startswith( check this: str|''|None, for this: str|''|None ) |
 
 | Call signatures                                                                                                      |
 |:---------------------------------------------------------------------------------------------------------------------|
-| startswith( check this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, for this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| startswith( check this: Term|Variable|Header|Function|Reference, for this: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|
@@ -17,7 +18,7 @@ Matches when a string begins with another string.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

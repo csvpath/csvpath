@@ -1,5 +1,6 @@
 
 Vote stack
+
 Returns the votes of the match components for each line as a stack.
 
 The votes are collected from the central record, not from each
@@ -14,7 +15,7 @@ not having voted until it is complete, always returns None.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

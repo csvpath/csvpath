@@ -1,5 +1,6 @@
 
 Header table
+
 Prints a table with all the header names and indexes. This output is
 primarily geared towards helping make visible changes in headers. The
 table is text formatted.
@@ -10,7 +11,7 @@ table is text formatted.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

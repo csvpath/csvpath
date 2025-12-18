@@ -1,15 +1,16 @@
 
 Has dups
+
 Evaluates to True if there are duplicate lines or duplicate subsets of
 header values.
 
 | Data signatures                    |
 |:-----------------------------------|
-| has_dups( [check: [36m[3mNone[0m|[36m[3mAny[0m], ... ) |
+| has_dups( [check: None|Any], ... ) |
 
 | Call signatures                  |
 |:---------------------------------|
-| has_dups( [check: [36m[3mHeader[0m], ... ) |
+| has_dups( [check: Header], ... ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|
@@ -17,8 +18,8 @@ header values.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

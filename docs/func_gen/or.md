@@ -1,5 +1,6 @@
 
 Or
+
 or() implements OR logic in a csvpath writer-directed way.
 
 Evaluation of or() completes before any errors are handled to allow
@@ -11,11 +12,11 @@ composable.
 
 | Data signatures                                                    |
 |:-------------------------------------------------------------------|
-| or( First alternative: [36m[3mNone[0m|[36m[3mAny[0m, Next alternative: [36m[3mNone[0m|[36m[3mAny[0m, ... ) |
+| or( First alternative: None|Any, Next alternative: None|Any, ... ) |
 
 | Call signatures                                                      |
 |:---------------------------------------------------------------------|
-| or( First alternative: [36m[3mMatchable[0m, Next alternative: [36m[3mMatchable[0m, ... ) |
+| or( First alternative: Matchable, Next alternative: Matchable, ... ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|
@@ -23,7 +24,7 @@ composable.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

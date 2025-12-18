@@ -1,5 +1,6 @@
 
 Print line
+
 Prints the current line as delimited data.
 
 print_line() only prints collected headers. That is, if you use the
@@ -22,12 +23,12 @@ printers' printouts are more clearly separated.
 | Data signatures                                                |
 |:---------------------------------------------------------------|
 | print_line()                                                   |
-| print_line( printer: [36m[3mstr[0m, [delimiter: [36m[3mstr[0m], [quotechar: [36m[3mstr[0m] ) |
+| print_line( printer: str, [delimiter: str], [quotechar: str] ) |
 
 | Call signatures                                                   |
 |:------------------------------------------------------------------|
 | print_line()                                                      |
-| print_line( printer: [36m[3mTerm[0m, [delimiter: [36m[3mTerm[0m], [quotechar: [36m[3mTerm[0m] ) |
+| print_line( printer: Term, [delimiter: Term], [quotechar: Term] ) |
 
 | Purpose    | Value                         |
 |:-----------|:------------------------------|
@@ -35,7 +36,7 @@ printers' printouts are more clearly separated.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

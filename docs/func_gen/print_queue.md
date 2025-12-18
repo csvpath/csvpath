@@ -1,5 +1,6 @@
 
 Print queue
+
 Returns the number of printouts that have been done by the present
 csvpath so far.
 
@@ -9,7 +10,7 @@ csvpath so far.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

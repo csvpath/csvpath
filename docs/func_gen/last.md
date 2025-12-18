@@ -1,5 +1,6 @@
 
 Last
+
 Evaluates True on the last line to be scanned.
 
 last() used by itself will always run, even if its line turns out to
@@ -18,11 +19,11 @@ be relied on.
 
 | Data signatures                  |
 |:---------------------------------|
-| last( [eval on last: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| last( [eval on last: None|Any] ) |
 
 | Call signatures                                    |
 |:---------------------------------------------------|
-| last( [eval on last: [36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mEquality[0m] ) |
+| last( [eval on last: Function|Variable|Equality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|
@@ -30,7 +31,7 @@ be relied on.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

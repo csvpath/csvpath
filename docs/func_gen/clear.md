@@ -1,16 +1,17 @@
 
 Clear
+
 Clears a variable by removing it.
 
 | Data signatures        |
 |:-----------------------|
-| clear( var name: [36m[3mstr[0m ) |
-| clear( var: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| clear( var name: str ) |
+| clear( var: None|Any ) |
 
 | Call signatures         |
 |:------------------------|
-| clear( var name: [36m[3mTerm[0m ) |
-| clear( var: [36m[3mVariable[0m )  |
+| clear( var name: Term ) |
+| clear( var: Variable )  |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
@@ -18,7 +19,7 @@ Clears a variable by removing it.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

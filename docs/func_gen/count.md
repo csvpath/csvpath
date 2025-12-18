@@ -1,5 +1,6 @@
 
 Count
+
 Returns the number of matches.
 
 When used alone count() gives the total matches seen up to the current
@@ -43,12 +44,12 @@ that case, onmatch would add nothing.
 | Data signatures                |
 |:-------------------------------|
 | count()                        |
-| count( [eval: [36m[3mNone[0m|[36m[3mAny[0m], ... ) |
+| count( [eval: None|Any], ... ) |
 
 | Call signatures                 |
 |:--------------------------------|
 | count()                         |
-| count( [eval: [36m[3mMatchable[0m], ... ) |
+| count( [eval: Matchable], ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -56,8 +57,8 @@ that case, onmatch would add nothing.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

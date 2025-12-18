@@ -1,5 +1,6 @@
 
 Thisyear
+
 A convenience function that returns the datetime component as a
 string.
 
@@ -17,7 +18,7 @@ string.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

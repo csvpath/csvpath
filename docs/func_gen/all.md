@@ -1,5 +1,6 @@
 
 All
+
 Tests if all contained or referenced match components evaluate to
 True. If all() has no arguments the check is if all headers have
 values.
@@ -8,13 +9,13 @@ values.
 |:--------------------------------------------------------------|
 | all()                                                         |
 | all( [a function indicating all headers or all variables: ] ) |
-| all( [one of a set of match components: [36m[3mNone[0m|[36m[3mAny[0m], ... )      |
+| all( [one of a set of match components: None|Any], ... )      |
 
 | Call signatures                                                                |
 |:-------------------------------------------------------------------------------|
 | all()                                                                          |
-| all( [a function indicating all headers or all variables: [36m[3mVariables[0m|[36m[3mHeaders[0m] ) |
-| all( [one of a set of match components: [36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mHeader[0m], ... )       |
+| all( [a function indicating all headers or all variables: Variables|Headers] ) |
+| all( [one of a set of match components: Function|Variable|Header], ... )       |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|
@@ -22,7 +23,7 @@ values.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

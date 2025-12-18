@@ -1,15 +1,16 @@
 
 Xpath
+
 Finds the value of an XPath expression given a match component
 containing XML.
 
 | Data signatures                                             |
 |:------------------------------------------------------------|
-| xpath( from this XML: [36m[3mstr[0m|[36m[3m''[0m|[36m[3mNone[0m, select this XPath: [36m[3mstr[0m ) |
+| xpath( from this XML: str|''|None, select this XPath: str ) |
 
 | Call signatures                                                                                                             |
 |:----------------------------------------------------------------------------------------------------------------------------|
-| xpath( from this XML: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, select this XPath: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| xpath( from this XML: Term|Variable|Header|Function|Reference, select this XPath: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -17,7 +18,7 @@ containing XML.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

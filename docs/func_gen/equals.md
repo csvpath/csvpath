@@ -1,5 +1,6 @@
 
 Equals
+
 Tests the equality of two values.
 
 In most cases you will use == to test equality. However, in some cases
@@ -15,11 +16,11 @@ allowed.
 
 | Data signatures                            |
 |:-------------------------------------------|
-| equals( is this: [36m[3mAny[0m, equal to that: [36m[3mAny[0m ) |
+| equals( is this: Any, equal to that: Any ) |
 
 | Call signatures                                                                                                    |
 |:-------------------------------------------------------------------------------------------------------------------|
-| equals( is this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, equal to that: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| equals( is this: Term|Variable|Header|Function|Reference, equal to that: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|
@@ -28,7 +29,7 @@ allowed.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

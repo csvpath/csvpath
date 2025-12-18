@@ -1,18 +1,21 @@
 
 Date
+
 date() has two purposes.
+
 First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.
+
 Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.
 
 | Data signatures                              |
 |:---------------------------------------------|
-| date( date: [36m[3mNone[0m|[36m[3mdatetime[0m|[36m[3mdate[0m )             |
-| date( date string: [36m[3mNone[0m|[36m[3mstr[0m, [format: [36m[3mstr[0m] ) |
+| date( date: None|datetime|date )             |
+| date( date string: None|str, [format: str] ) |
 
 | Call signatures                                                                                                 |
 |:----------------------------------------------------------------------------------------------------------------|
-| date( date: [36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mReference[0m )                                                                |
-| date( date string: [36m[3mTerm[0m|[36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mReference[0m, [format: [36m[3mTerm[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mReference[0m] ) |
+| date( date: Header|Variable|Function|Reference )                                                                |
+| date( date string: Term|Header|Variable|Function|Reference, [format: Term|Header|Function|Variable|Reference] ) |
 
 | Purpose    | Value                                                  |
 |:-----------|:-------------------------------------------------------|
@@ -21,7 +24,7 @@ Alternatively, it may generate a date from a string. Generally, {self.name}() re
 
 | Context          | Qualifier                          |
 |:-----------------|:-----------------------------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3mnotnone[0m, [36m[3mstrict[0m, [36m[3mdistinct[0m |
-| Value qualifiers | [36m[3monmatch[0m, [36m[3mnotnone[0m                   |
+| Match qualifiers | onmatch, notnone, strict, distinct |
+| Value qualifiers | onmatch, notnone                   |
 
 

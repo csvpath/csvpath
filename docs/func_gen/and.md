@@ -1,5 +1,6 @@
 
 And
+
  and() tests if its contained match components evaluate to True.
 
 Matching is ANDed by default, but it can be set to OR. And and() gives
@@ -11,11 +12,11 @@ that are more specific than and().
 
 | Data signatures                                          |
 |:---------------------------------------------------------|
-| and( Eval this: [36m[3mNone[0m|[36m[3mAny[0m, And eval this: [36m[3mNone[0m|[36m[3mAny[0m, ... ) |
+| and( Eval this: None|Any, And eval this: None|Any, ... ) |
 
 | Call signatures                                            |
 |:-----------------------------------------------------------|
-| and( Eval this: [36m[3mMatchable[0m, And eval this: [36m[3mMatchable[0m, ... ) |
+| and( Eval this: Matchable, And eval this: Matchable, ... ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|
@@ -23,7 +24,7 @@ that are more specific than and().
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

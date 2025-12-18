@@ -1,5 +1,6 @@
 
 Increment
+
 increment() increases a variable tracking each match every N-matches.
 
 For example in a file with four lines of first names where there are
@@ -14,11 +15,11 @@ every N-times a value is seen, matching or not.
 
 | Data signatures                               |
 |:----------------------------------------------|
-| increment( Match component: [36m[3mAny[0m, Ratio: [36m[3mint[0m ) |
+| increment( Match component: Any, Ratio: int ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
-| increment( Match component: [36m[3mMatchable[0m, Ratio: [36m[3mTerm[0m ) |
+| increment( Match component: Matchable, Ratio: Term ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|
@@ -26,8 +27,8 @@ every N-times a value is seen, matching or not.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

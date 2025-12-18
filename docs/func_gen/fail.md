@@ -1,5 +1,6 @@
 
 Indicates that a csvpath statement fails a data file. 
+
 Failures can be seen in metadata and are used in error handling.
 
 | Purpose    | Value                            |
@@ -8,7 +9,7 @@ Failures can be seen in metadata and are used in error handling.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

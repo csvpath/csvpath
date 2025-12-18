@@ -1,5 +1,6 @@
 
 Do when stack
+
 Returns a stack of bool representing the when/do operators for each
 line.
 
@@ -12,7 +13,7 @@ didn't fire have a False.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,14 +1,15 @@
 
 Round
+
 Rounds a number, optionally to a certain number of places.
 
 | Data signatures                                                |
 |:---------------------------------------------------------------|
-| round( round this: [36m[3mNone[0m|[36m[3mbool[0m|[36m[3mstr[0m|[36m[3mfloat[0m|[36m[3mint[0m, [to places: [36m[3mint[0m] ) |
+| round( round this: None|bool|str|float|int, [to places: int] ) |
 
 | Call signatures                                                       |
 |:----------------------------------------------------------------------|
-| round( round this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m, [to places: [36m[3mTerm[0m] ) |
+| round( round this: Term|Variable|Header|Function, [to places: Term] ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -16,7 +17,7 @@ Rounds a number, optionally to a certain number of places.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

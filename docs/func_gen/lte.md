@@ -1,14 +1,15 @@
 
 Less than or equal to
+
 lte() returns true if a value is less than or equal to another value.
 
 | Data signatures                                                                                 |
 |:------------------------------------------------------------------------------------------------|
-| lte( relate this: [36m[3mNone[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mdate[0m|[36m[3mdatetime[0m|[36m[3mstr[0m, to that: [36m[3mNone[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mdate[0m|[36m[3mdatetime[0m|[36m[3mstr[0m ) |
+| lte( relate this: None|int|float|date|datetime|str, to that: None|int|float|date|datetime|str ) |
 
 | Call signatures                                                                                               |
 |:--------------------------------------------------------------------------------------------------------------|
-| lte( relate this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, to that: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| lte( relate this: Term|Variable|Header|Function|Reference, to that: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                           |
 |:-----------|:--------------------------------|
@@ -17,7 +18,7 @@ lte() returns true if a value is less than or equal to another value.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

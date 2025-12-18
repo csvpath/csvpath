@@ -1,5 +1,6 @@
 
 Pstdev
+
 Given a stack of values returns the population standard deviation.
 
 This function expects a string naming a stack prepared by the csvpath
@@ -8,11 +9,11 @@ using push() or other functions.
 
 | Data signatures                          |
 |:-----------------------------------------|
-| pstdev( stack var name: [36m[3mstr[0m|[36m[3mtuple[0m|[36m[3mlist[0m ) |
+| pstdev( stack var name: str|tuple|list ) |
 
 | Call signatures                                  |
 |:-------------------------------------------------|
-| pstdev( stack var name: [36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mTerm[0m ) |
+| pstdev( stack var name: Variable|Function|Term ) |
 
 | Purpose    | Value                                |
 |:-----------|:-------------------------------------|
@@ -20,7 +21,7 @@ using push() or other functions.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

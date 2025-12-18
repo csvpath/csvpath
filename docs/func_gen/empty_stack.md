@@ -1,5 +1,6 @@
 
 Empty stack
+
 If no arguments are provided, adds the names of any headers without
 values to a stack. If one or more arguments are provided and an
 argument is a variable that variable is checked for emptyness.
@@ -11,12 +12,12 @@ The resulting stack does not persist from line to line.
 | Data signatures                               |
 |:----------------------------------------------|
 | empty_stack()                                 |
-| empty_stack( [header or var: [36m[3mNone[0m|[36m[3mAny[0m], ... ) |
+| empty_stack( [header or var: None|Any], ... ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
 | empty_stack()                                        |
-| empty_stack( [header or var: [36m[3mVariable[0m|[36m[3mHeader[0m], ... ) |
+| empty_stack( [header or var: Variable|Header], ... ) |
 
 | Purpose    | Value                                     |
 |:-----------|:------------------------------------------|
@@ -24,7 +25,7 @@ The resulting stack does not persist from line to line.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

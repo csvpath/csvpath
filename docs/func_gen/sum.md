@@ -1,5 +1,6 @@
 
 Sum
+
 Returns the running sum of a source.
 
 sum() is similar to subtotal() but unlike subtotal it does not use
@@ -12,11 +13,11 @@ using integer() or another approach.
 
 | Data signatures            |
 |:---------------------------|
-| sum( sum this: [36m[3mint[0m|[36m[3mfloat[0m ) |
+| sum( sum this: int|float ) |
 
 | Call signatures                                |
 |:-----------------------------------------------|
-| sum( sum this: [36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mTerm[0m|[36m[3mHeader[0m ) |
+| sum( sum this: Variable|Function|Term|Header ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -24,8 +25,8 @@ using integer() or another approach.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

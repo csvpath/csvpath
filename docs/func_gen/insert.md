@@ -1,5 +1,6 @@
 
 Insert
+
 Inserts a new header-value at a certain position within the output
 data.
 
@@ -12,11 +13,11 @@ sets the value for each line of output to the @critter variable.
 
 | Data signatures                                                         |
 |:------------------------------------------------------------------------|
-| insert( insert at index: [36m[3mint[0m, insert header name: [36m[3mstr[0m, data: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| insert( insert at index: int, insert header name: str, data: None|Any ) |
 
 | Call signatures                                                                                     |
 |:----------------------------------------------------------------------------------------------------|
-| insert( insert at index: [36m[3mTerm[0m, insert header name: [36m[3mTerm[0m, data: [36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| insert( insert at index: Term, insert header name: Term, data: Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
@@ -24,7 +25,7 @@ sets the value for each line of output to the @critter variable.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

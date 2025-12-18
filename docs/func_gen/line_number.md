@@ -1,5 +1,6 @@
 
 Line number
+
 The 0-based number of data lines seen, blanks excluded. This is also
 known as the physical line number.
 
@@ -11,7 +12,7 @@ count_lines() is similar but is 1-based and excludes blank lines.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

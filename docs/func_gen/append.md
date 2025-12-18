@@ -1,5 +1,6 @@
 
 Append
+
 Adds the header name and a value to the end of every line. The name is
 added to the headers and available for use in the csvpath. An appended
 header becomes part of the headers when it is first set. If The
@@ -9,11 +10,11 @@ appended line all lines have the appended header.
 
 | Data signatures                                                                                        |
 |:-------------------------------------------------------------------------------------------------------|
-| append( name of appended header: [36m[3mstr[0m, value: [36m[3mNone[0m|[36m[3mAny[0m, [append header name to header row data: [36m[3mbool[0m] ) |
+| append( name of appended header: str, value: None|Any, [append header name to header row data: bool] ) |
 
 | Call signatures                                                                                                                                 |
 |:------------------------------------------------------------------------------------------------------------------------------------------------|
-| append( name of appended header: [36m[3mTerm[0m, value: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, [append header name to header row data: [36m[3mTerm[0m|[36m[3mFunction[0m] ) |
+| append( name of appended header: Term, value: Term|Variable|Header|Function|Reference, [append header name to header row data: Term|Function] ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
@@ -21,7 +22,7 @@ appended line all lines have the appended header.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

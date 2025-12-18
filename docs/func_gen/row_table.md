@@ -1,15 +1,16 @@
 
 Row table
+
 Prints a table with all the header names and values for each line. The
 table is text formatted.
 
 | Data signatures                                   |
 |:--------------------------------------------------|
-| row_table( [from header: [36m[3mint[0m], [to header: [36m[3mint[0m] ) |
+| row_table( [from header: int], [to header: int] ) |
 
 | Call signatures                                     |
 |:----------------------------------------------------|
-| row_table( [from header: [36m[3mTerm[0m], [to header: [36m[3mTerm[0m] ) |
+| row_table( [from header: Term], [to header: Term] ) |
 
 | Purpose    | Value                        |
 |:-----------|:-----------------------------|
@@ -17,7 +18,7 @@ table is text formatted.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

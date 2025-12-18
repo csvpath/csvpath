@@ -1,5 +1,6 @@
 
 Jinja
+
 jinja() enables you to create a document using a template and tokens
 derrived from the presently executing run and any number of past
 csvpath results.
@@ -16,11 +17,11 @@ already taxing for high print volumes and/or very large files.
 
 | Data signatures                                           |
 |:----------------------------------------------------------|
-| jinja( template: [36m[3mstr[0m, out: [36m[3mstr[0m, [results ref: [36m[3mstr[0m], ... ) |
+| jinja( template: str, out: str, [results ref: str], ... ) |
 
 | Call signatures                                                                                                                                                       |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jinja( template: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, out: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, [results ref: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m], ... ) |
+| jinja( template: Term|Variable|Header|Function|Reference, out: Term|Variable|Header|Function|Reference, [results ref: Term|Variable|Header|Function|Reference], ... ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
@@ -28,7 +29,7 @@ already taxing for high print volumes and/or very large files.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

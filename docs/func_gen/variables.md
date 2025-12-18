@@ -1,5 +1,6 @@
 
 Variables
+
 Directs certain functions, such as any() or all(), to search in the
 variables. headers() has the same function, but directing the search
 to the headers.
@@ -10,7 +11,7 @@ to the headers.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

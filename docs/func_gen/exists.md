@@ -1,5 +1,6 @@
 
 Exists
+
 exist() does an existance test on match components.
 
 Unlike a simple reference to a match component, also essentially an
@@ -9,11 +10,11 @@ purposes of matching.
 
 | Data signatures                        |
 |:---------------------------------------|
-| exists( Component to check: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| exists( Component to check: None|Any ) |
 
 | Call signatures                                                  |
 |:-----------------------------------------------------------------|
-| exists( Component to check: [36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| exists( Component to check: Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|
@@ -21,7 +22,7 @@ purposes of matching.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

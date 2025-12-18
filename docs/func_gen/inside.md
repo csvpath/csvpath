@@ -1,5 +1,6 @@
 
 Inside
+
 Returns true if the values provided have a between relationship.
 
 The values can be dates, numbers, or strings. They must all be of the
@@ -10,15 +11,15 @@ syntactically in your use case, but they are all the same logic.
 
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
-| inside( The value to test: [36m[3mNone[0m|[36m[3mdatetime[0m|[36m[3mdate[0m, From: [36m[3mNone[0m|[36m[3mdatetime[0m|[36m[3mdate[0m, To: [36m[3mNone[0m|[36m[3mdatetime[0m|[36m[3mdate[0m ) |
-| inside( The value to test: [36m[3mNone[0m|[36m[3mfloat[0m|[36m[3mint[0m, From: [36m[3mNone[0m|[36m[3mfloat[0m|[36m[3mint[0m, To: [36m[3mNone[0m|[36m[3mfloat[0m|[36m[3mint[0m )             |
-| inside( The value to test: [36m[3mNone[0m|[36m[3mstr[0m, From: [36m[3mNone[0m|[36m[3mstr[0m, To: [36m[3mNone[0m|[36m[3mstr[0m )                               |
+| inside( The value to test: None|datetime|date, From: None|datetime|date, To: None|datetime|date ) |
+| inside( The value to test: None|float|int, From: None|float|int, To: None|float|int )             |
+| inside( The value to test: None|str, From: None|str, To: None|str )                               |
 
 | Call signatures                                                                                                                                                  |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| inside( The value to test: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, From: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, To: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
-| inside( The value to test: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, From: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, To: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
-| inside( The value to test: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, From: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, To: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| inside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
+| inside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
+| inside( The value to test: Term|Variable|Header|Function|Reference, From: Term|Variable|Header|Function|Reference, To: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|
@@ -27,7 +28,7 @@ syntactically in your use case, but they are all the same logic.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

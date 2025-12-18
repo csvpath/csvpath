@@ -1,5 +1,6 @@
 
 In
+
 in() checks if the component value is in the values of the other
 arguments.
 
@@ -10,11 +11,11 @@ String terms are treated as possibly | delimited strings of values
 
 | Data signatures                                             |
 |:------------------------------------------------------------|
-| in( Value to find: [36m[3mNone[0m|[36m[3mAny[0m, Place to look: [36m[3mNone[0m|[36m[3mAny[0m, ... ) |
+| in( Value to find: None|Any, Place to look: None|Any, ... ) |
 
 | Call signatures                                                                                                           |
 |:--------------------------------------------------------------------------------------------------------------------------|
-| in( Value to find: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, Place to look: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, ... ) |
+| in( Value to find: Term|Variable|Header|Function|Reference, Place to look: Term|Variable|Header|Function|Reference, ... ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|
@@ -22,7 +23,7 @@ String terms are treated as possibly | delimited strings of values
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

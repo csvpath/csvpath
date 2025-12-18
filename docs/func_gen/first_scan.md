@@ -1,5 +1,6 @@
 
 First scan
+
 Evaluates to True on the first line scanned. A scanned line is one
 that has been evaluated for matching.
 
@@ -8,11 +9,11 @@ matches
 
 | Data signatures                     |
 |:------------------------------------|
-| first_scan( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| first_scan( [eval this: None|Any] ) |
 
 | Call signatures                              |
 |:---------------------------------------------|
-| first_scan( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| first_scan( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
@@ -21,7 +22,7 @@ matches
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

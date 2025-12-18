@@ -1,5 +1,6 @@
 
 Skip all
+
 Jumps to the next line abruptly. In a named-paths group run, where the
 run method is breadth-first, skip_all() jumps to the next line without
 any following csvpaths seeing the line at all.
@@ -19,12 +20,12 @@ See skip() for more behavior details.
 | Data signatures                 |
 |:--------------------------------|
 | skip_all()                      |
-| skip_all( eval this: [36m[3mNone[0m|[36m[3mAny[0m ) |
+| skip_all( eval this: None|Any ) |
 
 | Call signatures                          |
 |:-----------------------------------------|
 | skip_all()                               |
-| skip_all( eval this: [36m[3mFunction[0m|[36m[3mEquality[0m ) |
+| skip_all( eval this: Function|Equality ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|
@@ -32,7 +33,7 @@ See skip() for more behavior details.
 
 | Context          | Qualifier     |
 |:-----------------|:--------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3monce[0m |
-| Value qualifiers | [36m[3monmatch[0m       |
+| Match qualifiers | onmatch, once |
+| Value qualifiers | onmatch       |
 
 

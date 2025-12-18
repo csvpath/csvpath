@@ -1,5 +1,6 @@
 
 Count scans
+
 Returns the current number of lines that have been scanned.
 
 Scanning predicts a specific number of lines for a given file.
@@ -18,7 +19,7 @@ line.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

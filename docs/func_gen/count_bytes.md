@@ -1,5 +1,6 @@
 
 Count bytes
+
 Returns the total data bytes written count.
 
 This function is only for named-path group runs. Individual CsvPath
@@ -11,7 +12,7 @@ instances do not write out data, so this value would be 0 for them.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

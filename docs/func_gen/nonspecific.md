@@ -1,6 +1,8 @@
 
 Nonspecific
+
 A line() schema type representing an incompletely known header.
+
 Blank cannot be used outside a line()
 
 | Purpose    | Value                                   |
@@ -11,7 +13,7 @@ Blank cannot be used outside a line()
 
 | Context          | Qualifier         |
 |:-----------------|:------------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3mdistinct[0m |
-| Value qualifiers | [36m[3monmatch[0m           |
+| Match qualifiers | onmatch, distinct |
+| Value qualifiers | onmatch           |
 
 

@@ -1,5 +1,6 @@
 
 Stop all
+
 Halts the containing csvpath's run abruptly and, in certain named-
 paths group runs, prevents subsequent csvpaths from running.
 
@@ -12,11 +13,11 @@ See stop() for more behavior details.
 
 | Data signatures                   |
 |:----------------------------------|
-| stop_all( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| stop_all( [eval this: None|Any] ) |
 
 | Call signatures                            |
 |:-------------------------------------------|
-| stop_all( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| stop_all( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                       |
 |:-----------|:----------------------------|
@@ -24,7 +25,7 @@ See stop() for more behavior details.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,5 +1,6 @@
 
 Run table
+
 Prints a table with all the metadata names and values available at
 each line. The table is text formatted.
 
@@ -9,7 +10,7 @@ each line. The table is text formatted.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,5 +1,6 @@
 
 Collect
+
 When collect() is used only values for the indicated headers are
 returned during the run. If there are four columns in a data file and
 two are collected each line returned by CsvPath.next() will contain
@@ -7,13 +8,13 @@ two values.
 
 | Data signatures                            |
 |:-------------------------------------------|
-| collect( header identifier: [36m[3mint[0m|[36m[3mstr[0m, ... ) |
-| collect( header: [36m[3mAny[0m, ... )                |
+| collect( header identifier: int|str, ... ) |
+| collect( header: Any, ... )                |
 
 | Call signatures                         |
 |:----------------------------------------|
-| collect( header identifier: [36m[3mTerm[0m, ... ) |
-| collect( header: [36m[3mHeader[0m, ... )          |
+| collect( header identifier: Term, ... ) |
+| collect( header: Header, ... )          |
 
 | Purpose    | Value                      |
 |:-----------|:---------------------------|
@@ -21,7 +22,7 @@ two values.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

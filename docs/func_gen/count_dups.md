@@ -1,15 +1,16 @@
 
 Count dups
+
 Produces the number of duplicate lines or the number of lines where
 there are duplicate subsets of header values.
 
 | Data signatures                           |
 |:------------------------------------------|
-| count_dups( [check this: [36m[3mNone[0m|[36m[3mAny[0m], ... ) |
+| count_dups( [check this: None|Any], ... ) |
 
 | Call signatures                         |
 |:----------------------------------------|
-| count_dups( [check this: [36m[3mHeader[0m], ... ) |
+| count_dups( [check this: Header], ... ) |
 
 | Purpose    | Value                                    |
 |:-----------|:-----------------------------------------|
@@ -17,8 +18,8 @@ there are duplicate subsets of header values.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

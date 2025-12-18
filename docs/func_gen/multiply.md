@@ -1,14 +1,15 @@
 
 Multiply
+
 Multiplies numbers. Any number of arguments is acceptable.
 
 | Data signatures                                               |
 |:--------------------------------------------------------------|
-| multiply( multiply this: [36m[3mfloat[0m|[36m[3mint[0m, by that: [36m[3mfloat[0m|[36m[3mint[0m, ... ) |
+| multiply( multiply this: float|int, by that: float|int, ... ) |
 
 | Call signatures                                                                                                           |
 |:--------------------------------------------------------------------------------------------------------------------------|
-| multiply( multiply this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, by that: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, ... ) |
+| multiply( multiply this: Term|Variable|Header|Function|Reference, by that: Term|Variable|Header|Function|Reference, ... ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
@@ -16,7 +17,7 @@ Multiplies numbers. Any number of arguments is acceptable.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

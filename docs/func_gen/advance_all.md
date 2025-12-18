@@ -1,5 +1,6 @@
 
 Advance all
+
 Like advance(), advance_all() jumps processing N-lines forward. The
 lines skipped will not be considered or collected as matched or
 unmatched.
@@ -28,11 +29,11 @@ csvpath will only see the even lines.
 
 | Data signatures                      |
 |:-------------------------------------|
-| advance_all( lines to advance: [36m[3mint[0m ) |
+| advance_all( lines to advance: int ) |
 
 | Call signatures                                         |
 |:--------------------------------------------------------|
-| advance_all( lines to advance: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mFunction[0m ) |
+| advance_all( lines to advance: Term|Variable|Function ) |
 
 | Purpose    | Value                          |
 |:-----------|:-------------------------------|
@@ -40,7 +41,7 @@ csvpath will only see the even lines.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

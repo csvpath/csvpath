@@ -1,14 +1,15 @@
 
 Mod
+
 Calculates the modulo of two numbers.
 
 | Data signatures                                |
 |:-----------------------------------------------|
-| mod( dividend: [36m[3mint[0m|[36m[3mfloat[0m, divisor: [36m[3mint[0m|[36m[3mfloat[0m ) |
+| mod( dividend: int|float, divisor: int|float ) |
 
 | Call signatures                                                                                            |
 |:-----------------------------------------------------------------------------------------------------------|
-| mod( dividend: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, divisor: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| mod( dividend: Term|Variable|Header|Function|Reference, divisor: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -16,7 +17,7 @@ Calculates the modulo of two numbers.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

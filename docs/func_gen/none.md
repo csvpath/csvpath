@@ -1,18 +1,19 @@
 
 None
+
 A value producer and line() schema type representing a None value.
 
 | Data signatures               |
 |:------------------------------|
 | none()                        |
-| none( nullable: [36m[3mNone[0m )        |
-| none( header reference: [36m[3mstr[0m ) |
+| none( nullable: None )        |
+| none( header reference: str ) |
 
 | Call signatures                                      |
 |:-----------------------------------------------------|
 | none()                                               |
-| none( nullable: [36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
-| none( header reference: [36m[3mTerm[0m )                       |
+| none( nullable: Variable|Header|Function|Reference ) |
+| none( header reference: Term )                       |
 
 | Purpose    | Value                                                  |
 |:-----------|:-------------------------------------------------------|
@@ -21,7 +22,7 @@ A value producer and line() schema type representing a None value.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

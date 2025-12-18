@@ -1,5 +1,6 @@
 
 Import
+
 Imports one csvpath into another. The imported csvpath's match
 components are copied into the importing csvpath. Scan instructions
 are not imported.
@@ -44,11 +45,11 @@ mode of the imported csvpaths to no-run.
 
 | Data signatures            |
 |:---------------------------|
-| import( import this: [36m[3mstr[0m ) |
+| import( import this: str ) |
 
 | Call signatures                       |
 |:--------------------------------------|
-| import( import this: [36m[3mTerm[0m|[36m[3mReference[0m ) |
+| import( import this: Term|Reference ) |
 
 | Purpose    | Value                     |
 |:-----------|:--------------------------|
@@ -56,7 +57,7 @@ mode of the imported csvpaths to no-run.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

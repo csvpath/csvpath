@@ -1,5 +1,6 @@
 
 Get
+
 Returns a variable's tracking or index value. The variable is either:
 - found by name using string value of the first argument, or - a
 variable or reference that is a dictionary or stack
@@ -16,11 +17,11 @@ unless there is no simplier solution based on more specific functions.
 
 | Data signatures                                                                                                |
 |:---------------------------------------------------------------------------------------------------------------|
-| get( var name: [36m[3mstr[0m|[36m[3mdict[0m, [tracking value: [36m[3mNone[0m|[36m[3mstr[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mbool[0m|[36m[3m''[0m], [default: [36m[3mNone[0m|[36m[3mstr[0m|[36m[3mint[0m|[36m[3mfloat[0m|[36m[3mbool[0m|[36m[3m''[0m] ) |
+| get( var name: str|dict, [tracking value: None|str|int|float|bool|''], [default: None|str|int|float|bool|''] ) |
 
 | Call signatures                                                                                                                                     |
 |:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| get( var name: [36m[3mHeader[0m|[36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mVariable[0m|[36m[3mReference[0m, [tracking value: [36m[3mHeader[0m|[36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mVariable[0m], [default: [36m[3mHeader[0m|[36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mVariable[0m] ) |
+| get( var name: Header|Term|Function|Variable|Reference, [tracking value: Header|Term|Function|Variable], [default: Header|Term|Function|Variable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -28,7 +29,7 @@ unless there is no simplier solution based on more specific functions.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

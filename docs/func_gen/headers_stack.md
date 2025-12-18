@@ -1,5 +1,6 @@
 
 Headers stack
+
 Returns the current header names as a stack variable.
 
 | Data signatures   |
@@ -16,7 +17,7 @@ Returns the current header names as a stack variable.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

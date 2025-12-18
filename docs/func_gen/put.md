@@ -1,5 +1,6 @@
 
 Put
+
 Sets a variable that tracks keyed-values.
 
 A tracking value is similar to a dictionary key. It usually keys a
@@ -20,15 +21,15 @@ function is often simpler.
 
 | Data signatures                                              |
 |:-------------------------------------------------------------|
-| put( new var name: [36m[3mstr[0m )                                     |
-| put( var name: [36m[3mstr[0m, var value: [36m[3mAny[0m )                         |
-| put( var name: [36m[3mstr[0m, tracking key: [36m[3mstr[0m, tracking value: [36m[3mAny[0m ) |
+| put( new var name: str )                                     |
+| put( var name: str, var value: Any )                         |
+| put( var name: str, tracking key: str, tracking value: Any ) |
 
 | Call signatures                                                                                                                                                          |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| put( new var name: [36m[3mTerm[0m )                                                                                                                                                |
-| put( var name: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, var value: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m )                                                             |
-| put( var name: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, tracking key: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m, tracking value: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m|[36m[3mReference[0m ) |
+| put( new var name: Term )                                                                                                                                                |
+| put( var name: Term|Variable|Header|Function|Reference, var value: Term|Variable|Header|Function|Reference )                                                             |
+| put( var name: Term|Variable|Header|Function|Reference, tracking key: Term|Variable|Header|Function|Reference, tracking value: Term|Variable|Header|Function|Reference ) |
 
 | Purpose    | Value                  |
 |:-----------|:-----------------------|
@@ -36,7 +37,7 @@ function is often simpler.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

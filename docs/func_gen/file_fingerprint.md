@@ -1,5 +1,6 @@
 
 File fingerprint
+
 Enters the SHA256 hash of the current data file into metadata.
 
 A file's hash is available in run metadata. However, this function can
@@ -27,8 +28,8 @@ csvpath and different from the original data file.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

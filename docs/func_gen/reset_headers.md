@@ -1,5 +1,6 @@
 
 Reset headers
+
 reset_headers() sets the headers to the values of the current row.
 
 This may change the number of headers. It may be that the header names
@@ -23,7 +24,7 @@ line numbers where the reset calls happened.
 
 | Call signatures                            |
 |:-------------------------------------------|
-| reset_headers( [evaluate this: [36m[3mFunction[0m] ) |
+| reset_headers( [evaluate this: Function] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|
@@ -31,7 +32,7 @@ line numbers where the reset calls happened.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

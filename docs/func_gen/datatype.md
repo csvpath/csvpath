@@ -1,5 +1,6 @@
 
 Datatype
+
 datatype() returns the best fitting type for a header value on a given line.
               String is considered the least specific type, meaning that a type is only
               considered a string if all other types do not match. For example, "" is
@@ -8,11 +9,11 @@ datatype() returns the best fitting type for a header value on a given line.
 
 | Data signatures                  |
 |:---------------------------------|
-| datatype( header of value: [36m[3mstr[0m ) |
+| datatype( header of value: str ) |
 
 | Call signatures                                       |
 |:------------------------------------------------------|
-| datatype( header of value: [36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m ) |
+| datatype( header of value: Variable|Header|Function ) |
 
 | Purpose    | Value                                  |
 |:-----------|:---------------------------------------|
@@ -20,7 +21,7 @@ datatype() returns the best fitting type for a header value on a given line.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

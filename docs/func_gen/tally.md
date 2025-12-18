@@ -1,5 +1,6 @@
 
 Tally
+
 tally() tracks the value of a variable, function, or header.
 
 It always matches, effectively giving it nocontrib. Tally collects its
@@ -20,11 +21,11 @@ variable of birds with values like blue|bluebird,red|redbird.
 
 | Data signatures                   |
 |:----------------------------------|
-| tally( Value to count: [36m[3mAny[0m, ... ) |
+| tally( Value to count: Any, ... ) |
 
 | Call signatures                                        |
 |:-------------------------------------------------------|
-| tally( Value to count: [36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mFunction[0m, ... ) |
+| tally( Value to count: Header|Variable|Function, ... ) |
 
 | Purpose    | Value                    |
 |:-----------|:-------------------------|
@@ -32,8 +33,8 @@ variable of birds with values like blue|bluebird,red|redbird.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

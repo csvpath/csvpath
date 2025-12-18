@@ -1,5 +1,6 @@
 
 Stop
+
 Halts the run abruptly.
 
 When stop() contains no other match components it simply stops the
@@ -19,11 +20,11 @@ stop().
 
 | Data signatures               |
 |:------------------------------|
-| stop( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| stop( [eval this: None|Any] ) |
 
 | Call signatures                        |
 |:---------------------------------------|
-| stop( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| stop( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                   |
 |:-----------|:------------------------|
@@ -31,7 +32,7 @@ stop().
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

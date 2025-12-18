@@ -1,5 +1,6 @@
 
 Percent
+
 Returns the percent of scanned, matched or all lines so-far seen of
 the total data lines in the file. Data lines have data. The total does
 not include blanks.
@@ -10,11 +11,11 @@ overriding
 
 | Data signatures                      |
 |:-------------------------------------|
-| percent( scan, match, or line: [36m[3mstr[0m ) |
+| percent( scan, match, or line: str ) |
 
 | Call signatures                       |
 |:--------------------------------------|
-| percent( scan, match, or line: [36m[3mTerm[0m ) |
+| percent( scan, match, or line: Term ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|
@@ -22,7 +23,7 @@ overriding
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

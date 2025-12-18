@@ -1,5 +1,6 @@
 
 Count headers in line
+
 count_headers_in_line() returns the number of headers in the current
 line.
 
@@ -9,7 +10,7 @@ line.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

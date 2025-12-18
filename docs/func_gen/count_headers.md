@@ -1,5 +1,6 @@
 
 Count headers
+
 count_headers() returns the number of headers currently in-effect. It
 is our expected number, not the number of values we actually get.
 
@@ -13,7 +14,7 @@ count_headers() is also reset.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,5 +1,6 @@
 
 First
+
 Captures the first line a value or set of values is seen on.
 
 first() stores the first line in a variable using the concatenation of
@@ -10,11 +11,11 @@ variable name is "first".
 
 | Data signatures                    |
 |:-----------------------------------|
-| first( header to track: [36m[3mAny[0m, ... ) |
+| first( header to track: Any, ... ) |
 
 | Call signatures                       |
 |:--------------------------------------|
-| first( header to track: [36m[3mHeader[0m, ... ) |
+| first( header to track: Header, ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -22,8 +23,8 @@ variable name is "first".
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

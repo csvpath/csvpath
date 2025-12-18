@@ -1,5 +1,6 @@
 
 True
+
 yes() always evaluates to True. It is similar to no() and none().
 
 | Purpose    | Value                              |
@@ -9,7 +10,7 @@ yes() always evaluates to True. It is similar to no() and none().
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

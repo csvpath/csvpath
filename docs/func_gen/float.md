@@ -1,12 +1,11 @@
 
-
 | Data signatures         |
 |:------------------------|
-| float( [36m[3mNone[0m|[36m[3mfloat[0m|[36m[3mint[0m ) |
+| float( None|float|int ) |
 
 | Call signatures                        |
 |:---------------------------------------|
-| float( [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m ) |
+| float( Term|Variable|Header|Function ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|
@@ -14,7 +13,7 @@
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

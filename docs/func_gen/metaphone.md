@@ -1,5 +1,6 @@
 
 Metaphone
+
 metaphone() uses the Metaphone algorithm to generate a "sound-alike"
 phonetic transformation of a string. The algorithm is intended for
 English.
@@ -28,11 +29,11 @@ variables generated in the results of the run.
 
 | Data signatures                                       |
 |:------------------------------------------------------|
-| metaphone( transform this: [36m[3mstr[0m, [lookup data: [36m[3mdict[0m] ) |
+| metaphone( transform this: str, [lookup data: dict] ) |
 
 | Call signatures                                                                                |
 |:-----------------------------------------------------------------------------------------------|
-| metaphone( transform this: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mReference[0m, [lookup data: [36m[3mReference[0m] ) |
+| metaphone( transform this: Term|Function|Header|Variable|Reference, [lookup data: Reference] ) |
 
 | Purpose    | Value                                   |
 |:-----------|:----------------------------------------|
@@ -40,7 +41,7 @@ variables generated in the results of the run.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

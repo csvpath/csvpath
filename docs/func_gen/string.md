@@ -1,5 +1,6 @@
 
 String
+
 string() indicates that a value must be a string to be valid. All CSV
 values start as strings so this function can be expected to return
 True                unless there is a notnone or length constraint
@@ -11,11 +12,11 @@ string(none(), 5).
 
 | Data signatures                                              |
 |:-------------------------------------------------------------|
-| string( value: [36m[3mstr[0m|[36m[3mNone[0m|[36m[3m''[0m, [max len: [36m[3mint[0m], [min len: [36m[3mint[0m] ) |
+| string( value: str|None|'', [max len: int], [min len: int] ) |
 
 | Call signatures                                                                       |
 |:--------------------------------------------------------------------------------------|
-| string( value: [36m[3mHeader[0m|[36m[3mVariable[0m|[36m[3mFunction[0m|[36m[3mReference[0m, [max len: [36m[3mTerm[0m], [min len: [36m[3mTerm[0m] ) |
+| string( value: Header|Variable|Function|Reference, [max len: Term], [min len: Term] ) |
 
 | Purpose    | Value                              |
 |:-----------|:-----------------------------------|
@@ -24,7 +25,7 @@ string(none(), 5).
 
 | Context          | Qualifier                  |
 |:-----------------|:---------------------------|
-| Match qualifiers | [36m[3monmatch[0m, [36m[3mnotnone[0m, [36m[3mdistinct[0m |
-| Value qualifiers | [36m[3monmatch[0m                    |
+| Match qualifiers | onmatch, notnone, distinct |
+| Value qualifiers | onmatch                    |
 
 

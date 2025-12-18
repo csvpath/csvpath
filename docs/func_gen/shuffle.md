@@ -1,17 +1,18 @@
 
 Shuffle
+
 Generates a random number from within an integer range without
 duplicates.
 
 | Data signatures                             |
 |:--------------------------------------------|
 | shuffle()                                   |
-| shuffle( from this int: [36m[3mint[0m, to this: [36m[3mint[0m ) |
+| shuffle( from this int: int, to this: int ) |
 
 | Call signatures                                                                                 |
 |:------------------------------------------------------------------------------------------------|
 | shuffle()                                                                                       |
-| shuffle( from this int: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m, to this: [36m[3mTerm[0m|[36m[3mVariable[0m|[36m[3mHeader[0m|[36m[3mFunction[0m ) |
+| shuffle( from this int: Term|Variable|Header|Function, to this: Term|Variable|Header|Function ) |
 
 | Purpose    | Value                                 |
 |:-----------|:--------------------------------------|
@@ -19,8 +20,8 @@ duplicates.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

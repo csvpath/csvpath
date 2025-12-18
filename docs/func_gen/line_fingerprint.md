@@ -1,5 +1,6 @@
 
 Line fingerprint
+
 Sets the line-by-line SHA256 hash of the current data file into a
 variable. You can use a name qualifier to name the variable.
 Otherwise, the name will be by_line_fingerprint.
@@ -28,8 +29,8 @@ identity of certain input data bits.
 
 | Context          | Qualifier           |
 |:-----------------|:--------------------|
-| Match qualifiers | [36m[3monmatch[0m             |
-| Value qualifiers | [36m[3monmatch[0m             |
-| Name qualifier   | [36m[3moptionally expected[0m |
+| Match qualifiers | onmatch             |
+| Value qualifiers | onmatch             |
+| Name qualifier   | optionally expected |
 
 

@@ -1,14 +1,15 @@
 
 Log
+
 Writes a message to the CsvPath Framework log at a certain log level.
 
 | Data signatures                                       |
 |:------------------------------------------------------|
-| log( log this: [36m[3mstr[0m, [info, debug, warn, error: [36m[3mstr[0m] ) |
+| log( log this: str, [info, debug, warn, error: str] ) |
 
 | Call signatures                                         |
 |:--------------------------------------------------------|
-| log( log this: [36m[3mTerm[0m, [info, debug, warn, error: [36m[3mTerm[0m] ) |
+| log( log this: Term, [info, debug, warn, error: Term] ) |
 
 | Purpose    | Value                  |
 |:-----------|:-----------------------|
@@ -16,7 +17,7 @@ Writes a message to the CsvPath Framework log at a certain log level.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,12 +1,11 @@
 
-
 | Data signatures                        |
 |:---------------------------------------|
-| fail_and_stop( [eval this: [36m[3mNone[0m|[36m[3mAny[0m] ) |
+| fail_and_stop( [eval this: None|Any] ) |
 
 | Call signatures                                 |
 |:------------------------------------------------|
-| fail_and_stop( [eval this: [36m[3mFunction[0m|[36m[3mEquality[0m] ) |
+| fail_and_stop( [eval this: Function|Equality] ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|
@@ -14,7 +13,7 @@
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 

@@ -1,17 +1,18 @@
 
 Now
+
 Returns the current datetime. If a strftime() format is provided the
 return is a string matching the format.
 
 | Data signatures           |
 |:--------------------------|
 | now()                     |
-| now( [format: [36m[3mNone[0m|[36m[3mstr[0m] ) |
+| now( [format: None|str] ) |
 
 | Call signatures                                |
 |:-----------------------------------------------|
 | now()                                          |
-| now( [format: [36m[3mTerm[0m|[36m[3mFunction[0m|[36m[3mHeader[0m|[36m[3mVariable[0m] ) |
+| now( [format: Term|Function|Header|Variable] ) |
 
 | Purpose    | Value                             |
 |:-----------|:----------------------------------|
@@ -19,7 +20,7 @@ return is a string matching the format.
 
 | Context          | Qualifier   |
 |:-----------------|:------------|
-| Match qualifiers | [36m[3monmatch[0m     |
-| Value qualifiers | [36m[3monmatch[0m     |
+| Match qualifiers | onmatch     |
+| Value qualifiers | onmatch     |
 
 
