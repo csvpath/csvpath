@@ -69,7 +69,7 @@ There are lots more simple examples on the individual function pages, linked bel
 
 ## Self-documenting
 
-The functions are self-documenting. Each can programmatically explain how it works. You can see the output in the CLI and in the language help window in [FlightPath Data](https://www.flightpathdata.com).
+The functions are self-documenting. Each can programmatically explain how it works. You can see the output in the CLI, in the language help window in [FlightPath Data](https://www.flightpathdata.com), and in these [online function docs](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md).
 
 Each function can display:
 * A short description
