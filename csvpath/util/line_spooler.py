@@ -77,12 +77,6 @@ class CsvLineSpooler(LineSpooler):
     def __iter__(self):
         return self
 
-    """
-    def __next__(self):
-        for _ in self.next():
-            yield _
-    """
-
     def to_list(self) -> list[str]:
         if self.path is None:
             self._instance_data_file_path()
@@ -106,7 +100,6 @@ class CsvLineSpooler(LineSpooler):
         if self._count is None or self._count <= 0:
             if self.result is not None and self.result.instance_dir:
                 d = Nos(self.result.instance_dir).join("meta.json")
-                # d = os.path.join(self.result.instance_dir, "meta.json")
                 if Nos(d).exists() is True:
                     with DataFileReader(d) as file:
                         j = json.load(file.source)
@@ -129,7 +122,6 @@ class CsvLineSpooler(LineSpooler):
         if self.path is None:
             self._instance_data_file_path()
         if Nos(self.path).exists() is False:
-            # if os.path.exists(self.path) is False:
             self.result.csvpath.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
@@ -182,8 +174,7 @@ class CsvLineSpooler(LineSpooler):
 
     def bytes_written(self) -> int:
         p = self._instance_data_file_path()
-        # there may be no file if we're on/before line 0 of the data.csv
-        # that is Ok.
+        # there may be no file if we're on/before line 0 of the data.csv. that is Ok.
         try:
             i = FileInfo.info(p)
             if i and "bytes" in i:
