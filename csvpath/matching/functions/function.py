@@ -72,11 +72,12 @@ class Function(Matchable):
             self.valuing().result(ret).because("skip")
             return ret
         #
-        # experiment -- timing
+        # timing
         #
         startval = time.perf_counter_ns()
         # exp end
         if self.do_frozen():
+            #
             # doing frozen means not doing anything else. this is the
             # inverse of onmatch and other qualifiers. but it makes sense
             # and we're not talking about a qualifier, in any case. the
@@ -84,7 +85,17 @@ class Function(Matchable):
             self.matcher.csvpath.logger.debug("We're frozen in %s", self)
             return self._noop_value()
         if self.value is None and not isinstance(self.checked, CheckedUnset):
+            #
+            # exp! start with the default value and let anything move us off that. if we have a non-None
+            # we'll keep it. practically speaking, this is a way of making sure any _apply_default_value()
+            # overriders get a crack at the value, even if control doesn't pass all the way down to their
+            # value and match methods. sum() and line() are important examples.
+            #
+            if self.value is None:
+                self._apply_default_value()
+            #
             # count() doesn't yet use args. it is grandfathered, for now.
+            #
             if self.args and not self.args.matched:
                 self.matcher.csvpath.logger.debug(
                     "Validating arg actuals for %s in to_value", self.name

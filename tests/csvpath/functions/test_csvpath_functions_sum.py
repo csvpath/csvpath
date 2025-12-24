@@ -15,6 +15,7 @@ class TestCsvPathFunctionsSum(unittest.TestCase):
             [ @l = sum(#0) ]"""
         )
         path.collect()
+        print(f"vars: {path.variables}")
         assert path.variables["l"] == 6
 
     def test_function_sum2(self):

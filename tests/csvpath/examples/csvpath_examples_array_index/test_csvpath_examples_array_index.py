@@ -12,22 +12,20 @@ class TestCsvpathExamplesArrayIndex(unittest.TestCase):
         path.parse(
             f"""
             ~
-               id: schema
-               validation-mode: raise, print
-               source-mode: preceding
-               explain-mode: explain
+              This test demonstrates blank() and line() working in an OR. both were having troubles
+              with default value and/or default match. It also shows a simple 2 entity schema. If
+              we add print the run gets noisy. If we need print but don't want the noise we have to
+              have a way to test for each entity type in a when/do statement. Should be easy to do
+              in most cases.
+
+                 id: schema
+                 validation-mode: no-raise, no-print
+                 source-mode: preceding
+                 explain-mode: explain
+                 logic-mode:OR
             ~
-            ${PATH}[1*][
-                count_headers_in_line() == 1 -> skip()
-                reset_headers()
-
-                @order = eq(#0, "H")
-                @item = eq(#0, "D")
-
-                tally.entities(@order, @item)
-                line_number.nocontrib() == 8 -> var_table("entities")
-
-                @order.asbool.nocontrib -> line.orders(
+            ${PATH}[*][
+                line.orders(
                     string.notnone.type(#0,1,1),
                     integer.orderid( #1),
                     integer.customerid( #2),
@@ -35,15 +33,18 @@ class TestCsvpathExamplesArrayIndex(unittest.TestCase):
                     string(#4),
                     string.address(#5)
                 )
-
-                @item.asbool.nocontrib -> line.items(
-                    string.notnone.type(#0, 1, 1),
-                    integer.notnone.sku(#1, 99999999, 1 ),
-                    string.description(#2,255, 5),
-                    decimal.price(#3, none(), .10),
-                    integer.quantity(#4, none(), 1)
+                line.items(
+                    string.notnone.type(#0,1,1),
+                    integer.sku(#1),
+                    string.description(#2),
+                    decimal.price(#3),
+                    integer.quantity(#4),
+                    blank()
                 )
             ]
             """
         )
-        path.fast_forward()
+        lines = path.collect()
+        assert len(lines) == 10
+        for _ in lines:
+            print(f" ... {_}")

@@ -10,50 +10,6 @@ from ..function_focus import ValueProducer
 from .type import Type
 
 
-class Nonef(ValueProducer, Type):
-    def check_valid(self) -> None:
-        self.description = [
-            "A value producer and line() schema type representing a None value.",
-        ]
-        self.args = Args(matchable=self)
-        self.args.argset(0)
-        a = self.args.argset(1)
-        a.arg(
-            name="nullable",
-            types=[Variable, Header, Function, Reference],
-            actuals=[None],
-        )
-        a = self.args.argset(1)
-        a.arg(name="header reference", types=[Term], actuals=[str])
-        self.args.validate(self.siblings())
-        super().check_valid()
-
-    def _produce_value(self, skip=None) -> None:
-        self.value = None
-
-    def _decide_match(self, skip=None) -> None:  # pragma: no cover
-        if len(self.children) == 0:
-            self.match = True
-        if isinstance(self._child_one(), Term):
-            v = self._value_one(skip=skip)
-            h = self.matcher.get_header_value(v)
-            self.match = ExpressionUtility.is_none(h)
-            if self.match is False:
-                msg = f"'{v}' must be empty"
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-                if self.matcher.csvpath.do_i_raise():
-                    raise MatchException(msg)
-        else:
-            self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
-
-    @classmethod
-    def _is_match(
-        cls,
-        value: str,
-    ) -> tuple[bool, str | None]:
-        return ExpressionUtility.is_none(value)
-
-
 class Wildcard(Type):
     def check_valid(self) -> None:
         self.description = [
