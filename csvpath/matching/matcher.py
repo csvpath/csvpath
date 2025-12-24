@@ -302,7 +302,6 @@ class Matcher:  # pylint: disable=R0902
             return True
         ret = True
         failed = self._AND is not True
-        # failed = False if self._AND else True
         self.csvpath.logger.debug(
             "Beginning %s match against line[%s]: %s",
             ("AND" if self._AND else "OR"),
@@ -325,7 +324,6 @@ class Matcher:  # pylint: disable=R0902
                 #
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Stopped at line %s", pln)
-                # self.clear_errors()
                 return False
             if self.skip is True:
                 #
@@ -337,7 +335,6 @@ class Matcher:  # pylint: disable=R0902
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Skipping at line %s", pln)
                 self.skip = False
-                # self.clear_errors()
                 if self.take is True:
                     self.take = False
                     return True

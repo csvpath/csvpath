@@ -101,7 +101,9 @@ from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
-from .types.nonef import Nonef, Blank, Wildcard
+from .types.nonef import Nonef
+from .types.wildcard import Wildcard
+from .types.blank import Blank
 from .types.decimal import Decimal
 from .types.boolean import Boolean
 from .types.datef import Date

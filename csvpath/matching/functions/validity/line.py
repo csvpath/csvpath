@@ -87,8 +87,18 @@ class Line(MatchDecider):
         self.args.validate(sibs)
         super().check_valid()
 
+    def _apply_default_value(self) -> None:
+        self.value = True
+        self.matcher.csvpath.logger.debug(
+            "%s applying line() default value: %s", self, self.value
+        )
+
     def _produce_value(self, skip=None) -> None:  # pragma: no cover
-        self.value = self.matches(skip=skip)
+        v = self.matches(skip=skip)
+        #
+        # should never be None now, but can leave.
+        #
+        self.value = False if v is None else v
 
     def _decide_match(self, skip=None) -> None:
         errors = []
@@ -105,16 +115,18 @@ class Line(MatchDecider):
             errors.append(msg)
         for e in errors:
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=e)
+        #
+        # exp
+        #
+        self._distinct_if(skip=skip)
         if len(errors) > 0:
             msg = f"{len(errors)} errors in line()"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
             self.match = False
-        elif self._distinct_if(skip=skip):
-            pass
         else:
-            self.match = self.default_match()
+            self.match = True
 
     # =======================================
     #
@@ -166,7 +178,10 @@ class Line(MatchDecider):
                 errors.append(msg)
             b = s.matches(skip=skip)
             if b is not True:
-                msg = f"Invalid value at {s.my_chain}"
+                _ = s.to_value(skip=skip)
+                _ = str(_)
+                _ = _ if len(_) <= 15 else f"{_[0:14]}..."
+                msg = f"Invalid value at {s.my_chain}: {_}"
                 errors.append(msg)
         found = len(sibs) + advanced + advance
         return found
