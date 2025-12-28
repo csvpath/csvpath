@@ -107,16 +107,25 @@ class LogUtility:
                 component.project if component.project else "no_project_identified"
             )
         elif cn.find("CsvPath") > -1:
-            ctx_name = (
-                component.csvpaths.project_context
-                if component.csvpaths and component.csvpaths.project_context
-                else "no_project_context"
-            )
-            proj_name = (
-                component.csvpaths.project
-                if component.csvpaths and component.csvpaths.project
-                else "no_projects_available"
-            )
+            #
+            # we first look "up" to the component's csvpaths instance, if available; otherwise
+            # we'll take our component's own project and ctx names; failing that return the default
+            #
+            ctx_name = None
+            if component.csvpaths and component.csvpaths.project_context:
+                ctx_name = component.csvpaths.project_context
+            if hasattr(component, "project_context") and component.project_context:
+                ctx_name = component.project_context
+            else:
+                ctx_name = "no_project_context"
+            proj_name = None
+            if component.csvpaths and component.csvpaths.project:
+                proj_name = component.csvpaths.project
+            if hasattr(component, "project") and component.project:
+                proj_name = component.project
+            else:
+                proj_name = "no_project_name"
+
         elif cn.find("Config") > -1:
             ctx_name = "config"
             proj_name = cn.rstrip("'>")
