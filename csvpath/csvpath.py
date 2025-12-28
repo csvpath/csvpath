@@ -54,11 +54,14 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         print_default=True,
         # config=None,
         error_manager=None,
+        project_context="no_project_context",
+        project="no_project_name",
     ):
-        # re: R0913: all reasonable pass-ins with sensible defaults
         #
-        # the config.ini file loaded as a ConfigParser instance
+        # these identifiers are for the logging system. they are optional but useful
         #
+        self.project = project
+        self.project_context = project_context
         """
         #
         # passing in the config actually nets us nothing but a little unnecessary complexity that we don't use.

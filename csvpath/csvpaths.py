@@ -107,8 +107,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         quotechar='"',
         skip_blank_lines=True,
         print_default=True,
-        project_name=None,
-        project_context=None
+        project_context=None,
+        project=None
         # config: Config = None,
     ):
         if CsvPaths.METRICS_WRAP_REG is False:
@@ -126,7 +126,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         # the expectation is that FlightPath Server will use API key as project context.
         #
-        self._project = project_name if project_name else "project"
+        self._project = project if project else "project"
         self._project_context = project_context if project_context else "csvpaths"
         #
         # in a few cases, mainly s3 and sftp connection or config sharing
@@ -416,6 +416,8 @@ Cache: {cache}
             # config=None,
             print_default=self.print_default,
             error_manager=self.error_manager,
+            project=self.project,
+            project_context=self.project_context,
         )
         if path.config.configpath != self.config.configpath:
             path.config.set_config_path_and_reload(self.config.configpath)
