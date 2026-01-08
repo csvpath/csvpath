@@ -7,10 +7,10 @@ NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers.csv"
 
 
 class TestCsvPathFunctionsNow(unittest.TestCase):
-    def test_function_now(self):
+    def test_function_now1(self):
         path = CsvPath()
         # TODO: obviously this will break and need updating 1x a year. :(
-        path.parse(f'${PATH}[*][now("%Y") == "2025"]')
+        path.parse(f'${PATH}[*][now("%Y") == "2026"]')
         lines = path.collect()
         assert len(lines) == 9
 

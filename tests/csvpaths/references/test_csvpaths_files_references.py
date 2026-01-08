@@ -27,7 +27,10 @@ class TestCsvPathsReferencesFilesReferences(unittest.TestCase):
         )
         paths.config.add_to_config("inputs", "files", inputs)
         paths.file_manager.add_named_file(name="Cars", path=CARS)
-        ref = "$Cars.files.Autom:2025-:last"
+        #
+        # CHANGE ME AFTER 1/1
+        #
+        ref = "$Cars.files.Autom:2026-:last"
         # ref = "$Cars.files.Autom:2025-:all"
         # ref = "$Cars.files.Autom"
         # ref = "$Cars.files.:all"

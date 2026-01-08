@@ -113,6 +113,8 @@ from .types.string import String
 from .types.datatype import Datatype
 from .xml.xpath import XPath
 
+from .json.jsonpath import JsonPath
+
 
 class UnknownFunctionException(Exception):
     """thrown when the name used is not registered"""
@@ -268,10 +270,40 @@ class FunctionFactory:
             e = FunctionFinder.externals_sentinel(matcher)
             if e not in FunctionFactory.NOT_MY_FUNCTION:
                 FunctionFinder.load(matcher, cls)
-            if name in FunctionFactory.NOT_MY_FUNCTION:
-                f = cls.NOT_MY_FUNCTION[name]
+            #
+            # we cache external functions under a qualified name constructed by the
+            # project_context and project variables known to the matcher's csvpath
+            #
+            # if we aren't working in a projectized env the vars will likely be
+            # defaulted or None. in that case we just use the plain name. however, in
+            # FlightPath we have to separate not only the class bytes but also the
+            # function names that find the instances of the bytes, so we have to have
+            # a proper set of project_context and project IDs. project_context is the
+            # project's API key hash or (None|default) and project is the project's
+            # name or (None|default).
+            #
+            # check for projctx.proj.name
+            # if proj ctx not set we check for proj.name
+            # if proj not set we check for name
+            #
+            qname = cls.qname(matcher=matcher, name=name)
+            if qname in FunctionFactory.NOT_MY_FUNCTION:
+                f = cls.NOT_MY_FUNCTION[qname]
                 f = f(matcher, name, child)
         return f
+
+    @classmethod
+    def qname(cls, *, matcher, name) -> str:
+        if matcher is None:
+            return name
+        c = matcher.csvpath
+        if c is None:
+            return name
+        proj_ctx = c.project_context
+        proj = c.project
+        proj_ctx = "" if proj_ctx is None else f"{proj_ctx}"
+        proj = "" if proj is None else f"{proj}"
+        return f"{proj_ctx}{proj}{name}"
 
     @classmethod
     def load(cls) -> None:
@@ -434,6 +466,7 @@ class FunctionFactory:
         fs["count_dups"] = CountDups
         fs["dup_lines"] = DupLines
         fs["empty"] = Empty
+        fs["jsonpath"] = JsonPath
         fs["advance"] = Advance
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect

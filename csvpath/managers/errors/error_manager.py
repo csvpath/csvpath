@@ -123,9 +123,9 @@ class ErrorManager(Registrar, Listener):
         instance = ""
         chain = ""
         line = (
-            self.csvpath.line_monitor.physical_line_number
-            if self.csvpath is not None
-            else -1
+            -1
+            if (not self.csvpath or not self.csvpath.line_monitor)
+            else self.csvpath.line_monitor.physical_line_number
         )
         try:
             if isinstance(source, Matchable):

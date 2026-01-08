@@ -111,7 +111,9 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         c.parse(f"${PATH}[*][yes()]")
         count = Count(matcher=c.matcher, name="count")
         c.fast_forward()
-        FunctionFactory.add_function("iamaname", count)
+        name = "iamaname"
+        name = FunctionFactory.qname(matcher=c.matcher, name=name)
+        FunctionFactory.add_function(name, count)
         f = FunctionFactory.get_function(matcher=c.matcher, name="iamaname")
         assert f is not None
         assert isinstance(f, Function)

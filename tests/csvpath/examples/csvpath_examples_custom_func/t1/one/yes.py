@@ -27,3 +27,28 @@ class Yes(ValueProducer):
 
     def _decide_match(self, skip=None) -> None:
         self.match = True
+
+
+class Maybe(ValueProducer):
+    """returns True"""
+
+    def check_valid(self) -> None:
+        self.description = [
+            self._cap_name(),
+            self.wrap(
+                """\
+                    maybe() always evaluates to "?".
+            """
+            ),
+        ]
+
+        self.aliases = ["maybe"]
+        self.args = Args(matchable=self)
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    def _produce_value(self, skip=None) -> None:
+        self.value = "?"
+
+    def _decide_match(self, skip=None) -> None:
+        self.match = True
