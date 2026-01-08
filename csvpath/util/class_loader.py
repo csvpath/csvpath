@@ -77,7 +77,7 @@ class ClassLoader:
         module_path = module_path.replace(".", os.sep)
         module_path = f"{module_path}.py"
         if not os.path.exists(module_path):
-            raise ImportError(f"Module not found in {module_path}")
+            raise ImportError(f"Module {module_name} not found in {module_path}")
         #
         # create a unique module spec. we hash the full path to the bytes in order
         # to make sure we have a distinct class, even if one project names and locates

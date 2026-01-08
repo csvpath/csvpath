@@ -3,6 +3,7 @@ import pytest
 import os
 import textwrap
 from csvpath import CsvPath
+from csvpath.matching.functions.function_factory import FunctionFactory
 from csvpath.util.class_loader import ClassLoader
 from csvpath.matching.util.exceptions import ChildrenException
 
@@ -13,6 +14,14 @@ CPATH = os.path.join(
     "examples",
     "csvpath_examples_custom_func",
     "extra-functions.imports",
+)
+
+CPATH2 = os.path.join(
+    "tests",
+    "csvpath",
+    "examples",
+    "csvpath_examples_custom_func",
+    "extra-functions-2.imports",
 )
 
 
@@ -30,6 +39,10 @@ class TestCsvpathExamplesCustomFunc(unittest.TestCase):
             path.fast_forward()
 
     def test_csvpath_examples_custom_func_2(self):
+        #
+        # clear external functions
+        #
+        FunctionFactory.NOT_MY_FUNCTION = {}
         path = CsvPath()
         if not os.path.exists(CPATH):
             raise RuntimeError(f"{CPATH} must exist")
@@ -54,3 +67,24 @@ class TestCsvpathExamplesCustomFunc(unittest.TestCase):
         assert a
         assert b
         assert type(a) is not type(b)
+
+    def test_different_output_same_name(self) -> None:
+        #
+        # clear external functions
+        #
+        FunctionFactory.NOT_MY_FUNCTION = {}
+        path = CsvPath(project="A", project_context="a1")
+        path.config.add_to_config("functions", "imports", CPATH)
+        path.parse(f"${PATH}[3][ @e = A() ]")
+        path.fast_forward()
+        vars1 = path.variables
+        assert "e" in vars1
+        assert vars1["e"] is True
+
+        path = CsvPath(project="B", project_context="b2")
+        path.config.add_to_config("functions", "imports", CPATH2)
+        path.parse(f"${PATH}[3][ @e = A() ]")
+        path.fast_forward()
+        vars2 = path.variables
+        assert "e" in vars2
+        assert vars2["e"] == "?"

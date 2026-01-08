@@ -12,8 +12,10 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 
 class TestCsvPathsLogs(unittest.TestCase):
     def test_log_names_and_files(self):
-        if os.sep == '\\':
-            print("Windows doesn't release log file for test setup so this test is skipped on Windows")
+        if os.sep == "\\":
+            print(
+                "Windows doesn't release log file for test setup so this test is skipped on Windows"
+            )
             return
         #
         # create a paths just to get and delete log files
@@ -45,7 +47,7 @@ class TestCsvPathsLogs(unittest.TestCase):
         # second values: new paths has different logger name, but
         # logs to the same log file
         #
-        paths2 = CsvPaths(project_name="testing", project_context="abcdefg")
+        paths2 = CsvPaths(project="testing", project_context="abcdefg")
         paths2.file_manager.add_named_file(name="test", path=PATH)
         assert paths2.logger
         assert Nos(path).exists()

@@ -70,7 +70,6 @@ class FunctionFinder:  # pylint: disable=R0903
     def _add_function(cls, matcher, func_fact, s: str) -> None:
         s = s.strip()
         if s is None or s == "":
-            # return None
             raise ValueError("External function import statement cannot be None or ''")
         instance = None
         # instantiate the classes
@@ -81,17 +80,9 @@ class FunctionFinder:  # pylint: disable=R0903
         #   from module import class as function-name
         #
         if len(cs) == 6 and cs[0] == "from" and cs[2] == "import" and cs[4] == "as":
-
-            #
-            #
-            #
             config = matcher.csvpath.config
             instance = ClassLoader.load_private_function(config, s, matcher, cs[5])
-            """
-            module = importlib.import_module(cs[1])
-            class_ = getattr(module, cs[3])
-            instance = class_(matcher, cs[5])
-            """
-            func_fact.add_function(cs[5], instance)
+            qname = func_fact.qname(matcher=matcher, name=cs[5])
+            func_fact.add_function(qname, instance)
         else:
             raise ConfigurationException("Unclear external function imports: {s}")

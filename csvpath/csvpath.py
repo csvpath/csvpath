@@ -708,6 +708,42 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #   - files-mode: all | no-data | no-unmatched | no-printouts | data | unmatched | errors | meta | vars | printouts
         #
         self.modes.update()
+        #
+        # if we find "use-delimiter" or "use-quotechar" we need to update ourselves. this is primarily for
+        # flightpath server (and other similar non-programmatic uses). these could be modes but it doesn't
+        # feel like we're changing the behavior of the framework so much as just passing a parameter
+        # declaratively, similar to the integrations and "test-delimiter", "test-quotechar".
+        #
+        d = self.metadata.get("use-delimiter")
+        if d:
+            v = ["pipe", "bar", "semi", "comma", "colon", "tab", "space"]
+            if d not in v:
+                raise ValueError(f"The use-delimiter directive must be one of {v}")
+            v = {
+                "pipe": "|",
+                "bar": "|",
+                "semi": ";",
+                "comma": ",",
+                "colon": ":",
+                "tab": "\t",
+                "space": " ",
+            }
+            self.delimiter = v[d]
+
+        q = self.metadata.get("use-quotechar")
+        if q:
+            v = ["quotes", "quote", "single-quote", "singlequote", "single", "tick"]
+            if q not in v:
+                raise ValueError(f"The use-quotechar directive must be one of {v}")
+            v = {
+                "quotes": '"',
+                "quote": '"',
+                "single-quote": "'",
+                "singlequote": "'",
+                "single": "'",
+                "tick": "`",
+            }
+            self.quotechar = v[q]
 
     # =====================
     # in principle the modes should come through the mode controller like:

@@ -61,6 +61,8 @@ psycopg2-binary = "^2.9.10"
 pandas = "^2.2.2"
 lxml = "^6.0.2"
 jsonlines = "^4.0.0"
+jsonpath-ng = "^1.7.0"
+pyjson5 = "^2.0.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

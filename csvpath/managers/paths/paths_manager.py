@@ -802,7 +802,6 @@ class PathsManager:
         if not self.has_named_paths(name):
             return
         home = self.named_paths_home(name)
-        # nos = self.nos
         nos = Nos(home)
         nos.remove()
 
@@ -815,8 +814,6 @@ class PathsManager:
     def has_named_paths(self, name: NamedPathsName) -> bool:
         """@private"""
         path = Nos(self.named_paths_dir).join(name)
-        # path = os.path.join(self.named_paths_dir, name)
-        # nos = self.nos
         nos = Nos(path)
         return nos.dir_exists()
 
