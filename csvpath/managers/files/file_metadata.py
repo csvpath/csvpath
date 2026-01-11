@@ -22,6 +22,11 @@ class FileMetadata(Metadata):
         self.mark: str = None
         # like csv
         self.type: str = None
-        self.file_size = 0
+        self.file_size: int = 0
         self.template: str = None
-        self.fingerprint = None
+        self.fingerprint: str = None
+        #
+        # named_file_ref is the most specific reference possible it is
+        # in the form $name.files.fingerprint
+        #
+        self.named_file_ref: str = None

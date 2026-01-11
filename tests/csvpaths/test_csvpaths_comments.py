@@ -42,3 +42,31 @@ class TestCsvPathsComments(unittest.TestCase):
         assert results[2].lines_printed == len(results[2].csvpath.printers)
         assert len(results[3]) == 0
         assert results[3].lines_printed == len(results[3].csvpath.printers)
+
+    def test_comment_bad_identifier(self):
+        #
+        # this tests makes sure that if we have an empty ID we handle it.
+        # if we are in the context of a named-paths group we handle the
+        # lack of an identity by setting the identity to the csvpath
+        # index within the named-paths group. if we ask the same question
+        # just to the csvpath itself, it replies with None because it
+        # doesn't have an identity that it knows about.
+        #
+        paths = Builder().build()
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.file_manager.add_named_file(name="test", path=PATH)
+        settings = {}
+        settings["settings"] = [
+            """~ id: ~ $[1][ yes() ]""",
+            """~ name:  ~ $[2][ yes() ]""",
+        ]
+        paths.paths_manager.set_named_paths(settings)
+        paths.collect_paths(filename="test", pathsname="settings")
+        results = paths.results_manager.get_named_results("settings")
+        assert len(results) == 2
+        assert len(results[0]) == 1
+        assert results[0].identity_or_index == "0"
+        assert results[0].csvpath.identity is None
+        assert len(results[1]) == 1
+        assert results[1].identity_or_index == "1"
+        assert results[1].csvpath.identity is None

@@ -387,8 +387,6 @@ class FileManager:
         #
         self.legal_name(name)
         p = Nos(self.named_files_dir).join(name)
-        # p = os.path.join(self.named_files_dir, name)
-        # nos = self.nos
         nos = Nos(p)
         if nos.dir_exists():
             nos.remove()
@@ -458,7 +456,8 @@ class FileManager:
     #
     def add_named_files_from_dir(
         self, dirname: str, *, name=None, template: str = None, recurse=True
-    ):
+    ) -> list[str]:
+        ret = []
         #
         # legal_name handled at add_named_file
         #
@@ -474,7 +473,6 @@ class FileManager:
         dlist = nos.listdir(files_only=True, recurse=recurse)
         for i, _ in enumerate(dlist):
             dlist[i] = f"{nos.join(_)}"
-
         base = dirname
         #
         # collect all full paths that are files and have correct extensions
@@ -499,11 +497,14 @@ class FileManager:
                 else:
                     # path = os.path.join(base, p)
                     path = Nos(base).join(p)
-                self.add_named_file(name=n, path=path, template=template)
+                ref = self.add_named_file(name=n, path=path, template=template)
+                if ref is not None:
+                    ret.append(ref)
             else:
                 self._csvpaths.logger.debug(
                     "%s is not in accept list", Nos(base).join(p)
                 )
+        return ret
 
     def can_load(self, path: str) -> bool:
         #
@@ -533,7 +534,7 @@ class FileManager:
 
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
-    ) -> None:
+    ) -> str | None:
         self.csvpaths.logger.info("Adding named file %s from %s", name, path)
         if not self.can_load(path):
             #
@@ -607,8 +608,11 @@ class FileManager:
             name_home = self.named_file_home(name)
             rpath, h = self._fingerprint(home)
             self.csvpaths.logger.debug("Fingerprint of %s: %s", path, h)
+            ret = f"${name}.files.{h}"
+            self.csvpaths.logger.debug("Reference to named-file: %s", ret)
             mdata = FileMetadata(self.csvpaths.config)
             mdata.named_file_name = name
+            mdata.named_file_ref = ret
             #
             # we need the declared path, incl. any extra path info, in order
             # to know if we are being pointed at a sub-portion of the data, e.g.
@@ -634,7 +638,6 @@ class FileManager:
             # the fingerprint is the most precise way of referencing a particular
             # named-file version.
             #
-            ret = f"${name}.files.{h}"
             self.csvpaths.logger.debug("Registered %s", ret)
             return ret
         except Exception as ex:

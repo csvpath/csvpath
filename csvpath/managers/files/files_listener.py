@@ -33,7 +33,6 @@ class FilesListener(Listener):  # Registrar,
     def manifest_path(self) -> str:
         root = self.config.get(section="inputs", name="files")
         mf = Nos(root).join("manifest.json")
-        # mf = os.path.join(root, "manifest.json")
         if not Nos(mf).exists():
             with DataFileWriter(path=mf, mode="w") as writer:
                 writer.append("[]")
@@ -63,6 +62,7 @@ class FilesListener(Listener):  # Registrar,
         mani["named_file_name"] = mdata.named_file_name
         mani["origin_path"] = mdata.origin_path
         mani["fingerprint"] = mdata.fingerprint
+        mani["reference"] = mdata.named_file_ref
         mani["file_path"] = mdata.file_path
         mani["file_home"] = mdata.file_home
         mani["file_name"] = mdata.file_name

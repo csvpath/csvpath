@@ -82,6 +82,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         mdata = FileMetadata(paths.config)
         mdata.named_file_name = None
         mdata.fingerprint = "123"
+        mdata.named_file_ref = "${mdata.named_file_name}.files.{mdata.fingerprint}"
         mdata.origin_path = "p/d/q"
         mdata.manifest_path = os.path.join("root", "name", "manifest.json")
         mdata.name_home = os.path.join("root", "name")
@@ -107,6 +108,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert mani["uuid"] is not None
         assert mani["time"] is not None
         assert mani["type"] == "files"
+        assert mani["reference"] == mdata.named_file_ref
         assert mani["file_manifest"] == os.path.join("root", "name", "manifest.json")
         assert mani["name_home"] == os.path.join("root", "name")
         assert mani["file_home"] == os.path.join("root", "name", "filename")

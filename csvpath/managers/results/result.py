@@ -198,14 +198,13 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     def manifest(self) -> dict:
         p = self.instance_dir
         p = Nos(p).join("manifest.json")
-        # p = os.path.join(p, "manifest.json")
         with DataFileReader(p) as reader:
             return json.load(reader.source)
 
     @property
     def identity_or_index(self) -> str:
         s = self._csvpath.identity
-        if f"{s}".strip() == "":
+        if s is None or f"{s}".strip() == "":
             s = self.run_index
         return s
 

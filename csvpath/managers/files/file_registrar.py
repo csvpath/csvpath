@@ -38,7 +38,6 @@ class FileRegistrar(Registrar, Listener):
         if nos.physical_dirs() and not nos.dir_exists():
             raise InputException(f"Named file home does not exist: {home}")
         mf = Nos(home).join("manifest.json")
-        # mf = os.path.join(home, "manifest.json")
         nos.path = mf
         if not nos.exists():
             self.intermediary.put_json(mf, [])
@@ -124,6 +123,7 @@ class FileRegistrar(Registrar, Listener):
         manifest_path = mdata.manifest_path
         mani = {}
         mani["type"] = t
+        mani["reference"] = mdata.named_file_ref
         mani["file"] = rpath
         mani["file_home"] = mdata.file_home
         mani["fingerprint"] = h
