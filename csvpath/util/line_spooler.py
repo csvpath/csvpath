@@ -2,8 +2,10 @@ import os
 import csv
 import json
 import boto3
+import logging
 from pathlib import Path
 from abc import ABC, abstractmethod
+
 from .exceptions import InputException
 from .file_readers import DataFileReader
 from .file_writers import DataFileWriter
@@ -14,7 +16,7 @@ from .path_util import PathUtility as pathu
 
 class LineSpooler(ABC):
     def __init__(self, myresult) -> None:
-        self.result = myresult if myresult is not None else None
+        self.result = myresult
         self.sink = None
         self._count = 0
         self.closed = False
@@ -60,13 +62,26 @@ class ListLineSpooler(LineSpooler):
 
 
 class CsvLineSpooler(LineSpooler):
-    def __init__(self, myresult) -> None:
+    def __init__(
+        self,
+        myresult,
+        *,
+        path: str = None,
+        logger: logging.Logger = None,
+        delimiter: str = ",",
+        quotechar: str = '"',
+    ) -> None:
         super().__init__(myresult)
-        self._path = None
+        self._path = path
         self.writer = None
+        self._logger = logger
+        self._delimiter = delimiter
+        self._quotechar = quotechar
 
     @property
     def path(self) -> str:
+        if self._path is None:
+            self._instance_data_file_path()
         return self._path
 
     @path.setter
@@ -74,14 +89,40 @@ class CsvLineSpooler(LineSpooler):
         p = pathu.resep(p)
         self._path = p
 
+    @property
+    def logger(self) -> logging.Logger:
+        if self._logger:
+            return self._logger
+        if self.result is not None and self.result.csvpath is not None:
+            return self.result.csvpath.logger
+        return logging.getLogger(self.__class__.__name__)
+
+    @property
+    def delimiter(self) -> str:
+        if self._delimiter is not None:
+            return self._delimiter
+        if self.result is not None and self.result.csvpath is not None:
+            return self.result.csvpath.delimiter
+        else:
+            self.logger.error("No delimiter available")
+
+    @property
+    def quotechar(self) -> str:
+        if self._quotechar is not None:
+            return self._quotechar
+        if self.result is not None and self.result.csvpath is not None:
+            return self.result.csvpath.quotechar
+        else:
+            self.logger.error("No quotechar available")
+
     def __iter__(self):
         return self
 
     def to_list(self) -> list[str]:
-        if self.path is None:
-            self._instance_data_file_path()
-        if Nos(self.path).exists() is False:
-            self.result.csvpath.logger.debug(
+        if not self.path:
+            return []
+        if self.path is not None and Nos(self.path).exists() is False:
+            self.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
             )
@@ -90,15 +131,15 @@ class CsvLineSpooler(LineSpooler):
         for line in DataFileReader(
             self.path,
             filetype="csv",
-            delimiter=self.result.csvpath.delimiter,
-            quotechar=self.result.csvpath.quotechar,
+            delimiter=self.delimiter,
+            quotechar=self.quotechar,
         ).next():
             lst.append(line)
         return lst
 
     def __len__(self) -> int:
         if self._count is None or self._count <= 0:
-            if self.result is not None and self.result.instance_dir:
+            if self.result is not None and self.result.instance_dir is not None:
                 d = Nos(self.result.instance_dir).join("meta.json")
                 if Nos(d).exists() is True:
                     with DataFileReader(d) as file:
@@ -108,9 +149,10 @@ class CsvLineSpooler(LineSpooler):
         return self._count
 
     def load_if(self) -> None:
-        p = self._instance_data_file_path()
-        if p is not None:
-            self.sink = self._open_file(p)
+        if self.path is None:
+            ...
+        else:
+            self.sink = self._open_file(self.path)
             self.writer = csv.writer(self.sink)
 
     def _open_file(self, path: str):
@@ -119,10 +161,10 @@ class CsvLineSpooler(LineSpooler):
         return dw.sink
 
     def next(self):
-        if self.path is None:
-            self._instance_data_file_path()
+        if not self.path:
+            ...
         if Nos(self.path).exists() is False:
-            self.result.csvpath.logger.debug(
+            self.logger.debug(
                 "There is no data.csv at %s. This may or may not be a problem.",
                 self.path,
             )
@@ -130,31 +172,35 @@ class CsvLineSpooler(LineSpooler):
         for line in DataFileReader(
             self.path,
             filetype="csv",
-            delimiter=self.result.csvpath.delimiter,
-            quotechar=self.result.csvpath.quotechar,
+            delimiter=self.delimiter,
+            quotechar=self.quotechar,
         ).next():
             yield line
 
     def _warn_if(self) -> None:
-        if self.result is not None and self.result.csvpath:
-            self.result.csvpath.logger.warning(
-                "CsvLineSpooler cannot find instance_data_file_path yet within %s",
+        if self.result is not None and self.result.csvpath is not None:
+            self.logger.warning(
+                "CsvLineSpooler cannot find data file path yet within %s",
                 self.result.run_dir,
             )
+        else:
+            self.logger.warning("No path available")
 
     def _instance_data_file_path(self):
+        if self._path is not None:
+            return
         if self.result is None:
             self._warn_if()
-            return None
+            return
         if self.result.csvpath is None:
             self._warn_if()
-            return None
+            return
         if self.result.csvpath.scanner is None:
             self._warn_if()
-            return None
+            return
         if self.result.csvpath.scanner.filename is None:
             self._warn_if()
-            return None
+            return
         #
         # data file could be not there. we can in principle make sure that doesn't happen.
         # if we did, tho, we would need to be sure we don't create the dir so early that
@@ -162,21 +208,23 @@ class CsvLineSpooler(LineSpooler):
         # one case. leave the concern about the existence of the path aside for now.
         #
         self.path = self.result.data_file_path
-        return self.path
 
     def append(self, line) -> None:
         if not self.writer:
             self.load_if()
         if not self.writer:
-            raise InputException(f"Cannot write to data file for {self.result}")
+            msg = None
+            if self.result:
+                msg = f"Cannot write to data file for {self.result}"
+            else:
+                msg = f"Cannot write to {self.path}"
+            raise InputException(msg)
         self.writer.writerows([line])
         self._count += 1
 
     def bytes_written(self) -> int:
-        p = self._instance_data_file_path()
-        # there may be no file if we're on/before line 0 of the data.csv. that is Ok.
         try:
-            i = FileInfo.info(p)
+            i = FileInfo.info(self.path)
             if i and "bytes" in i:
                 return i["bytes"]
             else:
@@ -194,9 +242,13 @@ class CsvLineSpooler(LineSpooler):
             # drop the sink so no chance for recurse
             self.sink = None
             try:
-                c = self.csvpath if self.csvpath else self.csvpaths
-                c.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.csvpath:
+                    self.csvpath.error_manager.handle_error(source=self, msg=f"{ex}")
+                elif self.csvpaths:
+                    self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+                else:
+                    self.logger.error(str(ex))
             except Exception as e:
-                self.result.csvpath.logger.error(
+                self.logger.error(
                     f"Caught {e}. Not raising an exception because closing."
                 )

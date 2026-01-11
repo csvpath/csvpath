@@ -61,10 +61,10 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         result.csvpath = c
         dpath = result.data_file_path
         assert dpath is not None
-        assert pathu.equal(dpath, cs._instance_data_file_path())
+        assert pathu.equal(dpath, cs.path)
         dpath = result.data_file_path
         assert dpath is not None
-        assert pathu.equal(dpath, cs._instance_data_file_path())
+        assert pathu.equal(dpath, cs.path)
 
     def test_reload_result_reader_helpers(self):
         paths = self._setup()
@@ -78,7 +78,7 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         results = paths.results_manager.get_named_results("food")
         result = results[0]
         result_dir = Nos(result.run_dir).join(result.identity_or_index)
-        #result_dir = os.path.join(result.run_dir, result.identity_or_index)
+        # result_dir = os.path.join(result.run_dir, result.identity_or_index)
         m = ResultFileReader.meta(result_dir)
         assert m is not None
         assert len(m) > 0

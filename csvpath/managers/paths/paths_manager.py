@@ -413,6 +413,29 @@ class PathsManager:
             s = self._str_from_list(paths)
             group_file_path = self._copy_in(name, s, append=append)
             #
+            # capture the fingerprint here before/as soon as we write the bytes
+            #
+            # self.registrar._fingerprint(s)
+            #
+            # we should capture the fingerprint here. the way we do it today, we
+            # have Hasher read the file. However, that opens up a race condition. may
+            # not be likely, but we could have a conflict. there are a few problems.
+            # for local files we can use the same Hasher code by writing a temp file
+            # and hashing that. non-local files are harder because we don't know for
+            # 100% certain that the same bytes will result in the same hash if we do
+            # the hashing ourselves vs get it from the backend. given that non-local
+            # backends are inherently performance challenged we would prefer to not
+            # push even the relatively small group files back and forth to check that
+            # they haven't changed. however, since we can see the point in time where
+            # an updated happened to compare it to the point in time when a run
+            # happened we can make a good guess if we have a race and analyze
+            # accordingly. not perfect, but also not a complete information gap, so
+            # this is probably good enough for now.
+            #
+            # h = Hasher().hash(s)
+            #
+
+            #
             # the paths have to be reacquired because we might be appending.
             #
             # need paths to be the full set of csvpaths in the named-paths group

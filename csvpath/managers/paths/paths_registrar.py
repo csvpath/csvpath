@@ -120,7 +120,6 @@ class PathsRegistrar(Registrar, Listener):
     def manifest_path(self, name: str) -> None:
         nhome = self.manager.named_paths_home(name)
         mf = Nos(nhome).join("manifest.json")
-        # mf = os.path.join(nhome, "manifest.json")
         if not Nos(mf).exists():
             self.intermediary.put_json(mf, [])
         return mf
@@ -141,10 +140,13 @@ class PathsRegistrar(Registrar, Listener):
         return sname
 
     def _fingerprint(self, *, name=None, group_file_path=None) -> str:
+        #
+        # in a more perfect world this fingerprint would be generated at the time
+        # we write the group file bytes. as is looks like a fairly large race condition.
+        #
         if group_file_path is None and name is not None:
             home = self.manager.named_paths_home(name)
             group_file_path = Nos(home).join("group.csvpaths")
-            # group_file_path = os.path.join(home, "group.csvpaths")
         elif group_file_path is None and name is None:
             raise InputException(
                 "Either the named-paths name or the path to the group file must be provided"
