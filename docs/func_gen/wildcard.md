@@ -5,7 +5,7 @@ A wildcard() schema type represents one or more headers that are otherwise unspe
 
 It may take an int indicating the number of headers or a * to indicate any number of headers.
 
-When wildcard() has no args it represents any nuber of headers, same as "*".
+When wildcard() has no args it represents any number of headers, same as "*".
 
 Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself will not
             invalidate a document unless it defines a specific number of headers that are not found.

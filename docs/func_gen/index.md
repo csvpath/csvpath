@@ -102,6 +102,7 @@ These function docs are generated from the function code. They are also availabl
 * [integer](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/integer.md)
 * [interpolate](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/interpolate.md)
 * [jinja](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jinja.md)
+* [jsonpath](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jsonpath.md)
 * [last](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/last.md)
 * [le](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/le.md)
 * [length](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/length.md)
@@ -198,3 +199,6 @@ These function docs are generated from the function code. They are also availabl
 * [xpath](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/xpath.md)
 * [year](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/year.md)
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
+
+
+Generated on: 2026-01-11 19:30:08.090567

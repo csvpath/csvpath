@@ -1,5 +1,6 @@
 import os
 import io
+from datetime import datetime
 from contextlib import redirect_stdout
 from csvpath.cli.function_describer import FunctionDescriber
 from csvpath.matching.functions.function_factory import FunctionFactory
@@ -72,6 +73,7 @@ if __name__ == "__main__":
     docdir = os.path.join(".", "docs", "func_gen")
     for _ in names:
         index += f"* [{_}](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/{_}.md)\n"
+    index += f"\n\nGenerated on: {datetime.now()}\n"
     path = os.path.join(docdir, "index.md")
     print(f"path: {path}")
     with open(path, "w") as file:
