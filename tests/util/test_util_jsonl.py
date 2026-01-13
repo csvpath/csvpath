@@ -21,27 +21,23 @@ class TestUtilJsonl(unittest.TestCase):
                 csvlines.append(_)
         with DataFileReader(JSONL_PATH) as json:
             for i, _ in enumerate(json.next()):
-                assert _ == csvlines[i]
+                assert (
+                    _ == csvlines[i + 1]
+                )  # the +1 is because JSONL doesn't have a header row
                 print(f"json: {_}")
                 print(f"csv: {csvlines[i]}\n")
 
     def test_util_jsonl_2(self):
         with DataFileReader(JSONL_PATH_2) as json:
             for i, _ in enumerate(json.next()):
-                if i == 0:
-                    assert _[0] == "date"
-                else:
-                    dt = exut.to_datetime(_[0])
-                    print(f"json[{i}]: {_}: {dt}")
-                    assert isinstance(dt, datetime)
+                dt = exut.to_datetime(_[0])
+                print(f"json[{i}]: {_}: {dt}")
+                assert isinstance(dt, datetime)
 
     def test_util_jsonl_3(self):
         with DataFileReader(JSONL_PATH_3) as json:
             for i, _ in enumerate(json.next()):
-                if i == 0:
-                    assert _[0] == "fish"
-                else:
-                    assert _[0] in ["gold", "blue", "clown", "sea", "flat"]
+                assert _[0] in ["gold", "blue", "clown", "sea", "flat"]
 
     def test_util_jsonl_4(self):
         with DataFileReader(JSONL_PATH_4) as json:

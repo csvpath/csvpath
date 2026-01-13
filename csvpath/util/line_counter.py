@@ -36,7 +36,16 @@ class LineCounter:
                 lm.next_line(last_line=[], data=line)
                 if len(line) == 0 and self.csvpathx.skip_blank_lines:
                     continue
-                if (not headers or len(headers) == 0) and len(line) > 0:
+                #
+                # some data formats embed headers in each line -- e.g. JSONL.
+                # in that case, we never have a header line. we'll just take the
+                # first headers available. in JSONL headers are an even looser
+                # concept than in CSV. it is very possible that a JSONL file's
+                # headers never settle for more than one line.
+                #
+                if reader.updates_headers and reader.current_headers:
+                    line = reader.current_headers
+                if (not headers or len(headers) == 0) and line and len(line) > 0:
                     headers = line[:]
         if not headers:
             headers = []

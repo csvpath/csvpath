@@ -27,6 +27,7 @@ class JsonDataReader(DataFileReader):
         self.path = path
         self.mode = mode
         self.encoding = encoding
+        self._updates_headers = True
 
     def next(self) -> list[str]:
         with jsonlines.open(self.path) as reader:
@@ -35,10 +36,12 @@ class JsonDataReader(DataFileReader):
                 line = JsonReaderHelper.line_from_obj(obj, i)
                 if isinstance(line, tuple):
                     headers = line[0]
+                    self.current_headers = headers
                     line = line[1]
-                    yield headers
+                    # yield headers
                     yield line
                 else:
+                    self.current_headers = line[:]
                     yield line
                 i += 1
 

@@ -1234,6 +1234,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         )
         for line in reader.next():
             self.track_line(line=line)
+            #
+            # some formats embed headers in each line. JSONL headers are the dict keys in
+            # each line that uses a dict
+            #
+            if reader.updates_headers:
+                _ = reader.current_headers
+                self.headers = self.headers if _ is None else _
             yield line
         self.finalize()
 

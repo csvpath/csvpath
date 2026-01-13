@@ -23,6 +23,23 @@ class DataFileReader(ABC):
         self._encoding = None
         self.mode = mode
         self.encoding = encoding
+        self._current_headers = None
+        self._updates_headers = False
+
+    #
+    # some formats -- esp. JSONL -- embed their headers line-by-line
+    #
+    @property
+    def updates_headers(self) -> bool:
+        return self._updates_headers
+
+    @property
+    def current_headers(self) -> list[str]:
+        return self._current_headers
+
+    @current_headers.setter
+    def current_headers(self, headers: list[str]) -> None:
+        self._current_headers = headers
 
     @classmethod
     def register_data(cls, *, path, filelike) -> None:

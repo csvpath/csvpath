@@ -74,7 +74,13 @@ class JsonReaderHelper:
         if isinstance(obj, (tuple, list)):
             return ["" if o is None else str(o) for o in obj]
         elif isinstance(obj, dict):
-            obj = {key: obj[key] for key in sorted(obj)}
+            #
+            # new theory is that we don't sort the keys because headers change on a row-by-row
+            # so the positions in the header list don't have meaning and there is no other value
+            # to the keys being sorted, and, moreover, if the key order had any meaning to the
+            # data generator that information is lost if we sort.
+            #
+            # obj = {key: obj[key] for key in sorted(obj)}
             keys = list(obj.keys())
             #
             # we sort because a dict does require a certain order of its keys.
@@ -82,12 +88,14 @@ class JsonReaderHelper:
             # order on any given line.
             #
             line = [cls.string_or_date_string(obj[k]) for k in keys]
+            return (keys, line)
             #
             # make a header row if line number is 0 else just a data row
             #
             #
             # check if we have headers for values. i.e. keys == values in first line
             #
+            """
             same = True
             if line_number == 0:
                 for i, _ in enumerate(line):
@@ -97,6 +105,7 @@ class JsonReaderHelper:
             if line_number == 0 and not same:
                 return (keys, line)
             return line
+            """
         else:
             return cls.string_or_date_string(obj)
 
