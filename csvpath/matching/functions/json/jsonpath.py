@@ -1,7 +1,17 @@
 import json
 import pyjson5
 from typing import Any
-from jsonpath_ng import jsonpath, parse
+
+#
+# the ext supports a "full" JSONPath syntax; whereas, w/o .ext is too limiting
+# both should support single quotes in paths, which we need because atm csvpaths
+# require double quotes for terms. if that becomes a problem we either have to
+# allow single quoted strings (probably easily doable) or unwrapped jsonpaths,
+# same as we do with regexes; but this would probably be a pain.
+#
+from jsonpath_ng.ext import parse
+
+# from jsonpath_ng import jsonpath, parse
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -43,9 +53,9 @@ class JsonPath(ValueProducer):
         v = self._value_two(skip=skip)
         jpath = parse(v)
         r = jpath.find(j)
-        if r and len(r) == 1:
+        if r is not None and len(r) == 1:
             self.value = r[0].value
-        elif r:
+        elif r is not None:
             self.value = [_.value for _ in r]
         else:
             raise DataException("No value for jsonpath")
