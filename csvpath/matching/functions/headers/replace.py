@@ -59,9 +59,22 @@ class Replace(SideEffect):
 
         val = self._value_two(skip=skip)
 
-        self.matcher.csvpath.logger.debug(
-            "Replacing %s idenified as %s with %s", self.matcher.line[i], header, val
-        )
-        self.matcher.line[i] = val
+        if i >= len(self.matcher.line):
+            #
+            # this obviously happens in the normal run of things if we have a new number of
+            # header values or a blank line. it isn't considered an error. should it ever be?
+            # doesn't feel like it atm.
+            #
+            self.matcher.csvpath.logger.debug(
+                "Not enough values. %s vs %s", i, len(self.matcher.line)
+            )
+        else:
+            self.matcher.csvpath.logger.debug(
+                "Replacing %s idenified as %s with %s",
+                self.matcher.line[i],
+                header,
+                val,
+            )
+            self.matcher.line[i] = val
 
         self.match = self.default_match()

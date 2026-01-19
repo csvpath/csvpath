@@ -5,6 +5,7 @@ from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
+PATH2 = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test-5.csv"
 
 
 class TestCsvPathFunctionsReplace(unittest.TestCase):
@@ -76,6 +77,21 @@ class TestCsvPathFunctionsReplace(unittest.TestCase):
         assert len(lines[0]) == 3
         assert lines[0] == [2, "Kermit", "hi!"]
         assert lines[1] == [3, "Bat", "blurgh..."]
+
+    def test_function_replace4(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ~ checks that replace deals with blank and/or short lines. it had a problem at one point ~
+            ${PATH2}[*]
+            [
+                replace(#2, "replaced")
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 11
+        lst = [_ for _ in lines if len(_) > 2 and _[2] == "replaced"]
+        assert len(lst) == 10
 
     def test_function_append(self):
         path = CsvPath()

@@ -51,6 +51,8 @@ class ConfigEnv:
         if self._env is None:
             try:
                 if not self.nos(self.var_sub_source).exists():
+                    self.write_env_file({})
+                    """
                     # cannot use DataFileWriter and DataFileReader because that would create a circular import.
                     # with DataFileWriter(path=self.var_sub_source) as file:
                     file = ClassLoader.load(
@@ -61,7 +63,7 @@ class ConfigEnv:
                     file.__enter__()
                     json.dump({}, file.sink, indent=4)
                     file.__exit__(None, None, None)
-
+                    """
                 # with DataFileReader(self.var_sub_source) as file:
                 file = ClassLoader.load(
                     "from csvpath.util.file_readers import DataFileReader",
@@ -73,6 +75,18 @@ class ConfigEnv:
             except Exception:
                 print(traceback.format_exc())
         return self._env
+
+    def write_env_file(self, j: dict) -> None:
+        # cannot use DataFileWriter and DataFileReader because that would create a circular import.
+        # with DataFileWriter(path=self.var_sub_source) as file:
+        file = ClassLoader.load(
+            "from csvpath.util.file_writers import DataFileWriter",
+            [],
+            {"path": self.var_sub_source},
+        )
+        file.__enter__()
+        json.dump(j, file.sink, indent=4)
+        file.__exit__(None, None, None)
 
     #
     # takes an UPPERCASE name-value, finds where to swap it -- env vars, env file --
