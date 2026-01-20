@@ -303,7 +303,17 @@ class FunctionFactory:
         proj = c.project
         proj_ctx = "" if proj_ctx is None else f"{proj_ctx}"
         proj = "" if proj is None else f"{proj}"
-        return f"{proj_ctx}{proj}{name}"
+        qname = f"{proj_ctx}{proj}{name}"
+        qname = cls.improve_name(qname)
+        return qname
+
+    @classmethod
+    def improve_name(cls, name: str) -> str:
+        ffrom = " `~!@#$%^&*()_+-=[]\\{}|;':\",./<>?"
+        to = "1234567890abcdefghijklmnopqrstuvw"
+        table = str.maketrans(ffrom, to)
+        name = name.translate(table)
+        return name
 
     @classmethod
     def load(cls) -> None:
