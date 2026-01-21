@@ -40,7 +40,12 @@ class FunctionFinder:  # pylint: disable=R0903
                     if line == "" or line.startswith("#"):
                         continue
                     cls._debug(matcher, "Adding function %s", line)
-                    cls._add_function(matcher, func_fact, line)
+                    try:
+                        cls._add_function(matcher, func_fact, line)
+                    except Exception:
+                        matcher.csvpath.logger.exception(
+                            f"Could not add function for '{line}'"
+                        )
                 matcher.csvpath.logger.info("Added %s external functions", i)
         # add a sentinel to keep us from attempting reload.
         # this instance will never be found, but the dict will
@@ -55,7 +60,10 @@ class FunctionFinder:  # pylint: disable=R0903
             return
         if matcher.csvpath is None:
             return
-        matcher.csvpath.logger.debug(txt, obj, obj2)
+        if obj2 is None:
+            matcher.csvpath.logger.debug(txt, str(obj))
+        else:
+            matcher.csvpath.logger.debug(txt, str(obj), str(obj2))
 
     @classmethod
     def externals_sentinel(cls, matcher) -> str:
@@ -91,14 +99,20 @@ class FunctionFinder:  # pylint: disable=R0903
         # lines in config are like:
         #   from module import class as function-name
         #
-        matcher.csvpath.logger.debug("Import line is %s", cs)
+        cls._debug(matcher, "Import line is %s", cs)
         if len(cs) == 6 and cs[0] == "from" and cs[2] == "import" and cs[4] == "as":
             config = matcher.csvpath.config
-            instance = ClassLoader.load_private_function(config, s, matcher, cs[5])
-            qname = func_fact.qname(matcher=matcher, name=cs[5])
-            matcher.csvpath.logger.debug(
-                "Adding custom function %s: %s", qname, instance
-            )
-            func_fact.add_function(qname, instance)
+            try:
+                instance = ClassLoader.load_private_function(config, s, matcher, cs[5])
+                qname = func_fact.qname(matcher=matcher, name=cs[5])
+                cls._debug(matcher, "Adding custom function %s: %s", qname, instance)
+                func_fact.add_function(qname, instance)
+            except Exception:
+                if matcher is not None and matcher.csvpath is not None:
+                    matcher.csvpath.logger.exception(f"Cannot load class {cs}")
+                #
+                # matcher and csvpath will be present, but we check to be sure. there's no
+                # fallback because it is an unlikely scenario that would have its own logic.
+                #
         else:
             raise ConfigurationException("Unclear external function imports: {s}")

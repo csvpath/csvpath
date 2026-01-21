@@ -170,7 +170,10 @@ class FunctionFactory:
             return
         if matcher.csvpath is None:
             return
-        matcher.csvpath.logger.debug(txt, obj, obj2)
+        if obj2 is None:
+            matcher.csvpath.logger.debug(txt, str(obj))
+        else:
+            matcher.csvpath.logger.debug(txt, str(obj), str(obj2))
 
     #
     # valid function names start with a letter and contain only letters,
