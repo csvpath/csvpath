@@ -172,26 +172,30 @@ class ClassLoader:
             import py_compile
 
             # py_compile.compile(str(module_path), doraise=True)
-
             compiled_path = py_compile.compile(
                 str(module_path),
                 cfile=str(module_path) + "c",  # or any path you choose
                 doraise=True,
             )
-
-            print(f"Compiled fine to: {compiled_path}")
+            print(f"Classloader: compiled fine to: {compiled_path}")
 
         except Exception as ex:
-            print(f"Cannot compile: {ex}")
+            print(f"Classloader: cannot compile: {ex}")
+        #
+        # debugging. can remove
+        #
         try:
-            print("ABS:", os.path.abspath(module_path))
-            print("REAL:", os.path.realpath(module_path))
-            print("EXISTS:", os.path.exists(module_path))
-            print("ISFILE:", os.path.isfile(module_path))
-            print("ACCESS_R:", os.access(module_path, os.R_OK))
-            print("ACCESS_X:", os.access(module_path, os.X_OK))
+            print("Classloader: ABS:", os.path.abspath(module_path))
+            print("Classloader: REAL:", os.path.realpath(module_path))
+            print("Classloader: EXISTS:", os.path.exists(module_path))
+            print("Classloader: ISFILE:", os.path.isfile(module_path))
+            print("Classloader: ACCESS_R:", os.access(module_path, os.R_OK))
+            print("Classloader: ACCESS_X:", os.access(module_path, os.X_OK))
         except Exception as ex:
-            print(f"Cannot print module_path attributes: {ex}")
+            print(f"Classloader: cannot print module_path attributes: {ex}")
+        #
+        # end debugging.
+        #
         """
         spec = importlib.util.spec_from_file_location(
             f"{module_name}_{hash(module_path)}",  # unique name per loader instance
@@ -207,8 +211,11 @@ class ClassLoader:
         module = importlib.util.module_from_spec(spec)
         loader = spec.loader
         if loader is None:
-            raise ImportError(f"Could not load spec for {module_name} at {module_path}")
+            raise ImportError(
+                f"Classloader: could not load spec for {module_name} at {module_path}"
+            )
         loader.exec_module(module)
         cls = getattr(module, class_name)
         instance = cls(*args, **kwargs)
+        print(f"Classloader: returning instance: {instance}")
         return instance
