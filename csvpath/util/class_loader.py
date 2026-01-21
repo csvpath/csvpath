@@ -150,8 +150,14 @@ class ClassLoader:
         # Resolve the file path for the module
         #
         module_path = os.path.join(base_path, module_name)
-        module_path = module_path.replace(".", os.sep)
+
+        _i = module_path.rfind(os.sep)
+        mpt = module_path[0:_i]
+        mpb = module_path[_i:]
+        mpb = mpb.replace(".", os.sep)
+        module_path = f"{mpt}{mpb}"
         module_path = f"{module_path}.py"
+
         if not os.path.exists(module_path):
             raise ImportError(f"Module {module_name} not found in {module_path}")
         #
