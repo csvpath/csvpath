@@ -139,6 +139,7 @@ class FunctionFactory:
     @classmethod
     def add_function(cls, name: str, function: Function) -> None:
         """use to add a new, external function at runtime"""
+
         if name is None:
             name = function.name
         if name is None:
@@ -150,17 +151,26 @@ class FunctionFactory:
             raise InvalidNameException("Name must not be an empty string")
         if not cls.valid_function_name(name):  # name.isalpha():
             raise InvalidNameException(f"Name {name} is not valid")
+        cls._debug(function.matcher, "Looking for an existing function named %s", name)
         if cls.get_function(None, name=name, find_external_functions=False) is not None:
             function.matcher.csvpath.logger.warning(
                 "Internal function is overriden by external function: %s", name
             )
-            # raise InvalidNameException("Built-in functions cannot be overriden")
         if not isinstance(function, Function):
             # pass as an instance, not a class, for specificity. good to do?
             raise InvalidChildException(
                 "Function being registered must be passed as an instance"
             )
+        cls._debug(function.matcher, "Adding %s as key to %s", name, function.__class__)
         cls.NOT_MY_FUNCTION[name] = function.__class__
+
+    @classmethod
+    def _debug(cls, matcher, txt: str, obj=None, obj2=None) -> None:
+        if matcher is None:
+            return
+        if matcher.csvpath is None:
+            return
+        matcher.csvpath.logger.debug(txt, obj, obj2)
 
     #
     # valid function names start with a letter and contain only letters,
@@ -287,9 +297,15 @@ class FunctionFactory:
             # if proj not set we check for name
             #
             qname = cls.qname(matcher=matcher, name=name)
+            cls._debug(matcher, "Qualified name of %s is %s", name, qname)
             if qname in FunctionFactory.NOT_MY_FUNCTION:
                 f = cls.NOT_MY_FUNCTION[qname]
                 f = f(matcher, name, child)
+            cls._debug(matcher, "Found %s as %s", qname, f)
+            if f is None:
+                cls._debug(
+                    matcher, "%s not in: %s", qname, FunctionFactory.NOT_MY_FUNCTION
+                )
         return f
 
     @classmethod

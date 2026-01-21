@@ -24,6 +24,7 @@ class FunctionFinder:  # pylint: disable=R0903
             if path is None or path.strip() == "":
                 matcher.csvpath.logger.error("No [functions][imports] in config.ini")
                 return
+            cls._debug(matcher, "Functions import file is at %s", path)
             if not os.path.exists(path):
                 matcher.csvpath.logger.error(
                     f"[functions][imports] path {path} in {config.configpath} does not exist"
@@ -35,8 +36,10 @@ class FunctionFinder:  # pylint: disable=R0903
                 i = 0
                 for line in file:
                     i += 1
-                    if str(line).strip() == "":
+                    line = str(line).strip()
+                    if line == "" or line.startswith("#"):
                         continue
+                    cls._debug(matcher, "Adding function %s", line)
                     cls._add_function(matcher, func_fact, line)
                 matcher.csvpath.logger.info("Added %s external functions", i)
         # add a sentinel to keep us from attempting reload.
@@ -44,6 +47,15 @@ class FunctionFinder:  # pylint: disable=R0903
         # never be empty
         e = cls.externals_sentinel(matcher)
         func_fact.add_function(e, Yes(None, e))
+        cls._debug(matcher, "Added sentinel function %s", e)
+
+    @classmethod
+    def _debug(cls, matcher, txt: str, obj=None, obj2=None) -> None:
+        if matcher is None:
+            return
+        if matcher.csvpath is None:
+            return
+        matcher.csvpath.logger.debug(txt, obj, obj2)
 
     @classmethod
     def externals_sentinel(cls, matcher) -> str:
@@ -79,10 +91,14 @@ class FunctionFinder:  # pylint: disable=R0903
         # lines in config are like:
         #   from module import class as function-name
         #
+        matcher.csvpath.logger.debug("Import line is %s", cs)
         if len(cs) == 6 and cs[0] == "from" and cs[2] == "import" and cs[4] == "as":
             config = matcher.csvpath.config
             instance = ClassLoader.load_private_function(config, s, matcher, cs[5])
             qname = func_fact.qname(matcher=matcher, name=cs[5])
+            matcher.csvpath.logger.debug(
+                "Adding custom function %s: %s", qname, instance
+            )
             func_fact.add_function(qname, instance)
         else:
             raise ConfigurationException("Unclear external function imports: {s}")
