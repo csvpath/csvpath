@@ -18,7 +18,6 @@ class FunctionFinder:  # pylint: disable=R0903
     def load(cls, matcher, func_fact) -> None:
         # any problems loading will bubble up to the nearest
         # expression and be handled there.
-        print("fun fndrx: loading")
         if matcher and matcher.csvpath and matcher.csvpath.config:
             config = matcher.csvpath.config
             path = config.function_imports
