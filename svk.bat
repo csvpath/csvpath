@@ -1,5 +1,5 @@
 @echo=off
-poetry run pytest -s -v -k %1
+poetry run pytest --full-trace -s -v -k %1
 
 
 
