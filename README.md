@@ -14,9 +14,9 @@
 Check the headers in `myorders.csv`
 
 ```python
-from csvpath import CsvPaths
+from csvpath import CsvPath
 
-CsvPaths().fast_forward_paths("$myorders.csv[*][ count_headers() == 6 ]").is_valid
+CsvPaths().fast_forward("$myorders.csv[*][ count_headers() == 6 ]").is_valid
 ```
 
 
@@ -37,7 +37,7 @@ print(f"Valid: {results[0].is_valid}")
 #### What problem does this solve?
 CSV and Excel files are critical to data partnerships — and they are often the most unloved part of the data estate. Partners have different priorities, technical capabilities, and interpretations of requirements. The result is untrustworthy data flowing into the enterprise, often caught only after it has already caused damage downstream.
 
-CsvPath Framework adds a preboarding layer before files reach your pipeline: registering, versioning, validating, and staging partner files so your teams work with trusted data. The cost of manual checking and firefighting CSV and Excel problems can reach 50% of a DataOps and BizOps team's time. CsvPath's automation-first approach scales that back.
+CsvPath Framework adds a preboarding layer before files reach your pipeline. It registers, versions, validates, and stages partner files, so your teams work with trusted data. The cost of manual checking and firefighting CSV and Excel problems can reach 50% of a DataOps and BizOps team's time. CsvPath's automation-first approach scales that back.
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org). For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
