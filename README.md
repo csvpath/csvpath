@@ -84,14 +84,6 @@ The project uses Poetry and works fine with Uv. You can also install it with:
     pip install csvpath
 ```
 
-CsvPath has an optional dependency on Pandas. Pandas data frames can be used as a data source, much like Excel or CSV files. To install CsvPath with the Pandas option do:
-```
-    pip install csvpath[pandas]
-```
-
-Pandas and its dependencies can make it harder to use CsvPath in certain specific MFT use cases. For e.g., using Pandas in an AWS Lambda layer may be less straightforward.
-
-
 <a name="approach"></a>
 
 <p></p>
