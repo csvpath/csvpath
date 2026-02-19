@@ -41,7 +41,7 @@ CsvPath Framework adds a preboarding layer ahead of a data partner's files reach
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org).
 
-For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html). <a href='https://flightpathdata.com'><img src='docs/images/flightpath-data-logo-tiny.png'/></a>
+For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
 If you need help getting started, there are lots of ways to reach us.
 - Use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a>
