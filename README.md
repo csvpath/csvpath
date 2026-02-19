@@ -5,13 +5,13 @@
 
 #### CsvPath Framework closes the gap between Managed File Transfer and the data lake with a purpose-built, open source solution for validating and staging inbound data file feeds from external partners.
 
-*See it in 30 seconds*
+*See it running in 30 seconds*
 
 ```bash
     pip install csvpath
 ```
 
-Check the headers in `myorders.csv`
+Check the headers in `myorders.csv`.
 
 ```python
 from csvpath import CsvPath
@@ -20,7 +20,7 @@ CsvPaths().fast_forward("$myorders.csv[*][ count_headers() == 6 ]").is_valid
 ```
 
 
-Run an automated file arrival
+Load an automated file arrival process and run it.
 
 ```python
 from csvpath import CsvPaths
