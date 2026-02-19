@@ -37,14 +37,9 @@ print(f"Valid: {results[0].is_valid}")
 #### What problem does this solve?
 CSV and Excel files are critical to data partnerships — and they are often the most unloved part of the data estate. Partners have different priorities, technical capabilities, and interpretations of requirements. The result is untrustworthy data flowing into the enterprise, often caught only after it has already caused damage downstream.
 
-CsvPath Framework adds a preboarding layer ahead of a data partner's files reaching your ingestion pipeline. It registers, versions, validates, and stages clean data and metadata to make your processes run smoothly. The cost of manual checking and firefighting CSV and Excel problems can reach 50% of a DataOps and BizOps team's time. CsvPath's automation-first approach scales that back.
+CsvPath Framework adds a preboarding layer ahead of a data partner's files reaching your ingestion pipeline. It registers, versions, validates, and stages clean data and metadata so your processes run smoothly. The cost of manual checking and firefighting CSV and Excel problems can reach 50% of a DataOps and BizOps team's time. CsvPath's automation-first approach scales that back.
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org). For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
-
-CsvPath Validation Language is inspired by:
-- XPath, JSONPath, and Schematron validation
-- SQL schemas
-- And business rules engines like Jess or Drools
 
 If you need help getting started, there are lots of ways to reach us.
 - Use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a>
