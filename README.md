@@ -3,20 +3,51 @@
 
 ## Make Data File Feed Ingestion Higher Quality, Lower Risk, and More Agile
 
-#### CsvPath Framework closes the gap between Managed File Transfer and the data lake, applications, analytics, and AI with a purpose-built, open source data file feeds preboarding solution.
+#### CsvPath Framework closes the gap between Managed File Transfer and the data lake with a purpose-built, open source solution for validating and staging inbound data file feeds from external partners.
+
+*See it in 30 seconds*
+
+```bash
+    pip install csvpath
+```
+
+Check the headers in `myorders.csv`
+
+```python
+from csvpath import CsvPaths
+
+CsvPaths().fast_forward_paths("$myorders.csv[*][ count_headers() == 6 ]").is_valid
+```
+
+
+Run an automated file arrival
+
+```python
+from csvpath import CsvPaths
+
+paths = CsvPaths()
+paths.file_manager.add_named_file(name="orders", path="myorders.csv")
+paths.paths_manager.add_named_paths(name="validate-orders", from_file="orders.csvpath")
+paths.fast_forward_paths(filename="orders", pathsname="validate-orders")
+
+results = paths.results_manager.get_named_results("validate-orders")
+print(f"Valid: {results[0].is_valid}")
+```
+
+#### What problem does this solve?
+CSV and Excel files are critical to data partnerships — and they are often the most unloved part of the data estate. Partners have different priorities, technical capabilities, and interpretations of requirements. The result is untrustworthy data flowing into the enterprise, often caught only after it has already caused damage downstream.
+
+CsvPath Framework adds a preboarding layer before files reach your pipeline: registering, versioning, validating, and staging partner files so your teams work with trusted data. The cost of manual checking and firefighting CSV and Excel problems can reach 50% of a DataOps and BizOps team's time. CsvPath's automation-first approach scales that back.
 
 These pages focus on *CsvPath Validation Language*. For more documentation on the whole data preboarding architecture, along with code, examples, and best practices, check out [csvpath.org](https://www.csvpath.org). For the FlightPath frontend application and API server head over to [flightpathdata.com](https://www.flightpathdata.com/flightpath.html).
 
-CSV and Excel validation is at the core of the Framework. The Language defines a simple, declarative syntax for inspecting and validating files and other tabular data. Its mission is to end manual data checking and upgrading. The cost of manual processes and firefighting CSV and Excel problems can be as high as 50% of a DataOps and BizOps team's time. CsvPath Framework's automation-first approach helps scale back that unproductive and frustrating investment.
-
 CsvPath Validation Language is inspired by:
-- XPath and ISO standard <a href='https://schematron.com/'>Schematron validation</a>
+- XPath, JSONPath, and Schematron validation
 - SQL schemas
 - And business rules engines like Jess or Drools
 
 If you need help getting started, there are lots of ways to reach us.
 - Use the <a href='https://www.csvpath.org/getting-started/get-help'>contact form</a>
-- The <a href='https://github.com/csvpath/csvpath/issues'>issue tracker</a>
 - Email support@csvpath.org
 - Or reach out to one of our [sponsors, below](#sponsors).
 
@@ -39,7 +70,7 @@ If you need help getting started, there are lots of ways to reach us.
 
 CSV and Excel files are everywhere! They are critical to successful data partnerships. They are a great example of how garbage-in-garbage-out threatens applications, analytics, and AI. And they are often the most unloved part of the data estate.
 
-We rely on CSV because it the lowest common dominator. The majority of systems that have import/export capabilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
+We rely on CSV because it the lowest common denominator. The majority of systems that have import/export capabilities accept CSV. But many CSV files are invalid or broken in some way due to partners having different priorities, SDLCs, levels of technical capability, and interpretations of requirements. The result is that untrustworthy data flows into the enterprise. Often times a lot of manual effort goes into tracing data back to problems and fixing them.
 
 CsvPath Validation Language adds trust to data file feeds. It is a quality management shift-left that solves problems early where they are easiest to fix.
 
