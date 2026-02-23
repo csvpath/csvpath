@@ -1,6 +1,7 @@
 import os
 import subprocess
 import threading
+import traceback
 from datetime import datetime, timezone
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
@@ -145,5 +146,8 @@ class ScriptsResultsListener(Listener, threading.Thread):
         except Exception as e:
             msg = f"Run script failed on results {mdata.named_paths_name}, script_name {script_name}, with {type(e)}: {e}"
             self.csvpaths.logger.error(msg)
+            self.csvpaths.error_manager.handle_error(
+                source=traceback.format_exc(), msg=msg
+            )
             if self.csvpaths.ecoms.do_i_raise():
                 raise RuntimeError(msg) from e

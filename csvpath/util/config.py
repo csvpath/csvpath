@@ -305,14 +305,18 @@ shell = /bin/bash
                 path = Config.CONFIG
         self._configpath = path
         self._load_config()
+        #
         # if newly loaded config path doesn't match where it was loaded from, reload w/it.
+        #
         path = self._get(section="config", name="path", no_list=True)
         if path is not None:
             path = path.strip()
         if path == "":
             path = None
         if path is not None and path != self._configpath:
+            #
             # if recurse, could loop. but probably won't and not looping is user's responsibility.
+            #
             self.configpath = path
 
     @property
@@ -585,29 +589,6 @@ shell = /bin/bash
                     os.makedirs(self.inputs_csvpaths_path)
                 except Exception:
                     print(traceback.format_exc())
-
-    """
-    def _assure_cache_path(self) -> None:
-        if self.load:
-            p = self._get("cache", "path", "cache")
-            if p:
-                p = p.strip()
-            if not p or p == "":
-                uc = self.get(section="cache", name="use_cache")
-                if uc and uc.strip().lower() == "no":
-                    return
-                self._set("cache", "use_cache", "no")
-                return
-            if p.find("://") > -1:
-                raise ConfigurationException(
-                    f"Cache dir must be on the local drive, not {p}"
-                )
-            if not os.path.exists(p):
-                try:
-                    os.makedirs(p)
-                except Exception:
-                    print(traceback.format_exc())
-    """
 
     def _assure_cache_path(self) -> None:
         if self.load:

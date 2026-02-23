@@ -1543,11 +1543,21 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 f"""Name cannot be the empty string:
                     name: {name}, tracking: {tracking}, value: {value}"""
             )
+        #
+        # exp!
+        #
+        if str(tracking).strip() == "":
+            tracking = ""
+        #
+        # is this limitation good?
+        #
+        """
         if tracking is not None and f"{tracking}".strip() == "":
             raise VariableException(
-                f"""Tracking value cannot be empty.
-                    name: {name}, tracking: {tracking}, value: {value}"""
+                f""Tracking value cannot be empty.
+                    name: {name}, tracking: {tracking}, value: {value}""
             )
+        """
         if tracking is not None:
             if name not in self.variables:
                 self.variables[name] = {}

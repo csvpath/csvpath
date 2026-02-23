@@ -19,7 +19,7 @@ class FilesListener(Listener):  # Registrar,
 
     def __init__(self, csvpaths=None):
         #
-        # FileListener is the primary listener. however,
+        # FileRegistrar is the primary listener. however,
         # we want another file listener that tracks all files
         # staged at the inputs/named_files level.
         #

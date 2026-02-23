@@ -152,8 +152,18 @@ class CsvLineSpooler(LineSpooler):
         if self.path is None:
             ...
         else:
+            d = self.delimiter
+            if d is None:
+                d = ","
+            d = d.strip()
+
+            q = self.quotechar
+            if q is None:
+                q = '"'
+            q = q.strip()
+
             self.sink = self._open_file(self.path)
-            self.writer = csv.writer(self.sink)
+            self.writer = csv.writer(self.sink, delimiter=d, quotechar=q)
 
     def _open_file(self, path: str):
         dw = DataFileWriter(path=path, mode="w")
