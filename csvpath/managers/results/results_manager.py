@@ -2,6 +2,7 @@
 import os
 import json
 import re
+import traceback
 from uuid import UUID
 from pathlib import Path
 import datetime
@@ -439,9 +440,9 @@ class ResultsManager:  # pylint: disable=C0115
             elif t[0].startswith("unmatched"):
                 filefrom = "unmatched.csv"
             else:
-                raise ValueError(
-                    "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
-                )
+                msg = "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                raise ValueError(msg)
             varname = t[1]
             pathfrom = self._path_to_result(result, filefrom)
             if varname.endswith("+"):
@@ -468,12 +469,15 @@ class ResultsManager:  # pylint: disable=C0115
         p = result.csvpath.config.transfer_root
 
         if t not in result.csvpath.variables:
-            raise InputException(f"Variable {t} not found in variables")
+            msg = f"Variable {t} not found in variables"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            raise InputException(msg)
         f = result.csvpath.variables[t]
         if f.find("..") != -1:
-            raise InputException("Transfer path cannot include '..': {f}")
+            msg = f"Transfer path cannot include '..': {f}"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            raise InputException(msg)
         rp = Nos(p).join(f)
-        # rp = os.path.join(p, f)
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
         if not Nos(rd).exists():
@@ -576,6 +580,7 @@ class ResultsManager:  # pylint: disable=C0115
             if len(results.files) == 0:
                 msg = f"Results '{name}' does not exist"
                 self.csvpaths.logger.error(msg)
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise InputException(msg)
                 return []
@@ -611,7 +616,9 @@ class ResultsManager:  # pylint: disable=C0115
             #
             return self.get_named_results(ref.root_major)
         else:
-            raise ValueError(f"Unexpected reference datatype in: {ref}")
+            msg = f"Unexpected reference datatype in: {ref}"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            raise ValueError(msg)
 
     def has_named_results(self, name: str) -> bool:
         lst = self.get_named_results(name)
@@ -632,9 +639,9 @@ class ResultsManager:  # pylint: disable=C0115
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
             if name.endswith(":data") or name.endswith(":unmatched"):
-                raise ValueError(
-                    "Reference must be to a run, or an instance within a run, not to a result's data file"
-                )
+                msg = "Reference must be to a run, or an instance within a run, not to a result's data file"
+                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                raise ValueError(msg)
             return self._get_named_results_for_reference(name)
         #
         # CsvPaths instances should not be long lived. they are not servers or
@@ -661,12 +668,9 @@ class ResultsManager:  # pylint: disable=C0115
         # find the parent of the runs do the join below with that.
         #
         path = Nos(self.csvpaths.config.archive_path).join(name)
-        # path = os.path.join(self.csvpaths.config.archive_path, name)
-        self.csvpaths.logger.debug(
-            "Attempting to load results for %s from %s", name, path
-        )
+        self.csvpaths.logger.debug("Attempting to load %s results from %s", name, path)
         #
-        # find the template. it comes from the named-paths so from the named-paths mgr
+        # find the template. see the named-paths, so from the named-paths mgr
         #
         template = self._csvpaths.paths_manager.get_template_for_paths(name)
         if template is not None and not template == "":
@@ -762,16 +766,13 @@ class ResultsManager:  # pylint: disable=C0115
             ref = ReferenceParser(name)
             name = ref.root_major
         path = Nos(self.csvpaths.config.archive_path).join(name)
-        # path = os.path.join(self.csvpaths.config.archive_path, name)
         return path
 
     def get_named_results_for_run(self, *, name: str, run: str) -> list[list[Any]]:
         if run is None:
             return None
         path = Nos(self.csvpaths.config.archive_path).join(name)
-        # path = os.path.join(self.csvpaths.config.archive_path, name)
         path = Nos(path).join(run)
-        # path = os.path.join(path, run)
         return self._get_named_results_for_run(name=name, run=run, path=path)
 
     #
@@ -813,6 +814,7 @@ class ResultsManager:  # pylint: disable=C0115
             instance_dir = Nos(run_dir).join(instance)
             # instance_dir = os.path.join(run_dir, instance)
         mani = ResultFileReader.manifest(instance_dir)
+
         #
         # csvpath needs to be loaded with all meta.json->metadata and some/most of runtime_data
         #
@@ -840,19 +842,18 @@ class ResultsManager:  # pylint: disable=C0115
         #
         # this may not be complete. let's see if it works or needs more.
         #
-        # try:
         r = Result(
             csvpath=csvpath,
             paths_name=name,
             run_dir=run_dir,
-            file_name=mani["actual_data_file"],
+            #
+            # why are adf and instance_data (others?) not in mani?
+            #
+            file_name=mani.get("actual_data_file"),
             run_index=mani["instance_index"],
             run_time=dateutil.parser.parse(mani["time"]),
             runtime_data=meta["runtime_data"],
             by_line=not bool(mani["serial"]),
             run_uuid=mani["run_uuid"],
         )
-        """
-        except Exception as e:
-        """
         return r

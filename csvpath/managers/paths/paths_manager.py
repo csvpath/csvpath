@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 import os
 import json
+import traceback
 from typing import NewType
 from json import JSONDecodeError
 from csvpath import CsvPath
@@ -161,7 +162,8 @@ class PathsManager:
         for name in np:
             if not isinstance(np[name], list):
                 msg = f"{name} does not key a list of csvpaths"
-                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                src = traceback.format_exc()
+                self.csvpaths.error_manager.handle_error(source=src, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise InputException(msg)
                 return
@@ -179,7 +181,8 @@ class PathsManager:
         #
         if directory is None:
             msg = "Named paths collection name needed"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            src = traceback.format_exc()
+            self.csvpaths.error_manager.handle_error(source=src, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise InputException(msg)
         if self.can_load(directory) is not True:
@@ -234,7 +237,8 @@ class PathsManager:
                     lst.append(ref)
             except Exception as ex:
                 msg = f"Error adding named-paths from directory: {ex}"
-                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                src = traceback.format_exc()
+                self.csvpaths.error_manager.handle_error(source=src, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise
         else:
@@ -273,7 +277,8 @@ class PathsManager:
             return ref
         except Exception as ex:
             msg = f"Error adding named-paths from file: {ex}"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            src = traceback.format_exc()
+            self.csvpaths.error_manager.handle_error(source=src, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise
             return None
@@ -331,7 +336,8 @@ class PathsManager:
                     )
                     lst.append(ref)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+            src = traceback.format_exc()
+            self.csvpaths.error_manager.handle_error(source=src, msg=f"{ex}")
             if self.csvpaths.ecoms.do_i_raise():
                 raise
         return lst
@@ -351,11 +357,13 @@ class PathsManager:
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} because loading files over HTTP is not allowed"
             self.csvpaths.logger.error(msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return False
         if nos.is_local and local is not True:
             msg = f"Cannot add {path} because loading local files is not allowed"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             self.csvpaths.logger.error(msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
@@ -494,7 +502,8 @@ class PathsManager:
             return ref
         except Exception as ex:
             msg = f"Error adding named-paths list to named-paths group: {ex}"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            src = traceback.format_exc()
+            self.csvpaths.error_manager.handle_error(source=src, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise
             return None
@@ -746,7 +755,8 @@ class PathsManager:
                 # print(traceback.format_exc())
                 msg = f"Could not store script at {script_file}: {e}"
                 self.csvpaths.logger.error(e)
-                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+                src = traceback.format_exc()
+                self.csvpaths.error_manager.handle_error(source=src, msg=msg)
                 if self.csvpaths.ecoms.do_i_raise():
                     raise RuntimeError(msg)
                 return

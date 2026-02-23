@@ -21,17 +21,14 @@ class ResultFileReader:
     @classmethod
     def manifest(self, result_home: str) -> dict | None:
         mp = Nos(result_home).join("manifest.json")
-        # mp = os.path.join(result_home, "manifest.json")
         return ResultFileReader.json_file(mp)
 
     @classmethod
     def meta(self, result_home: str) -> dict | None:
         mp = Nos(result_home).join("meta.json")
-        # mp = os.path.join(result_home, "meta.json")
         return ResultFileReader.json_file(mp)
 
     @classmethod
     def vars(self, result_home: str) -> dict | None:
         mp = Nos(result_home).join("vars.json")
-        # mp = os.path.join(result_home, "vars.json")
         return ResultFileReader.json_file(mp)

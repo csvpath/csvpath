@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+import traceback
 from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
@@ -20,6 +21,8 @@ from csvpath.util.template_util import TemplateUtility as temu
 from .file_registrar import FileRegistrar
 from .lines_and_headers_cacher import LinesAndHeadersCacher
 from .file_metadata import FileMetadata
+from .file_describer import NamedFileDescriber
+from .file_activator import NamedFileActivator
 
 NamedFileName = NewType("NamedFileName", str)
 """@private"""
@@ -37,6 +40,15 @@ class FileManager:
         self.lines_and_headers_cacher = LinesAndHeadersCacher(csvpaths)
         """@private"""
         self._nos = None
+        self._describer = None
+
+    @property
+    def describer(self) -> NamedFileDescriber:
+        return NamedFileDescriber(self)
+
+    @property
+    def activator(self) -> NamedFileActivator:
+        return NamedFileActivator(self)
 
     @property
     def nos(self) -> Nos:
@@ -227,9 +239,7 @@ class FileManager:
         if name.find("://") > -1:
             return name
         home = Nos(self.named_files_dir).join(name)
-        # home = os.path.join(self.named_files_dir, name)
         nos = Nos(home)
-        # nos.path = home
         if nos.isfile():
             home = home[0 : home.rfind(nos.sep)]
         home = pathu.resep(home)
@@ -239,7 +249,6 @@ class FileManager:
         """@private"""
         home = self.named_file_home(name)
         nos = Nos(home)
-        # nos.path = home
         if not nos.exists():
             nos.makedirs()
         home = pathu.resep(home)
@@ -298,7 +307,9 @@ class FileManager:
         if template is None:
             return name
         if template.find(":filename") == -1:
-            raise ValueError(f"Template {template} must include :filename")
+            msg = f"Template {template} must include :filename"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            raise ValueError(msg)
         t = template
         #
         # uses the origin path + template to decorate the cleaned filename with
@@ -424,7 +435,11 @@ class FileManager:
                 j = json.load(reader.source)
                 self.set_named_files(j)
         except (OSError, ValueError, TypeError, JSONDecodeError) as ex:
-            self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+            # self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+            msg = f"{ex}"
+            self.csvpaths.error_manager.handle_error(
+                source=traceback.format_exc(), msg=msg
+            )
             if self.csvpaths.ecoms.do_i_raise():
                 raise
 
@@ -459,11 +474,7 @@ class FileManager:
     ) -> list[str]:
         ret = []
         #
-        # legal_name handled at add_named_file
-        #
-        # self.legal_name(name)
-        # if dirname is None or dirname.strip() == "":
-        #    raise ValueError("Dirname cannot be None or empty")
+        # legal_name check handled at add_named_file
         #
         # need to support adding all files from directory under the same name. preferably
         # in order of file created time, if possible.
@@ -521,16 +532,26 @@ class FileManager:
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} because loading files over HTTP is not allowed"
             self.csvpaths.logger.error(msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return False
         if nos.is_local and local is not True:
             msg = f"Cannot add {path} because loading local files is not allowed"
             self.csvpaths.logger.error(msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return False
         return True
+
+    def assure_docs_and_discriptor(self, name: NamedFileName) -> None:
+        if name is None:
+            raise ValueError("Named-file name cannot be None")
+        self.legal_name(name)
+        nfd = NamedFileDescriber(self)
+        nfd.get_readme(name)
+        nfd.get_json(name)
 
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
@@ -562,12 +583,14 @@ class FileManager:
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} as {name} because loading files over HTTP is not allowed"
             self.csvpaths.logger.warning(msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return
         if nos.is_local and local is not True:
             msg = f"Cannot add {path} as {name} because loading local files is not allowed"
             self.csvpaths.logger.warning(msg)
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return
@@ -580,9 +603,7 @@ class FileManager:
             # convert those, but obviously only after obtaining the
             # bytes.
             #
-            #
             # create folder tree in inputs/named_files/name/filename
-            #
             #
             home = self.assure_file_home(name, path, template)
             file_home = home
@@ -605,11 +626,23 @@ class FileManager:
             #
             self.csvpaths.logger.debug("Path after removing mark, if any: %s", path)
             self._copy_in(path, home, template)
-            name_home = self.named_file_home(name)
+            #
+            #
+            #
+            self.assure_docs_and_discriptor(name)
+            #
+            # create the reference to the bytes/version added to the named-file.
+            # this is the most specific reference possible. we return it when we're
+            # done here.
+            #
             rpath, h = self._fingerprint(home)
             self.csvpaths.logger.debug("Fingerprint of %s: %s", path, h)
             ret = f"${name}.files.{h}"
             self.csvpaths.logger.debug("Reference to named-file: %s", ret)
+            #
+            # create the metadata event for this registration
+            #
+            name_home = self.named_file_home(name)
             mdata = FileMetadata(self.csvpaths.config)
             mdata.named_file_name = name
             mdata.named_file_ref = ret
@@ -643,6 +676,9 @@ class FileManager:
         except Exception as ex:
             msg = f"Error in loading named-file: {ex}"
             self.csvpaths.logger.error(msg)
+            self.csvpaths.error_manager.handle_error(
+                source=traceback.format_exc(), msg=msg
+            )
             if self.csvpaths.ecoms.do_i_raise():
                 raise
 
