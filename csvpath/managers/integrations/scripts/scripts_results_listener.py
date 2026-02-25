@@ -56,57 +56,73 @@ class ScriptsResultsListener(Listener, threading.Thread):
         self.start()
 
     def _metadata_update(self, mdata: Metadata) -> None:
-        #
-        # create separate csvpaths instance here on the thread?
-        #
-        if not self.csvpaths:
-            raise RuntimeError("Scripts results listener requires a CsvPaths instance")
-        if mdata.time_completed is None:
-            return
-        #
-        # if we set a flag to run scripts we will, if any. otherwise, we skip.
-        #
-        run = self.csvpaths.config.get(section="scripts", name="run_scripts")
-        if run is None or run.strip() not in ["on", "true", "yes"]:
-            self.csvpaths.logger.info(
-                "Not running completion scripts, if any, because run_scripts is not yes"
-            )
-            return
-        #
-        # find any scripts
-        #
-        pm = self.csvpaths.paths_manager
-        cfg = None
-        cfg = pm.get_config_for_paths(mdata.named_paths_name)
-        if cfg is None:
-            return
-        #
-        # all runs for every execution, regardless of completeness, validity, etc.
-        #
-        t = "on_complete_all_script"
-        all_script = cfg.get(t)
-        if all_script is not None and all_script.strip() != "":
-            self._run(mdata=mdata, script_name=all_script, script_type=t)
-        #
-        # valid and invalid run according to the mdata:
-        #   self.all_valid: bool = None
-        #   self.error_count: int = None
-        #
-        if mdata.all_valid is True:
-            t = "on_complete_valid_script"
-            valid_script = cfg.get(t)
-            if valid_script is not None and valid_script.strip() != "":
-                self._run(mdata=mdata, script_name=valid_script, script_type=t)
-        else:
-            t = "on_complete_invalid_script"
-            invalid_script = cfg.get(t)
-            if invalid_script is not None and invalid_script.strip() != "":
-                self._run(mdata=mdata, script_name=invalid_script, script_type=t)
-        if mdata.error_count > 0:
-            t = "on_complete_error_script"
-            error_script = cfg.get(t)
-            if error_script is not None and error_script.strip() != "":
-                self._run(mdata=mdata, script_name=error_script, script_type=t)
+        try:
+            #
+            # create separate csvpaths instance here on the thread?
+            #
+            if not self.csvpaths:
+                raise RuntimeError(
+                    "Scripts results listener requires a CsvPaths instance"
+                )
+            if mdata.time_completed is None:
+                return
+            #
+            # if we set a flag to run scripts we will, if any. otherwise, we skip.
+            #
+            run = self.csvpaths.config.get(section="scripts", name="run_scripts")
+            run = run.strip() in ["on", "true", "yes"]
+            if not run:
+                self.csvpaths.logger.info(
+                    "Not running scripts, if any. run_scripts is not yes"
+                )
+                return
+            #
+            # find any scripts
+            #
+            pm = self.csvpaths.paths_manager
+            cfg = pm.describer.get_scripts(mdata.named_paths_name)
+            if cfg is None:
+                return
+            #
+            # all runs for every execution, regardless of completeness, validity, etc.
+            #
+            if cfg.on_complete_all and str(cfg.on_complete_all).strip() != "":
+                self._run(
+                    mdata=mdata,
+                    script_name=cfg.on_complete_all,
+                    script_type="on_complete_all",
+                )
+            #
+            # valid and invalid run according to the mdata:
+            #   self.all_valid: bool = None
+            #   self.error_count: int = None
+            #
+            if mdata.all_valid is True:
+                if (
+                    cfg.on_complete_valid is not None
+                    and cfg.on_complete_valid.strip() != ""
+                ):
+                    self._run(
+                        mdata=mdata,
+                        script_name=cfg.on_complete_valid,
+                        script_type="on_complete_valid",
+                    )
+            else:
+                if cfg.on_complete_invalid and cfg.on_complete_invalid.strip() != "":
+                    self._run(
+                        mdata=mdata,
+                        script_name=cfg.on_complete_invalid,
+                        script_type="on_complete_invalid",
+                    )
+            if mdata.error_count > 0:
+                if cfg.on_complete_error and cfg.on_complete_error.strip() != "":
+                    self._run(
+                        mdata=mdata,
+                        script_name=cfg.on_complete_error,
+                        script_type="on_complete_error",
+                    )
+        except Exception:
+            self.csvpaths.logger.error(traceback.format_exc())
 
     def _run(self, *, mdata, script_name, script_type) -> None:
         #
@@ -130,7 +146,6 @@ class ScriptsResultsListener(Listener, threading.Thread):
                 os.chmod(path, 0o755)
             except Exception:
                 ...
-            print(f"runningx: path: {[path]}")
             result = subprocess.run([path], capture_output=True, text=True, check=True)
             out = result.stdout
             err = result.stderr

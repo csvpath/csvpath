@@ -19,6 +19,12 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
             paths.config.add_to_config("errors", "csvpaths", "collect, print")
             paths.config.add_to_config("webhook", "timeout", ".25")
 
+            if paths.file_manager.has_named_file("hooks"):
+                paths.file_manager.remove_named_file("hooks")
+
+            if paths.paths_manager.has_named_paths("hooks"):
+                paths.paths_manager.remove_named_paths("hooks")
+
             paths.file_manager.add_named_file(
                 name="hooks",
                 path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvs{os.sep}hooks.csv",
@@ -50,25 +56,30 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         )
         paths.config.add_to_config("listeners", "groups", "test")
 
+        if paths.file_manager.has_named_file("hooks"):
+            paths.file_manager.remove_named_file("hooks")
+
+        if paths.paths_manager.has_named_paths("hooks"):
+            paths.paths_manager.remove_named_paths("hooks")
+
         paths.paths_manager.add_named_paths_from_json(
             file_path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths{os.sep}hooks.json"
         )
         self._do_test(paths, paths_name="hooks")
 
     def _do_test(self, paths, paths_name):
-        print(f"paths: {paths}")
-        print(f"paths.config: {paths.config}")
-        print(f"paths.config.configpath: {paths.config.configpath}")
-        print(
-            f"paths.config.namedpaths: {paths.config.get(section='inputs', name='csvpaths')}"
-        )
+        if paths.file_manager.has_named_file("hooks"):
+            paths.file_manager.remove_named_file("hooks")
+
+        if paths.paths_manager.has_named_paths("hooks"):
+            paths.paths_manager.remove_named_paths("hooks")
+
         paths.file_manager.add_named_file(
             name="hooks",
             path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvs{os.sep}hooks.csv",
         )
-        paths.paths_manager.add_named_paths_from_dir(
-            name="hooks2",
-            directory=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths",
+        paths.paths_manager.add_named_paths_from_json(
+            file_path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths{os.sep}hooks.json"
         )
         paths.fast_forward_paths(pathsname=paths_name, filename="hooks")
         #
@@ -113,6 +124,7 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         htype = WebhookListener.HOOKS[3]
         url = listener._url_for_type(mdata, WebhookListener.URLS[htype])
         payload = listener._payload_for_type(mdata, htype)
+
         assert "errors" in payload
         assert len(payload.get("errors")) > 0
 
@@ -133,45 +145,40 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         )
         paths.config.add_to_config("listeners", "groups", "test")
 
-        print(f"paths: {paths}")
-        print(f"paths.config: {paths.config}")
-        print(f"paths.config.configpath: {paths.config.configpath}")
-        print(
-            f"paths.config.namedpaths: {paths.config.get(section='inputs', name='csvpaths')}"
-        )
-        print(
-            f"paths.config.namedpaths: {paths.config.get(section='extensions', name='csvpath_files')}"
-        )
+        if paths.file_manager.has_named_file("hooks"):
+            paths.file_manager.remove_named_file("hooks")
 
-        paths.paths_manager.add_named_paths_from_dir(
-            name="hooks2",
-            directory=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths",
-        )
-        assert paths.paths_manager.has_named_paths("hooks2")
+        if paths.paths_manager.has_named_paths("hooks"):
+            paths.paths_manager.remove_named_paths("hooks")
 
-        cfg = paths.paths_manager.get_config_for_paths("hooks2")
-        hooks2 = cfg.get("hooks2")
-        if hooks2 is None:
-            hooks2 = {}
-            cfg["hooks2"] = hooks2
-        hooks2[
+        paths.paths_manager.add_named_paths_from_json(
+            file_path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths{os.sep}hooks.json"
+        )
+        assert paths.paths_manager.has_named_paths("hooks")
+
+        cfg = paths.paths_manager.get_config_for_paths("hooks")
+        hooks = cfg.get("hooks")
+        if hooks is None:
+            hooks = {}
+            cfg["hooks"] = hooks
+        hooks[
             "on_complete_all_webhook"
         ] = "type > all, me > var|me, name > meta|name, time > var|now"
-        hooks2[
+        hooks[
             "on_complete_valid_webhook"
         ] = "type > valid, me > var|me, name > meta|name, time > var|now"
-        hooks2[
+        hooks[
             "on_complete_invalid_webhook"
         ] = "type > invalid, me > var|me, name > meta|name, time > var|now"
-        hooks2[
+        hooks[
             "on_complete_errors_webhook"
         ] = "type > errors, me > var|me, name > meta|name, time > var|now"
 
-        hooks2["all_webhook_url"] = "http://localhost:8000/json-hook"
-        hooks2["valid_webhook_url"] = "http://localhost:8000/json-hook"
-        hooks2["invalid_webhook_url"] = "http://localhost:8000/json-hook"
-        hooks2["errors_webhook_url"] = "http://localhost:8000/json-hook"
+        hooks["all_webhook_url"] = "http://localhost:8000/json-hook"
+        hooks["valid_webhook_url"] = "http://localhost:8000/json-hook"
+        hooks["invalid_webhook_url"] = "http://localhost:8000/json-hook"
+        hooks["errors_webhook_url"] = "http://localhost:8000/json-hook"
 
-        paths.paths_manager.store_config_for_paths("hooks2", cfg)
+        paths.paths_manager.store_config_for_paths("hooks", cfg)
 
-        self._do_test(paths, paths_name="hooks2")
+        self._do_test(paths, paths_name="hooks")

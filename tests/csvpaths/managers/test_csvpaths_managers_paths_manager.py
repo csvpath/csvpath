@@ -73,6 +73,10 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         paths.config.add_to_config("listeners", "groups", "default")
         name = "aname"
         p = "$[*][yes()]"
+
+        if paths.paths_manager.has_named_paths(name):
+            paths.paths_manager.remove_named_paths(name)
+
         paths.paths_manager.add_named_paths(name=name, paths=[p])
         definition = paths.paths_manager.get_json_paths_file(name)
         assert definition is not None
@@ -83,6 +87,30 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         assert lst is not None
         assert isinstance(lst, list)
         assert len(lst) == 0
+
+    def test_paths_readme(self):
+        paths = Builder().build()
+        paths.config.get(section="listeners", name="groups")
+        paths.config.add_to_config("listeners", "groups", "default")
+        name = "areadme"
+        if paths.paths_manager.has_named_paths(name):
+            paths.paths_manager.remove_named_paths(name)
+        #
+        # creates readme
+        #
+        p = "$[*][yes()]"
+        paths.paths_manager.add_named_paths(name=name, paths=[p])
+        readme = paths.paths_manager.describer.get_readme(name)
+        assert readme is not None
+        assert isinstance(readme, str)
+        #
+        # don't overwrite
+        #
+        p = "$[*][no()]"
+        paths.paths_manager.add_named_paths(name=name, paths=[p])
+        readme2 = paths.paths_manager.describer.get_readme(name)
+        assert readme2 is not None
+        assert readme == readme2
 
     def test_paths_manager_append_1(self):
         paths = Builder().build()

@@ -63,6 +63,7 @@ lxml = "^6.0.2"
 jsonlines = "^4.0.0"
 jsonpath-ng = "^1.7.0"
 pyjson5 = "^2.0.0"
+pydantic = "^2.12.5"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
