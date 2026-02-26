@@ -1,0 +1,4 @@
+product_id,name,price,in_stock
+101,Widget,29.99,true
+102,Gadget,49.99,false
+

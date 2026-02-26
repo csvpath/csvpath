@@ -48,7 +48,7 @@ class Subtract(ValueProducer):
             if i == 0:
                 ret = v
             else:
-                ret = float(ret) - float(v)
+                ret = ExpressionUtility.to_float(ret) - ExpressionUtility.to_float(v)
         return ret
 
     def _decide_match(self, skip=None) -> None:

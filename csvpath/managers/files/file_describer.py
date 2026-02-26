@@ -16,9 +16,8 @@ class NamedFileDescriber:
     JSON_FILE = "definition.json"
     ON_ARRIVAL = "on_arrival"
     NAMED_PATHS_GROUP = "named_paths_group"
-    STAGING_TEMPLATE = "run_template"
-    RUN_TEMPLATE = "run_template"
     RUN_METHOD = "run_method"
+    TEMPLATE = "template"
 
     def __init__(self, file_manager) -> None:
         self.file_manager = file_manager
@@ -36,6 +35,9 @@ class NamedFileDescriber:
             raise ValueError("Name cannot be None")
         name = self._name_for_name(name)
         home = self.file_manager.named_file_home(name)
+        nos = Nos(home)
+        if not nos.dir_exists():
+            nos.makedirs()
         p = Nos(home).join(self.JSON_FILE)
         with DataFileWriter(path=p) as writer:
             json.dump(j, writer.sink, indent=2)
@@ -59,16 +61,16 @@ class NamedFileDescriber:
             raise ValueError("Name cannot be None")
         name = self._name_for_name(name)
         config = self.get_json(name)
-        if not config:
+        if config is None:
             raise ValueError(f"No config for {name}")
-        return config.get("template")
+        return config.get(self.TEMPLATE)
 
     def store_template(self, name: NamedFileName, template: str) -> None:
         name = self._name_for_name(name)
         config = self.get_json(name)
-        if not config:
+        if config is None:
             raise ValueError(f"No config for {name}")
-        config["template"] = template
+        config[self.TEMPLATE] = template
         self.store_json(name, config)
 
     # ========== MD file ============

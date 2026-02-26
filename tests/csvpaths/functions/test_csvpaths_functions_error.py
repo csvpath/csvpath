@@ -99,4 +99,4 @@ class TestCsvPathsFunctionsError(unittest.TestCase):
         assert Nos(ef).exists()
         with DataFileReader(ef) as file:
             j = json.load(file.source)
-            assert len(j) == 8
+            assert len(j) == 4

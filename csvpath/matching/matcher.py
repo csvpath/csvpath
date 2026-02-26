@@ -109,7 +109,6 @@ class Matcher:  # pylint: disable=R0902
                 if self.csvpath.do_i_raise():
                     raise ChildrenException(msg)
 
-            # print(tree.pretty())
             expressions = []
             for e in es:
                 expressions.append([e, None])

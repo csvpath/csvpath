@@ -533,15 +533,23 @@ class ExpressionUtility:
         while p is not None:
             ancs.append(p)
             p = p.parent
-        chain = cls.name_or_class(thing)
-        for o in ancs:
-            n = cls.name_or_class(o)
+        if len(ancs) == 1:
+            x = f"[{cls.get_my_expressions_index(thing)}]"
+            chain = f"{cls.name_or_class(thing, index=x)}"
+        else:
+            chain = f"{cls.name_or_class(thing)}"
+        for i, o in enumerate(ancs):
+            if i != len(ancs) - 1:
+                x = f"[{cls.get_my_expressions_index(o)}]"
+                n = f"{cls.name_or_class(o, index=x)}"
+            else:
+                n = f"{cls.name_or_class(o)}"
             if n != "":
                 chain = f"{n}.{chain}"
         return chain
 
     @classmethod
-    def name_or_class(cls, thing, show_eq_and_exp=False):
+    def name_or_class(cls, thing, show_eq_and_exp=False, index=None):
         ret = None
         if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
             ret = ""
@@ -557,8 +565,11 @@ class ExpressionUtility:
         elif thing.name is None:
             ret = cls.simple_class_name(thing)
         else:
-            i = thing.parent.children.index(thing)
-            ret = f"{thing.name}[{i}]"
+            if index is not None:
+                ret = f"{thing.name}{index}"
+            else:
+                i = thing.parent.children.index(thing)
+                ret = f"{thing.name}[{i}]"
         return ret
 
     @classmethod

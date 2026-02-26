@@ -303,21 +303,22 @@ shell = /bin/bash
                 path = None
             if path is None:
                 path = Config.CONFIG
-        self._configpath = path
-        self._load_config()
-        #
-        # if newly loaded config path doesn't match where it was loaded from, reload w/it.
-        #
-        path = self._get(section="config", name="path", no_list=True)
-        if path is not None:
-            path = path.strip()
-        if path == "":
-            path = None
-        if path is not None and path != self._configpath:
+        if self._configpath != path:
+            self._configpath = path
+            self._load_config()
             #
-            # if recurse, could loop. but probably won't and not looping is user's responsibility.
+            # if newly loaded config path doesn't match where it was loaded from, reload w/it.
             #
-            self.configpath = path
+            path = self._get(section="config", name="path", no_list=True)
+            if path is not None:
+                path = path.strip()
+            if path == "":
+                path = None
+            if path is not None and path != self._configpath:
+                #
+                # if recurse, could loop. but probably won't and not looping is user's responsibility.
+                #
+                self.configpath = path
 
     @property
     def load(self) -> bool:

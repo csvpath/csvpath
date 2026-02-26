@@ -570,6 +570,11 @@ class FileManager:
         self.legal_name(name)
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
+        if template is None:
+            #
+            # check if we have a template already
+            #
+            template = self.describer.get_template(name)
         if template is not None:
             temu.valid(template, file=True)
         path = pathu.resep(path)
@@ -775,6 +780,7 @@ class FileManager:
         #
 
         if name.startswith("$"):
+            """# orig
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype == ref.FILES:
                 reff = FilesReferenceFinder(self._csvpaths, reference=name)
@@ -793,6 +799,47 @@ class FileManager:
                         "unmatched.csv"
                     ):
                         ret = Nos(ret).join("data.csv")
+            """
+            #
+            # this version returns multiple files, if multiple are found.
+            # that is the desired behavor for references; although it wasn't
+            # the original.
+            #
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
+            if ref.datatype == ref.FILES:
+                reff = FilesReferenceFinder(self._csvpaths, reference=name)
+                lst = reff.resolve()
+                lsti = len(lst)
+                if lsti == 0:
+                    ret = None
+                elif lsti == 1:
+                    ret = lst[0]
+                else:
+                    ret = lst
+            elif ref.datatype == ref.RESULTS:
+                reff = ResultsReferenceFinder(self._csvpaths, reference=name)
+                lst = reff.resolve()
+                lsti = len(lst)
+                if len(lst) > 0:
+                    if lsti == 0:
+                        ret = None
+                    elif lsti == 1:
+                        ret = lst[0]
+                        hasdatafile = ret.endswith("data.csv") or ret.endswith(
+                            "unmatched.csv"
+                        )
+                        if not hasdatafile:
+                            ret = Nos(ret).join("data.csv")
+                    else:
+                        ret = []
+                        for _ in lst:
+                            hasdatafile = _.endswith("data.csv") or _.endswith(
+                                "unmatched.csv"
+                            )
+                            if not hasdatafile:
+                                _ = Nos(_).join("data.csv")
+                            ret.append(_)
+
         else:
             if not self.has_named_file(name):
                 return None

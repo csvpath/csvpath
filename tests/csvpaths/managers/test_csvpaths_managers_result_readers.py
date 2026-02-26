@@ -133,7 +133,7 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         assert len(results) == 1
         errors = results[0].errors
         assert errors
-        assert len(errors) == 16
+        assert len(errors) == 8
         #
         # reload
         #

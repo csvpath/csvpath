@@ -55,18 +55,25 @@ class Expression(Matchable, Listener):
             self.matching().result(ret).because("skip")
             return ret
         if self.match is None:
+            child = None
             try:
                 ret = True
                 for child in self.children:
                     if not child.matches(skip=skip):
                         ret = False
                 self.match = ret
-            except Exception as e:  # pylint: disable=W0718
-                if not isinstance(e, (ChildrenException, MatchException)):
-                    self.matcher.csvpath.error_manager.handle_error(
-                        source=self, msg=f"{e}"
-                    )
-                    self.matcher.csvpath.logger.error(e)
+            except (ChildrenException, MatchException) as e:  # pylint: disable=W0718
+                self.matcher.csvpath.error_manager.handle_error(
+                    source=child, msg=f"{e}"
+                )
+                self.matcher.csvpath.logger.error(e)
+                if self.matcher.csvpath.do_i_raise():
+                    raise
+            except (ValueError, TypeError) as e:
+                self.matcher.csvpath.logger.error(e)
+            except Exception as e:
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
+                self.matcher.csvpath.logger.error(e)
                 if self.matcher.csvpath.do_i_raise():
                     raise
         #

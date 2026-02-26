@@ -148,7 +148,12 @@ class Regex(MatchDecider):
                 # us.
                 v = None
                 if m:
-                    v = m.group(group)
+                    try:
+                        v = m.group(group)
+                    except Exception:
+                        # if no such group the result is None
+                        # try/except is the safest check
+                        ...
                 if self.name == "regex":
                     self.value = v
                 elif self.name == "exact":

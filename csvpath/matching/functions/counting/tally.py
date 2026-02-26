@@ -55,11 +55,10 @@ class Tally(SideEffect):
                 # goes under "tally" or the qualifier
                 tally[0 : len(tally) - 1],
             )
-        # self.value = True
         self._apply_default_value()
 
     def _store(self, name, value):
-        if name == "":
+        if not name or str(name).strip() == "":
             name = self.first_non_term_qualifier("tally")
         else:
             name = f"""{self.first_non_term_qualifier("tally")}_{name}"""
@@ -72,7 +71,7 @@ class Tally(SideEffect):
         if count is None:
             count = 0
         if not isinstance(count, int):
-            msg = "Variable {name}"
+            msg = f"Variable {name}"
             if value is not None:
                 msg = f"{msg}.{value}"
             msg = f"{msg} must be a number, not {count}"

@@ -2,6 +2,7 @@
 import math
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
 
@@ -41,10 +42,12 @@ class Divide(ValueProducer):
             if i == 0:
                 ret = v
             else:
-                if math.isnan(ret) or float(v) == 0:
+                if math.isnan(ret) or ExpressionUtility.to_float(v) == 0:
                     ret = float("nan")
                 else:
-                    ret = float(ret) / float(v)
+                    ret = ExpressionUtility.to_float(ret) / ExpressionUtility.to_float(
+                        v
+                    )
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:

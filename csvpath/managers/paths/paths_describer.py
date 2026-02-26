@@ -70,6 +70,9 @@ class NamedPathsDescriber:
             raise ValueError("Name cannot be None")
         name = self._name_for_name(name)
         home = self.paths_manager.named_paths_home(name)
+        nos = Nos(home)
+        if not nos.dir_exists():
+            nos.makedirs()
         #
         # validate the config structure
         #

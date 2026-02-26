@@ -322,11 +322,17 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         """@private"""
-        if self.errors is not None:
+        if self.errors is not None and not self.has_error(error):
             self.errors.append(error)
 
     def has_errors(self) -> bool:
         return self.errors_count > 0
+
+    def has_error(self, e: Error) -> bool:
+        for _ in self.errors:
+            if _.equals(e):
+                return True
+        return False
 
     #
     # =============== PRINTOUTS =================

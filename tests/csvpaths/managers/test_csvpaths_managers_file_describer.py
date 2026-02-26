@@ -56,7 +56,7 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
         assert j == {}
         a = {
             describer.NAMED_PATHS_GROUP: "test_run",
-            describer.RUN_TEMPLATE: "on_arrival_run_template",
+            describer.TEMPLATE: "template",
         }
         j[describer.ON_ARRIVAL] = a
         describer.store_json(nf, j)

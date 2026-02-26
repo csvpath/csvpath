@@ -108,7 +108,27 @@ class ErrorManager(Registrar, Listener):
             error.match = self.csvpath.match
         error.message = msg
         error.expanded_message = self.decorate_error(source=source, msg=msg)
-        self.distribute_update(error)
+        #
+        # source should never be ''
+        #
+        """
+        if not error.source or str(error.source).strip() == "":
+            from csvpath.util.log_utility import LogUtility as lout
+            lout.log_brief_trace()
+            raise ValueError(f"NO SOURCE in error {error}")
+        """
+        #
+        # in some non-bad but inconvenient cases we get two errors for the same incident
+        # we'd like to not over report so we test equality for everything but timestamp
+        # and if matched we drop the error. i say non-bad, but really if we were 100%
+        # consistent about handling errors where they happen we'd not have this problem.
+        # it happens (at least mainly) when Expression handles and error that bubbled up
+        # correctly, but the point of origin also handled it.
+        #
+        if self.csvpath and self.csvpath.has_error(error):
+            ...
+        else:
+            self.distribute_update(error)
 
     def decorate_error(self, *, source, msg: str) -> str:
         #
@@ -187,13 +207,16 @@ class ErrorManager(Registrar, Listener):
     def format(self, *, time, file="", paths="", instance="", chain="", line, message):
         # TODO: a better solution that doesn't use exec
         f = self.full_format
+        time = datetime.now() if time is None else time
+        file = "Unknown file" if file is None else file
+        instance = "Indeterminate statement" if instance is None else instance
         f = f.replace("{time}", time)
         f = f.replace("{file}", file)
-        f = f.replace("{paths}", paths)
+        f = f.replace("{paths}", str(paths))
         f = f.replace("{instance}", instance)
-        f = f.replace("{chain}", chain)
+        f = f.replace("{chain}", str(chain))
         f = f.replace("{line}", f"{line}")
-        f = f.replace("{message}", message)
+        f = f.replace("{message}", str(message))
         return f
 
     # listeners must include:

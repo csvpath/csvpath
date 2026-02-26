@@ -5,7 +5,7 @@ from textwrap import TextWrapper, dedent
 
 from typing import Any
 from ..productions.matchable import Matchable
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import ChildrenException, MatchException
 
 
 class CheckedUnset:  # pylint: disable=R0903
@@ -96,6 +96,11 @@ class Function(Matchable):
             #
             # count() doesn't yet use args. it is grandfathered, for now.
             #
+            # mtc captures the args matched, or not, state ahead of any matching
+            # so that we can react accordingly to any exceptions from lower
+            # matchables. it's a bit ugly. more below.
+            #
+            mtc = False
             if self.args and not self.args.matched:
                 self.matcher.csvpath.logger.debug(
                     "Validating arg actuals for %s in to_value", self.name
@@ -107,6 +112,7 @@ class Function(Matchable):
                     # we have issues. return because nothing should work.
                     return self.value
             elif self.args:
+                mtc = True
                 self.matcher.csvpath.logger.debug(
                     "Validation already done on arg actuals for %s in to_value",
                     self.name,
@@ -115,7 +121,28 @@ class Function(Matchable):
                 self.matcher.csvpath.logger.debug(
                     "%s, a %s, calling produce value", self, self.__class__.FOCUS
                 )
-                self._produce_value(skip=skip)
+                #
+                # this ugly thing is because we already matched, producing an error if needed.
+                # therefore, we don't need to raise an error because we shouldn't continue.
+                # it's possible we should not even produce a value in this case. but let's
+                # leave it for now and see what happens. there is a considerable history of
+                # working with out the try/except. this change may break or highlight problems
+                # but because of the history let's be empirical for now.
+                #
+                try:
+                    self._produce_value(skip=skip)
+                except (MatchException, ChildrenException):
+                    if self.matcher.csvpath.do_i_raise():
+                        raise
+                except (ValueError, TypeError):
+                    #
+                    # value and type should be alreadly handled as match or children exceptions
+                    # by Args.
+                    #
+                    ...
+                except Exception:
+                    if not mtc or self.matcher.csvpath.do_i_raise():
+                        raise
             else:
                 self._apply_default_value()
                 self.matcher.csvpath.logger.debug(

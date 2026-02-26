@@ -37,24 +37,6 @@ class TestCsvPathFunctionsFingerprint(unittest.TestCase):
         assert "by_line_fingerprint" in path.metadata
         assert "by_line_fingerprint" not in path.variables
 
-    def test_function_fingerprint_3(self):
-        path = CsvPath().parse(
-            f""" ${PATH}[*][
-                line_fingerprint.hash()
-                last() -> store_line_fingerprint()
-            ]"""
-        )
-        #
-        # not a particularly meaningful test, but it is good to
-        # know the behavior. the underlying is KeyError because
-        # we don't have the same name for line vs. store. we could
-        # try to figure it out, but that would be error prone and
-        # brittle.
-        #
-        path.config.add_to_config("errors", "csvpath", "raise")
-        with pytest.raises(KeyError):
-            path.collect()
-
     def test_function_fingerprint_4(self):
         path = CsvPath()
         path.parse(

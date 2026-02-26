@@ -38,7 +38,8 @@ class HeaderNamesMismatch(ValueProducer):
             ),
         ]
         self.aliases = ["header_names_mismatch", "header_names_match"]
-
+        if self.name not in self.aliases:
+            raise ValueError(f"Unknown name {self.name}")
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
@@ -51,6 +52,7 @@ class HeaderNamesMismatch(ValueProducer):
         varname = self.first_non_term_qualifier(self.name)
         header_names = self._value_one(skip=skip)
         names = header_names.split("|")
+        names = [_ for _ in names if str(_).strip() != ""]
         present = []
         unmatched = []
         misordered = []
@@ -84,9 +86,11 @@ class HeaderNamesMismatch(ValueProducer):
         #   don't need ^^^^ because present doesn't include any misordered so if present
         #   doesn't equal the current headers we have the right answer
         #
-        self.value = len(present) != len(
-            self.matcher.csvpath.headers
-        )  # or len(misordered) > 0
+        if self.name == "header_names_match":
+            self.value = len(present) == len(self.matcher.csvpath.headers)
+        else:
+            # self.name == "header_names_mismatch":
+            self.value = len(present) != len(self.matcher.csvpath.headers)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
