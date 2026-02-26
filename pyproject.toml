@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.592"
-description = "A data preboarding framework for ingesting, managing, and validating CSV, Excel, and other tabular data files using a Collect, Store, Validate, Publish architecture to create a trusted publisher for downstream data consumers."
+version = "0.0.594"
+description = "CsvPath Framework is a data preboarding automation library for receiving, validating, and tracking CSV, Excel, JSONL and other tabular data files before they can corrupt downstream data consumers."
 authors = ["David Kershaw <info@csvpath.org>"]
 readme = "README.md"
 classifiers = [
@@ -63,6 +63,7 @@ lxml = "^6.0.2"
 jsonlines = "^4.0.0"
 jsonpath-ng = "^1.7.0"
 pyjson5 = "^2.0.0"
+pydantic = "^2.12.5"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

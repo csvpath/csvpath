@@ -14,6 +14,7 @@ from csvpath.util.box import Box
 from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
+from .paths_describer import NamedPathsDescriber
 from csvpath.util.template_util import TemplateUtility as temu
 from csvpath.matching.util.expression_utility import ExpressionUtility as expu
 
@@ -49,6 +50,10 @@ class PathsManager:
         self._last_add_metadata = None
 
     @property
+    def describer(self) -> NamedPathsDescriber:
+        return NamedPathsDescriber(self)
+
+    @property
     def last_add_metadata(self) -> PathsMetadata:
         #
         # BIG CAVEAT: this breaks the statelessness we're trying to trend towards.
@@ -63,17 +68,17 @@ class PathsManager:
     def last_add_metadata(self, mdata: PathsMetadata) -> None:
         self._last_add_metadata = mdata
 
-    """
-    @property
-    def nos(self) -> Nos:
-        box = Box()
-        if self._nos is None:
-            self._nos = box.get("boto_s3_nos")
-            if self._nos is None:
-                self._nos = Nos(None)
-                box.add("boto_s3_nos", self._nos)
-        return self._nos
-    """
+    def get_config_for_paths(self, name: NamedPathsName) -> dict:
+        config = self.describer.get_config(name)
+        ret = None
+        if config is None:
+            ret = {}
+        else:
+            ret = config.model_dump()
+        return ret
+
+    def store_config_for_paths(self, name: NamedPathsName, cfg: dict) -> None:
+        self.describer.store_config(name, cfg)
 
     #
     # ================== publics =====================
@@ -442,8 +447,6 @@ class PathsManager:
             #
             # h = Hasher().hash(s)
             #
-
-            #
             # the paths have to be reacquired because we might be appending.
             #
             # need paths to be the full set of csvpaths in the named-paths group
@@ -459,14 +462,19 @@ class PathsManager:
             if template is not None:
                 self.store_template_for_paths(name, template)
             #
-            # exp.
             # added for FP
             #
             # make sure there is a json definition file?
             # if true, just ask for the file and it will be created if not found.
             #
             if assure_definition is True:
-                self.get_json_paths_file(name)
+                t = self.get_json_paths_file(name)
+                if t is None:
+                    raise ValueError(f"JSON definitionn for {name} cannot be None")
+                if name not in t:
+                    t[name] = []
+                    self.describer.store_json(name, t)
+            self.assure_readme(name)
             #
             # end exp
             #
@@ -507,6 +515,23 @@ class PathsManager:
             if self.csvpaths.ecoms.do_i_raise():
                 raise
             return None
+
+    def assure_readme(self, name: str) -> None:
+        r = f"# {name} Documentation\n\n&nbsp;\nThe purpose of these statements is ___________________."
+        self.describer.store_readme(name=name, readme=r, overwrite=False)
+        """
+        path = self.named_paths_home(name)
+        nos = Nos(path)
+        nos.path = nos.join(self.describer.README)
+        if not nos.exists():
+            #
+            # since we only want to create a readme if one doesn't already exist
+            # we may as well do the write here. calling describer.store_readme()
+            # wouldn't do much more or less.
+            #
+            with DataFileWriter(path=nos.path) as file:
+                file.sink.write(r)
+        """
 
     #
     # adding ref handling for the form: $many.csvpaths.food
@@ -579,8 +604,9 @@ class PathsManager:
             ...
         return ret
 
+    ####################################################
+
     def store_json_paths_file(self, name: NamedPathsName, jsonpath: str) -> None:
-        """@private"""
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
@@ -597,221 +623,45 @@ class PathsManager:
                 self.store_json_for_paths(name, j)
 
     def store_json_for_paths(self, name: NamedPathsName, definition: str) -> None:
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if name.startswith("$"):
-            ref = ReferenceParser(name, csvpaths=self.csvpaths)
-            name = ref.root_major
-        home = self.named_paths_home(name)
-        p = Nos(home).join("definition.json")
-        with DataFileWriter(path=p) as writer:
-            writer.write(definition)
+        j = json.loads(definition)
+        self.describer.store_json(name, j)
 
     def get_json_paths_file(self, name: NamedPathsName) -> dict:
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if name.startswith("$"):
-            ref = ReferenceParser(name, csvpaths=self.csvpaths)
-            name = ref.root_major
-        home = self.named_paths_home(name)
-        path = Nos(home).join("definition.json")
-        # path = os.path.join(home, "definition.json")
-        nos = Nos(path)
-        definition = None
-        if nos.exists():
-            with DataFileReader(path) as file:
-                definition = json.load(file.source)
-        else:
-            definition = {}
-            #
-            # exp. improved for FP
-            #
-            self._get_named_paths(name)
-            definition[name] = []
-            #
-            # end exp.
-            #
-            with DataFileWriter(path=path, mode="w") as writer:
-                json.dump(definition, writer.sink, indent=2)
-        return definition
+        t = self.describer.get_json(name)
+        return t
 
     def get_template_for_paths(self, name: NamedPathsName) -> str:
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if name.startswith("$"):
-            ref = ReferenceParser(name, csvpaths=self.csvpaths)
-            name = ref.root_major
-        definition = self.get_json_paths_file(name)
-        if "_config" not in definition:
-            return ""
-        config = definition["_config"]
-        if name not in config:
-            return None
-        template = config[name].get("template")
-        if template is None:
-            return None
-        return template
+        return self.describer.get_template(name)
 
     def store_template_for_paths(self, name: NamedPathsName, template: str) -> None:
-        if template is None:
-            raise ValueError("Template cannot be None")
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if name.startswith("$"):
-            ref = ReferenceParser(name, csvpaths=self.csvpaths)
-            name = ref.root_major
-        definition = self.get_json_paths_file(name)
-        config = definition.get("_config")
-        if config is None:
-            config = {}
-            definition["_config"] = config
-        if name not in config:
-            config[name] = {"template": template}
-        else:
-            config[name]["template"] = template
-        j = json.dumps(definition)
-        self.store_json_for_paths(name, j)
+        self.describer.store_template(name, template)
 
-    def get_config_for_paths(self, name: NamedPathsName) -> dict:
-        if name.startswith("$"):
-            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
-        definition = self.get_json_paths_file(name)
-        config = definition.get("_config")
-        if config is None:
-            config = {}
-        config = config.get(name)
-        if config is None:
-            config = {}
-        return config
-
-    def store_config_for_paths(self, name: NamedPathsName, cfg: dict) -> None:
-        if name.startswith("$"):
-            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
-        j = self.get_json_paths_file(name)
-        j["_config"] = cfg
-        d = json.dumps(j, indent=2)
-        self.store_json_for_paths(name, d)
-
-    #
-    # store script to run after the named-path. we could make this a mode, but it
-    # should be in the named-paths first.
-    #
     def store_script_for_paths(
         self,
         *,
         name: NamedPathsName,
         script_name: str,
-        when: str = None,
         script_type: str = None,
         text: str = None,
     ) -> None:
-        if script_name is None:
-            raise ValueError("script_name cannot be None")
-        if when not in [None, "all", "errors", "valid", "invalid"]:
-            raise ValueError(
-                "When must be one of 'all', 'errors', 'valid', or 'invalid'; it cannot be None"
-            )
-        if script_type is None and when is None:
-            when = "all"
-        elif script_type is not None and when is not None:
-            raise ValueError("Cannot provide both when and script_type")
         if script_type is None:
-            script_type = f"on_complete_{when}_script"
-
-        if name.startswith("$"):
-            ref = ReferenceParser(name, csvpaths=self.csvpaths)
-            name = ref.root_major
-        # check this creates if not found
-        definition = self.get_json_paths_file(name)
-        config = definition.get("_config")
-        if config is None:
-            config = {}
-            definition["_config"] = config
-        if name not in config:
-            config[name] = {script_type: script_name}
-        else:
-            config[name][script_type] = script_name
-        j = json.dumps(definition)
-        self.store_json_for_paths(name, j)
-        #
-        # if we have the text of the script, store that too
-        #
-        script_file = None
-        if text is not None:
-            #
-            # if the user configured a shell we'll use it to add a shebang.
-            #
-            if not text.startswith("#!"):
-                s = self.csvpaths.config.get(section="scripts", name="shell")
-                if s is not None:
-                    text = f"#!{s}\n{text}"
-            script_file = Nos(self.named_paths_home(name)).join(script_name)
-            # script_file = os.path.join(self.named_paths_home(name), script_name)
-            try:
-                with DataFileWriter(path=script_file, mode="wb") as file:
-                    file.write(text)
-            except Exception as e:
-                # import traceback
-                # print(traceback.format_exc())
-                msg = f"Could not store script at {script_file}: {e}"
-                self.csvpaths.logger.error(e)
-                src = traceback.format_exc()
-                self.csvpaths.error_manager.handle_error(source=src, msg=msg)
-                if self.csvpaths.ecoms.do_i_raise():
-                    raise RuntimeError(msg)
-                return
+            script_type = "all"
+        self.describer.store_script_for_paths(
+            name=name, script_name=script_name, script_type=script_type, text=text
+        )
 
     def get_scripts_for_paths(self, name: NamedPathsName) -> list:
-        config = self.get_config_for_paths(name)
-        lst = []
-        for t in self.SCRIPT_TYPES:
-            s = config.get(t)
-            if s is not None:
-                lst.append((t, s))
-        return lst
+        return self.describer.get_scripts_for_paths(name)
 
-    #
-    # given a named-paths name and one of the four types of scripts, returns the
-    # full filesystem path to the script file. the four types of scripts are:
-    #    - on_complete_all_script
-    #    - on_complete_errors_script
-    #    - on_complete_valid_script
-    #    - on_complete_invalid_script
-    #
     def get_script_path_for_paths(
         self, *, name: NamedPathsName, script_type: str
     ) -> str:
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if script_type is None:
-            raise ValueError("Script type cannot be None")
-        if script_type not in PathsManager.SCRIPT_TYPES:
-            raise ValueError(f"Unknown script type {script_type}")
+        return self.describer.get_script_path_for_paths(name, script_type)
 
-        definition = self.get_json_paths_file(name)
-        config = definition.get("_config")
-        if config is None:
-            raise ValueError(f"Script {script_type} is not configured")
-        cfg = config.get(name)
-        if cfg is None:
-            raise ValueError(f"Script {script_type} is not configured")
-        script_name = cfg.get(script_type)
-        return Nos(self.named_paths_home(name)).join(script_name)
-        # return os.path.join(self.named_paths_home(name), script_name)
-
-    #
-    # gets the text of the script indicated by named-paths name and script type
-    #
     def get_script_for_paths(self, *, name: NamedPathsName, script_type: str) -> str:
-        path = self.get_script_path_for_paths(name=name, script_type=script_type)
-        if path is None:
-            raise ValueError(f"Script path for {script_type} is not found in {name}")
-        nos = Nos(path)
-        if nos.exists():
-            with DataFileReader(path) as file:
-                return file.read()
-        else:
-            raise ValueError(f"Script {path} not found")
+        return self.describer.get_script_for_paths(name=name, script_type=script_type)
+
+    ####################################################
 
     @property
     def named_paths_names(self) -> list[str]:

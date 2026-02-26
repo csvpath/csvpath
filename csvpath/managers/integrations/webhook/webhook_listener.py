@@ -27,18 +27,18 @@ class WebhookException(Exception):
 
 
 class WebhookListener(Listener, threading.Thread):
-    ON_ALL = "on_complete_all_webhook"
-    ON_VALID = "on_complete_valid_webhook"
-    ON_INVALID = "on_complete_invalid_webhook"
-    ON_ERRORS = "on_complete_errors_webhook"
+    ON_ALL = "on_complete_all"
+    ON_VALID = "on_complete_valid"
+    ON_INVALID = "on_complete_invalid"
+    ON_ERRORS = "on_complete_error"
 
     HOOKS = None
     URLS = None
 
-    ALL_URL = "all_webhook_url"
-    VALID_URL = "valid_webhook_url"
-    INVALID_URL = "invalid_webhook_url"
-    ERRORS_URL = "errors_webhook_url"
+    ALL_URL = "all_url"
+    VALID_URL = "valid_url"
+    INVALID_URL = "invalid_url"
+    ERRORS_URL = "error_url"
 
     def __init__(self, config=None):
         super().__init__(config)

@@ -445,13 +445,20 @@ Cache: {cache}
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         """@private"""
-        self._errors.append(error)
+        if not self.has_error(error):
+            self._errors.append(error)
 
     def has_errors(self) -> bool:  # pylint: disable=C0116
         """@private
         generally you should be looking at results_manager or error_manager for errors.
         """
         return len(self._errors) > 0
+
+    def has_error(self, e: Error) -> bool:
+        for _ in self.errors:
+            if _.equals(e):
+                return True
+        return False
 
     @property
     def config(self) -> Config:  # pylint: disable=C0116

@@ -66,10 +66,19 @@ class WebhookResultsListener(WebhookListener):
         return True
 
     def _url_for_type(self, mdata: Metadata, atype: str):
-        cfg = self.csvpaths.paths_manager.get_config_for_paths(mdata.named_paths_name)
+        cfg = self.csvpaths.paths_manager.describer.get_webhooks(mdata.named_paths_name)
         if cfg is None:
             return None
-        return cfg.get(atype)
+        if atype.find("all") > -1:
+            return cfg.all_url
+        elif atype.find("invalid") > -1:
+            return cfg.invalid_url
+        elif atype.find("valid") > -1:
+            return cfg.valid_url
+        elif atype.find("error") > -1:
+            return cfg.error_url
+        else:
+            raise ValueError(f"Unknown type: {atype}")
 
     def _payload_for_type(self, mdata: Metadata, atype: str) -> dict:
         if mdata is None:
@@ -82,6 +91,7 @@ class WebhookResultsListener(WebhookListener):
             )
         if self.csvpaths is None:
             raise ValueError("CsvPaths cannot be None")
+
         #
         # find the named-paths config. look for a webhook definition.
         #
@@ -90,30 +100,41 @@ class WebhookResultsListener(WebhookListener):
         # if we are sending errors we don't need anything in cfg. we just attach the errors.json list
         # like { errors:[], fields:[] }
         #
-        cfg = self.csvpaths.paths_manager.get_config_for_paths(mdata.named_paths_name)
+        cfg = self.csvpaths.paths_manager.describer.get_webhooks(mdata.named_paths_name)
+
         if cfg is None:
             return {}
-        on = cfg.get(atype)
+        on = None
+        if atype.find("all") > -1:
+            on = cfg.on_complete_all
+        elif atype.find("invalid") > -1:
+            on = cfg.on_complete_invalid
+        elif atype.find("valid") > -1:
+            on = cfg.on_complete_valid
+        elif atype.find("error") > -1:
+            on = cfg.on_complete_error
+        else:
+            raise ValueError(f"Unknown type: {atype}")
         if on and len(on) > 0:
-            if atype == WebhookListener.ON_ERRORS:
-                return self._errors(atype=atype, mdata=mdata, cfg=cfg)
-            return self._payload(atype=atype, mdata=mdata, cfg=cfg)
+            if atype.find("error") > -1:
+                return self._errors(atype=atype, mdata=mdata, cfg=cfg, hook=on)
+            return self._payload(atype=atype, mdata=mdata, cfg=cfg, hook=on)
         return None
 
-    def _payload(self, *, mdata: Metadata, atype: str, cfg) -> dict:
+    def _payload(self, *, mdata: Metadata, atype: str, cfg, hook: str) -> dict:
+
         metadata = self.get_data(mdata, "meta.json")
         variables = self.get_data(mdata, "vars.json")
-        v = cfg.get(atype)
         pairs = VarUtility.get_value_pairs_from_value(
-            metadata=metadata, variables=variables, value=v
+            metadata=metadata, variables=variables, value=hook
         )
         payload = {}
         for pair in pairs:
             payload[pair[0]] = pair[1]
         return payload
 
-    def _errors(self, *, mdata: Metadata, atype: str, cfg) -> dict:
-        payload = self._payload(mdata=mdata, atype=atype, cfg=cfg)
+    def _errors(self, *, mdata: Metadata, atype: str, cfg, hook: str) -> dict:
+        payload = self._payload(mdata=mdata, atype=atype, cfg=cfg, hook=hook)
         errors = self.csvpaths.results_manager.get_errors(mdata.named_results_name)
         if errors is None:
             errors = []
@@ -128,7 +149,6 @@ class WebhookResultsListener(WebhookListener):
         homes = []
         for f in lst:
             f = Nos(p).join(f)
-            # f = os.path.join(p, f)
             nos.path = f
             if nos.isfile():
                 continue
@@ -140,7 +160,6 @@ class WebhookResultsListener(WebhookListener):
         homes = self.instance_homes(mdata)
         for f in homes:
             f = Nos(f).join(filename)
-            # f = os.path.join(f, filename)
             nos = Nos(f)
             if nos.exists():
                 with DataFileReader(f) as file:

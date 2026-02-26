@@ -42,6 +42,11 @@ class Add(ValueProducer):
             v = sib.to_value(skip=skip)
             if ExpressionUtility.is_none(v):
                 v = 0
+            ret = ExpressionUtility.to_float(v) + ExpressionUtility.to_float(ret)
+            #
+            # we know Args is checking types of actuals for us
+            #
+            """
             try:
                 ret = float(v) + float(ret)
             except ValueError as e:
@@ -49,6 +54,7 @@ class Add(ValueProducer):
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg) from e
+            """
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:

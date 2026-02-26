@@ -115,5 +115,6 @@ class StoreFingerprint(SideEffect):
         h = m.hexdigest()
         self.matcher.csvpath.metadata[f] = h
         self.matcher.csvpath.metadata["hash_algorithm"] = "sha256"
-        del self.matcher.csvpath.variables[f]
+        if f in self.matcher.csvpath.variables:
+            del self.matcher.csvpath.variables[f]
         self.match = self.default_match()

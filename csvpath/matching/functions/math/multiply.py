@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
+from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
 
@@ -43,7 +44,7 @@ class Multiply(ValueProducer):
             if i == 0:
                 ret = v
             else:
-                ret = float(v) * float(ret)
+                ret = ExpressionUtility.to_float(v) * ExpressionUtility.to_float(ret)
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:

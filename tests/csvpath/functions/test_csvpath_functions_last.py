@@ -175,7 +175,7 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise", "print"]
         path.parse(
-            f"""${PATH}[*]
+            f"""~ validation-mode:collect, raise ~ ${PATH}[*]
                             [
                             ~ the point of this test is that: tally works even when no()
                               and that manually replacing a tally var with a string blows up because

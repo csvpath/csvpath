@@ -74,6 +74,25 @@ class Error(Metadata):
             and f"{self.time}" == f"{e.time}"
         )
 
+    #
+    # everything exactly equal but not considering the timestamps. the
+    # timestamps wouldn't match if two error objects were created for the
+    # same error incident.
+    #
+    def equals(self, e) -> bool:
+        return (
+            self.line_count == e.line_count
+            and self.match_count == e.match_count
+            and self.scan_count == e.scan_count
+            and self.named_paths_name == e.named_paths_name
+            and self.named_file_name == e.named_file_name
+            and self.source == e.source
+            and self.message == e.message
+            and self.identity == e.identity
+            and self.filename == e.filename
+            and self.run_dir == e.run_dir
+        )
+
     def how_eq(self, e) -> bool:
         print(f"Error.how_eq: is equal? {self.__eq__(e)}:")
         b = self.line_count == e.line_count

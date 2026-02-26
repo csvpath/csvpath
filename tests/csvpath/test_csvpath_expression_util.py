@@ -244,7 +244,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.ascompariable(2.0) == 2.0
         assert ExpressionUtility.ascompariable("-1") == -1
 
-    def test_exp_util_chain(self):
+    def test_exp_util_chain_1(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][
@@ -257,6 +257,35 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         c = es[0].children[0].children[0].children[0].children[0].children[0]
         chain = ExpressionUtility.my_chain(c)
         assert chain == "any[0].length[0].concat[0].a"
+
+    def test_exp_util_chain_2(self):
+        path = CsvPath()
+        path.parse(
+            f"""~ validation-mode:collect,no-raise ~
+            ${PATH}[1][
+                add("b", "i")
+                add("c", subtract("a", "b"))
+                add(subtract("g", "h"), subtract("e", "f"))
+                in("i", subtract("g", "h"), subtract("e", "f"), subtract("l", "m"), none(), subtract("v", "u"))
+            ]"""
+        )
+        path.fast_forward()
+        assert path.errors
+        x = [
+            "add[0]",
+            "add[1].subtract[1]",
+            "add[1]",
+            "add[2].subtract[0]",
+            "add[2].subtract[1]",
+            "in[3].subtract[1]",
+            "in[3].subtract[2]",
+            "in[3].subtract[3]",
+            "in[3].subtract[5]",
+        ]
+        for e in path.errors:
+            assert e.source in x
+            del x[x.index(e.source)]
+        assert len(x) == 0
 
     def test_exp_util_descendents(self):
         path = CsvPath()

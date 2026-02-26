@@ -83,10 +83,15 @@ class TestCsvPathFunctionsRegex(unittest.TestCase):
             [
                 regex(/s(niff)le/, #say)
                 @group1.onmatch = regex(/s(niff)le/, #say, 11)
+                push("x", regex(/s(niff)le/, #say, 11))
             ]"""
         )
-        with pytest.raises(IndexError):
-            path.collect()
+        path.collect()
+        assert len(path.errors) == 0
+        assert path.errors_count == 0
+        assert path.has_errors() is False
+        assert "group1" in path.variables
+        assert path.variables["group1"] is None
 
     def test_function_bad_regex1(self):
         path = CsvPath()

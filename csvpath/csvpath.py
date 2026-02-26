@@ -512,7 +512,14 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
 
     def collect_error(self, error: Error) -> None:  # pylint: disable=C0116
         """@private"""
-        self.errors.append(error)
+        if not self.has_error(error):
+            self.errors.append(error)
+
+    def has_error(self, e: Error) -> bool:
+        for _ in self.errors:
+            if _.equals(e):
+                return True
+        return False
 
     def has_errors(self) -> bool:
         return self.errors_count > 0

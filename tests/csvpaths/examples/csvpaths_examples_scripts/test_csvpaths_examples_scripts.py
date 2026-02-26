@@ -12,7 +12,7 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 
 
 class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
-    def test_paths_mgr_script_run_1(self) -> None:
+    def test_paths_mgr_scripts_run_1(self) -> None:
         paths = CsvPaths()
         arch = paths.config.get(section="results", name="archive")
         backend = Nos(arch).backend
@@ -40,17 +40,18 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         if platform.system() == "Windows":
             paths.paths_manager.store_script_for_paths(
                 name="many",
-                when="all",
                 script_name="run.bat",
                 text="echo 'hello world!'",
             )
         else:
             paths.paths_manager.store_script_for_paths(
                 name="many",
-                when="all",
                 script_name="run.sh",
                 text="#!/bin/bash\necho 'hello world!'",
             )
+        #
+        # =====================
+        #
 
         #
         # set up file
@@ -101,6 +102,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         #
         p = os.path.join(out, lst[0][1])
         exists = Nos(p).exists()
+        print(f"testx: {p}: {exists}")
         assert exists
         found = False
         files = Nos(out).listdir()
@@ -110,7 +112,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         assert found is True
         paths.wrap_up()
 
-    def test_paths_mgr_add_script_1(self) -> None:
+    def test_paths_mgr_scripts_add_script_1(self) -> None:
         paths = CsvPaths()
         pm = paths.paths_manager
         name = "many"
@@ -139,7 +141,7 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         #
         assert s.find(text) > -1
 
-    def test_paths_mgr_add_script_2(self) -> None:
+    def test_paths_mgr_scripts_add_script_2(self) -> None:
         paths = CsvPaths()
         pm = paths.paths_manager
         name = "many"
@@ -158,12 +160,12 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         with pytest.raises(ValueError):
             pm.store_script_for_paths(
                 name=name,
-                when="after",
+                script_type="after",
                 script_name=script_name,
                 text="#!/bin/bash\necho 'hello world'",
             )
 
-    def test_paths_mgr_add_script_3(self) -> None:
+    def test_paths_mgr_scripts_add_script_3(self) -> None:
         paths = CsvPaths()
         pm = paths.paths_manager
         name = "many"
@@ -180,26 +182,3 @@ class TestCsvPathsExamplesPathsScripts(unittest.TestCase):
         #
         with pytest.raises(ValueError):
             pm.get_script_for_paths(name=name, script_type="on_complete_after_script")
-
-    def test_paths_mgr_add_script_4(self) -> None:
-        paths = CsvPaths()
-        pm = paths.paths_manager
-        name = "many"
-        if pm.has_named_paths(name):
-            home = pm.named_paths_home(name)
-            for _ in PathsManager.SCRIPT_TYPES:
-                script = os.path.join(home, _)
-                nos = Nos(script)
-                if nos.exists():
-                    nos.remove()
-        pm.add_named_paths_from_file(name=name, file_path=PATH)
-        #
-        # cannot give both script_type and when, even if they agree
-        #
-        with pytest.raises(ValueError):
-            pm.store_script_for_paths(
-                name=name,
-                script_type="on_complete_all_script",
-                when="all",
-                script_name="test.sh",
-            )
