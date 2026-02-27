@@ -83,6 +83,11 @@ class ErrorManager(Registrar, Listener):
         # delegate if requested for this source. we'll delegate as
         # many times as requested.
         #
+        from csvpath.matching.productions import Equality
+
+        if isinstance(source, Equality):
+            ...
+
         found = False
         for k, v in self.vetos.items():
             if source in v:

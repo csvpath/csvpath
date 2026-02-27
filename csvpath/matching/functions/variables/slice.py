@@ -60,7 +60,6 @@ class Slice(ValueProducer):
 
         ffrom = self._value_two(skip=skip)
         to = self._value_three(skip=skip)
-        print(f"from {ffrom} to {to}")
         if ffrom > to:
             msg = "Slice stop index is before start index"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
