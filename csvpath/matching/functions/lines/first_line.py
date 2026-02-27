@@ -17,7 +17,8 @@ class FirstLine(MatchDecider):
             self.description = [
                 self.wrap(
                     """\
-                    Evaluates to True on the first line.
+                    Evaluates to True on the first line of the file. If the first line is blank
+                    and blanks are skipped firstline() never fires.
 
                     Optionally, takes a function argument that is evaluated if firstline() matches
                 """
@@ -29,7 +30,13 @@ class FirstLine(MatchDecider):
                 self.wrap(
                     """\
                     Evaluates to True on the first line scanned. A scanned line is
-                    one that has been evaluated for matching.
+                    one that has been selected for matching.
+
+                    firstscan() is basically the first data line. If you select all lines
+                    for scanning but the first three are skipped for being blank,
+                    firstscan()'s first line is line #3; whereas, in that situation firstline()
+                    never fires because the first line is blank. (Remember that the line number
+                    is 0-based)
 
                     Optionally, takes a function argument that is evaluated if firstscan() matches
                 """
@@ -62,7 +69,7 @@ class FirstLine(MatchDecider):
                 if self.matcher.csvpath.do_i_raise():
                     raise ChildrenException(msg)
 
-        if self.name not in ["firstmatch", "firstscan", "firstline"]:
+        if self.name not in ["firstmatch", "firstscan", "firstline", "first_line"]:
             # correct as structure / children exception
             msg = f"Unknown function name: {self.name}"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)

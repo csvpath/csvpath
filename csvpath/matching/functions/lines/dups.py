@@ -41,6 +41,42 @@ class Fingerprint(ValueProducer):
         self.value = fingerprint
 
 
+class PercentDups(ValueProducer):
+    """returns a count of duplicates."""
+
+    def check_valid(self) -> None:
+        self.name_qualifier = True
+        self.description = [
+            self.wrap(
+                """\
+                    Returns the percent of lines or sets of headers that have duplicate values.
+            """
+            )
+        ]
+        self.args = Args(matchable=self)
+        self.args.argset().arg(
+            name="check this", types=[None, Header], actuals=[None, Any]
+        )
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    def _decide_match(self, skip=None) -> None:
+        self.match == self.default_match()
+
+    def _produce_value(self, skip=None) -> None:
+        name = self.first_non_term_qualifier(self.name)
+        fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
+        i = len(lines) - 1
+        j = (
+            1
+            if self.matcher.csvpath.line_monitor.data_line_count == 0
+            else self.matcher.csvpath.line_monitor.data_line_count
+        )
+        pd = i / j
+        print(f"i: {i} / j: {j} == {pd}")
+        self.value = pd * 100
+
+
 #
 # count dups produces a number of dups
 # dup_lines produces a stack of line numbers
@@ -52,14 +88,15 @@ class CountDups(ValueProducer):
 
     def check_valid(self) -> None:
         self.name_qualifier = True
-        self.description = [
-            self.wrap(
-                """\
-                    Produces the number of duplicate lines or the number of
-                    lines where there are duplicate subsets of header values.
-            """
-            ),
-        ]
+        if self.name == "count_dups":
+            self.description = [
+                self.wrap(
+                    """\
+                        Produces the number of duplicate lines or the number of
+                        lines where there are duplicate subsets of header values.
+                """
+                )
+            ]
         self.args = Args(matchable=self)
         self.args.argset().arg(
             name="check this", types=[None, Header], actuals=[None, Any]
@@ -68,10 +105,7 @@ class CountDups(ValueProducer):
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
-        if self.name == "count_dups":
-            self.match = self.default_match()
-        elif self.name == "has_dups":
-            self.match == self.get_value(skip=skip) > 1
+        self.match = self.default_match()
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)

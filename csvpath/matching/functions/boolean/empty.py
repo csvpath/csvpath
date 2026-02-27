@@ -18,10 +18,12 @@ class Empty(MatchDecider):
         self.description = [
             self.wrap(
                 """\
-                    empty() checks for empty or blank header values in a given line.
-                    It reports True only if all the places it is directed to look are empty.
+                    empty() checks for empty or blank header values in a given line. It will
+                    also check variables and/or the results of functions.
 
-                    If you pass it a headers() function it checks for all headers being empty.
+                    empty() reports True only if all the places it is directed to look are empty.
+
+                    If you pass a headers() function empty() checks for all headers being empty.
             """
             ),
         ]
