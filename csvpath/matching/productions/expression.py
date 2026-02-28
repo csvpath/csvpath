@@ -23,6 +23,15 @@ class Expression(Matchable, Listener):
         Listener.__init__(self, matcher.csvpath.config)
         self.error_count = 0
         self._index = -1
+        self._current_child = None
+
+    @property
+    def current_child(self) -> Matchable:
+        return self._current_child
+
+    @current_child.setter
+    def current_child(self, m: Matchable) -> None:
+        self._current_child = m
 
     #
     # we need to implement the error_listener interface
@@ -63,8 +72,10 @@ class Expression(Matchable, Listener):
                         ret = False
                 self.match = ret
             except (ChildrenException, MatchException) as e:  # pylint: disable=W0718
+                if self.current_child is None:
+                    self.current_child = child if child else self
                 self.matcher.csvpath.error_manager.handle_error(
-                    source=child, msg=f"{e}"
+                    source=self.current_child, msg=f"{e}"
                 )
                 self.matcher.csvpath.logger.error(e)
                 if self.matcher.csvpath.do_i_raise():
@@ -72,7 +83,11 @@ class Expression(Matchable, Listener):
             except (ValueError, TypeError) as e:
                 self.matcher.csvpath.logger.error(e)
             except Exception as e:
-                self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
+                if self.current_child is None:
+                    self.current_child = child if child else self
+                self.matcher.csvpath.error_manager.handle_error(
+                    source=self.current_child, msg=f"{e}"
+                )
                 self.matcher.csvpath.logger.error(e)
                 if self.matcher.csvpath.do_i_raise():
                     raise

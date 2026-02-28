@@ -347,7 +347,7 @@ class Qualified:  # pylint: disable=R0904
         )
         return ret
 
-    def line_matches(self):
+    def line_matches(self, increase=True):
         """checks that all other match components report True. this can result in
         multiple iterations over the match component tree; however, we minimize
         the impact by cutting off at the expression and short-circuiting using the
@@ -372,7 +372,8 @@ class Qualified:  # pylint: disable=R0904
         # match count. if we wait for matcher to report to csvpath the count
         # will be hard to explain.
         #
-        self.matcher.csvpath.raise_match_count_if()
+        if increase is True:
+            self.matcher.csvpath.raise_match_count_if()
         return self.default_match()
 
     # =============

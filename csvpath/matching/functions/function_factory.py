@@ -83,7 +83,7 @@ from .print.print_queue import PrintQueue
 from .lines.stop import Stop, Skip, StopAll, SkipAll
 from .lines.first import First
 from .lines.last import Last
-from .lines.dups import HasDups, DupLines, CountDups, Fingerprint
+from .lines.dups import HasDups, DupLines, CountDups, PercentDups, Fingerprint
 from .lines.first_line import FirstLine
 from .lines.advance import Advance, AdvanceAll
 from .lines.after_blank import AfterBlank
@@ -93,6 +93,8 @@ from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
 from .variables.clear import Clear
+from .variables.sort import Sort
+from .variables.slice import Slice
 from .variables.index_of import IndexOf
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
@@ -101,6 +103,8 @@ from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
+from .validity.percent_matching import PercentMatching
+from .validity.matches import Matches
 from .types.nonef import Nonef
 from .types.wildcard import Wildcard
 from .types.blank import Blank
@@ -384,9 +388,9 @@ class FunctionFactory:
         fs["ge"] = AboveBelow
         fs["first"] = First
         fs["firstline"] = FirstLine
+        fs["first_line"] = FirstLine
         fs["firstmatch"] = FirstLine
         fs["firstscan"] = FirstLine
-        fs["first_line"] = FirstLine
         fs["first_scan"] = FirstLine
         fs["first_match"] = FirstLine
         fs["count_lines"] = CountLines
@@ -497,10 +501,13 @@ class FunctionFactory:
         fs["fail_all"] = FailAll
         fs["failed"] = Failed
         fs["valid"] = Failed
+        fs["percent_matching"] = PercentMatching
+        fs["matches"] = Matches
         fs["stack"] = Stack
         fs["stdev"] = Stdev
         fs["pstdev"] = Stdev
         fs["has_dups"] = HasDups
+        fs["percent_dups"] = PercentDups
         fs["count_dups"] = CountDups
         fs["dup_lines"] = DupLines
         fs["empty"] = Empty
@@ -519,6 +526,8 @@ class FunctionFactory:
         fs["track"] = Track
         fs["track_any"] = Track
         fs["clear"] = Clear
+        fs["sort"] = Sort
+        fs["slice"] = Slice
         fs["index_of"] = IndexOf
         fs["sum"] = Sum
         fs["odd"] = Odd
