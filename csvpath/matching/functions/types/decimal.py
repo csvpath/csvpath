@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.functions.function import Function
@@ -51,7 +51,41 @@ class Decimal(Type):
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
-        self.value = self.matches(skip=skip)
+        #
+        # we return the value if we're within parquet. line() is fine with that.
+        # otherwise, we return True/False to indicate if we are the datatype in
+        # question -- i.e. the value of self.match. this is a confusing hack.
+        # however, there is a twisted logic to how we do it. ideally all the types
+        # either return their value or T/F consistently. sorting this out is for
+        # a future effort, tho, deferring only makes it harder to roll out. :/
+        #
+        if self.parent.parent.name == "parquet":
+            v = self._value_one(skip=skip)
+            if v is None:
+                if self.notnone is True:
+                    msg = "Value of {self.name} cannot be None"
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
+                    )
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
+                self.value = None
+                return
+            else:
+                mid = self._to(name=self.name, n=v)
+                if isinstance(mid, (int, float)):
+                    self.value = mid
+                else:
+                    msg = mid
+                    self.matcher.csvpath.error_manager.handle_error(
+                        source=self, msg=msg
+                    )
+                    if self.matcher.csvpath.do_i_raise():
+                        raise MatchException(msg)
+                    else:
+                        self.value = v
+        else:
+            self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
         h = self._value_one(skip=skip)
@@ -126,8 +160,8 @@ class Decimal(Type):
                 msg = "Integers cannot have a fractional part"
                 if strict:
                     return (False, msg)
-                i = ExpressionUtility.to_int(h)
-                f = ExpressionUtility.to_float(h)
+                i = exut.to_int(h)
+                f = exut.to_float(h)
                 if i == f and i != h:
                     # the fractional part is 0, so we'll allow it
                     return (True, None)
@@ -142,12 +176,12 @@ class Decimal(Type):
     @classmethod
     def _to(cls, *, name: str, n: str):
         if name == "decimal":
-            f = ExpressionUtility.to_float(n)
+            f = exut.to_float(n)
             if not isinstance(f, float):
                 return f"Cannot convert {n} to float"
             return f
         if name == "integer":
-            i = ExpressionUtility.to_int(n)
+            i = exut.to_int(n)
             if not isinstance(i, int):
                 return f"Cannot convert {n} to int"
             return i

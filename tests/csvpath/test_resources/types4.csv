@@ -1,0 +1,17 @@
+price,quantity,truth,when,"exactly when",Nothing,an_email,a_url,a_string
+5.5,5,True,2021-01-27,2021/5/29 01:01:59,None,dk@fish.com,https://www.csvpath.org,i'm a string
+.30,5.5,false,23 May 2010,21/12/1995,,ba@ts.io,,catfish
+.0030,5.5,,23 May 2010,21/12/1995,,ba@ts.io,http://b.net,catfish
+0,5.5,False,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+1,100000,,23 May 2010,21/12/1995,null,ba@ts.io,https://www.csvpath.org,catfish
+,,,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+,,true,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+10.1,,,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+10.00000001,5.5,False,23 May 2010,,none,ba@ts.io,https://www.csvpath.org,catfish
+0,50,False,23 May 2010,21/12/1995,,ba@ts.io,https://www.csvpath.org,catfish
+,4,False,23 May 2010,21/12/1995,nan,,https://www.csvpath.org,catfish
+2,5,false,23 May 2010,21/12/1995,none,ba@ts.io,,catfish
+22.22,05,False,23 May 2010,21/12/1995,none,ba@ts.io,https://www.csvpath.org,
+
+
+

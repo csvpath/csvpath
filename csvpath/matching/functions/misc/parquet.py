@@ -1,5 +1,9 @@
-from typing import Any
 import traceback
+import tempfile
+import os
+import shutil
+
+from smart_open import open as smart_open
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -71,6 +75,7 @@ class Parquet(Line, SideEffect, MatchDecider):
             config.get(section="parquet", name="batch_size", default=25000)
         )
         self.writer = None
+        self.tmp_path = None  # the path to the temp file we write to before copying to whichever backend
         self.schema = None
         try:
             self.schema = paut.line_to_schema(self)
@@ -102,20 +107,63 @@ class Parquet(Line, SideEffect, MatchDecider):
         #
         self.parquet_file_path = self._get_path()
 
+    def _produce_value(self, skip=None) -> None:
+        self._apply_default_value()
+
+    def _decide_match(self, skip=None) -> None:
+        super()._decide_match(skip=skip)
+        ename = f"_{self.first_non_term_qualifier()}_entity"
+        if self.match is True:
+            #
+            # capture lines to a list var buffer
+            #
+            entity = self.matcher.get_variable(ename, set_if_none=[])
+            sibs = self.siblings()
+            #
+            # index_name is the count of how many rows we have. it must be
+            # less than the batch size -- if not, the batch is written out.
+            #
+            index_name = f"_{self.first_non_term_qualifier()}_index"
+            row = {}
+            for i, s in enumerate(sibs):
+                v = s.to_value(skip=skip)
+                print(f"asib: {i}: {s} = {v}")
+                row[self.schema.names[i]] = v
+            entity.append(row)
+            rows = self.matcher.get_variable(index_name, set_if_none=0)
+            rows += 1
+            if rows >= self.batch_size:
+                #
+                # store batch lines.
+                #
+                self._write(entity)
+                rows = 0
+                #
+                # we store the entity because CsvPath converts lists to tuples at the end of
+                # runs. here we shouldn't be dealing with that, but for consistency we'll
+                # make the extra effort, since we can't clear the list in _write().
+                #
+                self.matcher.set_variable(ename, value=[])
+            #
+            # store the new count against the batch size.
+            #
+            self.matcher.set_variable(index_name, value=rows)
+
     def _flush(self) -> None:
         ename = f"_{self.first_non_term_qualifier()}_entity"
         entity = self.matcher.get_variable(ename, set_if_none=[])
         if len(entity) > 0:
-            table = pa.Table.from_pylist(entity, schema=self.schema)
-            if self.writer is None:
-                self.writer = pq.ParquetWriter(self.parquet_file_path, table.schema)
-            with DataFileWriter(path=self.parquet_file_path, mode="wb") as w:
-                self.writer.write_table(table, w.sink)
-        if self.writer:
-            try:
-                self.writer.close()
-            except Exception:
-                ...
+            self._write(entity)
+        try:
+            self.writer.close()
+            with open(self.tmp_path, "rb") as src, DataFileWriter(
+                path=self.parquet_file_path, mode="wb"
+            ) as dst:
+                shutil.copyfileobj(src, dst)
+        finally:
+            os.unlink(self.tmp_path)
+            self.writer = None
+            self.tmp_path = None
 
     def _get_path(self) -> str:
         pname = f"{self.first_non_term_qualifier()}.parquet"
@@ -145,61 +193,40 @@ class Parquet(Line, SideEffect, MatchDecider):
             #
             if Nos(pname).exists():
                 raise ValueError(f"There is already a file at {pname}")
+        else:
+            #
+            # drop in a dir in the current working dir. putting the files in their own
+            # dir makes clean up easier, which we'll need for one-off runs in FlightPath.
+            # there we'll have potentially a lot of stranded parquet files that will
+            # not be seen by the user and will eventually need to be removed. users
+            # will be able to run csvpaths with parquet(), but will not have easy access
+            # to the files unless/until run using a CsvPaths. they can of course dig up
+            # their parquets by hand.
+            #
+            # that's a little lame. and fixable. we can work on it later.
+            #
+            if not Nos("parquet").dir_exists():
+                Nos("parquet").makedirs()
+            pname = Nos("parquet").join(pname)
         return pname
 
-    def _produce_value(self, skip=None) -> None:
-        self._apply_default_value()
+    def _write(self, entity: list) -> None:
+        self._assure_writer()
+        try:
+            print(f"partq: schema: {self.schema}")
+            print(f"partq: entity: {entity}")
+            table = pa.Table.from_pylist(entity, schema=self.schema)
+            print(f"partq: table: {table}")
+            self.writer.write_table(table)
+        except Exception as e:
+            msg = f"Error in write: {e}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
 
-    def _decide_match(self, skip=None) -> None:
-        super()._decide_match(skip=skip)
-        ename = f"_{self.first_non_term_qualifier()}_entity"
-        if self.match is True:
-            #
-            # capture to a var
-            #
-            entity = self.matcher.get_variable(ename, set_if_none=[])
-            sibs = self.siblings()
-            i = 0
-            #
-            # index_name is the count of how many rows we have. it must be
-            # less than the batch size -- if not, the batch is written out.
-            #
-            index_name = f"_{self.first_non_term_qualifier()}_index"
-            row = {}
-            for i, s in enumerate(sibs):
-                v = s.to_value(skip=skip)
-                row[self.schema.names[i]] = v
-                # self.matcher.set_variable(ename, entity)
-            entity.append(row)
-            rows = self.matcher.get_variable(index_name, set_if_none=0)
-            rows += 1
-            if rows >= self.batch_size:
-                #
-                # store batch lines. where do we create the schema?
-                #
-                table = pa.Table.from_pylist(entity, schema=self.schema)
-                if self.writer is None:
-                    self.writer = pq.ParquetWriter(self.parquet_file_path, table.schema)
-                # self.writer.write_table(table)
-                with DataFileWriter(path=self.parquet_file_path, mode="wb") as w:
-                    self.writer.write_table(table, w.sink)
-                entity.clear()
-                rows = 0
-            else:
-                #
-                # skip writing the rows until the batch fills up
-                #
-                ...
-            #
-            # store the new count against the batch size. we don't store the entity because
-            # we're working off the same collection object reference, so we don't need to
-            # refresh the var.
-            #
-            self.matcher.set_variable(index_name, value=rows)
-            #
-            # at the end of the file we'll have some leftover data. how and where
-            # do we output that?
-            #
-        else:
-            ...
-            # print("the parquet() didn't match")
+    def _assure_writer(self) -> None:
+        if self.writer is None:
+            tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
+            self.tmp_path = tmp.name
+            tmp.close()
+            self.writer = pq.ParquetWriter(self.tmp_path, self.schema)

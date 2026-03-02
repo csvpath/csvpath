@@ -101,7 +101,6 @@ class Line(MatchDecider):
         self.value = False if v is None else v
 
     def _decide_match(self, skip=None) -> None:
-        print("line: _decide_match")
         errors = []
         #
         # validation work happens here
@@ -128,7 +127,6 @@ class Line(MatchDecider):
             self.match = False
         else:
             self.match = True
-        print(f"Line: done with _decide_match: {self.match}")
 
     # =======================================
     #

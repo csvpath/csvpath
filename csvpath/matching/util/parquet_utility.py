@@ -1,4 +1,5 @@
 import pyarrow as pa
+from pyarrow import DataType
 from pyarrow import Schema, Field
 
 from csvpath.matching.functions.types.string import String
@@ -11,7 +12,6 @@ from csvpath.matching.functions.types.url import Url
 from csvpath.matching.functions.types.email import Email
 from csvpath.matching.functions.types.wildcard import Wildcard
 from csvpath.matching.productions import Term
-
 from csvpath.matching.functions.function import Function
 from csvpath.matching.util.exceptions import ChildrenException
 
@@ -24,12 +24,14 @@ class ParquetUtility:
         return pa.schema(cls.columns(line))
 
     @classmethod
-    def columns(cls, line: Function) -> Schema:
+    def columns(cls, line: Function) -> list[tuple[str, DataType]]:
         if line.name not in ["line", "parquet"]:
             raise ChildrenException(f"Cannot create a schema from a {line.name}")
         columns = []
         for i, s in enumerate(line.siblings()):
             ttypes = cls.to_type(s)
+            if ttypes is None:
+                raise ChildrenException(f"Cannot identity type from {s}")
             if len(ttypes) == 1:
                 #
                 # find name in name qualifer, or
@@ -49,7 +51,7 @@ class ParquetUtility:
         return columns
 
     @classmethod
-    def to_type(cls, s: Function) -> list:
+    def to_type(cls, s: Function) -> list[DataType]:
         if s is None:
             raise ValueError("Function cannot be None")
         if isinstance(s, String):
@@ -63,9 +65,9 @@ class ParquetUtility:
                 raise ChildrenException(f"Unknown number type: {s.name}")
         elif isinstance(s, Date):
             if s.name == "date":
-                [pa.date64()]
+                return [pa.date64()]
             elif s.name == "datetime":
-                [pa.timestamp("us")]
+                return [pa.timestamp("us")]
             else:
                 raise ChildrenException(f"Unknown type of Date object: {s.name}")
         elif isinstance(s, Blank):
