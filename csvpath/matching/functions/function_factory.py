@@ -99,6 +99,7 @@ from .variables.index_of import IndexOf
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
 from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
+from .misc.parquet import Parquet
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
@@ -575,6 +576,7 @@ class FunctionFactory:
         fs["var_table"] = VarTable
         fs["run_table"] = RunTable
         fs["empty_stack"] = EmptyStack
+        fs["parquet"] = Parquet
         fs["fingerprint"] = Fingerprint
         fs["line_fingerprint"] = LineFingerprint
         fs["file_fingerprint"] = FileFingerprint

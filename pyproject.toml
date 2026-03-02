@@ -64,6 +64,7 @@ jsonlines = "^4.0.0"
 jsonpath-ng = "^1.7.0"
 pyjson5 = "^2.0.0"
 pydantic = "^2.12.5"
+pyarrow = "^23.0.1"
 
 [tool.poetry.extras]
 pandas = ["pandas"]

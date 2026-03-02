@@ -166,6 +166,9 @@ slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.result = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.results = from csvpath.managers.integrations.slack.sender import SlackSender
 
+[parquet]
+batch_size=5000
+
 [otlp]
 # add OTLP config here if not relying directly on the env vars
 

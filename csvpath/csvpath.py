@@ -6,7 +6,7 @@ import os
 import hashlib
 import traceback
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from .util.config import Config
@@ -144,6 +144,12 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self.variables: Dict[str, Any] = {}
         self.delimiter = delimiter
         self.quotechar = quotechar
+        #
+        # match expressions -- and others -- can register a callback that
+        # will be called when CsvPath.flush() is called at the end of a run
+        # or called intentionally by any user code that is using next().
+        #
+        self._flushes: list[Callable[[None], None]] = []
         #
         # a blank line has no headers. it has no data. physically it is 2 \n with
         # nothing but whitespace between them. any data or any delimiters would make
@@ -1054,6 +1060,27 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         """@private"""
         self.stopped = True
 
+    @property
+    def flush_callbacks(self) -> list[Callable[[None], None]]:
+        return self._flushes
+
+    #
+    # note that we are only accepting the registration if we haven't already.
+    # how well this works with closures is not tested atm.
+    #
+    def register_flush_callback(self, c: Callable[[None], None]) -> None:
+        if c not in self._flushes:
+            self._flushes.append(c)
+
+    def flush(self) -> None:
+        for _ in self.flush_callbacks:
+            try:
+                _()
+            except Exception as e:
+                self.logger.error(e, exc_info=True)
+                if self.ecoms.do_i_raise():
+                    raise
+
     #
     #
     # collect(), fast_forward(), and next() are the central methods of CsvPath.
@@ -1119,6 +1146,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # potentially large data.csv to find out how many lines.
         if isinstance(self.lines, list):
             self.lines = None
+        #
+        # we could call a flush()-like function here that would allow
+        # internal code (mostly) to register clean-up callbacks. that
+        # way, if we were just using for _ in next() we could still
+        # deliberately call flush() when we were done.
+        #
+        self.flush()
         return lines
 
     def fast_forward(self, csvpath=None):
@@ -1131,6 +1165,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.parse(csvpath)
         for _ in self.next():
             pass
+        #
+        # we call flush() to allow internal code (mostly) to register clean-up
+        # callbacks. at this time this is not a capability we want the public to
+        # take advantage of. that said, people using next() will have to call flush()
+        # themselves.
+        #
+        self.flush()
         return self
 
     #

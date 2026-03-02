@@ -439,6 +439,8 @@ class ResultsManager:  # pylint: disable=C0115
                 filefrom = "data.csv"
             elif t[0].startswith("unmatched"):
                 filefrom = "unmatched.csv"
+            elif t[0].endswith(".parquet"):
+                ...
             else:
                 msg = "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
                 self.csvpaths.error_manager.handle_error(source=self, msg=msg)

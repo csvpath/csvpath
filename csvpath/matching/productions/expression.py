@@ -80,7 +80,11 @@ class Expression(Matchable, Listener):
                 self.matcher.csvpath.logger.error(e)
                 if self.matcher.csvpath.do_i_raise():
                     raise
-            except (ValueError, TypeError) as e:
+            #
+            # not catching TypeError because it is likely to be a dev time problem and
+            # we need to see it and not just in the log.
+            #
+            except (ValueError) as e:
                 self.matcher.csvpath.logger.error(e)
             except Exception as e:
                 if self.current_child is None:

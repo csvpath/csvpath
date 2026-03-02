@@ -17,7 +17,7 @@ class Decimal(Type):
         self.match_qualifiers.append("strict")
         self.match_qualifiers.append("distinct")
         self.description = [
-            f"{self.name}() is a type function often used as an argument to line().",
+            f"{self.name}() is a type function typically used as an argument to line().",
             f"It indicates that the value it receives must be {self._a_an()} {self.name}.",
         ]
         #

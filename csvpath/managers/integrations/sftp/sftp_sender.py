@@ -92,6 +92,7 @@ class SftpSender(Listener, threading.Thread):
         ) and self._send_original is not True:
             # no files to send and not sending the original data means we're done
             return
+        """
         files = [
             "data.csv",
             "unmatched.csv",
@@ -101,6 +102,7 @@ class SftpSender(Listener, threading.Thread):
             "printouts.txt",
             "manifest.json",
         ]
+        """
         sep = Nos(self.metadata.run_home).sep
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -122,8 +124,8 @@ class SftpSender(Listener, threading.Thread):
             for pair in self._files:
                 file = pair[0]
                 to = pair[1]
-                if file not in files:
-                    raise ValueError("File name {file} is not in {files}")
+                # if file not in files:
+                #    raise ValueError("File name {file} is not in {files}")
                 if to is None:
                     raise ValueError("File name {file} has no destination")
                 path = f"{self.metadata.run_home}{sep}{self.result.identity_or_index}{sep}{file}"
