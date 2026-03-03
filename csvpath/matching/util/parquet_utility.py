@@ -81,6 +81,8 @@ class ParquetUtility:
         elif isinstance(s, Email):
             return [pa.string()]
         elif isinstance(s, Wildcard):
+            return []
+            """
             c = s._child_one()
             if not isinstance(c, Term):
                 raise ChildrenException(
@@ -94,5 +96,6 @@ class ParquetUtility:
                 return ts
             else:
                 raise ChildrenException(f"Cannot have a wildcard with cardinality: {i}")
+            """
         else:
             raise ChildrenException(f"Unknown type function: {s}")

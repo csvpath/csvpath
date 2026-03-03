@@ -103,17 +103,27 @@ class Parquet(Line, SideEffect, MatchDecider):
         # this works for CsvPath and CsvPaths. using a listener would have only worked for
         # CsvPaths.
         #
+        self.parquet_file_path = self._get_path()
         self.matcher.csvpath.register_flush_callback(self._flush)
         #
-        self.parquet_file_path = self._get_path()
 
     def _produce_value(self, skip=None) -> None:
         self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
         super()._decide_match(skip=skip)
-        ename = f"_{self.first_non_term_qualifier()}_entity"
-        if self.match is True:
+        #
+        # line() is always true. it relies on its children to block matches. makes sense
+        # for line() but parquet() needs to make that determination itself for its own
+        # functionality. i.e. we want parquet() to not write invalid lines.
+        #
+        guard1 = self.my_children_match()
+        guard2 = self.line_matches(increase=False)
+        guard = guard1 if self.nocontrib else guard2
+
+        if guard is True:
+            self._assure_writer()
+            ename = f"_{self.first_non_term_qualifier()}_entity"
             #
             # capture lines to a list var buffer
             #
@@ -126,8 +136,12 @@ class Parquet(Line, SideEffect, MatchDecider):
             index_name = f"_{self.first_non_term_qualifier()}_index"
             row = {}
             for i, s in enumerate(sibs):
+                #
+                # we don't take wildcards, so the number of sibs will often be higher
+                #
+                if i >= len(self.schema.names):
+                    break
                 v = s.to_value(skip=skip)
-                print(f"asib: {i}: {s} = {v}")
                 row[self.schema.names[i]] = v
             entity.append(row)
             rows = self.matcher.get_variable(index_name, set_if_none=0)
@@ -159,7 +173,12 @@ class Parquet(Line, SideEffect, MatchDecider):
             with open(self.tmp_path, "rb") as src, DataFileWriter(
                 path=self.parquet_file_path, mode="wb"
             ) as dst:
-                shutil.copyfileobj(src, dst)
+                shutil.copyfileobj(src, dst.sink)
+        except Exception as e:
+            msg = f"Cannot save parquet file: {e}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(msg)
         finally:
             os.unlink(self.tmp_path)
             self.writer = None
@@ -168,13 +187,10 @@ class Parquet(Line, SideEffect, MatchDecider):
     def _get_path(self) -> str:
         pname = f"{self.first_non_term_qualifier()}.parquet"
         if self.matcher.csvpath.csvpaths:
-            mdata = self.writer.csvpath.csvpaths.run_metadata
+            mdata = self.matcher.csvpath.csvpaths.run_metadata
             if mdata is None:
                 raise MatchException("No run metadata available")
-            archive = self.writer.csvpath.csvpaths.config.get(
-                section="results", name="archive"
-            )
-            rundir = mdata.run_dir
+            rundir = mdata.run_home
             #
             # if we don't have an identity we will dump the parquet file in the run
             # dir. we don't have a reasonable way to find the index of the csvpath
@@ -182,10 +198,10 @@ class Parquet(Line, SideEffect, MatchDecider):
             # is the first time the need has come up, and CsvPath should not fool
             # around with CsvPaths, it doesn't seem like we should rush into it now.
             #
-            instance = self.writer.csvpath.identity
-            path = Nos(archive).join(rundir)
+            instance = self.matcher.csvpath.identity
+            path = Nos(rundir)
             if instance:
-                path = Nos(path).join(instance)
+                path = path.join(instance)
             pname = Nos(path).join(pname)
             #
             # we create this path once at validation time, and only for CsvPaths runs,
@@ -211,12 +227,8 @@ class Parquet(Line, SideEffect, MatchDecider):
         return pname
 
     def _write(self, entity: list) -> None:
-        self._assure_writer()
         try:
-            print(f"partq: schema: {self.schema}")
-            print(f"partq: entity: {entity}")
             table = pa.Table.from_pylist(entity, schema=self.schema)
-            print(f"partq: table: {table}")
             self.writer.write_table(table)
         except Exception as e:
             msg = f"Error in write: {e}"

@@ -36,8 +36,11 @@ class Wildcard(Type):
         #    line->equality->wildcard
         # path? as-is, it allows deeper nesting which we don't want.
         #
-        if ExpressionUtility.get_ancestor(self, "Line") is None:
-            msg = "Wildcard can only be used within line()"
+        if (
+            ExpressionUtility.get_ancestor(self, "Line") is None
+            and ExpressionUtility.get_ancestor(self, "Parquet") is None
+        ):
+            msg = "Wildcard can only be used within line() or parquet()"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)

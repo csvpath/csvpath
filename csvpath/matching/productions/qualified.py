@@ -376,6 +376,17 @@ class Qualified:  # pylint: disable=R0904
             self.matcher.csvpath.raise_match_count_if()
         return self.default_match()
 
+    def my_children_match(self):
+        """checks that all other match components report True. this can result in
+        multiple iterations over the match component tree; however, we minimize
+        the impact by cutting off at the expression and short-circuiting using the
+        self.value and self.match properties. we also take care to not recurse
+        by adding self to the skip list."""
+        for s in self.siblings():
+            if not s.matches(skip=[self]):
+                return False
+        return True
+
     # =============
     # onchange
     # =============

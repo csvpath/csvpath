@@ -20,8 +20,8 @@ class Date(ValueProducer, Type):
         self.match_qualifiers.append("distinct")
         self.description = [
             f"{self.name}() has two purposes.",
-            "First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.",
-            "Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.",
+            f"First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.",
+            f"Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.",
         ]
 
         self.args = Args(matchable=self)

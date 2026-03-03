@@ -96,7 +96,14 @@ class ResultSerializer:
         with DataFileWriter(path=Nos(run_dir).join("errors.json")) as f:
             json.dump(errors, f.sink, indent=2)
         with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
-            json.dump(variables, f.sink, indent=2)
+            #
+            # exp
+            #
+            import jsonpickle
+
+            s = jsonpickle.encode(variables, unpicklable=False, indent=2)
+            f.sink.write(s)
+            # json.dump(variables, f.sink, indent=2)
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
         if lines is not None:

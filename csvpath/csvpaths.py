@@ -777,10 +777,8 @@ Cache: {cache}
         # the named-paths were loaded.
         #
         paths = self._get_named_paths(pathsname)
-        print(f"\npscol: template 1: {pathsname} -> {template}")
         if template is None:
             template = self.paths_manager.get_template_for_paths(pathsname)
-        print(f"pscol: template 2: {pathsname} -> {template}")
         self.logger.info(
             "Prepping %s and %s with template %s", filename, pathsname, template
         )
