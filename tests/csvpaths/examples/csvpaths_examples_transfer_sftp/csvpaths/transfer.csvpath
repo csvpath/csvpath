@@ -1,0 +1,15 @@
+~
+    id:output
+    validation-mode:no-raise, print
+    transfer-mode: stores.parquet > out
+~
+$[10-12][
+    @out = "sftp://192.168.1.152:2022/stores.parquet"
+    ~ we are skipping a bunch of blank lines that will have screwed up the headers ~
+    reset_headers()
+    parquet.stores.nocontrib(
+        integer.id(#0),
+        date.day(#1),
+        wildcard(16)
+    )
+]
