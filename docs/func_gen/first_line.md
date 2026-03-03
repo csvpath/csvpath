@@ -1,7 +1,8 @@
 
 ## first_line()
 
-Evaluates to True on the first line.
+Evaluates to True on the first line of the file. If the first line is
+blank and blanks are skipped firstline() never fires.
 
 Optionally, takes a function argument that is evaluated if firstline()
 matches

@@ -519,19 +519,6 @@ class PathsManager:
     def assure_readme(self, name: str) -> None:
         r = f"# {name} Documentation\n\n&nbsp;\nThe purpose of these statements is ___________________."
         self.describer.store_readme(name=name, readme=r, overwrite=False)
-        """
-        path = self.named_paths_home(name)
-        nos = Nos(path)
-        nos.path = nos.join(self.describer.README)
-        if not nos.exists():
-            #
-            # since we only want to create a readme if one doesn't already exist
-            # we may as well do the write here. calling describer.store_readme()
-            # wouldn't do much more or less.
-            #
-            with DataFileWriter(path=nos.path) as file:
-                file.sink.write(r)
-        """
 
     #
     # adding ref handling for the form: $many.csvpaths.food
@@ -673,7 +660,6 @@ class PathsManager:
         lst = nos.listdir()
         for n in lst:
             nos.path = Nos(path).join(n)
-            # nos.path = os.path.join(path, n)
             if not nos.isfile():
                 names.append(n)
         return names

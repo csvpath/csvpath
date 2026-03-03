@@ -29,19 +29,36 @@ class SftpDataReader(CsvDataReader):
         if self.source is None:
             config = self._config
             c = SftpConfig(config)
-            self.source = open(
-                self.path,
-                self.mode,
-                encoding=self.encoding,
-                transport_params={
-                    "connect_kwargs": {
-                        "username": c.username,
-                        "password": c.password,
-                        "look_for_keys": False,
-                        "allow_agent": False,
-                    }
-                },
-            )
+            #
+            # careful with the "b", w/o removing the encoding we have problems.
+            #
+            if self.mode and "b" in self.mode:
+                self.source = open(
+                    self.path,
+                    self.mode,
+                    transport_params={
+                        "connect_kwargs": {
+                            "username": c.username,
+                            "password": c.password,
+                            "look_for_keys": False,
+                            "allow_agent": False,
+                        }
+                    },
+                )
+            else:
+                self.source = open(
+                    self.path,
+                    self.mode,
+                    encoding=self.encoding,
+                    transport_params={
+                        "connect_kwargs": {
+                            "username": c.username,
+                            "password": c.password,
+                            "look_for_keys": False,
+                            "allow_agent": False,
+                        }
+                    },
+                )
 
     def next(self) -> list[str]:
         config = self._config

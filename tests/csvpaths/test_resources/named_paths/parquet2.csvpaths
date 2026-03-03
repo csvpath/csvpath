@@ -1,0 +1,19 @@
+
+~
+ validation-mode:no-raise
+ name: autos
+~
+$[1*][
+    parquet.nocontrib.autos(
+        integer.year(#Year, 2026, 2000),
+        string.type(#Type),
+        integer.volume(#"Automobile Volume")
+    )
+    parquet.nocontrib.years(
+        integer.year(#Year, 2010, 2008),
+        wildcard(2)
+    )
+]
+
+
+

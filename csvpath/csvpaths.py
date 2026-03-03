@@ -212,6 +212,13 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         self._wrap_up_automatically = True
         """ @private """
+        #
+        # adding a reference to the csvpaths in the run as they are created
+        # we'll clean this up in the wrap-up. not loving this, but it
+        # doesn't seem unreasonable and it is needed for functions (etc?)
+        # that need to know about the run during the run; e.g. parquet()
+        #
+        self._csvpath_instances = []
 
         self.logger.info(
             f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
@@ -513,6 +520,10 @@ Cache: {cache}
         self.named_paths_name = None
         self.run_metadata = None
         self._logger = None
+        #
+        # clear csvpath references. these are collected as the run progresses.
+        #
+        self._csvpath_instances = []
 
     def wrap_up(self) -> None:
         #
@@ -574,6 +585,9 @@ Cache: {cache}
     # prep csvpath children
     # =========================
 
+    def csvpath_instances(self) -> list[CsvPath]:
+        return self._csvpath_instances
+
     def _load_csvpath(
         self,
         *,
@@ -586,8 +600,14 @@ Cache: {cache}
         crt: str,
         index: int = -1,
     ) -> None:
-        """@private"""
+        #
+        # collecting for downstream access. prefer to not use this, but needed for some
+        # corner cases.
+        #
+        self._csvpath_instances.append(csvpath)
+        #
         # file is the physical file (+/- if preceding mode) filename is the named-file name
+        #
         self.logger.debug("Beginning to load csvpath %s with file %s", path, file)
         csvpath.named_paths_name = pathsname
         self.named_paths_name = pathsname

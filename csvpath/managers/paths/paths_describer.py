@@ -105,6 +105,7 @@ class NamedPathsDescriber:
     def store_config(self, name: NamedPathsName, j: dict | GroupConfig) -> None:
         if name is None:
             raise ValueError("Name cannot be None")
+        name = self._name_for_name(name)
         _ = self.get_json(name)
         config = None
         c = _.get(self.CONFIG)
@@ -125,8 +126,8 @@ class NamedPathsDescriber:
     def get_config(self, name: NamedPathsName) -> GroupConfig:
         if name is None:
             raise ValueError("Name cannot be None")
+        name = self._name_for_name(name)
         _ = self.get_json(name)
-
         cfg = _.get(self.CONFIG)
         if cfg:
             cfg = Config(**cfg)

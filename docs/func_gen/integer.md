@@ -1,7 +1,7 @@
 
 ## integer()
 
-integer() is a type function often used as an argument to line().
+integer() is a type function typically used as an argument to line().
 
 It indicates that the value it receives must be an integer.
 

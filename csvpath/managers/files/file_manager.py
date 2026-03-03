@@ -271,7 +271,6 @@ class FileManager:
             raise ValueError("Name cannot be None or empty")
         if path.find("#") > -1:
             path = path[0 : path.find("#")]
-        # nos = self.nos
         nos = Nos(path)
         #
         # nos sep is backend aware. it doesn't know what backend is handling
@@ -279,7 +278,7 @@ class FileManager:
         #
         # sep = self.csvpaths.config.files_sep
         #
-        # sadly we don't have an https backend at this time. so we have to test for the protocol.
+        # no https backend at this time. so we have to test for the protocol.
         #
         sep = (
             "/"
@@ -296,7 +295,6 @@ class FileManager:
         #
         home = self.named_file_home(name)
         home = Nos(home).join(fname)
-        # home = os.path.join(home, fname)
         nos.path = home
         if not nos.exists():
             nos.makedirs()
@@ -327,6 +325,9 @@ class FileManager:
         parts = pathu.parts(path)
         for i, part in enumerate(parts):
             t = t.replace(f":{i}", part)
+            #
+            # TODO: replace dynamic tokens: :day_of_week, :day, :month, :month_of_year, :year, :quarter
+            #
         t = t.replace(":filename", parts[-1])
         return t
 

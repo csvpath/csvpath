@@ -1,7 +1,7 @@
 
 ## decimal()
 
-decimal() is a type function often used as an argument to line().
+decimal() is a type function typically used as an argument to line().
 
 It indicates that the value it receives must be a decimal.
 

@@ -435,10 +435,18 @@ class ResultsManager:  # pylint: disable=C0115
         tpaths = []
         for t in transfers:
             filefrom = None
+            mode = None
             if t[0].startswith("data"):
                 filefrom = "data.csv"
             elif t[0].startswith("unmatched"):
                 filefrom = "unmatched.csv"
+            elif t[0].endswith(".parquet"):
+                filefrom = t[0]
+                mode = "wb"
+            elif t[0].endswith(".txt"):
+                filefrom = t[0]
+            elif t[0].endswith(".json"):
+                filefrom = t[0]
             else:
                 msg = "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
                 self.csvpaths.error_manager.handle_error(source=self, msg=msg)
@@ -449,7 +457,8 @@ class ResultsManager:  # pylint: disable=C0115
                 mode = "a"
                 varname = varname[:-1]
             else:
-                mode = "w"
+                if mode is None:
+                    mode = "w"
             pathto = self._path_to_transfer_to(result, varname)
 
             tpaths.append((filefrom, varname, pathfrom, pathto, mode))
@@ -460,23 +469,42 @@ class ResultsManager:  # pylint: disable=C0115
         for t in tpaths:
             pathfrom = t[2]
             pathto = t[3]
-            with DataFileReader(pathfrom) as pf:
+            rmode = "rb" if "b" in t[4] else "r"
+            with DataFileReader(pathfrom, mode=rmode) as pf:
                 with DataFileWriter(path=pathto, mode=t[4]) as file:
                     file.write(pf.read())
 
     def _path_to_transfer_to(self, result, t) -> str:
-        """@private"""
-        p = result.csvpath.config.transfer_root
-
-        if t not in result.csvpath.variables:
+        if result is None:
+            raise ValueError("Result cannot be None")
+        if t is None:
+            raise ValueError("Variable name cannot be None")
+        vs = result.csvpath.variables
+        if vs is None:
+            raise ValueError("Variables cannot be None")
+        if t not in vs:
             msg = f"Variable {t} not found in variables"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             raise InputException(msg)
-        f = result.csvpath.variables[t]
+        #
+        # get the target file name
+        #
+        f = vs[t]
+        if f is None or str(f).strip() == "":
+            msg = f"Variable {t} is invalid: {f}"
+            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
+            raise InputException(msg)
+        #
+        # if we're shipping to another backend, we don't need to change the target location
+        #
+        if not Nos(f).is_local:
+            return f
+
         if f.find("..") != -1:
             msg = f"Transfer path cannot include '..': {f}"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             raise InputException(msg)
+        p = result.csvpath.config.transfer_root
         rp = Nos(p).join(f)
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
@@ -485,10 +513,12 @@ class ResultsManager:  # pylint: disable=C0115
         return rp
 
     def _path_to_result(self, result, t) -> str:
-        """@private"""
+        if result is None:
+            raise ValueError("Result cannot be None")
+        if t is None:
+            raise ValueError("Path to result file cannot be None")
         d = result.instance_dir
         o = Nos(d).join(t)
-        # o = os.path.join(d, t)
         sep = Nos(o).sep
         r = o[0 : o.rfind(sep)]
         if not Nos(r).exists():

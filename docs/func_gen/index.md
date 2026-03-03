@@ -114,6 +114,7 @@ These function docs are generated from the function code. They are also availabl
 * [lower](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/lower.md)
 * [lt](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/lt.md)
 * [lte](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/lte.md)
+* [matches](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/matches.md)
 * [max](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/max.md)
 * [max_length](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/max_length.md)
 * [median](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/median.md)
@@ -136,9 +137,12 @@ These function docs are generated from the function code. They are also availabl
 * [odd](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/odd.md)
 * [or](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/or.md)
 * [outside](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/outside.md)
+* [parquet](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/parquet.md)
 * [peek](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek.md)
 * [peek_size](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_size.md)
 * [percent](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent.md)
+* [percent_dups](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent_dups.md)
+* [percent_matching](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent_matching.md)
 * [percent_unique](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent_unique.md)
 * [pop](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/pop.md)
 * [print](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/print.md)
@@ -163,6 +167,8 @@ These function docs are generated from the function code. They are also availabl
 * [size](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/size.md)
 * [skip](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/skip.md)
 * [skip_all](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/skip_all.md)
+* [slice](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/slice.md)
+* [sort](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/sort.md)
 * [stack](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/stack.md)
 * [starts_with](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/starts_with.md)
 * [startswith](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/startswith.md)
@@ -201,4 +207,4 @@ These function docs are generated from the function code. They are also availabl
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
 
 
-Generated on: 2026-01-11 19:30:08.090567
+Generated on: 2026-03-02 16:36:49.269195

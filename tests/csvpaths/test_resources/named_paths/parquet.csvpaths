@@ -1,0 +1,16 @@
+
+~
+ validation-mode:no-raise
+ name: autos
+~
+$[1*][
+    parquet.autos(
+        integer.year.notnone(#Year, 2026, 2000),
+        string.type.distinct(#Type),
+        integer.volume.distinct(#"Automobile Volume")
+    )
+    in(#1, "Imports", "Exports")
+]
+
+
+
