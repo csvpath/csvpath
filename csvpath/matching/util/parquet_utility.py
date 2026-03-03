@@ -82,20 +82,5 @@ class ParquetUtility:
             return [pa.string()]
         elif isinstance(s, Wildcard):
             return []
-            """
-            c = s._child_one()
-            if not isinstance(c, Term):
-                raise ChildrenException(
-                    "Wildcard child must be a Term with an int value"
-                )
-            i = s._value_one(skip=None)
-            if isinstance(i, int):
-                ts = []
-                for _ in range(0, i):
-                    ts.append(pa.string())
-                return ts
-            else:
-                raise ChildrenException(f"Cannot have a wildcard with cardinality: {i}")
-            """
         else:
             raise ChildrenException(f"Unknown type function: {s}")

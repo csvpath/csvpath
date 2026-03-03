@@ -250,12 +250,9 @@ class TestCsvPathFunctionsParquet(unittest.TestCase):
         s.add_child(i)
         assert s is not None
         t = paut.to_type(s)
-        print(f"s: {s}, t: {t}: {type(t[0])}")
+        print(f"test_function_parquet_util_wildcard_1: s: {s}, t: {t}")
         assert isinstance(t, list)
-        assert len(t) == 1
-        t = t[0]
-        assert isinstance(t, DataType)
-        assert t == pa.string()
+        assert len(t) == 0
 
     def test_function_parquet_util_wildcard_2(self):
         s = fact.get_function(
@@ -265,12 +262,9 @@ class TestCsvPathFunctionsParquet(unittest.TestCase):
         s.add_child(i)
         assert s is not None
         t = paut.to_type(s)
-        print(f"s: {s}, t: {t}: {type(t[0])}")
+        print(f"test_function_parquet_util_wildcard_2: s: {s}, t: {t}")
         assert isinstance(t, list)
-        assert len(t) == 5
-        t = t[0]
-        assert isinstance(t, DataType)
-        assert t == pa.string()
+        assert len(t) == 0
 
     def test_function_parquet_util_wildcard_3(self):
         s = fact.get_function(
@@ -279,8 +273,10 @@ class TestCsvPathFunctionsParquet(unittest.TestCase):
         i = Term(None, value="*")
         s.add_child(i)
         assert s is not None
-        with pytest.raises(ChildrenException):
-            paut.to_type(s)
+        t = paut.to_type(s)
+        print(f"test_function_parquet_util_wildcard_3: s: {s}, t: {t}")
+        assert isinstance(t, list)
+        assert len(t) == 0
 
     def test_function_parquet_columns_1(self):
         line = fact.get_function(
