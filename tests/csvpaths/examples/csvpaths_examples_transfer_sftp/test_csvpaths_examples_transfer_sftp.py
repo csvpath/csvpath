@@ -91,6 +91,7 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
             chunked_array = table.column("day")
             assert len(chunked_array) == 3
             assert chunked_array[2].as_py().day == 21
+            p = None
         finally:
             os.unlink(temp_path)
 

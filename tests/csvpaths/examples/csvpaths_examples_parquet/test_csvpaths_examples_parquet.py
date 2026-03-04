@@ -63,6 +63,7 @@ class TestCsvPathsExamplesPathsParquet(unittest.TestCase):
             chunked_array = table.column("volume")
             assert len(chunked_array) == 2
             assert int(chunked_array[1]) == 302441
+            p = None
         finally:
             os.unlink(temp_path)
 
@@ -136,6 +137,7 @@ class TestCsvPathsExamplesPathsParquet(unittest.TestCase):
             chunked_array = table.column("volume")
             assert len(chunked_array) == 32
             assert int(chunked_array[1]) == 302441
+            p = None
         finally:
             os.unlink(temp_path)
 
@@ -159,5 +161,6 @@ class TestCsvPathsExamplesPathsParquet(unittest.TestCase):
             chunked_array = table.column("year")
             assert len(chunked_array) == 6
             assert int(chunked_array[2]) == 2009
+            p = None
         finally:
             os.unlink(temp_path)
