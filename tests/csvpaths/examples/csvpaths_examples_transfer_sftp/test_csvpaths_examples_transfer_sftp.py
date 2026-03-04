@@ -64,6 +64,7 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
         #
         path = Nos(paths.run_metadata.run_home).join("output")
         pname = Nos(path).join("stores.parquet")
+        """
         with DataFileReader(path=pname, mode="rb") as src, tempfile.NamedTemporaryFile(
             mode="wb"
         ) as dst:
@@ -75,6 +76,24 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
             chunked_array = table.column("day")
             assert len(chunked_array) == 3
             assert chunked_array[2].as_py().day == 21
+        """
+        temp_path = None
+        with DataFileReader(path=pname, mode="rb") as src, tempfile.NamedTemporaryFile(
+            mode="wb", delete=False
+        ) as dst:
+            shutil.copyfileobj(src.source, dst)
+            dst.flush()
+            temp_path = dst.name
+        try:
+            p = pq.ParquetFile(temp_path)
+            table = p.read(columns=["id", "day"])
+            assert table
+            chunked_array = table.column("day")
+            assert len(chunked_array) == 3
+            assert chunked_array[2].as_py().day == 21
+        finally:
+            os.unlink(temp_path)
+
         #
         # check that transfer happened
         #

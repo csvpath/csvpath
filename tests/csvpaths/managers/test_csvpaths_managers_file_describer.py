@@ -154,7 +154,7 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
             #
             import time
 
-            time.sleep(0.5)
+            time.sleep(1.5)
             results = paths.results_manager.get_named_results(np)
             assert results
             assert len(results) == 1
