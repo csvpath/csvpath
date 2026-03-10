@@ -1,10 +1,31 @@
-import datetime
-from datetime import timezone
+from datetime import timezone, datetime
+from dateutil.relativedelta import relativedelta
 
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 
 class DateUtility:
+
+    OFFSET_DAYS = 0
+    OFFSET_MONTHS = 0
+    OFFSET_YEARS = 0
+
+    @classmethod
+    def now(cls) -> datetime:
+        realnow = datetime.now(timezone.utc)
+        now = realnow + relativedelta(
+            months=DateUtility.OFFSET_MONTHS,
+            years=DateUtility.OFFSET_YEARS,
+            days=DateUtility.OFFSET_DAYS,
+        )
+        return now
+
+    """
+    @classmethod
+    def now(cls) -> datetime:
+        return datetime.now(timezone.utc)
+    """
+
     @classmethod
     def proper_dates(cls, dates: list) -> list:
         dates2 = dates[:]
@@ -22,7 +43,7 @@ class DateUtility:
         #
         lst = []
         for d in dates:
-            if isinstance(d, datetime.datetime):
+            if isinstance(d, datetime):
                 lst.append(d)
         return lst
 

@@ -3,6 +3,7 @@ from datetime import time, timedelta, timezone
 from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.reference_exceptions import ReferenceException
 from csvpath.util.references.results_tools.date_filter import DateFilter
+from csvpath.util.date_util import DateUtility as daut
 
 
 class TokenFilters:
@@ -52,13 +53,15 @@ class TokenFilters:
         # let's filter
         #
         if token == "yesterday":
-            end = datetime.datetime.now(timezone.utc)
+            end = daut.now()
+            # end = datetime.datetime.now(timezone.utc)
             end = cls.first_moment(end)
             begin = end - timedelta(days=1)
             DateFilter.according_to_limit(results, begin, end, filter=True)
             return
         if token == "today":
-            begin = datetime.datetime.now(timezone.utc)
+            begin = daut.now()
+            # begin = datetime.datetime.now(timezone.utc)
             begin = cls.first_moment(begin)
             end = begin + timedelta(days=1)
             DateFilter.according_to_limit(results, begin, end, filter=True)

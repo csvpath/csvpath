@@ -17,9 +17,7 @@ class TestCsvPathsExamplesPathsParquet(unittest.TestCase):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-        #
-        # setup paths
-        #
+
         paths.paths_manager.add_named_paths_from_file(
             name="annual_units", file_path=PATH
         )
@@ -71,9 +69,6 @@ class TestCsvPathsExamplesPathsParquet(unittest.TestCase):
         paths = CsvPaths()
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-        #
-        # setup paths
-        #
         paths.paths_manager.add_named_paths_from_file(
             name="annual_units", file_path=PATH2
         )

@@ -35,6 +35,7 @@ from .util.exceptions import (
 from csvpath.managers.files.lines_and_headers_cacher import LinesAndHeadersCacher
 from .matching.util.exceptions import MatchException
 from .managers.errors.error_collector import ErrorCollector
+from csvpath.util.date_util import DateUtility as daut
 
 
 class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
@@ -262,7 +263,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # _function_times_value collects the time a function spends doing its to_value()
         #
         self._function_times_value = {}
-        self._created_at = datetime.now(timezone.utc)
+        self._created_at = daut.now()
+        # self._created_at = datetime.now(timezone.utc)
         self._run_started_at = None
         self._collecting = False
         #
@@ -271,6 +273,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # by collect(), but is the lines not returned by collect().
         #
         self._unmatched = None
+        self._cacher = None
 
     @property
     def logger(self):
@@ -306,6 +309,17 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self.config.add_to_config(section=section, key=key, value=value)
         self.config.save_config()
         self.config.reload()
+
+    @property
+    def cacher(self) -> LinesAndHeadersCacher:
+        if self._cacher is None:
+            if self.csvpaths:
+                self._cacher = self.csvpaths.file_manager.lines_and_headers_cacher
+            else:
+                self._cacher = LinesAndHeadersCacher(
+                    self, line_counter=LineCounter(self)
+                )
+        return self._cacher
 
     @property
     def data_from_preceding(self) -> bool:
@@ -1315,7 +1329,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             last_line = self.matcher.line
         self.line_monitor.next_line(last_line=last_line, data=line)
         if self.line_monitor.physical_line_number == 0:
-            self._run_started_at = datetime.now(timezone.utc)
+            self._run_started_at = daut.now()
+            # self._run_started_at = datetime.now(timezone.utc)
 
     def _consider_line(self, line):  # pylint: disable=R0912, R0911
         """@private"""
@@ -1492,13 +1507,11 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.logger.debug(
                 f"Using cache to get total lines and headers for {filename}"
             )
-            lahc = (
-                self.csvpaths.file_manager.lines_and_headers_cacher
-                if self.csvpaths
-                else LinesAndHeadersCacher(self, line_counter=LineCounter(self))
-            )
-            self.line_monitor = lahc.get_new_line_monitor(filename)
-            self.headers = lahc.get_original_headers(filename)
+            cacher = self.cacher
+            print(f"cassff: {cacher}: {filename}")
+            self.line_monitor = cacher.get_new_line_monitor(filename)
+            self.headers = cacher.get_original_headers(filename)
+            print(f"cassff: {self.line_monitor}: {self.headers}")
         else:
             self.logger.debug(
                 f"Not using cache to get total lines and headers for {filename}"

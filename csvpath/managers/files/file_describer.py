@@ -45,12 +45,20 @@ class NamedFileDescriber:
     def get_json(self, name: NamedFileName) -> dict:
         if name is None:
             raise ValueError("Name cannot be None")
+        if str(name).strip() == "":
+            raise ValueError("Name cannot be empty")
         name = self._name_for_name(name)
         home = self.file_manager.named_file_home(name)
         path = Nos(home).join(self.JSON_FILE)
         nos = Nos(path)
         if nos.exists() is False:
-            self.store_json(name, {})
+            #
+            # cannot return None (today) and we definitely should not
+            # create+save a new json file. returning None may be better
+            # for today this works.
+            #
+            return {}
+            # self.store_json(name, {})
         with DataFileReader(path) as file:
             return json.load(file.source)
 
@@ -59,6 +67,8 @@ class NamedFileDescriber:
     def get_template(self, name: NamedFileName) -> str:
         if name is None:
             raise ValueError("Name cannot be None")
+        if str(name).strip() == "":
+            raise ValueError("Name cannot be empty")
         name = self._name_for_name(name)
         config = self.get_json(name)
         if config is None:
@@ -75,12 +85,24 @@ class NamedFileDescriber:
 
     # ========== MD file ============
 
-    def store_readme(self, name: NamedFileName, readme: str) -> None:
+    def readme_path(self, name: NamedFileName) -> str:
         if name is None:
             raise ValueError("Name cannot be None")
         name = self._name_for_name(name)
         home = self.file_manager.named_file_home(name)
         p = Nos(home).join(self.README)
+        return p
+
+    def has_readme(self, name: NamedFileName) -> bool:
+        p = self.readme_path(name)
+        return Nos(p).exists()
+
+    def store_readme(
+        self, name: NamedFileName, readme: str, overwrite: bool = True
+    ) -> None:
+        p = self.readme_path(name)
+        if overwrite is False and Nos(p).exists():
+            return
         with DataFileWriter(path=p) as writer:
             writer.write(readme)
 

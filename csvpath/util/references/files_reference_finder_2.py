@@ -6,6 +6,7 @@ from .files_tools.fingerprint_finder import FingerprintFinder
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.references.tools.date_completer import DateCompleter
 from csvpath.util.nos import Nos
+from csvpath.util.date_util import DateUtility as daut
 
 
 class FilesReferenceFinder2:
@@ -76,7 +77,7 @@ class FilesReferenceFinder2:
         if not self._range_if_name_one(results=results, tokens=tokens):
             # print(f"65: results: {len(results)}")
             if not self._date_if_name_one(results=results, tokens=tokens):
-                #print(f"66: results: {len(results)}")
+                # print(f"66: results: {len(results)}")
                 self._path_if_name_one(results=results, tokens=tokens)
         # print(f"69: results: {len(results)}")
         #
@@ -604,9 +605,11 @@ class FilesReferenceFinder2:
 
     def _range_as_timestring(self, rrange: str) -> str:
         if rrange == "today":
-            dat = datetime.now(timezone.utc)
+            dat = daut.now()
+            # dat = datetime.now(timezone.utc)
         elif rrange == "yesterday":
-            dat = datetime.now(timezone.utc) - timedelta(days=1)
+            dat = daut.now() - timedelta(days=1)
+            # dat = datetime.now(timezone.utc) - timedelta(days=1)
         return dat.strftime("%Y-%m-%d_%H-%M-%S")
 
     def _prefix(self, results) -> tuple[str, int]:

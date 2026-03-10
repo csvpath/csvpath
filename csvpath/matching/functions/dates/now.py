@@ -5,6 +5,7 @@ from csvpath.matching.functions.function import Function
 from csvpath.matching.util.exceptions import ChildrenException
 from ..args import Args
 from ..function_focus import ValueProducer
+from csvpath.util.date_util import DateUtility as daut
 
 
 class Now(ValueProducer):
@@ -53,7 +54,8 @@ class Now(ValueProducer):
             form = "%m"
         elif self.name == "today":
             form = "%d"
-        x = datetime.now(timezone.utc)
+        x = daut.now()
+        # x = datetime.now(timezone.utc)
         xs = None
         if form:
             xs = x.strftime(form)

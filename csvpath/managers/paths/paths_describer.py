@@ -90,7 +90,12 @@ class NamedPathsDescriber:
         path = Nos(home).join(self.JSON_FILE)
         nos = Nos(path)
         if nos.exists() is False:
-            self.store_json(name, {})
+            #
+            # cannot return None (today) and we definitely should not
+            # create+save a new json file. returning None may be better
+            #
+            return {}
+            # self.store_json(name, {})
         with DataFileReader(path) as file:
             j = json.load(file.source)
             #

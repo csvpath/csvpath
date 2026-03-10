@@ -39,6 +39,9 @@ class PandasDataReader(DataFileReader):
     def dataframe(self, df) -> None:
         self._frame = df
 
+    def load_if(self) -> None:
+        ...
+
     def next(self) -> list[str]:
         if self.dataframe is None:
             raise InputException("No dataframe is registered on {self._path}")

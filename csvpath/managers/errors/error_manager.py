@@ -9,6 +9,7 @@ from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
 from .error import Error
+from csvpath.util.date_util import DateUtility as daut
 
 
 class ErrorManager(Registrar, Listener):
@@ -141,7 +142,8 @@ class ErrorManager(Registrar, Listener):
         #
         # time:file-name:paths-name:instance-name:source-chain: msg
         #
-        t = datetime.now(timezone.utc)
+        t = daut.now()
+        # t = datetime.now(timezone.utc)
         t = t.strftime("%Y-%m-%d %Hh%Mm%Ss-%f")
         file = ""
         paths = ""
@@ -212,7 +214,8 @@ class ErrorManager(Registrar, Listener):
     def format(self, *, time, file="", paths="", instance="", chain="", line, message):
         # TODO: a better solution that doesn't use exec
         f = self.full_format
-        time = datetime.now() if time is None else time
+        time = daut.now() if time is None else time
+        # time = datetime.now() if time is None else time
         file = "Unknown file" if file is None else file
         instance = "Indeterminate statement" if instance is None else instance
         f = f.replace("{time}", time)

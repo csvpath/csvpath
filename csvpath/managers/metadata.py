@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from dateutil import parser
 import getpass
 import socket
+from csvpath.util.date_util import DateUtility as daut
 
 
 class Metadata(ABC):
@@ -102,13 +103,16 @@ class Metadata(ABC):
         self._uuid = UUID(u)
 
     def set_time(self) -> None:
-        self._time = datetime.now(timezone.utc)
+        self._time = daut.now()
+        # self._time = datetime.now(timezone.utc)
 
     def set_time_started(self) -> None:
-        self._time_started = datetime.now(timezone.utc)
+        self._time_started = daut.now()
+        # self._time_started = datetime.now(timezone.utc)
 
     def set_time_completed(self) -> None:
-        self._time_completed = datetime.now(timezone.utc)
+        self._time_completed = daut.now()
+        # self._time_completed = datetime.now(timezone.utc)
 
     @property
     def time(self) -> datetime:

@@ -5,7 +5,7 @@ import os
 from datetime import timedelta, timezone, datetime
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from .reference_parser import ReferenceParser
-
+from csvpath.util.date_util import DateUtility as daut
 from csvpath.util.nos import Nos
 
 
@@ -78,13 +78,15 @@ class ReferenceUtility:
 
     @classmethod
     def translate_today(cls) -> str:
-        d = datetime.now().astimezone(timezone.utc)
+        d = daut.now().astimezone(timezone.utc)
+        # d = datetime.now().astimezone(timezone.utc)
         ret = f"{d.strftime('%Y')}-{d.strftime('%m')}-{d.strftime('%d')}_"
         return ret
 
     @classmethod
     def translate_yesterday(cls) -> str:
-        d = datetime.now().astimezone(timezone.utc)
+        d = daut.now().astimezone(timezone.utc)
+        # d = datetime.now().astimezone(timezone.utc)
         d = d - timedelta(days=1)
         ret = f"{d.strftime('%Y')}-{d.strftime('%m')}-{d.strftime('%d')}_"
         return ret

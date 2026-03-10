@@ -46,6 +46,10 @@ class DataFileReader(ABC):
         DataFileReader.DATA[path] = filelike
 
     @classmethod
+    def has_data(cls) -> bool:
+        return len(DataFileReader.DATA) > 0
+
+    @classmethod
     def deregister_data(cls, path) -> None:
         del DataFileReader.DATA[path]
 
@@ -150,8 +154,6 @@ class DataFileReader(ABC):
             #
             thing = DataFileReader.DATA.get(path)
             if thing is not None and thing.__class__.__name__.endswith("DataFrame"):
-                if thing is None:
-                    raise Exception(f"No dataframe for {path}")
                 module = importlib.import_module("csvpath.util.pandas_data_reader")
                 class_ = getattr(module, "PandasDataReader")
                 instance = class_(path, delimiter=delimiter, quotechar=quotechar)

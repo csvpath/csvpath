@@ -47,7 +47,7 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
             describer = paths.file_manager.describer
             r = describer.get_readme(nf)
             assert r
-            assert r.find("# Named") > -1
+            assert r.find("purpose") > -1
             r = "Modified!"
             describer.store_readme(nf, r)
             describer = paths.file_manager.describer

@@ -74,9 +74,6 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
 
     def test_result_manifest(self):
         paths = CsvPaths()
-        #
-        # setup
-        #
         paths.config.add_to_config("errors", "csvpaths", "raise, print")
         paths.config.add_to_config("errors", "csvpath", "raise, print")
 

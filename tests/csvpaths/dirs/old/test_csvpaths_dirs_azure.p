@@ -2,7 +2,6 @@ import unittest
 from os import environ
 from csvpath.csvpaths import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
-from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.azure.azure_utils import AzureUtility
 

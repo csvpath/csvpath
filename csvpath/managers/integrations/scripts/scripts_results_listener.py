@@ -9,6 +9,7 @@ from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.box import Box
 from csvpath.util.nos import Nos
+from csvpath.util.date_util import DateUtility as daut
 
 
 class ScriptsResultsListener(Listener, threading.Thread):
@@ -151,7 +152,8 @@ class ScriptsResultsListener(Listener, threading.Thread):
             err = result.stderr
             if err is not None and err.strip() != "":
                 out = f"{out}\n ===================== \n{err}"
-            n = datetime.now(timezone.utc)
+            n = daut.now()
+            # n = datetime.now(timezone.utc)
             script_out_name = f"{script_name}-{n.strftime('%Y-%m-%d_%H-%M-%S_%f')}.txt"
             script_out_path = mdata.run_home
             script_out_path = Nos(script_out_path).join(script_out_name)

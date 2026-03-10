@@ -18,6 +18,7 @@ from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.template_util import TemplateUtility as temu
+from csvpath.util.date_util import DateUtility as daut
 
 
 class RunHomeMaker:
@@ -136,7 +137,8 @@ class RunHomeMaker:
         """@private
         gets the time marking the start of the run. used to create the run home directory."""
         if self._csvpaths._current_run_time is None:
-            self._csvpaths._current_run_time = datetime.now(timezone.utc)
+            self._csvpaths._current_run_time = daut.now()
+            # self._csvpaths._current_run_time = datetime.now(timezone.utc)
         return self._csvpaths._current_run_time
 
     # ==============================================
@@ -175,7 +177,7 @@ class RunHomeMaker:
         #
         run_time = self._csvpaths.current_run_time
         if run_time is None:
-            run_time = datetime.now()
+            run_time = daut.now()
         if not isinstance(run_time, str):
             run_time = run_time.strftime("%Y-%m-%d_%H-%M-%S")
             # run_time = self.get_run_dir_name_from_datetime(run_time)

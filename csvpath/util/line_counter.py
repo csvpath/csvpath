@@ -18,20 +18,14 @@ class LineCounter:
         # just need quotechar, delimiter, and logger
         self.csvpathx = csvpathx
 
-    def get_lines_and_headers(
-        self, path: str
-    ) -> tuple[LineMonitor, List[Any]]:  # pylint: disable=C0116
+    def get_lines_and_headers(self, path: str) -> tuple[LineMonitor, List[Any]]:
         lm = LineMonitor()
         headers = None
         start = time.time()
-        # we just created lm. how could it not be None/-1?
-        if lm.physical_end_line_number is None or lm.physical_end_line_number == -1:
-            lm.reset()
-            reader = DataFileReader(
-                path,
-                delimiter=self.csvpathx.delimiter,
-                quotechar=self.csvpathx.quotechar,
-            )
+        lm.reset()
+        with DataFileReader(
+            path, delimiter=self.csvpathx.delimiter, quotechar=self.csvpathx.quotechar
+        ) as reader:
             for line in reader.next():
                 lm.next_line(last_line=[], data=line)
                 if len(line) == 0 and self.csvpathx.skip_blank_lines:
@@ -51,9 +45,7 @@ class LineCounter:
             headers = []
         headers = LineCounter.clean_headers(headers)
         end = time.time()
-        self.csvpathx.logger.info(
-            "Counting lines and getting headers took %s", round(end - start, 2)
-        )
+        self.csvpathx.logger.info("Lines and headers took %s", round(end - start, 2))
         lm.set_end_lines_and_reset()
         return (lm, headers)
 

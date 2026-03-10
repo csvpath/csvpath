@@ -546,13 +546,17 @@ class FileManager:
             return False
         return True
 
+    def assure_readme(self, name: str, overwrite: bool = False) -> None:
+        if not self.describer.has_readme(name):
+            r = f"# {name} Documentation\n\n&nbsp;\nThe purpose of this files space is ___________________."
+            self.describer.store_readme(name=name, readme=r)
+
     def assure_docs_and_discriptor(self, name: NamedFileName) -> None:
         if name is None:
             raise ValueError("Named-file name cannot be None")
         self.legal_name(name)
-        nfd = NamedFileDescriber(self)
-        nfd.get_readme(name)
-        nfd.get_json(name)
+        self.assure_readme(name)
+        self.describer.get_json(name)
 
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None
