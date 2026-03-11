@@ -73,7 +73,6 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         paths.config.add_to_config("listeners", "groups", "default")
         name = "aname"
         p = "$[*][yes()]"
-
         if paths.paths_manager.has_named_paths(name):
             paths.paths_manager.remove_named_paths(name)
 

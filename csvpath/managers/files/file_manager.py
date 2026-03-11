@@ -556,7 +556,12 @@ class FileManager:
             raise ValueError("Named-file name cannot be None")
         self.legal_name(name)
         self.assure_readme(name)
-        self.describer.get_json(name)
+        #
+        # we don't automatically save the json for good reasons: we don't want
+        # to create artifacts we don't need. that means we have to save here.
+        #
+        js = self.describer.get_json(name)
+        self.describer.store_json(name, js)
 
     def add_named_file(
         self, *, name: NamedFileName, path: str, template: str = None

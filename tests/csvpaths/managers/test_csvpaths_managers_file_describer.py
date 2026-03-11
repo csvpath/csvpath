@@ -41,6 +41,10 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
                 "tmp", "local", "inputs", "named_files", nf, "README.md"
             )
             assert os.path.exists(path)
+            path = os.path.join(
+                "tmp", "local", "inputs", "named_files", nf, "definition.json"
+            )
+            assert os.path.exists(path)
             #
             # update readme
             #
