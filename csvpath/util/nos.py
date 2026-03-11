@@ -130,6 +130,8 @@ class Nos:
             #
             else:
                 self._do = FileDo(self.path)
+        if self._do is None:
+            raise ValueError(f"Do cannot be None. Path is: {self.path}")
         return self._do
 
     @property
