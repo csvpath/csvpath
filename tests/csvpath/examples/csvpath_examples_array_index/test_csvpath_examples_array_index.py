@@ -19,7 +19,7 @@ class TestCsvpathExamplesArrayIndex(unittest.TestCase):
               in most cases.
 
                  id: schema
-                 validation-mode: no-raise, no-print
+                 validation-mode: no-raise, no-print, no-stop
                  source-mode: preceding
                  explain-mode: explain
                  logic-mode:OR

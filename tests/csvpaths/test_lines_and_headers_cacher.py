@@ -28,10 +28,14 @@ class TestCsvPathsLinesAndHeadersCacher(unittest.TestCase):
         paths = Builder().build()
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        filespath = paths.config.get(section="inputs", name="files")
+        if not Nos(filespath).is_local:
+            print("caching is currently only supported in local files")
+            return
         cachedir = paths.file_manager.lines_and_headers_cacher.cache.get_cachedir()
         nos = Nos(cachedir)
         if nos.backend != "local":
-            print("caching is currently only supported in local files")
+            print("caching is currently only supported in local caches")
             return
         assert paths.config.get(section="cache", name="path") == "cache" == cachedir
         _ = paths.config.get(section="cache", name="use_cache")
@@ -43,12 +47,15 @@ class TestCsvPathsLinesAndHeadersCacher(unittest.TestCase):
         paths = Builder().build()
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
-        cachedir = paths.file_manager.lines_and_headers_cacher.cache.get_cachedir()
-        nos = Nos(cachedir)
-        if nos.backend != "local":
+        filespath = paths.config.get(section="inputs", name="files")
+        if not Nos(filespath).is_local:
             print("caching is currently only supported in local files")
             return
-        print(f"cache dir: {cachedir} -> {os.getcwd()}")
+        cachedir = paths.file_manager.lines_and_headers_cacher.cache.get_cachedir()
+        nos = Nos(cachedir)
+        if not nos.is_local:
+            print("Caching is currently only supported for local cachepaths")
+            return
         shutil.rmtree(cachedir)
         assert not os.path.exists(cachedir)
 
@@ -70,7 +77,16 @@ class TestCsvPathsLinesAndHeadersCacher(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("cache", "path", "cache")
+        filespath = paths.config.get(section="inputs", name="files")
+        if not Nos(filespath).is_local:
+            print("caching is currently only supported in local files")
+            return
         cachedir = paths.file_manager.lines_and_headers_cacher.cache.get_cachedir()
+        cachedir = paths.file_manager.lines_and_headers_cacher.cache.get_cachedir()
+        nos = Nos(cachedir)
+        if nos.backend != "local":
+            print("caching is currently only supported in local files")
+            return
         assert cachedir
         assert cachedir == "cache"
         assert os.path.exists(cachedir)
@@ -88,6 +104,10 @@ class TestCsvPathsLinesAndHeadersCacher(unittest.TestCase):
         v = paths.config.get(section="cache", name="use_cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("cache", "path", "cache")
+        filespath = paths.config.get(section="inputs", name="files")
+        if not Nos(filespath).is_local:
+            print("caching is currently only supported in local files")
+            return
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = PATH
         lm = LineMonitor()
@@ -114,6 +134,10 @@ class TestCsvPathsLinesAndHeadersCacher(unittest.TestCase):
         v = paths.config.get(section="cache", name="use_cache")
         paths.config.add_to_config("cache", "use_cache", "yes")
         paths.config.add_to_config("cache", "path", "cache")
+        filespath = paths.config.get(section="inputs", name="files")
+        if not Nos(filespath).is_local:
+            print("caching is currently only supported in local files")
+            return
         cache = paths.file_manager.lines_and_headers_cacher.cache
         filename = PATH
         lm = LineMonitor()
