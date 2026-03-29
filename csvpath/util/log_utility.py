@@ -156,11 +156,11 @@ class LogUtility:
             return
         for name in names[:]:
             loggerx = logging.getLogger(name)
-
             # from .code import Code
             # print( Code.get_source_path(loggerx.__class__) )
-
-            for handler in loggerx.handlers[:]:
+            hs = loggerx.handlers[:]
+            for handler in hs:
+                file_descriptor = handler.stream.fileno()
                 try:
                     handler.flush()
                     handler.close()
@@ -200,7 +200,7 @@ class LogUtility:
     # component must be either a CsvPath or CsvPaths
     #
     @classmethod
-    def logger(cls, component, level: str = None):
+    def logger(cls, component, level: str = None) -> Logger:
         if component is None:
             raise LogException("component must be a CsvPaths or CsvPath instance")
         name = None
@@ -215,10 +215,11 @@ class LogUtility:
                 else config.csvpath_log_level
             )
         )
-        return cls.config_logger(config=config, name=name, level=level)
+        l = cls.config_logger(config=config, name=name, level=level)
+        return l
 
     @classmethod
-    def config_logger(cls, *, config, name: str, level: str = None):
+    def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
         if config is None:
             raise ValueError("Config cannot be None")
         if name is None:

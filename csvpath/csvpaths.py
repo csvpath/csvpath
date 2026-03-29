@@ -422,6 +422,9 @@ Cache: {cache}
             #
             # config=None,
             print_default=self.print_default,
+            #
+            # we don't use this error manager reference atm.
+            #
             error_manager=self.error_manager,
             project=self.project,
             project_context=self.project_context,
@@ -545,7 +548,6 @@ Cache: {cache}
         box = Box()
         ds = []
         for k, v in box.get_my_stuff().items():
-            self.logger.debug(f"csvpaths.wrapping up: {k}: {v}")
             if hasattr(v, "close"):
                 ds.append(k)
         for _ in ds:

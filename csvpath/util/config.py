@@ -1,6 +1,7 @@
 from configparser import RawConfigParser
 from os import path, environ
 import os
+import io
 import traceback
 from typing import Dict, List
 from enum import Enum
@@ -265,6 +266,16 @@ shell = /bin/bash
             lout.release_logger(self)
         except Exception:
             print(traceback.format_exc())
+
+    def __str__(self) -> str:
+        s = self.__io__(self._config)
+        return f"Config from {self.configpath}: {s}"
+
+    def __io__(self, c) -> str:
+        string_buffer = io.StringIO()
+        c.write(string_buffer)
+        config_str = string_buffer.getvalue()
+        return config_str
 
     @property
     def config_env(self) -> ConfigEnv:
@@ -698,42 +709,45 @@ shell = /bin/bash
             or not len(self.csvpath_errors_policy) > 0
         ):
             raise ConfigurationException(
-                f"CsvPath error policy is wrong: {self.csvpath_errors_policy}"
+                f"CsvPath error policy is wrong in {self.configpath}: {self.csvpath_errors_policy}"
             )
         for _ in self.csvpath_errors_policy:
             if _ not in [s.value for s in OnError]:
-                raise ConfigurationException(f"CsvPath error policy {_} is wrong")
+                raise ConfigurationException(f"CsvPath error policy {_} is wrong in {self.configpath}")
         if (
             self.csvpaths_errors_policy is None
             or not isinstance(self.csvpaths_errors_policy, list)
             or not len(self.csvpaths_errors_policy) > 0
         ):
-            raise ConfigurationException("CsvPaths error policy is wrong")
+            raise ConfigurationException("CsvPaths error policy is wrong in {self.configpath}")
         for _ in self.csvpaths_errors_policy:
             if _ not in [s.value for s in OnError]:
-                raise ConfigurationException(f"CsvPaths error policy {_} is wrong")
+                raise ConfigurationException(f"CsvPaths error policy {_} is wrong in {self.configpath}")
         #
         # log levels
         #
         if self.csvpath_log_level is None or not isinstance(
             self.csvpath_log_level, str
         ):
+
+            print(f"error!!!XXse: { self}")
+
             raise ConfigurationException(
-                f"CsvPath log level is wrong: {self.csvpath_log_level}"
+                f"CsvPath log level is wrong in {self.configpath}: {self.csvpath_log_level}"
             )
         if self.csvpath_log_level not in [s.value for s in LogLevels]:
-            raise ConfigurationException(f"CsvPath log level {_} is wrong")
+            raise ConfigurationException(f"CsvPath log level {_} is wrong in {self.configpath}")
         if self.csvpaths_log_level is None or not isinstance(
             self.csvpaths_log_level, str
         ):
-            raise ConfigurationException("CsvPaths log level is wrong")
+            raise ConfigurationException("CsvPaths log level is wrong in {self.configpath}")
         if self.csvpaths_log_level not in [s.value for s in LogLevels]:
-            raise ConfigurationException(f"CsvPaths log level {_} is wrong")
+            raise ConfigurationException(f"CsvPaths log level {_} is wrong in {self.configpath}")
         #
         # log files config
         #
         if self.log_file is None or not isinstance(self.log_file, str):
-            raise ConfigurationException(f"Log file path is wrong: {self.log_file}")
+            raise ConfigurationException(f"Log file path is wrong in {self.configpath}: {self.log_file}")
         #
         # make sure the log dir exists
         #
@@ -742,10 +756,10 @@ shell = /bin/bash
             self.log_files_to_keep, int
         ):
             raise ConfigurationException(
-                f"Log files to keep is wrong: {type(self.log_files_to_keep)}"
+                f"Log files to keep is wrong in {self.configpath}: {type(self.log_files_to_keep)}"
             )
         if self.log_file_size is None or not isinstance(self.log_file_size, int):
-            raise ConfigurationException("Log files size is wrong")
+            raise ConfigurationException("Log files size is wrong in {self.configpath}")
         #
         # make sure a cache dir exists. the default should be chosen in the
         # default config, but regardless, we create the dir.

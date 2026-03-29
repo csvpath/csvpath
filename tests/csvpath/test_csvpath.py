@@ -1,6 +1,7 @@
 import unittest
 import pytest
 import os
+import traceback
 from csvpath import CsvPath
 from csvpath.scanning.scanner2 import Scanner2 as Scanner
 from csvpath.util.config import OnError
@@ -10,7 +11,28 @@ PEOPLE = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}people2.csv"
 EMPTY = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}empty2.csv"
 
 
-class TestCsvPath(unittest.TestCase):
+class TestCsvPathA(unittest.TestCase):
+
+    def test_acsvpath_a_lot_of_csvpaths(self):
+        #
+        # we had an open files bug due to too many loggers. this test catches it. problem
+        # resulted in for e.g.:
+        # OSError: [Errno 24] Too many open files: 'assets/config/jenkins-local-s3.ini'
+        # the reason was that we were not __del__() csvpath object because there were
+        # ref cycles in errorcomms, error_manager, and mode_controller. fixed w/
+        # weakref.
+        #
+        config = None
+        path = None
+        configpath = None
+        for i in range(0, 1000):
+            path = CsvPath()
+            config = path.config
+            configpath = config.configpath
+            path.logger
+            del config
+            del path
+
     def test_acsvpath_matcher_get_header(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
@@ -95,15 +117,6 @@ class TestCsvPath(unittest.TestCase):
         assert path.variables["chk"] == ["True"]
         assert "line" in path.variables
         assert path.variables["line"] == [0, 1, 2]
-
-    def test_acsvpath_a_lot_of_csvpaths(self):
-        #
-        # we had an open files bug due to too many loggers. this
-        # is just in case something similar.
-        #
-        for i in range(0, 1000):
-            path = CsvPath()
-            path.logger
 
     def test_acsvpath_collect_when_not_matched1(self):
         path = CsvPath()

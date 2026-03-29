@@ -54,6 +54,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         skip_blank_lines=True,
         print_default=True,
         # config=None,
+        #
+        # atm, we don't use this error manager reference. instead we make
+        # an error manager for this csvpath, and if we have a csvpaths we
+        # add its error_manager as an internal listener for error events
+        #
+        # we can refactor this reference away
+        #
         error_manager=None,
         project_context="no_project_context",
         project="no_project_name",

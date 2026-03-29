@@ -1,3 +1,5 @@
+import weakref
+
 from .explain_mode import ExplainMode
 from .files_mode import FilesMode
 from .logic_mode import LogicMode
@@ -29,7 +31,7 @@ class ModeController:
     ]
 
     def __init__(self, csvpath):
-        self.csvpath = csvpath
+        self._csvpath = weakref.ref(csvpath)
         self.explain_mode = ExplainMode(self)
         self.files_mode = FilesMode(self)
         self.logic_mode = LogicMode(self)
@@ -41,6 +43,10 @@ class ModeController:
         self.transfer_mode = TransferMode(self)
         self.unmatched_mode = UnmatchedMode(self)
         self.validation_mode = ValidationMode(self)
+
+    @property
+    def csvpath(self):
+        return self._csvpath()
 
     def update(self) -> None:
         self.explain_mode.update()

@@ -1,3 +1,6 @@
+
+import weakref
+
 from typing import Any, List
 from csvpath.util.config import OnError
 from csvpath.modes.error_mode import ErrorMode
@@ -22,32 +25,42 @@ class ErrorCommunications:
     """
 
     def __init__(self, csvpath=None, csvpaths=None) -> None:
-        self._csvpath = csvpath
-        self._csvpaths = csvpaths
         if not csvpath and not csvpaths:
             raise ValueError("Must have either a CsvPath or CsvPaths instance")
+        if csvpath and csvpaths:
+            raise ValueError("Cannot have both a csvpath and csvpaths handling the same errors")
+        self._csvpath = None if csvpath is None else weakref.ref(csvpath)
+        self._csvpaths = None if csvpaths is None else weakref.ref(csvpaths)
+
+    @property
+    def csvpath(self):
+        return None if self._csvpath is None else self._csvpath()
+
+    @property
+    def csvpaths(self):
+        return None if self._csvpaths is None else self._csvpaths()
 
     def do_i_quiet(self) -> bool:
         return self.in_policy(OnError.QUIET.value)
 
     def do_i_raise(self) -> bool:
-        if self._csvpath and self._csvpath.raise_validation_errors is not None:
-            return self._csvpath.raise_validation_errors
+        if self.csvpath and self.csvpath.raise_validation_errors is not None:
+            return self.csvpath.raise_validation_errors
         return self.in_policy(OnError.RAISE.value)
 
     def do_i_collect(self) -> bool:
-        if self._csvpath and self._csvpath.collect_validation_errors is not None:
-            return self._csvpath.collect_validation_errors
+        if self.csvpath and self.csvpath.collect_validation_errors is not None:
+            return self.csvpath.collect_validation_errors
         return self.in_policy(OnError.COLLECT.value)
 
     def do_i_print(self) -> bool:
-        if self._csvpath and self._csvpath.print_validation_errors is not None:
-            return self._csvpath.print_validation_errors
+        if self.csvpath and self.csvpath.print_validation_errors is not None:
+            return self.csvpath.print_validation_errors
         return self.in_policy(OnError.PRINT.value)
 
     def do_i_print_expanded(self) -> bool:
         ret = False
-        c = self._csvpath if self._csvpath is not None else self._csvpaths
+        c = self.csvpath if self.csvpath is not None else self.csvpaths
         if c is not None:
             ret = (
                 c.config.get(
@@ -55,7 +68,7 @@ class ErrorCommunications:
                 )
                 == ErrorMode.FULL
             )
-        if self._csvpath and self._csvpath.error_mode == ErrorMode.FULL:
+        if self.csvpath and self.csvpath.error_mode == ErrorMode.FULL:
             ret = True
         return ret
 
@@ -63,8 +76,8 @@ class ErrorCommunications:
         #
         # stop is having problems. copying raise, which works fine.
         #
-        if self._csvpath and self._csvpath.stop_on_validation_errors is not None:
-            return self._csvpath.stop_on_validation_errors
+        if self.csvpath and self.csvpath.stop_on_validation_errors is not None:
+            return self.csvpath.stop_on_validation_errors
         return self.in_policy(OnError.STOP.value)
         """
         mode = None
@@ -83,11 +96,11 @@ class ErrorCommunications:
         """
 
     def do_i_fail(self) -> bool:
-        if self._csvpath and self._csvpath.fail_on_validation_errors is not None:
-            return self._csvpath.fail_on_validation_errors
+        if self.csvpath and self.csvpath.fail_on_validation_errors is not None:
+            return self.csvpath.fail_on_validation_errors
         return self.in_policy(OnError.FAIL.value)
 
     def in_policy(self, v) -> bool:
-        if self._csvpath:
-            return v in self._csvpath.config.csvpath_errors_policy
-        return v in self._csvpaths.config.csvpaths_errors_policy
+        if self.csvpath:
+            return v in self.csvpath.config.csvpath_errors_policy
+        return v in self.csvpaths.config.csvpaths_errors_policy

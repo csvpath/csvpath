@@ -1,4 +1,6 @@
 import os
+import weakref
+
 from typing import Any
 from datetime import datetime, timezone
 from csvpath.util.config import OnError
@@ -16,7 +18,7 @@ class ErrorManager(Registrar, Listener):
     """creates errors uses the csvpaths's or csvpath's error policy to handle them."""
 
     def __init__(self, *, csvpaths=None, csvpath=None, error_collector=None):
-        self.csvpath = csvpath
+        self._csvpath = None if csvpath is None else weakref.ref(csvpath)
         self._csvpaths = None
         if csvpaths is not None:
             self.csvpaths = csvpaths
@@ -24,7 +26,7 @@ class ErrorManager(Registrar, Listener):
             self.csvpaths = csvpath.csvpaths
         if self.csvpath is None and self.csvpaths is None:
             raise ValueError("CsvPaths and/or CsvPath must be provided")
-        self._collector = csvpath if csvpath else csvpaths
+        #self._collector = csvpath if csvpath else csvpaths
         #
         #
         #
@@ -44,6 +46,14 @@ class ErrorManager(Registrar, Listener):
         self.vetos = {}
         self.error_metrics = None
         self.full_format = None
+
+    @property
+    def collector(self):
+        return self.csvpath if self.csvpath else self.csvpaths
+
+    @property
+    def csvpath(self):
+        return None if self._csvpath is None else self._csvpath()
 
     @property
     def csvpaths(self):
@@ -190,7 +200,7 @@ class ErrorManager(Registrar, Listener):
             #
             #
             #
-            self._collector.logger.error(e)
+            self.collector.logger.error(e)
         if self.full_format is None:
             self.full_format = (
                 "{time}:{file}:{line}:{paths}:{instance}:{chain}: {message}"
@@ -249,26 +259,26 @@ class ErrorManager(Registrar, Listener):
         # but not in the csvpath modes. both of these things could change.
         #
         if self.ecoms.do_i_quiet():
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: message: {mdata.message}"
             )
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: named_paths_name: {mdata.named_paths_name}"
             )
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: path identity: {mdata.identity}"
             )
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: file: {mdata.filename}"
             )
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: line: {mdata.line_count}"
             )
-            self._collector.logger.error(
+            self.collector.logger.error(
                 f"Qt {mdata.uuid_string}: source: {mdata.source}"
             )
         else:
-            self._collector.logger.error(f"{mdata}")
+            self.collector.logger.error(f"{mdata}")
         #
         #
         #
@@ -277,7 +287,7 @@ class ErrorManager(Registrar, Listener):
             # if we are held by a CsvPath we are the CsvPath's error listener so we're
             # pushing the error back to our parent's public access interface.
             #
-            self._collector.collect_error(mdata)
+            self.collector.collect_error(mdata)
         if self.ecoms.do_i_stop() is True:
             if self.csvpath:
                 self.csvpath.stopped = True
