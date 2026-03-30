@@ -1,14 +1,13 @@
 {
   "file_format_version": 10,
-  "environments": {
-    "Mac":{
-      "pipelines":[
-        "azure-pipeline",
-        "google-pipeline",
-        "s3-pipeline",
-        "sftp-pipeline"
-      ],
-      "agents": []
-    }
+  "environment": {
+    "name": "Mac",
+    "pipelines": [
+      "azure-pipeline",
+      "google-pipeline",
+      "s3-pipeline",
+      "sftp-pipeline"
+    ],
+    "agents": []
   }
 }
