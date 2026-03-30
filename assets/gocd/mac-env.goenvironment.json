@@ -8,8 +8,7 @@
       "s3-pipeline",
       "sftp-pipeline"
     ],
-    "agents": [],
-    "variables":[]
+    "agents": []
   }
 }
 
