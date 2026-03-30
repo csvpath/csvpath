@@ -1,9 +1,9 @@
 {
-
   "environments": [
     {
       "name": "Mac",
-      "pipelines": [
+      "pipelines":
+      [
         "azure-pipeline",
         "google-pipeline",
         "s3-pipeline",
