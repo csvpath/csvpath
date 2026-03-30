@@ -1,5 +1,4 @@
 {
-  "environment": {
     "name": "Mac",
     "pipelines": [
       "azure-pipeline",
@@ -8,6 +7,5 @@
       "sftp-pipeline"
     ],
     "agents": []
-  }
 }
 
