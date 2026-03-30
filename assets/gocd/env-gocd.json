@@ -1,9 +1,8 @@
 {
-  "environments": [
-    {
-      "name": "Mac",
-      "pipelines":
-      [
+  "file_format_version": 10,
+  "environments": {
+    "Mac":{
+      "pipelines":[
         "azure-pipeline",
         "google-pipeline",
         "s3-pipeline",
@@ -11,5 +10,5 @@
       ],
       "agents": []
     }
-  ]
+  }
 }
