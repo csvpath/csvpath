@@ -27,7 +27,7 @@ class Rpc:
             section="sftpplus",
             name="api_url",
             default="https://localhost:10020/json",
-            config=self.csvpaths.config,
+            config=self.csvpaths.config
         )
         result = self.send("login", username=self.username, password=self.password)
         self._session_id = result["session_id"]
@@ -37,6 +37,7 @@ class Rpc:
         if self._username is None:
             self._username = VarUtility.get(
                 section="sftpplus", name="admin_username", env="SFTPPLUS_ADMIN_USERNAME"
+                , config=self.csvpaths.config
             )
         return self._username
 
@@ -45,6 +46,7 @@ class Rpc:
         if self._password is None:
             self._password = VarUtility.get(
                 section="sftpplus", name="admin_password", env="SFTPPLUS_ADMIN_PASSWORD"
+                , config=self.csvpaths.config
             )
         return self._password
 

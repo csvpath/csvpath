@@ -6,9 +6,10 @@ import traceback
 from typing import Dict, List
 from enum import Enum
 import logging
-from ..util.config_exception import ConfigurationException
-from ..util.log_utility import LogUtility as lout
-from .config_env import ConfigEnv
+from csvpath.util.config_exception import ConfigurationException
+from csvpath.util.log_utility import LogUtility as lout
+from csvpath.util.config_env import ConfigEnv
+from csvpath.util.var_utility import VarUtility as vaut
 
 #
 #   1 csvpaths & csvpath own their own config
@@ -287,6 +288,9 @@ shell = /bin/bash
     def config_env(self, e: ConfigEnv) -> None:
         self._config_env = e
 
+    def clear_config_env(self) -> None:
+        self._config_env = None
+
     @property
     def config_parser(self) -> RawConfigParser:
         return self._config
@@ -359,7 +363,7 @@ shell = /bin/bash
     def sections(self) -> list[str]:
         return self._config.sections()
 
-    def get(self, *, section: str = None, name: str, default=None):
+    def get(self, *, section: str = None, name: str, default=None, string_parse=True):
         #
         # go-agent on Mac via Brew can have commas in paths. must be true in other cases
         # as well. finding configpath is the only place we've seen the problem of finding
@@ -369,10 +373,10 @@ shell = /bin/bash
         no_list = False
         if section == "config" and name == "path":
             no_list = True
-        ret = self._get(section, name, default, no_list=no_list)
+        ret = self._get(section, name, default, no_list=no_list, string_parse=string_parse)
         return ret
 
-    def _get(self, section: str, name: str, default=None, no_list=False):
+    def _get(self, section: str, name: str, default=None, no_list=False, string_parse=True):
         #
         # TODO: we should swap all uppercase values for env var values if we find a
         # matching env var. same as we do for metadata values
@@ -388,9 +392,9 @@ shell = /bin/bash
             return ret
         if self._config is None:
             raise ConfigurationException("No config object available")
+        ret = default
         try:
             s = self._config[section][name]
-            ret = None
             if no_list is False and s and isinstance(s, str) and s.find(",") > -1:
                 ret = [s.strip() for s in s.split(",")]
             elif isinstance(s, str):
@@ -401,9 +405,12 @@ shell = /bin/bash
                 v2 = self.config_env.get(name=ret, default=default)
                 if v2 is not None:
                     ret = v2.strip()
-            return ret
+            if string_parse is True and isinstance(ret, str) and self.config_env.allow_var_sub is True:
+                subs = self.config_env.subs
+                ret = vaut.substitute(ret, subs)
         except KeyError:
-            return default
+            ...
+        return ret
 
     @property
     def _logger(self):
@@ -643,6 +650,7 @@ shell = /bin/bash
     def _load_config(self, norecurse=False):
         if self._load is False:
             return
+        self._config_env = None
         self._assure_config_file_path()
         path = self.configpath
         self._config.read(path)

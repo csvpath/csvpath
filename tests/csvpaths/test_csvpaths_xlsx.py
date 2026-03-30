@@ -27,6 +27,10 @@ class TestCsvPathsXlsx(unittest.TestCase):
         assert len(results) == 22
 
     def test_csvpaths_bytes_written_1(self):
+        #
+        # currently bytes written only works for local files because FileInfo only
+        # handles local files.
+        #
         paths = Builder().build()
         paths.file_manager.set_named_files(FILES)
         paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)

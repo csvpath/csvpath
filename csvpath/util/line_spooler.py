@@ -77,6 +77,8 @@ class CsvLineSpooler(LineSpooler):
         self._logger = logger
         self._delimiter = delimiter
         self._quotechar = quotechar
+        self._local = Nos(path).is_local
+        self._aprox_bytes = 0
 
     @property
     def path(self) -> str:
@@ -231,16 +233,26 @@ class CsvLineSpooler(LineSpooler):
             raise InputException(msg)
         self.writer.writerows([line])
         self._count += 1
+        if not self._local:
+            self._aprox_bytes += len(str(line))
 
+    #
+    # this is very aproximate for non-local files. otoh,
+    # asking a remote backend for bytes count would be
+    # unacceptably slow.
+    #
     def bytes_written(self) -> int:
-        try:
-            i = FileInfo.info(self.path)
-            if i and "bytes" in i:
-                return i["bytes"]
-            else:
-                return -1
-        except FileNotFoundError:
-            return 0
+        if self._local:
+            try:
+                i = FileInfo.info(self.path)
+                if i and "bytes" in i:
+                    return i["bytes"]
+                else:
+                    return -1
+            except FileNotFoundError:
+                return 0
+        else:
+            return self._aprox_bytes
 
     def close(self) -> None:
         try:

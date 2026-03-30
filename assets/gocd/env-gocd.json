@@ -1,0 +1,13 @@
+{
+  "environments": [
+    {
+      "name": "Mac",
+      "pipelines": [
+        "azure-pipeline",
+        "google-pipeline",
+        "s3-pipeline",
+        "sftp-pipeline"
+      ]
+    }
+  ]
+}

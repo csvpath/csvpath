@@ -460,7 +460,15 @@ class ResultsManager:  # pylint: disable=C0115
                 if mode is None:
                     mode = "w"
             pathto = self._path_to_transfer_to(result, varname)
-
+            #
+            # exp! it would be good to offer a var sub here
+            #
+            if pathto:
+                result.csvpath.config.set(section="_dummy-section", name="_dummy-name", value=pathto)
+                pathto = result.csvpath.config.get(section="_dummy-section", name="_dummy-name")
+            #
+            #
+            #
             tpaths.append((filefrom, varname, pathfrom, pathto, mode))
         return tpaths
 
@@ -508,6 +516,9 @@ class ResultsManager:  # pylint: disable=C0115
         rp = Nos(p).join(f)
         sep = Nos(rp).sep
         rd = rp[0 : rp.rfind(sep)]
+        #
+        # should this be dir_exists()?
+        #
         if not Nos(rd).exists():
             Nos(rd).makedir()
         return rp

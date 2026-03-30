@@ -35,16 +35,26 @@ class ConfigEnv:
     def var_sub_source(self) -> str:
         if self._var_sub_source is None:
             self._var_sub_source = self.config.get(
-                section="config", name="var_sub_source", default="env"
+                section="config", name="var_sub_source", default="env", string_parse=False
             )
         return self._var_sub_source
 
     @property
     def allow_var_sub(self) -> bool:
         if self._allow is None:
-            a = self.config.get(section="config", name="allow_var_sub", default=False)
+            a = self.config.get(section="config", name="allow_var_sub", default=False, string_parse=False)
             self._allow = a and str(a).strip().lower() in ["true", "yes"]
         return self._allow
+
+    @property
+    def subs(self) -> dict:
+        if self.allow_var_sub:
+            if self.var_sub_source == "env":
+                return os.environ
+            else:
+                return self.env
+        else:
+            return {}
 
     @property
     def env(self) -> dict:

@@ -4,7 +4,7 @@
     transfer-mode: stores.parquet > out
 ~
 $[10-12][
-    @out = "sftp://192.168.1.152:2022/stores.parquet"
+    @out = "sftp://{SFTP_SERVER}:{SFTP_PORT}/stores.parquet"
     ~ we are skipping a bunch of blank lines that will have screwed up the headers ~
     reset_headers()
     parquet.stores.nocontrib(

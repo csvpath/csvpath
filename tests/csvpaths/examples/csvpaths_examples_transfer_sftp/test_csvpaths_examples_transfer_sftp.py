@@ -8,6 +8,8 @@ from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 
+from tests.csvpaths.builder import Builder
+
 CSV = os.path.join(
     "tests",
     "csvpaths",
@@ -28,11 +30,14 @@ PATH = os.path.join(
 
 class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
     def test_transfer_parquet_1(self):
-        paths = CsvPaths()
+        paths = Builder().build()
+        #paths = CsvPaths()
+        print(f"sfae: {paths.config.configpath}")
+        print(f"sfae: {paths.config.get(section='sftp', name='server')}")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        paths.config.set(section="sftp", name="server", value="192.168.1.152")
-        paths.config.set(section="sftp", name="port", value="2022")
+        #paths.config.set(section="sftp", name="server")
+        #paths.config.set(section="sftp", name="port")
         paths.config.set(section="sftp", name="username", value="python")
         paths.config.set(section="sftp", name="password", value="hangzhou")
         #

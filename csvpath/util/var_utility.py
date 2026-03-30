@@ -1,6 +1,5 @@
 import os
 from os import environ
-from .config import Config
 
 
 class VarUtility:
@@ -23,7 +22,7 @@ class VarUtility:
         name: str = None,
         env: str = None,
         default=None,
-        config: Config = None,
+        config
     ) -> str:
         v = None
         if env:
@@ -32,12 +31,12 @@ class VarUtility:
             return v
         # check config
         if section and name:
-            if config is None:
-                config = Config()
+            #if config is None:
+            #    config = Config()
             v = config.get(section=section, name=name)
         elif section or name:
-            if config is None:
-                config = Config()
+            #if config is None:
+            #    config = Config()
             config.logger.warn(
                 "Get var with section or name but not both will not work: %s, %s",
                 section,
@@ -229,3 +228,114 @@ class VarUtility:
         if v == "false" or v == "no" or v == "null" or v == "none":
             return False
         return False
+
+
+##########
+#
+# var sub within line. Claude created this and its units.
+#
+
+    """
+    string_parser.py
+    ----------------
+    Substitutes {TOKEN} placeholders in a template string with values from a
+    dictionary.
+
+    Escaping convention
+    -------------------
+    A literal brace that is NOT part of a substitution token must be doubled
+    in the template:
+      {{  →  {
+      }}  →  }
+
+    This mirrors Python's str.format() / str.format_map() convention so the
+    module is easy to reason about for Python developers.
+
+    Public API
+    ----------
+    substitute(template: str, tokens: dict[str, str]) -> str
+        Replace every {KEY} in *template* with tokens[KEY].
+        Raise KeyError  if a token is found in the template but not in *tokens*.
+        Raise ValueError if the template contains unmatched / malformed braces.
+    """
+
+    import re
+    from typing import Dict
+
+    # Matches, in order of priority:
+    #   1.  {{   – escaped open brace
+    #   2.  }}   – escaped close brace
+    #   3.  {TOKEN}  – substitution token (identifier chars only)
+    #   4.  {    – bare (unescaped) open brace  → error
+    #   5.  }    – bare (unescaped) close brace → error
+    _PATTERN = re.compile(
+        r"(\{\{)"           # group 1 – escaped {
+        r"|(\}\})"          # group 2 – escaped }
+        r"|\{([^{}]+)\}"    # group 3 – substitution token
+        r"|(\{)"            # group 4 – lone { (error)
+        r"|(\})"            # group 5 – lone } (error)
+    )
+
+    @classmethod
+    def substitute(cls, template: str, tokens: Dict[str, str]=None) -> str:
+
+        """
+        Return *template* with every ``{KEY}`` replaced by ``tokens[KEY]``.
+
+        Parameters
+        ----------
+        template : str
+            The template string.  Literal braces must be escaped as ``{{``/``}}``.
+        tokens : dict
+            Mapping of token names to replacement values.
+
+        Returns
+        -------
+        str
+            The fully substituted string.
+
+        Raises
+        ------
+        KeyError
+            If a ``{TOKEN}`` found in the template has no entry in *tokens*.
+        ValueError
+            If the template contains an unescaped ``{`` or ``}`` that is not
+            part of a valid token or escape sequence.
+        """
+        parts: list[str] = []
+        last_end = 0
+
+        for m in cls._PATTERN.finditer(template):
+            # Append any literal text between the previous match and this one
+            parts.append(template[last_end:m.start()])
+            last_end = m.end()
+            if m.group(1):          # {{ → {
+                parts.append("{")
+            elif m.group(2):        # }} → }
+                parts.append("}")
+            elif m.group(3):        # {TOKEN}
+                key = m.group(3)
+                if tokens is None or tokens.get(key) is None:
+                    """
+                    raise KeyError(
+                        f"Token {{{key}}} found in template but not in tokens dict"
+                    )
+                    """
+                    parts.append(f"{{{key}}}")
+                else:
+                    parts.append(tokens[key])
+            elif m.group(4):        # bare {
+                raise ValueError(
+                    f"Unescaped '{{' at position {m.start()} in template. "
+                    "Use '{{{{' to include a literal brace."
+                )
+            elif m.group(5):        # bare }
+                raise ValueError(
+                    f"Unescaped '}}' at position {m.start()} in template. "
+                    "Use '}}}}' to include a literal brace."
+                )
+
+        # Append any trailing literal text
+        parts.append(template[last_end:])
+        return "".join(parts)
+
