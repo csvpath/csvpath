@@ -160,14 +160,16 @@ class LogUtility:
             # print( Code.get_source_path(loggerx.__class__) )
             hs = loggerx.handlers[:]
             for handler in hs:
-                file_descriptor = handler.stream.fileno()
-                try:
-                    handler.flush()
-                    handler.close()
-                    handler.stream = None
-                    loggerx.removeHandler(handler)
-                except Exception:
-                    print(traceback.format_exc())
+                s = handler.stream
+                if s:
+                    file_descriptor = s.fileno()
+                    try:
+                        handler.flush()
+                        handler.close()
+                        handler.stream = None
+                        loggerx.removeHandler(handler)
+                    except Exception:
+                        print(traceback.format_exc())
             #
             # this is the concerning part. we don't have a rock-solid guarantee
             # that the logging system will never change the loggerDict in some way

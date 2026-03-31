@@ -1,0 +1,12 @@
+{
+    "name": "Windows",
+    "pipelines": [
+      "windows-azure",
+      "windows-gcs",
+      "windows-s3",
+      "windows-sftp",
+      "windows-local"
+    ],
+    "agents": []
+}
+
