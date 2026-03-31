@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.598"
+version = "0.0.599"
 description = "CsvPath Framework is a data preboarding automation library for receiving, validating, and tracking CSV, Excel, JSONL and other tabular data files before they can corrupt downstream data consumers."
 authors = ["David Kershaw <info@csvpath.org>"]
 readme = "README.md"
