@@ -4,7 +4,7 @@ import sqlalchemy as sa
 import traceback
 
 from csvpath.managers.integrations.sql.engine import Db
-from csvpath.matching.productions import Term, Variable, Header
+from csvpath.matching.productions import Term, Variable, Header, Matchable
 from csvpath.matching.functions.function_focus import ValueProducer, MatchDecider
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.args import Args
@@ -14,7 +14,7 @@ class SqlIn(ValueProducer, MatchDecider):
 
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name, child=child)
-        self._cache = {}
+        self._cached = None
 
     def check_valid(self) -> None:
         self.description = [
@@ -69,13 +69,7 @@ class SqlIn(ValueProducer, MatchDecider):
         conn = self._value_four(skip=skip)
         cache = self._value_five(skip=skip)
         cache = False if cache is None else cache
-        print(f"sqlin table: {table}")
-        print(f"sqlin col: {column}")
-        print(f"sqlin conn: {conn}")
-        print(f"sqlin cache: {cache}")
         self.value = self._query(table=table, column=column, value=v, conn=conn, cache=cache)
-        print(f"sqlin done")
-
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
@@ -84,33 +78,29 @@ class SqlIn(ValueProducer, MatchDecider):
 
     def _query(self, *, table:str, column:str, value:Any, cache:bool, conn:str) -> bool:
         try:
-            print(f"sqlin: doing _query")
             engine = Db.get_engine(conn=conn)
-            print(f"sqlin: engine: {engine}")
             return self._do_query(table=table, column=column, value=value, cache=cache, engine=engine)
         except Exception as ex:
             print(traceback.format_exc())
 
     def _do_query(self, *, table:str, column:str, value:Any, cache:bool, engine:Engine) -> bool:
-        print(f"sqlin cache: {cache}")
         if cache is True:
             if self._cached is None:
                 self._do_cache(value=value, table=table, column=column, engine=engine)
-            print(f"sqlin alue: {value} in _cached: {self._cached}")
             return value in self._cached
         else:
-            print(f"sqlin looking up: {value} ")
             return self._do_lookup(value=value, table=table, column=column, engine=engine)
 
     def _do_cache(self, *, value:Any, table:str, column:str, engine:Engine) -> bool:
-        print(f"sqlin doing cached")
-        sql = f"select {column} from {table}"
+        table = sa.table(table, sa.column(column))
+        sql = sa.select(sa.column(column)).select_from(table)
+
+
         with engine.connect() as conn:
             rows = conn.execute(sql).fetchall()
-            self._cache = {row[0]: None for row in rows}
+            self._cached = {row[0]: None for row in rows}
 
     def _do_lookup(self, *, value:Any, table:str, column:str, engine:Engine) -> bool:
-        print(f"sqlin doing lookup")
         table = sa.table(table, sa.column(column))
         query = (
             sa.select(sa.column(column))

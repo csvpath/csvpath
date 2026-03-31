@@ -68,33 +68,33 @@ class TestCsvPathFunctionsSqlInFunction:
 # --- no-cache tests ---
 
 class TestCsvPathFunctionsSqlInLive:
-    def test_value_present(self, engine):
+    def test_csvpath_sql_in_value_present(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=False, value="apple") is True
 
-    def test_value_absent(self, engine):
+    def test_csvpath_sql_in_value_absent(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=False, value="mango") is False
 
-    def test_case_sensitive(self, engine):
+    def test_csvpath_sql_in_case_sensitive(self, engine):
         # SQLite TEXT is case-sensitive by default
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=False, value="Apple") is False
 
-    def test_empty_string_absent(self, engine):
+    def test_csvpath_sql_in_empty_string_absent(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=False, value="") is False
 
-    def test_none_absent(self, engine):
+    def test_csvpath_sql_in_none_absent(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=False, value=None) is False
 
 class TestCsvPathFunctionsSqlInLookup:
-    def test_value_present(self, engine):
+    def test_csvpath_sql_in_lookup_value_present(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=True, value="banana") is True
 
-    def test_value_absent(self, engine):
+    def test_csvpath_sql_in_lookup_value_absent(self, engine):
         sql = SqlIn(None, "dummy")
         assert sql._do_query(engine=engine, table=TABLE, column=COLUMN, cache=True, value="mango") is False
 
