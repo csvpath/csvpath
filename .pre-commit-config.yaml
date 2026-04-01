@@ -1,4 +1,10 @@
 repos:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.15.8  # Use the latest version
+  hooks:
+    - id: ruff-check
+      args: [ --fix ]
+    - id: ruff-format
 #-   repo: https://github.com/psf/black
 #    rev: 22.10.0
 #    hooks:
