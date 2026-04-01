@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "csvpath"
-version = "0.0.599"
+version = "0.0.602"
 description = "CsvPath Framework is a data preboarding automation library for receiving, validating, and tracking CSV, Excel, JSONL and other tabular data files before they can corrupt downstream data consumers."
 authors = ["David Kershaw <info@csvpath.org>"]
 readme = "README.md"
@@ -28,6 +28,7 @@ include = ["config","assets"]
 
 [tool.poetry.scripts]
 cli = "csvpath.cli.cli:run"
+release = "run:run"
 
 [tool.poetry.dependencies]
 python = ">3.10,<4.0"
@@ -80,6 +81,7 @@ pylint = "3.3.9"
 coverage = "7.13.4"
 pytest = "8.4.2"
 pytest-profiling = "1.8.1"
+release_candidate_maker = { path = "assets/libs/release_candidate_maker-0.0.35.tar.gz" }
 
 [build-system]
 requires = ["poetry-core"]
