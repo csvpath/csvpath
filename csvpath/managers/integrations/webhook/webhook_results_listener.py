@@ -1,4 +1,3 @@
-import os
 import json
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.results.results_metadata import ResultsMetadata
@@ -70,13 +69,13 @@ class WebhookResultsListener(WebhookListener):
         if cfg is None:
             return None
         if atype.find("all") > -1:
-            return cfg.all_url
+            return cfg.on_complete_all.url
         elif atype.find("invalid") > -1:
-            return cfg.invalid_url
+            return cfg.on_complete_invalid.url
         elif atype.find("valid") > -1:
-            return cfg.valid_url
+            return cfg.on_complete_valid.url
         elif atype.find("error") > -1:
-            return cfg.error_url
+            return cfg.on_complete_error.url
         else:
             raise ValueError(f"Unknown type: {atype}")
 
@@ -106,13 +105,13 @@ class WebhookResultsListener(WebhookListener):
             return {}
         on = None
         if atype.find("all") > -1:
-            on = cfg.on_complete_all
+            on = cfg.on_complete_all.payload
         elif atype.find("invalid") > -1:
-            on = cfg.on_complete_invalid
+            on = cfg.on_complete_invalid.payload
         elif atype.find("valid") > -1:
-            on = cfg.on_complete_valid
+            on = cfg.on_complete_valid.payload
         elif atype.find("error") > -1:
-            on = cfg.on_complete_error
+            on = cfg.on_complete_error.payload
         else:
             raise ValueError(f"Unknown type: {atype}")
         if on and len(on) > 0:
@@ -122,7 +121,6 @@ class WebhookResultsListener(WebhookListener):
         return None
 
     def _payload(self, *, mdata: Metadata, atype: str, cfg, hook: str) -> dict:
-
         metadata = self.get_data(mdata, "meta.json")
         variables = self.get_data(mdata, "vars.json")
         pairs = VarUtility.get_value_pairs_from_value(
