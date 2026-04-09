@@ -1,4 +1,5 @@
 import unittest
+import os
 from csvpath.util.path_util import PathUtility as pathu
 
 
@@ -25,11 +26,17 @@ class TestUtilPathUtil(unittest.TestCase):
         re = pathu.resep(path, hint="win")
         assert re == "c:\\\\csvpath.org\\i\\am\\a\\path"
 
-    def test_path_util_parts(self):
+    def test_path_util_parts_1(self):
         path = "http://csvpath.org/i/am/a/path"
         parts = pathu.parts(path)
         assert parts == ["http", "csvpath.org", "i", "am", "a", "path"]
-
         path = "i/am/a/path"
         parts = pathu.parts(path)
         assert parts == ["i", "am", "a", "path"]
+
+    def test_path_util_parts_2(self):
+        path = os.getcwd()
+        parts = pathu.parts(path)
+        assert "" not in parts
+        parts2 = [str(_).strip() for _ in parts if str(_).strip() != ""]
+        assert parts == parts2

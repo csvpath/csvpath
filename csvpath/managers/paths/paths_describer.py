@@ -42,7 +42,6 @@ class Config(BaseModel):
 
 
 class NamedPathsDescriber:
-
     README = "README.md"
     DEFAULT_README = "# Named-Paths Documentation\n\n"
     JSON_FILE = "definition.json"
@@ -78,6 +77,22 @@ class NamedPathsDescriber:
         #
         if self.CONFIG in j:
             GroupConfig(**j[self.CONFIG])
+        #
+        # clear out the Nones
+        #
+        if self.CONFIG in j:
+            configs = j[self.CONFIG]["groups"]
+            print(f"configs: {configs}")
+            for _k, _v in j[self.CONFIG].items():
+                rms = []
+                for k, v in _v.items():
+                    if v is None:
+                        rms.append(k)
+                for rm in rms:
+                    del _v[rm]
+        #
+        #
+        #
         p = Nos(home).join(self.JSON_FILE)
         with DataFileWriter(path=p) as writer:
             json.dump(j, writer.sink, indent=2)
@@ -125,7 +140,7 @@ class NamedPathsDescriber:
             config.groups[name] = gc
         else:
             config.groups[name] = j
-        _[self.CONFIG] = config.model_dump()
+        _[self.CONFIG] = config.model_dump(exclude_none=True)
         self.store_json(name, _)
 
     def get_config(self, name: NamedPathsName) -> GroupConfig:

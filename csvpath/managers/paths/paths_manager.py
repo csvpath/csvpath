@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import os
 import json
 import traceback
 from typing import NewType
@@ -10,7 +9,6 @@ from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
-from csvpath.util.box import Box
 from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
@@ -470,7 +468,7 @@ class PathsManager:
             if assure_definition is True:
                 t = self.get_json_paths_file(name)
                 if t is None:
-                    raise ValueError(f"JSON definitionn for {name} cannot be None")
+                    raise ValueError(f"JSON definition for {name} cannot be None")
                 if name not in t:
                     t[name] = []
                     self.describer.store_json(name, t)

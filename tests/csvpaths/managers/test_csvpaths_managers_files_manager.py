@@ -2,11 +2,9 @@ import unittest
 import pytest
 import shutil
 import os
-from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.managers.files.files_listener import FilesListener
 from csvpath.managers.files.file_metadata import FileMetadata
-from csvpath.matching.util.exceptions import MatchException
 from csvpath.util.path_util import PathUtility as pathu
 from tests.csvpaths.builder import Builder
 from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
@@ -19,6 +17,73 @@ AMAZING = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}lookup_names.csv"
 
 
 class TestCsvPathsManagersFileManager(unittest.TestCase):
+    def test_files_named_file_template_1(self) -> None:
+        paths = Builder().build()
+        nf = "orders"
+        #
+        # clear out anything lingering
+        #
+        if paths.file_manager.has_named_file(nf):
+            paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+        #
+        # add with template
+        #
+        paths.file_manager.add_named_file(
+            name=nf, path=FILE, template=":1/:2/:filename"
+        )
+        assert paths.file_manager.has_named_file(nf)
+        #
+        # check
+        #
+        file = paths.file_manager.get_named_file(name=nf)
+        file = os.path.dirname(file)
+        home = paths.file_manager.named_file_home(nf)
+        sep = Nos(home).sep
+        assert file == f"{home}{sep}csvpaths{sep}test_resources{sep}test.csv"
+
+        #
+        # clear what we just added
+        #
+        assert paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
+    def test_files_named_file_template_2(self) -> None:
+        paths = Builder().build()
+        nf = "orders"
+        #
+        # clear out anything lingering
+        #
+        if paths.file_manager.has_named_file(nf):
+            paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+        #
+        # add with template
+        #
+        file = os.path.join(os.getcwd(), FILE)
+        print(f"nf: {nf}")
+        print(f"file: {file}")
+        paths.file_manager.add_named_file(
+            name=nf, path=file, template=":1/:2/:filename"
+        )
+        assert paths.file_manager.has_named_file(nf)
+        #
+        # check
+        #
+        res = paths.file_manager.get_named_file(name=nf)
+        res = os.path.dirname(res)
+        home = paths.file_manager.named_file_home(nf)
+
+        sep = Nos(home).sep
+        parts = pathu.parts(file)
+        expected = f"{home}{sep}{parts[1]}{sep}{parts[2]}{sep}test.csv"
+        assert res == expected
+
+        #
+        # clear what we just added
+        #
+        assert paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
 
     #
     # base case. add zap, find zap

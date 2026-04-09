@@ -30,6 +30,8 @@ class PathUtility:
 
     @classmethod
     def sep(cls, path: str, *, hint: str = None) -> tuple[str, str]:
+        if path is None:
+            raise ValueError("Path cannot be None")
         #
         # returns a tuple of sep and not-sep. e.g. for Windows:
         # ("\\", "/")
@@ -59,15 +61,10 @@ class PathUtility:
             hint = "/"
         sep = cls.sep(apath, hint=hint)
         for s in apath.split(sep[0]):
-            parts.append(s)
+            s = s.strip()
+            if s != "":
+                parts.append(s)
         return parts
-
-    """
-    @classmethod
-    def root_and_branch(cls, apath:str) -> tuple[str,str]:
-        parts = cls.parts(apath)
-        return (parts[0], "/".join(parts[1:]))
-    """
 
     @classmethod
     def stripp(cls, apath: str) -> str:

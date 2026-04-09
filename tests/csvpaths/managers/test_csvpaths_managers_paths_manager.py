@@ -1,8 +1,8 @@
 import unittest
 import os
+import json
 from uuid import uuid4
 from csvpath import CsvPaths
-from csvpath.managers.paths.paths_manager import PathsManager
 from csvpath.managers.paths.paths_listener import PathsListener
 from csvpath.managers.paths.paths_metadata import PathsMetadata
 from csvpath.util.nos import Nos
@@ -16,6 +16,44 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 
 
 class TestCsvPathsManagersPathsManager(unittest.TestCase):
+    def test_named_paths_describer_no_nulls_1(self):
+        name = f"{uuid4()}"
+        apath = "$[*][yes()]"
+        template = ":01/:run_dir"
+        paths = Builder().build()
+        paths.paths_manager.add_named_paths(name=name, paths=[apath], template=template)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst
+        assert len(lst) == 1
+        assert lst[0].strip() == apath.strip()
+        #
+        # check that we don't litter the JSON with "null"s when scripts, hooks, etc. not present
+        #
+        home = paths.paths_manager.named_paths_home(name)
+        _p = Nos(home).join(paths.paths_manager.describer.JSON_FILE)
+        with open(_p, "r") as file:
+            s = json.load(file)
+            cfg = s["_config"]["groups"][name]
+            assert "template" in cfg
+            assert "scripts" not in cfg
+            assert "webhooks" not in cfg
+        #
+        # we can retrieve template
+        #
+        t = paths.paths_manager.get_template_for_paths(name)
+        assert t == template
+        #
+        # scripts is empty, but not None, as expected
+        #
+        scripts = paths.paths_manager.get_scripts_for_paths(name)
+        assert scripts == []
+        #
+        # cleanup
+        #
+        CsvPaths().paths_manager.remove_named_paths(name)
+        lst = CsvPaths().paths_manager.get_named_paths(name)
+        assert lst is None
+
     def test_paths_listener_1(self):
         paths = Builder().build()
 
