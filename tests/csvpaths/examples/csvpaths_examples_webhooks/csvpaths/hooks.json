@@ -7,14 +7,22 @@
     "groups":{
        "hooks": {
           "webhooks":{
-             "on_complete_all":"type > all, me > var|me, name > meta|name, time > var|now",
-             "on_complete_valid":"type > valid, me > var|me, name > meta|name, time > var|now",
-             "on_complete_invalid":"type > invalid, me > var|me, name > meta|name, time > var|now",
-             "on_complete_error":"type > errors, me > var|me, name > meta|name, time > var|now",
-             "all_url":"http://localhost:8000/json-hook",
-             "valid_url":"http://localhost:8000/json-hook",
-             "invalid_url":"http://localhost:8000/json-hook",
-             "error_url":"http://localhost:8000/json-hook"
+             "on_complete_all": {
+                "payload":"type > all, me > var|me, name > meta|name, time > var|now",
+                "url":"http://localhost:8000/json-hook"
+             },
+             "on_complete_valid": {
+                "payload":"type > valid, me > var|me, name > meta|name, time > var|now",
+                "url":"http://localhost:8000/json-hook"
+             },
+             "on_complete_invalid":{
+                "payload": "type > invalid, me > var|me, name > meta|name, time > var|now",
+                "url":"http://localhost:8000/json-hook"
+             },
+             "on_complete_error":{
+                "payload":"type > errors, me > var|me, name > meta|name, time > var|now",
+                "error_url":"http://localhost:8000/json-hook"
+             }
           }
        }
     }

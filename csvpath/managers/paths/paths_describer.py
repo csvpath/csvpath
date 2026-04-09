@@ -20,15 +20,16 @@ class Scripts(BaseModel):
     on_complete_error: Optional[str] = None
 
 
+class Webhook(BaseModel):
+    url: Optional[str] = None
+    payload: Optional[str] = None
+
+
 class Webhooks(BaseModel):
-    on_complete_all: Optional[str] = None
-    on_complete_invalid: Optional[str] = None
-    on_complete_valid: Optional[str] = None
-    on_complete_error: Optional[str] = None
-    all_url: Optional[str] = None
-    valid_url: Optional[str] = None
-    invalid_url: Optional[str] = None
-    error_url: Optional[str] = None
+    on_complete_all: Optional[Webhook] = None
+    on_complete_invalid: Optional[Webhook] = None
+    on_complete_valid: Optional[Webhook] = None
+    on_complete_error: Optional[Webhook] = None
 
 
 class GroupConfig(BaseModel):
@@ -81,15 +82,17 @@ class NamedPathsDescriber:
         # clear out the Nones
         #
         if self.CONFIG in j:
-            configs = j[self.CONFIG]["groups"]
-            print(f"configs: {configs}")
-            for _k, _v in j[self.CONFIG].items():
-                rms = []
-                for k, v in _v.items():
-                    if v is None:
-                        rms.append(k)
-                for rm in rms:
-                    del _v[rm]
+            configs = j[self.CONFIG]
+            if "groups" in configs:
+                configs = configs["groups"]
+                print(f"configs: {configs}")
+                for _k, _v in j[self.CONFIG].items():
+                    rms = []
+                    for k, v in _v.items():
+                        if v is None:
+                            rms.append(k)
+                    for rm in rms:
+                        del _v[rm]
         #
         #
         #
