@@ -1,11 +1,7 @@
 # pylint: disable=C0114
 import os
-import json
 import re
-import traceback
 from uuid import UUID
-from pathlib import Path
-import datetime
 import dateutil.parser
 from typing import Dict, List, Any
 from csvpath.util.line_spooler import LineSpooler
@@ -40,6 +36,19 @@ class ResultsManager:  # pylint: disable=C0115
         # use property
         self.csvpaths = csvpaths
         """@private"""
+        #
+        # the dynamic listeners are added to each Registrar before
+        # it distributes updates. we don't need this for the other
+        # managers (paths, files, errors) because they don't create
+        # new registrars each time. we can just do:
+        # paths.error_manager.registrar.add_internal_listeners(lst)
+        # but with these we cannot do that. we could change how this
+        # class handles listeners but it feels like a small additive
+        # is better than an unknown impact
+        #
+        self.dynamic_result_listeners = []
+        self.dynamic_results_listeners = []
+        self.dynamic_run_listeners = []
 
     @property
     def csvpaths(self):
@@ -59,6 +68,11 @@ class ResultsManager:  # pylint: disable=C0115
             pathsname=pathsname,
             results=results,
         )
+        for _ in self.dynamic_results_listeners:
+            rr.add_internal_listener(_)
+        #
+        # add any dynamic listeners to the registrar here
+        #
         m = rr.manifest
         mdata = ResultsMetadata(self.csvpaths.config)
         if "time" not in m or m["time"] is None:
@@ -104,6 +118,12 @@ class ResultsManager:  # pylint: disable=C0115
             run_dir=run_dir,
             pathsname=pathsname,
         )
+        #
+        # add any dynamic listeners to the registrar here
+        #
+        for _ in self.dynamic_results_listeners:
+            rr.add_internal_listener(_)
+
         #
         # collect the named-paths and named-file uuids. these may
         # need to come from a different source at some point but
@@ -337,6 +357,18 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_file_name = result.file_name
         mdata.method = result.method
         rr = RunRegistrar(self.csvpaths)
+        #
+        # add any dynamic listeners to the registrar here
+        #
+        print(f"regsman: me: {id(self)}")
+        print(f"regsman: my csvpaths: {id(self.csvpaths)}")
+        print(f"regsman: dylsi: {self.dynamic_run_listeners}")
+        from csvpath.util.log_utility import LogUtility as lout
+
+        lout.log_brief_trace()
+        for _ in self.dynamic_run_listeners:
+            print(f"regsman: adding int lsit: {_}")
+            rr.add_internal_listener(_)
         rr.register_start(mdata)
         #
         # we prep the results event
@@ -376,6 +408,11 @@ class ResultsManager:  # pylint: disable=C0115
         rr = ResultRegistrar(
             csvpaths=self.csvpaths, result=result, result_serializer=rs
         )
+        #
+        # add any dynamic listeners to the registrar here
+        #
+        for _ in self.dynamic_result_listeners:
+            rr.add_internal_listener(_)
         rr.register_start(mdata)
 
     def set_named_results(self, results: Dict[str, List[Result]]) -> None:
@@ -464,8 +501,12 @@ class ResultsManager:  # pylint: disable=C0115
             # exp! it would be good to offer a var sub here
             #
             if pathto:
-                result.csvpath.config.set(section="_dummy-section", name="_dummy-name", value=pathto)
-                pathto = result.csvpath.config.get(section="_dummy-section", name="_dummy-name")
+                result.csvpath.config.set(
+                    section="_dummy-section", name="_dummy-name", value=pathto
+                )
+                pathto = result.csvpath.config.get(
+                    section="_dummy-section", name="_dummy-name"
+                )
             #
             #
             #
@@ -559,9 +600,15 @@ class ResultsManager:  # pylint: disable=C0115
         self.do_transfers_if(result)
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
-        ResultRegistrar(
+        rr = ResultRegistrar(
             csvpaths=self.csvpaths, result=result, result_serializer=rs
-        ).register_complete()
+        )
+        #
+        # add any dynamic listeners to the registrar here
+        #
+        for _ in self.dynamic_result_listeners:
+            rr.add_internal_listener(_)
+        rr.register_complete()
 
     def remove_named_results(self, name: str) -> None:
         """@private"""

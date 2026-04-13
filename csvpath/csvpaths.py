@@ -1,15 +1,15 @@
-""" CsvPaths' intent is to help you manage and automate your use
-    of the CsvPath library. it makes it easier to scale your CSV quality control. """
+"""CsvPaths' intent is to help you manage and automate your use
+of the CsvPath library. it makes it easier to scale your CSV quality control."""
 
 import os
 import traceback
 import atexit
 import threading
 
-from uuid import uuid4, UUID
+from uuid import uuid4
 from abc import ABC, abstractmethod
 from typing import List, Any, NewType
-from datetime import datetime, timezone
+from datetime import datetime
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
 from .managers.errors.error_manager import ErrorManager
@@ -26,7 +26,6 @@ from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
 from . import CsvPath
-from .managers.integrations.otlp.metrics import Metrics
 
 
 # types for clarity
@@ -108,7 +107,7 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         skip_blank_lines=True,
         print_default=True,
         project_context=None,
-        project=None
+        project=None,
         # config: Config = None,
     ):
         if CsvPaths.METRICS_WRAP_REG is False:
@@ -219,7 +218,14 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         # that need to know about the run during the run; e.g. parquet()
         #
         self._csvpath_instances = []
-
+        #
+        # any listeners added here will be added to the internal_listeners of
+        # the csvpath instances that run.
+        #
+        self.dynamic_csvpath_error_listeners = []
+        #
+        #
+        #
         self.logger.info(
             f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
         )
@@ -278,40 +284,42 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         return f"""
 Context: {self.project_context}.{self.project}
 Logger: {logstr}
-Configured log path: {self.config.get(section='logging', name='log_file')}
+Configured log path: {self.config.get(section="logging", name="log_file")}
 Current log paths: {logpath}
 Config file: {self.config.configpath}
-Var sub source: {self.config.get(section='config', name='var_sub_source')}
+Var sub source: {self.config.get(section="config", name="var_sub_source")}
 Var subs: {subs}
 Errors:
- - csvpath: {self.config.get(section='errors', name='csvpath')}
- - csvpaths: {self.config.get(section='errors', name='csvpaths')}
-Named-files: {self.config.get(section='inputs', name='files')}
-Named-paths: {self.config.get(section='inputs', name='files')}
-Archive: {self.config.get(section='results', name='archive')}
+ - csvpath: {self.config.get(section="errors", name="csvpath")}
+ - csvpaths: {self.config.get(section="errors", name="csvpaths")}
+Named-files: {self.config.get(section="inputs", name="files")}
+Named-paths: {self.config.get(section="inputs", name="files")}
+Archive: {self.config.get(section="results", name="archive")}
 Cache: {cache}
 {lstrs}
         """
 
-    """
-    def info_dump(self) -> None:
-        self.logger.info(
-            "Initated logging on log path: %s",
-            self.config.get(section="logging", name="log_file"),
-        )
-        self.logger.info("Config file is at: %s", self.config.configpath)
-        intgs = self.config.get(section="listeners", name="groups")
-        self.logger.debug("Active integrations:")
-        for _ in intgs:
-            self.logger.debug("  - %s", _)
-    """
-
     def _set_managers(self) -> None:
         self.paths_manager = PathsManager(csvpaths=self)
         self.file_manager = FileManager(csvpaths=self)
-        self.results_manager = ResultsManager(csvpaths=self)
         self.ecoms = ErrorCommunications(csvpaths=self)
         self.error_manager = ErrorManager(csvpaths=self)
+        #
+        # we take a bit more care with resman because it may have listeners
+        # that are set programmatically. other managers deal with their
+        # registrars differently and don't have the problem of maintaining
+        # lists of listeners at the csvpaths level
+        #
+        resman = ResultsManager(csvpaths=self)
+        if self.results_manager:
+            resman.dynamic_result_listeners = (
+                self.results_manager.dynamic_result_listeners
+            )
+            resman.dynamic_results_listeners = (
+                self.results_manager.dynamic_results_listeners
+            )
+            resman.dynamic_run_listeners = self.results_manager.dynamic_run_listeners
+        self.results_manager = resman
 
     @property
     def project(self) -> str:
@@ -432,6 +440,8 @@ Cache: {cache}
         if path.config.configpath != self.config.configpath:
             path.config.set_config_path_and_reload(self.config.configpath)
             path.logger = None
+        for _ in self.dynamic_csvpath_error_listeners:
+            path.error_manager.add_internal_listener(_)
         return path
 
     def stop_all(self) -> None:  # pragma: no cover
@@ -1448,10 +1458,8 @@ Cache: {cache}
                     #
                     # re: W0212: treating _consider_line something like package private
                     #
-                    matched = (
-                        self.current_matcher._consider_line(  # pylint:disable=W0212
-                            line
-                        )
+                    matched = self.current_matcher._consider_line(  # pylint:disable=W0212
+                        line
                     )
                     if self.current_matcher.stopped:
                         stopped_count.append(1)
