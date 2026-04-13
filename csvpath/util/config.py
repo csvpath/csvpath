@@ -3,9 +3,7 @@ from os import path, environ
 import os
 import io
 import traceback
-from typing import Dict, List
 from enum import Enum
-import logging
 from csvpath.util.config_exception import ConfigurationException
 from csvpath.util.log_utility import LogUtility as lout
 from csvpath.util.config_env import ConfigEnv
@@ -363,7 +361,22 @@ shell = /bin/bash
     def sections(self) -> list[str]:
         return self._config.sections()
 
-    def get(self, *, section: str = None, name: str, default=None, string_parse=True):
+    #
+    # > if string_parse == True strings like "this is {my} string it is {NICE}" will happen
+    # > if swaps == True a string like MY_STRING will be transformed to OS env or var sub
+    # value of MY_STRING -- all caps only
+    # > MY_STRING w/o a section name will always be subbed for the value of MY_STRING, regardless
+    # of the swaps parameter
+    #
+    def get(
+        self,
+        *,
+        section: str = None,
+        name: str,
+        default=None,
+        string_parse=True,
+        swaps=True,
+    ):
         #
         # go-agent on Mac via Brew can have commas in paths. must be true in other cases
         # as well. finding configpath is the only place we've seen the problem of finding
@@ -373,10 +386,25 @@ shell = /bin/bash
         no_list = False
         if section == "config" and name == "path":
             no_list = True
-        ret = self._get(section, name, default, no_list=no_list, string_parse=string_parse)
+        ret = self._get(
+            section,
+            name,
+            default,
+            no_list=no_list,
+            string_parse=string_parse,
+            swaps=swaps,
+        )
         return ret
 
-    def _get(self, section: str, name: str, default=None, no_list=False, string_parse=True):
+    def _get(
+        self,
+        section: str,
+        name: str,
+        default=None,
+        no_list=False,
+        string_parse=True,
+        swaps=True,
+    ):
         #
         # TODO: we should swap all uppercase values for env var values if we find a
         # matching env var. same as we do for metadata values
@@ -401,11 +429,15 @@ shell = /bin/bash
                 ret = s.strip()
             else:
                 ret = s
-            if ret and isinstance(ret, str) and ret.isupper():
+            if ret and isinstance(ret, str) and ret.isupper() and swaps is True:
                 v2 = self.config_env.get(name=ret, default=default)
                 if v2 is not None:
                     ret = v2.strip()
-            if string_parse is True and isinstance(ret, str) and self.config_env.allow_var_sub is True:
+            if (
+                string_parse is True
+                and isinstance(ret, str)
+                and self.config_env.allow_var_sub is True
+            ):
                 subs = self.config_env.subs
                 ret = vaut.substitute(ret, subs)
         except KeyError:
@@ -721,41 +753,54 @@ shell = /bin/bash
             )
         for _ in self.csvpath_errors_policy:
             if _ not in [s.value for s in OnError]:
-                raise ConfigurationException(f"CsvPath error policy {_} is wrong in {self.configpath}")
+                raise ConfigurationException(
+                    f"CsvPath error policy {_} is wrong in {self.configpath}"
+                )
         if (
             self.csvpaths_errors_policy is None
             or not isinstance(self.csvpaths_errors_policy, list)
             or not len(self.csvpaths_errors_policy) > 0
         ):
-            raise ConfigurationException("CsvPaths error policy is wrong in {self.configpath}")
+            raise ConfigurationException(
+                "CsvPaths error policy is wrong in {self.configpath}"
+            )
         for _ in self.csvpaths_errors_policy:
             if _ not in [s.value for s in OnError]:
-                raise ConfigurationException(f"CsvPaths error policy {_} is wrong in {self.configpath}")
+                raise ConfigurationException(
+                    f"CsvPaths error policy {_} is wrong in {self.configpath}"
+                )
         #
         # log levels
         #
         if self.csvpath_log_level is None or not isinstance(
             self.csvpath_log_level, str
         ):
-
-            print(f"error!!!XXse: { self}")
+            print(f"error!!!XXse: {self}")
 
             raise ConfigurationException(
                 f"CsvPath log level is wrong in {self.configpath}: {self.csvpath_log_level}"
             )
         if self.csvpath_log_level not in [s.value for s in LogLevels]:
-            raise ConfigurationException(f"CsvPath log level {_} is wrong in {self.configpath}")
+            raise ConfigurationException(
+                f"CsvPath log level {_} is wrong in {self.configpath}"
+            )
         if self.csvpaths_log_level is None or not isinstance(
             self.csvpaths_log_level, str
         ):
-            raise ConfigurationException("CsvPaths log level is wrong in {self.configpath}")
+            raise ConfigurationException(
+                "CsvPaths log level is wrong in {self.configpath}"
+            )
         if self.csvpaths_log_level not in [s.value for s in LogLevels]:
-            raise ConfigurationException(f"CsvPaths log level {_} is wrong in {self.configpath}")
+            raise ConfigurationException(
+                f"CsvPaths log level {_} is wrong in {self.configpath}"
+            )
         #
         # log files config
         #
         if self.log_file is None or not isinstance(self.log_file, str):
-            raise ConfigurationException(f"Log file path is wrong in {self.configpath}: {self.log_file}")
+            raise ConfigurationException(
+                f"Log file path is wrong in {self.configpath}: {self.log_file}"
+            )
         #
         # make sure the log dir exists
         #

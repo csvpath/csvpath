@@ -162,7 +162,16 @@ class LogUtility:
             for handler in hs:
                 s = handler.stream
                 if s:
-                    file_descriptor = s.fileno()
+                    #
+                    # ruff complained about file_descriptor never being used. seems
+                    # reasonable, not sure what took it so long to notice. however,
+                    # since this code point was challenging and I don't have it in, mind
+                    # I'm leaving the stream fileno call. if it truly does nothing we're
+                    # no worse off.
+                    #
+                    # file_descriptor = s.fileno()
+                    #
+                    s.fileno()
                     try:
                         handler.flush()
                         handler.close()
@@ -217,8 +226,8 @@ class LogUtility:
                 else config.csvpath_log_level
             )
         )
-        l = cls.config_logger(config=config, name=name, level=level)
-        return l
+        lg = cls.config_logger(config=config, name=name, level=level)
+        return lg
 
     @classmethod
     def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
@@ -241,8 +250,11 @@ class LogUtility:
         logger = None
         filename = config.log_file
         parentdir = os.path.dirname(filename)
-        if not os.path.exists(parentdir):
-            os.makedirs(parentdir)
+        #
+        # if we're not just in a file in cwd we make sure the dir path exists
+        #
+        if parentdir and str(parentdir).strip() != "" and not os.path.exists(parentdir):
+            os.makedirs(parentdir, exist_ok=True)
             #
             # this is a bit paranoid
             #
