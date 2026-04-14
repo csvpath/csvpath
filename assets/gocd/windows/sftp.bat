@@ -29,3 +29,11 @@ cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
 cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
 
+net stop w32time
+w32tm /unregister
+w32tm /register
+net start w32time
+timeout /t 1
+w32tm /resync
+
+
