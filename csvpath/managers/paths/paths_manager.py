@@ -390,7 +390,7 @@ class PathsManager:
         assure_definition: bool = True,
     ) -> str:
         self.last_add_metadata = None
-        if template is not None:
+        if template is not None and str(template).strip() != "":
             #
             # this will raise an error. if that's a problem use temu.validate
             #

@@ -85,7 +85,6 @@ class NamedPathsDescriber:
             configs = j[self.CONFIG]
             if "groups" in configs:
                 configs = configs["groups"]
-                print(f"configs: {configs}")
                 for _k, _v in j[self.CONFIG].items():
                     rms = []
                     for k, v in _v.items():

@@ -374,7 +374,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
     # need:
     # . all in directory under one name
     # . add duplicates to name
-    def test_named_paths_dir(self):
+    def test_named_paths_dir_1(self):
         paths = Builder().build()
         pm = paths.paths_manager
         pm.remove_all_named_paths()
@@ -387,4 +387,22 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         pm2 = paths2.paths_manager
         pm2.remove_all_named_paths()
         pm2.add_named_paths_from_dir(directory=DIR, name="many")
+        assert pm2.total_named_paths() == 1
+
+    # need:
+    # . all in directory under one name
+    # . add duplicates to name
+    def test_named_paths_dir_2(self):
+        paths = Builder().build()
+        pm = paths.paths_manager
+        pm.remove_all_named_paths()
+        assert pm.total_named_paths() == 0
+        pm.add_named_paths_from_dir(directory=DIR)
+        files = os.listdir(DIR)
+        files = [f for f in files if f.find("csvpath") > -1]
+        assert pm.total_named_paths() == len(files)
+        paths2 = Builder().build()
+        pm2 = paths2.paths_manager
+        pm2.remove_all_named_paths()
+        pm2.add_named_paths_from_dir(directory=DIR, name="many", template="")
         assert pm2.total_named_paths() == 1

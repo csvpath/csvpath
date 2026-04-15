@@ -172,8 +172,8 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         #
         #
-        self.info_dump()
-        """ @private """
+        # self.info_dump()
+
         self._errors = []
         # coordinator attributes
         self._stop_all = False
@@ -269,8 +269,9 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         if subs not in ["env", "none"]:
             subs = f"{subs} with keys:"
             e = self.config.config_env.env
-            for k, v in e.items():
-                subs = f"{subs}\n - {k}"
+            if e is not None:
+                for k, v in e.items():
+                    subs = f"{subs}\n - {k}"
         cache = self.config.get(section="cache", name="path")
         cache = cache if self.config.get(section="cache", name="use_cache") else "none"
         logstr = self.logger if self.logger else "pending"
