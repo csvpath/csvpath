@@ -1,4 +1,3 @@
-import uuid
 import tempfile
 from smart_open import open
 from csvpath.util.hasher import Hasher
@@ -22,7 +21,7 @@ class SftpFingerprinter:
             Box().add(Box.CSVPATHS_CONFIG, config)
         return config
 
-    def fingerprint(self, path: str) -> str:
+    def fingerprint(self, path: str, *, retry=True) -> str:
         config = self._config
         #
         #
@@ -55,5 +54,7 @@ class SftpFingerprinter:
                         to.write(s)
                         h = Hasher().hash(to)
             except Exception as e:
-                print(f"SftpFingerprinter: second chance failed with {type(e)}: {e}")
+                print(f"SftpFingerprinter: second method failed with {type(e)}: {e}")
+                if retry is True:
+                    return self.fingerprint(path, retry=False)
         return h
