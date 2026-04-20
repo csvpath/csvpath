@@ -363,11 +363,7 @@ class ResultsManager:  # pylint: disable=C0115
         print(f"regsman: me: {id(self)}")
         print(f"regsman: my csvpaths: {id(self.csvpaths)}")
         print(f"regsman: dylsi: {self.dynamic_run_listeners}")
-        from csvpath.util.log_utility import LogUtility as lout
-
-        lout.log_brief_trace()
         for _ in self.dynamic_run_listeners:
-            print(f"regsman: adding int lsit: {_}")
             rr.add_internal_listener(_)
         rr.register_start(mdata)
         #
