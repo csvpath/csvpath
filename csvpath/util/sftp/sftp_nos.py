@@ -1,8 +1,6 @@
 # pylint: disable=C0114
-import os
 import paramiko
 import stat
-from stat import S_ISDIR, S_ISREG
 from csvpath import CsvPaths
 from csvpath.util.box import Box
 from ..path_util import PathUtility as pathu
@@ -10,6 +8,14 @@ from .sftp_config import SftpConfig
 from .sftp_walk import SftpWalk
 
 
+#
+# apr 2026. this class now does 1x retry to attempt to manage sketchy
+# network conditions. it covers SftpWalk and fingerprinter. it does not
+# cover the read and write classes. retrying a simple atomic operation
+# feels reasonable. retrying a read or write feels potentially less
+# safe and less like something we should cover for, rather than draw
+# attention to.
+#
 class SftpDo:
     @property
     def _config(self):
@@ -81,14 +87,19 @@ class SftpDo:
         return f"{self._orig_path}/{name}"
         # return f"{self.path}/{name}"
 
-    def remove(self) -> None:
-        if self.path == "/":
-            raise ValueError("Cannot remove the root")
-        if self.isfile():
-            self._config.sftp_client.remove(self.path)
-        else:
-            walk = SftpWalk(self._config)
-            walk.remove(self.path)
+    def remove(self, *, retry=True) -> None:
+        try:
+            if self.path == "/":
+                raise ValueError("Cannot remove the root")
+            if self.isfile():
+                self._config.sftp_client.remove(self.path)
+            else:
+                walk = SftpWalk(self._config)
+                walk.remove(self.path)
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                self.remove(retry=False)
 
     def listdir(
         self,
@@ -97,53 +108,74 @@ class SftpDo:
         recurse: bool = False,
         dirs_only: bool = False,
         default=None,
+        retry=True,
     ) -> list[str]:
-        if files_only is True and dirs_only is True:
-            raise ValueError("Cannot list with neither files nor dirs")
-        walk = SftpWalk(self._config)
-        path = self.path
-        lst = walk.listdir(path=path, default=[], recurse=recurse)
-        if files_only is True:
-            lst = [_ for _ in lst if _[1] is True]
-        if dirs_only is True:
-            lst = [_ for _ in lst if _[1] is False]
-        if recurse is True:
-            lst = [_[0] for _ in lst]
-        else:
-            lst2 = []
-            path = path.lstrip("/")
-            for _ in lst:
-                t = _[0]
-                t = t.lstrip("/")
-                if t.startswith(path):
-                    t = t[len(path) + 1 :]
-                if t.count("/") > 0:
-                    continue
-                lst2.append(t)
-            lst = lst2
-        return lst
+        try:
+            if files_only is True and dirs_only is True:
+                raise ValueError("Cannot list with neither files nor dirs")
+            walk = SftpWalk(self._config)
+            path = self.path
+            lst = walk.listdir(path=path, default=[], recurse=recurse)
+            if files_only is True:
+                lst = [_ for _ in lst if _[1] is True]
+            if dirs_only is True:
+                lst = [_ for _ in lst if _[1] is False]
+            if recurse is True:
+                lst = [_[0] for _ in lst]
+            else:
+                lst2 = []
+                path = path.lstrip("/")
+                for _ in lst:
+                    t = _[0]
+                    t = t.lstrip("/")
+                    if t.startswith(path):
+                        t = t[len(path) + 1 :]
+                    if t.count("/") > 0:
+                        continue
+                    lst2.append(t)
+                lst = lst2
+            return lst
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                return self.listdir(
+                    files_only=files_only,
+                    recurse=recurse,
+                    dirs_only=dirs_only,
+                    default=default,
+                    retry=False,
+                )
 
-    def copy(self, to) -> None:
-        if not self.exists():
-            raise FileNotFoundError(f"Source {self.path} does not exist.")
-        a = self._config.ssh_client
-        a.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        a.connect(
-            self._config.server,
-            port=self._config.port,
-            username=self._config.username,
-            password=self._config.password,
-            allow_agent=False,
-            look_for_keys=False,
-        )
-        stdin, stdout, stderr = a.exec_command(f"cp {self.path} {to}")
+    def copy(self, to, *, retry=True) -> None:
+        try:
+            if not self.exists():
+                raise FileNotFoundError(f"Source {self.path} does not exist.")
+            a = self._config.ssh_client
+            a.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            a.connect(
+                self._config.server,
+                port=self._config.port,
+                username=self._config.username,
+                password=self._config.password,
+                allow_agent=False,
+                look_for_keys=False,
+            )
+            stdin, stdout, stderr = a.exec_command(f"cp {self.path} {to}")
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                self.copy(self, to, retry=False)
 
-    def exists(self) -> bool:
+    def exists(self, *, retry=True) -> bool:
         try:
             self._config.sftp_client.stat(self.path)
             return True
         except FileNotFoundError:
             return False
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                return self.exists(retry=False)
 
     def dir_exists(self) -> bool:
         try:
@@ -160,12 +192,16 @@ class SftpDo:
         except FileNotFoundError:
             return False
 
-    def isdir(self, path) -> bool:
+    def isdir(self, path, *, retry=True) -> bool:
         try:
             attr = self._config.sftp_client.stat(path)
             return stat.S_ISDIR(attr.st_mode)
         except FileNotFoundError:
             return False
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                return self.isdir(path, retry=False)
 
     def physical_dirs(self) -> bool:
         return True
@@ -192,14 +228,18 @@ class SftpDo:
         return r
     """
 
-    def _isfile(self, path) -> bool:
+    def _isfile(self, path, *, retry=True) -> bool:
         try:
             attr = self._config.sftp_client.stat(path)
             return stat.S_ISREG(attr.st_mode)
         except FileNotFoundError:
             return False
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                return self._isfile(path, retry=False)
 
-    def rename(self, new_path: str) -> None:
+    def rename(self, new_path: str, *, retry=True) -> None:
         try:
             np = pathu.resep(new_path, hint="posix")
             np = pathu.stripp(np)
@@ -208,6 +248,10 @@ class SftpDo:
             raise
         except (IOError, PermissionError):
             raise RuntimeError(f"Failed to rename {self.path} to {new_path}")
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                self.rename(new_path, retry=False)
 
     def makedirs(self) -> None:
         lst = self.path.split("/")
@@ -216,7 +260,7 @@ class SftpDo:
             path = f"{p}" if path == "" else f"{path}/{p}"
             self._mkdirs(path)
 
-    def _mkdirs(self, path):
+    def _mkdirs(self, path, *, retry=False):
         try:
             self._config.sftp_client.mkdir(path)
         except OSError:
@@ -225,6 +269,10 @@ class SftpDo:
         except IOError:
             ...
             # TODO: should log
+        except Exception:
+            if retry is True:
+                self._config.reset()
+                self._mkdirs(path, retry=False)
 
     def makedir(self) -> None:
         self.makedirs()
