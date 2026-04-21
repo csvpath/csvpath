@@ -1,6 +1,4 @@
 # pylint: disable=C0114
-import os
-from azure.storage.blob import BlobServiceClient, ContainerClient
 from azure.storage.blob._list_blobs_helper import BlobPrefix
 from .azure_utils import AzureUtility
 from ..path_util import PathUtility as pathu
@@ -100,8 +98,6 @@ class AzureDo:
         if files_only is True and dirs_only is True:
             raise ValueError("Cannot list with neither files nor dirs")
         container, blob = AzureUtility.path_to_parts(path)
-
-        # listed = os.path.basename(self.path)
         if not blob.endswith("/"):
             blob = f"{blob}/"
         if blob == "/":

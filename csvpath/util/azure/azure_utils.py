@@ -1,5 +1,4 @@
-import os
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobServiceClient
 from csvpath.util.box import Box
 from csvpath.util.config import Config
 
@@ -48,14 +47,22 @@ class AzureUtility:
                 connection_string = config.get(
                     section=None, name=cls.AZURE_STORAGE_CONNECTION_STRING
                 )
-            # connection_string = os.getenv(cls.AZURE_STORAGE_CONNECTION_STRING)
             if not connection_string:
                 raise ValueError(
                     f"{cls.AZURE_STORAGE_CONNECTION_STRING} environment variable not set."
                 )
             client = BlobServiceClient.from_connection_string(connection_string)
             #
-            # exp!
+            # if needed, use the following to dump call timings
+            #
+            # from .azure_timing_policy import TimingPolicy
+            # client = BlobServiceClient.from_connection_string(
+            #    connection_string,
+            #    _additional_pipeline_policies=[TimingPolicy()],
+            #    read_timeout=5
+            # )
+            #
+            #
             #
             client.close = MyClose(client.close).close
             box.add(Box.AZURE_BLOB_CLIENT, client)

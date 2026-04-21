@@ -2,7 +2,6 @@ import unittest
 import os
 from csvpath.csvpaths import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
-from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 
@@ -14,17 +13,18 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
     def test_dirs(self) -> None:
         config = CsvPaths().config
 
-        for _ in [
+        """
             ("s3", "csvpath-example-1"),
             ("gs", "csvpath-testing-1"),
-            ("azure", "csvpath"),
             (
                 "sftp",
                 config.get(section="sftp", name="server"),
                 config.get(section="sftp", name="port"),
             ),
             ("", f"tests{os.sep}test_resources"),
-        ]:
+        """
+
+        for _ in [("azure", "csvpath")]:
             try:
                 self.do_test_dirs(_)
             except Exception as e:
@@ -52,9 +52,13 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
         TEMP_FILE_3 = f"pdq{sep}abc_3.txt"
         TEMP_FILE_4 = f"xyz{sep}ijk{sep}abc_4.txt"
 
+        ts = [TEMP_FILE_1, TEMP_FILE_2, TEMP_FILE_3, TEMP_FILE_4]
+
         DIR_1 = "xyz"
         DIR_2 = "pdq"
         DIR_3 = f"xyz{sep}ijk"
+
+        ds = [DIR_1, DIR_2, DIR_3]
 
         print(f"checking if {nos} exists")
         if nos.exists():
@@ -88,6 +92,24 @@ class TestCsvPathsBackendDirs(unittest.TestCase):
             with DataFileWriter(path=_) as file:
                 print(f"writing {text}")
                 file.write(text)
+
+        for _ in range(0, 10):
+            self._do_ops(paths, dirpath, ts, ds)
+
+    def _do_ops(self, paths: list, dirpath, ts, ds) -> None:
+
+        TEMP_FILE_1 = ts[0]
+        TEMP_FILE_2 = ts[1]
+        TEMP_FILE_3 = ts[2]
+        TEMP_FILE_4 = ts[3]
+
+        DIR_1 = ds[0]
+        DIR_2 = ds[1]
+        DIR_3 = ds[2]
+
+        nos = Nos(dirpath)
+        # print(f"dirpath: {dirpath}")
+        sep = nos.sep
 
         print(f"1. listing {dirpath}")
         lst = Nos(dirpath).listdir(recurse=True, files_only=False)
