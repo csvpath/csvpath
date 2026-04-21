@@ -10,7 +10,7 @@ class Stopwatch:
         self.last = time.perf_counter()
         self.clicks = 0
         self.slow = slow
-        print(f"stopwatch start: {self.start}, {self.last}, {self.clicks}")
+        print(f"Stopwatch: start: {self.start}, {self.last}, {self.clicks}")
 
     def show(self, mark: str = ""):
         self.click(mark, show=True)
@@ -22,5 +22,18 @@ class Stopwatch:
         if show or c > self.slow:
             s = t - self.start
             space = " " if mark else ""
-            print(f"slow click: {mark}{space}{self.clicks}: {c} at time: {s}  ")
+            print(
+                f"Stopwatch: slow click: {mark}{space}{self.clicks}: {c} at time: {s}  "
+            )
         self.last = t
+
+    def start(self) -> None:
+        self.start = time.perf_counter()
+        self.last = time.perf_counter()
+        self.clicks = 0
+
+    def end(self) -> None:
+        self.clicks = self.clicks + 1
+        t = time.perf_counter()
+        s = t - self.start
+        print(f"Stopwatch: end: {self.clicks}: {s}  ")

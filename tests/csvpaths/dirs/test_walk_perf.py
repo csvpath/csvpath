@@ -38,13 +38,26 @@ class TestWalkPerf(unittest.TestCase):
 
         for _ in range(0, 20):
             Nos(dirpath).listdir(recurse=True, files_only=False)
-            stopwatch.click()
+            stopwatch.click("a")
 
             Nos(dirpath).listdir(recurse=False, files_only=True)
-            stopwatch.click()
+            stopwatch.click("b")
 
             Nos(dirpath).listdir(recurse=True, files_only=False, dirs_only=True)
-            stopwatch.click()
+            stopwatch.click("c")
 
             Nos(f"{dirpath}{sep}xyz").listdir(recurse=False)
-            stopwatch.click()
+            stopwatch.click("d")
+
+            Nos(f"{dirpath}{sep}xyz").listdir(recurse=False, files_only=True)
+            stopwatch.click("e")
+
+            _ = f"{dirpath}{sep}xyz"
+            Nos(_).listdir(recurse=True, files_only=True)
+            stopwatch.click("f")
+
+            Nos(f"{dirpath}{sep}xyz{sep}ijk").listdir(recurse=True)
+            stopwatch.click("g")
+
+            Nos(dirpath).listdir(recurse=True, files_only=True)
+            stopwatch.click("h")
