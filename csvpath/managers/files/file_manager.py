@@ -1,6 +1,4 @@
-import os
 import json
-import csv
 import traceback
 from typing import NewType
 from json import JSONDecodeError
@@ -13,7 +11,7 @@ from csvpath.util.references.files_reference_finder_2 import (
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
-from csvpath.util.exceptions import InputException, FileException
+from csvpath.util.exceptions import FileException
 from csvpath.util.nos import Nos
 from csvpath.util.box import Box
 from csvpath.util.path_util import PathUtility as pathu
@@ -641,10 +639,12 @@ class FileManager:
             #
             self.csvpaths.logger.debug("Path after removing mark, if any: %s", path)
             self._copy_in(path, home, template)
+            self.csvpaths.logger.debug("Done copying in")
             #
             #
             #
             self.assure_docs_and_discriptor(name)
+            self.csvpaths.logger.debug("Assured docs and discriptor")
             #
             # create the reference to the bytes/version added to the named-file.
             # this is the most specific reference possible. we return it when we're
@@ -658,6 +658,7 @@ class FileManager:
             # create the metadata event for this registration
             #
             name_home = self.named_file_home(name)
+            self.csvpaths.logger.debug("Name home is %s", name_home)
             mdata = FileMetadata(self.csvpaths.config)
             mdata.named_file_name = name
             mdata.named_file_ref = ret
@@ -678,6 +679,7 @@ class FileManager:
             mdata.name_home = name_home
             mdata.mark = mark
             mdata.template = template
+            self.csvpaths.logger.debug("Created metadata")
             #
             # TODO: add file_size. move FileInfo into Nos. for now it is 0.
             #
