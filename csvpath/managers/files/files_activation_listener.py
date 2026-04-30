@@ -1,7 +1,5 @@
-import requests
 import threading
 
-from abc import ABC
 
 from csvpath import CsvPaths
 from csvpath.managers.metadata import Metadata
@@ -28,6 +26,6 @@ class FileActivationListener(Listener, threading.Thread):
         csvpaths = CsvPaths()
         activator = csvpaths.file_manager.activator
         ref = mdata.named_file_ref
-        csvpaths.logger.info("Activating for {ref} if any activation is configured")
+        csvpaths.logger.info(f"Activating for {ref} if any activation is configured")
         activator.activate_if(ref)
-        csvpaths.logger.info("Activation for {ref} if any completed")
+        csvpaths.logger.info(f"Activation for {ref} if any completed")
