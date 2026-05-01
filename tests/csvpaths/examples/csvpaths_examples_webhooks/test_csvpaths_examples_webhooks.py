@@ -47,8 +47,8 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
 
     def test_webhooks_2(self) -> None:
         paths = CsvPaths()
-        paths.config.add_to_config("errors", "csvpath", "collect, print")
-        paths.config.add_to_config("errors", "csvpaths", "collect, print")
+        paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
+        paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.config.add_to_config(
             "listeners",
             "test.results",
@@ -102,6 +102,7 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         htype = WebhookListener.HOOKS[0]
         url = listener._url_for_type(mdata, WebhookListener.URLS[htype])
         payload = listener._payload_for_type(mdata, htype)
+        headers = listener._headers_for_type(mdata, htype)
         #
         # check it
         #
@@ -118,6 +119,12 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         assert payload.get("me") in ["one", "two"]
         assert payload.get("name") in ["many one", "many_two"]
         assert payload.get("time") is not None
+        #
+        #
+        #
+        assert len(headers) == 2
+        print(f"headersss: {headers}")
+        assert headers["X-API-KEY"] == "mykey"
         #
         # check errors
         #
@@ -161,18 +168,18 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         if hooks is None:
             hooks = {}
             cfg["hooks"] = hooks
-        hooks[
-            "on_complete_all_webhook"
-        ] = "type > all, me > var|me, name > meta|name, time > var|now"
-        hooks[
-            "on_complete_valid_webhook"
-        ] = "type > valid, me > var|me, name > meta|name, time > var|now"
-        hooks[
-            "on_complete_invalid_webhook"
-        ] = "type > invalid, me > var|me, name > meta|name, time > var|now"
-        hooks[
-            "on_complete_errors_webhook"
-        ] = "type > errors, me > var|me, name > meta|name, time > var|now"
+        hooks["on_complete_all_webhook"] = (
+            "type > all, me > var|me, name > meta|name, time > var|now"
+        )
+        hooks["on_complete_valid_webhook"] = (
+            "type > valid, me > var|me, name > meta|name, time > var|now"
+        )
+        hooks["on_complete_invalid_webhook"] = (
+            "type > invalid, me > var|me, name > meta|name, time > var|now"
+        )
+        hooks["on_complete_errors_webhook"] = (
+            "type > errors, me > var|me, name > meta|name, time > var|now"
+        )
 
         hooks["all_webhook_url"] = "http://localhost:8000/json-hook"
         hooks["valid_webhook_url"] = "http://localhost:8000/json-hook"

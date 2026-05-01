@@ -1,8 +1,6 @@
 import requests
 import threading
 
-from abc import ABC
-from csvpath.util.box import Box
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -22,8 +20,7 @@ from csvpath.matching.util.expression_utility import ExpressionUtility
 #
 
 
-class WebhookException(Exception):
-    ...
+class WebhookException(Exception): ...
 
 
 class WebhookListener(Listener, threading.Thread):
@@ -113,6 +110,7 @@ class WebhookListener(Listener, threading.Thread):
         # prep request
         #
         headers = {"Content-Type": "application/json"}
+        headers = headers | self._headers_for_type(mdata, atype)
         #
         # send
         #

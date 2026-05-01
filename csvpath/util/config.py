@@ -138,6 +138,7 @@ sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener
 default.file = from csvpath.managers.files.files_listener import FilesListener
 default.paths = from csvpath.managers.paths.paths_listener import PathsListener
 
+# adds a listener that uses info in a named-file descriptor to create a run when data arrives
 activation.file = from csvpath.managers.files.files_activation_listener import FileActivationListener
 
 # add otlp to the list of groups above to push observability metrics to an OpenTelemetry endpoint

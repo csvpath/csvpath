@@ -20,9 +20,15 @@ class Scripts(BaseModel):
     on_complete_error: Optional[str] = None
 
 
+class Header(BaseModel):
+    name: Optional[str] = None
+    value: Optional[str] = None
+
+
 class Webhook(BaseModel):
     url: Optional[str] = None
     payload: Optional[str] = None
+    headers: list[Header] = []
 
 
 class Webhooks(BaseModel):
@@ -330,7 +336,7 @@ class NamedPathsDescriber:
         else:
             raise ValueError(f"Script {path} not found")
 
-    # ========== scripts ============
+    # ========== webhooks ============
 
     def store_webhooks(self, name: NamedPathsName, w: Webhooks) -> None:
         config = self.get_config(name)

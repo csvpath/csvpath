@@ -9,11 +9,19 @@
           "webhooks":{
              "on_complete_all": {
                 "payload":"type > all, me > var|me, name > meta|name, time > var|now",
-                "url":"http://localhost:8000/json-hook"
+                "url":"http://localhost:8000/json-hook",
+                "headers": [
+                    {"name":"X-API-KEY", "value":"mykey"},
+                    {"name":"access_token", "value":"mytoken"}
+                ]
              },
              "on_complete_valid": {
                 "payload":"type > valid, me > var|me, name > meta|name, time > var|now",
-                "url":"http://localhost:8000/json-hook"
+                "url":"http://localhost:8000/json-hook",
+                "headers": [
+                    {"name":"X-API-KEY", "value":"mykey"},
+                    {"name":"access_token", "value":"mytoken"}
+                ]
              },
              "on_complete_invalid":{
                 "payload": "type > invalid, me > var|me, name > meta|name, time > var|now",
