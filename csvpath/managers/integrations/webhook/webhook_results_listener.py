@@ -64,7 +64,7 @@ class WebhookResultsListener(WebhookListener):
                 return False
         return True
 
-    def _url_for_type(self, mdata: Metadata, atype: str):
+    def _url_for_type(self, mdata: Metadata, atype: str) -> str:
         cfg = self.csvpaths.paths_manager.describer.get_webhooks(mdata.named_paths_name)
         if cfg is None:
             return None
@@ -78,6 +78,43 @@ class WebhookResultsListener(WebhookListener):
             return cfg.on_complete_error.url
         else:
             raise ValueError(f"Unknown type: {atype}")
+
+    def _headers_for_type(self, mdata: Metadata, atype: str) -> dict:
+        cfg = self.csvpaths.paths_manager.describer.get_webhooks(mdata.named_paths_name)
+        if cfg is None:
+            return None
+        headers = None
+        if atype.find("all") > -1:
+            headers = cfg.on_complete_all.headers
+        elif atype.find("invalid") > -1:
+            headers = cfg.on_complete_invalid.headers
+        elif atype.find("valid") > -1:
+            headers = cfg.on_complete_valid.headers
+        elif atype.find("error") > -1:
+            headers = cfg.on_complete_error.headers
+        else:
+            raise ValueError(f"Unknown type: {atype}")
+        #
+        # get raw headers
+        #
+        _ = {}
+        if headers and len(headers) > 0:
+            _ = {
+                header.name: header.value
+                for header in headers
+                if header.name and header.value
+            }
+        #
+        # do var sub. this looks goofy but it will have the correct source and do {} var sub
+        #
+        faux = "___never_say_never___"
+        headers = {}
+        for k, v in _.items():
+            self.config.set(section=faux, name=k, value=v)
+            v = self.config.get(section=faux, name=k)
+            headers[k] = v
+        self.config.config_parser.remove_section(faux)
+        return headers
 
     def _payload_for_type(self, mdata: Metadata, atype: str) -> dict:
         if mdata is None:
