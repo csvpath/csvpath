@@ -870,12 +870,23 @@ class ResultsManager:  # pylint: disable=C0115
         instances = Nos(path).listdir()
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
-            if inst == "manifest.json":
+            if inst.endswith(".json"):
+                #
+                # exp ^^^^
+                #
+                # if inst == "manifest.json":
                 continue
             r = self.get_named_result_for_instance(
                 name=name, run_dir=path, run=run, instance=inst
             )
             rs[r.index] = r
+        #
+        # exp. works well, it seems. the problem is that we begin to have more json files
+        # we were avoiding manifest.json. when we added more we had to skip more leaving
+        # more nulls where an item was found, added to the array, but then passed over.
+        # other changes above were less effective than simply removing the nulls.
+        #
+        rs = [_ for _ in rs if _ is not None]
         return rs
 
     def get_named_result_for_instance(
@@ -891,6 +902,10 @@ class ResultsManager:  # pylint: disable=C0115
         # it should be deleted.
         #
         _ = ""
+
+        print(
+            f"resman: get_named_result_for_instance: {name}, {run_dir}, {run}, {instance}"
+        )
 
         if run_dir.endswith(f"/{instance}") or run_dir.endswith(f"\\{instance}"):
             instance_dir = run_dir

@@ -1,9 +1,13 @@
 import requests
 import threading
+import traceback
+import json
 
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.matching.util.expression_utility import ExpressionUtility
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
 
 #
 # ~
@@ -89,6 +93,7 @@ class WebhookListener(Listener, threading.Thread):
             try:
                 self._do_hook_if(mdata=mdata, atype=t)
             except Exception as e:
+                print(traceback.format_exc())
                 if isinstance(e, WebhookException):
                     raise
                 msg = f"WebhookListener could not call {t} webhook: {type(e)}: {e}"
@@ -105,31 +110,53 @@ class WebhookListener(Listener, threading.Thread):
                 "Nothing to do for webhook url %s", WebhookListener.URLS[atype]
             )
             return
-        payload = self._payload_for_type(mdata, atype)
-        #
-        # prep request
-        #
-        headers = {"Content-Type": "application/json"}
-        headers = headers | self._headers_for_type(mdata, atype)
-        #
-        # send
-        #
-        x = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
-        if x and x.status_code != 200:
-            if self.csvpaths is not None:
-                self.csvpaths.logger.warning(
-                    "WebhookListener received status code %s from %s",
-                    x.status_code,
-                    "",
-                )
-            elif self.result is not None:
-                self.result.csvpath.logger.warning(
-                    "WebhookListener received status code %s from %s",
-                    x.status_code,
-                    "",
-                )
-            else:
-                msg = f"WebhookListener received status code {x.status_code} from {self.url}"
-                self.csvpaths.logger.error(msg)
-                if self.csvpaths.ecoms.do_i_raise():
-                    raise WebhookException(msg)
+        r = {"url": url}
+        try:
+            payload = self._payload_for_type(mdata, atype)
+            r["payload"] = payload
+            #
+            # prep request
+            #
+            headers = {"Content-Type": "application/json"}
+            headers = headers | self._headers_for_type(mdata, atype)
+            r["headers"] = headers
+            r["timeout"] = self.timeout
+            #
+            # send
+            #
+            x = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+            if x and x.status_code != 200:
+                if self.csvpaths is not None:
+                    self.csvpaths.logger.warning(
+                        "WebhookListener received status code %s from %s",
+                        x.status_code,
+                        "",
+                    )
+                elif self.result is not None:
+                    self.result.csvpath.logger.warning(
+                        "WebhookListener received status code %s from %s",
+                        x.status_code,
+                        "",
+                    )
+                else:
+                    msg = f"WebhookListener received status code {x.status_code} from {self.url}"
+                    self.csvpaths.logger.error(msg)
+                    if self.csvpaths.ecoms.do_i_raise():
+                        raise WebhookException(msg)
+            try:
+                r["response_json"] = x.json()
+            except requests.exceptions.JSONDecodeError:
+                ...
+            r["response"] = {"code": x.status_code, "text": x.text}
+            #
+            # save
+            #
+            nos = Nos(mdata.run_home)
+            path = nos.join(f"webhook-{atype}.json")
+            with DataFileWriter(path=path) as file:
+                file.write(json.dumps(r, indent=2))
+        except Exception:
+            print(traceback.format_exc())
+            raise
+        finally:
+            ...

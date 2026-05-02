@@ -1,6 +1,9 @@
 import unittest
 import os
+import json
 from csvpath import CsvPaths
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 from csvpath.managers.integrations.webhook.webhook_listener import (
     WebhookException,
     WebhookListener,
@@ -15,6 +18,15 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
     def test_webhooks_1(self):
         try:
             paths = CsvPaths()
+            g = paths.config.get(section="listeners", name="groups")
+            li = paths.config.get(section="listeners", name="webhook.results")
+            if li is None:
+                paths.config.set(
+                    section="listeners",
+                    name="webhook.results",
+                    value="from csvpath.managers.integrations.webhook.webhook_results_listener import WebhookResultsListener",
+                )
+            paths.config.set(section="listeners", name="groups", value=f"{g},webhook")
             paths.config.add_to_config("errors", "csvpath", "collect, print")
             paths.config.add_to_config("errors", "csvpaths", "collect, print")
             paths.config.add_to_config("webhook", "timeout", ".25")
@@ -32,18 +44,38 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
             paths.paths_manager.add_named_paths_from_json(
                 file_path=f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_webhooks{os.sep}csvpaths{os.sep}hooks.json"
             )
-            paths.fast_forward_paths(pathsname="hooks", filename="hooks")
+            ref = paths.fast_forward_paths(pathsname="hooks", filename="hooks")
             #
             # this will blow up under some adverse conditions and will itself
             # raise for a non-200. but don't yet have a good way to know it ran
             # and that the right stuff happened without looking at the test
             # container.  :/
             #
+            import time
+
+            time.sleep(2)
+            paths.config.set(section="listeners", name="groups", value=g)
+            results = paths.results_manager.get_named_results(ref)
+            assert results is not None
+            assert len(results) == 2
+            rundir = results[0].run_dir
+            assert rundir is not None
+            path = Nos(rundir).join("webhook-on_complete_all.json")
+            assert Nos(path).exists()
+            with DataFileReader(path) as file:
+                js = json.load(file.source)
+                assert js is not None
+                assert "url" in js
+                assert "response" in js
+                assert "code" in js["response"]
+
         except WebhookException as e:
-            # presumably the webhook test container is not working. this is not
-            # a serious automated test. but it's useful for more manual runs.
+            #
+            # presumably the webhook test container is not working. this test is meh,
+            # but useful for more manual runs.
             #
             print(f"test_webhooks_1: error: {type(e)}: {e}")
+            raise
 
     def test_webhooks_2(self) -> None:
         paths = CsvPaths()
@@ -123,7 +155,6 @@ class TestCsvPathsExamplesWebhooks(unittest.TestCase):
         #
         #
         assert len(headers) == 2
-        print(f"headersss: {headers}")
         assert headers["X-API-KEY"] == "mykey"
         #
         # check errors

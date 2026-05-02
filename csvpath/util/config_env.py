@@ -35,14 +35,22 @@ class ConfigEnv:
     def var_sub_source(self) -> str:
         if self._var_sub_source is None:
             self._var_sub_source = self.config.get(
-                section="config", name="var_sub_source", default="env", string_parse=False
+                section="config",
+                name="var_sub_source",
+                default="env",
+                string_parse=False,
             )
         return self._var_sub_source
 
     @property
     def allow_var_sub(self) -> bool:
         if self._allow is None:
-            a = self.config.get(section="config", name="allow_var_sub", default=False, string_parse=False)
+            a = self.config.get(
+                section="config",
+                name="allow_var_sub",
+                default=False,
+                string_parse=False,
+            )
             self._allow = a and str(a).strip().lower() in ["true", "yes"]
         return self._allow
 
@@ -62,19 +70,6 @@ class ConfigEnv:
             try:
                 if not self.nos(self.var_sub_source).exists():
                     self.write_env_file({})
-                    """
-                    # cannot use DataFileWriter and DataFileReader because that would create a circular import.
-                    # with DataFileWriter(path=self.var_sub_source) as file:
-                    file = ClassLoader.load(
-                        "from csvpath.util.file_writers import DataFileWriter",
-                        [],
-                        {"path": self.var_sub_source},
-                    )
-                    file.__enter__()
-                    json.dump({}, file.sink, indent=4)
-                    file.__exit__(None, None, None)
-                    """
-                # with DataFileReader(self.var_sub_source) as file:
                 file = ClassLoader.load(
                     "from csvpath.util.file_readers import DataFileReader",
                     [self.var_sub_source],
@@ -87,8 +82,6 @@ class ConfigEnv:
         return self._env
 
     def write_env_file(self, j: dict) -> None:
-        # cannot use DataFileWriter and DataFileReader because that would create a circular import.
-        # with DataFileWriter(path=self.var_sub_source) as file:
         file = ClassLoader.load(
             "from csvpath.util.file_writers import DataFileWriter",
             [],
