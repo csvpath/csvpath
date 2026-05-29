@@ -1,6 +1,5 @@
 import pytest
 import os
-import shutil
 import traceback
 from csvpath import CsvPaths
 from csvpath.util.nos import Nos
@@ -75,6 +74,13 @@ def _clear_files():
                 print(f"Error in cleaning {p}: {type(e)}: {e}")
 
     config._assure_archive_path()
+    paths = None
+
+    import gc
+
+    gc.collect()
+
+    Box().empty_my_stuff()
     print("Clean-up complete.")
     print(
         "\nREMEMBER TO CHECK THAT CONFIG.INI PATHS (IN ./CONFIG/ AND ./TEST/) MATCH SYSTEM SEPARATORS\n\n"

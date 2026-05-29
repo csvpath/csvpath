@@ -1,7 +1,6 @@
 import unittest
 import os
 from csvpath import CsvPaths
-from csvpath.util.file_readers import DataFileReader
 
 FILE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_print{os.sep}assets{os.sep}process-list-cols.csv"
 PATH = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_print{os.sep}assets{os.sep}onchange.csvpath"
@@ -20,7 +19,7 @@ class TestCsvPathsExamplesPrint(unittest.TestCase):
         assert len(results) == 1
         assert len(results[0].lines) > 2  # don't know how many but much > 1
         printouts = results[0].get_printouts("default")
-        assert len(printouts) > 2
+        assert len(printouts) == 1
 
     def test_print_once_1(self):
         paths = CsvPaths()

@@ -22,7 +22,6 @@ class AzureUtility:
         box = Box()
         client = box.get(Box.AZURE_BLOB_CLIENT)
         if client is None:
-            # for debugging/metrics, not reference counting
             cls._client_count += 1
             #
             # this needs to come through config, even if configured in OS env vars
@@ -66,6 +65,7 @@ class AzureUtility:
             #
             client.close = MyClose(client.close).close
             box.add(Box.AZURE_BLOB_CLIENT, client)
+
         return client
 
     @classmethod

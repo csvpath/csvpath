@@ -4,6 +4,28 @@
     "_config": {
         "test":{
             "template":":1/:2/:filename"
+        },
+        "numbers": {
+            "template": ":0/:3/my/:filename",
+            "on_arrival": {
+                "named_paths_group": "order validations",
+                "run_method": "collect_paths"
+            },
+            "sources": {
+                "a": {
+                    "address":"localhost",
+                    "port":22,
+                    "username":"foo",
+                    "password":"bar"
+                },
+                "b": {
+                    "address":"localhost",
+                    "port":2022,
+                    "username":"foo2",
+                    "password":"bar2"
+                }
+            }
         }
+
     }
 }

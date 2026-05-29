@@ -1,6 +1,5 @@
 # pylint: disable=C0114
 
-import os
 from smart_open import open
 from csvpath import CsvPaths
 from csvpath.util.box import Box

@@ -6,6 +6,8 @@ from csvpath.util.nos import Nos
 from csvpath.managers.files.files_listener import FilesListener
 from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.file_readers import DataFileReader
+
 from tests.csvpaths.builder import Builder
 from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
 
@@ -215,7 +217,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         m = paths.file_manager
         tf = FILE
         home = m.assure_file_home("mytest", tf)
-        d = m._copy_in(tf, home)
+        d = m._copy_in(name="mytest", path=tf, home=home)
         assert d is not None
         ds = pathu.parts(d)
         my = f"{paths.config.inputs_files_path}{os.sep}mytest{os.sep}test.csv{os.sep}test.csv"
@@ -227,7 +229,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         paths = Builder().build()
         m = paths.file_manager
         home = m.assure_file_home("mytest", FILE)
-        d = m._copy_in(FILE, home)
+        d = m._copy_in(name="mytest", path=FILE, home=home)
         if d.find("://") == -1:
             d = pathu.norm(d)
         assert Nos(d).exists()
@@ -280,12 +282,57 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert fm.named_files_count == 0
         fm.set_named_files_from_json(JSON)
         assert fm.named_files_count == 2
+        config = fm.describer.get_config("numbers")
+        assert config is not None
+        sources = config.sources
+        assert sources is not None
+        assert len(sources) == 2
 
     def test_file_mgr_json2(self):
         paths = Builder().build()
         fm = paths.file_manager
         with pytest.raises((FileNotFoundError, IsADirectoryError)):
             fm.set_named_files_from_json("xyz")
+
+    def test_file_mgr_json3(self):
+        paths = Builder().build()
+        fm = paths.file_manager
+        fm.remove_all_named_files()
+        assert fm.named_files_count == 0
+        fm.set_named_files_from_json(JSON)
+        assert fm.named_files_count == 2
+        config = fm.describer.get_config("numbers")
+        assert config is not None
+        sources = config.sources
+        assert sources is not None
+        assert len(sources) == 2
+        data = DataFileReader("sftp://localhost:2022/a/b/c")
+        data.server_config = sources
+        t = data.server_credentials()
+        assert t == ("foo2", "bar2")
+
+        from unittest.mock import MagicMock, patch
+
+        mock_file = MagicMock()
+        mock_file.read.return_value = "test content"
+        with patch("csvpath.util.sftp.sftp_data_reader.open") as mock_open:
+            mock_open.return_value.__enter__ = MagicMock(return_value=mock_file)
+            # return false to make sure python raises any exceptions that might be raised
+            mock_open.return_value.__exit__ = MagicMock(return_value=False)
+
+            data.read()
+            mock_open.assert_called_once_with(
+                "sftp://localhost:2022/a/b/c",
+                data.mode,
+                transport_params={
+                    "connect_kwargs": {
+                        "username": "foo2",
+                        "password": "bar2",
+                        "look_for_keys": False,
+                        "allow_agent": False,
+                    }
+                },
+            )
 
     def test_file_mgr_dict1(self):
         paths = Builder().build()

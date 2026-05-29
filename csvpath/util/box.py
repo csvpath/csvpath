@@ -38,7 +38,9 @@ class Box:
     @property
     def _thread(self) -> str:
         current_thread = threading.current_thread()
-        return current_thread.name
+        return current_thread.native_id
+
+    AID = None
 
     def add(self, key: str, value: Any) -> None:
         s = Box.STUFF.get(self._thread)

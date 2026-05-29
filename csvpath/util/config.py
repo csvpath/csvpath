@@ -465,6 +465,8 @@ shell = /bin/bash
         if not self._config.has_section(section):
             self._config.add_section(section)
         self._config.set(section, key, value)
+        if section == "config":
+            self.config_env = None
 
     #
     # adds the value to the internal configparser object. doesn't save.
@@ -778,8 +780,6 @@ shell = /bin/bash
         if self.csvpath_log_level is None or not isinstance(
             self.csvpath_log_level, str
         ):
-            print(f"error!!!XXse: {self}")
-
             raise ConfigurationException(
                 f"CsvPath log level is wrong in {self.configpath}: {self.csvpath_log_level}"
             )

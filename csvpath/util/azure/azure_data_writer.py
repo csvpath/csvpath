@@ -3,7 +3,6 @@
 from smart_open import open
 from ..file_writers import DataFileWriter
 from csvpath.util.azure.azure_utils import AzureUtility
-from csvpath.util.stopwatch import Stopwatch
 
 
 class AzureDataWriter(DataFileWriter):
@@ -20,9 +19,7 @@ class AzureDataWriter(DataFileWriter):
     def write(self, data) -> None:
         if self.is_binary and not isinstance(data, bytes):
             data = data.encode(self.encoding)
-        s = Stopwatch()
         self.sink.write(data)
-        s.end()
 
     def file_info(self) -> dict[str, str | int | float]:
         # TODO: what can/should we provide here?

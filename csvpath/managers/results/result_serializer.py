@@ -1,9 +1,7 @@
-import os
 import json
 import csv
-from typing import NewType, List, Dict, Optional, Union
+from typing import NewType, List, Dict, Union
 from datetime import datetime
-from csvpath import CsvPath
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.file_writers import DataFileWriter
@@ -141,11 +139,34 @@ class ResultSerializer:
                 writer = csv.writer(f.sink)
                 writer.writerows(unmatched)
 
-        # Save the printout lines
-        if self._has_printouts(printouts):
+        self._do_printouts_if(run_dir=run_dir, printouts=printouts)
+
+    def _do_printouts_if(
+        self, *, run_dir: str, printouts: dict[str, list[str]]
+    ) -> None:
+        if not self._has_printouts(printouts):
+            return
+        if (
+            not self.result
+            or not self.result.csvpath
+            or self.result.csvpath.consolidate_printouts
+        ):
             with DataFileWriter(path=Nos(run_dir).join("printouts.txt")) as f:
                 for k, v in printouts.items():
                     f.sink.write(f"---- PRINTOUT: {k}\n")
+                    for _ in v:
+                        f.sink.write(f"{_}\n")
+        else:
+            for k, v in printouts.items():
+                k = k.replace("..", "_")
+                k = k.lstrip("/")
+                k = k.lstrip("\\")
+                if k.find("//"):
+                    self.result.csvpath.logger.warning(
+                        f"Cannot write printouts to {k}. Check name compatibility with filesystem."
+                    )
+                k = f"{k}.txt"
+                with DataFileWriter(path=Nos(run_dir).join(k)) as f:
                     for _ in v:
                         f.sink.write(f"{_}\n")
 

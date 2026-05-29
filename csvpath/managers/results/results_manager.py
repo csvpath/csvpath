@@ -10,7 +10,6 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
-from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
@@ -22,6 +21,7 @@ from .result_metadata import ResultMetadata
 from .results_registrar import ResultsRegistrar
 from .result_registrar import ResultRegistrar
 from .result_serializer import ResultSerializer
+from .transfers_manager import TransfersManager
 from .result import Result
 from .result_file_reader import ResultFileReader
 from csvpath.util.template_util import TemplateUtility as temu
@@ -36,6 +36,7 @@ class ResultsManager:  # pylint: disable=C0115
         # use property
         self.csvpaths = csvpaths
         """@private"""
+        self.transfers_manager = TransfersManager(results_manager=self)
         #
         # the dynamic listeners are added to each Registrar before
         # it distributes updates. we don't need this for the other
@@ -360,9 +361,6 @@ class ResultsManager:  # pylint: disable=C0115
         #
         # add any dynamic listeners to the registrar here
         #
-        print(f"regsman: me: {id(self)}")
-        print(f"regsman: my csvpaths: {id(self.csvpaths)}")
-        print(f"regsman: dylsi: {self.dynamic_run_listeners}")
         for _ in self.dynamic_run_listeners:
             rr.add_internal_listener(_)
         rr.register_start(mdata)
@@ -448,132 +446,6 @@ class ResultsManager:  # pylint: disable=C0115
             names = []
         return names
 
-    def do_transfers_if(self, result) -> None:
-        """@private"""
-        transfers = result.csvpath.transfers
-        if transfers is None:
-            return
-        tpaths = self.transfer_paths(result)
-        self._do_transfers(tpaths)
-
-    def transfer_paths(self, result) -> list[tuple[str, str, str, str]]:
-        """@private"""
-        #
-        # 1: filename, no extension needed: data | unmatched
-        # 2: variable name containing the path to write to
-        # 3: path of source file
-        # 3: path to write to
-        #
-        transfers = result.csvpath.transfers
-        tpaths = []
-        for t in transfers:
-            filefrom = None
-            mode = None
-            if t[0].startswith("data"):
-                filefrom = "data.csv"
-            elif t[0].startswith("unmatched"):
-                filefrom = "unmatched.csv"
-            elif t[0].endswith(".parquet"):
-                filefrom = t[0]
-                mode = "wb"
-            elif t[0].endswith(".txt"):
-                filefrom = t[0]
-            elif t[0].endswith(".json"):
-                filefrom = t[0]
-            else:
-                msg = "Unknown file in transfer: {t[0]}. Must be 'data' or 'unmatched'"
-                self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-                raise ValueError(msg)
-            varname = t[1]
-            pathfrom = self._path_to_result(result, filefrom)
-            if varname.endswith("+"):
-                mode = "a"
-                varname = varname[:-1]
-            else:
-                if mode is None:
-                    mode = "w"
-            pathto = self._path_to_transfer_to(result, varname)
-            #
-            # exp! it would be good to offer a var sub here
-            #
-            if pathto:
-                result.csvpath.config.set(
-                    section="_dummy-section", name="_dummy-name", value=pathto
-                )
-                pathto = result.csvpath.config.get(
-                    section="_dummy-section", name="_dummy-name"
-                )
-            #
-            #
-            #
-            tpaths.append((filefrom, varname, pathfrom, pathto, mode))
-        return tpaths
-
-    def _do_transfers(self, tpaths) -> None:
-        """@private"""
-        for t in tpaths:
-            pathfrom = t[2]
-            pathto = t[3]
-            rmode = "rb" if "b" in t[4] else "r"
-            with DataFileReader(pathfrom, mode=rmode) as pf:
-                with DataFileWriter(path=pathto, mode=t[4]) as file:
-                    file.write(pf.read())
-
-    def _path_to_transfer_to(self, result, t) -> str:
-        if result is None:
-            raise ValueError("Result cannot be None")
-        if t is None:
-            raise ValueError("Variable name cannot be None")
-        vs = result.csvpath.variables
-        if vs is None:
-            raise ValueError("Variables cannot be None")
-        if t not in vs:
-            msg = f"Variable {t} not found in variables"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-            raise InputException(msg)
-        #
-        # get the target file name
-        #
-        f = vs[t]
-        if f is None or str(f).strip() == "":
-            msg = f"Variable {t} is invalid: {f}"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-            raise InputException(msg)
-        #
-        # if we're shipping to another backend, we don't need to change the target location
-        #
-        if not Nos(f).is_local:
-            return f
-
-        if f.find("..") != -1:
-            msg = f"Transfer path cannot include '..': {f}"
-            self.csvpaths.error_manager.handle_error(source=self, msg=msg)
-            raise InputException(msg)
-        p = result.csvpath.config.transfer_root
-        rp = Nos(p).join(f)
-        sep = Nos(rp).sep
-        rd = rp[0 : rp.rfind(sep)]
-        #
-        # should this be dir_exists()?
-        #
-        if not Nos(rd).exists():
-            Nos(rd).makedir()
-        return rp
-
-    def _path_to_result(self, result, t) -> str:
-        if result is None:
-            raise ValueError("Result cannot be None")
-        if t is None:
-            raise ValueError("Path to result file cannot be None")
-        d = result.instance_dir
-        o = Nos(d).join(t)
-        sep = Nos(o).sep
-        r = o[0 : o.rfind(sep)]
-        if not Nos(r).exists():
-            Nos(r).makedirs()
-            Nos(r).makedir()
-        return o
-
     def save(self, result: Result) -> None:
         """@private"""
         #
@@ -590,12 +462,17 @@ class ResultsManager:  # pylint: disable=C0115
             # closed to true to indicate that we've written. we don't need the
             # serializer trying to save spooled lines result.lines = None
         #
-        # if we are doing a transfer(s) do it here so we can put metadata in about
-        # the copy before the metadata is serialized into the results.
+        # CHANGED 27 may 2026: no longer to it this way: "if we are doing a transfer(s)
+        # do it here so we can put metadata in about the copy before the metadata is
+        # serialized into the results." it isn't clear that we ever had a good strategy
+        # for adding transfer info to metadata. it would be good to do it. but moving
+        # transfers after serialization is a must-do because we need the files to be
+        # available. if we need better info about transfers -- and ideally yes -- we need
+        # to be more thoughtful about it.
         #
-        self.do_transfers_if(result)
         rs = ResultSerializer(self._csvpaths.config.archive_path)
         rs.save_result(result)
+        self.transfers_manager.do_transfers_if(result)
         rr = ResultRegistrar(
             csvpaths=self.csvpaths, result=result, result_serializer=rs
         )
@@ -903,9 +780,11 @@ class ResultsManager:  # pylint: disable=C0115
         #
         _ = ""
 
+        """
         print(
             f"resman: get_named_result_for_instance: {name}, {run_dir}, {run}, {instance}"
         )
+        """
 
         if run_dir.endswith(f"/{instance}") or run_dir.endswith(f"\\{instance}"):
             instance_dir = run_dir

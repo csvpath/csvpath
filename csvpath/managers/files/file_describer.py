@@ -5,12 +5,12 @@ from csvpath.util.nos import Nos
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.references.reference_parser import ReferenceParser
+from .file_descriptor import ServerConfig, Config
 
 NamedFileName = NewType("NamedFileName", str)
 
 
 class NamedFileDescriber:
-
     README = "README.md"
     DEFAULT_README = "# Named-File Documentation\n\n"
     JSON_FILE = "definition.json"
@@ -29,6 +29,12 @@ class NamedFileDescriber:
         return name
 
     # ========== JSON ============
+
+    def get_config(self, name: NamedFileName) -> Config:
+        return Config.model_validate(self.get_json(name))
+
+    def store_config(self, name: NamedFileName, config: Config) -> None:
+        self.store_json(name, config.model_dump(exclude_none=True))
 
     def store_json(self, name: NamedFileName, j: dict) -> None:
         if name is None:
@@ -136,3 +142,35 @@ class NamedFileDescriber:
         else:
             j[self.ON_ARRIVAL] = on
         self.store_json(name, j)
+
+    # ========== sources ============
+
+    def add_server(
+        self, name: NamedFileName, servername: str, server: ServerConfig
+    ) -> None:
+        t = self.get_sources(name)
+        if t is None:
+            t = {}
+        t[servername] = server
+        self.store_sources(name, t)
+
+    def remove_server(self, name: NamedFileName, servername: str) -> None:
+        t = self.get_sources(name)
+        if t is None or servername not in t:
+            raise ValueError(f"{name} does not have server {servername}")
+        del t[servername]
+        self.store_sources(name, t)
+
+    def store_sources(self, name: NamedFileName, t: dict[str, ServerConfig]) -> None:
+        if t is None:
+            t = {}
+        config = self.get_config(name)
+        config.sources = t
+        self.store_config(name, config)
+
+    def get_sources(self, name: NamedFileName) -> dict[str, ServerConfig]:
+        config = self.get_config(name)
+        t = config.sources
+        if t is None:
+            return {}
+        return t

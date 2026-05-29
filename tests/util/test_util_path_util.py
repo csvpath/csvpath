@@ -4,6 +4,13 @@ from csvpath.util.path_util import PathUtility as pathu
 
 
 class TestUtilPathUtil(unittest.TestCase):
+    def test_path_util_dir_name(self):
+        assert pathu.dir_name("/a/b/c.txt") == "/a/b"
+        assert pathu.dir_name("c.txt") == ""
+        assert pathu.dir_name("https://f/i/s.html") == "https://f/i"
+        assert pathu.dir_name("\\a\\b\\c.txt") == "\\a\\b"
+        assert pathu.dir_name("d:\\a\\b\\c.txt") == "d:\\a\\b"
+
     def test_path_util_norm(self):
         path = "./csvpath/../org/i/am/a/path"
         normed = pathu.norm(path)

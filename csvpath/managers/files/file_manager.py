@@ -13,7 +13,6 @@ from csvpath.util.references.results_reference_finder_2 import (
 )
 from csvpath.util.exceptions import FileException
 from csvpath.util.nos import Nos
-from csvpath.util.box import Box
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.template_util import TemplateUtility as temu
 from .file_registrar import FileRegistrar
@@ -21,6 +20,8 @@ from .lines_and_headers_cacher import LinesAndHeadersCacher
 from .file_metadata import FileMetadata
 from .file_describer import NamedFileDescriber
 from .file_activator import NamedFileActivator
+from .file_names_rules import FileNamesRules as rules
+from .file_descriptor import Config
 
 NamedFileName = NewType("NamedFileName", str)
 """@private"""
@@ -48,6 +49,7 @@ class FileManager:
     def activator(self) -> NamedFileActivator:
         return NamedFileActivator(self)
 
+    """
     @property
     def nos(self) -> Nos:
         box = Box()
@@ -57,6 +59,7 @@ class FileManager:
                 self._nos = Nos(None)
                 box.add("boto_s3_nos", self._nos)
         return self._nos
+    """
 
     @property
     def csvpaths(self):
@@ -252,6 +255,10 @@ class FileManager:
         home = pathu.resep(home)
         return home
 
+    def configure_named_file(self, name: NamedFileName, descriptor: Config) -> None:
+        self.assure_named_file_home(name)
+        self.describer.store_config(name, descriptor)
+
     #
     # file homes are paths to files like:
     #   inputs/named_files/March-2024/March-2024.csv/March-2024.csv
@@ -409,6 +416,14 @@ class FileManager:
         for name in names:
             self.remove_named_file(name)
 
+    #
+    # TODO:
+    #   this is out of sync with file descriptors as now handled. is that a problem?
+    #   we don't save the actual JSON object, just use it. there is a difference
+    #   between how we define here and the actual descriptor that means you cannot just
+    #   copy back the descriptor and use it to repopulate the named-file. that is
+    #   probably not good.
+    #
     def set_named_files(self, nf: dict[str, str]) -> None:
         """@private"""
         cfg = {} if nf.get("_config") is None else nf.get("_config")
@@ -416,8 +431,11 @@ class FileManager:
             if k == "_config":
                 continue
             template = None
-            if k in cfg and "template" in cfg[k]:
-                template = cfg[k]["template"]
+            config = None
+            if k in cfg:
+                config = Config(**cfg[k])
+                template = config.template
+                self.configure_named_file(k, config)
             self.add_named_file(name=k, path=v, template=template)
 
     def set_named_files_from_json(self, filename: str) -> None:
@@ -443,20 +461,10 @@ class FileManager:
                 raise
 
     def legal_name(self, name: str) -> None:
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if name.strip() == "":
-            raise ValueError("Name cannot be empty")
-        if name.find("/") > -1 or name.find("\\") > -1:
-            raise ValueError(
-                f"Not a legal name: {name}. Path seperators are not allowed."
-            )
-        if name.find(".") > -1:
-            raise ValueError(f"Not a legal name: {name}. Periods are not allowed.")
-        if name.find("$") > -1:
-            raise ValueError(f"Not a legal name: {name}. Dollarsigns are not allowed.")
-        if name.find("#") > -1:
-            raise ValueError(f"Not a legal name: {name}. Hashmarks are not allowed.")
+        return rules.is_legal_file_name(name)
+
+    def _clean_file_name(self, fname: str) -> str:
+        return rules.make_clean_file_name(fname)
 
     #
     # if name is provided all files selected will be registered under the same name in
@@ -562,8 +570,18 @@ class FileManager:
         self.describer.store_json(name, js)
 
     def add_named_file(
-        self, *, name: NamedFileName, path: str, template: str = None
+        self,
+        *,
+        name: NamedFileName,
+        path: str,
+        template: str = None,
+        config: Config = None,
     ) -> str | None:
+        #
+        # note that we can pass in a Config with a template that is different
+        # from the present template arg. the file registration will happen
+        # using the arg, not the template from the config.
+        #
         self.csvpaths.logger.info("Adding named file %s from %s", name, path)
         if not self.can_load(path):
             #
@@ -579,12 +597,18 @@ class FileManager:
         if path is None or path.strip() == "":
             raise ValueError("Path cannot be None or empty")
         if template is None:
-            #
-            # check if we have a template already
-            #
             template = self.describer.get_template(name)
         if template is not None:
             temu.valid(template, file=True)
+        if config is not None:
+            #
+            # doing config here enables copy_in() to pull down files
+            # from sftp and http servers that we wouldn't otherwise
+            # have access to. usually we'd expect the named-file was
+            # configured in advance, but that doesn't have to be the
+            # case.
+            #
+            self.configure_named_file(name, config)
         path = pathu.resep(path)
         self.csvpaths.logger.debug("Path after resep %s", path)
         config = self.csvpaths.config
@@ -593,6 +617,11 @@ class FileManager:
         local = config.get(section="inputs", name="allow_local_files", default=False)
         local = str(local).strip().lower() in ["on", "yes", "true"]
         nos = Nos(path)
+        #
+        # can the descriptor override the project's prohibition on http(s) loads?
+        # no. the project may be controlled by a context like FlightPath Server, where
+        # the user cannot just override certain settings.
+        #
         if nos.is_http and http is not True:
             msg = f"Cannot add {path} as {name} because loading files over HTTP is not allowed"
             self.csvpaths.logger.warning(msg)
@@ -635,16 +664,23 @@ class FileManager:
                 mark = path[pm + 1 :]
                 path = path[0:pm]
             #
+            # exp: moving docs and descriptor to above copy_in()
+            #
+            self.assure_docs_and_discriptor(name)
+            self.csvpaths.logger.debug("Assured docs and discriptor")
+            #
             # copy file to its home location
             #
             self.csvpaths.logger.debug("Path after removing mark, if any: %s", path)
-            self._copy_in(path, home, template)
+            self._copy_in(name=name, path=path, home=home, template=template)
             self.csvpaths.logger.debug("Done copying in")
             #
             #
             #
-            self.assure_docs_and_discriptor(name)
-            self.csvpaths.logger.debug("Assured docs and discriptor")
+            # self.assure_docs_and_discriptor(name)
+            # self.csvpaths.logger.debug("Assured docs and discriptor")
+            #
+            # end exp!
             #
             # create the reference to the bytes/version added to the named-file.
             # this is the most specific reference possible. we return it when we're
@@ -699,13 +735,7 @@ class FileManager:
             if self.csvpaths.ecoms.do_i_raise():
                 raise
 
-    def _clean_file_name(self, fname: str) -> str:
-        fname = fname.replace("?", "_")
-        fname = fname.replace("&", "_")
-        fname = fname.replace("=", "_")
-        return fname
-
-    def _copy_in(self, path, home, template=None) -> None:
+    def _copy_in(self, *, name, path, home, template=None) -> None:
         # nos = self.nos
         nos = Nos(path)
         sep = nos.sep
@@ -728,15 +758,56 @@ class FileManager:
             nos.path = path
             nos.copy(temp)
         else:
-            self._copy_down(path, temp, mode="wb")
+            self._copy_down(name=name, path=path, temp=temp, mode="wb")
         return temp
 
-    def _copy_down(self, path, temp, mode="wb") -> None:
+    def _copy_down(self, *, name, path, temp, mode="wb") -> None:
         """@private"""
-        with DataFileReader(path) as reader:
+        #
+        # here we need to verify that we have access to the source.
+        #
+        # if we're on FlightPath Server the server is responsible for preventing
+        # local loads, or allowing them. here we are responsible for SFTP and
+        # HTTP sites.
+        #
+        # ^^^ NOTE: not handling HTTP specifically atm. vvv
+        #
+        # if we recognize an http we should check our descriptor (if available)
+        # to see if it is an acceptable site.
+        #
+        # if we are using sftp we need credentials, so we look in the descriptor
+        # to see if we know the site. this is both a security and a practical
+        # thing we don't want to allow adding files from just anywhere. but also,
+        # we can't access a server without username and secret, even if we are
+        # ok with the source.
+        #
+        # at this time we're going to allow any defined source or the project's
+        # main config.ini [sftp] settings. in principle it might be that someone
+        # can push to the main sftp, but should not pull from it, but that seems
+        # like a marginal advantage that would mostly just be annoying.
+        #
+        nos = Nos(path)
+        if nos.is_sftp:
+            reader = DataFileReader(path)
+            #
+            # adding config to the reader allows the reader to look to the config
+            # for server credentials that match host and port, if any.
+            #
+            config = self.describer.get_config(name)
+            servers = config.sources
+            reader.server_config = servers
+            lines = ""
+            try:
+                lines = reader.read()
+            finally:
+                reader.close()
             with DataFileWriter(path=temp, mode=mode) as writer:
-                for line in reader.next_raw():
-                    writer.append(line)
+                writer.write(lines)
+        else:
+            with DataFileReader(path) as reader:
+                with DataFileWriter(path=temp, mode=mode) as writer:
+                    for line in reader.next_raw():
+                        writer.append(line)
 
     #
     # can take a reference. the ref would only be expected to point
