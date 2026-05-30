@@ -275,6 +275,50 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         fm.add_named_files_from_dir(DIR)
         assert fm.named_files_count == 6
 
+    def test_file_mgr_dir2(self):
+        paths = Builder().build()
+        fm = paths.file_manager
+        fm.remove_all_named_files()
+        res = fm.add_named_files_from_dir(DIR, name="test")
+        assert len(res) == 6
+        assert fm.named_files_count == 1
+        mani = fm.get_manifest("test")
+        assert len(mani) == 6
+
+    def test_file_mgr_dir3(self):
+        paths = Builder().build()
+        fm = paths.file_manager
+        fm.remove_all_named_files()
+        res = fm.add_named_files_from_dir(DIR, name="test", recurse=False)
+        assert len(res) == 6
+        assert fm.named_files_count == 1
+        mani = fm.get_manifest("test")
+        assert len(mani) == 6
+
+    def test_file_mgr_dir4(self):
+        paths = Builder().build()
+        fm = paths.file_manager
+        fm.remove_all_named_files()
+        #
+        # this will add dir, recurse=False
+        #
+        res = fm.add_named_file(name="test", path=DIR)
+        assert len(res) == 6
+        mani = fm.get_manifest("test")
+        assert len(mani) == 6
+
+    def test_file_mgr_dir5(self):
+        paths = Builder().build()
+        fm = paths.file_manager
+        fm.remove_all_named_files()
+        res = fm.add_named_files_from_dir(
+            DIR, name="test", recurse=False, regex=".*/csvpaths/.*food\\.*"
+        )
+        assert len(res) == 2
+        assert fm.named_files_count == 1
+        mani = fm.get_manifest("test")
+        assert len(mani) == 2
+
     def test_file_mgr_json1(self):
         paths = Builder().build()
         fm = paths.file_manager

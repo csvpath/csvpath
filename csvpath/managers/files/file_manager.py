@@ -1,3 +1,4 @@
+import re
 import json
 import traceback
 from typing import NewType
@@ -256,6 +257,9 @@ class FileManager:
         return home
 
     def configure_named_file(self, name: NamedFileName, descriptor: Config) -> None:
+        #
+        # updates the named-file's descriptor by replacement
+        #
         self.assure_named_file_home(name)
         self.describer.store_config(name, descriptor)
 
@@ -476,8 +480,17 @@ class FileManager:
     # if we don't pass in a name, each file is registered under its filename, minus the
     # extension
     #
+    # return is a list of references using fingerprints for exact identification of
+    # registered data.
+    #
     def add_named_files_from_dir(
-        self, dirname: str, *, name=None, template: str = None, recurse=True
+        self,
+        dirname: str,
+        *,
+        name=None,
+        template: str = None,
+        recurse=True,
+        regex: str = None,
     ) -> list[str]:
         ret = []
         #
@@ -496,8 +509,19 @@ class FileManager:
         # collect all full paths that are files and have correct extensions
         #
         for p in dlist:
-            # _ = p.lower()
-            # p = nos.join(p)
+            #
+            # check against a regex if provided. if no match, skip
+            #
+            if regex is not None:
+                print(f"filman: add dir: checking regex: {regex}, p: {p}")
+                m = re.search(regex, p)
+                if not m:
+                    print("filman: add dir: no match on regex!")
+                    continue
+
+            #
+            #
+            #
             ext = p[p.rfind(".") + 1 :].strip().lower()
             if ext in self._csvpaths.config.get(section="extensions", name="csv_files"):
                 if name is None:
@@ -509,13 +533,9 @@ class FileManager:
                 #
                 # we expect when Nos gives us a recursive listing the files are qualified
                 # by every dir up to the starting dir.
+                # this should be consistent across backends, if ever not, fix it there, not here.
                 #
-                if recurse is True:
-                    path = p
-                else:
-                    # path = os.path.join(base, p)
-                    path = Nos(base).join(p)
-                ref = self.add_named_file(name=n, path=path, template=template)
+                ref = self.add_named_file(name=n, path=p, template=template)
                 if ref is not None:
                     ret.append(ref)
             else:
@@ -636,6 +656,20 @@ class FileManager:
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return
+        #
+        # exp! we should know enough to redirect if handed a dir path. we'll not recurse
+        # because the caller hasn't given us enough info to know if we should.
+        #
+        # if the caller is acting programmatically, they should call the more specific
+        # method. if using FlightPath Server, the server should allow them to be likewise
+        # more specific. this branch is essentially a fallback presumed to be covering for
+        # lazy developers and people who are working without better information.
+        #
+        isfile = Nos(path).isfile()
+        if not isfile:
+            return self.add_named_files_from_dir(
+                path, name=name, template=template, recurse=False
+            )
         try:
             self.csvpaths.logger.debug("Ready to register %s", path)
             #
@@ -691,6 +725,10 @@ class FileManager:
             ret = f"${name}.files.{h}"
             self.csvpaths.logger.debug("Reference to named-file: %s", ret)
             #
+            # ---------------------------
+            # maybe move the metadata handling to its own method?
+            #
+            #
             # create the metadata event for this registration
             #
             name_home = self.named_file_home(name)
@@ -727,6 +765,13 @@ class FileManager:
             self.csvpaths.logger.debug("Registered %s", ret)
             return ret
         except Exception as ex:
+            #
+            # remove me! tho, why you'd want quiet is not sure.
+            #
+            print(traceback.format_exc())
+            #
+            #
+            #
             msg = f"Error in loading named-file: {ex}"
             self.csvpaths.logger.error(msg)
             self.csvpaths.error_manager.handle_error(
@@ -741,6 +786,7 @@ class FileManager:
         sep = nos.sep
         #
         # TODO: why wouldn't nos.sep cover http? Nos is not used in http. probably should be.
+        # update: it does now, but for now leaving this. a future moment can remove.
         #
         sep = "/" if path.startswith("https://") or path.startswith("http://") else sep
         fname = path if path.rfind(sep) == -1 else path[path.rfind(sep) + 1 :]

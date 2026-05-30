@@ -280,7 +280,8 @@ class FileDo:
         Path(self.path).mkdir(parents=True, exist_ok=True)
 
     def isfile(self) -> bool:
-        return os.path.isfile(self.path)
+        isfile = os.path.isfile(self.path)
+        return isfile
 
     #
     # listdir returns files in filesystem order, i.e. unordered.
