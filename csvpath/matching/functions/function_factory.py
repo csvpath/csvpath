@@ -98,6 +98,7 @@ from .variables.sort import Sort
 from .variables.slice import Slice
 from .variables.index_of import IndexOf
 from .misc.metadata import Metadata
+from .misc.env import Env
 from .misc.runtime import Runtime
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
@@ -415,6 +416,7 @@ class FunctionFactory:
         fs["random"] = Random
         fs["shuffle"] = Shuffle
         fs["metadata"] = Metadata
+        fs["env"] = Env
         #
         # not aliases
         #
