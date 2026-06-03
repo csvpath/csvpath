@@ -23,6 +23,22 @@ class ReferenceResults:
         with DataFileReader(self.runs_manifest_path) as file:
             return json.load(file.source)
 
+    def files_with_root_minor_if(self) -> list[str]:
+        #
+        # we capture a tab b using references like: $a#b.files.:all. the info exists
+        # in the ReferenceParser but it isn't in the results' files until we add it.
+        #
+        if self.ref.root_minor is None:
+            return self._files
+
+        update = []
+        for i, _ in enumerate(self._files):
+            if _.endswith(f"#{self.ref.root_minor}"):
+                update.append(_)
+            else:
+                update.append(f"{_}#{self.ref.root_minor}")
+        return update
+
     @property
     def files(self) -> list[str]:
         return self._files

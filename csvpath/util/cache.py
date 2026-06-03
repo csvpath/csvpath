@@ -1,10 +1,7 @@
 # pylint: disable=C0114
 import os
-import csv
 import hashlib
 import json
-from typing import Dict
-from .path_util import PathUtility as pathu
 from csvpath.util.nos import Nos
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
@@ -44,6 +41,7 @@ class Cache:
                 self.csvpathx.logger.debug("{filename} is not available or not a file")
         return None
         """
+
     def get_cachedir(self) -> str:
         self.csvpathx.config._assure_cache_path()
         if not Nos(self.csvpathx.config.cache_dir_path).is_local:
@@ -53,6 +51,16 @@ class Cache:
     def get_keypath(self, filename: str) -> str:
         if filename is None:
             raise ValueError("Filename cannot be None")
+        #
+        # filenames may have root minor tokens separated from the filename by a #.
+        # this will usually be an excel tab. we don't want that info here.
+        #
+        i = filename.find("#")
+        if i > -1:
+            filename = filename[0:i]
+        #
+        #
+        #
         fn = self.get_cache_name(filename)
         if fn is None:
             self.csvpathx.logger.debug(

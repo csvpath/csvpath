@@ -1,13 +1,10 @@
 # pylint: disable=C0114
-import os
 import json
-from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
 from csvpath.util.references.reference_parser import ReferenceParser
-from csvpath.util.references.reference_results import ReferenceResults
 from csvpath.util.references.reference_exceptions import ReferenceException
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
@@ -96,6 +93,16 @@ class ReferenceManifestEntryFinder:
         mani = results.manifest
         files = results.files
         file = None if len(files) == 0 else files[0]
+        #
+        # excel files may have a root_minor indicating a tab. that doesn't help here
+        # because the manifest deals with the whole file.
+        #
+        # i = file.find("#")
+        # if i > -1:
+        #    file = file[0:i]
+        #
+        #
+        #
         for _ in mani:
             path = _["file"]
             if file == path:

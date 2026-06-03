@@ -1524,6 +1524,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 f"Not using cache to get total lines and headers for {filename}"
             )
             lc = LineCounter(self)
+            print(f"csvcwpath: 1527: filename: {filename}")
             lm, headers = lc.get_lines_and_headers(filename)
             self.line_monitor = lm
             self.headers = headers

@@ -111,6 +111,16 @@ class FileManager:
             raise ValueError("Named-file name and file cannot both be None")
         if name is None:
             raise ValueError("File can be None but named-file name must be passed")
+        #
+        # excel files may have a root_minor indicating a tab. that doesn't help here
+        # because the manifest deals with the whole file.
+        #
+        # i = file.find("#")
+        # if i > -1:
+        #    file = file[0:i]
+        #
+        #
+        #
 
         ref = (
             ReferenceParser(name, csvpaths=self.csvpaths)
