@@ -3,6 +3,7 @@ import csv
 from typing import NewType, List, Dict, Union
 from datetime import datetime
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -93,15 +94,17 @@ class ResultSerializer:
             json.dump(meta, f.sink, indent=2)
         with DataFileWriter(path=Nos(run_dir).join("errors.json")) as f:
             json.dump(errors, f.sink, indent=2)
+        self._save_vars(run_dir)
+        """
         with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
             #
             # exp
             #
             import jsonpickle
-
             s = jsonpickle.encode(variables, unpicklable=False, indent=2)
             f.sink.write(s)
             # json.dump(variables, f.sink, indent=2)
+        """
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
         if lines is not None:
@@ -140,6 +143,33 @@ class ResultSerializer:
                 writer.writerows(unmatched)
 
         self._do_printouts_if(run_dir=run_dir, printouts=printouts)
+
+    def _save_vars(self, run_dir: str) -> None:
+        variables = self.result.csvpath.variables
+        #
+        # need to look for vars and functions that create vars that have a temp qualifier
+        #
+        matcher = self.result.csvpath.matcher
+        es = matcher.expressions
+        es = [_[0] for _ in es]
+        for _ in es:
+            for m in exut.get_my_descendents(_):
+                if m.temp:
+                    name = m.first_non_term_qualifier(m.name)
+                    variables.pop(name)
+
+        #
+        #
+        #
+        with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
+            #
+            # exp
+            #
+            import jsonpickle
+
+            s = jsonpickle.encode(variables, unpicklable=False, indent=2)
+            f.sink.write(s)
+            # json.dump(variables, f.sink, indent=2)
 
     def _do_printouts_if(
         self, *, run_dir: str, printouts: dict[str, list[str]]
