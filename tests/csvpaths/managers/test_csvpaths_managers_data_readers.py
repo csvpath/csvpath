@@ -1,11 +1,8 @@
 import unittest
-import pytest
 import os
 import shutil
-from csvpath.managers.files.file_manager import FileManager
 from csvpath.util.file_readers import CsvDataReader
 from csvpath.util.xlsx.xlsx_data_reader import XlsxDataReader
-from csvpath import CsvPaths
 from tests.csvpaths.builder import Builder
 from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
 
@@ -14,7 +11,7 @@ PATH_XLSX = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.xlsx"
 PATH_XLSX2 = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.xlsx#again"
 
 
-class TestCsvPathsManagersDataReaders(unittest.TestCase):
+class TestCsvPathsManagersXlsxDataReaders(unittest.TestCase):
     def _clean(self) -> None:
         path = f"inputs{os.sep}named_files{os.sep}xlsx"
         b = os.path.exists(path)
@@ -61,7 +58,10 @@ class TestCsvPathsManagersDataReaders(unittest.TestCase):
         mgr = paths.file_manager
         if mgr.has_named_file("xlsx"):
             mgr.remove_named_file("xlsx")
+
         mgr.add_named_file(name="xlsx", path=PATH_XLSX2)
+        assert mgr.has_named_file("xlsx")
+
         xreader = mgr.get_named_file_reader("xlsx")
         assert isinstance(xreader, XlsxDataReader)
         i = 0

@@ -37,7 +37,6 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         # adding files and paths is optional, but a good idea for tests because
         # the source test files and dirs could change.
         #
-        import time
 
         # t1 = time.perf_counter()
         paths.file_manager.add_named_files_from_dir(CSVS)
@@ -121,9 +120,12 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
         paths.file_manager.add_named_files_from_dir(CSVS)
         paths.paths_manager.add_named_paths_from_json(TJSON)
         paths.collect_paths(filename="March-2024", pathsname="transfer")
-        assert os.path.exists(f"transfers{os.sep}transfer.txt")
+
+        t = paths.config.get(section="results", name="transfers")
+        t = Nos(t).join("transfer.txt")
+        assert Nos(t).exists()
         i = 0
-        with open(f"transfers{os.sep}transfer.txt") as file:
+        with open(t) as file:
             for _ in file:
                 i += 1
                 print(f"[{i}]: {_}")
@@ -147,9 +149,13 @@ class TestCsvPathsExamplesJsonNamedPaths(unittest.TestCase):
             name="transfer", file_path=T2JSON, append=True
         )
         paths.collect_paths(filename="March-2024", pathsname="transfer")
-        assert os.path.exists(f"transfers{os.sep}transfer.txt")
+
+        t = paths.config.get(section="results", name="transfers")
+        t = Nos(t).join("transfer.txt")
+        assert Nos(t).exists()
+
         i = 0
-        with open(f"transfers{os.sep}transfer.txt") as file:
+        with open(t) as file:
             for _ in file:
                 i += 1
                 print(f"[{i}]: {_}")

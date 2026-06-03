@@ -150,13 +150,14 @@ class ResultSerializer:
         # need to look for vars and functions that create vars that have a temp qualifier
         #
         matcher = self.result.csvpath.matcher
-        es = matcher.expressions
-        es = [_[0] for _ in es]
-        for _ in es:
-            for m in exut.get_my_descendents(_):
-                if m.temp:
-                    name = m.first_non_term_qualifier(m.name)
-                    variables.pop(name)
+        if hasattr(matcher, "expressions") and matcher.expressions:
+            es = matcher.expressions
+            es = [_[0] for _ in es]
+            for _ in es:
+                for m in exut.get_my_descendents(_):
+                    if m.temp:
+                        name = m.first_non_term_qualifier(m.name)
+                        variables.pop(name)
 
         #
         #

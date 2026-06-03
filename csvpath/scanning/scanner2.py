@@ -145,10 +145,7 @@ class Scanner2:
         #
         # we need to check for a root minor
         #
-        print(f"scanner2: self.filname 1: {self.filename}")
         self._add_root_minor_to_filename_if()
-        print(f"scanner2: self.filname 2: {self.filename}")
-
         #
         #
         #
@@ -174,16 +171,10 @@ class Scanner2:
         #
         if not self.csvpath:
             return
-        print(
-            f"scanner2: _add_root_minor_to_filename_if 1: {self.csvpath.named_file_name}"
-        )
         if self.csvpath.named_file_name is None:
             return
         if self.csvpath.named_file_name.find("#") == -1:
             return
-        print(
-            f"scanner2: _add_root_minor_to_filename_if 2: {self.csvpath.named_file_name}"
-        )
         if not self.csvpath.named_file_name.strip().startswith("$"):
             #
             # non references can have a root_minor, but we don't expect them in
@@ -198,7 +189,6 @@ class Scanner2:
             #
             return
         ref = ReferenceParser(self.csvpath.named_file_name)
-        print(f"scanner2: _add_root_minor_to_filename_if 3: {ref}")
         if ref.root_minor is None:
             raise ValueError(
                 "Root minor cannot be None when a named-file reference has a #"

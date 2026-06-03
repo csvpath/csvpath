@@ -24,6 +24,9 @@ from .file_activator import NamedFileActivator
 from .file_names_rules import FileNamesRules as rules
 from .file_descriptor import Config
 
+from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
+
+
 NamedFileName = NewType("NamedFileName", str)
 """@private"""
 
@@ -674,8 +677,16 @@ class FileManager:
         # method. if using FlightPath Server, the server should allow them to be likewise
         # more specific. this branch is essentially a fallback presumed to be covering for
         # lazy developers and people who are working without better information.
+        if nos.path.find("#") > -1:
+            #
+            # if we passed in a root minor, a.k.a. "mark", we need to strip
+            # it in order to find the actual file
+            #
+            nos = Nos(nos.path[0 : nos.path.find("#")])
         #
-        isfile = Nos(path).isfile()
+        # note for now we treat any http as a file
+        #
+        isfile = nos.is_http or nos.isfile()
         if not isfile:
             return self.add_named_files_from_dir(
                 path, name=name, template=template, recurse=False
@@ -707,6 +718,12 @@ class FileManager:
             if pm > -1:
                 mark = path[pm + 1 :]
                 path = path[0:pm]
+            #
+            # we're registering with a mark, so we need to be Xlsx and have a tab with that name.
+            #
+            if mark is not None:
+                self._validate_xlsx_mark(path, mark)
+
             #
             # exp: moving docs and descriptor to above copy_in()
             #
@@ -789,6 +806,16 @@ class FileManager:
             )
             if self.csvpaths.ecoms.do_i_raise():
                 raise
+
+    def _validate_xlsx_mark(self, path: str, mark: str) -> None:
+        if not XlsxReaderHelper.is_xlsx(path):
+            raise ValueError(f"Not an Excel file: {path}")
+        if mark is None:
+            raise ValueError("Mark cannot be None")
+        if mark.find("#") > -1:
+            raise ValueError("Mark cannot include #")
+        if not XlsxReaderHelper.valid_worksheet(path, mark):
+            raise ValueError(f"{mark} is not a worksheet in {path}")
 
     def _copy_in(self, *, name, path, home, template=None) -> None:
         # nos = self.nos

@@ -40,13 +40,13 @@ class SftpDataReader(CsvDataReader):
     # we should be good.
     #
     @property
-    def server_config(self) -> list[ServerConfig]:
+    def server_config(self) -> dict[str, ServerConfig]:
         if not hasattr(self, "_server_config") or self._server_config is None:
-            return []
+            return {}
         return self._server_config
 
     @server_config.setter
-    def server_config(self, servers: list[ServerConfig]) -> None:
+    def server_config(self, servers: dict[str, ServerConfig]) -> None:
         self._server_config = servers
 
     #
