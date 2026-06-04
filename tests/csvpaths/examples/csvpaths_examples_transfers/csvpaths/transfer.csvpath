@@ -1,0 +1,14 @@
+~
+    id:output
+    validation-mode:no-raise, print
+~
+$[10-12][
+    @report_path = "sftp://{SFTP_SERVER}:{SFTP_PORT}/print_reports.txt"
+    @valid_path = "output/is/valid.txt"
+    @invalid_path = "output/is/invalid.txt"
+    @vars_path = "vars/vars.json"
+    @data_path = "data.csv"
+    @source_path = "source.csv"
+    @all_path = "done.txt"
+    print("hi")
+]

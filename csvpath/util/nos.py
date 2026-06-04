@@ -90,11 +90,48 @@ class Nos:
             return False
         return True
 
+    @property
+    def location(self) -> str:
+        #
+        # returns None if a local path. there may be some gray areas around mounted drives?
+        # otherwise, returns the first path part after the protocol. port is included, if any.
+        #
+        if self.is_local:
+            return None
+        path_part = self.strip_protocol(self.path)
+        i = path_part.find(self.sep)
+        if i > -1:
+            return path_part[0:i]
+        return path_part
+
+    @property
+    def location_and_port(self) -> tuple[str, int]:
+        location = self.location
+        if location is None:
+            return None
+        i = location.find(":")
+        if i == -1:
+            return (location,)
+        return (location[0:i], int(location[i + 1 :]))
+
     #
-    # subclass removes ftps://hostname:port if found, or any similar
+    # subclass removes sftp://hostname:port if found, or any similar
     # protocol. s3:// does not need this.
+    # we'll handle http(s) here because not a backend
     #
     def strip_protocol(self, path: str) -> str:
+        if path.startswith("https://"):
+            return path[8:]
+        if path.startswith("http://"):
+            return path[7:]
+        if path.startswith("s3://"):
+            return path[5:]
+        if path.startswith("azure://"):
+            return path[8:]
+        if path.startswith("gs://"):
+            return path[6:]
+        if path.startswith("sftp://"):
+            return path[7:]
         return path
 
     @property
@@ -243,7 +280,8 @@ class FileDo:
         Path(self.path).mkdir(parents=True, exist_ok=True)
 
     def isfile(self) -> bool:
-        return os.path.isfile(self.path)
+        isfile = os.path.isfile(self.path)
+        return isfile
 
     #
     # listdir returns files in filesystem order, i.e. unordered.
@@ -266,7 +304,6 @@ class FileDo:
         if recurse is True:
             lst = []
             for root, dirs, files in os.walk(self.path):
-
                 troot = root[len(self.path) :]
                 troot = troot.lstrip("/").lstrip("\\")
                 if dirs_only is False:

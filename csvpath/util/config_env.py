@@ -15,13 +15,9 @@ class ConfigEnv:
         #
         self._nos = ClassLoader.load("from csvpath.util.nos import Nos", [""])
         self._env = None
-        self._var_sub_source = None
-        self._allow = None
 
     def refresh(self) -> None:
         self._env = None
-        self._var_sub_source = None
-        self._allow = None
 
     def nos(self, path: str):
         self._nos.path = path
@@ -33,26 +29,22 @@ class ConfigEnv:
 
     @property
     def var_sub_source(self) -> str:
-        if self._var_sub_source is None:
-            self._var_sub_source = self.config.get(
-                section="config",
-                name="var_sub_source",
-                default="env",
-                string_parse=False,
-            )
-        return self._var_sub_source
+        return self.config.get(
+            section="config",
+            name="var_sub_source",
+            default="env",
+            string_parse=False,
+        )
 
     @property
     def allow_var_sub(self) -> bool:
-        if self._allow is None:
-            a = self.config.get(
-                section="config",
-                name="allow_var_sub",
-                default=False,
-                string_parse=False,
-            )
-            self._allow = a and str(a).strip().lower() in ["true", "yes"]
-        return self._allow
+        a = self.config.get(
+            section="config",
+            name="allow_var_sub",
+            default=False,
+            string_parse=False,
+        )
+        return a and str(a).strip().lower() in ["true", "yes", "on"]
 
     @property
     def subs(self) -> dict:
@@ -103,6 +95,13 @@ class ConfigEnv:
             return default if default else name
         if not self.allow_var_sub:
             return default if default else name
+        return self.get_from_env(name=name, default=default)
+
+    #
+    # returns an env value, if name is found in the configured env source,
+    # irregardless of all caps or not.
+    #
+    def get_from_env(self, *, name, default=None):
         if self.var_sub_source == "env":
             v = os.getenv(name)
             return v if v else default if default else name

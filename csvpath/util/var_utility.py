@@ -5,6 +5,20 @@ from typing import Dict
 
 
 class VarUtility:
+    @classmethod
+    def parse_var_value(cls, config, name: str, value: str) -> str:
+        #
+        # use this method to make sure a value is parsed and subbed. if a var
+        # should be checked for ALL CAPS and swapped for the same name from OS
+        # or env.json you have to get it from config.
+        # likewise, a var value may have {name} tokens that must be swapped in for
+        #
+        faux = "___never_say_never___"
+        config.set(section=faux, name=name, value=value)
+        value = config.get(section=faux, name=name)
+        config.config_parser.remove_section(faux)
+        return value
+
     #
     # finds variables that may be in env vars. does these steps:
     #  1. if env var name passed check for it

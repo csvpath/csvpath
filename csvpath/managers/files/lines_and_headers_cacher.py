@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 import json
 from csvpath.util.line_counter import LineCounter
 from csvpath.util.line_monitor import LineMonitor
@@ -6,7 +6,6 @@ from csvpath.util.cache import Cache
 
 
 class LinesAndHeadersCacher:
-
     #
     # csvpathx can be either CsvPath or CsvPaths
     #
@@ -44,10 +43,16 @@ class LinesAndHeadersCacher:
         #
         # bit of goofy json sneezing :/
         #
-        js = json.loads(jjson)
+        # json should come back as objects, not string. but that has
+        # changed over time, so I'm leaving the test in for now.
+        #
+        js = jjson
+        if isinstance(jjson, str):
+            js = json.loads(jjson)
         headers = js.get("headers")
         headers = None if headers is None else headers[:]
-        del js["headers"]
+        if "headers" in js:
+            del js["headers"]
         jjson = json.dumps(js)
         lm.load(jjson)
         return (lm, headers)

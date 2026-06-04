@@ -526,6 +526,17 @@ Cache: {cache}
         """@private
         at this time we do not recommend reusing CsvPaths, but it is doable
         you should clean before reuse unless you want to accumulate results."""
+        #
+        # adding this Config() refresh breaks several tests, indicating -- i think --
+        # mainly that 1) we have some iffy tests that don't act like real use cases
+        # and 2) we sorta say that CsvPaths shouldn't be reused, but sorta act like
+        # we solved that so it can be, but aren't fully safe yet or at least haven't
+        # proved it yet.
+        #
+        # regardless, for now, don't reup the Config.
+        #
+        # self._config = Config()
+        #
         self._set_managers()
         self.clear_run_coordination()
         self._errors = []

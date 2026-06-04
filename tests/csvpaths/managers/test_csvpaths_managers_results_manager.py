@@ -2,8 +2,6 @@ import unittest
 import pytest
 import os
 from datetime import datetime
-from csvpath import CsvPaths
-from csvpath.managers.results.results_manager import ResultsManager
 from csvpath.managers.results.result import Result
 from csvpath.managers.results.result_serializer import ResultSerializer
 from tests.csvpaths.builder import Builder
@@ -143,24 +141,40 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
 
     def test_results_mgr_specific_named_result(self):
         paths = Builder().build()
-        paths.paths_manager.add_named_paths_from_dir(directory=NAMED_PATHS_DIR)
-        paths.file_manager.set_named_files(FILES)
+
+        from tests.conftest import _clear_files
+
+        _clear_files()
+
+        path = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}food.csvpaths"
+        if paths.paths_manager.has_named_paths("food"):
+            paths.paths_manager.remove_named_paths("food")
+        paths.paths_manager.add_named_paths(name="food", from_file=path)
+
+        path = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv"
+        if paths.file_manager.has_named_file("food"):
+            paths.file_manager.remove_named_file("food")
+        paths.file_manager.add_named_file(name="food", path=path)
 
         paths.collect_paths(filename="food", pathsname="food")
 
         with pytest.raises(ValueError):
             paths.results_manager.get_specific_named_result("food")
 
-        result = paths.results_manager.get_specific_named_result(
-            "$food#candy check.results.:0"
-        )
+        ref = "$food#candy check.results.:0"
+        result = paths.results_manager.get_specific_named_result(ref)
+        # if result is None:
+        #    pytest.exit("Cannot find {ref}")
+
         assert result is not None
         assert isinstance(result, Result)
         assert result.csvpath.identity == "candy check"
 
-        result = paths.results_manager.get_specific_named_result(
-            "$food.results.2025.candy check"
-        )
+        ref = "$food.results.2025.candy check"
+        result = paths.results_manager.get_specific_named_result(ref)
+        # if result is None:
+        #    pytest.exit("Cannot find {ref}")
+
         assert result is not None
         assert isinstance(result, Result)
         assert result.csvpath.identity == "candy check"

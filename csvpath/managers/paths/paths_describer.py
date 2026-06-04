@@ -1,51 +1,23 @@
 import traceback
 import json
 from typing import NewType
-from typing import Optional
+
 
 from csvpath.util.nos import Nos
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.references.reference_parser import ReferenceParser
-
-from pydantic import BaseModel
+from .paths_descriptor import (
+    Scripts,
+    Webhooks,
+    Transfers,
+    GroupTransfers,
+    ServerConfig,
+    GroupConfig,
+    Config,
+)
 
 NamedPathsName = NewType("NamedPathsName", str)
-
-
-class Scripts(BaseModel):
-    on_complete_all: Optional[str] = None
-    on_complete_valid: Optional[str] = None
-    on_complete_invalid: Optional[str] = None
-    on_complete_error: Optional[str] = None
-
-
-class Header(BaseModel):
-    name: Optional[str] = None
-    value: Optional[str] = None
-
-
-class Webhook(BaseModel):
-    url: Optional[str] = None
-    payload: Optional[str] = None
-    headers: list[Header] = []
-
-
-class Webhooks(BaseModel):
-    on_complete_all: Optional[Webhook] = None
-    on_complete_invalid: Optional[Webhook] = None
-    on_complete_valid: Optional[Webhook] = None
-    on_complete_error: Optional[Webhook] = None
-
-
-class GroupConfig(BaseModel):
-    template: Optional[str] = None
-    scripts: Optional[Scripts] = None
-    webhooks: Optional[Webhooks] = None
-
-
-class Config(BaseModel):
-    groups: Optional[dict[str, GroupConfig]] = None
 
 
 class NamedPathsDescriber:
@@ -56,9 +28,6 @@ class NamedPathsDescriber:
     TEMPLATE = "template"
     CONFIG = "_config"
     SCRIPTS = "scripts"
-    # ON_COMPLETE_ALL_SCRIPT = "on_complete_all_script"
-    # ON_COMPLETE_VALID_SCRIPT = "on_complete_valid_script"
-    # ON_COMPLETE_ERROR_SCRIPT = "on_complete_error_script"
 
     def __init__(self, paths_manager) -> None:
         self.paths_manager = paths_manager
@@ -157,7 +126,7 @@ class NamedPathsDescriber:
         name = self._name_for_name(name)
         _ = self.get_json(name)
         cfg = _.get(self.CONFIG)
-        if cfg:
+        if cfg is not None:
             cfg = Config(**cfg)
         else:
             cfg = Config()
@@ -349,3 +318,33 @@ class NamedPathsDescriber:
         if w is None:
             return Webhooks()
         return w
+
+    # ========== transfers ============
+
+    def store_transfers(self, name: NamedPathsName, t: GroupTransfers) -> None:
+        config = self.get_config(name)
+        config.transfers = t
+        self.store_config(name, config)
+
+    def get_transfers(self, name: NamedPathsName) -> Transfers:
+        config = self.get_config(name)
+        t = config.transfers
+        if t is None:
+            return GroupTransfers()
+        return t
+
+    # ========== destinations ============
+
+    def store_destinations(
+        self, name: NamedPathsName, t: dict[str, ServerConfig]
+    ) -> None:
+        config = self.get_config(name)
+        config.destinations = t
+        self.store_config(name, config)
+
+    def get_destinations(self, name: NamedPathsName) -> dict[str, ServerConfig]:
+        config = self.get_config(name)
+        t = config.destinations
+        if t is None:
+            return {}
+        return t

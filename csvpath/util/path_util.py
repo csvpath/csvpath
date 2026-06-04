@@ -49,6 +49,17 @@ class PathUtility:
             return ("/", "\\")
 
     @classmethod
+    def dir_name(cls, apath: str) -> str:
+        parts = cls.parts(apath)
+        path = ""
+        if len(parts) > 1:
+            last = parts[len(parts) - 1]
+            path = apath[0 : apath.rfind(last)]
+            path = path.rstrip("/")
+            path = path.rstrip("\\")
+        return path
+
+    @classmethod
     def parts(cls, apath: str) -> list[str]:
         apath = cls.resep(apath)
         parts = []

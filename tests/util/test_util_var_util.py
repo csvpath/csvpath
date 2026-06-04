@@ -3,9 +3,29 @@ import os
 from csvpath.util.var_utility import VarUtility
 from csvpath import CsvPath
 from csvpath import CsvPaths
+from csvpath.util.config import Config
 
 
 class TestUtilVarUtil(unittest.TestCase):
+    def test_parse_var_value(self) -> None:
+        c = Config()
+        c.set(
+            section="config",
+            name="var_sub_source",
+            value="tests/util/test_resources/my-env.json",
+        )
+        c.set(section="config", name="allow_var_sub", value="yes")
+        assert (
+            c.get(section="config", name="var_sub_source")
+            == "tests/util/test_resources/my-env.json"
+        )
+        v = VarUtility.parse_var_value(c, "server", value="DUMMY_SFTP_SERVER")
+        assert v == "otter"
+        v = VarUtility.parse_var_value(
+            c, "server", value="{DUMMY_SFTP_SERVER} eats fish"
+        )
+        assert v == "otter eats fish"
+
     def test_var_util_1(self):
         assert VarUtility.isupper("ABDC_DEW")
         assert VarUtility.isupper("A2_DEW")

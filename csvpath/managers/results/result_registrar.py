@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.references.reference_parser import ReferenceParser
@@ -109,7 +108,7 @@ class ResultRegistrar(Registrar, Listener):
         mdata.lines_scanned = self.result.csvpath.scan_count
         mdata.lines_matched = self.result.csvpath.match_count
         if self.result.csvpath.transfers:
-            tpaths = self.result.csvpath.csvpaths.results_manager.transfer_paths(
+            tpaths = self.result.csvpath.csvpaths.results_manager.transfers_manager.transfer_paths(
                 self.result
             )
             mdata.transfers = tpaths

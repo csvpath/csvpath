@@ -3,13 +3,12 @@ import csv
 from smart_open import open
 from ..file_readers import CsvDataReader
 
-#
-# atm, http(s) is read-remote for named-file adds only so we don't have
-# to worry about the writer, Nos or Excel.
-#
-
 
 class HttpDataReader(CsvDataReader):
+    #
+    # atm, http(s) is read-remote for named-file adds only so we don't have
+    # to worry about the writer, Nos or Excel.
+    #
     def load_if(self) -> None:
         if self.source is None:
             self.source = open(self._path, "r")
@@ -39,14 +38,10 @@ class HttpDataReader(CsvDataReader):
                 for line in file:
                     yield line
 
-    def fingerprint(self) -> str:
-        ...
+    def fingerprint(self) -> str: ...
 
-    def exists(self, path: str) -> bool:
-        ...
+    def exists(self, path: str) -> bool: ...
 
-    def remove(self, path: str) -> None:
-        ...
+    def remove(self, path: str) -> None: ...
 
-    def rename(self, path: str, new_path: str) -> None:
-        ...
+    def rename(self, path: str, new_path: str) -> None: ...

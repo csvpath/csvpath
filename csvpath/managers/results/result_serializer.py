@@ -1,10 +1,9 @@
-import os
 import json
 import csv
-from typing import NewType, List, Dict, Optional, Union
+from typing import NewType, List, Dict, Union
 from datetime import datetime
-from csvpath import CsvPath
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -95,15 +94,17 @@ class ResultSerializer:
             json.dump(meta, f.sink, indent=2)
         with DataFileWriter(path=Nos(run_dir).join("errors.json")) as f:
             json.dump(errors, f.sink, indent=2)
+        self._save_vars(run_dir)
+        """
         with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
             #
             # exp
             #
             import jsonpickle
-
             s = jsonpickle.encode(variables, unpicklable=False, indent=2)
             f.sink.write(s)
             # json.dump(variables, f.sink, indent=2)
+        """
         # Save lines returned as a CSV file. note that they may have already
         # spooled and the spooler been discarded.
         if lines is not None:
@@ -141,11 +142,64 @@ class ResultSerializer:
                 writer = csv.writer(f.sink)
                 writer.writerows(unmatched)
 
-        # Save the printout lines
-        if self._has_printouts(printouts):
+        self._do_printouts_if(run_dir=run_dir, printouts=printouts)
+
+    def _save_vars(self, run_dir: str) -> None:
+        if self.result is None or self.result.csvpath is None:
+            return
+        variables = self.result.csvpath.variables
+        #
+        # need to look for vars and functions that create vars that have a temp qualifier
+        #
+        matcher = self.result.csvpath.matcher
+        if hasattr(matcher, "expressions") and matcher.expressions:
+            es = matcher.expressions
+            es = [_[0] for _ in es]
+            for _ in es:
+                for m in exut.get_my_descendents(_):
+                    if m.temp:
+                        name = m.first_non_term_qualifier(m.name)
+                        variables.pop(name)
+
+        #
+        #
+        #
+        with DataFileWriter(path=Nos(run_dir).join("vars.json")) as f:
+            #
+            # exp
+            #
+            import jsonpickle
+
+            s = jsonpickle.encode(variables, unpicklable=False, indent=2)
+            f.sink.write(s)
+            # json.dump(variables, f.sink, indent=2)
+
+    def _do_printouts_if(
+        self, *, run_dir: str, printouts: dict[str, list[str]]
+    ) -> None:
+        if not self._has_printouts(printouts):
+            return
+        if (
+            not self.result
+            or not self.result.csvpath
+            or self.result.csvpath.consolidate_printouts
+        ):
             with DataFileWriter(path=Nos(run_dir).join("printouts.txt")) as f:
                 for k, v in printouts.items():
                     f.sink.write(f"---- PRINTOUT: {k}\n")
+                    for _ in v:
+                        f.sink.write(f"{_}\n")
+        else:
+            for k, v in printouts.items():
+                k = k.replace("..", "_")
+                k = k.lstrip("/")
+                k = k.lstrip("\\")
+                if k.find("//"):
+                    self.result.csvpath.logger.warning(
+                        f"Cannot write printouts to {k}. Check name compatibility with filesystem."
+                    )
+                k = f"{k}.txt"
+                with DataFileWriter(path=Nos(run_dir).join(k)) as f:
                     for _ in v:
                         f.sink.write(f"{_}\n")
 

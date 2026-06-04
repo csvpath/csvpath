@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+import traceback
 import paramiko
 import stat
 from csvpath import CsvPaths
@@ -17,38 +18,40 @@ from .sftp_walk import SftpWalk
 # attention to.
 #
 class SftpDo:
-    @property
-    def _config(self):
-        if self._cfg is None:
-            self._cfg = Box().get(Box.CSVPATHS_CONFIG)
-            #
-            # if none, we may not be in a context closely tied to a CsvPaths.
-            # e.g. FP. so we create a new csvpaths just for the config. it will
-            # be identical to any csvpaths in this project unless the other
-            # csvpaths were long-lived and had programmatic changes.
-            #
-            if self._cfg is None:
-                self._cfg = CsvPaths().config
-                Box().add(Box.CSVPATHS_CONFIG, self._cfg)
-        return self._cfg
+    def _csvpath_config(self):
+        _csvpathconfig = Box().get(Box.CSVPATHS_CONFIG)
+        #
+        # if none, we may not be in a context closely tied to a CsvPaths.
+        # e.g. FP. so we create a new csvpaths just for the config. it will
+        # be identical to any csvpaths in this project unless the other
+        # csvpaths were long-lived and had programmatic changes.
+        #
+        if _csvpathconfig is None:
+            _csvpathconfig = CsvPaths().config
+            Box().add(Box.CSVPATHS_CONFIG, _csvpathconfig)
+        return _csvpathconfig
 
     @property
-    def sep(self) -> str:
-        return "/"
+    def _config(self):
+        return self._cfg
 
     @_config.setter
     def _config(self, cfg: SftpConfig) -> None:
         self._cfg = cfg
 
+    @property
+    def sep(self) -> str:
+        return "/"
+
     def __init__(self, path):
         self._path = None
         self._orig_path = None
         self._server_part = None
-        self._config = None
+        self._csvpathconfig = None
         self.setup(path)
 
     def setup(self, path: str = None) -> None:
-        config = self._config
+        config = self._csvpath_config()
         self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
         self._config = SftpConfig(config)
         if path:
@@ -85,7 +88,6 @@ class SftpDo:
 
     def join(self, name: str) -> str:
         return f"{self._orig_path}/{name}"
-        # return f"{self.path}/{name}"
 
     def remove(self, *, retry=True) -> None:
         try:
@@ -176,6 +178,7 @@ class SftpDo:
             if retry is True:
                 self._config.reset()
                 return self.exists(retry=False)
+            print(traceback.format_exc())
 
     def dir_exists(self) -> bool:
         try:

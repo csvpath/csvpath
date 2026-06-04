@@ -1,0 +1,10 @@
+~
+   id: printing   test-data: process-list-cols.csv
+    print-mode:separate
+~
+$[1*][
+
+    print("The city is $.headers.SRC_NAM_TX")
+    print("FULL_XY: $.headers.FULL_XY", "FULL_XY values")
+
+]

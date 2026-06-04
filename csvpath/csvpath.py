@@ -1,14 +1,13 @@
-""" CsvPath is the main class for the library. most of the magic
-    happens either here or in individual functions. """  # pylint: disable=C0302
+"""CsvPath is the main class for the library. most of the magic
+happens either here or in individual functions."""  # pylint: disable=C0302
 
 import time
 import os
 import hashlib
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Callable
 from collections.abc import Iterator
-from abc import ABC, abstractmethod
 from .util.config import Config
 from .util.line_monitor import LineMonitor
 from .util.log_utility import LogUtility as lout
@@ -293,6 +292,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self._logger = ler
 
     def __del__(self) -> None:
+        self.csvpaths = None
+        self.matcher = None
         try:
             # in a test on windows 0.0.570 we see self has no error_manager attribute
             # that is surprising since there is one ^^^^. no idea. this test is cheap tho.
@@ -303,6 +304,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             ):
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
+                self.error_manager = None
             lout.release_logger(self)
         except Exception:
             print(traceback.format_exc())
@@ -586,6 +588,10 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         """@private"""
         return self.modes.validation_mode.collect_validation_errors
 
+    @property
+    def consolidate_printouts(self) -> bool:
+        return self.modes.print_mode.consolidate_printouts
+
     def add_printer(self, printer) -> None:  # pylint: disable=C0116
         """@private"""
         if printer not in self.printers:
@@ -739,7 +745,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #   - run-mode: no-run | run
         #   - unmatched-mode: no-keep | keep
         #   - source-mode: preceding | origin
-        #   - files-mode: all | no-data | no-unmatched | no-printouts | data | unmatched | errors | meta | vars | printouts
+        #   - files-mode: all | no-data | no-unmatched | no-printouts | data
+        #                     | unmatched | errors | meta | vars | printouts
         #
         self.modes.update()
         #
@@ -1484,9 +1491,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self.get_total_lines_and_headers()
         return self.line_monitor.physical_end_line_number
 
-    def get_total_lines_and_headers(
-        self, *, filename: str = None
-    ) -> None:  # pylint: disable=C0116
+    def get_total_lines_and_headers(self, *, filename: str = None) -> None:  # pylint: disable=C0116
         #
         # filename is an option for certain needs but in the usual case
         # we expect scanner.filename, and if both are available for some
@@ -1515,10 +1520,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 f"Using cache to get total lines and headers for {filename}"
             )
             cacher = self.cacher
-            print(f"cassff: {cacher}: {filename}")
             self.line_monitor = cacher.get_new_line_monitor(filename)
             self.headers = cacher.get_original_headers(filename)
-            print(f"cassff: {self.line_monitor}: {self.headers}")
         else:
             self.logger.debug(
                 f"Not using cache to get total lines and headers for {filename}"

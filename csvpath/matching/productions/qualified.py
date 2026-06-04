@@ -57,6 +57,12 @@ class Qualities(Enum):
     # because that would compete with the existing renew() function.
     #
     RENEW = "renew"
+    #
+    # a "tmp" qualifier says that the variable should not be stored in
+    # vars.json. at this time we're only checking for tmp on variables,
+    # not on functions that may create variables.
+    #
+    TEMP = "tmp"
 
 
 class Qualified:  # pylint: disable=R0904
@@ -82,6 +88,7 @@ class Qualified:  # pylint: disable=R0904
         Qualities.WEAK.value,
         Qualities.STRICT.value,
         Qualities.RENEW.value,
+        Qualities.TEMP.value,
     ]
 
     def __init__(self, *, name: str = None):
@@ -94,7 +101,7 @@ class Qualified:  # pylint: disable=R0904
         # keep the original name so we can look up non-term
         # secondary qualifiers
         self.qualified_name = name
-        if self.name and self.name.__class__ == str:
+        if self.name and isinstance(self.name, str):
             self.name = self.name.strip()
         self.qualifier = None
         self._qualifiers = []
@@ -270,6 +277,16 @@ class Qualified:  # pylint: disable=R0904
         self._set(Qualities.LATCH.value, latch)
 
     @property
+    def temp(self) -> bool:  # pylint: disable=C0116
+        if self.qualifiers:
+            return Qualities.TEMP.value in self.qualifiers
+        return False
+
+    @temp.setter
+    def temp(self, temp: bool) -> None:
+        self._set(Qualities.TEMP.value, temp)
+
+    @property
     def nocontrib(self) -> bool:  # pylint: disable=C0116
         if self.qualifiers:
             return Qualities.NOCONTRIB.value in self.qualifiers
@@ -355,9 +372,7 @@ class Qualified:  # pylint: disable=R0904
         by adding self to the skip list."""
         es = self.matcher.expressions  # pylint: disable=E1101
         for e in es:
-            m = e[1] is self.default_match() or e[0].matches(
-                skip=[self]
-            )  # pylint: disable=E1101
+            m = e[1] is self.default_match() or e[0].matches(skip=[self])  # pylint: disable=E1101
             # updating the [expression, bool] unit so that matcher knows it
             # doesn't have to evaluate the expression another time
             if not m:

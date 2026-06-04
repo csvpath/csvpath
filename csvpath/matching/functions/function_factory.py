@@ -70,6 +70,7 @@ from .boolean.all import All
 from .boolean.exists import Exists
 from .sql.sql_in import SqlIn
 from .stats.percent import Percent
+
 # from .stats.minf import Min, Max, Average, Median
 from .stats.minf import Average, Median
 from .stats.nminmax import Min, Max
@@ -96,6 +97,9 @@ from .variables.clear import Clear
 from .variables.sort import Sort
 from .variables.slice import Slice
 from .variables.index_of import IndexOf
+from .misc.metadata import Metadata
+from .misc.env import Env
+from .misc.runtime import Runtime
 from .misc.random import Random, Shuffle
 from .misc.importf import Import
 from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
@@ -112,6 +116,7 @@ from .types.blank import Blank
 from .types.decimal import Decimal
 from .types.boolean import Boolean
 from .types.datef import Date
+from .types.uuid import Uuid
 from .types.email import Email
 from .types.url import Url
 from .types.string import String
@@ -407,8 +412,11 @@ class FunctionFactory:
         fs["min"] = Min
         fs["average"] = Average
         fs["median"] = Median
+        fs["runtime"] = Runtime
         fs["random"] = Random
         fs["shuffle"] = Shuffle
+        fs["metadata"] = Metadata
+        fs["env"] = Env
         #
         # not aliases
         #
@@ -535,6 +543,7 @@ class FunctionFactory:
         fs["odd"] = Odd
         fs["even"] = Odd
         fs["email"] = Email
+        fs["uuid"] = Uuid
         fs["url"] = Url
         fs["subtotal"] = Subtotal
         fs["reset_headers"] = ResetHeaders

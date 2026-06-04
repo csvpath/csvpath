@@ -4,8 +4,6 @@ from typing import Any
 from csvpath.matching.productions import Equality
 from csvpath.matching.util.exceptions import ChildrenException, MatchException
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.functions.function import Function
-from csvpath.matching.productions.term import Term
 from csvpath.matching.functions.types import (
     String,
     Nonef,
@@ -16,6 +14,7 @@ from csvpath.matching.functions.types import (
     Email,
     Url,
     Wildcard,
+    Uuid,
 )
 from ..args import Args
 from ..function_focus import MatchDecider
@@ -61,6 +60,7 @@ class Line(MatchDecider):
             Blank,
             Email,
             Url,
+            Uuid,
         ]
         a.arg(
             name="function representing a data type",
@@ -279,7 +279,7 @@ class Line(MatchDecider):
     def _handle_types_if(
         self, skip, i, s, errors, *, advanced=-1, advance_max=-1
     ) -> bool:
-        if not isinstance(s, (String, Decimal, Date, Boolean, Email, Url)):
+        if not isinstance(s, (String, Decimal, Date, Boolean, Email, Url, Uuid)):
             return False
         t = s._child_one()
         i = advance_max + i

@@ -1,13 +1,14 @@
 # pylint: disable=C0114
 import csv
 from smart_open import open
-from csvpath.util.box import Box
-from csvpath.util.nos import Nos
 from ..file_readers import CsvDataReader
 from .sftp_fingerprinter import SftpFingerprinter
 from .sftp_config import SftpConfig
-from .sftp_nos import SftpDo
 from csvpath import CsvPaths
+from csvpath.util.var_utility import VarUtility as vaut
+from csvpath.util.box import Box
+from csvpath.util.nos import Nos
+from csvpath.managers.files.file_descriptor import ServerConfig
 
 
 class SftpDataReader(CsvDataReader):
@@ -25,21 +26,76 @@ class SftpDataReader(CsvDataReader):
             Box().add(Box.CSVPATHS_CONFIG, config)
         return config
 
+    #
+    # populate from the FileManager.describer's descriptor, when needed, in order
+    # to load files from sftp sites other than the one configured in config.ini
+    # that is the only use that should be made.
+    #
+    # we need to be able to use a non-cached client with a given set of credentials
+    # so that we can talk with servers that are not in our config.ini. this is a
+    # particularly sftp requirement.
+    #
+    # in this class we have the advantage of never having cached the client used
+    # for basic reads. (Nos is another matter). so if we add the required info here
+    # we should be good.
+    #
+    @property
+    def server_config(self) -> dict[str, ServerConfig]:
+        if not hasattr(self, "_server_config") or self._server_config is None:
+            return {}
+        return self._server_config
+
+    @server_config.setter
+    def server_config(self, servers: dict[str, ServerConfig]) -> None:
+        self._server_config = servers
+
+    #
+    # unit
+    #
+    def server_credentials(self) -> tuple[str, int]:
+        if not Nos(self.path).is_sftp:
+            raise ValueError(f"{self.path} is not sftp")
+        server, port = Nos(self.path).location_and_port
+        username = None
+        password = None
+        for k, v in self.server_config.items():
+            if v.address == server:
+                if v.port == port:
+                    username = vaut.parse_var_value(
+                        self._config, "username", v.username
+                    )
+                    password = vaut.parse_var_value(
+                        self._config, "password", v.password
+                    )
+                    break
+                if port is None and (v.port == 22 or v.port is None):
+                    username = vaut.parse_var_value(
+                        self._config, "username", v.username
+                    )
+                    password = vaut.parse_var_value(
+                        self._config, "password", v.password
+                    )
+                    break
+        if username is None:
+            c = SftpConfig(self._config)
+            username = c.username
+            password = c.password
+        return username, password
+
     def load_if(self) -> None:
         if self.source is None:
-            config = self._config
-            c = SftpConfig(config)
             #
             # careful with the "b", w/o removing the encoding we have problems.
             #
+            u, p = self.server_credentials()
             if self.mode and "b" in self.mode:
                 self.source = open(
                     self.path,
                     self.mode,
                     transport_params={
                         "connect_kwargs": {
-                            "username": c.username,
-                            "password": c.password,
+                            "username": u,
+                            "password": p,
                             "look_for_keys": False,
                             "allow_agent": False,
                         }
@@ -52,54 +108,24 @@ class SftpDataReader(CsvDataReader):
                     encoding=self.encoding,
                     transport_params={
                         "connect_kwargs": {
-                            "username": c.username,
-                            "password": c.password,
+                            "username": u,
+                            "password": p,
                             "look_for_keys": False,
                             "allow_agent": False,
                         }
                     },
                 )
 
-    def next(self) -> list[str]:
-        config = self._config
-        c = SftpConfig(config)
-        with open(
-            self.path,
-            self.mode,
-            encoding=self.encoding,
-            transport_params={
-                "connect_kwargs": {
-                    "username": c.username,
-                    "password": c.password,
-                    "look_for_keys": False,
-                    "allow_agent": False,
-                }
-            },
-        ) as file:
-            reader = csv.reader(
-                file, delimiter=self._delimiter, quotechar=self._quotechar
-            )
-            for line in reader:
-                yield line
-
-    def next_raw(self) -> list[str]:
-        config = self._config
-        c = SftpConfig(config)
-        with open(
-            self.path,
-            self.mode,
-            encoding=self.encoding,
-            transport_params={
-                "connect_kwargs": {
-                    "username": c.username,
-                    "password": c.password,
-                    "look_for_keys": False,
-                    "allow_agent": False,
-                }
-            },
-        ) as file:
-            for line in file:
-                yield line
+    # ----------------------
+    # NOTE:
+    #
+    # fingerprint(), exists(), remove(), and rename() use Nos and
+    # are always operating against the config.ini sftp server.
+    #
+    # the read methods: next(), next_raw() and read() can use the
+    # server_config properties and server_credentials() to go against
+    # other sftp servers.
+    # ----------------------
 
     def fingerprint(self) -> str:
         self.load_if()
@@ -128,19 +154,57 @@ class SftpDataReader(CsvDataReader):
         else:
             raise ValueError(f"Path {path} is not a file")
 
+    def next(self) -> list[str]:
+        u, p = self.server_credentials()
+        with open(
+            self.path,
+            self.mode,
+            encoding=self.encoding,
+            transport_params={
+                "connect_kwargs": {
+                    "username": u,
+                    "password": p,
+                    "look_for_keys": False,
+                    "allow_agent": False,
+                }
+            },
+        ) as file:
+            reader = csv.reader(
+                file, delimiter=self._delimiter, quotechar=self._quotechar
+            )
+            for line in reader:
+                yield line
+
+    def next_raw(self) -> list[str]:
+        u, p = self.server_credentials()
+        with open(
+            self.path,
+            self.mode,
+            encoding=self.encoding,
+            transport_params={
+                "connect_kwargs": {
+                    "username": u,
+                    "password": p,
+                    "look_for_keys": False,
+                    "allow_agent": False,
+                }
+            },
+        ) as file:
+            for line in file:
+                yield line
+
     #
     # now using smart-open. the test_title_fix test uses it. other than that?
     #
     def read(self) -> str:
-        config = self._config
-        c = SftpConfig(config)
+        u, p = self.server_credentials()
         with open(
             self.path,
             self.mode,
             transport_params={
                 "connect_kwargs": {
-                    "username": c.username,
-                    "password": c.password,
+                    "username": u,
+                    "password": p,
                     "look_for_keys": False,
                     "allow_agent": False,
                 }
