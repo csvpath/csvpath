@@ -186,6 +186,7 @@ class ResultsManager:  # pylint: disable=C0115
                     raise ValueError("You must identity which run")
         if name_or_id is None:
             raise ValueError("Instance name cannot be none")
+
         results = self.get_named_results(name)
         if results is not None and not isinstance(results, list):
             return results

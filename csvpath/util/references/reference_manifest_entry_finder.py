@@ -94,8 +94,8 @@ class ReferenceManifestEntryFinder:
         files = results.files
         file = None if len(files) == 0 else files[0]
         #
-        # excel files may have a root_minor indicating a tab. that doesn't help here
-        # because the manifest deals with the whole file.
+        # logically excel files may have a root_minor indicating a tab. that doesn't
+        # apply here because the manifest separates the "mark" from the file path.
         #
         # i = file.find("#")
         # if i > -1:

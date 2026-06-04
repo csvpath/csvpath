@@ -128,7 +128,7 @@ class Nos:
             return path[5:]
         if path.startswith("azure://"):
             return path[8:]
-        if path.startswith("gcs://"):
+        if path.startswith("gs://"):
             return path[6:]
         if path.startswith("sftp://"):
             return path[7:]

@@ -19,18 +19,17 @@ from .sftp_walk import SftpWalk
 #
 class SftpDo:
     def _csvpath_config(self):
-        if self._csvpathconfig is None:
-            self._csvpathconfig = Box().get(Box.CSVPATHS_CONFIG)
-            #
-            # if none, we may not be in a context closely tied to a CsvPaths.
-            # e.g. FP. so we create a new csvpaths just for the config. it will
-            # be identical to any csvpaths in this project unless the other
-            # csvpaths were long-lived and had programmatic changes.
-            #
-            if self._csvpathconfig is None:
-                self._csvpathconfig = CsvPaths().config
-                Box().add(Box.CSVPATHS_CONFIG, self._csvpathconfig)
-        return self._csvpathconfig
+        _csvpathconfig = Box().get(Box.CSVPATHS_CONFIG)
+        #
+        # if none, we may not be in a context closely tied to a CsvPaths.
+        # e.g. FP. so we create a new csvpaths just for the config. it will
+        # be identical to any csvpaths in this project unless the other
+        # csvpaths were long-lived and had programmatic changes.
+        #
+        if _csvpathconfig is None:
+            _csvpathconfig = CsvPaths().config
+            Box().add(Box.CSVPATHS_CONFIG, _csvpathconfig)
+        return _csvpathconfig
 
     @property
     def _config(self):

@@ -292,6 +292,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self._logger = ler
 
     def __del__(self) -> None:
+        self.csvpaths = None
+        self.matcher = None
         try:
             # in a test on windows 0.0.570 we see self has no error_manager attribute
             # that is surprising since there is one ^^^^. no idea. this test is cheap tho.
@@ -302,6 +304,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             ):
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
+                self.error_manager = None
             lout.release_logger(self)
         except Exception:
             print(traceback.format_exc())
@@ -1524,7 +1527,6 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 f"Not using cache to get total lines and headers for {filename}"
             )
             lc = LineCounter(self)
-            print(f"csvcwpath: 1527: filename: {filename}")
             lm, headers = lc.get_lines_and_headers(filename)
             self.line_monitor = lm
             self.headers = headers

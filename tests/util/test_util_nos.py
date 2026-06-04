@@ -16,6 +16,6 @@ class TestUtilNos(unittest.TestCase):
         assert not Nos("/a/b/c").is_s3
         assert Nos("s3://a/b/c").is_s3
         assert Nos("sftp://a/b/c").is_sftp
-        assert Nos("gcs://a/b/c").is_gcs
+        assert Nos("gs://a/b/c").is_gcs
         assert Nos("azure://a/b/c").is_azure
         assert Nos("http://a/b/c").is_http

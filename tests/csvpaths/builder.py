@@ -1,6 +1,4 @@
 from csvpath import CsvPaths
-from tests.csvpaths.kit.tracking_file_manager import TrackingFileManager
-from tests.csvpaths.kit.tracking_paths_manager import TrackingPathsManager
 
 
 class Builder:
@@ -11,10 +9,10 @@ class Builder:
         #
         # swap in tracking paths and files managers
         #
-        paths.file_manager = TrackingFileManager(csvpaths=paths, mgr=paths.file_manager)
-        paths.paths_manager = TrackingPathsManager(
-            csvpaths=paths, mgr=paths.paths_manager
-        )
+        # paths.file_manager = TrackingFileManager(csvpaths=paths, mgr=paths.file_manager)
+        # paths.paths_manager = TrackingPathsManager(
+        #    csvpaths=paths, mgr=paths.paths_manager
+        # )
         #
         # put any custom stuff here
         #
@@ -23,7 +21,6 @@ class Builder:
         )
         paths.config.set(section="listeners", name="groups", value="default")
         # paths.config.set(section="listeners", name="groups", value="default,otlp")
-
         #
         # end custom
         #

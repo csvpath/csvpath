@@ -145,6 +145,8 @@ class ResultSerializer:
         self._do_printouts_if(run_dir=run_dir, printouts=printouts)
 
     def _save_vars(self, run_dir: str) -> None:
+        if self.result is None or self.result.csvpath is None:
+            return
         variables = self.result.csvpath.variables
         #
         # need to look for vars and functions that create vars that have a temp qualifier

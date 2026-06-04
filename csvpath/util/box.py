@@ -40,7 +40,7 @@ class Box:
         current_thread = threading.current_thread()
         return current_thread.native_id
 
-    AID = None
+    # AID = None
 
     def add(self, key: str, value: Any) -> None:
         s = Box.STUFF.get(self._thread)

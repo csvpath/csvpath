@@ -10,7 +10,8 @@ class XlsxReaderHelper:
         if not cls.is_xlsx(path):
             raise ValueError(f"Not an Excel path: {path}")
         db = xl.readxl(fn=path)
-        return mark in db.ws_names
+        b = mark in db.ws_names
+        return b
 
     @classmethod
     def is_xlsx(cls, path: str) -> bool:
