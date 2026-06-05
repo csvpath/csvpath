@@ -5,7 +5,6 @@ from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 
 class DateUtility:
-
     OFFSET_DAYS = 0
     OFFSET_MONTHS = 0
     OFFSET_YEARS = 0
@@ -19,12 +18,6 @@ class DateUtility:
             days=DateUtility.OFFSET_DAYS,
         )
         return now
-
-    """
-    @classmethod
-    def now(cls) -> datetime:
-        return datetime.now(timezone.utc)
-    """
 
     @classmethod
     def proper_dates(cls, dates: list) -> list:

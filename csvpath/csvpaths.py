@@ -443,6 +443,7 @@ Cache: {cache}
             path.logger = None
         for _ in self.dynamic_csvpath_error_listeners:
             path.error_manager.add_internal_listener(_)
+        path.run_dir = self._last_run_dir
         return path
 
     def stop_all(self) -> None:  # pragma: no cover

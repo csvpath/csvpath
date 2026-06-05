@@ -124,7 +124,10 @@ class WebhookListener(Listener, threading.Thread):
             #
             # send
             #
-            x = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+            x = self._do_send(
+                url=url, payload=payload, headers=headers, timeout=self.timeout
+            )
+            # x = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
             if x and x.status_code != 200:
                 if self.csvpaths is not None:
                     self.csvpaths.logger.warning(
@@ -160,3 +163,6 @@ class WebhookListener(Listener, threading.Thread):
             raise
         finally:
             ...
+
+    def _do_send(self, *, url: str, payload: dict, headers: dict, timeout: int):
+        return requests.post(url, json=payload, headers=headers, timeout=timeout)

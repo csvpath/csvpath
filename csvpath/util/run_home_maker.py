@@ -1,6 +1,5 @@
-import os
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from csvpath.util.references.reference_parser import ReferenceParser
 
 # from csvpath.util.references.files_reference_finder import FilesReferenceFinder
@@ -228,6 +227,12 @@ class RunHomeMaker:
                 suffix = suffix.replace(f":{i}", p)
 
             prefix = pathu.resep(prefix)
+        #
+        # this is what we need to do instead of the above ^^^^
+        #
+        # prefix, suffix  = temu.transform_paths_template(file, template)
+        #
+        #
         #
         # TODO: check for an assure_paths_home type method in paths mgr
         #

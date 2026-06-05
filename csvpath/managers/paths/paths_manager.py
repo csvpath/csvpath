@@ -843,12 +843,13 @@ class PathsManager:
     def get_identified_paths_in(
         self, nps: NamedPathsName, paths: list[Csvpath] = None
     ) -> list[tuple[Identity, Csvpath]]:
-        """@private"""
         #
         # used by PathsRegistrar
         #
         if paths is None:
             paths = self.get_named_paths(nps)
+            if paths is None:
+                raise ValueError(f"No such named-paths group: {nps}")
         idps = []
         for path in paths:
             #

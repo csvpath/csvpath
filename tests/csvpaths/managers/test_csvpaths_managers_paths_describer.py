@@ -2,7 +2,11 @@ import json
 import pytest
 from pydantic import ValidationError
 
+from csvpath import CsvPaths
 from csvpath.managers.files.file_descriptor import Config, OnArrival, ServerConfig
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.sftp.sftp_server_creds import SftpServerCreds
 
 
 class TestCsvPathsManagersFileDescriber:
@@ -141,3 +145,46 @@ class TestCsvPathsManagersFileDescriber:
         raw = '{"template": "t", "future_field": "some_value"}'
         d = Config.model_validate_json(raw)
         assert d.future_field == "some_value"  # type: ignore[attr-defined]
+
+    def test_sftp_config_server_creds(self) -> None:
+        config = Config(
+            sources={
+                "qa": ServerConfig(
+                    address="localhost",
+                    port=2022,
+                    username="LOCAL_USER",
+                    password="LOCAL_PASS",
+                ),
+                "prod": ServerConfig(
+                    address="192.168.1.255",
+                    port=22,
+                    username="AUSER",
+                    password="APASS",
+                ),
+            }
+        )
+
+        for rw in [DataFileReader, DataFileWriter]:
+            _ = rw(path="sftp://localhost:2022/abc")
+            _.server_config = config.sources
+            u, p = SftpServerCreds.server_credentials(_)
+            assert u == "LOCAL_USER"
+            assert p == "LOCAL_PASS"
+
+            _ = rw(path="sftp://192.168.1.255:22/abc")
+            _.server_config = config.sources
+            u, p = SftpServerCreds.server_credentials(_)
+            assert u == "AUSER"
+            assert p == "APASS"
+
+            _ = rw(path="sftp://192.168.1.255:1234/abc")
+            _.server_config = config.sources
+            u, p = SftpServerCreds.server_credentials(_)
+            assert u == CsvPaths().config.get(section="sftp", name="username")
+            assert p == CsvPaths().config.get(section="sftp", name="password")
+
+            _ = rw(path="sftp://192.168.1.255/abc")
+            _.server_config = config.sources
+            u, p = SftpServerCreds.server_credentials(_)
+            assert u == "AUSER"
+            assert p == "APASS"

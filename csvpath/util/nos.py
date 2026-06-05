@@ -111,8 +111,8 @@ class Nos:
             return None
         i = location.find(":")
         if i == -1:
-            return (location,)
-        return (location[0:i], int(location[i + 1 :]))
+            return (location, None)
+        return location[0:i], int(location[i + 1 :])
 
     #
     # subclass removes sftp://hostname:port if found, or any similar

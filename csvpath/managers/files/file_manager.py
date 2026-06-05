@@ -351,6 +351,14 @@ class FileManager:
             # TODO: replace dynamic tokens: :day_of_week, :day, :month, :month_of_year, :year, :quarter
             #
         t = t.replace(":filename", parts[-1])
+
+        #
+        # this is what we need to do instead of the above ^^^^
+        #
+        # t = temu.transform_file_template(t, path)
+        #
+        #
+        #
         return t
 
     @property
@@ -818,7 +826,6 @@ class FileManager:
             raise ValueError(f"{mark} is not a worksheet in {path}")
 
     def _copy_in(self, *, name, path, home, template=None) -> None:
-        # nos = self.nos
         nos = Nos(path)
         sep = nos.sep
         #
