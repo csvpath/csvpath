@@ -1,7 +1,51 @@
+from datetime import datetime, timezone
+
 from csvpath.util.references.reference_parser import ReferenceParser
+from csvpath.util.path_util import PathUtility as pathu
 
 
 class TemplateUtility:
+    @classmethod
+    def transform_file_template(cls, file: str, template: str) -> str:
+        template = cls.transform_template(template)
+        parts = pathu.parts(file)
+        for i, part in enumerate(parts):
+            template = template.replace(f":{i}", part)
+        template = template.replace(":filename", parts[-1])
+        #
+        # we do resep on the paths template transform but not here. it hasn't
+        # caused a problem so far in testing.
+        #
+        return template
+
+    @classmethod
+    def transform_paths_template(cls, file: str, template: str) -> str:
+        if str(template).strip() in ["None", ""]:
+            return template
+        template = cls.transform_template(template)
+        cls.valid(template)
+        suffix = cls.get_template_suffix(template=template)
+        i = template.find(":run_dir")
+        prefix = template[0:i]
+        parts = pathu.parts(file)
+        for i, p in enumerate(parts):
+            prefix = prefix.replace(f":{i}", p)
+            suffix = suffix.replace(f":{i}", p)
+        prefix = pathu.resep(prefix)
+        return prefix, suffix
+
+    @classmethod
+    def transform_template(cls, template: str) -> str:
+        dt = datetime.now(timezone.utc)
+        t = template
+        t = t.replace(":day", dt.day)
+        t = t.replace(":month", dt.month)
+        t = t.replace(":year", dt.year)
+        t = t.replace(":hour", dt.hour)
+        t = t.replace(":minute", dt.minute)
+        t = t.replace(":second", dt.second)
+        return t
+
     @classmethod
     def get_template_suffix(
         cls, *, template: str = None, ref: str = None, csvpaths=None
@@ -36,7 +80,7 @@ class TemplateUtility:
 
     @classmethod
     def find_template(cls, csvpaths, ref: str) -> str:
-        ref = ReferenceParser(ref, csvpaths=self.csvpaths)
+        ref = ReferenceParser(ref, csvpaths=csvpaths)
         paths = ref.root_major
         #
         # TODO: a reference could be FILES not just CSVPATHS.

@@ -1,14 +1,13 @@
 # pylint: disable=C0114
 import csv
 from smart_open import open
-from ..file_readers import CsvDataReader
-from .sftp_fingerprinter import SftpFingerprinter
-from .sftp_config import SftpConfig
 from csvpath import CsvPaths
-from csvpath.util.var_utility import VarUtility as vaut
+from csvpath.managers.files.file_descriptor import ServerConfig
 from csvpath.util.box import Box
 from csvpath.util.nos import Nos
-from csvpath.managers.files.file_descriptor import ServerConfig
+from csvpath.util.file_readers import CsvDataReader
+from csvpath.util.sftp.sftp_server_creds import SftpServerCreds
+from csvpath.util.sftp.sftp_fingerprinter import SftpFingerprinter
 
 
 class SftpDataReader(CsvDataReader):
@@ -53,6 +52,9 @@ class SftpDataReader(CsvDataReader):
     # unit
     #
     def server_credentials(self) -> tuple[str, int]:
+        u, p = SftpServerCreds.server_credentials(self)
+        return (u, p)
+        """
         if not Nos(self.path).is_sftp:
             raise ValueError(f"{self.path} is not sftp")
         server, port = Nos(self.path).location_and_port
@@ -81,6 +83,7 @@ class SftpDataReader(CsvDataReader):
             username = c.username
             password = c.password
         return username, password
+        """
 
     def load_if(self) -> None:
         if self.source is None:

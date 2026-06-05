@@ -86,7 +86,7 @@ class TransfersManager:
         # alternately, we could do all at once from a single array, either way.
         #
         tpaths = self._transfer_paths(result, [(t.file, t.transfer_to)])
-        self._do_transfers(tpaths)
+        self._do_transfers(tpaths, name)
 
     def do_transfer_mode_if(self, result) -> None:
         #
@@ -102,7 +102,7 @@ class TransfersManager:
         if transfers is None:
             return
         tpaths = self.transfer_paths(result)
-        self._do_transfers(tpaths)
+        self._do_transfers(tpaths, result.paths_name)
 
     def _name_for_token(self, result, nametoken) -> tuple[str, str]:
         file = None
@@ -222,7 +222,7 @@ class TransfersManager:
             #
         return (filefrom, varname, pathfrom, pathto, mode)
 
-    def _do_transfers(self, tpaths) -> None:
+    def _do_transfers(self, tpaths, name: str) -> None:
         for t in tpaths:
             pathfrom = t[2]
             pathto = t[3]
@@ -234,10 +234,25 @@ class TransfersManager:
                     nos.makedirs()
 
                 nos = Nos(pathfrom)
-
+                #
+                # use named-paths descriptor server configs to allow transfer to otherwise unknown SFTP servers
+                #
                 with DataFileReader(pathfrom, mode=rmode) as pf:
-                    with DataFileWriter(path=pathto, mode=t[4]) as file:
-                        file.write(pf.read())
+                    #
+                    # adding config to the reader allows the reader to look to the config for
+                    # server credentials that match host and port, if any. this capability is
+                    # only used for transfers and the writer only looks in named-paths
+                    # descriptor
+                    #
+                    writer = DataFileWriter(path=pathto, mode=t[4])
+                    try:
+                        config = self.csvpaths.paths_manager.describer.get_config(name)
+                        servers = config.destinations
+                        writer.server_config = servers
+                        writer.load_if()
+                        writer.sink.write(pf.read())
+                    finally:
+                        writer.close()
             except Exception:
                 print(traceback.format_exc())
                 logger = self.results_manager.csvpaths.logger

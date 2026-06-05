@@ -237,7 +237,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._save_scan_dir = None
         self._save_match_dir = None
-        self._run_name = None
+        self._run_dir = None
         #
         # metadata is collected from "outer" csvpath comments. outer comments
         # separate from the comments within the match part of the csvpath.
@@ -280,6 +280,14 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
         self._cacher = None
+
+    @property
+    def run_dir(self) -> str:
+        return self._run_dir
+
+    @run_dir.setter
+    def run_dir(self, d: str) -> None:
+        self._run_dir = d
 
     @property
     def logger(self):
@@ -988,16 +996,16 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         return scan, matches
 
     def _save_parts_if(self, scan, match):
-        if self._save_scan_dir and self._run_name:
+        if self._save_scan_dir and self._run_dir:
             with open(
-                os.path.join(self._save_scan_dir, f"{self._run_name}.txt"),
+                os.path.join(self._save_scan_dir, f"{self._run_dir}.txt"),
                 "w",
                 encoding="utf-8",
             ) as f:
                 f.write(scan)
-        if self._save_match_dir and self._run_name:
+        if self._save_match_dir and self._run_dir:
             with open(
-                os.path.join(self._save_match_dir, f"{self._run_name}.txt"),
+                os.path.join(self._save_match_dir, f"{self._run_dir}.txt"),
                 "w",
                 encoding="utf-8",
             ) as f:

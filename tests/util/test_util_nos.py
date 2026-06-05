@@ -7,7 +7,7 @@ class TestUtilNos(unittest.TestCase):
         assert Nos("https://localhost:8080/a").location == "localhost:8080"
         assert Nos("https://localhost:8080/a").location_and_port == ("localhost", 8080)
         assert Nos("sftp://localhost:2022/a").location_and_port == ("localhost", 2022)
-        assert Nos("azure://blob/a").location_and_port == ("blob",)
+        assert Nos("azure://blob/a").location_and_port == ("blob", None)
 
     def test_nos_backends_check(self) -> None:
         assert Nos("/a/b/c").is_local

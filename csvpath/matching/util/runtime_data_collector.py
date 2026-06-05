@@ -1,6 +1,8 @@
 from typing import Any, Dict
+from datetime import timezone, datetime
 
 from .exceptions import PrintParserException
+from csvpath.util.nos import Nos
 
 
 class RuntimeDataCollector:
@@ -171,6 +173,136 @@ class RuntimeDataCollector:
             identity,
             "errors_count",
             csvpath.errors_count,
+            local,
+            False,
+        )
+        # new
+        if csvpath.named_paths_name:
+            cls._set(
+                runtime,
+                identity,
+                "named_paths_name",
+                csvpath.named_paths_name,
+                local,
+                False,
+            )
+        if csvpath.named_file_name:
+            cls._set(
+                runtime,
+                identity,
+                "named_file_name",
+                csvpath.named_file_name,
+                local,
+                False,
+            )
+        if csvpath.run_dir is not None:
+            cls._set(
+                runtime,
+                identity,
+                "run_dir",
+                csvpath.run_dir,
+                local,
+                False,
+            )
+            sep = Nos(csvpath.run_dir).sep[0]
+            cls._set(
+                runtime,
+                identity,
+                "run_dir_name",
+                csvpath.run_dir[csvpath.run_dir.rfind(sep) + 1 :],
+                local,
+                False,
+            )
+        if (
+            csvpath.csvpaths is not None
+            and csvpath.run_dir is not None
+            and csvpath.named_paths_name is not None
+        ):
+            ref = csvpath.csvpaths._make_run_reference(
+                pathsname=csvpath.named_paths_name, crt=csvpath.run_dir
+            )
+            cls._set(
+                runtime,
+                identity,
+                "run_reference",
+                ref,
+                local,
+                False,
+            )
+        #
+        # we already have a time stamp, but breaking a date time down
+        # makes it more flexible for reporting.
+        #
+        dt = datetime.now(timezone.utc)
+        cls._set(
+            runtime,
+            identity,
+            "day_of_week",
+            dt.strftime("%A"),
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "day",
+            dt.day,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "month",
+            dt.month,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "month_of_year",
+            dt.strftime("%B"),
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "year",
+            dt.year,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "hour",
+            dt.hour,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "hour_of_day",
+            dt.strftime("%H"),
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "minute",
+            dt.minute,
+            local,
+            False,
+        )
+        cls._set(
+            runtime,
+            identity,
+            "second",
+            dt.second,
             local,
             False,
         )
