@@ -344,6 +344,8 @@ class FileManager:
         # and then, once fingerprinted:
         #   -> d/b/myfile.csv/0b849c9c1ef....csv
         #
+        """
+        _t = t
         parts = pathu.parts(path)
         for i, part in enumerate(parts):
             t = t.replace(f":{i}", part)
@@ -351,11 +353,19 @@ class FileManager:
             # TODO: replace dynamic tokens: :day_of_week, :day, :month, :month_of_year, :year, :quarter
             #
         t = t.replace(":filename", parts[-1])
-
+        """
         #
         # this is what we need to do instead of the above ^^^^
         #
-        # t = temu.transform_file_template(t, path)
+        t = temu.transform_file_template(template=t, file=path)
+        """
+        print(f"xt2: path: {path}")
+        print(f"xt2: parts: {parts}")
+        print(f"xt2: _t: {_t}")
+        print(f"xt2: _2: {_t2}")
+        print(f"xt2: t: {t}")
+        print("")
+        """
         #
         #
         #
@@ -534,12 +544,9 @@ class FileManager:
             # check against a regex if provided. if no match, skip
             #
             if regex is not None:
-                print(f"filman: add dir: checking regex: {regex}, p: {p}")
                 m = re.search(regex, p)
                 if not m:
-                    print("filman: add dir: no match on regex!")
                     continue
-
             #
             #
             #
@@ -678,7 +685,7 @@ class FileManager:
                 raise FileException(msg)
             return
         #
-        # exp! we should know enough to redirect if handed a dir path. we'll not recurse
+        # we should know enough to redirect if handed a dir path. we'll not recurse
         # because the caller hasn't given us enough info to know if we should.
         #
         # if the caller is acting programmatically, they should call the more specific
