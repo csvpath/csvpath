@@ -14,7 +14,6 @@ from csvpath.util.references.reference_manifest_entry_finder import (
 )
 from csvpath.util.exceptions import CsvPathsException
 from csvpath.util.nos import Nos
-from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.template_util import TemplateUtility as temu
 from csvpath.util.date_util import DateUtility as daut
@@ -214,6 +213,8 @@ class RunHomeMaker:
         #
         if isinstance(file, list):
             file = file[0]
+
+        """
         suffix = ""
         prefix = ""
         if template is not None and template.strip() != "":
@@ -227,10 +228,11 @@ class RunHomeMaker:
                 suffix = suffix.replace(f":{i}", p)
 
             prefix = pathu.resep(prefix)
+        """
         #
         # this is what we need to do instead of the above ^^^^
         #
-        # prefix, suffix  = temu.transform_paths_template(file, template)
+        prefix, suffix = temu.transform_paths_template(file, template)
         #
         #
         #

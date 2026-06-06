@@ -6,7 +6,7 @@ from csvpath.util.path_util import PathUtility as pathu
 
 class TemplateUtility:
     @classmethod
-    def transform_file_template(cls, file: str, template: str) -> str:
+    def transform_file_template(cls, *, file: str, template: str) -> str:
         template = cls.transform_template(template)
         parts = pathu.parts(file)
         for i, part in enumerate(parts):
@@ -21,7 +21,7 @@ class TemplateUtility:
     @classmethod
     def transform_paths_template(cls, file: str, template: str) -> str:
         if str(template).strip() in ["None", ""]:
-            return template
+            return template, ""
         template = cls.transform_template(template)
         cls.valid(template)
         suffix = cls.get_template_suffix(template=template)
@@ -38,12 +38,14 @@ class TemplateUtility:
     def transform_template(cls, template: str) -> str:
         dt = datetime.now(timezone.utc)
         t = template
-        t = t.replace(":day", dt.day)
-        t = t.replace(":month", dt.month)
-        t = t.replace(":year", dt.year)
-        t = t.replace(":hour", dt.hour)
-        t = t.replace(":minute", dt.minute)
-        t = t.replace(":second", dt.second)
+        t = t.replace(":day", str(dt.day))
+        t = t.replace(":month_name", dt.strftime("%B"))
+        t = t.replace(":month", str(dt.month))
+        t = t.replace(":year", str(dt.year))
+        t = t.replace(":hour_24", dt.strftime("%H"))
+        t = t.replace(":hour", str(dt.hour))
+        t = t.replace(":minute", str(dt.minute))
+        t = t.replace(":second", str(dt.second))
         return t
 
     @classmethod
@@ -96,6 +98,11 @@ class TemplateUtility:
 
     @classmethod
     def validate(cls, template: str, file: bool = False) -> tuple[bool, str]:
+        #
+        # this step corrects for :day, :month, :year, etc. by replacing them. we're
+        # not returning the template, so this shortcut doesn't matter.
+        #
+        template = cls.transform_template(template)
         #
         # removed the windows \\ rules because we cannot assume a dev using windows
         # works in a purely windows env. may need to convert seps in some step.
