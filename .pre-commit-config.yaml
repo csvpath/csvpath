@@ -5,19 +5,15 @@ repos:
     - id: ruff-check
       args: [ --fix ]
     - id: ruff-format
-#-   repo: https://github.com/psf/black
-#    rev: 22.10.0
-#    hooks:
-#    -   id: black
-#-   repo: https://github.com/pre-commit/mirrors-mypy
-#    rev: 'v1.8.0'  # Use the sha / tag you want to point at
-#    hooks:
-#    -   id: mypy
-#-   repo: https://github.com/pre-commit/pre-commit-hooks
-#    rev: v2.0.0
-#    hooks:
-#    -   id: flake8
-#        exclude: ^csvpath/matching/productions/equality\.py$
+
+- repo: local
+  hooks:
+    - id: no-commit-to-main
+      name: Prevent commits to main
+      entry: bash -c 'branch=$(git symbolic-ref HEAD 2>/dev/null | sed "s|refs/heads/||"); if [ "$branch" = "main" ]; then echo "❌ Direct commits to main are blocked. Create a branch first."; exit 1; fi'
+      language: system
+      pass_filenames: false
+
 #- repo: local
 #  hooks:
 #    - id: pylint
