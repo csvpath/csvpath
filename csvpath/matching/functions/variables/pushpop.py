@@ -34,7 +34,7 @@ class Push(SideEffect):
             types=[Term],
             actuals=[str],
         )
-        a = self.args.argset(2)
+        a = self.args.argset()
         a.arg(
             name="stack name",
             types=[Term, Variable, Header, Function, Reference],
@@ -63,7 +63,6 @@ class Push(SideEffect):
                     raise MatchException(msg)
             self.match = self.default_match()
             return
-        v = sibs[1].to_value(skip=skip)
         stack = None
         if isinstance(k, list):
             stack = k
@@ -89,12 +88,15 @@ class Push(SideEffect):
         #
         # do the push
         #
-        if (self.distinct or self.name == "push_distinct") and v in stack:
-            pass
-        elif self.skipnone and ExpressionUtility.is_empty(v):
-            pass
-        else:
-            stack.append(v)
+        for s in sibs[1:]:
+            v = s.to_value(skip=skip)
+            if (self.distinct or self.name == "push_distinct") and v in stack:
+                pass
+            elif self.skipnone and ExpressionUtility.is_empty(v):
+                pass
+            else:
+                stack.append(v)
+
         self.match = self.default_match()
 
 

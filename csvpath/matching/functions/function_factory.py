@@ -69,6 +69,7 @@ from .boolean.any import Any
 from .boolean.all import All
 from .boolean.exists import Exists
 from .sql.sql_in import SqlIn
+from .sql.select import Select
 from .stats.percent import Percent
 
 # from .stats.minf import Min, Max, Average, Median
@@ -373,6 +374,7 @@ class FunctionFactory:
         fs["format_date"] = DateFormat
         fs["in"] = In
         fs["sql_in"] = SqlIn
+        fs["select"] = Select
         fs["concat"] = Concat
         fs["contains"] = Contains
         fs["find"] = Contains
