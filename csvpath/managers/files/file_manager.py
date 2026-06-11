@@ -90,7 +90,9 @@ class FileManager:
         # nos = self.nos
         nos = Nos(p)
         if nos.exists():
+            print(f"filemges: {p}")
             with DataFileReader(p) as reader:
+                #print(f"filemges: {reader.source.read()}")
                 return json.load(reader.source)
         return None
 

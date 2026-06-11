@@ -312,7 +312,7 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         fm = paths.file_manager
         fm.remove_all_named_files()
         res = fm.add_named_files_from_dir(
-            DIR, name="test", recurse=False, regex=".*/csvpaths/.*food\\.*"
+            DIR, name="test", recurse=False, regex=r".*csvpaths[/\\].*food.*"
         )
         assert len(res) == 2
         assert fm.named_files_count == 1

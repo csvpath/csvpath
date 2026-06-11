@@ -2,7 +2,7 @@
 this is a jinja template
 
 line: 
-name: tests/csvpaths/test_resources/test.csv
+name: tests\csvpaths\test_resources\test.csv
 scan count: 9
 headers: ['firstname', 'lastname', 'say']
 
