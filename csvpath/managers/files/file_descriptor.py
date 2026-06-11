@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
+from csvpath.managers.server_config import ServerConfig
 
+"""
 class ServerConfig(BaseModel):
     address: str = Field(description="Hostname or IP address of the server.")
-    port: int = Field(description="Port number; coerced from string if needed.")
+    port: int = Field(description="Port number; coerce from string if needed.", default=None)
     username: str = Field(description="Login username (may be an env-var name).")
     password: str = Field(description="Login password (may be an env-var name).")
 
@@ -21,6 +23,7 @@ class ServerConfig(BaseModel):
             ) from e
 
     model_config = {"extra": "forbid"}
+"""
 
 
 class OnArrival(BaseModel):

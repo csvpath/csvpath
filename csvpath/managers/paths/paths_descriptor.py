@@ -1,5 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel, model_validator, Field, field_validator
+from pydantic import BaseModel, model_validator
+from csvpath.managers.server_config import ServerConfig
 
 
 class Scripts(BaseModel):
@@ -59,11 +60,10 @@ class GroupTransfers(BaseModel):
         return data
 
 
+"""
 class ServerConfig(BaseModel):
     address: str = None
-    port: int = Field(
-        description="Port number; coerced from string if needed.", default=None
-    )
+    port: int = Field(description="Port number; coerce from string if needed.", default=None)
     username: str = None
     password: str = None
 
@@ -78,6 +78,7 @@ class ServerConfig(BaseModel):
             ) from e
 
     model_config = {"extra": "forbid"}
+"""
 
 
 class GroupConfig(BaseModel):
