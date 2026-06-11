@@ -39,8 +39,6 @@ class FilesListener(Listener):  # Registrar,
         return mf
 
     def get_manifest(self, mpath) -> list:
-
-        print(f"fdaslistener: {mpath}")
         with DataFileReader(mpath) as reader:
             return json.load(reader.source)
 

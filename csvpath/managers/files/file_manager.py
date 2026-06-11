@@ -87,12 +87,9 @@ class FileManager:
     def files_root_manifest(self) -> dict:
         """@private"""
         p = self.files_root_manifest_path
-        # nos = self.nos
         nos = Nos(p)
         if nos.exists():
-            print(f"filemges: {p}")
             with DataFileReader(p) as reader:
-                #print(f"filemges: {reader.source.read()}")
                 return json.load(reader.source)
         return None
 
@@ -346,28 +343,7 @@ class FileManager:
         # and then, once fingerprinted:
         #   -> d/b/myfile.csv/0b849c9c1ef....csv
         #
-        """
-        _t = t
-        parts = pathu.parts(path)
-        for i, part in enumerate(parts):
-            t = t.replace(f":{i}", part)
-            #
-            # TODO: replace dynamic tokens: :day_of_week, :day, :month, :month_of_year, :year, :quarter
-            #
-        t = t.replace(":filename", parts[-1])
-        """
-        #
-        # this is what we need to do instead of the above ^^^^
-        #
         t = temu.transform_file_template(template=t, file=path)
-        """
-        print(f"xt2: path: {path}")
-        print(f"xt2: parts: {parts}")
-        print(f"xt2: _t: {_t}")
-        print(f"xt2: _2: {_t2}")
-        print(f"xt2: t: {t}")
-        print("")
-        """
         #
         #
         #
