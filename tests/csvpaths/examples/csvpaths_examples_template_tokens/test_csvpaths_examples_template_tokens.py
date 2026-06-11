@@ -2,6 +2,7 @@ import unittest
 import os
 from datetime import datetime, timezone
 from tests.csvpaths.builder import Builder
+from csvpath.util.path_util import PathUtility as pathu
 
 PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}food.csv"
 
@@ -17,7 +18,11 @@ class TestCsvPathsTemplateTokens(unittest.TestCase):
         filepath = paths.file_manager.get_named_file("food")
         print(f"filepath: {filepath}")
         dt = datetime.now(timezone.utc)
-        assert filepath.find(f"{dt.month}/{dt.year}/food.csv") > -1
+
+        rp = paths.config.get(section="inputs", name="files")
+        sep = pathu.sep(rp)[0]
+
+        assert filepath.find(f"{dt.month}{sep}{dt.year}{sep}food.csv") > -1
 
     def test_csvpaths_template_tokens_2(self):
         paths = Builder().build()
@@ -29,7 +34,11 @@ class TestCsvPathsTemplateTokens(unittest.TestCase):
         filepath = paths.file_manager.get_named_file("food")
         print(f"filepath: {filepath}")
         dt = datetime.now(timezone.utc)
-        chk = f"{dt.strftime('%B')}/{dt.strftime('%H')}/food.csv"
+
+        rp = paths.config.get(section="inputs", name="files")
+        sep = pathu.sep(rp)[0]
+        chk = f"{dt.strftime('%B')}{sep}{dt.strftime('%H')}{sep}food.csv"
+
         print(f"chk: {chk}")
         assert filepath.find(chk) > -1
 
@@ -43,7 +52,11 @@ class TestCsvPathsTemplateTokens(unittest.TestCase):
         filepath = paths.file_manager.get_named_file("food")
         print(f"filepath: {filepath}")
         dt = datetime.now(timezone.utc)
-        chk = f"{dt.strftime('%B')}/{dt.strftime('%H')}/food.csv"
+
+        rp = paths.config.get(section="inputs", name="files")
+        sep = pathu.sep(rp)[0]
+
+        chk = f"{dt.strftime('%B')}{sep}{dt.strftime('%H')}{sep}food.csv"
         print(f"chk: {chk}")
         assert filepath.find(chk) > -1
 
@@ -66,6 +79,8 @@ class TestCsvPathsTemplateTokens(unittest.TestCase):
         assert len(results) == 1
         result = results[0]
         assert result.run_dir
-        chk = f"test_resources/{dt.day}/{dt.month}/"
+        rp = paths.config.get(section="results", name="archive")
+        sep = pathu.sep(rp)[0]
+        chk = f"test_resources{sep}{dt.day}{sep}{dt.month}{sep}"
         print(f"chk: {chk}, run_dir: {result.run_dir}")
         assert result.run_dir.find(chk) > -1

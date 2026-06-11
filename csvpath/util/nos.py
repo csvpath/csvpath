@@ -178,6 +178,8 @@ class Nos:
         # posix/cloud seps?
         #
         # return "/" if self.path.find("\\") == -1 else os.sep
+        if self.path.startswith("http://") or self.path.startswith("https://"):
+            return "/"
         return self.do.sep
 
     def join(self, name: str) -> str:
