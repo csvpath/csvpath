@@ -1,0 +1,32 @@
+{
+  "validations": [
+    "tests/csvpaths/examples/csvpaths_examples_transfers/csvpaths/transfer.csvpath"
+  ],
+  "_config": {
+    "groups": {
+      "validations": {
+        "webhooks": { },
+        "transfers":{
+            "output": {
+                "on_complete_all":
+                [
+                    {"data": "data_path"},
+                    {"data": "vars_path"},
+                    {"printouts": "report_path"},
+                    {"manifest.json": "all_path"},
+                    {"source": "source_path"}
+                ],
+                "on_complete_invalid":
+                [
+                    {"unmatched": "invalid_path"}
+                ],
+                "on_complete_valid": [
+                    {"vars.json": "valid_path"}
+                ],
+                "on_complete_error": []
+            }
+        }
+      }
+    }
+  }
+}

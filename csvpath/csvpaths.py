@@ -8,7 +8,7 @@ import threading
 
 from uuid import uuid4
 from abc import ABC, abstractmethod
-from typing import List, Any, NewType
+from typing import Any, NewType, Optional
 from datetime import datetime
 from .managers.errors.error import Error
 from .managers.errors.error_comms import ErrorCommunications
@@ -459,7 +459,7 @@ Cache: {cache}
         self._advance_all = lines
 
     @property
-    def errors(self) -> List[Error]:  # pylint: disable=C0116
+    def errors(self) -> list[Error]:  # pylint: disable=C0116
         """@private
         generally you should be looking at results_manager or error_manager for errors.
         """
@@ -758,7 +758,12 @@ Cache: {cache}
     # case data.csv is the default.
     #
     def collect_paths(
-        self, *, pathsname: str, filename: str, template: str = None
+        self,
+        *,
+        pathsname: str,
+        filename: str,
+        template: str = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         """
         Sequentially does a CsvPath.collect() on filename for every named-path in the
@@ -783,11 +788,19 @@ Cache: {cache}
         if isinstance(files, list):
             for file in files:
                 ref = self._collect_paths(
-                    pathsname=pathsname, filename=filename, template=template, file=file
+                    pathsname=pathsname,
+                    filename=filename,
+                    template=template,
+                    file=file,
+                    extra_data=extra_data,
                 )
         else:
             ref = self._collect_paths(
-                pathsname=pathsname, filename=filename, template=template, file=files
+                pathsname=pathsname,
+                filename=filename,
+                template=template,
+                file=files,
+                extra_data=extra_data,
             )
         #
         # absolute reference to the results
@@ -795,7 +808,13 @@ Cache: {cache}
         return ref
 
     def _collect_paths(
-        self, *, pathsname: str, file: str, filename: str, template: str = None
+        self,
+        *,
+        pathsname: str,
+        file: str,
+        filename: str,
+        template: str = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         #
         # if template is None we need to go find any template that was given when
@@ -828,7 +847,6 @@ Cache: {cache}
 
         results = []
         #
-        # exp
         # adding uuid for the run as a whole
         run_uuid = uuid4()
         #
@@ -841,6 +859,7 @@ Cache: {cache}
             file=file,
             run_uuid=run_uuid,
             method="collect_paths",
+            extra_data=extra_data,
         )
         #
         #
@@ -930,7 +949,12 @@ Cache: {cache}
         return ret
 
     def fast_forward_paths(
-        self, *, pathsname: str, filename: str, template: str = None
+        self,
+        *,
+        pathsname: str,
+        filename: str,
+        template: str = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         """
         Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected.
@@ -942,16 +966,30 @@ Cache: {cache}
         if isinstance(files, list):
             for file in files:
                 ref = self._fast_forward_paths(
-                    pathsname=pathsname, filename=filename, template=template, file=file
+                    pathsname=pathsname,
+                    filename=filename,
+                    template=template,
+                    file=file,
+                    extra_data=extra_data,
                 )
         else:
             ref = self._fast_forward_paths(
-                pathsname=pathsname, filename=filename, template=template, file=files
+                pathsname=pathsname,
+                filename=filename,
+                template=template,
+                file=files,
+                extra_data=extra_data,
             )
         return ref
 
     def _fast_forward_paths(
-        self, *, pathsname: str, file: str, filename: str, template: str = None
+        self,
+        *,
+        pathsname: str,
+        file: str,
+        filename: str,
+        template: str = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         """Sequentially does a CsvPath.fast_forward() on filename for every named path. No matches are collected."""
         paths = self._get_named_paths(pathsname)
@@ -991,6 +1029,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="fast_forward_paths",
+            extra_data=extra_data,
         )
         #
         #
@@ -1066,7 +1105,8 @@ Cache: {cache}
         filename: str,
         collect: bool = False,
         template: str = None,
-    ) -> List[Any]:  # pylint: disable=R0914
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Any]:  # pylint: disable=R0914
         """
         Does a CsvPath.next() on filename for every line against every named path in sequence
         """
@@ -1107,6 +1147,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="next_paths",
+            extra_data=extra_data,
         )
         #
         #
@@ -1200,6 +1241,7 @@ Cache: {cache}
         collect_when_not_matched=False,
         template: str = None,
         lines: list = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         """
         Does a CsvPath.collect() on filename where each row is considered by
@@ -1228,6 +1270,7 @@ Cache: {cache}
                 file=file,
                 template=template,
                 method="collect_by_line",
+                extra_data=extra_data,
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 lines.append(line)
@@ -1254,6 +1297,7 @@ Cache: {cache}
         if_all_agree=False,
         collect_when_not_matched=False,
         template: str = None,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
         """
         Does a CsvPath.fast_forward() on filename where each row is considered by
@@ -1279,6 +1323,7 @@ Cache: {cache}
                 file=file,
                 template=template,
                 method="fast_forward_by_line",
+                extra_data=extra_data,
             ):
                 # re: W0612: we need 'line' in order to do the iteration. we have to iterate.
                 pass
@@ -1308,7 +1353,8 @@ Cache: {cache}
         collect_when_not_matched=False,
         template: str = None,
         method: str = None,
-    ) -> List[Any]:
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Any]:
         #
         # we're doing a programmatic use when we use next_by_line() so we don't allow
         # multiple file runs. we check that here; the other _by_line()s skip it.
@@ -1326,6 +1372,7 @@ Cache: {cache}
             collect_when_not_matched=collect_when_not_matched,
             template=template,
             file=file,
+            extra_data=extra_data,
         )
 
     def _next_by_line(  # pylint: disable=R0912,R0915,R0914
@@ -1339,7 +1386,8 @@ Cache: {cache}
         template: str = None,
         file: str,
         method: str = "next_by_line",
-    ) -> List[Any]:
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Any]:
         """Does a CsvPath.next() on filename where each row is considered
         by every named path before the next row starts.
 
@@ -1350,6 +1398,11 @@ Cache: {cache}
 
         collect_when_not_matched=True inverts the match so that lines
         which did not match are returned, rather than the default behavior.
+
+        extra_data is a flat dict of values that are meaningful to the caller.
+        the results registrar stores them as an extra.json file in the
+        run_dir within an _extra_data directory. the directory can be used
+        by any listener as a scratch space
         """
         # re: R0912 -- absolutely. plan to refactor.
         if isinstance(file, list):
@@ -1393,6 +1446,7 @@ Cache: {cache}
             pathsname=pathsname,
             crt=crt,
             method=method,
+            extra_data=extra_data,
         )
         #
         # setting file into the csvpath is less obviously useful at CsvPaths
@@ -1402,7 +1456,7 @@ Cache: {cache}
         reader = FileManager.get_reader(
             file, delimiter=self.delimiter, quotechar=self.quotechar
         )
-        stopped_count: List[int] = []
+        stopped_count: list[int] = []
         for line in reader.next():
             # for line in reader:  # pylint: disable=R1702
             # question to self: should this default be in a central place
@@ -1524,7 +1578,7 @@ Cache: {cache}
     def _load_csvpath_objects(
         self,
         *,
-        paths: List[str],
+        paths: list[str],
         named_file: str,
         collect_when_not_matched=False,
         filename,
@@ -1562,7 +1616,14 @@ Cache: {cache}
         return csvpath_objects
 
     def _prep_csvpath_results(
-        self, *, csvpath_objects, filename, pathsname, crt: str, method: str
+        self,
+        *,
+        csvpath_objects,
+        filename,
+        pathsname,
+        crt: str,
+        method: str,
+        extra_data: Optional[dict[str, str]],
     ):
         """@private"""
         #
@@ -1578,6 +1639,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="next_paths",
+            extra_data=extra_data,
         )
         #
         #

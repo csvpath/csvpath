@@ -1,7 +1,4 @@
-import os
 import json
-from datetime import datetime
-from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -87,4 +84,6 @@ class FilesListener(Listener):  # Registrar,
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         with DataFileWriter(path=manifest_path, mode="w") as writer:
-            json.dump(jdata, writer.sink, indent=2)
+            j = json.dumps(jdata, indent=2)
+            writer.sink.write(j)
+            writer.sink.flush()

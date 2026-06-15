@@ -161,6 +161,8 @@ class RunHomeMaker:
     # this is the method csvpaths uses to site a run.
     #
     def get_run_dir(self, paths_name: str, file_name: str, template: str = "") -> str:
+        if template is None:
+            template = ""
         if self._csvpaths._run_time_str is not None:
             return self._csvpaths._run_time_str
         #

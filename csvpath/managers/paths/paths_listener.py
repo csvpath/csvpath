@@ -1,10 +1,7 @@
-import os
 import json
-from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
-from .paths_metadata import PathsMetadata
 from ..listener import Listener
 from ..metadata import Metadata
 
@@ -37,14 +34,13 @@ class PathsListener(Listener):
         mpath = self.manifest_path
         with DataFileReader(mpath, encoding="utf-8") as file:
             contents = file.read()
+            # print(f"pathslist: mpath: {mpath}: {contents}")
             j = json.loads(contents)
-            # j = json.load(file.source)
             return j
 
     @property
     def manifest_path(self) -> None:
         mf = Nos(self.csvpaths.config.inputs_csvpaths_path).join("manifest.json")
-        # mf = os.path.join(self.csvpaths.config.inputs_csvpaths_path, "manifest.json")
         if not Nos(mf).exists():
             with DataFileWriter(path=mf) as file:
                 file.append("[]")
@@ -74,4 +70,6 @@ class PathsListener(Listener):
         jdata = self.manifest
         jdata.append(mani)
         with DataFileWriter(path=self.manifest_path) as file:
-            json.dump(jdata, file.sink, indent=2)
+            j = json.dumps(jdata, indent=2)
+            file.sink.write(j)
+            file.sink.flush()

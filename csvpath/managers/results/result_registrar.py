@@ -209,7 +209,6 @@ class ResultRegistrar(Registrar, Listener):
     @property
     def manifest_path(self) -> str:
         h = Nos(self.result_path).join("manifest.json")
-        # h = os.path.join(self.result_path, "manifest.json")
         return h
 
     @property

@@ -1,5 +1,5 @@
+from typing import Optional
 from csvpath.managers.metadata import Metadata
-from datetime import datetime
 from uuid import UUID
 
 
@@ -8,6 +8,7 @@ class ResultsMetadata(Metadata):
 
     def __init__(self, config):
         super().__init__(config)
+        self._extra_data: Optional[dict[str, str]] = None
         self.run_home: str = None
         self.named_paths_name: str = None
         self.named_paths_uuid: UUID = None
@@ -27,6 +28,21 @@ class ResultsMetadata(Metadata):
         self.by_line: bool = False
         self._run_uuid: UUID = None
         self._method: str = None
+
+    @property
+    def extra_data(self) -> dict[str, str]:
+        return self._extra_data
+
+    @extra_data.setter
+    def extra_data(self, extra: dict[str, str]) -> None:
+        if extra is None:
+            return
+        if not isinstance(extra, dict):
+            raise ValueError(f"Extra data must be a dictionary, not a {type(extra)}")
+        for k, v in extra.items():
+            if not isinstance(v, str):
+                raise ValueError(f"Extra data items must be strings, not {type(extra)}")
+        self._extra_data = extra
 
     @property
     def method(self) -> str:

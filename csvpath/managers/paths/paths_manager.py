@@ -616,7 +616,8 @@ class PathsManager:
         return t
 
     def get_template_for_paths(self, name: NamedPathsName) -> str:
-        return self.describer.get_template(name)
+        t = self.describer.get_template(name)
+        return "" if t is None else t
 
     def store_template_for_paths(self, name: NamedPathsName, template: str) -> None:
         self.describer.store_template(name, template)
