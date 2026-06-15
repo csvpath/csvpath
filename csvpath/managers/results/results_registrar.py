@@ -1,7 +1,4 @@
-import os
-from datetime import datetime, timezone
 import json
-import time
 from csvpath.util.nos import Nos
 from csvpath.util.file_info import FileInfo
 from csvpath.util.exceptions import FileException
@@ -11,7 +8,6 @@ from .result import Result
 from .result_serializer import ResultSerializer
 from .result_registrar import ResultRegistrar
 from .results_metadata import ResultsMetadata
-from ..run.run_metadata import RunMetadata
 from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
@@ -26,7 +22,6 @@ class ResultsRegistrar(Registrar, Listener):
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
     ) -> None:
-        # super().__init__(csvpaths=csvpaths)
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
         self.pathsname = pathsname
@@ -127,6 +122,38 @@ class ResultsRegistrar(Registrar, Listener):
         m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
             json.dump(m, file.sink, indent=2)
+        #
+        # extra data is a flat str->str dict that is provided by the CsvPaths caller at
+        # run start time. we store it in the _extra_data directory within the run. we
+        # don't do anything else with it, but an integration or an end user can look
+        # there to find any user provided metadata. this is in addition to and has nothing
+        # to do with the metadata fields that csvpath writers can add to the external
+        # comment of a csvpath.
+        #
+        self._save_extra_data_if(mdata)
+
+    @property
+    def extra_data_path(self) -> str:
+        path = Nos(self.run_dir).join("_extra_data")
+        if not Nos(path).exists():
+            Nos(path).makedirs()
+        path = Nos(path).join("extra.json")
+        return path
+
+    def _save_extra_data_if(self, mdata: Metadata) -> None:
+        if mdata.extra_data is None:
+            return
+        self._save_extra_data(self.extra_data_path, mdata.extra_data)
+
+    def _save_extra_data(self, path: str, extra: dict[str, str]) -> None:
+        if Nos(path).exists():
+            with DataFileReader(path) as reader:
+                ed = json.load(reader.source)
+                if not isinstance(ed, dict):
+                    raise ValueError(f"Extra data must be a dictionary, not {type(ed)}")
+                extra = extra | ed
+        with DataFileWriter(path=path) as writer:
+            json.dump(extra, writer.sink)
 
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
@@ -186,5 +213,4 @@ class ResultsRegistrar(Registrar, Listener):
         if not Nos(self.run_dir).exists():
             Nos(self.run_dir).makedir()
         mp = Nos(self.run_dir).join("manifest.json")
-        # mp = os.path.join(self.run_dir, "manifest.json")
         return mp

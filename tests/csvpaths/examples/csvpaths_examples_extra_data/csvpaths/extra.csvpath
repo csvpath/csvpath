@@ -1,0 +1,7 @@
+~
+    id:output
+    validation-mode:no-raise, print
+~
+$[10-12][
+    print("hi")
+]

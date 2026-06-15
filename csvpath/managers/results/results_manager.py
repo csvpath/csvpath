@@ -3,7 +3,7 @@ import os
 import re
 from uuid import UUID
 import dateutil.parser
-from typing import Dict, List, Any
+from typing import Any, Optional
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.exceptions import InputException, CsvPathsException
 from csvpath.util.references.reference_parser import ReferenceParser
@@ -112,6 +112,7 @@ class ResultsManager:  # pylint: disable=C0115
         file: str = None,
         run_uuid: UUID,
         method: str,
+        extra_data: Optional[dict[str, str]] = None,
     ) -> ResultsMetadata:
         """@private"""
         rr = ResultsRegistrar(
@@ -142,6 +143,12 @@ class ResultsManager:  # pylint: disable=C0115
         #
         #
         mdata = ResultsMetadata(self.csvpaths.config)
+        #
+        # extra data is a flat list of dict[str,str] determined by the user and saved by some
+        # listener. we don't do anything with it, other than save it in the default listener
+        # when we first create the run manifest.json.
+        #
+        mdata.extra_data = extra_data
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.run_home = run_dir
         mdata.run_uuid = run_uuid
@@ -410,13 +417,13 @@ class ResultsManager:  # pylint: disable=C0115
             rr.add_internal_listener(_)
         rr.register_start(mdata)
 
-    def set_named_results(self, results: Dict[str, List[Result]]) -> None:
+    def set_named_results(self, results: dict[str, list[Result]]) -> None:
         """@private"""
         self.named_results = {}
         for value in results.values():
             self.add_named_results(value)
 
-    def add_named_results(self, results: List[Result]) -> None:
+    def add_named_results(self, results: list[Result]) -> None:
         """@private"""
         for r in results:
             self.add_named_result(r)
@@ -522,7 +529,7 @@ class ResultsManager:  # pylint: disable=C0115
             mydirs[os.path.dirname(path)] = path
         return mydirs
 
-    def _get_named_results_for_reference(self, name: str) -> List[List[Any]]:
+    def _get_named_results_for_reference(self, name: str) -> list[list[Any]]:
         #
         # $mygroup.results.orders/acme/2025:first.myinstance
         #
@@ -592,7 +599,7 @@ class ResultsManager:  # pylint: disable=C0115
     #
     # this gets the results of a single run. it does not get all runs under the name.
     #
-    def get_named_results(self, name) -> List[List[Any]]:
+    def get_named_results(self, name) -> list[list[Any]]:
         #
         # as it turns out, references are (finally!) the easiest, so let's do that
         # first.
@@ -748,7 +755,7 @@ class ResultsManager:  # pylint: disable=C0115
         instances = Nos(path).listdir()
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
-            if inst.endswith(".json"):
+            if inst.endswith(".json") or inst == "_extra_data":
                 #
                 # exp ^^^^
                 #
