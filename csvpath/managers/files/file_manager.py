@@ -1,6 +1,7 @@
 import re
 import json
 import traceback
+from uuid import UUID
 from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
@@ -53,18 +54,6 @@ class FileManager:
     def activator(self) -> NamedFileActivator:
         return NamedFileActivator(self)
 
-    """
-    @property
-    def nos(self) -> Nos:
-        box = Box()
-        if self._nos is None:
-            self._nos = box.get("boto_s3_nos")
-            if self._nos is None:
-                self._nos = Nos(None)
-                box.add("boto_s3_nos", self._nos)
-        return self._nos
-    """
-
     @property
     def csvpaths(self):
         """@private"""
@@ -97,7 +86,22 @@ class FileManager:
     def files_root_manifest_path(self) -> dict:
         """@private"""
         return Nos(self.named_files_dir).join("manifest.json")
-        # return os.path.join(self.named_files_dir, "manifest.json")
+
+    def _named_file_ref_to_uuid(self, ref: ReferenceParser) -> str:
+        if ref is None:
+            raise ValueError("Reference cannot be None")
+        finder = FilesReferenceFinder(self._csvpaths, ref=ref)
+        lst = finder.resolve()
+        if lst is None:
+            raise ValueError("ReferenceFinder cannot return None")
+        if len(lst) == 0:
+            return None
+        path = lst[0]
+        mani = self.get_manifest(ref.root_major)
+        for r in mani:
+            if r.get("file") == path:
+                return r.get("uuid")
+        return None
 
     #
     # namedfile: a NamedFileName (name or reference)
@@ -130,6 +134,11 @@ class FileManager:
             else None
         )
         if ref is not None and file is None:
+            #
+            # we need to support files as well as results
+            #
+            if ref.datatype == ref.FILES:
+                return self._named_file_ref_to_uuid(ref)
             if ref.datatype != ref.RESULTS:
                 raise ValueError("Reference must be results, not {ref.datatype}")
             #
@@ -185,6 +194,13 @@ class FileManager:
                     if p == file:
                         return _["uuid"]
         raise ValueError(f"No matching UUID found for file {file} in {name}")
+
+    def get_reference_for_uuid(self, name: NamedFileName, uuid: str) -> str | None:
+        mani = self.get_manifest(name)
+        for _ in mani:
+            if uuid == _["uuid"]:
+                return _["reference"]
+        return None
 
     def get_manifest(self, name: NamedFileName) -> json:
         if name is None:
@@ -602,6 +618,7 @@ class FileManager:
         path: str,
         template: str = None,
         config: Config = None,
+        registration_uuid: str = None,
     ) -> str | None:
         #
         # note that we can pass in a Config with a template that is different
@@ -609,6 +626,19 @@ class FileManager:
         # using the arg, not the template from the config.
         #
         self.csvpaths.logger.info("Adding named file %s from %s", name, path)
+        if registration_uuid is not None:
+            #
+            # check that we have a real uuid and if not blow up before registration
+            # blowing up seems right here, rather than checking should_i_raise because
+            # we're looking at a serious development problem, rather than a runtime
+            # issue driven by the 3rd party or business rules.
+            #
+            UUID(registration_uuid)
+            self.csvpaths.logger.info(
+                "Registration of %s will be associated with UUID %s",
+                path,
+                registration_uuid,
+            )
         if not self.can_load(path):
             #
             # if False, can_load() will have already raised an error and/or, minimally,
@@ -716,7 +746,6 @@ class FileManager:
             #
             if mark is not None:
                 self._validate_xlsx_mark(path, mark)
-
             #
             # exp: moving docs and descriptor to above copy_in()
             #
@@ -729,12 +758,8 @@ class FileManager:
             self._copy_in(name=name, path=path, home=home, template=template)
             self.csvpaths.logger.debug("Done copying in")
             #
-            #
-            #
             # self.assure_docs_and_discriptor(name)
             # self.csvpaths.logger.debug("Assured docs and discriptor")
-            #
-            # end exp!
             #
             # create the reference to the bytes/version added to the named-file.
             # this is the most specific reference possible. we return it when we're
@@ -754,6 +779,15 @@ class FileManager:
             name_home = self.named_file_home(name)
             self.csvpaths.logger.debug("Name home is %s", name_home)
             mdata = FileMetadata(self.csvpaths.config)
+            #
+            # add the ability to pass in a UUID. if received, use it here to
+            # set the FileMetadata's UUID. this will allow the caller to give a
+            # trackable ticket. for e.g. we may want to spin-up a registration in
+            # a thread, create our own UUID, pass it in for the registration, and
+            # return the UUID to the user so they can retrieve the reference later
+            #
+            if registration_uuid is not None:
+                mdata.uuid_string = registration_uuid
             mdata.named_file_name = name
             mdata.named_file_ref = ret
             #
@@ -767,7 +801,6 @@ class FileManager:
             mdata.fingerprint = h
             mdata.file_path = rpath
             mdata.file_home = file_home
-            # nos = self.nos
             nos.path = file_home
             mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
             mdata.name_home = name_home
