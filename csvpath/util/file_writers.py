@@ -34,9 +34,12 @@ class DataFileWriter(ABC):
 
     def close(self) -> None:
         if self.sink is not None:
-            self.sink.flush()
-            self.sink.close()
-            self.sink = None
+            try:
+                self.sink.flush()
+                self.sink.close()
+                self.sink = None
+            except Exception as e:
+                ...
 
     @abstractmethod
     def load_if(self) -> None:
