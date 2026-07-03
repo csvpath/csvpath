@@ -313,9 +313,10 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 self.error_manager.error_metrics.provider.shutdown()
                 self.error_manager.error_metrics = None
                 self.error_manager = None
-            lout.release_logger(self)
         except Exception:
             print(traceback.format_exc())
+        finally:
+            lout.release_logger(self)
 
     #
     # this method saves and reloads the config. if you don't want that use

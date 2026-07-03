@@ -294,7 +294,7 @@ class LogUtility:
         #
         # there will be 0, 1, or 2 handlers. we clear them and start fresh.
         #
-        for _ in logger.handlers:
+        for _ in logger.handlers[:]:
             _.flush()
             _.close()
             logger.removeHandler(_)

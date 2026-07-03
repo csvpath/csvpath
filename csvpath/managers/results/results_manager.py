@@ -365,6 +365,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_paths_name = result.paths_name
         mdata.named_file_name = result.file_name
         mdata.method = result.method
+        mdata.template = result.template or ""
         rr = RunRegistrar(self.csvpaths)
         #
         # add any dynamic listeners to the registrar here

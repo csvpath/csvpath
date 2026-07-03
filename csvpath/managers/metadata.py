@@ -1,7 +1,7 @@
 from uuid import uuid4, UUID
 import os
 from abc import ABC
-from datetime import datetime, timezone
+from datetime import datetime
 from dateutil import parser
 import getpass
 import socket
@@ -150,7 +150,6 @@ class Metadata(ABC):
 
     @time_started_string.setter
     def time_started_string(self, s: str) -> None:
-        # self._time_started = datetime.date.fromisoformat(s)
         self._time_started = parser.parse(s)
 
     @property

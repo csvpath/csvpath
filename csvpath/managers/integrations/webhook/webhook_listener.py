@@ -165,4 +165,11 @@ class WebhookListener(Listener, threading.Thread):
             ...
 
     def _do_send(self, *, url: str, payload: dict, headers: dict, timeout: int):
+        #
+        # this is an expected occurance. any empty block captured by the FlightPath form
+        # will have no url but will exist so will be attempted. we just want to ignore
+        # those attempts
+        #
+        if not url:
+            return
         return requests.post(url, json=payload, headers=headers, timeout=timeout)

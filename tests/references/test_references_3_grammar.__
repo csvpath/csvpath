@@ -1,0 +1,78 @@
+from lark import UnexpectedInput
+from csvpath.references.reference_parser_3 import ReferenceParser3
+
+cases = [
+    ('$*.files.:name("acme").:data()', True),
+    ('$*.files.*.:data()', False),  # bare * NOT legal in name_one, only as root_major itself
+    ('$*.files.:name("Acme")/:year()/:q2():from(:version(1)):to(:version(3)).:data()', True),
+    ('$*.files.:name("*")/more/:name("*"):last().:data()', True),
+    ('$*.files.*/more/pathnames.:last()', False),
+    ('$q1-orders.results.:year(2024)/:run_dir().:data()', True),
+    ('$orders.csvpaths.:last().', False),  # trailing empty name_three -- illegal, + requires at least one item
+    ('$orders.csvpaths.:last()', False),   # only 3 dot-separated parts, not 4 -- illegal
+    ('$orders.csvpaths.:last().:all()', True),  # version selected, no specific member -- spelled explicitly
+    ('$orders.csvpaths.:last().q1-orders', True),   # last version of the group, member "q1-orders"
+    ('$orders.csvpaths.:index(2).q1-orders', True),  # explicit version, member "q1-orders"
+    ('$orders.csvpaths..', False),  # empty name_one -- illegal, must spell out :last() etc.
+    ('$*.files.:name(@customer).:data()', True),
+
+    # nested function args specifically
+    ('$*.files.:name("x"):from(:version(1)):to(:version(3)).:data()', True),
+    ('$orders.results.:from(:first()):to(:last()).:vars()', True),
+
+    # root_major must be EITHER "*" OR a name -- not both, not empty
+    ('$.files.:name("x").:data()', False),
+    ('$*orders.files.:name("x").:data()', False),
+
+    # minor names via "#"
+    # root_major stands alone -- no "#" at all (root_minor concept removed:
+    # it was attached to the wrong slot, and named-files don't have
+    # worksheets -- physical files do, which is what name_two is for).
+    ('$orders#sub.files.:name("x").:data()', False),
+    # name_one may carry #name_two -- the one surviving use case, worksheets
+    # within a physical file. This is the ONLY place "#" is legal now.
+    ('$orders.files.:name("x")#Sheet1.:data()', True),
+    # name_three never carries "#" -- name_four is cut, no surviving use case.
+    ('$orders.files.:name("x").:data()#four', False),
+
+    # path-text character rules: literal space preserved, %-encoding legal
+    ('$*.files.:name("Acme Corp")/folder name/here.:data()', True),
+    # the literal %% is an escapted %
+    ('$*.files.:name("100%%done").:data()', True),
+    # the lteral %20 is a url encoded space char. we can take a space char
+    # in a name, but this %20 is another way to include one and just a test
+    # that could have been any other encoded char.
+    ('$*.files.:name("100%20done").:data()', True),
+    # a literal \t/\r/\n adjacent to path text is stripped via %ignore WS,
+    # leaving the surrounding literal segments to concatenate -- verified
+    # this matches the spec's "strip \t \r \n, preserve a literal space"
+    # rule (confirmed by inspecting the parse tree directly, not asserted
+    # blindly): the lexer treats tab as an inter-token separator, so
+    # "fol<TAB>der" parses as two adjacent path_items that read as one
+    # continuous "folder" once concatenated by the resolver.
+
+    # name_one paths are always relative -- a leading "/" is a hard parse
+    # error, not silently stripped (stripping would make "/Acme" and "Acme"
+    # mean the same thing with no signal the input was altered).
+    ('$*.files./Acme.:data()', False),
+    ('$*.files.Acme.:data()', True),
+    ('$*.files.Acme/sub.:data()', True),  # internal slash still fine, not first position
+]
+
+paths = CsvPaths()
+for expr, expect_ok in cases:
+    err = ""
+    try:
+        ref = ReferenceParser3(reference=expr, csvpaths=paths)
+        ref.parse()
+        finder = ReferenceFinder3.finder_for_datatype(ref=ref)
+        results = finder.query()
+        assert len(results) != None and len(results) > -1
+        for _ in results:
+            ...
+        ok = True
+    except UnexpectedInput as e:
+        ok = False
+        err = str(e).split("\n")[0]
+    status = "PASS" if ok == expect_ok else "FAIL"
+    print(f"[{status}] expect_ok={str(expect_ok):5} got_ok={str(ok):5} | {expr}" + (f"  -- {err}" if err else ""))

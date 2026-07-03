@@ -588,9 +588,10 @@ Cache: {cache}
     def __del__(self) -> None:
         try:
             self.wrap_up()
-            lout.release_logger(self)
         except Exception:
             print(traceback.format_exc())
+        finally:
+            lout.release_logger(self)
 
     def _trim_archive_if(self, home: str) -> str:
         archive = self.config.get(section="results", name="archive")
@@ -877,6 +878,7 @@ Cache: {cache}
                 run_dir=crt,
                 run_uuid=run_uuid,
                 method="collect_paths",
+                template=template,
             )
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
@@ -1047,6 +1049,7 @@ Cache: {cache}
                 run_dir=crt,
                 run_uuid=run_uuid,
                 method="fast_forward_paths",
+                template=template,
             )
             try:
                 self._load_csvpath(
@@ -1181,6 +1184,7 @@ Cache: {cache}
                 run_dir=crt,
                 run_uuid=run_uuid,
                 method="next_paths",
+                template=template,
             )
             if self._fail_all:
                 self.logger.warning(
@@ -1447,6 +1451,7 @@ Cache: {cache}
             crt=crt,
             method=method,
             extra_data=extra_data,
+            template=template,
         )
         #
         # setting file into the csvpath is less obviously useful at CsvPaths
@@ -1624,6 +1629,7 @@ Cache: {cache}
         crt: str,
         method: str,
         extra_data: Optional[dict[str, str]],
+        template: str = "",
     ):
         """@private"""
         #
@@ -1660,6 +1666,7 @@ Cache: {cache}
                     by_line=True,
                     run_uuid=run_uuid,
                     method=method,
+                    template=template,
                 )
                 csvpath[1] = result
                 #

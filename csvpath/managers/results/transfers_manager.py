@@ -13,6 +13,10 @@ class TransfersManager:
         self._results_manager = results_manager
 
     @property
+    def logger(self):
+        return self.csvpaths.logger
+
+    @property
     def csvpaths(self):
         return self.results_manager.csvpaths
 
@@ -22,21 +26,25 @@ class TransfersManager:
 
     def do_transfers_if(self, result) -> None:
         try:
+            self.logger.info(
+                "Checking for transfers from run: %s declared on named-paths group: %s for statement: %s",
+                result.run_uuid,
+                result.paths_name,
+                result.identity_or_index,
+            )
             self.do_transfer_mode_if(result)
-        except Exception as ex:
-            #
-            # handle better!
-            #
-            print(traceback.format_exc())
-            self.results_manager.csvpaths.logger.error(ex)
+        except Exception:
+            self.logger.error(traceback.format_exc())
         try:
+            self.logger.info(
+                "Checking for transfers from run: %s in named-paths group: %s declared by statement: %s",
+                result.run_uuid,
+                result.paths_name,
+                result.identity_or_index,
+            )
             self.do_description_transfers_if(result)
-        except Exception as ex:
-            #
-            # handle better!
-            #
-            print(traceback.format_exc())
-            self.results_manager.csvpaths.logger.error(ex)
+        except Exception:
+            self.logger.error(traceback.format_exc())
 
     def do_description_transfers_if(self, result) -> None:
         #
@@ -226,6 +234,12 @@ class TransfersManager:
         for t in tpaths:
             pathfrom = t[2]
             pathto = t[3]
+            self.logger.info(
+                "Attempting transfer of %s to %s for named-paths group %s",
+                pathfrom,
+                pathto,
+                name,
+            )
             try:
                 rmode = "rb" if "b" in t[4] else "r"
                 n = pathu.dir_name(pathto)
@@ -253,12 +267,17 @@ class TransfersManager:
                         writer.sink.write(pf.read())
                     finally:
                         writer.close()
-            except Exception:
-                print(traceback.format_exc())
-                logger = self.results_manager.csvpaths.logger
-                logger.warning(
-                    "Cannot transfer %s to %s", pathfrom, pathto, exc_info=True
+                self.logger.info(
+                    "Done transfering %s to %s for named-paths group %s",
+                    pathfrom,
+                    pathto,
+                    name,
                 )
+            except Exception:
+                self.logger.error(
+                    "Error in transfers of %s for named-paths group %s", tpaths, name
+                )
+                self.logger.error(traceback.format_exc())
 
     def _path_to_transfer_to(self, result, t) -> str:
         if result is None:
