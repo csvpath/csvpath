@@ -1,5 +1,5 @@
 
 {
- "SFTP_SERVER":"192.168.1.181",
+ "SFTP_SERVER":"localhost",
  "SFTP_PORT":"2022"
 }
