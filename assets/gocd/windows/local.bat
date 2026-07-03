@@ -49,16 +49,16 @@ echo(
 ::
 :: do the build
 ::
+rem net user "python" "hangzhou1!"
+rem cmd.exe /C c:\Users\"%USERPROFILE%\.local\bin\poetry.exe run pytest
 
-IF NOT EXIST "%USERPROFILE%\.local\bin\poetry.exe" (
+IF NOT EXIST "c:\Users\Administrator\.local\bin\poetry.exe" (
     echo ERROR: The Poetry binary was not found.
     EXIT /B 1
 )
 
-rem cmd.exe /C c:\Users\"%USERPROFILE%\.local\bin\poetry.exe run pytest
-
-cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
-cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
+cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" install
+cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" run pytest
 
 
 net stop w32time
