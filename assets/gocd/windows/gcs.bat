@@ -37,6 +37,11 @@ cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" install
 cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" run pytest
 
 
+IF %ERRORLEVEL% NEQ 0 (
+    echo "Tests failed. Failing the build..."
+    exit /b %ERRORLEVEL%
+)
+
 net stop w32time
 w32tm /unregister
 w32tm /register
