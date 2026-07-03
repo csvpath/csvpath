@@ -27,9 +27,11 @@ set OTEL_RESOURCE_ATTRIBUTES=""
 
 
 call c:\dev\win-exports.bat
-cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
-cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
+rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
+rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
 
 net stop w32time
 w32tm /unregister
