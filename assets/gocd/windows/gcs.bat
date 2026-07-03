@@ -25,18 +25,9 @@ set OTEL_SERVICE_NAME=""
 set OTEL_RESOURCE_ATTRIBUTES=""
 
 call c:\dev\win-exports.bat
-rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
-rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
-IF NOT EXIST "c:\Users\Administrator\.local\bin\poetry.exe" (
-    echo ERROR: The Poetry binary was not found.
-    EXIT /B 1
-)
-
-cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" install
-cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" run pytest
-
-
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
 IF %ERRORLEVEL% NEQ 0 (
     echo "Tests failed. Failing the build..."
     exit /b %ERRORLEVEL%

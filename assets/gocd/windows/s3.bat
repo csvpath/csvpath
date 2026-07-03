@@ -27,16 +27,14 @@ set OTEL_RESOURCE_ATTRIBUTES=""
 
 
 call c:\dev\win-exports.bat
-rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
-rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
-IF NOT EXIST "c:\Users\Administrator\.local\bin\poetry.exe" (
-    echo ERROR: The Poetry binary was not found.
-    EXIT /B 1
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] The pytest failed with code %ERRORLEVEL%.
+    exit /b %ERRORLEVEL%
 )
 
-cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" install
-cmd.exe /C "c:\Users\Administrator\.local\bin\poetry.exe" run pytest
 
 
 net stop w32time
