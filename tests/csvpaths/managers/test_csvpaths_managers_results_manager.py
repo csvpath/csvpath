@@ -1,18 +1,20 @@
 import unittest
 import pytest
 import os
+import json
 from datetime import datetime
 from csvpath.managers.results.result import Result
 from csvpath.managers.results.result_serializer import ResultSerializer
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 from tests.csvpaths.builder import Builder
-
 
 FOODX = (
     f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}foodx.csv"
 )
-FILES = {
-    "food": f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv"
-}
+PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_files{os.sep}food.csv"
+FILES = {"food": PATH}
+
 NAMED_PATHS_DIR = (
     f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}"
 )
@@ -115,6 +117,29 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         paths.fast_forward_paths(pathsname="print_test", filename="food")
         results = paths.results_manager.get_named_results("print_test")
         assert results
+
+    def test_results_template_captured(self):
+        paths = Builder().build()
+
+        a = paths.config.get(section="results", name="archive")
+        print(f"archive: {a}")
+
+        paths.file_manager.add_named_file(name="food", path=PATH)
+        paths.paths_manager.add_named_paths(
+            name="template_capture",
+            paths=[""" ~ validation-mode: no-raise, print~ $[0][ print( "test" ) ]"""],
+        )
+        paths.fast_forward_paths(
+            pathsname="template_capture", filename="food", template=":0/:run_dir"
+        )
+        results = paths.results_manager.get_named_results("template_capture")
+        assert results
+
+        m = Nos(a).join("manifest.json")
+        with DataFileReader(m) as file:
+            js = json.load(file.source)
+            for _ in js:
+                assert "template" in _
 
     def test_results_named_results_home(self):
         paths = Builder().build()

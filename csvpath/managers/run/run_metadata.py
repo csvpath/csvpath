@@ -1,6 +1,6 @@
 from csvpath.managers.metadata import Metadata
 
-from uuid import uuid4, UUID
+from uuid import UUID
 
 
 class RunMetadata(Metadata):
@@ -12,6 +12,15 @@ class RunMetadata(Metadata):
         self.identity: str = None
         self._run_uuid: UUID = None
         self._method: str = None
+        self._template: str = ""
+
+    @property
+    def template(self) -> str:
+        return self._template
+
+    @template.setter
+    def template(self, t: str) -> None:
+        self._template = t
 
     @property
     def run_uuid(self) -> UUID:

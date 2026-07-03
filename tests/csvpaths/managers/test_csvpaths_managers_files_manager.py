@@ -2,6 +2,7 @@ import unittest
 import pytest
 import shutil
 import os
+import json
 from csvpath.util.nos import Nos
 from csvpath.managers.files.files_listener import FilesListener
 from csvpath.managers.files.file_metadata import FileMetadata
@@ -19,6 +20,30 @@ AMAZING = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}lookup_names.csv"
 
 
 class TestCsvPathsManagersFileManager(unittest.TestCase):
+    def test_file_registration_failed(self) -> None:
+        paths = Builder().build()
+        if paths.file_manager.has_named_file("failed"):
+            paths.file_manager.remove_named_file("failed")
+        assert not paths.file_manager.has_named_file("failed")
+
+        with pytest.raises(ValueError):
+            paths.file_manager.add_named_file(name="failed", path="")
+        mpath = paths.config.get(section="inputs", name="files")
+        mpath = Nos(mpath).join("manifest.json")
+
+        self._find_in_mani(
+            paths, {"status": ["Registration failed", None], "template": [-9999]}
+        )
+
+    def _find_in_mani(self, csvpaths, keys: dict[str, str]) -> list[bool]:
+        mpath = csvpaths.config.get(section="inputs", name="files")
+        mpath = Nos(mpath).join("manifest.json")
+        with DataFileReader(mpath) as file:
+            js = json.load(file.source)
+            for _ in js:
+                for k, v in keys.items():
+                    assert _.get(k) in v or (-9999 in v and _.get(k) is not None)
+
     def test_files_named_file_template_1(self) -> None:
         paths = Builder().build()
         nf = "orders"
@@ -108,6 +133,13 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         #
         paths.file_manager.add_named_file(name=nf, path=FILE)
         assert paths.file_manager.has_named_file(nf)
+        #
+        # check that we picked up a template key
+        #
+        self._find_in_mani(
+            paths, {"status": ["Registration failed", None], "template": [-9999]}
+        )
+
         #
         # clear what we just added
         #

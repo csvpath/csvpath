@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import os
 from uuid import UUID
 import uuid
 import json
@@ -12,7 +11,7 @@ from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 from csvpath.util.printer import Printer
 from csvpath.util.exceptions import CsvPathsException
-from csvpath.util.line_spooler import LineSpooler, CsvLineSpooler
+from csvpath.util.line_spooler import LineSpooler
 from .result_serializer import ResultSerializer
 from .readers.readers import ResultReadersFacade
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -40,6 +39,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         by_line: bool = False,
         run_uuid: UUID,
         method: str = None,
+        template: str = None,
     ):
         """@private"""
         ErrorCollector.__init__(self)
@@ -105,6 +105,7 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         self._lines: list[list[Any]] = None
         self._readers_facade = ResultReadersFacade(self)
         self._run_uuid = run_uuid
+        self._template = template or ""
 
     @property
     def actual_data_file(self) -> str:
@@ -120,6 +121,10 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
                 self.file_name
             )
         return self._origin_data_file
+
+    @property
+    def template(self) -> str:
+        return self._template
 
     @property
     def uuid(self) -> UUID:

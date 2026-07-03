@@ -69,6 +69,8 @@ class FilesListener(Listener):  # Registrar,
         if mdata.mark is not None:
             mani["mark"] = mdata.mark
         mani["manifest_path"] = self.manifest_path()
+        if hasattr(mdata, "status"):
+            mani["status"] = mdata.status
         return mani
 
     def metadata_update(self, mdata: Metadata) -> None:

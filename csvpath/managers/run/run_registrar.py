@@ -1,8 +1,4 @@
-import os
-import time
 import json
-from abc import ABC, abstractmethod
-from csvpath.util.exceptions import FileException
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -13,7 +9,6 @@ from ..metadata import Metadata
 
 class RunRegistrar(Registrar, Listener):
     def __init__(self, csvpaths):
-        # super().__init__(csvpaths)
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
         self.type_name = "run"
@@ -22,7 +17,6 @@ class RunRegistrar(Registrar, Listener):
     @property
     def manifest_path(self) -> str:
         return Nos(self.archive).join("manifest.json")
-        # return os.path.join(self.archive, "manifest.json")
 
     @property
     def manifest(self) -> list:
@@ -54,6 +48,7 @@ class RunRegistrar(Registrar, Listener):
         m["base_path"] = mdata.base_path
         m["named_files_root"] = mdata.named_files_root
         m["named_paths_root"] = mdata.named_paths_root
+        m["template"] = mdata.template or ""
         #
         #
         #

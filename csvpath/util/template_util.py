@@ -145,12 +145,12 @@ class TemplateUtility:
         #
         # remove run_dir or filename for remaining tests
         #
-        t2 = template.rstrip(f"/{e}")
+        t2 = template.removesuffix(f"/{e}")
         #
         # cannot be just ":run_dir". covered this above, no?
         #
         if t2 == "/" or t2.strip() == "":
-            return (False, "Cannot be solely {e}")
+            return (False, f"Cannot be solely {e}")
         #
         # index pointers must be the only other uses of colon and
         # must have 1 or 2 integers, not 3
@@ -164,7 +164,11 @@ class TemplateUtility:
                     return False
                 ns = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
                 if t2[i + 1] not in ns:
-                    return (False, "Colon-led tokens must be numbers or :run_dir")
+                    t = ":filename" if file is True else ":run_dir"
+                    return (
+                        False,
+                        f"Colon-led tokens must be numbers, datetime tokens, or {t}",
+                    )
                 try:
                     if t2[i + 2] in ns and t2[i + 3] in ns:
                         return False

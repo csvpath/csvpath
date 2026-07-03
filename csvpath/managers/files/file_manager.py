@@ -1,7 +1,7 @@
 import re
 import json
 import traceback
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
@@ -19,6 +19,7 @@ from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.template_util import TemplateUtility as temu
 from .file_registrar import FileRegistrar
 from .lines_and_headers_cacher import LinesAndHeadersCacher
+from .files_listener import FilesListener
 from .file_metadata import FileMetadata
 from .file_describer import NamedFileDescriber
 from .file_activator import NamedFileActivator
@@ -219,8 +220,6 @@ class FileManager:
                 #
                 path = lst[0]
                 path = Nos(path).join("manifest.json")
-                # path = os.path.join(path, "manifest.json")
-                # nos = self.nos
                 nos = Nos(path)
                 if nos.exists():
                     mani = self.registrar.get_manifest(path)
@@ -634,11 +633,18 @@ class FileManager:
             # issue driven by the 3rd party or business rules.
             #
             UUID(registration_uuid)
-            self.csvpaths.logger.info(
-                "Registration of %s will be associated with UUID %s",
-                path,
-                registration_uuid,
-            )
+        else:
+            #
+            # if we don't create the uuid here the metadata object will create one;
+            # however, if we want to tie log statements back we should have a uuid
+            # here, regardless of if the user creates it or we do.
+            #
+            registration_uuid = str(uuid4())
+        self.csvpaths.logger.info(
+            "Registration of %s will be associated with UUID %s",
+            path,
+            registration_uuid,
+        )
         if not self.can_load(path):
             #
             # if False, can_load() will have already raised an error and/or, minimally,
@@ -648,9 +654,26 @@ class FileManager:
             # will load any allowed files, even if some are not allowed -- but with the
             # caveat that if an exception is raised we may stop in the middle of the load.
             #
+            #
+            #
+            _ = {
+                "name": name,
+                "path": path,
+                "template": template,
+                "registration_uuid": registration_uuid,
+            }
+            self._registration_failed(_)
+            #
             return
         self.legal_name(name)
         if path is None or path.strip() == "":
+            _ = {
+                "name": name,
+                "path": path,
+                "template": template,
+                "registration_uuid": registration_uuid,
+            }
+            self._registration_failed(_)
             raise ValueError("Path cannot be None or empty")
         if template is None:
             template = self.describer.get_template(name)
@@ -666,7 +689,7 @@ class FileManager:
             #
             self.configure_named_file(name, config)
         path = pathu.resep(path)
-        self.csvpaths.logger.debug("Path after resep %s", path)
+        self.csvpaths.logger.debug("[%s] Path after resep %s", registration_uuid, path)
         config = self.csvpaths.config
         http = config.get(section="inputs", name="allow_http_files", default=False)
         http = str(http).strip().lower() in ["on", "yes", "true"]
@@ -679,14 +702,28 @@ class FileManager:
         # the user cannot just override certain settings.
         #
         if nos.is_http and http is not True:
-            msg = f"Cannot add {path} as {name} because loading files over HTTP is not allowed"
+            _ = {
+                "name": name,
+                "path": path,
+                "template": template,
+                "registration_uuid": registration_uuid,
+            }
+            self._registration_failed(_)
+            msg = f"[{registration_uuid}] Cannot add {path} as {name} because loading files over HTTP is not allowed"
             self.csvpaths.logger.warning(msg)
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return
         if nos.is_local and local is not True:
-            msg = f"Cannot add {path} as {name} because loading local files is not allowed"
+            _ = {
+                "name": name,
+                "path": path,
+                "template": template,
+                "registration_uuid": registration_uuid,
+            }
+            self._registration_failed(_)
+            msg = f"[{registration_uuid}] Cannot add {path} as {name} because loading local files is not allowed"
             self.csvpaths.logger.warning(msg)
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             if self.csvpaths.ecoms.do_i_raise():
@@ -715,7 +752,9 @@ class FileManager:
                 path, name=name, template=template, recurse=False
             )
         try:
-            self.csvpaths.logger.debug("Ready to register %s", path)
+            self.csvpaths.logger.debug(
+                "[%s] Ready to register %s", registration_uuid, path
+            )
             #
             # path must end up with only legal filesystem chars.
             # the read-only http backend will have ? and possibly other
@@ -750,13 +789,17 @@ class FileManager:
             # exp: moving docs and descriptor to above copy_in()
             #
             self.assure_docs_and_discriptor(name)
-            self.csvpaths.logger.debug("Assured docs and discriptor")
+            self.csvpaths.logger.debug(
+                "[%s] Assured docs and discriptor", registration_uuid
+            )
             #
             # copy file to its home location
             #
-            self.csvpaths.logger.debug("Path after removing mark, if any: %s", path)
+            self.csvpaths.logger.debug(
+                "[%s] Path after removing mark, if any: %s", registration_uuid, path
+            )
             self._copy_in(name=name, path=path, home=home, template=template)
-            self.csvpaths.logger.debug("Done copying in")
+            self.csvpaths.logger.debug("[%s] Done copying in", registration_uuid)
             #
             # self.assure_docs_and_discriptor(name)
             # self.csvpaths.logger.debug("Assured docs and discriptor")
@@ -766,9 +809,13 @@ class FileManager:
             # done here.
             #
             rpath, h = self._fingerprint(home)
-            self.csvpaths.logger.debug("Fingerprint of %s: %s", path, h)
+            self.csvpaths.logger.debug(
+                "[%s] Fingerprint of %s: %s", registration_uuid, path, h
+            )
             ret = f"${name}.files.{h}"
-            self.csvpaths.logger.debug("Reference to named-file: %s", ret)
+            self.csvpaths.logger.debug(
+                "[%s] Reference to named-file: %s", registration_uuid, ret
+            )
             #
             # ---------------------------
             # maybe move the metadata handling to its own method?
@@ -777,7 +824,9 @@ class FileManager:
             # create the metadata event for this registration
             #
             name_home = self.named_file_home(name)
-            self.csvpaths.logger.debug("Name home is %s", name_home)
+            self.csvpaths.logger.debug(
+                "[%s] Name home is %s", registration_uuid, name_home
+            )
             mdata = FileMetadata(self.csvpaths.config)
             #
             # add the ability to pass in a UUID. if received, use it here to
@@ -805,8 +854,8 @@ class FileManager:
             mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]
             mdata.name_home = name_home
             mdata.mark = mark
-            mdata.template = template
-            self.csvpaths.logger.debug("Created metadata")
+            mdata.template = template or ""
+            self.csvpaths.logger.debug("[%s] Created metadata", registration_uuid)
             #
             # TODO: add file_size. move FileInfo into Nos. for now it is 0.
             #
@@ -815,23 +864,39 @@ class FileManager:
             # the fingerprint is the most precise way of referencing a particular
             # named-file version.
             #
-            self.csvpaths.logger.debug("Registered %s", ret)
+            self.csvpaths.logger.debug("[%s] Registered %s", registration_uuid, ret)
             return ret
         except Exception as ex:
+            _ = {
+                "name": name,
+                "path": path,
+                "template": template,
+                "registration_uuid": registration_uuid,
+            }
+            self._registration_failed(_)
             #
             # remove me! tho, why you'd want quiet is not sure.
             #
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             #
             #
-            #
-            msg = f"Error in loading named-file: {ex}"
+            msg = f"[{registration_uuid}] Error in loading named-file: {ex}"
             self.csvpaths.logger.error(msg)
             self.csvpaths.error_manager.handle_error(
                 source=traceback.format_exc(), msg=msg
             )
             if self.csvpaths.ecoms.do_i_raise():
                 raise
+
+    def _registration_failed(self, data: dict[str, str]) -> None:
+        lst = FilesListener(self.csvpaths)
+        mdata = FileMetadata(self.csvpaths.config)
+        mdata.named_file_name = data.get("name")
+        mdata.origin_path = data.get("path")
+        mdata.template = data.get("template") or ""
+        mdata.uuid_string = data.get("registration_uuid")
+        mdata.status = "Registration failed"
+        lst.metadata_update(mdata)
 
     def _validate_xlsx_mark(self, path: str, mark: str) -> None:
         if not XlsxReaderHelper.is_xlsx(path):

@@ -1,6 +1,4 @@
 import os
-import json
-from datetime import datetime
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
@@ -110,9 +108,9 @@ class FileRegistrar(Registrar, Listener):
         nos.path = old_home
         nos.rename(new_home)
         mani[index]["file_home"] = new_home
-        mani[index][
-            "file"
-        ] = f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+        mani[index]["file"] = (
+            f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
+        )
 
     def metadata_update(self, mdata: Metadata) -> None:
         path = mdata.origin_path
@@ -132,8 +130,7 @@ class FileRegistrar(Registrar, Listener):
         mani["from"] = path
         if mark is not None:
             mani["mark"] = mark
-        if mdata.template is not None:
-            mani["template"] = mdata.template
+        mani["template"] = mdata.template or ""
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)

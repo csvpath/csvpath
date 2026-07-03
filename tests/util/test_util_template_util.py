@@ -7,8 +7,15 @@ class TestUtilTemplateUtil(unittest.TestCase):
         #
         # goods
         #
-        temu.valid("a/b/:run_dir")
-        temu.valid("a/:1/:run_dir")
+        t = temu.validate("a/b/:run_dir")
+        print(f"11: {t}")
+        assert t[0]
+        t = temu.validate("a/:1/:run_dir")
+        print(f"11: {t}")
+        assert t[0]
+        t = temu.validate("a/:filename", file=True)
+        print(f"11: {t}")
+        assert t[0]
         #
         # bads
         #
