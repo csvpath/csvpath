@@ -28,6 +28,12 @@ call c:\dev\win-exports.bat
 rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
 rem cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
 
+
+IF NOT EXIST "%USERPROFILE%\.local\bin\poetry.exe" (
+    echo ERROR: The Poetry binary was not found.
+    EXIT /B 1
+)
+
 cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
 cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
 
