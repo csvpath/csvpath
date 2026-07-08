@@ -162,8 +162,8 @@ class Nos:
     @server_config.setter
     def server_config(self, servers: list[ServerConfig]) -> None:
         #
-        # when we set server config on a nos we're changing the SFTP from the
-        # cached backend location and creds to the uncached creds stored in a
+        # when we set server config on a nos we're enabling the SFTP not only
+        # from the cached backend location, but also uncached creds stored in a
         # named-file or named-paths definition json.
         #
         # for an example see: TestUtilNos.test_nos_server_config_1
@@ -203,6 +203,7 @@ class Nos:
                     args=[self.path, False],
                 )
                 self._do = instance
+                self._do.server_config = v
                 #
                 # for getting Sftp server creds we need a csvpath.util.Config.
                 # it isn't certain we'll have one ourselves; however, the SftpDo

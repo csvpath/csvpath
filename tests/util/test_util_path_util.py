@@ -14,7 +14,7 @@ class TestUtilPathUtil(unittest.TestCase):
         assert pathu.location_and_port("sftp://aserver/afile.txt") == ("aserver", None)
         assert pathu.location_and_port("sftp://aserver:2022/afile.txt") == (
             "aserver",
-            2022,
+            "2022",
         )
         assert pathu.location_and_port("aserver/afile.txt") is None
         assert pathu.location_and_port("afile.txt") is None

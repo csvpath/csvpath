@@ -54,36 +54,6 @@ class SftpDataReader(CsvDataReader):
     def server_credentials(self) -> tuple[str, int]:
         u, p = SftpServerCreds.server_credentials(self)
         return (u, p)
-        """
-        if not Nos(self.path).is_sftp:
-            raise ValueError(f"{self.path} is not sftp")
-        server, port = Nos(self.path).location_and_port
-        username = None
-        password = None
-        for k, v in self.server_config.items():
-            if v.address == server:
-                if v.port == port:
-                    username = vaut.parse_var_value(
-                        self._config, "username", v.username
-                    )
-                    password = vaut.parse_var_value(
-                        self._config, "password", v.password
-                    )
-                    break
-                if port is None and (v.port == 22 or v.port is None):
-                    username = vaut.parse_var_value(
-                        self._config, "username", v.username
-                    )
-                    password = vaut.parse_var_value(
-                        self._config, "password", v.password
-                    )
-                    break
-        if username is None:
-            c = SftpConfig(self._config)
-            username = c.username
-            password = c.password
-        return username, password
-        """
 
     def load_if(self) -> None:
         if self.source is None:
