@@ -20,6 +20,22 @@ AMAZING = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}lookup_names.csv"
 
 
 class TestCsvPathsManagersFileManager(unittest.TestCase):
+    def test_assure_named_file(self) -> None:
+        paths = Builder().build()
+        mgr = paths.file_manager
+        if mgr.has_named_file("foo"):
+            mgr.remove_named_file("foo")
+        files = paths.config.get(section="inputs", name="files")
+        nos = Nos(files)
+        assert nos.dir_exists()
+        nos = Nos(nos.join("foo"))
+        if nos.dir_exists():
+            nos.remove()
+        mgr.assure_named_file("foo")
+        assert nos.dir_exists()
+        nos = Nos(nos.join("manifest.json"))
+        assert nos.exists()
+
     def test_file_registration_failed(self) -> None:
         paths = Builder().build()
         if paths.file_manager.has_named_file("failed"):

@@ -79,6 +79,9 @@ class PathUtility:
 
     @classmethod
     def stripp(cls, apath: str) -> str:
+        #
+        # removes protocol + location, incl. port.
+        #
         i = apath.find("://")
         j = -1
         if i > -1:
@@ -87,6 +90,38 @@ class PathUtility:
             if j > -1:
                 apath = apath[j + 1 :]
         return apath
+
+    @classmethod
+    def location(cls, path: str):
+        #
+        # find the location of a non-local path. i.e. in sftp://mylocation:22/a file.txt
+        # the return would be mylocation:22
+        #
+        i = path.find("://")
+        if i == -1:
+            return None
+        path = path[i + 3 :]
+        i = path.find("/")
+        if i == -1:
+            return path
+        return path[0:i]
+
+    @classmethod
+    def location_and_port(cls, path: str) -> tuple[str, int]:
+        #
+        # find the location of a non-local path. \
+        #
+        # in sftp://mylocation:22/a file.txt  the return would be (mylocation,22)
+        # in sftp://mylocation/a file.txt  the return would be (mylocation,None)
+        #
+        location = cls.location(path)
+        if location is None:
+            return None
+        i = location.find(":")
+        if i == -1:
+            return (location, None)
+        port = location[i + 1 :]
+        return location[0:i], int(port)
 
     @classmethod
     def equal(cls, pathone: str, pathtwo: str, stripp=False) -> bool:

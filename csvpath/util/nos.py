@@ -6,6 +6,9 @@ from .config import Config
 from .path_util import PathUtility as pathu
 from .class_loader import ClassLoader
 from typing import Self
+from csvpath.util.sftp.sftp_config import SftpConfig
+from csvpath.util.sftp.sftp_server_creds import SftpServerCreds
+from csvpath.managers.server_config import ServerConfig
 
 
 class Nos:
@@ -14,6 +17,7 @@ class Nos:
         self._do = None
         self._config = config
         self.path = path
+        self._servers = None
 
     def __str__(self) -> str:
         return f"{type(self)}: do: {self.do}, path: {self.path}"
@@ -93,6 +97,8 @@ class Nos:
     @property
     def location(self) -> str:
         #
+        # pathu.location(path) is now available. prefer that going forward.
+        #
         # returns None if a local path. there may be some gray areas around mounted drives?
         # otherwise, returns the first path part after the protocol. port is included, if any.
         #
@@ -106,6 +112,9 @@ class Nos:
 
     @property
     def location_and_port(self) -> tuple[str, int]:
+        #
+        # pathu.location_and_port(path) is now available. prefer that going forward.
+        #
         location = self.location
         if location is None:
             return None
@@ -133,6 +142,81 @@ class Nos:
         if path.startswith("sftp://"):
             return path[7:]
         return path
+
+    #
+    # SFTP only:
+    # server configs are set on named-files and named-paths for non-local file
+    # registration and post run transfers, respectively. if we have a matching
+    # config, we will use it, not the backend, even if the backend is configured
+    # for sftp.
+    #
+    # ServerConfig connections/clients are not cached/reused like the regular
+    # SFTP backend is.
+    #
+    # also see DataFileReader and DataFileWriter's ServerConfig logic.
+    #
+    @property
+    def server_config(self) -> list[ServerConfig]:
+        return self._servers
+
+    @server_config.setter
+    def server_config(self, servers: list[ServerConfig]) -> None:
+        #
+        # when we set server config on a nos we're changing the SFTP from the
+        # cached backend location and creds to the uncached creds stored in a
+        # named-file or named-paths definition json.
+        #
+        # for an example see: TestUtilNos.test_nos_server_config_1
+        # or see FileManager.add_named_file() around like 750:
+        #
+        #        config = self.describer.get_config(name)
+        #        servers = config.sources
+        #        nos.server_config = servers
+        #
+        # if there is a match, that is what is used, if no match, it should
+        # fall back to the backend sftp config, if any.
+        #
+        if servers is None:
+            return
+        if not self.is_sftp:
+            #
+            # do we need to worry about people adding server config to non-SFTP
+            # Nos? there isn't much practical advantage and we can simplify use
+            # just a bit by making a non-sftp a no-op.
+            #
+            return
+        if len(servers) == 0:
+            return
+        self._servers = servers
+        server, port = self.location_and_port
+        for k, v in servers.items():
+            #
+            # there is a lot of use of _ (underscored) methods that are supposed
+            # to be hiding below here. that could and probably should change, but
+            # simply making the methods not _ would not better guarantee that we
+            # be careful with the way Nos, DataFileReader, DataFileWriter and their
+            # implementation classes are handled.
+            #
+            if v.address == server and v.port == port:
+                instance = ClassLoader.load(
+                    "from csvpath.util.sftp.sftp_nos import SftpDo",
+                    args=[self.path, False],
+                )
+                self._do = instance
+                #
+                # for getting Sftp server creds we need a csvpath.util.Config.
+                # it isn't certain we'll have one ourselves; however, the SftpDo
+                # will look for one in Box or create one for us.
+                #
+                if self._config is None:
+                    self._config = self._do._csvpath_config()
+                c = SftpConfig(self._config)
+                c.username, c.password = SftpServerCreds.server_credentials(self)
+                c.server = server
+                c.port = port
+                c._do_load()
+                self._do._config = c
+                break
 
     @property
     def do(self):

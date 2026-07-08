@@ -1,16 +1,26 @@
 # pylint: disable=C0114
 
-from csvpath.util.nos import Nos
 from csvpath.util.sftp.sftp_config import SftpConfig
 from csvpath.util.var_utility import VarUtility as vaut
+from csvpath.util.path_util import PathUtility as pathu
 
 
 class SftpServerCreds:
+    #
+    # reader_or_writer requires:
+    #   - x.path:str
+    #   - x._config:csvpath.util.Config
+    #   - server_config:dict[str, ServerConfig]
+    #
     @classmethod
     def server_credentials(cls, reader_or_writer) -> tuple[str, int]:
-        if not Nos(reader_or_writer.path).is_sftp:
+        if reader_or_writer is None:
+            raise ValueError("reader_or_writer cannot be None")
+        if reader_or_writer.path is None:
+            raise ValueError("reader_or_writer.path cannot be None")
+        if not reader_or_writer.path.startswith("sftp://"):
             raise ValueError(f"{reader_or_writer.path} is not sftp")
-        server, port = Nos(reader_or_writer.path).location_and_port
+        server, port = pathu.location_and_port(reader_or_writer.path)
         username = None
         password = None
         for k, v in reader_or_writer.server_config.items():

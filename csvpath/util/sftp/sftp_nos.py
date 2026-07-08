@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import traceback
 import paramiko
 import stat
 from csvpath import CsvPaths
@@ -43,16 +42,24 @@ class SftpDo:
     def sep(self) -> str:
         return "/"
 
-    def __init__(self, path):
+    def __init__(self, path, setup: bool = True):
         self._path = None
         self._orig_path = None
-        self._server_part = None
+        # self._server_part = None
         self._csvpathconfig = None
-        self.setup(path)
+        #
+        # primarily for the case of setting up using ServerConfig, we may
+        # not want to do SftpConfig stuff here. we'll take the path, tho
+        # since that's just a given.
+        #
+        if setup is True:
+            self.setup(path)
+        else:
+            self.path = path
 
     def setup(self, path: str = None) -> None:
         config = self._csvpath_config()
-        self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
+        # self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
         self._config = SftpConfig(config)
         if path:
             self.path = path
@@ -102,6 +109,8 @@ class SftpDo:
             if retry is True:
                 self._config.reset()
                 self.remove(retry=False)
+                return None
+            raise
 
     def listdir(
         self,
@@ -147,6 +156,7 @@ class SftpDo:
                     default=default,
                     retry=False,
                 )
+            raise
 
     def copy(self, to, *, retry=True) -> None:
         try:
@@ -166,11 +176,14 @@ class SftpDo:
         except Exception:
             if retry is True:
                 self._config.reset()
-                self.copy(self, to, retry=False)
+                self.copy(to, retry=False)
+                return None
+            raise
 
     def exists(self, *, retry=True) -> bool:
         try:
-            self._config.sftp_client.stat(self.path)
+            path = self.path
+            self._config.sftp_client.stat(path)
             return True
         except FileNotFoundError:
             return False
@@ -178,7 +191,7 @@ class SftpDo:
             if retry is True:
                 self._config.reset()
                 return self.exists(retry=False)
-            print(traceback.format_exc())
+            raise
 
     def dir_exists(self) -> bool:
         try:
@@ -230,10 +243,44 @@ class SftpDo:
             r = False
         return r
     """
+    """
+    #
+    # we handle stripping the protocol and server in self.path = path using pathu
+    #
+    def _strip_location(self, url_or_path:str) -> str:
+        if url_or_path is None:
+            raise ValueError("url_or_path cannot be None")
+        if not isinstance(url_or_path, str):
+            return ValueError("url_or_path must be a string")
+        url_or_path = url_or_path.strip()
+        if url_or_path.find("://") > -1 and url_or_path.startswith("sftp://") == -1:
+            raise ValueError("url_or_path must begin with sftp://")
+        path = url_or_path
+        if url_or_path.startswith("sftp://"):
+            path = url_or_path[7:]
+            i = path.find("/")
+            if i == -1:
+                raise ValueError("url_or_path must have a / after the network location")
+            path = path[i:]
+        return path
+
+    def stripped(self) -> str:
+        return self._strip_location(self.path)
+    """
 
     def _isfile(self, path, *, retry=True) -> bool:
+        if path is None:
+            raise ValueError("Path cannot be None")
         try:
-            attr = self._config.sftp_client.stat(path)
+            #
+            # typically we remove protocol, location, and port in setting path; however,
+            # it has been seen that in at least one case we still need to failsafe of
+            # doing it (again) here.
+            #
+            path = pathu.stripp(path)
+            c = self._config
+            sc = c.sftp_client
+            attr = sc.stat(path)
             return stat.S_ISREG(attr.st_mode)
         except FileNotFoundError:
             return False
@@ -241,6 +288,7 @@ class SftpDo:
             if retry is True:
                 self._config.reset()
                 return self._isfile(path, retry=False)
+            raise
 
     def rename(self, new_path: str, *, retry=True) -> None:
         try:
