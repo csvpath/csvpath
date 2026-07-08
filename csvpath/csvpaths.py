@@ -4,7 +4,6 @@ of the CsvPath library. it makes it easier to scale your CSV quality control."""
 import os
 import traceback
 import atexit
-import threading
 
 from uuid import uuid4
 from abc import ABC, abstractmethod
@@ -226,9 +225,17 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         #
         #
         #
-        self.logger.info(
-            f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
-        )
+        # this log line didn't add especial value. but it did set the logger
+        # to a certain log file before we had a chance to do a cd-and-reload
+        # to switch into a particular project. the fix isn't just to remove the
+        # line, it's also to make the logger travel with the config used. but
+        # removing the log line is easy enough and we don't lose much. And the
+        # real fix was already in set_config_path_and_reload() -- it was just
+        # releasing/renewing the logger.
+        #
+        # self.logger.info(
+        #    f"Initialized CsvPaths: {self} in thread: {threading.current_thread()}"
+        # )
 
     @property
     def logger(self):
