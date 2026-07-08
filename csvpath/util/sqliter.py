@@ -40,7 +40,8 @@ class Sqliter:
 
     @property
     def connection(self) -> Connection:
-        self._conn = connect(self.db_file)
+        if self._conn is None:
+            self._conn = connect(self.db_file)
         return self._conn
 
     def __enter__(self):

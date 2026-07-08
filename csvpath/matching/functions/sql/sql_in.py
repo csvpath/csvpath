@@ -1,5 +1,5 @@
 from typing import Any
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import Engine
 import sqlalchemy as sa
 import traceback
 
@@ -11,7 +11,6 @@ from csvpath.matching.functions.args import Args
 
 
 class SqlIn(ValueProducer, MatchDecider):
-
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name, child=child)
         self._cached = None
@@ -69,38 +68,56 @@ class SqlIn(ValueProducer, MatchDecider):
         conn = self._value_four(skip=skip)
         cache = self._value_five(skip=skip)
         cache = False if cache is None else cache
-        self.value = self._query(table=table, column=column, value=v, conn=conn, cache=cache)
+        self.value = self._query(
+            table=table, column=column, value=v, conn=conn, cache=cache
+        )
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.to_value(skip=skip)
 
-##################
+    ##################
 
-    def _query(self, *, table:str, column:str, value:Any, cache:bool, conn:str) -> bool:
+    def _query(
+        self, *, table: str, column: str, value: Any, cache: bool, conn: str
+    ) -> bool:
+        engine = None
         try:
             engine = Db.get_engine(conn=conn)
-            return self._do_query(table=table, column=column, value=value, cache=cache, engine=engine)
-        except Exception as ex:
+            return self._do_query(
+                table=table, column=column, value=value, cache=cache, engine=engine
+            )
+        except Exception:
             print(traceback.format_exc())
+        finally:
+            if engine is not None:
+                try:
+                    engine.dispose()
+                except Exception:
+                    ...
 
-    def _do_query(self, *, table:str, column:str, value:Any, cache:bool, engine:Engine) -> bool:
+    def _do_query(
+        self, *, table: str, column: str, value: Any, cache: bool, engine: Engine
+    ) -> bool:
         if cache is True:
             if self._cached is None:
                 self._do_cache(value=value, table=table, column=column, engine=engine)
             return value in self._cached
         else:
-            return self._do_lookup(value=value, table=table, column=column, engine=engine)
+            return self._do_lookup(
+                value=value, table=table, column=column, engine=engine
+            )
 
-    def _do_cache(self, *, value:Any, table:str, column:str, engine:Engine) -> bool:
+    def _do_cache(self, *, value: Any, table: str, column: str, engine: Engine) -> bool:
         table = sa.table(table, sa.column(column))
         sql = sa.select(sa.column(column)).select_from(table)
-
 
         with engine.connect() as conn:
             rows = conn.execute(sql).fetchall()
             self._cached = {row[0]: None for row in rows}
 
-    def _do_lookup(self, *, value:Any, table:str, column:str, engine:Engine) -> bool:
+    def _do_lookup(
+        self, *, value: Any, table: str, column: str, engine: Engine
+    ) -> bool:
         table = sa.table(table, sa.column(column))
         query = (
             sa.select(sa.column(column))
@@ -111,5 +128,3 @@ class SqlIn(ValueProducer, MatchDecider):
         with engine.connect() as conn:
             result = conn.execute(query).fetchone()
             return result is not None
-
-

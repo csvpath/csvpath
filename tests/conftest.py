@@ -6,31 +6,33 @@ from csvpath.util.box import Box
 from csvpath.util.config import Config
 
 
+# conftest.py
+import gc
 import sqlite3
 
-_tracked = []
-_orig_connect = sqlite3.connect
+
+def _live_connections():
+    return {id(o): o for o in gc.get_objects() if isinstance(o, sqlite3.Connection)}
 
 
-def _tracking_connect(*args, **kwargs):
-    conn = _orig_connect(*args, **kwargs)
-    _tracked.append({"conn": conn, "stack": "".join(traceback.format_stack()[:-1])})
-    return conn
-
-
-sqlite3.connect = _tracking_connect
+@pytest.fixture(autouse=True)
+def _sqlite_leak_probe(request):
+    before = set(_live_connections())
+    yield
+    after = _live_connections()
+    for i in set(after) - before:
+        conn = after[i]
+        try:
+            rows = conn.execute("PRAGMA database_list").fetchall()
+        except sqlite3.ProgrammingError:
+            continue  # already closed cleanly, not a leak
+        raise Exception(
+            f"\n### sqlite3.Connection still open after {request.node.nodeid}"
+        )
+        print("    database_list:", rows)
 
 
 def pytest_sessionfinish(session, exitstatus):
-    ###
-    for entry in _tracked:
-        try:
-            entry["conn"].execute("SELECT 1")
-        except sqlite3.ProgrammingError:
-            continue  # already closed properly
-        print("\n### sqlite3 connection never closed, opened at:\n", entry["stack"])
-
-    ###
     if Box.SQL_ENGINE in Box.STUFF:
         try:
             box = Box()
