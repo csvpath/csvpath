@@ -74,7 +74,7 @@ class TestCsvpathsExamplesSftpRegisterNonLocal(unittest.TestCase):
         regpath = paths.file_manager.get_named_file(name)
         assert regpath
         print(f"non-local path {path} regstered at: {regpath}")
-        assert regpath.startswith(f"{backend}/s_ic/nos_test.txt")
+        assert regpath.startswith(f"{backend}{os.sep}s_ic{os.sep}nos_test.txt")
         nos = Nos(regpath)
         assert nos.exists()
         with DataFileReader(regpath) as file:

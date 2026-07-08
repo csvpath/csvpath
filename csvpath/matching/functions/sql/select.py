@@ -79,6 +79,7 @@ class Select(ValueProducer):
     ##################
 
     def _query(self, *, table: str, column: str, where: str, conn: str) -> bool:
+        engine = None
         try:
             engine = Db.get_engine(conn=conn)
             return self._do_query(
@@ -86,6 +87,12 @@ class Select(ValueProducer):
             )
         except Exception:
             print(traceback.format_exc())
+        finally:
+            if engine is not None:
+                try:
+                    engine.dispose()
+                except Exception:
+                    ...
 
     def _do_query(self, *, table: str, column: str, where: str, engine: Engine) -> list:
         table = sa.table(table, sa.column(column))
