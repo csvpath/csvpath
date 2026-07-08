@@ -6,6 +6,17 @@ from csvpath.util.box import Box
 from csvpath.util.config import Config
 
 
+import sys
+
+
+def _hook(args):
+    traceback.print_exception(args.exc_type, args.exc_value, args.exc_traceback)
+    print("unraisable in:", args.object, file=sys.stderr)
+
+
+sys.unraisablehook = _hook
+
+
 def pytest_sessionfinish(session, exitstatus):
     if Box.SQL_ENGINE in Box.STUFF:
         try:

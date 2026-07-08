@@ -154,15 +154,19 @@ class FileRegistrar(Registrar, Listener):
             raise InputException(
                 f"File mgr and registrar marks should match: {mdata.mark}, {mark}"
             )
-        if (
-            # Nos doesn't handle http files. they are special--inbound only.
-            not path.startswith("http:")
-            and not path.startswith("https:")
-            and not Nos(path).exists()
-        ):
-            # if not path.startswith("s3:") and not os.path.exists(path):
-            #
-            raise InputException(f"Path {path} does not exist")
+        opath = Nos(path)
+        #
+        # if we're registering a non-local file and it's an sftp file it may be
+        # on an sftp server that is configured in the named-file description. so
+        # we setup nos to be able to check, just in case.
+        #
+        config = self.csvpaths.file_manager.describer.get_config(mdata.named_file_name)
+        servers = config.sources
+        opath.server_config = servers
+
+        if not opath.is_http:
+            if not opath.exists():
+                raise InputException(f"Path {opath.path} does not exist")
         #
         # if the fingerprint already exists we don't store the file again.
         # we rename the file to the fingerprint. from this point the registrar

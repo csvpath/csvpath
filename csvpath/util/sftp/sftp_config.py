@@ -1,10 +1,14 @@
-import os
 from os import environ
+import socket
 import textwrap
 import paramiko
+import traceback
 from csvpath.util.box import Box
 from ..config import Config
 from ..caser import Caser
+
+
+class SftpConfigError(Exception): ...
 
 
 class SftpConfig:
@@ -19,8 +23,7 @@ class SftpConfig:
 
     def __str__(self) -> str:
         return textwrap.dedent(
-            f"""
-            {self.username}@{self.server}:{self.port}
+            f"""{self.username}@{self.server}:{self.port}
         """
         )
 
@@ -55,15 +58,28 @@ class SftpConfig:
     def reset(self) -> None:
         if self._ssh_client:
             box = Box()
-            self._ssh_client.close()
-            self._sftp_client = None
-            self._ssh_client = None
+            if self._ssh_client:
+                self._ssh_client.close()
+                self._ssh_client = None
+            if self._sftp_client:
+                self._sftp_client = None
             box.remove(Box.SSH_CLIENT)
             box.remove(Box.SFTP_CLIENT)
+            #
+            # should we not clear out the config properties?
+            #
+            self.username = None
+            self.password = None
+            self.server = None
+            self.port = None
+
+    @property
+    def has_ssh_client(self) -> bool:
+        return self._ssh_client is not None
 
     @property
     def ssh_client(self) -> paramiko.SSHClient:
-        if self._ssh_client is None:
+        if not self.has_ssh_client:
             self._load_clients()
         return self._ssh_client
 
@@ -72,6 +88,12 @@ class SftpConfig:
             self._ssh_client = Box().get(Box.SSH_CLIENT)
             self._sftp_client = Box().get(Box.SFTP_CLIENT)
         if self._sftp_client is None or self._ssh_client is None:
+            self._do_load()
+            Box().add(Box.SSH_CLIENT, self._ssh_client)
+            Box().add(Box.SFTP_CLIENT, self._sftp_client)
+
+    def _do_load(self):
+        try:
             c = paramiko.SSHClient()
             c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             c.connect(
@@ -84,8 +106,9 @@ class SftpConfig:
             )
             self._ssh_client = c
             self._sftp_client = c.open_sftp()
-            Box().add(Box.SSH_CLIENT, self._ssh_client)
-            Box().add(Box.SFTP_CLIENT, self._sftp_client)
+        except socket.gaierror as e:
+            print(traceback.format_exc())
+            raise SftpConfigError(f"Unknown or malformed config: {e}")
 
     @property
     def server(self) -> str:
@@ -96,6 +119,10 @@ class SftpConfig:
             self._server = s
         return self._server
 
+    @server.setter
+    def server(self, s: str) -> None:
+        self._server = s
+
     @property
     def port(self) -> int:
         if self._port is None:
@@ -104,6 +131,10 @@ class SftpConfig:
                 s = environ.get(s)
             self._port = s
         return self._port
+
+    @port.setter
+    def port(self, s: str) -> None:
+        self._port = s
 
     @property
     def username(self) -> str:
@@ -114,6 +145,10 @@ class SftpConfig:
             self._username = s
         return self._username
 
+    @username.setter
+    def username(self, s: str) -> None:
+        self._username = s
+
     @property
     def password(self) -> str:
         if self._password is None:
@@ -122,6 +157,10 @@ class SftpConfig:
                 s = environ.get(s)
             self._password = s
         return self._password
+
+    @password.setter
+    def password(self, s: str) -> None:
+        self._password = s
 
     @classmethod
     def check_for_server(self, config: Config) -> bool:

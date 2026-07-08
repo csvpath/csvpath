@@ -1,10 +1,6 @@
 import unittest
 import os
-import time
-import paramiko
-import stat
 from csvpath import CsvPaths
-from csvpath.util.nos import Nos
 from csvpath.util.var_utility import VarUtility
 
 
@@ -36,25 +32,29 @@ class TestCsvPathsExamplesSftpVarValues(unittest.TestCase):
         # get a var|var-name (tested above)
         # get an ENV_VAR
         #
-        os.environ["SFTP_USER"] = "auser"
-        m["sftp-user"] = "SFTP_USER"
-        v = VarUtility.get_str(m, v, "sftp-user")
-        assert v == "auser"
+        _auser = os.getenv("SFTP_USER")
+        try:
+            os.environ["SFTP_USER"] = "auser"
+            m["sftp-user"] = "SFTP_USER"
+            v = VarUtility.get_str(m, v, "sftp-user")
+            assert v == "auser"
 
-        v = VarUtility.get_int(m, v, "sftp-port")
-        assert v == 2022
+            v = VarUtility.get_int(m, v, "sftp-port")
+            assert v == 2022
 
-        v = VarUtility.get_bool(m, v, "sftp-original")
-        v is False
+            v = VarUtility.get_bool(m, v, "sftp-original")
+            v is False
 
-        r.csvpath.metadata["sftp-original"] = True
-        v = VarUtility.get_bool(m, v, "sftp-original")
-        v is True
+            r.csvpath.metadata["sftp-original"] = True
+            v = VarUtility.get_bool(m, v, "sftp-original")
+            v is True
 
-        assert VarUtility.is_true(1)
-        assert VarUtility.is_true("yes")
-        assert VarUtility.is_true("true")
-        assert not VarUtility.is_true(0)
-        assert not VarUtility.is_true("no")
-        assert not VarUtility.is_true("false")
-        assert not VarUtility.is_true(None)
+            assert VarUtility.is_true(1)
+            assert VarUtility.is_true("yes")
+            assert VarUtility.is_true("true")
+            assert not VarUtility.is_true(0)
+            assert not VarUtility.is_true("no")
+            assert not VarUtility.is_true("false")
+            assert not VarUtility.is_true(None)
+        finally:
+            os.environ["SFTP_USER"] = _auser

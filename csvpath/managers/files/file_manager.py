@@ -283,6 +283,13 @@ class FileManager:
         home = pathu.resep(home)
         return home
 
+    #
+    # creates a named-file before registering any files.
+    #
+    def assure_named_file(self, name: NamedFileName) -> None:
+        home = self.assure_named_file_home(name)
+        self.registrar.manifest_path(home)
+
     def configure_named_file(self, name: NamedFileName, descriptor: Config) -> None:
         #
         # updates the named-file's descriptor by replacement
@@ -665,7 +672,9 @@ class FileManager:
             self._registration_failed(_)
             #
             return
+        self.csvpaths.logger.info("Adding named file %s: can be loaded", name)
         self.legal_name(name)
+        self.csvpaths.logger.info("Adding named file %s: name is legal", name)
         if path is None or path.strip() == "":
             _ = {
                 "name": name,
@@ -678,7 +687,13 @@ class FileManager:
         if template is None:
             template = self.describer.get_template(name)
         if template is not None:
+            self.csvpaths.logger.debug(
+                "Adding named file %s: checking template %s", name, template
+            )
             temu.valid(template, file=True)
+        self.csvpaths.logger.info(
+            "Adding named file %s: template is valid or None: %s", name, template
+        )
         if config is not None:
             #
             # doing config here enables copy_in() to pull down files
@@ -687,6 +702,9 @@ class FileManager:
             # configured in advance, but that doesn't have to be the
             # case.
             #
+            self.csvpaths.logger.info(
+                "Adding named file %s: configuring named-file", name
+            )
             self.configure_named_file(name, config)
         path = pathu.resep(path)
         self.csvpaths.logger.debug("[%s] Path after resep %s", registration_uuid, path)
@@ -696,6 +714,10 @@ class FileManager:
         local = config.get(section="inputs", name="allow_local_files", default=False)
         local = str(local).strip().lower() in ["on", "yes", "true"]
         nos = Nos(path)
+        self.csvpaths.logger.info(
+            "Adding named file %s: checking permission, if needed, to register local and http files",
+            name,
+        )
         #
         # can the descriptor override the project's prohibition on http(s) loads?
         # no. the project may be controlled by a context like FlightPath Server, where
@@ -729,6 +751,9 @@ class FileManager:
             if self.csvpaths.ecoms.do_i_raise():
                 raise FileException(msg)
             return
+        self.csvpaths.logger.info(
+            "Adding named file %s: registration of %s permitted", name, path
+        )
         #
         # we should know enough to redirect if handed a dir path. we'll not recurse
         # because the caller hasn't given us enough info to know if we should.
@@ -737,6 +762,7 @@ class FileManager:
         # method. if using FlightPath Server, the server should allow them to be likewise
         # more specific. this branch is essentially a fallback presumed to be covering for
         # lazy developers and people who are working without better information.
+        #
         if nos.path.find("#") > -1:
             #
             # if we passed in a root minor, a.k.a. "mark", we need to strip
@@ -744,13 +770,35 @@ class FileManager:
             #
             nos = Nos(nos.path[0 : nos.path.find("#")])
         #
-        # note for now we treat any http as a file
+        # note for now we treat any http as a file.
+        #
+        # also note that this Nos must be savvy to any ServerConfig that may
+        # be available. it should use the possibly cached backend, if that
+        # matches, but if not, it must search any ServerConfig to configure
+        # itself to do operations on one of those servers.
+        #
+        # server config can be passed to a non-sftp nos. there won't be any
+        # complaints, but it won't do anything. atm, the judgement call is that
+        # we save an if-test by allowing any nos to receive server config and
+        # accepting the cost of searching for any server config in json.
+        #
+        config = self.describer.get_config(name)
+        servers = config.sources
+        nos.server_config = servers
+        #
+        #  for _ in servers:
+        #     if _.matches(nos.path):
+        #       nos.do._config = SftpConfig(_)
         #
         isfile = nos.is_http or nos.isfile()
+        self.csvpaths.logger.debug(
+            "Adding named file %s: path %s is a file? %s", name, path, isfile
+        )
         if not isfile:
             return self.add_named_files_from_dir(
                 path, name=name, template=template, recurse=False
             )
+        self.csvpaths.logger.debug("Adding named file %s: continuing with file", name)
         try:
             self.csvpaths.logger.debug(
                 "[%s] Ready to register %s", registration_uuid, path
@@ -896,6 +944,9 @@ class FileManager:
         mdata.template = data.get("template") or ""
         mdata.uuid_string = data.get("registration_uuid")
         mdata.status = "Registration failed"
+        self.csvpaths.logger.warn(
+            "[%s] Registration failed for %s", mdata.named_file_name, data
+        )
         lst.metadata_update(mdata)
 
     def _validate_xlsx_mark(self, path: str, mark: str) -> None:
@@ -927,8 +978,12 @@ class FileManager:
         fname = self._clean_file_name(fname)
         temp = f"{home}{sep}{fname}"
         copy = pathu.parts(path)[0] == pathu.parts(home)[0]
+        copy = copy and nos.is_local
         if copy:
             nos.path = path
+            config = self.describer.get_config(name)
+            servers = config.sources
+            nos.server_config = servers
             nos.copy(temp)
         else:
             self._copy_down(name=name, path=path, temp=temp, mode="wb")
