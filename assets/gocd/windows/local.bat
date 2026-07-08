@@ -49,8 +49,13 @@ echo(
 ::
 :: do the build
 ::
-cmd.exe /C c:\Users\python\.local\bin\poetry.exe install
-cmd.exe /C c:\Users\python\.local\bin\poetry.exe run pytest
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" install
+cmd.exe /C "%USERPROFILE%\.local\bin\poetry.exe" run pytest
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] The pytest failed with code %ERRORLEVEL%.
+    exit /b %ERRORLEVEL%
+)
+
 
 
 net stop w32time
