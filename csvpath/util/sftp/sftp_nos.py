@@ -47,6 +47,7 @@ class SftpDo:
         self._orig_path = None
         # self._server_part = None
         self._csvpathconfig = None
+        self.server_config = None
         #
         # primarily for the case of setting up using ServerConfig, we may
         # not want to do SftpConfig stuff here. we'll take the path, tho
@@ -75,6 +76,29 @@ class SftpDo:
     def path(self) -> str:
         return self._path
 
+    def validate_location_and_port(self) -> None:
+        path = self._orig_path
+        landp = pathu.location_and_port(path)
+        if landp is None:
+            raise ValueError(f"SFTP path cannot have no location: {path}")
+        server = landp[0]
+        port = landp[1]
+        if port is None:
+            port = "22"
+        #
+        # check the actual sftp_config server and port. if this doesn't match we may
+        # be pulling from a server other than what we expected.
+        #
+        if self._config.server != server:
+            raise ValueError(
+                f"SFTP server {self._config.server} does not equal configured: {server}"
+            )
+
+        if str(self._config.port) != str(port):
+            raise ValueError(
+                f"SFTP port {self._config.port} does not equal configured: {port}"
+            )
+
     @path.setter
     def path(self, p) -> None:
         #
@@ -97,6 +121,7 @@ class SftpDo:
         return f"{self._orig_path}/{name}"
 
     def remove(self, *, retry=True) -> None:
+        self.validate_location_and_port()
         try:
             if self.path == "/":
                 raise ValueError("Cannot remove the root")
@@ -121,6 +146,7 @@ class SftpDo:
         default=None,
         retry=True,
     ) -> list[str]:
+        self.validate_location_and_port()
         try:
             if files_only is True and dirs_only is True:
                 raise ValueError("Cannot list with neither files nor dirs")
@@ -159,6 +185,7 @@ class SftpDo:
             raise
 
     def copy(self, to, *, retry=True) -> None:
+        self.validate_location_and_port()
         try:
             if not self.exists():
                 raise FileNotFoundError(f"Source {self.path} does not exist.")
@@ -181,6 +208,7 @@ class SftpDo:
             raise
 
     def exists(self, *, retry=True) -> bool:
+        self.validate_location_and_port()
         try:
             path = self.path
             self._config.sftp_client.stat(path)
@@ -194,6 +222,7 @@ class SftpDo:
             raise
 
     def dir_exists(self) -> bool:
+        self.validate_location_and_port()
         try:
             #
             # list dir now returns [] by default, for better or worse. rather than
@@ -209,6 +238,7 @@ class SftpDo:
             return False
 
     def isdir(self, path, *, retry=True) -> bool:
+        self.validate_location_and_port()
         try:
             attr = self._config.sftp_client.stat(path)
             return stat.S_ISDIR(attr.st_mode)
@@ -269,6 +299,7 @@ class SftpDo:
     """
 
     def _isfile(self, path, *, retry=True) -> bool:
+        self.validate_location_and_port()
         if path is None:
             raise ValueError("Path cannot be None")
         try:
@@ -291,6 +322,7 @@ class SftpDo:
             raise
 
     def rename(self, new_path: str, *, retry=True) -> None:
+        self.validate_location_and_port()
         try:
             np = pathu.resep(new_path, hint="posix")
             np = pathu.stripp(np)
@@ -305,6 +337,7 @@ class SftpDo:
                 self.rename(new_path, retry=False)
 
     def makedirs(self) -> None:
+        self.validate_location_and_port()
         lst = self.path.split("/")
         path = ""
         for p in lst:

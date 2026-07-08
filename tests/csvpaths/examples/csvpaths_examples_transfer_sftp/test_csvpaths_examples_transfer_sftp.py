@@ -4,7 +4,6 @@ import os
 import shutil
 import pyarrow.parquet as pq
 
-from csvpath import CsvPaths
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 
@@ -31,13 +30,10 @@ PATH = os.path.join(
 class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
     def test_transfer_parquet_1(self):
         paths = Builder().build()
-        #paths = CsvPaths()
         print(f"sfae: {paths.config.configpath}")
         print(f"sfae: {paths.config.get(section='sftp', name='server')}")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
-        #paths.config.set(section="sftp", name="server")
-        #paths.config.set(section="sftp", name="port")
         paths.config.set(section="sftp", name="username", value="python")
         paths.config.set(section="sftp", name="password", value="hangzhou")
         #
@@ -69,23 +65,12 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
         #
         path = Nos(paths.run_metadata.run_home).join("output")
         pname = Nos(path).join("stores.parquet")
-        """
-        with DataFileReader(path=pname, mode="rb") as src, tempfile.NamedTemporaryFile(
-            mode="wb"
-        ) as dst:
-            shutil.copyfileobj(src.source, dst)
-            dst.flush()
-            p = pq.ParquetFile(dst.name)
-            table = p.read(columns=["id", "day"])
-            assert table
-            chunked_array = table.column("day")
-            assert len(chunked_array) == 3
-            assert chunked_array[2].as_py().day == 21
-        """
+
         temp_path = None
-        with DataFileReader(path=pname, mode="rb") as src, tempfile.NamedTemporaryFile(
-            mode="wb", delete=False
-        ) as dst:
+        with (
+            DataFileReader(path=pname, mode="rb") as src,
+            tempfile.NamedTemporaryFile(mode="wb", delete=False) as dst,
+        ):
             shutil.copyfileobj(src.source, dst)
             dst.flush()
             temp_path = dst.name
@@ -103,5 +88,6 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
         #
         # check that transfer happened
         #
-        tpath = "sftp://stores.parquet"
+        tpath = "sftp://192.168.1.182:2022/stores.parquet"
+        print(f"checking {tpath}")
         assert Nos(tpath).exists()

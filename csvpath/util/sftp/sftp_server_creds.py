@@ -25,7 +25,7 @@ class SftpServerCreds:
         password = None
         for k, v in reader_or_writer.server_config.items():
             if v.address == server:
-                if v.port == port:
+                if str(v.port) == str(port):
                     username = vaut.parse_var_value(
                         reader_or_writer._config, "username", v.username
                     )
@@ -33,7 +33,7 @@ class SftpServerCreds:
                         reader_or_writer._config, "password", v.password
                     )
                     break
-                if port is None and (v.port == 22 or v.port is None):
+                if port is None and (str(v.port) == "22" or v.port is None):
                     username = vaut.parse_var_value(
                         reader_or_writer._config, "username", v.username
                     )

@@ -6,6 +6,7 @@ from csvpath.managers.paths.paths_descriptor import Transfer, Transfers
 
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.var_utility import VarUtility as vaut
 
 
 class TransfersManager:
@@ -299,6 +300,11 @@ class TransfersManager:
             msg = f"Variable {t} is invalid: {f}"
             self.csvpaths.error_manager.handle_error(source=self, msg=msg)
             raise InputException(msg)
+
+        #
+        # make sure we have vars interpolated
+        #
+        f = vaut.parse_var_value(self.csvpaths.config, t, f)
         #
         # if we're shipping to another backend, we don't need to change the target location
         #

@@ -121,7 +121,7 @@ class PathUtility:
         if i == -1:
             return (location, None)
         port = location[i + 1 :]
-        return location[0:i], int(port)
+        return location[0:i], port
 
     @classmethod
     def equal(cls, pathone: str, pathtwo: str, stripp=False) -> bool:

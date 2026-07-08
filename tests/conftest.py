@@ -6,18 +6,31 @@ from csvpath.util.box import Box
 from csvpath.util.config import Config
 
 
-import sys
+import sqlite3
+
+_tracked = []
+_orig_connect = sqlite3.connect
 
 
-def _hook(args):
-    traceback.print_exception(args.exc_type, args.exc_value, args.exc_traceback)
-    print("unraisable in:", args.object, file=sys.stderr)
+def _tracking_connect(*args, **kwargs):
+    conn = _orig_connect(*args, **kwargs)
+    _tracked.append({"conn": conn, "stack": "".join(traceback.format_stack()[:-1])})
+    return conn
 
 
-sys.unraisablehook = _hook
+sqlite3.connect = _tracking_connect
 
 
 def pytest_sessionfinish(session, exitstatus):
+    ###
+    for entry in _tracked:
+        try:
+            entry["conn"].execute("SELECT 1")
+        except sqlite3.ProgrammingError:
+            continue  # already closed properly
+        print("\n### sqlite3 connection never closed, opened at:\n", entry["stack"])
+
+    ###
     if Box.SQL_ENGINE in Box.STUFF:
         try:
             box = Box()
