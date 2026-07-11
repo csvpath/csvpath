@@ -1,0 +1,30 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: CsvPath Framework
+message: >-
+  Please use this citation metadata to reference CsvPath
+  Framework
+type: software
+authors:
+  - given-names: 'David '
+    family-names: Kershaw
+    email: dkershaw@csvpath.org
+    orcid: 'https://orcid.org/0009-0000-3542-2965'
+repository-code: 'https://github.com/csvpath/csvpath'
+url: 'https://www.csvpath.org'
+abstract: >-
+  CsvPath Framework provides Edge Data Governance
+  infrastructure for data contract enforcement and data
+  identification of tabular data file feeds.
+keywords:
+  - CSV
+  - Excel
+  - JSONL
+  - schema validation
+  - csv validation
+  - data contracts
+  - python
+  - data engineering
+license: Apache-2.0
