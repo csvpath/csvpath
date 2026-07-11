@@ -48,8 +48,7 @@ If you need help getting started, there are lots of ways to reach us.
 - Email support@csvpath.org
 - Or reach out to one of our [sponsors, below](#sponsors).
 
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=green&color=green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath)
-
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvpath?logoColor=yellow&color=yellow) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dk107dk/csvpath) ![PyPI - Version](https://img.shields.io/pypi/v/csvpath) [![PyPI Downloads](https://static.pepy.tech/personalized-badge/csvpath?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/csvpath)
 
 # Contents
 
