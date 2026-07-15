@@ -57,7 +57,6 @@ class FileManager:
 
     @property
     def csvpaths(self):
-        """@private"""
         return self._csvpaths
 
     #
@@ -65,7 +64,6 @@ class FileManager:
     #
     @property
     def named_files_dir(self) -> str:
-        """@private"""
         return self._csvpaths.config.inputs_files_path
 
     #
@@ -75,7 +73,6 @@ class FileManager:
     #
     @property
     def files_root_manifest(self) -> dict:
-        """@private"""
         p = self.files_root_manifest_path
         nos = Nos(p)
         if nos.exists():
@@ -85,7 +82,6 @@ class FileManager:
 
     @property
     def files_root_manifest_path(self) -> dict:
-        """@private"""
         return Nos(self.named_files_dir).join("manifest.json")
 
     def _named_file_ref_to_uuid(self, ref: ReferenceParser) -> str:
@@ -944,7 +940,7 @@ class FileManager:
         mdata.template = data.get("template") or ""
         mdata.uuid_string = data.get("registration_uuid")
         mdata.status = "Registration failed"
-        self.csvpaths.logger.warn(
+        self.csvpaths.logger.warning(
             "[%s] Registration failed for %s", mdata.named_file_name, data
         )
         lst.metadata_update(mdata)
