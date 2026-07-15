@@ -128,7 +128,7 @@ class WebhookListener(Listener, threading.Thread):
                 url=url, payload=payload, headers=headers, timeout=self.timeout
             )
             # x = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
-            if x and x.status_code != 200:
+            if x and x.status_code >= 200 and x.status_code < 300:
                 if self.csvpaths is not None:
                     self.csvpaths.logger.warning(
                         "WebhookListener received status code %s from %s",

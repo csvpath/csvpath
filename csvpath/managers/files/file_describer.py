@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import NewType
 
 from csvpath.util.nos import Nos
@@ -57,16 +58,21 @@ class NamedFileDescriber:
         home = self.file_manager.named_file_home(name)
         path = Nos(home).join(self.JSON_FILE)
         nos = Nos(path)
-        if nos.exists() is False:
-            #
-            # cannot return None (today) and we definitely should not
-            # create+save a new json file. returning None may be better
-            # for today this works.
-            #
-            return {}
-            # self.store_json(name, {})
-        with DataFileReader(path) as file:
-            return json.load(file.source)
+        if nos.exists() is True:
+            with DataFileReader(path) as file:
+                try:
+                    return json.load(file.source)
+                except Exception:
+                    msg = "Error getting named-file discriptor JSON for {name}: {ex}"
+                    self.file_manager.csvpaths.logger.error(msg)
+                    msg = traceback.format_exc()
+                    self.file_manager.csvpaths.logger.debug(msg)
+        #
+        # cannot return None (today; << explain?) and we definitely should not
+        # create+save a new json file. (<< reasoning?) returning None may be
+        # better (<< why?) but for today this works.
+        #
+        return {}
 
     # ========== Templates ============
 

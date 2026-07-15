@@ -1,7 +1,6 @@
 from typing import Any
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from csvpath.matching.functions.function import Function
-from csvpath.matching.util.exceptions import ChildrenException, MatchException
 from ..args import Args
 from ..function_focus import ValueProducer
 
@@ -21,7 +20,8 @@ class Format(ValueProducer):
         if self.name == "interpolate":
             s = self.wrap(
                 """Interpolates a complete Pythonic formatting string with one replacement value.
-                Use {{ and }} to demarcate your replacement pattern."""
+                Use {{ and }} to demarcate your replacement pattern. For example, to set a variable
+                to a value as a string, use: @a = interpolate(uuid(), "{}")"""
             )
             self.description.append(s)
 

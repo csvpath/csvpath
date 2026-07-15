@@ -52,7 +52,7 @@ class VarUtility:
         elif section or name:
             # if config is None:
             #    config = Config()
-            config.logger.warn(
+            config.logger.warning(
                 "Get var with section or name but not both will not work: %s, %s",
                 section,
                 name,
