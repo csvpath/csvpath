@@ -34,19 +34,19 @@ class TestUtilLastLineStats(unittest.TestCase):
         stats = LastLineStats(line_monitor=lm, last_line=["a", None])
         assert stats.last_line_nonblank == 2
 
-    def test_last_line_length_is_not_actually_updated(self):
-        # documenting a real bug: __init__ sets self.last_line_length = 0,
-        # but _ingest_line() only ever sets self._last_line_length (a
-        # different, underscore-prefixed attribute), so the public
-        # last_line_length stays 0 no matter what line is ingested.
+    def test_last_line_length_is_updated_on_ingest(self):
+        # regression test for a real bug: _ingest_line() used to set
+        # self._last_line_length (a different, underscore-prefixed
+        # attribute) instead of self.last_line_length, so the public
+        # attribute stayed 0 no matter what line was ingested.
         lm = FakeLineMonitor(physical_line_number=1, data_line_number=1)
         stats = LastLineStats(line_monitor=lm, last_line=["a", "b", "c"])
-        assert stats.last_line_length == 0
-        assert stats._last_line_length == 3
+        assert stats.last_line_length == 3
 
     def test_str(self):
         lm = FakeLineMonitor(physical_line_number=5, data_line_number=4)
         stats = LastLineStats(line_monitor=lm, last_line=["a", "b"])
         s = str(stats)
+        assert "line len: 2" in s
         assert "non-blanks: 2" in s
         assert "physical line no: 5" in s
