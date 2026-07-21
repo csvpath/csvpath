@@ -96,14 +96,16 @@ class TestCsvPathMetadataParser(unittest.TestCase):
 
     def test_extract_csvpath_and_comment_nested_brackets_not_mistaken_for_end(self):
         # state only drops out of "inside" at the last ']' in the string, so
-        # a csvpath body containing its own ']' (e.g. an index reference)
-        # does not truncate collection early
+        # a csvpath body containing its own ']' (e.g. a literal in a string
+        # argument) does not truncate collection early. note: the state
+        # machine works char-by-char with no awareness of quoting, so this
+        # matters even for brackets that are just string content.
         mp = MetadataParser()
         csvpath2, comment = mp.extract_csvpath_and_comment(
-            "~ note ~\n$[*][ @x = #0[0] ]"
+            '~ note ~\n$[*][ print("[]") ]'
         )
         assert comment.strip() == "note"
-        assert csvpath2.strip() == "$[*][ @x = #0[0] ]"
+        assert csvpath2.strip() == '$[*][ print("[]") ]'
 
     #
     # _collect_metadata()
