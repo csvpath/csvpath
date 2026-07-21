@@ -27,7 +27,16 @@ class Cache:
             # four non-local backends so we can get the file mod time. quite doable,
             # but not doing it atm.
             #
-            t = os.path.getmtime(filename)
+            # filenames may have a root minor token separated from the real path by
+            # a #. this will usually be an excel tab. os.path.getmtime() needs the
+            # real path without that token, but the token itself must stay part of
+            # what we hash below -- otherwise every tab of the same file collapses
+            # onto the same cache name, and one tab's cached headers/line count get
+            # served for another tab entirely.
+            #
+            i = filename.find("#")
+            real_path = filename[0:i] if i > -1 else filename
+            t = os.path.getmtime(real_path)
             filename = f"{filename}{t}"
             return hashlib.sha256(filename.encode("utf-8")).hexdigest()
         except (FileNotFoundError, IsADirectoryError):
@@ -52,14 +61,10 @@ class Cache:
         if filename is None:
             raise ValueError("Filename cannot be None")
         #
-        # filenames may have root minor tokens separated from the filename by a #.
-        # this will usually be an excel tab. we don't want that info here.
-        #
-        i = filename.find("#")
-        if i > -1:
-            filename = filename[0:i]
-        #
-        #
+        # filename is passed through as-is, root minor token (e.g. an excel tab)
+        # included. get_cache_name() is responsible for stripping it off only
+        # where it needs the real on-disk path (the mtime lookup), while still
+        # hashing the full filename so different tabs get different cache names.
         #
         fn = self.get_cache_name(filename)
         if fn is None:
