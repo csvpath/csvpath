@@ -16,10 +16,14 @@ class LastLineStats:
         return f"""LastLineStats: line len: {self.last_line_length}, non-blanks: {self.last_line_nonblank}, physical line no: {self.last_line_number}"""
 
     def _ingest_line(self, line: List[List[Any]]) -> None:
-        self._last_line_length = len(line)
+        self.last_line_length = len(line)
         i = 0
         for h in line:
-            if f"{h}".strip() == "":
+            #
+            # a header value of None or the literal string "None" both mean
+            # "no value here" for after_blank()'s purposes, same as "".
+            #
+            if f"{h}".strip() in ("", "None"):
                 continue
             i += 1
         self.last_line_nonblank = i
