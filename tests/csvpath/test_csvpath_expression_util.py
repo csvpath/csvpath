@@ -287,6 +287,166 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
             del x[x.index(e.source)]
         assert len(x) == 0
 
+    def test_exp_util_safe_isinstance(self):
+        assert ExpressionUtility.safe_isinstance(1, int)
+        assert ExpressionUtility.safe_isinstance(1, (int, str))
+        assert not ExpressionUtility.safe_isinstance("1", int)
+        # isinstance() raises TypeError for a non-type second arg; safe_isinstance
+        # swallows that and returns False rather than propagating
+        assert not ExpressionUtility.safe_isinstance(1, "not a type")
+
+    def test_exp_util_isa_none(self):
+        assert ExpressionUtility.isa(None, None)
+        # None cross-casts to int via to_int(None) == 0, so this is True,
+        # not the False you might expect -- documenting actual behavior
+        assert ExpressionUtility.isa(None, [int])
+        # a non-None obj with no classlist at all has nothing to match against
+        assert not ExpressionUtility.isa(1, None)
+
+    def test_exp_util_isa_direct_and_cross_cast(self):
+        assert ExpressionUtility.isa(1, (int,))
+        assert ExpressionUtility.isa("1", (int,))
+        assert ExpressionUtility.isa("1.5", (float,))
+        assert ExpressionUtility.isa("true", (bool,))
+        assert not ExpressionUtility.isa("", (int,))
+        assert ExpressionUtility.isa(datetime.datetime.now(), (datetime.date,))
+        assert not ExpressionUtility.isa("not a number", (int,))
+
+    def test_exp_util_isa_classlist_with_instances_not_types(self):
+        # non-type entries in classes are converted to their own type()
+        assert ExpressionUtility.isa(1, (1,))
+        assert not ExpressionUtility.isa(1, ("a string",))
+
+    def test_exp_util_is_date_type(self):
+        assert ExpressionUtility.is_date_type(datetime.date(2024, 1, 1))
+        assert ExpressionUtility.is_date_type(datetime.datetime(2024, 1, 1))
+        assert ExpressionUtility.is_date_type("2024-01-01")
+        assert not ExpressionUtility.is_date_type("not a date")
+        assert not ExpressionUtility.is_date_type(None)
+
+    def test_exp_util_to_date(self):
+        d = datetime.date(2024, 3, 4)
+        assert ExpressionUtility.to_date(d) == d
+        dt = datetime.datetime(2024, 3, 4, 5, 6, 7)
+        assert ExpressionUtility.to_date(dt) == dt.date()
+        assert ExpressionUtility.to_date("2024-03-04") == d
+        # unparseable input is returned unchanged, not raised
+        assert ExpressionUtility.to_date("not a date") == "not a date"
+        assert ExpressionUtility.to_date(None) is None
+
+    def test_exp_util_to_datetime(self):
+        dt = datetime.datetime(2024, 3, 4, 5, 6, 7)
+        assert ExpressionUtility.to_datetime(dt) == dt
+        parsed = ExpressionUtility.to_datetime("2024-03-04T05:06:07")
+        assert parsed == dt
+        assert ExpressionUtility.to_datetime("not a date") == "not a date"
+        assert ExpressionUtility.to_datetime(None) is None
+
+    def test_exp_util_is_date_or_datetime_str(self):
+        assert ExpressionUtility.is_date_or_datetime_str("2024-03-04") == "date"
+        assert (
+            ExpressionUtility.is_date_or_datetime_str("2024-03-04T05:06:07")
+            == "datetime"
+        )
+        assert ExpressionUtility.is_date_or_datetime_str("not a date") == "unknown"
+
+    def test_exp_util_is_date_or_datetime_obj(self):
+        assert (
+            ExpressionUtility.is_date_or_datetime_obj(datetime.date(2024, 3, 4))
+            == "date"
+        )
+        assert (
+            ExpressionUtility.is_date_or_datetime_obj(
+                datetime.datetime(2024, 3, 4, 0, 0, 0)
+            )
+            == "date"
+        )
+        assert (
+            ExpressionUtility.is_date_or_datetime_obj(
+                datetime.datetime(2024, 3, 4, 5, 6, 7)
+            )
+            == "datetime"
+        )
+        assert ExpressionUtility.is_date_or_datetime_obj("not a date/datetime") == "unknown"
+
+    def test_exp_util_to_simple_bool(self):
+        assert ExpressionUtility.to_simple_bool(True) is True
+        assert ExpressionUtility.to_simple_bool(False) is False
+        assert ExpressionUtility.to_simple_bool("true") is True
+        assert ExpressionUtility.to_simple_bool("True") is True
+        assert ExpressionUtility.to_simple_bool("false") is False
+        assert ExpressionUtility.to_simple_bool("False") is False
+        # anything else is passed through unchanged, not coerced
+        assert ExpressionUtility.to_simple_bool("maybe") == "maybe"
+        assert ExpressionUtility.to_simple_bool(3) == 3
+
+    def test_exp_util_numeric_string(self):
+        assert ExpressionUtility._numeric_string(1) == "1st"
+        assert ExpressionUtility._numeric_string(2) == "2nd"
+        assert ExpressionUtility._numeric_string(3) == "3rd"
+        assert ExpressionUtility._numeric_string(4) == "4th"
+        assert ExpressionUtility._numeric_string(21) == "21st"
+        # note: this implementation looks only at the last digit, so 11/12/13
+        # come out as "11st"/"12nd"/"13rd" rather than the grammatically
+        # correct "11th"/"12th"/"13th" -- documenting actual behavior
+        assert ExpressionUtility._numeric_string(11) == "11st"
+        assert ExpressionUtility._numeric_string(12) == "12nd"
+        assert ExpressionUtility._numeric_string(13) == "13rd"
+
+    def test_exp_util_get_name_and_qualifiers_simple(self):
+        name, quals = ExpressionUtility.get_name_and_qualifiers("plain")
+        assert name == "plain"
+        assert quals == []
+
+    def test_exp_util_get_name_and_qualifiers_dotted(self):
+        name, quals = ExpressionUtility.get_name_and_qualifiers("test.onmatch.onchange")
+        assert name == "test"
+        assert quals == ["onmatch", "onchange"]
+
+    def test_exp_util_get_name_and_qualifiers_quoted(self):
+        name, quals = ExpressionUtility.get_name_and_qualifiers('"a.b".onmatch')
+        assert name == "a.b"
+        assert quals == ["onmatch"]
+
+    def test_exp_util_get_name_and_qualifiers_empty_raises(self):
+        with pytest.raises(ValueError):
+            ExpressionUtility.get_name_and_qualifiers("")
+
+    def test_exp_util_get_id_and_expressions_index(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                any( length( concat("a", "b")))
+            ]"""
+        )
+        path.fast_forward()
+        m = path.matcher
+        es = m.expressions[0]
+        top = es[0]
+        idx = ExpressionUtility.get_my_expressions_index(top.children[0])
+        assert idx == 0
+        id1 = ExpressionUtility.get_id(top.children[0])
+        id2 = ExpressionUtility.get_id(top.children[0])
+        assert id1 == id2
+        assert id1.startswith("_intx_")
+
+    def test_exp_util_name_or_class_and_simple_class_name(self):
+        path = CsvPath()
+        path.parse(
+            f"""${PATH}[*][
+                any( length( concat("a", "b")))
+            ]"""
+        )
+        path.fast_forward()
+        m = path.matcher
+        es = m.expressions[0]
+        any_func = es[0].children[0]
+        # equality/expression wrappers are hidden by default
+        assert ExpressionUtility.name_or_class(es[0]) == ""
+        # a named function shows up with its sibling index
+        assert ExpressionUtility.name_or_class(any_func) == "any[0]"
+        assert ExpressionUtility.simple_class_name(any_func) == "Any"
+
     def test_exp_util_descendents(self):
         path = CsvPath()
         path.parse(
