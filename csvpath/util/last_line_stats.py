@@ -19,7 +19,11 @@ class LastLineStats:
         self.last_line_length = len(line)
         i = 0
         for h in line:
-            if f"{h}".strip() == "":
+            #
+            # a header value of None or the literal string "None" both mean
+            # "no value here" for after_blank()'s purposes, same as "".
+            #
+            if f"{h}".strip() in ("", "None"):
                 continue
             i += 1
         self.last_line_nonblank = i

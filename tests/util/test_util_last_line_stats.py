@@ -26,13 +26,22 @@ class TestUtilLastLineStats(unittest.TestCase):
         stats = LastLineStats(line_monitor=lm, last_line=["a", "", "  ", "b"])
         assert stats.last_line_nonblank == 2
 
-    def test_none_value_in_line_counts_as_nonblank(self):
-        # documenting actual behavior: _ingest_line skips a value only when
+    def test_none_value_in_line_counts_as_blank(self):
+        # regression test: _ingest_line used to skip a value only when
         # f"{h}".strip() == "" -- for h is None that stringifies to "None",
-        # which is not empty, so a None entry is counted as non-blank
+        # which is not empty, so a None entry was wrongly counted as
+        # non-blank. after_blank() needs None to mean "no value here",
+        # same as "", so a None entry must not be counted.
         lm = FakeLineMonitor(physical_line_number=1, data_line_number=1)
         stats = LastLineStats(line_monitor=lm, last_line=["a", None])
-        assert stats.last_line_nonblank == 2
+        assert stats.last_line_nonblank == 1
+
+    def test_literal_none_string_counts_as_blank(self):
+        # the literal string "None" (e.g. data that stringified a missing
+        # value upstream) is treated the same as a real None or ""
+        lm = FakeLineMonitor(physical_line_number=1, data_line_number=1)
+        stats = LastLineStats(line_monitor=lm, last_line=["a", "None"])
+        assert stats.last_line_nonblank == 1
 
     def test_last_line_length_is_updated_on_ingest(self):
         # regression test for a real bug: _ingest_line() used to set
