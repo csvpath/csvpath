@@ -185,6 +185,9 @@ class LineMonitor:
         self._data_line_count = None
         self._data_line_number = None
 
+    # TODO: broken, dead code -- all() called with 4 positional args always
+    # raises TypeError. zero callers in this package. see issue #192.
+    # do not use; remove as soon as confirmed no external consumer calls it.
     def is_unset(self) -> bool:  # pragma: no cover
         return not all(
             self._physical_end_line_number,
