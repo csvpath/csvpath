@@ -211,6 +211,10 @@ class TestUtilVarUtil(unittest.TestCase):
         variables = {"time": 42}
         assert VarUtility.create_pair({}, variables, "t > var|time") == ("t", 42)
 
+    def test_create_pair_resolves_meta_reference_in_value(self):
+        mdata = {"me": "hello world"}
+        assert VarUtility.create_pair(mdata, {}, "m > meta|me") == ("m", "hello world")
+
     #
     # get_value_pairs()
     #
@@ -240,10 +244,14 @@ class TestUtilVarUtil(unittest.TestCase):
     def test_get_value_returns_none_when_key_missing(self):
         assert VarUtility.get_value({"a": "1"}, {}, "missing") is None
 
-    def test_get_value_passes_string_through_var_or_meta_substitution(self):
+    def test_get_value_passes_string_through_var_substitution(self):
         variables = {"time": 10}
         mdata = {"ref": "var|time"}
         assert VarUtility.get_value(mdata, variables, "ref") == 10
+
+    def test_get_value_passes_string_through_meta_substitution(self):
+        mdata = {"ref": "meta|me", "me": "hello world"}
+        assert VarUtility.get_value(mdata, {}, "ref") == "hello world"
 
     def test_get_value_returns_non_string_values_unchanged(self):
         mdata = {"count": 5}
