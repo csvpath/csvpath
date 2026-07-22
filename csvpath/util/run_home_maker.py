@@ -106,6 +106,7 @@ class RunHomeMaker:
                     mpath = Nos(mpath).join("manifest.json")
                     # mpath = os.path.join(mpath, "manifest.json")
                     nos = Nos(mpath)
+                    path = None
                     if nos.exists():
                         with DataFileReader(mpath) as file:
                             mani = json.load(file.source)
