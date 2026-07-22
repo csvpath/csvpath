@@ -124,7 +124,7 @@ class DataFileWriter(ABC):
 
 
 class GeneralDataWriter(DataFileWriter):
-    def __init__(self, path: str, *, mode: str = "w", encoding="utf-8") -> None:
+    def __init__(self, *, path: str, mode: str = "w", encoding="utf-8") -> None:
         super().__init__(path=path, mode=mode, encoding=encoding)
 
     def load_if(self) -> None:
