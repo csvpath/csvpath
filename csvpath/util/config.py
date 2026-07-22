@@ -360,6 +360,12 @@ shell = /bin/bash
         self.configpath = path
         self.reload()
 
+    # TODO: config_path is a rarely-used, read-only alias for configpath
+    # (the real, actively-used member -- setting it triggers reload
+    # logic). Having two names for the same state, one of which silently
+    # cannot be set the way the other can, is a footgun. See issue #207;
+    # recommendation is to remove this property and point the few
+    # existing callers at configpath directly.
     @property
     def config_path(self) -> str:
         return self.configpath

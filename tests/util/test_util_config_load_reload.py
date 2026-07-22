@@ -154,6 +154,9 @@ class TestUtilConfigLoadReload(unittest.TestCase):
         assert c.configpath == p2["file_path"]
 
     def test_config_path_property_is_an_alias_for_configpath(self):
+        # config_path is a redundant, read-only alias for configpath,
+        # the real member used throughout the class. Flagged as worth
+        # removing -- see issue #207.
         p = self._write_valid_config()
         self._set_env(p["file_path"])
         c = Config()
