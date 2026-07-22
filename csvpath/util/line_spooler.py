@@ -172,6 +172,13 @@ class CsvLineSpooler(LineSpooler):
         dw.load_if()
         return dw.sink
 
+    # TODO: broken -- see issue #195. "if not self.path: ..." is a no-op,
+    # so this falls through to Nos(None).exists() and raises ValueError
+    # instead of returning early like to_list() does. When fixed, add a
+    # return type hint (probably list[str] | None, though next() is a
+    # generator so the yielded-type nuance needs a look) and return None
+    # for the no-path case -- not [] like to_list() -- though that choice
+    # may be reconsidered when this is revisited.
     def next(self):
         if not self.path:
             ...

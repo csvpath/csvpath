@@ -107,6 +107,10 @@ class DataFileReader(ABC):
         self.close()
         return s
 
+    # TODO: broken, dead code -- os.path.exists(path) result is never
+    # returned, so this always evaluates to None. zero callers in this
+    # package. see issue #193. do not use; remove or fix once confirmed no
+    # external consumer calls it.
     def exists(self, path: str) -> bool:
         os.path.exists(path)
 
