@@ -187,7 +187,7 @@ class TestUtilConfigGetSet(unittest.TestCase):
             c.get(section="cache", name="path", string_parse=False) == "Hello {NAME}"
         )
 
-    def test_get_returns_default_when_internal_config_parser_is_missing(self):
+    def test_get_raises_when_internal_config_parser_is_missing(self):
         # defensive branch: _get() raises ConfigurationException if
         # self._config is ever None
         c, _ = self._config()
