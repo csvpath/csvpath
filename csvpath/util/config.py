@@ -360,6 +360,12 @@ shell = /bin/bash
         self.configpath = path
         self.reload()
 
+    # TODO: config_path is a rarely-used, read-only alias for configpath
+    # (the real, actively-used member -- setting it triggers reload
+    # logic). Having two names for the same state, one of which silently
+    # cannot be set the way the other can, is a footgun. See issue #207;
+    # recommendation is to remove this property and point the few
+    # existing callers at configpath directly.
     @property
     def config_path(self) -> str:
         return self.configpath
@@ -567,6 +573,14 @@ shell = /bin/bash
         p = os.path.dirname(filepath)
         return p if not p == "" else None
 
+    # TODO: missing a gs:// check (see _assure_inputs_files_path/
+    # _assure_inputs_csvpaths_path below, which check all four remote
+    # prefixes). A gs:// archive_path falls through to os.path.exists()/
+    # os.makedirs() on the raw URI string. Also worth evaluating whether
+    # sftp:// belongs grouped with s3/azure/gs at all here -- sftp is a
+    # real filesystem behind a network protocol, while the blob stores
+    # have only loose filesystem-like semantics; they may not warrant
+    # identical handling. See issue #209.
     def _assure_archive_path(self) -> None:
         if self.load:
             if self.archive_path is None or self.archive_path.strip() == "":
@@ -610,6 +624,11 @@ shell = /bin/bash
             return "/"
         return os.sep
 
+    # TODO: has no remote-prefix checks at all (compare
+    # _assure_archive_path and _assure_inputs_files_path above/below),
+    # so any s3://, azure://, sftp://, or gs:// transfer_root falls
+    # through to os.path.exists()/os.makedirs() on the raw URI string.
+    # See issue #209.
     def _assure_transfer_root(self) -> None:
         if self.load:
             if self.transfer_root is None or self.transfer_root.strip() == "":
