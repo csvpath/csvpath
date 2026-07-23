@@ -612,6 +612,11 @@ shell = /bin/bash
             return "/"
         return os.sep
 
+    # TODO: broken -- references self._assure_inputs_csvpaths_path (the
+    # private method object) instead of self.inputs_csvpaths_path (the
+    # property), so this always raises AttributeError. zero callers in
+    # this package. see issue #204. fix is a rename to
+    # self.inputs_csvpaths_path in both places below.
     @property
     def csvpaths_sep(self) -> None:
         if (
