@@ -66,6 +66,11 @@ POSITIVE_CASES = [
     '$acme.files.:name("100%%done").:data()',
     '$acme.files.:name("100%20done").:data()',
     '$acme.files.:name("say \\"hi\\"").:data()',
+    # delimited regex literal (REGEX) -- for grouping/quotes BARE_ARG cannot represent
+    '$acme.results.:name(/^[^M].*/)/2025:first().invoices',
+    '$acme.results.:name(/^(?:Mon|Tue)day$/)/2025:first().invoices',
+    '$acme.results.:name(/^(Mon|Tue)day$/)/2025:first().invoices',
+    '$acme.results.:name(/contains"quote/)/2025:first().invoices',
 ]
 
 NEGATIVE_CASES = [

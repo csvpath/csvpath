@@ -42,11 +42,18 @@ from lark import Lark, Tree, UnexpectedInput
 #   function chain.
 #
 # - function arguments accept a quoted string, a signed int, an "@name"
-#   runtime-bound variable, a nested function call, or a bare/unquoted
-#   token (BARE_ARG) -- the last of these exists specifically for regex
-#   arguments like :name(^[^M].*), which are not spec'd to require
-#   quoting. BARE_ARG is deliberately narrow (excludes parens and the
-#   quote character) so it can't swallow a function's closing ")".
+#   runtime-bound variable, a nested function call, a slash-delimited
+#   regex literal (REGEX, e.g. :name(/^(?:Mon|Tue)day$/) -- mirrors the
+#   REGEX/REGEX_INNER convention already used by the match-language
+#   grammar in csvpath/matching/lark_parser.py), or a bare/unquoted
+#   token (BARE_ARG) for the simple spec'd case of an unquoted regex
+#   with no parens or quotes, e.g. :name(^[^M].*). BARE_ARG excludes
+#   "(", ")", '"', and "/" -- the parens and quote so it can't swallow
+#   a function's closing ")" or be confused with STRING, and "/" so it
+#   can never collide with REGEX's leading delimiter. A bare argument
+#   that needs real regex grouping (capture or non-capturing) has no
+#   way to represent it, since "(" "and ")" are excluded outright and
+#   are themselves the group syntax -- that's what REGEX is for.
 #
 REFERENCE_GRAMMAR_3 = r"""
     ?start: reference
@@ -98,6 +105,7 @@ REFERENCE_GRAMMAR_3 = r"""
        | SIGNED_INT
        | AT_VAR
        | function
+       | REGEX
        | BARE_ARG
 
     //========================================
@@ -111,12 +119,21 @@ REFERENCE_GRAMMAR_3 = r"""
     STRING: /"(?:[^"\\]|\\.)*"/
     SIGNED_INT: /-?\d+/
     //
-    // bare/unquoted function argument. used for things like a raw regex
-    // (:name(^[^M].*)) that the spec does not require to be quoted.
-    // excludes "(", ")", and the quote char so it can never swallow a
-    // function's closing paren or be confused with STRING.
+    // slash-delimited regex literal, for arguments that need real regex
+    // grouping (capture or non-capturing) or a literal quote character --
+    // neither of which BARE_ARG below can represent. matches the
+    // REGEX/REGEX_INNER convention in csvpath/matching/lark_parser.py.
     //
-    BARE_ARG: /[^()"]+/
+    REGEX: "/" REGEX_INNER "/"
+    REGEX_INNER: /([^\/\\]|\\.)*/
+    //
+    // bare/unquoted function argument. used for the simple spec'd case
+    // of an unquoted regex with no parens or quotes (:name(^[^M].*)).
+    // excludes "(", ")", and the quote char so it can never swallow a
+    // function's closing paren or be confused with STRING, and "/" so
+    // it can never collide with REGEX's leading delimiter.
+    //
+    BARE_ARG: /[^()"\/]+/
 
     %import common.WS
     %ignore WS
