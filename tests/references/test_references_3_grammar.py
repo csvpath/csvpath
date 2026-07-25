@@ -48,7 +48,6 @@ POSITIVE_CASES = [
     '$acme.results.customers/2025:first().invoices',
     '$acme.results.*/2025:first().invoices',
     '$acme.results.*/*/2025:first().invoices',
-    '$acme.results.:name(^[^M].*)/2025:first().invoices',
     '$acme.results.:choice("acme|star|general")/2025:first().invoices',
     '$acme.results.:names(*)/2025:first().invoices:type("csv")',
     '$acme.results.:names(*)/2025:first().invoices:name("report.txt")',
@@ -66,7 +65,8 @@ POSITIVE_CASES = [
     '$acme.files.:name("100%%done").:data()',
     '$acme.files.:name("100%20done").:data()',
     '$acme.files.:name("say \\"hi\\"").:data()',
-    # delimited regex literal (REGEX) -- for grouping/quotes BARE_ARG cannot represent
+    # delimited regex literal (REGEX) -- the spec's own bare-regex example,
+    # now slash-delimited; plus grouped and quote-containing variants
     '$acme.results.:name(/^[^M].*/)/2025:first().invoices',
     '$acme.results.:name(/^(?:Mon|Tue)day$/)/2025:first().invoices',
     '$acme.results.:name(/^(Mon|Tue)day$/)/2025:first().invoices',
