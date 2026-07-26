@@ -24,10 +24,18 @@ from lark import Lark, Tree, UnexpectedInput
 #   avoids the combinatorial rule explosion of the v1/v2 grammar
 #   (reference_grammar.py's files_names alone has ~25 alternatives).
 #
-# - "*" and a bare ":all()" function are interchangeable at a path-segment
-#   position (both mean "everything at this level"). the grammar treats
-#   them as distinct tokens/productions; the equivalence is a semantic
-#   reading, not a grammar-level rewrite.
+# - "*" and a bare ":all()" function are NOT interchangeable, despite both
+#   being legal at a path-segment position. "*" flattens: it pools every
+#   wildcard position into a single search space that a terminal function
+#   (e.g. :last()) reduces to one answer. ":all()" anywhere in the
+#   reference switches the whole reference into grouped mode: every
+#   wildcard position -- root_major included -- becomes a dimension of a
+#   composite group key, and the terminal function distributes across the
+#   resulting cross-product. see "creating references v3.txt"'s EXAMPLE
+#   SCENARIO for a worked-out case. the grammar treats "*" and ":all()" as
+#   distinct tokens/productions either way; this flatten-vs-group behavior
+#   is a semantic reading enforced by the transformer, not a grammar-level
+#   concern.
 #
 # - name_one is: an optional "/"-joined path (segments are a literal name,
 #   "*", or a single function occupying the whole segment), optionally
