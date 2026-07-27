@@ -32,9 +32,11 @@ class ReferenceParser3:
             cls._query_parser = QueryParser3()
         return cls._query_parser
 
-    def __init__(self, *, string: str, csvpaths=None) -> None:
+    def __init__(self, *, string: str, csvpaths) -> None:
         if not string:
             raise ValueError("ReferenceParser3 string cannot be None or empty")
+        if csvpaths is None:
+            raise ValueError("ReferenceParser3 csvpaths cannot be None")
         self._csvpaths = csvpaths
         self._reference: str = string
         self._parsed: Reference3 | None = None

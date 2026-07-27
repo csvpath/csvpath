@@ -117,6 +117,21 @@ class TestFunctionCall3:
         assert FunctionCall3(name="last") != FunctionCall3(name="first")
         assert FunctionCall3(name="index", arg=7) != FunctionCall3(name="index", arg=8)
 
+    def test_contains_function_named_matches_self(self):
+        assert FunctionCall3(name="idchain", arg="x").contains_function_named("idchain")
+
+    def test_contains_function_named_matches_nested(self):
+        f = FunctionCall3(name="errors", arg=FunctionCall3(name="idchain", arg="x"))
+        assert f.contains_function_named("idchain")
+        assert not f.contains_function_named("data")
+
+    def test_contains_function_named_false_when_arg_not_a_function(self):
+        f = FunctionCall3(name="from", arg=FunctionCall3(name="index", arg=0))
+        assert not f.contains_function_named("idchain")
+
+    def test_contains_function_named_false_with_no_arg(self):
+        assert not FunctionCall3(name="all").contains_function_named("idchain")
+
 
 class TestNameOne3:
     def test_rejects_empty_path(self):
@@ -275,3 +290,55 @@ class TestReference3:
         )
         assert a == b
         assert a != c
+
+
+class TestResolvesToData:
+    def _name_one(self, *path):
+        return NameOne3(path=list(path))
+
+    def test_false_when_no_name_three(self):
+        r = Reference3(
+            root_major="acme", datatype=Reference3.RESULTS, name_one=self._name_one("a")
+        )
+        assert r.resolves_to_data is False
+
+    def test_false_for_plain_well_known_file_function(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.RESULTS,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(functions=[FunctionCall3(name="errors")]),
+        )
+        assert r.resolves_to_data is False
+
+    def test_true_when_value_locator_nested_in_terminal_function(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.RESULTS,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(
+                functions=[
+                    FunctionCall3(
+                        name="errors",
+                        arg=FunctionCall3(name="idchain", arg="add[0]string[2]"),
+                    )
+                ]
+            ),
+        )
+        assert r.resolves_to_data is True
+
+    def test_false_for_ordinary_selector_function_with_nested_arg(self):
+        # :from(:index(0)) is still a version/range selector, not a
+        # value extraction -- a nested function arg alone must not
+        # trigger resolves_to_data.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(
+                functions=[
+                    FunctionCall3(name="from", arg=FunctionCall3(name="index", arg=0))
+                ]
+            ),
+        )
+        assert r.resolves_to_data is False

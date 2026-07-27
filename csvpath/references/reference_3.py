@@ -115,6 +115,17 @@ class FunctionCall3:
         arg = "" if self._arg is None else _arg_to_string(self._arg)
         return f":{self._name}({arg})"
 
+    def contains_function_named(self, name: str) -> bool:
+        """true if this function, or any function nested in its
+        argument chain, is named `name`. a purely structural query --
+        no function-registry knowledge involved. see Reference3.
+        resolves_to_data for what this is used for."""
+        if self._name == name:
+            return True
+        if isinstance(self._arg, FunctionCall3):
+            return self._arg.contains_function_named(name)
+        return False
+
 
 class NameOne3:
     """name_one: a "/"-joined path (literal names, "*", and/or functions
@@ -208,6 +219,29 @@ class NameThree3:
         return s
 
 
+#
+# PLACEHOLDER pending the real function registry (see "requirements for
+# functions.txt" -- functions are looked up/validated at runtime by a
+# registry that does not exist yet). Once it does, this trait belongs on
+# Function3 itself as self-description metadata, not here as a bare name
+# list. For now this is the minimum needed to answer the one
+# function-semantics question ReferenceFinder3 needs today: does this
+# reference resolve to a whole file/thing (path+uuid), or a specific
+# extracted value?
+#
+# per "creating references v3.txt": a well-known-file function like
+# :errors() returns the file itself; giving it an argument that is a
+# VALUE-LOCATOR function like :idchain(...) means "pull a specific value
+# out of that file" instead. the signal is deliberately narrow -- it is
+# NOT "any nested function arg" (plenty of ordinary selector functions
+# take one, e.g. :from(:index(0)) is still a file/version selector, not
+# a value extraction) -- it is specifically whether a value-locator
+# function appears anywhere in the terminal function chain's argument
+# tree.
+#
+_VALUE_LOCATOR_FUNCTIONS = ("idchain",)
+
+
 class Reference3:
     """the parsed object graph for one references-v3 reference. holds no
     execution context (see ReferenceParser3 for that) -- just the parsed
@@ -271,6 +305,20 @@ class Reference3:
     @property
     def name_three(self) -> NameThree3 | None:
         return self._name_three
+
+    @property
+    def resolves_to_data(self) -> bool:
+        """does this reference ask for a specific extracted value
+        (True), or the referenced file/thing as-is (False)? see the
+        _VALUE_LOCATOR_FUNCTIONS placeholder comment above -- this is a
+        stand-in for a trait the future function registry will own."""
+        if self._name_three is None:
+            return False
+        return any(
+            f.contains_function_named(name)
+            for f in self._name_three.functions
+            for name in _VALUE_LOCATOR_FUNCTIONS
+        )
 
     def __eq__(self, other) -> bool:
         return (
