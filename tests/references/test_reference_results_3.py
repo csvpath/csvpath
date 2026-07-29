@@ -88,3 +88,61 @@ class TestReferenceResults3:
 
     def test_equality(self):
         assert self._results() == self._results()
+
+
+class TestRemove:
+    def _results(self, n=3):
+        return ReferenceResults3(
+            results=[ReferenceResult3(path=f"p{i}", uuid=f"u{i}") for i in range(n)]
+        )
+
+    def test_remove_drops_the_entry(self):
+        r = self._results()
+        target = r.results[1]
+        r.remove(target)
+        assert r.files == ["p0", "p2"]
+        assert len(r) == 2
+
+    def test_remove_missing_result_raises(self):
+        r = self._results()
+        stranger = ReferenceResult3(path="nope", uuid="nope")
+        with pytest.raises(ValueError):
+            r.remove(stranger)
+
+    def test_iterate_and_remove_in_the_same_loop_skips_nothing(self):
+        # the exact workflow this method exists for: walk the results,
+        # remove the ones you do not want, keep the rest. if __iter__
+        # returned the live list instead of a snapshot, removing p1
+        # while iterating would shift p2 into p1's old slot and the
+        # loop would skip over it.
+        r = self._results()
+        seen = []
+        for result in r:
+            seen.append(result.path)
+            if result.path == "p1":
+                r.remove(result)
+        assert seen == ["p0", "p1", "p2"]
+        assert r.files == ["p0", "p2"]
+
+    def test_trimmed_results_can_be_handed_to_resolve_from(self):
+        # the end-to-end shape David described: iterate, remove some,
+        # then pass the trimmed object straight to a finder.
+        from csvpath.references.reference_finder_3 import ReferenceFinder3
+        from csvpath.references.reference_parser_3 import ReferenceParser3
+
+        class _DummyFinder(ReferenceFinder3):
+            def query(self):
+                raise AssertionError("resolve_from(a ReferenceResults3) must not requery")
+
+            def _extract_data(self, result):
+                return f"data-for-{result.path}"
+
+        ref = ReferenceParser3(string="$acme.results.a.:errors()", csvpaths=object())
+        results = self._results()
+        for result in results:
+            if result.path == "p1":
+                results.remove(result)
+
+        finder = _DummyFinder(csvpaths=object(), ref=ref)
+        resolved = finder.resolve_from(results)
+        assert resolved.files == ["p0", "p2"]

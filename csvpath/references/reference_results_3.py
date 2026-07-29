@@ -102,11 +102,23 @@ class ReferenceResults3:
         selected = [r for r in self._results if r.path in wanted or r.uuid in wanted]
         return ReferenceResults3(results=selected)
 
+    def remove(self, result: ReferenceResult3) -> None:
+        """drops one result in place -- for the "iterate, decide, trim"
+        workflow: walk the results, remove the ones you do not want,
+        then hand what is left straight to a finder's resolve_from().
+        raises ValueError if result is not present (same as
+        list.remove()). safe to call from inside a `for r in results:`
+        loop -- see __iter__."""
+        self._results.remove(result)
+
     def __len__(self) -> int:
         return len(self._results)
 
     def __iter__(self):
-        return iter(self._results)
+        # a snapshot, not the live list: iterating and calling remove()
+        # on the same result within one loop must not skip entries the
+        # way iterating-while-mutating a list normally would.
+        return iter(list(self._results))
 
     def __eq__(self, other) -> bool:
         return isinstance(other, ReferenceResults3) and other.results == self._results
