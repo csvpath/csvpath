@@ -222,24 +222,30 @@ class NameThree3:
 #
 # PLACEHOLDER pending the real function registry (see "requirements for
 # functions.txt" -- functions are looked up/validated at runtime by a
-# registry that does not exist yet). Once it does, this trait belongs on
-# Function3 itself as self-description metadata, not here as a bare name
-# list. For now this is the minimum needed to answer the one
-# function-semantics question ReferenceFinder3 needs today: does this
-# reference resolve to a whole file/thing (path+uuid), or a specific
-# extracted value?
+# registry that does not exist yet). Once it does, this belongs on
+# Function3 itself as self-description metadata (each function will
+# self-report whether it is a "context setter" or a "pointer" -- see
+# that doc), not here as a bare name list.
 #
-# per "creating references v3.txt": a well-known-file function like
-# :errors() returns the file itself; giving it an argument that is a
-# VALUE-LOCATOR function like :idchain(...) means "pull a specific value
-# out of that file" instead. the signal is deliberately narrow -- it is
-# NOT "any nested function arg" (plenty of ordinary selector functions
-# take one, e.g. :from(:index(0)) is still a file/version selector, not
-# a value extraction) -- it is specifically whether a value-locator
-# function appears anywhere in the terminal function chain's argument
-# tree.
+# there is no separate "value extracting" category of function: a
+# pointer resolves the current scope to exactly 0 or 1 item, full stop.
+# in name_one that item is a physical file/version/run; in name_three
+# it is a well-known file (e.g. :errors()) UNLESS that pointer itself
+# takes another pointer as its argument, in which case the outer
+# pointer resolves to a specific value inside the file rather than the
+# file as a whole (e.g. :errors(:idchain("add[0]string[2]"))). so what
+# this constant actually names is: pointer functions currently known to
+# be used this way -- nested inside another function, in name_three,
+# meaning "a value" rather than "a file." it is deliberately NOT "any
+# pointer nested inside another function" -- name_one already nests
+# pointers inside functions all the time for ordinary version/range
+# selection (e.g. :from(:index(0)) is still picking a file/version, not
+# extracting a value), and name_three may end up doing the same for its
+# own result-file listing once more functions exist. this list will be
+# replaced by real trait lookups once Function3 exists; treat it as
+# provisional, not as a general rule for "nested pointer means value."
 #
-_VALUE_LOCATOR_FUNCTIONS = ("idchain",)
+_CONTENT_POINTER_FUNCTIONS = ("idchain",)
 
 
 class Reference3:
@@ -308,16 +314,17 @@ class Reference3:
 
     @property
     def resolves_to_data(self) -> bool:
-        """does this reference ask for a specific extracted value
-        (True), or the referenced file/thing as-is (False)? see the
-        _VALUE_LOCATOR_FUNCTIONS placeholder comment above -- this is a
-        stand-in for a trait the future function registry will own."""
+        """does this reference ask for a specific value inside a
+        well-known file (True), or the file/thing as-is (False)? see
+        the _CONTENT_POINTER_FUNCTIONS placeholder comment above -- this
+        is a stand-in for a trait the future function registry will
+        own (a pointer nested inside another pointer, in name_three)."""
         if self._name_three is None:
             return False
         return any(
             f.contains_function_named(name)
             for f in self._name_three.functions
-            for name in _VALUE_LOCATOR_FUNCTIONS
+            for name in _CONTENT_POINTER_FUNCTIONS
         )
 
     def __eq__(self, other) -> bool:
