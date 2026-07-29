@@ -24,17 +24,42 @@ from lark import Lark, Tree, UnexpectedInput
 #   avoids the combinatorial rule explosion of the v1/v2 grammar
 #   (reference_grammar.py's files_names alone has ~25 alternatives).
 #
-# - "*" and a bare ":all()" function are interchangeable at a path-segment
-#   position (both mean "everything at this level"). the grammar treats
-#   them as distinct tokens/productions; the equivalence is a semantic
-#   reading, not a grammar-level rewrite.
+# - "*" and a bare ":all()" function are NOT interchangeable, despite both
+#   being legal at a path-segment position. "*" flattens: it pools every
+#   wildcard position into a single search space that a terminal function
+#   (e.g. :last()) reduces to one answer. ":all()" anywhere in the
+#   reference switches the whole reference into grouped mode: every
+#   wildcard position -- root_major included -- becomes a dimension of a
+#   composite group key, and the terminal function distributes across the
+#   resulting cross-product. see "creating references v3.txt"'s EXAMPLE
+#   SCENARIO for a worked-out case. the grammar treats "*" and ":all()" as
+#   distinct tokens/productions either way; this flatten-vs-group behavior
+#   is a semantic reading enforced by the transformer, not a grammar-level
+#   concern.
 #
-# - name_one is: an optional "/"-joined path (segments are a literal name,
-#   "*", or a single function occupying the whole segment), optionally
-#   followed by a "#name_two" worksheet marker, optionally followed by a
-#   function chain (functions ANDed together with no separator between
-#   them) -- or, when there's no literal/wildcard path at all, just a bare
-#   function chain (e.g. ":all()", ":before(:yesterday()):index(3)").
+# - name_one is: a "/"-joined path (segments are a literal name, "*", or a
+#   single function occupying the whole segment), optionally followed by a
+#   "#name_two" worksheet marker, optionally followed by a function chain
+#   (functions ANDed together with no separator between them). there is no
+#   separate "bare function chain" alternative: a name_one with no literal/
+#   wildcard path at all (e.g. ":all()", ":before(:yesterday()):index(3)")
+#   is produced by path_prefix reducing to a single function-segment,
+#   followed by the rest of the functions as the trailing func_chain. an
+#   earlier version of this grammar had `name_one: path_prefix (...)
+#   func_chain? | func_chain` as two alternatives, but the second was
+#   redundant with the first (any string it could produce, the first
+#   branch already produces via its single-function-segment case) *and* it
+#   made the grammar genuinely ambiguous -- Earley silently picked one of
+#   two valid parse trees for any bare function chain, and the ambiguity
+#   also blocked LALR (a reduce/reduce collision on COLON, since the
+#   parser couldn't decide with one token of lookahead whether an upcoming
+#   function was "the sole path segment" or "the start of the bare
+#   func_chain" branch). removing the redundant alternative fixed both:
+#   one parse tree per string, and LALR compiles/parses cleanly (confirmed
+#   against the full positive/negative test corpus before switching
+#   QueryParser3 over). name_three has no equivalent issue -- its literal/
+#   wildcard body can't itself be a function, so there's no analogous
+#   ambiguity to remove there.
 #
 # - name_three is: an optional single body (a literal name or "*", no path
 #   building -- "name_three cannot have free-standing forward slashes" per
@@ -67,13 +92,14 @@ REFERENCE_GRAMMAR_3 = r"""
     RESULTS: "results"
 
     //========================================
-    // name_one: optional "/"-joined path, optional #worksheet (files
-    // only, but not restricted here -- see module docstring), optional
-    // trailing function chain. or, with no path at all, a bare function
-    // chain.
+    // name_one: "/"-joined path, optional #worksheet (files only, but not
+    // restricted here -- see module docstring), optional trailing function
+    // chain. a path-less, function(s)-only name_one (e.g. ":all()") is
+    // produced by path_prefix reducing to a single function-segment --
+    // see module docstring for why there is no separate bare-func_chain
+    // alternative here (there was; it was redundant and ambiguous).
 
     name_one: path_prefix ("#" name_two)? func_chain?
-            | func_chain
 
     path_prefix: segment ("/" segment)*
     segment: STAR
@@ -134,8 +160,16 @@ class QueryParser3:
     # being required for files/csvpaths) -- that is deferred to the
     # transformer, not yet built. see module docstring.
     #
+    # lalr, not earley: the grammar is unambiguous (see module docstring's
+    # note on the removed bare-func_chain alternative), so lalr is
+    # available and is what a later type-ahead layer will need -- lalr
+    # parsing is deterministic one state at a time, which is what makes
+    # Lark's parse_interactive()/InteractiveParser.choices() able to
+    # answer "what's legal next" from actual parser state. earley has no
+    # equivalent single-state mechanism.
+    #
     def __init__(self) -> None:
-        self.parser = Lark(REFERENCE_GRAMMAR_3, parser="earley")
+        self.parser = Lark(REFERENCE_GRAMMAR_3, parser="lalr")
 
     def parse(self, query: str) -> Tree:
         if not query:
