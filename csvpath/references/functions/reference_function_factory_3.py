@@ -19,11 +19,13 @@ class ReferenceFunctionFactory:
         from .first_3 import First3
         from .index_3 import Index3
         from .last_3 import Last3
+        from .name_3 import Name3
 
         cls._FUNCTIONS = {
             First3.NAME: First3,
             Last3.NAME: Last3,
             Index3.NAME: Index3,
+            Name3.NAME: Name3,
         }
 
     @classmethod

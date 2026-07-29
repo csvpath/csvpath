@@ -4,6 +4,7 @@ from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.index_3 import Index3
 from csvpath.references.functions.last_3 import Last3
+from csvpath.references.functions.name_3 import Name3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )
@@ -28,6 +29,11 @@ class TestBuild:
         f = ReferenceFunctionFactory.build(FunctionCall3(name="index", arg=0))
         assert isinstance(f, Index3)
         assert f.arg == 0
+
+    def test_builds_name(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="name", arg="zero.csv"))
+        assert isinstance(f, Name3)
+        assert f.arg == "zero.csv"
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):
@@ -84,3 +90,13 @@ class TestBuildChain:
 
     def test_empty_chain_is_fine(self):
         assert ReferenceFunctionFactory.build_chain([]) == []
+
+    def test_a_context_setter_alongside_a_pointer_is_fine(self):
+        # name() is CONTEXT_SETTER, not POINTER -- it does not count
+        # toward the at-most-one-pointer budget.
+        built = ReferenceFunctionFactory.build_chain(
+            [FunctionCall3(name="name", arg="zero.csv"), FunctionCall3(name="first")]
+        )
+        assert len(built) == 2
+        assert isinstance(built[0], Name3)
+        assert isinstance(built[1], First3)
