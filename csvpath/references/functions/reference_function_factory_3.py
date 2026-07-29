@@ -17,11 +17,13 @@ class ReferenceFunctionFactory:
     @classmethod
     def _load(cls) -> None:
         from .first_3 import First3
+        from .index_3 import Index3
         from .last_3 import Last3
 
         cls._FUNCTIONS = {
             First3.NAME: First3,
             Last3.NAME: Last3,
+            Index3.NAME: Index3,
         }
 
     @classmethod

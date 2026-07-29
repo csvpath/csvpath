@@ -2,6 +2,7 @@ import pytest
 
 from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
+from csvpath.references.functions.index_3 import Index3
 from csvpath.references.functions.last_3 import Last3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
@@ -22,6 +23,11 @@ class TestBuild:
     def test_builds_last(self):
         f = ReferenceFunctionFactory.build(FunctionCall3(name="last"))
         assert isinstance(f, Last3)
+
+    def test_builds_index(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="index", arg=0))
+        assert isinstance(f, Index3)
+        assert f.arg == 0
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):
@@ -68,6 +74,12 @@ class TestBuildChain:
         with pytest.raises(ReferenceException3):
             ReferenceFunctionFactory.build_chain(
                 [FunctionCall3(name="first"), FunctionCall3(name="last")]
+            )
+
+    def test_index_and_last_in_the_same_chain_also_raises(self):
+        with pytest.raises(ReferenceException3):
+            ReferenceFunctionFactory.build_chain(
+                [FunctionCall3(name="index", arg=0), FunctionCall3(name="last")]
             )
 
     def test_empty_chain_is_fine(self):
