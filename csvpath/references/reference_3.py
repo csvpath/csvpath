@@ -1,8 +1,3 @@
-import logging
-
-from .reference_exceptions_3 import ReferenceException3
-
-
 #
 # object graph built by Reference3Transformer (reference_transformer_3.py)
 # from a references-v3 parse tree (see reference_grammar_3.py). these are
@@ -119,7 +114,7 @@ class FunctionCall3:
         """true if this function, or any function nested in its
         argument chain, is named `name`. a purely structural query --
         no function-registry knowledge involved. see Reference3.
-        resolves_to_data for what this is used for."""
+        resolve_kind for what this is used for."""
         if self._name == name:
             return True
         if isinstance(self._arg, FunctionCall3):
@@ -223,41 +218,60 @@ class NameThree3:
 # PLACEHOLDER pending the real function registry (see "requirements for
 # functions.txt" -- functions are looked up/validated at runtime by a
 # registry that does not exist yet). Once it does, this belongs on
-# Function3 itself as self-description metadata (each function will
-# self-report whether it is a "context setter" or a "pointer" -- see
-# that doc), not here as a bare name list.
+# Function3 itself as self-description metadata, not here as bare name
+# lists.
 #
-# there is no separate "value extracting" category of function: a
-# pointer resolves the current scope to exactly 0 or 1 item, full stop.
-# in name_one that item is a physical file/version/run; in name_three
-# it is a well-known file (e.g. :errors()) UNLESS that pointer itself
-# takes another pointer as its argument, in which case the outer
-# pointer resolves to a specific value inside the file rather than the
-# file as a whole (e.g. :errors(:idchain("add[0]string[2]"))). so what
-# this constant actually names is: pointer functions currently known to
-# be used this way -- nested inside another function, in name_three,
-# meaning "a value" rather than "a file." it is deliberately NOT "any
-# pointer nested inside another function" -- name_one already nests
-# pointers inside functions all the time for ordinary version/range
-# selection (e.g. :from(:index(0)) is still picking a file/version, not
-# extracting a value), and name_three may end up doing the same for its
-# own result-file listing once more functions exist. this list will be
-# replaced by real trait lookups once Function3 exists; treat it as
-# provisional, not as a general rule for "nested pointer means value."
+# per "creating references v3.txt"'s "Query vs. Resolve" section, a
+# reference resolves to exactly one of three things:
+#   - first-party data: the actual underlying bytes/content, when no
+#     function points at metadata at all (e.g. a plain files reference
+#     with no special function -- resolves to the version file's raw
+#     bytes).
+#   - a whole metadata file: when a function names a known metadata
+#     file (e.g. :errors(), or an arbitrary-named one via :file(...))
+#     with no further drilling.
+#   - one metadata field: when that metadata-file function itself takes
+#     another pointer as its argument, to pull one value out of the
+#     file rather than the file as a whole (e.g.
+#     :errors(:idchain("add[0]string[2]"))).
 #
-_CONTENT_POINTER_FUNCTIONS = ("idchain",)
+# these two lists are deliberately narrow placeholders, not a general
+# rule -- e.g. _METADATA_FIELD_FUNCTIONS is NOT "any nested function
+# arg": name_one already nests pointers inside functions all the time
+# for ordinary version/range selection (:from(:index(0)) is still
+# picking a file/version, not extracting a value). both lists will be
+# replaced by real per-function trait lookups once Function3 exists.
+#
+_METADATA_FILE_FUNCTIONS = (
+    "errors",
+    "vars",
+    "meta",
+    "data",
+    "unmatched",
+    "file",
+    "definition",
+    "manifest",
+)
+_METADATA_FIELD_FUNCTIONS = ("idchain",)
 
 
 class Reference3:
     """the parsed object graph for one references-v3 reference. holds no
-    execution context (see ReferenceParser3 for that) -- just the parsed
-    shape, validated against the datatype-dependent name_three
-    requirement the grammar deliberately leaves out (see
-    reference_grammar_3.py's module docstring)."""
+    execution context (see ReferenceParser3 for that) -- just the
+    parsed shape. name_three is optional for every datatype (per the
+    STRUCTURE section of "creating references v3.txt": name_one alone
+    is a legal, resolvable reference on its own -- there is no
+    datatype-dependent name_three requirement to enforce here anymore;
+    check_valid() is kept as a hook for whatever semantic checks come
+    next, not removed outright)."""
 
     FILES = "files"
     CSVPATHS = "csvpaths"
     RESULTS = "results"
+
+    FIRST_PARTY = "first_party"
+    METADATA_FILE = "metadata_file"
+    METADATA_FIELD = "metadata_field"
 
     def __init__(
         self,
@@ -279,22 +293,15 @@ class Reference3:
         self._name_three = name_three
 
     def check_valid(self) -> None:
-        """structural check deferred out of the grammar (see
-        reference_grammar_3.py's module docstring): name_three is
-        required for files/csvpaths, optional for results. called
-        explicitly by ReferenceParser3 right after the transformer
-        builds this object -- not from __init__, so that a violation
-        raises ReferenceException3 as itself rather than being wrapped
-        in lark's VisitError (which is what happens to any exception
-        raised from inside a Transformer rule method)."""
-        if self._name_three is None and self._datatype in (
-            Reference3.FILES,
-            Reference3.CSVPATHS,
-        ):
-            logger = logging.getLogger(self.__class__.__name__)
-            msg = f"name_three is required for datatype '{self._datatype}'"
-            logger.error(msg)
-            raise ReferenceException3(msg)
+        """structural check, called explicitly by ReferenceParser3
+        right after the transformer builds this object -- not from
+        __init__, so that a violation would raise ReferenceException3
+        as itself rather than being wrapped in lark's VisitError (which
+        is what happens to any exception raised from inside a
+        Transformer rule method). nothing to check right now -- kept
+        as a hook for whatever semantic rule comes next, matching
+        matchable.py's Matchable.check_valid(), which is also a no-op
+        at the base level."""
 
     @property
     def root_major(self):
@@ -313,19 +320,32 @@ class Reference3:
         return self._name_three
 
     @property
-    def resolves_to_data(self) -> bool:
-        """does this reference ask for a specific value inside a
-        well-known file (True), or the file/thing as-is (False)? see
-        the _CONTENT_POINTER_FUNCTIONS placeholder comment above -- this
-        is a stand-in for a trait the future function registry will
-        own (a pointer nested inside another pointer, in name_three)."""
-        if self._name_three is None:
-            return False
-        return any(
-            f.contains_function_named(name)
-            for f in self._name_three.functions
-            for name in _CONTENT_POINTER_FUNCTIONS
+    def resolve_kind(self) -> str:
+        """which of the three resolve outcomes this reference asks for
+        -- FIRST_PARTY (the underlying bytes/content, the default),
+        METADATA_FILE (a whole well-known/named file), or
+        METADATA_FIELD (one value drilled out of such a file). computed
+        from whichever function chain is terminal: name_three's if
+        name_three is present, else name_one's own trailing chain (a
+        legal terminus now that name_three is optional everywhere).
+        see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_FUNCTIONS
+        placeholder comment above -- both lists are stand-ins for traits
+        the future function registry will own."""
+        terminal_functions = (
+            self._name_three.functions
+            if self._name_three is not None
+            else self._name_one.functions
         )
+        for f in terminal_functions:
+            if any(
+                f.contains_function_named(name)
+                for name in _METADATA_FIELD_FUNCTIONS
+            ):
+                return Reference3.METADATA_FIELD
+        for f in terminal_functions:
+            if f.name in _METADATA_FILE_FUNCTIONS:
+                return Reference3.METADATA_FILE
+        return Reference3.FIRST_PARTY
 
     def __eq__(self, other) -> bool:
         return (

@@ -1,6 +1,8 @@
+from csvpath.util.file_readers import DataFileReader
+
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Star3
+from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -16,11 +18,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    "." -- that cannot appear in a bare PATH_SEGMENT). any other
     #    function-valued segment (e.g. :quarter()) and the "#worksheet"
     #    marker (name_two) are not yet supported.
-    #  - name_three must resolve to exactly one pointer function
-    #    (:first()/:last()/:index(n)). This matches the STRUCTURE table:
-    #    name_one picks *which file*, name_three picks *which version*.
-    #    A literal name_three body (bypassing a pointer function
-    #    entirely) is not yet supported either.
+    #  - name_three, if present, must resolve to exactly one pointer
+    #    function (:first()/:last()/:index(n)) -- matching the
+    #    STRUCTURE table: name_one picks *which file*, name_three picks
+    #    *which version*. A literal name_three body (bypassing a
+    #    pointer function entirely) is not yet supported. name_three is
+    #    optional (per the STRUCTURE section's later update): when
+    #    absent, name_one alone is the whole reference and query()
+    #    returns every version currently matched, not narrowed to one --
+    #    mirrors the analogous csvpaths case, which the STRUCTURE table
+    #    describes explicitly as "a list of (path, uuid)".
     #
     # storage facts this relies on (confirmed against FileManager/
     # FileRegistrar and a real manifest.json, not assumed): a named-
@@ -54,7 +61,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         pattern = self._compile_path_pattern(name_one.path)
 
+        manifest = self.csvpaths.file_manager.get_manifest(root_major)
+        home = self.csvpaths.file_manager.named_file_home(root_major).rstrip("/")
+        candidates = [
+            entry for entry in manifest if self._matches(entry, home, pattern)
+        ]
+
         name_three = reference.name_three
+        if name_three is None:
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=entry["file"], uuid=entry["uuid"])
+                    for entry in candidates
+                ]
+            )
+
         if name_three.body is not None:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support a literal name_three "
@@ -70,12 +91,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         pointer = pointers[0]
 
-        manifest = self.csvpaths.file_manager.get_manifest(root_major)
-        home = self.csvpaths.file_manager.named_file_home(root_major).rstrip("/")
-        candidates = [
-            entry for entry in manifest if self._matches(entry, home, pattern)
-        ]
-
         selected = self._apply_pointer(pointer, candidates)
         results = []
         if selected is not None:
@@ -85,10 +100,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(results=results)
 
     def _extract_data(self, result: ReferenceResult3):
+        kind = self.ref.parsed.resolve_kind
+        if kind == Reference3.FIRST_PARTY:
+            with DataFileReader(path=result.path, mode="rb") as reader:
+                return reader.source.read()
         raise ReferenceException3(
-            "FilesReferenceFinder3 has no content to extract from -- "
-            "resolves_to_data should always be False for the files datatype "
-            "with the functions currently registered."
+            f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
+            "-- no metadata-file/metadata-field functions are registered for "
+            "files yet."
         )
 
     @staticmethod

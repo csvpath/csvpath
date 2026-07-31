@@ -54,27 +54,12 @@ class TestConstruction:
         assert f.csvpaths is CSVPATHS
 
 
-class TestResolveWithoutDataExtraction:
-    # "$acme.results.a.:errors()" -- a plain well-known-file function,
-    # no value-locator nested in it, so resolves_to_data is False.
-    def test_resolve_leaves_data_none(self):
-        f = _DummyFinder(csvpaths=CSVPATHS, ref=_ref("$acme.results.a.:errors()"))
-        results = f.resolve()
-        assert results.files == ["p1", "p2"]
-        assert all(r.data is None for r in results.results)
-
-    def test_resolve_from_list_narrows_without_extracting(self):
-        f = _DummyFinder(csvpaths=CSVPATHS, ref=_ref("$acme.results.a.:errors()"))
-        results = f.resolve_from(["p1"])
-        assert results.files == ["p1"]
-        assert results.results[0].data is None
-        assert f.query_call_count == 1
-
-
-class TestResolveWithDataExtraction:
-    # ":errors(:idchain(...))" -- a value-locator nested in the
-    # well-known-file function's arg, so resolves_to_data is True.
-    REF = '$acme.results.a.:errors(:idchain("add[0]string[2]"))'
+class TestResolve:
+    # resolve_from() always calls _extract_data() for every result now
+    # -- the old resolves_to_data gate is gone from the ABC (it moved
+    # into what each concrete finder's own _extract_data() does with
+    # Reference3.resolve_kind, not whether it gets called at all).
+    REF = "$acme.results.a"
 
     def test_resolve_extracts_data_for_every_result(self):
         f = _DummyFinder(csvpaths=CSVPATHS, ref=_ref(self.REF))
@@ -82,11 +67,11 @@ class TestResolveWithDataExtraction:
         assert results.data_for_uuid("u1") == "data-for-p1"
         assert results.data_for_uuid("u2") == "data-for-p2"
 
-    def test_resolve_from_narrows_then_only_extracts_the_selection(self):
+    def test_resolve_from_list_narrows_then_only_extracts_the_selection(self):
         f = _DummyFinder(csvpaths=CSVPATHS, ref=_ref(self.REF))
-        results = f.resolve_from(["u2"])
-        assert results.files == ["p2"]
-        assert results.results[0].data == "data-for-p2"
+        results = f.resolve_from(["p1"])
+        assert results.files == ["p1"]
+        assert results.results[0].data == "data-for-p1"
         assert f.query_call_count == 1
 
     def test_resolve_from_a_results3_does_not_requery(self):

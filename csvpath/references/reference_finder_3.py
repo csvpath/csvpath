@@ -56,16 +56,15 @@ class ReferenceFinder3(ABC):
             results = selection
         else:
             results = self.query().select(selection)
-        if not self.ref.parsed.resolves_to_data:
-            return results
         for result in results.results:
             result.data = self._extract_data(result)
         return results
 
     @abstractmethod
     def _extract_data(self, result: ReferenceResult3):
-        """pulls the specific value this reference's terminal function
-        chain asks for (see Reference3.resolves_to_data) out of the
-        well-known file at result.path. datatype-specific -- reading
-        errors.json vs vars.json vs a csv payload differs enough there
-        is no generic implementation."""
+        """returns whatever this reference's resolve_kind calls for --
+        first-party data (raw bytes/content), a whole metadata file, or
+        one metadata field (see Reference3.resolve_kind) -- for the
+        given already-queried result. datatype-specific -- reading raw
+        file bytes vs errors.json vs vars.json differs enough there is
+        no generic implementation."""

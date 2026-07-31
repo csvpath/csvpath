@@ -3,6 +3,7 @@ import pytest
 from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
+from csvpath.references.reference_results_3 import ReferenceResult3
 
 
 #
@@ -146,6 +147,29 @@ class TestIndexOutOfRange:
         assert finder.query().files == []
 
 
+class TestNameThreeAbsent:
+    # name_three is optional now (STRUCTURE section update): name_one
+    # alone is a legal reference, and returns every version it matched
+    # rather than narrowing to one -- mirrors how the STRUCTURE table
+    # describes the analogous csvpaths case as "a list of (path, uuid)".
+    def test_name_one_alone_returns_every_matched_version(self):
+        finder = _finder("$alpha.files.*", ALPHA_HOME, ALPHA_MANIFEST)
+        results = finder.query()
+        assert results.files == [
+            "inputs/named_files/alpha/zero.csv/0000000000000000.csv",
+            "inputs/named_files/alpha/one.csv/1111111111abcdef.csv",
+            "inputs/named_files/alpha/one.csv/0000000000abcdef.csv",
+        ]
+
+    def test_name_one_alone_narrowed_by_name_function(self):
+        finder = _finder('$alpha.files.:name("one.csv")', ALPHA_HOME, ALPHA_MANIFEST)
+        results = finder.query()
+        assert results.files == [
+            "inputs/named_files/alpha/one.csv/1111111111abcdef.csv",
+            "inputs/named_files/alpha/one.csv/0000000000abcdef.csv",
+        ]
+
+
 class TestScopeLimits:
     def test_star_root_major_not_yet_supported(self):
         finder = _finder("$*.files.*.:last()", ALPHA_HOME, ALPHA_MANIFEST)
@@ -183,7 +207,39 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_extract_data_is_not_reachable_for_files(self):
-        finder = _finder("$alpha.files.*.:first()", ALPHA_HOME, ALPHA_MANIFEST)
+
+class TestExtractData:
+    def test_first_party_returns_raw_file_bytes(self, tmp_path):
+        # resolve_kind is FIRST_PARTY by default (no metadata-file/
+        # field function present) -- resolving a plain files reference
+        # should give the version file's actual raw bytes.
+        content = b"a,b\n1,2\n"
+        file_path = tmp_path / "0000000000000000.csv"
+        file_path.write_bytes(content)
+        manifest = [
+            {
+                "file": str(file_path),
+                "file_home": f"{ALPHA_HOME}/zero.csv",
+                "uuid": "u-zero-1",
+            }
+        ]
+        finder = _finder("$alpha.files.*.:first()", ALPHA_HOME, manifest)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_metadata_file_kind_not_yet_supported(self):
+        # :meta() is not a registered function yet, so a real
+        # query()/resolve() would already reject this reference earlier
+        # (unknown function, in build_chain()). calling _extract_data()
+        # directly tests its own resolve_kind branching in isolation,
+        # ahead of any metadata-file function actually existing.
+        finder = _finder("$alpha.files.*.:meta()", ALPHA_HOME, ALPHA_MANIFEST)
         with pytest.raises(ReferenceException3):
-            finder._extract_data(None)
+            finder._extract_data(ReferenceResult3(path="p", uuid="u"))
+
+    def test_metadata_field_kind_not_yet_supported(self):
+        finder = _finder(
+            '$alpha.files.*.:meta(:idchain("a[0]"))', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        with pytest.raises(ReferenceException3):
+            finder._extract_data(ReferenceResult3(path="p", uuid="u"))
