@@ -519,6 +519,7 @@ class FileManager:
         recurse=True,
         regex: str = None,
     ) -> list[str]:
+        self.csvpaths.logger.info("Starting add_named_files_from_dir for: %s", dirname)
         ret = []
         #
         # legal_name check handled at add_named_file
@@ -542,6 +543,9 @@ class FileManager:
             if regex is not None:
                 m = re.search(regex, p)
                 if not m:
+                    self.csvpaths.logger.info(
+                        "Skipping file: %s doesn't match %s", p, regex
+                    )
                     continue
             #
             #
@@ -560,6 +564,7 @@ class FileManager:
                 # this should be consistent across backends, if ever not, fix it there, not here.
                 #
                 ref = self.add_named_file(name=n, path=p, template=template)
+                self.csvpaths.logger.info("add_named_files_from_dir added: %s", ref)
                 if ref is not None:
                     ret.append(ref)
             else:
@@ -709,7 +714,6 @@ class FileManager:
         http = str(http).strip().lower() in ["on", "yes", "true"]
         local = config.get(section="inputs", name="allow_local_files", default=False)
         local = str(local).strip().lower() in ["on", "yes", "true"]
-        nos = Nos(path)
         self.csvpaths.logger.info(
             "Adding named file %s: checking permission, if needed, to register local and http files",
             name,
@@ -719,6 +723,7 @@ class FileManager:
         # no. the project may be controlled by a context like FlightPath Server, where
         # the user cannot just override certain settings.
         #
+        nos = Nos(path)
         if nos.is_http and http is not True:
             _ = {
                 "name": name,
@@ -780,12 +785,10 @@ class FileManager:
         #
         config = self.describer.get_config(name)
         servers = config.sources
+        self.csvpaths.logger.debug(
+            "Adding named file. Available server configs: %s", servers
+        )
         nos.server_config = servers
-        #
-        #  for _ in servers:
-        #     if _.matches(nos.path):
-        #       nos.do._config = SftpConfig(_)
-        #
         isfile = nos.is_http or nos.isfile()
         self.csvpaths.logger.debug(
             "Adding named file %s: path %s is a file? %s", name, path, isfile
@@ -809,6 +812,7 @@ class FileManager:
             # create folder tree in inputs/named_files/name/filename
             #
             home = self.assure_file_home(name, path, template)
+            self.csvpaths.logger.debug("File home is %s", home)
             file_home = home
             mark = None
             #
@@ -824,6 +828,7 @@ class FileManager:
             if pm > -1:
                 mark = path[pm + 1 :]
                 path = path[0:pm]
+            self.csvpaths.logger.debug("File path, mark: %s, %s", path, mark)
             #
             # we're registering with a mark, so we need to be Xlsx and have a tab with that name.
             #
@@ -976,6 +981,9 @@ class FileManager:
         copy = pathu.parts(path)[0] == pathu.parts(home)[0]
         copy = copy and nos.is_local
         if copy:
+            self.csvpaths.logger.debug(
+                "Above nos copy: path: %s, name: %s, temp: %s", path, name, temp
+            )
             nos.path = path
             config = self.describer.get_config(name)
             servers = config.sources
@@ -1012,6 +1020,7 @@ class FileManager:
         #
         nos = Nos(path)
         if nos.is_sftp:
+            self.csvpaths.logger.debug("Doing copy_down with sftp path %s", path)
             reader = DataFileReader(path)
             #
             # adding config to the reader allows the reader to look to the config
@@ -1028,6 +1037,7 @@ class FileManager:
             with DataFileWriter(path=temp, mode=mode) as writer:
                 writer.write(lines)
         else:
+            self.csvpaths.logger.debug("Doing copy_down with non-sftp path %s", path)
             with DataFileReader(path) as reader:
                 with DataFileWriter(path=temp, mode=mode) as writer:
                     for line in reader.next_raw():

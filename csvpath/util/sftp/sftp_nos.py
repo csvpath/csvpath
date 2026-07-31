@@ -45,7 +45,6 @@ class SftpDo:
     def __init__(self, path, setup: bool = True):
         self._path = None
         self._orig_path = None
-        # self._server_part = None
         self._csvpathconfig = None
         self.server_config = None
         #
@@ -60,7 +59,6 @@ class SftpDo:
 
     def setup(self, path: str = None) -> None:
         config = self._csvpath_config()
-        # self._server_part = f"sftp://{config.get(section='sftp', name='server')}:{config.get(section='sftp', name='port')}"
         self._config = SftpConfig(config)
         if path:
             self.path = path
@@ -83,6 +81,11 @@ class SftpDo:
             raise ValueError(f"SFTP path cannot have no location: {path}")
         server = landp[0]
         port = landp[1]
+        #
+        # this shouldn't happen. if it does we regressed and we will probably
+        # have problems elsewhere with matching host and port to ServerConfig.
+        # leaving this note for now, nothing to do.
+        #
         if port is None:
             port = "22"
         #
@@ -93,7 +96,6 @@ class SftpDo:
             raise ValueError(
                 f"SFTP server {self._config.server} does not equal configured: {server}"
             )
-
         if str(self._config.port) != str(port):
             raise ValueError(
                 f"SFTP port {self._config.port} does not equal configured: {port}"
