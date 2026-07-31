@@ -149,17 +149,16 @@ class TestIndexOutOfRange:
 
 class TestNameThreeAbsent:
     # name_three is optional now (STRUCTURE section update): name_one
-    # alone is a legal reference, and returns every version it matched
-    # rather than narrowing to one -- mirrors how the STRUCTURE table
-    # describes the analogous csvpaths case as "a list of (path, uuid)".
-    def test_name_one_alone_returns_every_matched_version(self):
-        finder = _finder("$alpha.files.*", ALPHA_HOME, ALPHA_MANIFEST)
-        results = finder.query()
-        assert results.files == [
-            "inputs/named_files/alpha/zero.csv/0000000000000000.csv",
-            "inputs/named_files/alpha/one.csv/1111111111abcdef.csv",
-            "inputs/named_files/alpha/one.csv/0000000000abcdef.csv",
-        ]
+    # alone is a legal reference when it is already narrowed to one
+    # specific thing (a literal name or :name(...)) -- it returns every
+    # version it matched rather than narrowing to one. A bare,
+    # unqualified "*" with nothing else is NOT one of these cases --
+    # see test_star_alone_is_rejected_before_the_finder_even_runs below
+    # -- Reference3.check_valid() rejects it at construction, before
+    # the finder ever gets a chance to query().
+    def test_star_alone_is_rejected_before_the_finder_even_runs(self):
+        with pytest.raises(ReferenceException3):
+            _finder("$alpha.files.*", ALPHA_HOME, ALPHA_MANIFEST)
 
     def test_name_one_alone_narrowed_by_name_function(self):
         finder = _finder('$alpha.files.:name("one.csv")', ALPHA_HOME, ALPHA_MANIFEST)

@@ -1,3 +1,5 @@
+from .reference_exceptions_3 import ReferenceException3
+
 #
 # object graph built by Reference3Transformer (reference_transformer_3.py)
 # from a references-v3 parse tree (see reference_grammar_3.py). these are
@@ -295,13 +297,39 @@ class Reference3:
     def check_valid(self) -> None:
         """structural check, called explicitly by ReferenceParser3
         right after the transformer builds this object -- not from
-        __init__, so that a violation would raise ReferenceException3
-        as itself rather than being wrapped in lark's VisitError (which
-        is what happens to any exception raised from inside a
-        Transformer rule method). nothing to check right now -- kept
-        as a hook for whatever semantic rule comes next, matching
-        matchable.py's Matchable.check_valid(), which is also a no-op
-        at the base level."""
+        __init__, so that a violation raises ReferenceException3 as
+        itself rather than being wrapped in lark's VisitError (which is
+        what happens to any exception raised from inside a Transformer
+        rule method).
+
+        one rule so far: a bare "*" cannot be the terminal element of a
+        reference. "*" is a fragment -- "any of the data that ___" --
+        and needs something after it to complete the sentence:
+        :all() does NOT have this problem ("get me all of them!" is
+        already a complete instruction, not a dangling clause -- * and
+        :all() are not equivalent, see reference_grammar_3.py). A
+        literal path segment doesn't have this problem either, since
+        naming an exact thing isn't matching against an open set to
+        begin with. So the only violation is: no name_three, no
+        trailing function chain of its own on name_one, AND name_one's
+        own last path segment is a bare "*" -- e.g. "$alpha.files.*" is
+        illegal, but "$alpha.files.*/orders" (more path completes it),
+        "$alpha.files.*:first()" (name_one's own chain completes it),
+        "$alpha.files.*.:first()" (name_three completes it), and
+        "$alpha.files.:all()" (already complete on its own) are all
+        fine."""
+        if (
+            self._name_three is None
+            and not self._name_one.functions
+            and isinstance(self._name_one.path[-1], Star3)
+        ):
+            msg = (
+                "A bare '*' cannot be the last element of a reference -- "
+                "it needs a function (on name_one or name_three) or more "
+                "path to complete it, e.g. '*:first()' or '*.name_three', "
+                "not '*' alone."
+            )
+            raise ReferenceException3(msg)
 
     @property
     def root_major(self):

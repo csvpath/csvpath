@@ -9,6 +9,7 @@ from csvpath.references.reference_3 import (
     Star3,
     Variable3,
 )
+from csvpath.references.reference_exceptions_3 import ReferenceException3
 
 
 #
@@ -246,6 +247,68 @@ class TestReference3:
             datatype=Reference3.FILES,
             name_one=self._name_one("a"),
             name_three=NameThree3(body="v1"),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_rejects_bare_trailing_star(self):
+        # "*" alone: "any of the data that ___" with nothing to
+        # complete it -- no name_three, no trailing function on
+        # name_one, and the star is name_one's last path segment.
+        r = Reference3(
+            root_major="acme", datatype=Reference3.FILES, name_one=self._name_one(Star3())
+        )
+        with pytest.raises(ReferenceException3):
+            r.check_valid()
+
+    def test_check_valid_rejects_star_trailing_after_a_literal_segment(self):
+        # the star being last is what matters, not whether it is alone
+        # -- "orders/*" still dangles the same way "*" does.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one("orders", Star3()),
+        )
+        with pytest.raises(ReferenceException3):
+            r.check_valid()
+
+    def test_check_valid_allows_star_followed_by_a_literal_segment(self):
+        # "*/orders" completes the sentence with the literal segment
+        # that follows the star -- only a *trailing*, un-followed star
+        # is a problem.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(Star3(), "orders"),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_star_with_name_ones_own_trailing_function(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=NameOne3(
+                path=[Star3()], functions=[FunctionCall3(name="first")]
+            ),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_star_with_name_three(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(Star3()),
+            name_three=NameThree3(functions=[FunctionCall3(name="first")]),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_bare_all_function(self):
+        # :all() is not equivalent to "*" -- it is already a complete
+        # instruction ("get me all of them!"), not a dangling clause,
+        # so it is fine bare with no name_three and no other function.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(FunctionCall3(name="all")),
         )
         r.check_valid()  # should not raise
 
