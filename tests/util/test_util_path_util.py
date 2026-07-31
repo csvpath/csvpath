@@ -11,7 +11,11 @@ class TestUtilPathUtil(unittest.TestCase):
         assert pathu.location("afile.txt") is None
 
     def test_path_util_location_and_port(self):
-        assert pathu.location_and_port("sftp://aserver/afile.txt") == ("aserver", None)
+        #
+        # changed to make no port == 22, not None. this is important because
+        # server config matches swap in 22 for None.
+        #
+        assert pathu.location_and_port("sftp://aserver/afile.txt") == ("aserver", 22)
         assert pathu.location_and_port("sftp://aserver:2022/afile.txt") == (
             "aserver",
             "2022",

@@ -119,7 +119,11 @@ class PathUtility:
             return None
         i = location.find(":")
         if i == -1:
-            return (location, None)
+            #
+            # ServerConfig swap None, no port, for 22, standard sftp. so we need
+            # to do the same here, or there is no match
+            #
+            return (location, 22)
         port = location[i + 1 :]
         return location[0:i], port
 

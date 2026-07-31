@@ -120,7 +120,11 @@ class Nos:
             return None
         i = location.find(":")
         if i == -1:
-            return (location, None)
+            #
+            # ServerConfig swap None, no port, for 22, standard sftp. so we need
+            # to do the same here, or there is no match
+            #
+            return (location, 22)
         return location[0:i], int(location[i + 1 :])
 
     #
@@ -160,7 +164,7 @@ class Nos:
         return self._servers
 
     @server_config.setter
-    def server_config(self, servers: list[ServerConfig]) -> None:
+    def server_config(self, servers: dict[str, ServerConfig]) -> None:
         #
         # when we set server config on a nos we're enabling the SFTP not only
         # from the cached backend location, but also uncached creds stored in a
