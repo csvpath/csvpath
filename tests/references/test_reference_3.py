@@ -228,19 +228,16 @@ class TestReference3:
         with pytest.raises(ValueError):
             Reference3(root_major="acme", datatype=Reference3.FILES, name_one=None)
 
-    @pytest.mark.parametrize("datatype", [Reference3.FILES, Reference3.CSVPATHS])
-    def test_check_valid_requires_name_three_for_files_and_csvpaths(self, datatype):
+    @pytest.mark.parametrize(
+        "datatype", [Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS]
+    )
+    def test_check_valid_allows_missing_name_three_for_every_datatype(self, datatype):
+        # name_three is optional everywhere (per "creating references
+        # v3.txt"'s STRUCTURE section) -- name_one alone is a legal,
+        # resolvable reference on its own for files/csvpaths too now,
+        # not just results.
         r = Reference3(
             root_major="acme", datatype=datatype, name_one=self._name_one("a")
-        )
-        with pytest.raises(ReferenceException3):
-            r.check_valid()
-
-    def test_check_valid_allows_missing_name_three_for_results(self):
-        r = Reference3(
-            root_major="acme",
-            datatype=Reference3.RESULTS,
-            name_one=self._name_one("a"),
         )
         r.check_valid()  # should not raise
 
@@ -250,6 +247,68 @@ class TestReference3:
             datatype=Reference3.FILES,
             name_one=self._name_one("a"),
             name_three=NameThree3(body="v1"),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_rejects_bare_trailing_star(self):
+        # "*" alone: "any of the data that ___" with nothing to
+        # complete it -- no name_three, no trailing function on
+        # name_one, and the star is name_one's last path segment.
+        r = Reference3(
+            root_major="acme", datatype=Reference3.FILES, name_one=self._name_one(Star3())
+        )
+        with pytest.raises(ReferenceException3):
+            r.check_valid()
+
+    def test_check_valid_rejects_star_trailing_after_a_literal_segment(self):
+        # the star being last is what matters, not whether it is alone
+        # -- "orders/*" still dangles the same way "*" does.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one("orders", Star3()),
+        )
+        with pytest.raises(ReferenceException3):
+            r.check_valid()
+
+    def test_check_valid_allows_star_followed_by_a_literal_segment(self):
+        # "*/orders" completes the sentence with the literal segment
+        # that follows the star -- only a *trailing*, un-followed star
+        # is a problem.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(Star3(), "orders"),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_star_with_name_ones_own_trailing_function(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=NameOne3(
+                path=[Star3()], functions=[FunctionCall3(name="first")]
+            ),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_star_with_name_three(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(Star3()),
+            name_three=NameThree3(functions=[FunctionCall3(name="first")]),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_allows_bare_all_function(self):
+        # :all() is not equivalent to "*" -- it is already a complete
+        # instruction ("get me all of them!"), not a dangling clause,
+        # so it is fine bare with no name_three and no other function.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(FunctionCall3(name="all")),
         )
         r.check_valid()  # should not raise
 
@@ -292,26 +351,42 @@ class TestReference3:
         assert a != c
 
 
-class TestResolvesToData:
-    def _name_one(self, *path):
-        return NameOne3(path=list(path))
+class TestResolveKind:
+    def _name_one(self, *path, functions=None):
+        return NameOne3(path=list(path), functions=functions)
 
-    def test_false_when_no_name_three(self):
+    def test_first_party_when_no_name_three_and_no_name_one_functions(self):
         r = Reference3(
             root_major="acme", datatype=Reference3.RESULTS, name_one=self._name_one("a")
         )
-        assert r.resolves_to_data is False
+        assert r.resolve_kind == Reference3.FIRST_PARTY
 
-    def test_false_for_plain_well_known_file_function(self):
+    def test_first_party_for_ordinary_selector_function_with_nested_arg(self):
+        # :from(:index(0)) is still a version/range selector, not a
+        # value extraction -- a nested function arg alone must not
+        # trigger anything beyond FIRST_PARTY.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(
+                functions=[
+                    FunctionCall3(name="from", arg=FunctionCall3(name="index", arg=0))
+                ]
+            ),
+        )
+        assert r.resolve_kind == Reference3.FIRST_PARTY
+
+    def test_metadata_file_for_plain_well_known_file_function(self):
         r = Reference3(
             root_major="acme",
             datatype=Reference3.RESULTS,
             name_one=self._name_one("a"),
             name_three=NameThree3(functions=[FunctionCall3(name="errors")]),
         )
-        assert r.resolves_to_data is False
+        assert r.resolve_kind == Reference3.METADATA_FILE
 
-    def test_true_when_value_locator_nested_in_terminal_function(self):
+    def test_metadata_field_when_value_locator_nested_in_terminal_function(self):
         r = Reference3(
             root_major="acme",
             datatype=Reference3.RESULTS,
@@ -325,20 +400,15 @@ class TestResolvesToData:
                 ]
             ),
         )
-        assert r.resolves_to_data is True
+        assert r.resolve_kind == Reference3.METADATA_FIELD
 
-    def test_false_for_ordinary_selector_function_with_nested_arg(self):
-        # :from(:index(0)) is still a version/range selector, not a
-        # value extraction -- a nested function arg alone must not
-        # trigger resolves_to_data.
+    def test_uses_name_one_functions_when_name_three_is_absent(self):
+        # name_one alone is now a legal terminus (name_three optional
+        # everywhere), so its own trailing function chain is what
+        # resolve_kind must inspect when there is no name_three.
         r = Reference3(
             root_major="acme",
             datatype=Reference3.FILES,
-            name_one=self._name_one("a"),
-            name_three=NameThree3(
-                functions=[
-                    FunctionCall3(name="from", arg=FunctionCall3(name="index", arg=0))
-                ]
-            ),
+            name_one=self._name_one("a", functions=[FunctionCall3(name="errors")]),
         )
-        assert r.resolves_to_data is False
+        assert r.resolve_kind == Reference3.METADATA_FILE

@@ -15,11 +15,15 @@ from uuid import UUID
 
 
 class ReferenceResult3:
-    def __init__(self, *, path: str, uuid: str, data: Any = None) -> None:
+    def __init__(self, *, path: str, uuid: str | None, data: Any = None) -> None:
         if not path:
             raise ValueError("ReferenceResult3 path cannot be None or empty")
-        if not uuid:
-            raise ValueError("ReferenceResult3 uuid cannot be None or empty")
+        if uuid is not None and not uuid:
+            raise ValueError(
+                "ReferenceResult3 uuid cannot be empty -- use None if there "
+                "is no uuid (e.g. a directory-level, name_three-absent result "
+                "has no single version/registration to identify)"
+            )
         self._path = path
         self._uuid = uuid
         self._data = data
@@ -29,7 +33,7 @@ class ReferenceResult3:
         return self._path
 
     @property
-    def uuid(self) -> str:
+    def uuid(self) -> str | None:
         return self._uuid
 
     @property
@@ -70,7 +74,7 @@ class ReferenceResults3:
         return [r.path for r in self._results]
 
     @property
-    def uuids(self) -> list[str]:
+    def uuids(self) -> list[str | None]:
         return [r.uuid for r in self._results]
 
     def file_for_uuid(self, uuid: str | UUID) -> str | None:

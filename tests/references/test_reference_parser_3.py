@@ -1,7 +1,6 @@
 import pytest
 
 from csvpath.references.reference_3 import Reference3
-from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 
 #
@@ -127,23 +126,16 @@ class TestProperties:
         assert isinstance(r.parsed, Reference3)
 
 
-class TestNameThreeRequiredness:
-    @pytest.mark.parametrize("datatype", ["files", "csvpaths"])
-    def test_missing_name_three_raises_for_files_and_csvpaths(self, datatype):
-        with pytest.raises(ReferenceException3):
-            ReferenceParser3(string=f"$acme.{datatype}.a", csvpaths=CSVPATHS)
-
-    def test_missing_name_three_is_fine_for_results(self):
-        r = ReferenceParser3(string="$acme.results.a", csvpaths=CSVPATHS)
+class TestNameThreeOptional:
+    # name_three is optional for every datatype (per "creating
+    # references v3.txt"'s STRUCTURE section) -- name_one alone is a
+    # legal, resolvable reference on its own. check_valid() is still
+    # called by parse() after the transform completes, outside
+    # Transformer.transform()'s own call stack, on principle (so that
+    # if a future semantic rule gets added there, it surfaces as
+    # ReferenceException3 itself rather than wrapped in lark's
+    # VisitError) -- there is just nothing that rule currently rejects.
+    @pytest.mark.parametrize("datatype", ["files", "csvpaths", "results"])
+    def test_missing_name_three_is_fine_for_every_datatype(self, datatype):
+        r = ReferenceParser3(string=f"$acme.{datatype}.a", csvpaths=CSVPATHS)
         assert r.name_three is None
-
-    def test_reference_exception_is_not_wrapped_by_lark(self):
-        # regression: check_valid() runs outside Transformer.transform(),
-        # specifically so a violation surfaces as ReferenceException3
-        # itself, not wrapped in lark.exceptions.VisitError.
-        try:
-            ReferenceParser3(string="$acme.files.a", csvpaths=CSVPATHS)
-        except ReferenceException3:
-            pass
-        else:
-            pytest.fail("expected ReferenceException3")
