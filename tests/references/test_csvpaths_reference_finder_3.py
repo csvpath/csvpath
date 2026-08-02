@@ -80,6 +80,28 @@ class TestVersionPointer:
             _finder("$acme.csvpaths.:last():index(0)").query()
 
 
+class TestNoPointerReturnsEveryVersion:
+    # a chain with no pointer at all (e.g. a bare :all()) does not
+    # narrow to one version -- every version in the manifest comes
+    # back, unreduced. This is how "Name_one used alone == list of
+    # versions in the form: (path-to-group.csvpaths, uuid)" (STRUCTURE
+    # table) is actually reached.
+    def test_bare_all_returns_every_version(self):
+        results = _finder("$acme.csvpaths.:all()").query()
+        assert results.files == [GROUP_FILE_PATH, GROUP_FILE_PATH]
+        assert results.uuids == ["v0-uuid", "v1-uuid"]
+
+    def test_all_combined_with_name_three_filters_each_version(self):
+        # only versions containing the matching identity come back --
+        # "company_names" only exists in v0's identities.
+        results = _finder("$acme.csvpaths.:all().company_names").query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_all_with_no_matches_at_all_returns_empty(self):
+        results = _finder("$acme.csvpaths.:all().nope").query()
+        assert results.files == []
+
+
 class TestIdentityLookupOnNameThree:
     def test_matches_named_identity(self):
         results = _finder("$acme.csvpaths.:first().company_names").query()
@@ -142,16 +164,6 @@ class TestScopeLimits:
 
     def test_two_pointers_in_name_one_raises(self):
         finder = _finder("$acme.csvpaths.:first():last()")
-        with pytest.raises(ReferenceException3):
-            finder.query()
-
-    def test_name_one_with_no_pointer_at_all_raises(self):
-        # a context-setter alone (no pointer) does not resolve to
-        # exactly one version -- not yet supported (no context-setter
-        # functions are registered yet anyway, so this always surfaces
-        # as an unknown-function error today, but the "exactly one
-        # pointer" requirement stands regardless).
-        finder = _finder("$acme.csvpaths.:before(:yesterday())")
         with pytest.raises(ReferenceException3):
             finder.query()
 

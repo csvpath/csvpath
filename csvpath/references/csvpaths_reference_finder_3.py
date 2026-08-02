@@ -13,15 +13,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     # REVERSED from files here:
     #  - root_major is a literal named-paths group name. "*" (every
     #    group) is a different traversal problem, not yet built.
-    #  - name_one IS the version pointer for csvpaths (STRUCTURE table:
+    #  - name_one IS the version selector for csvpaths (STRUCTURE table:
     #    "name_one is always one or more versions of a named-paths
-    #    group's group.csvpaths file"). It must resolve, via
-    #    build_chain(), to exactly one pointer function
-    #    (:first()/:last()/:index(n)). Literal/"*"/path-building
-    #    content, and the "#worksheet" marker (name_two, files-only),
-    #    are not meaningful for csvpaths and are rejected. :uuid() is
-    #    not yet a registered function, so it is "not yet supported"
-    #    for now like any other unbuilt function.
+    #    group's group.csvpaths file"). Its combined function chain
+    #    (the sole path-segment function plus any trailing chain) may
+    #    contain at most one pointer function (:first()/:last()/
+    #    :index(n)): if present, it reduces to that one version; if
+    #    absent (e.g. a bare :all()), every version in the manifest is
+    #    returned, unreduced -- this is how "list of versions in the
+    #    form: (path-to-group.csvpaths, uuid)" (STRUCTURE table) is
+    #    actually reached. Literal/"*"/path-building content, and the
+    #    "#worksheet" marker (name_two, files-only), are not meaningful
+    #    for csvpaths and are rejected. :uuid() is not yet a registered
+    #    function, so it is "not yet supported" for now like any other
+    #    unbuilt function.
     #  - name_three, if present, is an identity lookup into that
     #    version's named_paths_identities list -- matched by identity
     #    string, or by the stringified index an unnamed statement is
@@ -60,36 +65,36 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "CsvpathsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
-        pointer = self._resolve_version_pointer(name_one)
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
-        selected = self._apply_pointer(pointer, manifest)
-        if selected is None:
-            return ReferenceResults3(results=[])
-
-        result = ReferenceResult3(
-            path=selected["group_file_path"], uuid=selected["uuid"]
-        )
+        selected_versions = self._resolve_versions(name_one, manifest)
 
         name_three = reference.name_three
-        if name_three is None:
-            return ReferenceResults3(results=[result])
+        if name_three is not None:
+            if name_three.functions:
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 does not yet support functions "
+                    "on name_three -- no metadata-access functions are "
+                    "registered for csvpaths yet."
+                )
+            if name_three.body is None or isinstance(name_three.body, Star3):
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 requires name_three to be a "
+                    "literal statement identity or index."
+                )
 
-        if name_three.functions:
-            raise ReferenceException3(
-                "CsvpathsReferenceFinder3 does not yet support functions on "
-                "name_three -- no metadata-access functions are registered "
-                "for csvpaths yet."
+        results = []
+        for selected in selected_versions:
+            if name_three is not None:
+                identities = selected.get("named_paths_identities") or []
+                if self._find_by_identity(name_three.body, identities) is None:
+                    continue
+            results.append(
+                ReferenceResult3(
+                    path=selected["group_file_path"], uuid=selected["uuid"]
+                )
             )
-        if name_three.body is None or isinstance(name_three.body, Star3):
-            raise ReferenceException3(
-                "CsvpathsReferenceFinder3 requires name_three to be a "
-                "literal statement identity or index."
-            )
-        identities = selected.get("named_paths_identities") or []
-        if self._find_by_identity(name_three.body, identities) is None:
-            return ReferenceResults3(results=[])
-        return ReferenceResults3(results=[result])
+        return ReferenceResults3(results=results)
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
@@ -122,26 +127,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         statements = selected.get("named_paths") or []
         return statements[index]
 
-    @staticmethod
-    def _resolve_version_pointer(name_one) -> Function3:
-        """name_one's sole job for csvpaths is being the version
-        pointer, so its path_prefix must reduce to exactly one
-        function-segment (no literal/"*" path-building, no worksheet
-        marker) -- combined with its own trailing function chain, if
-        any, and required to resolve to exactly one pointer function
-        overall (e.g. :before(:yesterday()):after(...):index(3))."""
+    def _resolve_versions(self, name_one, manifest: list) -> list:
+        """name_one's sole job for csvpaths is selecting which
+        version(s) to work with, so its path_prefix must reduce to
+        exactly one function-segment (no literal/"*" path-building, no
+        worksheet marker) -- combined with its own trailing function
+        chain, if any. At most one pointer function is allowed among
+        the combined chain (build_chain() enforces this): if present,
+        it reduces `manifest` to that one version; if absent (e.g. a
+        bare :all()), every version in `manifest` is returned,
+        unreduced."""
         if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 requires name_one to be a version-"
-                "selecting function chain (e.g. :last(), :index(3)) -- "
+                "selecting function chain (e.g. :last(), :all()) -- "
                 "literal/'*' path-building is not meaningful for csvpaths."
             )
         calls = [name_one.path[0], *name_one.functions]
         built = ReferenceFunctionFactory.build_chain(calls)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        if len(pointers) != 1:
-            raise ReferenceException3(
-                "CsvpathsReferenceFinder3 requires name_one to resolve to "
-                "exactly one pointer function (:first()/:last()/:index(n))."
-            )
-        return pointers[0]
+        if not pointers:
+            return manifest
+        selected = self._apply_pointer(pointers[0], manifest)
+        return [selected] if selected is not None else []
