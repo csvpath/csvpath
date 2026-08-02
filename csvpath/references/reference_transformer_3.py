@@ -1,9 +1,11 @@
 import re
 
-from lark import Transformer, v_args
+from lark import Lark, Transformer, v_args
+from lark.exceptions import UnexpectedInput
 
 from .reference_3 import (
     FunctionCall3,
+    InterpolatedString3,
     NameOne3,
     NameThree3,
     Reference3,
@@ -11,6 +13,7 @@ from .reference_3 import (
     Star3,
     Variable3,
 )
+from .reference_exceptions_3 import ReferenceException3
 
 #
 # turns a references-v3 Lark parse tree (see reference_grammar_3.py) into
@@ -32,6 +35,117 @@ from .reference_3 import (
 # defaults handle safely (fewer children always means the rightmost
 # param(s) are missing, never a reshuffle).
 #
+
+
+#
+# String interpolation: a STRING argument may contain one or more
+# "{...}" spans -- each a bare @variable or a call to a function whose
+# role is VALUE (context setters/pointers are rejected -- see
+# InterpolatedString3.check_valid()). "{{"/"}}" escape a literal brace,
+# matching the convention already used by csvpath/util/var_utility.py's
+# substitute().
+#
+# kept as a separate, small grammar rather than a REFERENCE_GRAMMAR_3
+# change, so the main, LALR-clean reference grammar stays untouched --
+# this one only ever parses the *content* of one already-found
+# "{...}" span, reusing the exact same AT_VAR/FNAME/function/arg
+# terminal definitions (kept textually identical to
+# reference_grammar_3.py's on purpose, to avoid behavioral drift
+# between the two).
+#
+_INTERPOLATION_GRAMMAR_3 = r"""
+    ?start: AT_VAR
+          | function
+
+    function: ":" FNAME "(" arg? ")"
+
+    arg: STRING
+       | SIGNED_INT
+       | AT_VAR
+       | function
+       | REGEX
+       | STAR
+
+    STAR: "*"
+    AT_VAR: "@" IDENTIFIER
+    FNAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+    IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_\-]*/
+    STRING: /"(?:[^"\\]|\\.)*"/
+    SIGNED_INT: /-?\d+/
+    REGEX: "/" REGEX_INNER "/"
+    REGEX_INNER: /([^\/\\]|\\.)*/
+
+    %import common.WS
+    %ignore WS
+"""
+
+_interpolation_parser = None
+
+
+def _get_interpolation_parser() -> Lark:
+    global _interpolation_parser
+    if _interpolation_parser is None:
+        _interpolation_parser = Lark(_INTERPOLATION_GRAMMAR_3, parser="lalr")
+    return _interpolation_parser
+
+
+def _parse_interpolation_span(inner: str):
+    try:
+        tree = _get_interpolation_parser().parse(inner)
+    except UnexpectedInput as e:
+        raise ReferenceException3(
+            f"Invalid {{...}} interpolation content {inner!r}: {e}"
+        ) from e
+    return Reference3Transformer().transform(tree)
+
+
+def _split_interpolated_parts(text: str) -> list:
+    """splits `text` into literal string chunks and parsed @variable/
+    function parts, honoring "{{"/"}}" as escapes for a literal brace.
+    a plain string with no unescaped "{" comes back as a single-element
+    list holding the original string, untouched -- callers use that to
+    skip wrapping in InterpolatedString3 for the (overwhelmingly
+    common) no-interpolation case.
+
+    deliberately simple: finds each span by the next unescaped "}"
+    after an unescaped "{", not by brace-depth/quote-aware balancing --
+    sufficient for the interpolation shapes actually in use (a bare
+    @variable or one function call), not a general nested-brace parser."""
+    parts = []
+    buf = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "{" and i + 1 < n and text[i + 1] == "{":
+            buf.append("{")
+            i += 2
+            continue
+        if ch == "}" and i + 1 < n and text[i + 1] == "}":
+            buf.append("}")
+            i += 2
+            continue
+        if ch == "{":
+            end = text.find("}", i + 1)
+            if end == -1:
+                raise ReferenceException3(
+                    f"Unescaped '{{' with no matching '}}' in string: {text!r}"
+                )
+            if buf:
+                parts.append("".join(buf))
+                buf = []
+            parts.append(_parse_interpolation_span(text[i + 1 : end]))
+            i = end + 1
+            continue
+        if ch == "}":
+            raise ReferenceException3(
+                f"Unescaped '}}' with no matching '{{' in string: {text!r}"
+            )
+        buf.append(ch)
+        i += 1
+    if buf or not parts:
+        parts.append("".join(buf))
+    return parts
 
 
 class _PathPrefixResult:
@@ -132,12 +246,16 @@ class Reference3Transformer(Transformer):
     def IDENTIFIER(self, token) -> str:  # noqa: N802
         return str(token)
 
-    def STRING(self, token) -> str:  # noqa: N802
+    def STRING(self, token) -> str | InterpolatedString3:  # noqa: N802
         # grammar's STRING allows "\." to escape any character (not just
         # quote/backslash) -- undo that generically rather than special
         # casing \" and \\.
         raw = str(token)[1:-1]
-        return re.sub(r"\\(.)", r"\1", raw)
+        unescaped = re.sub(r"\\(.)", r"\1", raw)
+        parts = _split_interpolated_parts(unescaped)
+        if len(parts) == 1 and isinstance(parts[0], str):
+            return parts[0]
+        return InterpolatedString3(parts=parts)
 
     def SIGNED_INT(self, token) -> int:  # noqa: N802
         return int(token)

@@ -54,6 +54,58 @@ class TestConstruction:
         assert f.csvpaths is CSVPATHS
 
 
+class TestApplyPointer:
+    # shared by every finder that reads a flat manifest array (files,
+    # csvpaths) -- moved onto the ABC once there were two real
+    # consumers, not just one.
+    def test_first(self):
+        assert ReferenceFinder3._apply_pointer(
+            type("P", (), {"name": "first"})(), ["a", "b", "c"]
+        ) == "a"
+
+    def test_last(self):
+        assert ReferenceFinder3._apply_pointer(
+            type("P", (), {"name": "last"})(), ["a", "b", "c"]
+        ) == "c"
+
+    def test_index(self):
+        assert ReferenceFinder3._apply_pointer(
+            type("P", (), {"name": "index", "arg": 1})(), ["a", "b", "c"]
+        ) == "b"
+
+    def test_index_out_of_range_returns_none(self):
+        assert ReferenceFinder3._apply_pointer(
+            type("P", (), {"name": "index", "arg": 99})(), ["a", "b", "c"]
+        ) is None
+
+    def test_empty_candidates_returns_none(self):
+        assert ReferenceFinder3._apply_pointer(
+            type("P", (), {"name": "first"})(), []
+        ) is None
+
+    def test_unsupported_pointer_name_raises(self):
+        from csvpath.references.reference_exceptions_3 import ReferenceException3
+
+        with pytest.raises(ReferenceException3):
+            ReferenceFinder3._apply_pointer(
+                type("P", (), {"name": "bogus"})(), ["a"]
+            )
+
+
+class TestFindByIdentity:
+    # shared by every finder whose name_three does an identity lookup
+    # (csvpaths' named_paths_identities, results' per-statement
+    # directory names).
+    def test_matches_named_identity(self):
+        assert ReferenceFinder3._find_by_identity("b", ["a", "b", "c"]) == 1
+
+    def test_matches_stringified_index_identity(self):
+        assert ReferenceFinder3._find_by_identity("0", ["0", "named"]) == 0
+
+    def test_no_match_returns_none(self):
+        assert ReferenceFinder3._find_by_identity("nope", ["a", "b"]) is None
+
+
 class TestResolve:
     # resolve_from() always calls _extract_data() for every result now
     # -- the old resolves_to_data gate is gone from the ABC (it moved

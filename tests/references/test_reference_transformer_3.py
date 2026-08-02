@@ -2,6 +2,7 @@ import pytest
 
 from csvpath.references.reference_3 import (
     FunctionCall3,
+    InterpolatedString3,
     Regex3,
     Star3,
     Variable3,
@@ -178,3 +179,58 @@ class TestFunctionArgs:
     def test_string_with_escaped_quote_and_backslash(self, parser):
         r = build(parser, '$acme.files.a.:name("say \\"hi\\"")')
         assert r.name_three.functions[0].arg == 'say "hi"'
+
+
+class TestStringInterpolation:
+    def test_plain_string_with_no_braces_is_unaffected(self, parser):
+        # no InterpolatedString3 wrapper for the overwhelmingly common
+        # no-interpolation case -- stays a plain str.
+        r = build(parser, '$acme.files.a.:name("Acme")')
+        assert r.name_three.functions[0].arg == "Acme"
+
+    def test_bare_variable_interpolation(self, parser):
+        r = build(parser, '$acme.files.a.:name("partner-{@company}-orders")')
+        arg = r.name_three.functions[0].arg
+        assert arg == InterpolatedString3(
+            parts=["partner-", Variable3(name="company"), "-orders"]
+        )
+
+    def test_function_interpolation(self, parser):
+        # structural only -- the transformer does not know or care that
+        # "year" is not a real/registered function yet, it just parses
+        # the {...} span's shape.
+        r = build(parser, '$acme.files.a.:name("partner-{:year()}-orders")')
+        arg = r.name_three.functions[0].arg
+        assert arg == InterpolatedString3(
+            parts=["partner-", FunctionCall3(name="year"), "-orders"]
+        )
+
+    def test_multiple_interpolations(self, parser):
+        r = build(parser, '$acme.files.a.:name("partner-{:year()}-{@company}")')
+        arg = r.name_three.functions[0].arg
+        assert arg == InterpolatedString3(
+            parts=["partner-", FunctionCall3(name="year"), "-", Variable3(name="company")]
+        )
+
+    def test_escaped_braces_yield_a_plain_string(self, parser):
+        r = build(parser, '$acme.files.a.:name("literal {{brace}} text")')
+        assert r.name_three.functions[0].arg == "literal {brace} text"
+
+    def test_escaped_braces_alongside_a_real_interpolation(self, parser):
+        r = build(parser, '$acme.files.a.:name("{{tag}} {@company}")')
+        arg = r.name_three.functions[0].arg
+        assert arg == InterpolatedString3(parts=["{tag} ", Variable3(name="company")])
+
+    def test_interpolation_with_a_nested_function_arg(self, parser):
+        r = build(
+            parser, '$acme.files.a.:name("id-{:idchain(@x)}")'
+        )
+        arg = r.name_three.functions[0].arg
+        assert arg == InterpolatedString3(
+            parts=["id-", FunctionCall3(name="idchain", arg=Variable3(name="x"))]
+        )
+
+    def test_round_trips_through_str(self, parser):
+        original = '$acme.files.a.:name("partner-{:year()}-{@company}")'
+        r = build(parser, original)
+        assert str(r) == original

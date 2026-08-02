@@ -1,5 +1,6 @@
 import pytest
 
+from csvpath.references.functions.all_3 import All3
 from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.index_3 import Index3
@@ -34,6 +35,10 @@ class TestBuild:
         f = ReferenceFunctionFactory.build(FunctionCall3(name="name", arg="zero.csv"))
         assert isinstance(f, Name3)
         assert f.arg == "zero.csv"
+
+    def test_builds_all(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="all"))
+        assert isinstance(f, All3)
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):

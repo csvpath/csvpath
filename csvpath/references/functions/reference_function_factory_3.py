@@ -16,6 +16,7 @@ class ReferenceFunctionFactory:
 
     @classmethod
     def _load(cls) -> None:
+        from .all_3 import All3
         from .first_3 import First3
         from .index_3 import Index3
         from .last_3 import Last3
@@ -26,6 +27,7 @@ class ReferenceFunctionFactory:
             Last3.NAME: Last3,
             Index3.NAME: Index3,
             Name3.NAME: Name3,
+            All3.NAME: All3,
         }
 
     @classmethod
@@ -38,6 +40,18 @@ class ReferenceFunctionFactory:
         if not cls._FUNCTIONS:
             cls._load()
         cls._FUNCTIONS[function_cls.NAME] = function_cls
+
+    @classmethod
+    def get_registered_class(cls, name: str) -> type | None:
+        """the registered Function3 CLASS for `name`, or None if
+        unknown -- for checking class-level metadata (e.g. ROLE)
+        without constructing/validating an instance. Used by
+        InterpolatedString3.check_valid() to reject non-VALUE
+        functions inside a "{...}" interpolation without needing to
+        evaluate them."""
+        if not cls._FUNCTIONS:
+            cls._load()
+        return cls._FUNCTIONS.get(name)
 
     @classmethod
     def build(cls, call: FunctionCall3) -> Function3:

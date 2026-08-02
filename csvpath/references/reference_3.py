@@ -71,9 +71,91 @@ class Regex3:
 
 def _arg_to_string(value) -> str:
     if isinstance(value, str):
+        # a bare "{" or "}" can only reach here having survived
+        # unescaping from an original "{{"/"}}" -- a single unescaped
+        # brace is a parse error (see _split_interpolated_parts in
+        # reference_transformer_3.py) and never produces a plain str.
+        # re-escape both back so this round-trips.
         escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        escaped = escaped.replace("{", "{{").replace("}", "}}")
         return f'"{escaped}"'
+    if isinstance(value, InterpolatedString3):
+        return f'"{value}"'
     return str(value)
+
+
+class InterpolatedString3:
+    """a string argument containing one or more "{...}" interpolation
+    spans (each a bare @variable or a call to a VALUE-role function)
+    plus the literal text between them. Built by Reference3Transformer's
+    STRING handling only when the raw content actually has an
+    unescaped "{" -- a string with none stays a plain str, unaffected.
+    "{{"/"}}" escape a literal brace (same convention already used by
+    csvpath/util/var_utility.py's substitute()).
+
+    Parsing/validation only for now: turning this into an actual
+    resolved string (looking up @variables, computing value functions)
+    needs a runtime CsvPaths context this object graph deliberately
+    has none of -- that is deferred until variable resolution and a
+    real VALUE function exist. See check_valid()."""
+
+    def __init__(self, *, parts: list) -> None:
+        if not parts:
+            raise ValueError("InterpolatedString3 parts cannot be None or empty")
+        self._parts = parts
+
+    @property
+    def parts(self) -> list:
+        return self._parts
+
+    def check_valid(self) -> None:
+        """rejects anything other than a bare @variable or a call to a
+        VALUE-role function inside a "{...}" span -- context setters
+        and pointers act on scope, which is not meaningful to
+        interpolate into a string. Checked by looking up each
+        function's registered CLASS (a class-level ROLE attribute),
+        not by building/evaluating it -- evaluation is out of scope
+        for this pass."""
+        # local import: the function registry lives in functions/,
+        # which already depends on this module (e.g. Reference3's
+        # datatype constants) -- importing it back at module level
+        # here would be circular. deferred import breaks the cycle at
+        # exactly this one, narrow, unavoidable point.
+        from .functions.function_3 import Function3
+        from .functions.reference_function_factory_3 import (
+            ReferenceFunctionFactory,
+        )
+
+        for part in self._parts:
+            if not isinstance(part, FunctionCall3):
+                continue
+            function_cls = ReferenceFunctionFactory.get_registered_class(part.name)
+            if function_cls is None:
+                raise ReferenceException3(f"Unknown reference function: {part.name}")
+            if function_cls.ROLE != Function3.VALUE:
+                raise ReferenceException3(
+                    f":{part.name}() cannot be used inside a {{...}} "
+                    "interpolation -- only @variables and VALUE-role "
+                    "functions are allowed there, not context setters or "
+                    "pointers."
+                )
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, InterpolatedString3) and other.parts == self._parts
+
+    def __repr__(self) -> str:
+        return f"InterpolatedString3(parts={self._parts!r})"
+
+    def __str__(self) -> str:
+        out = []
+        for part in self._parts:
+            if isinstance(part, str):
+                escaped = part.replace("\\", "\\\\").replace('"', '\\"')
+                escaped = escaped.replace("{", "{{").replace("}", "}}")
+                out.append(escaped)
+            else:
+                out.append(f"{{{part}}}")
+        return "".join(out)
 
 
 class FunctionCall3:
@@ -122,6 +204,16 @@ class FunctionCall3:
         if isinstance(self._arg, FunctionCall3):
             return self._arg.contains_function_named(name)
         return False
+
+    def check_valid(self) -> None:
+        """recursively validates any InterpolatedString3 nested
+        anywhere in this function's own argument chain (see
+        InterpolatedString3.check_valid() for what that actually
+        checks) -- functions have no other structural rule to check
+        here themselves (their own arg-type/arity rules are Function3's
+        job, once built by the registry, not FunctionCall3's)."""
+        if isinstance(self._arg, (InterpolatedString3, FunctionCall3)):
+            self._arg.check_valid()
 
 
 class NameOne3:
@@ -330,6 +422,18 @@ class Reference3:
                 "not '*' alone."
             )
             raise ReferenceException3(msg)
+
+        # validates any "{...}" interpolation nested anywhere in this
+        # reference's functions -- see FunctionCall3.check_valid()/
+        # InterpolatedString3.check_valid().
+        for segment in self._name_one.path:
+            if isinstance(segment, FunctionCall3):
+                segment.check_valid()
+        for f in self._name_one.functions:
+            f.check_valid()
+        if self._name_three is not None:
+            for f in self._name_three.functions:
+                f.check_valid()
 
     @property
     def root_major(self):

@@ -1,6 +1,7 @@
 import pytest
 
 from csvpath.references.functions.function_3 import Function3
+from csvpath.references.reference_3 import FunctionCall3, InterpolatedString3, Variable3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 
 
@@ -68,6 +69,23 @@ class TestCheckValid:
         bad_nested = _RequiredIntArgFunction()  # missing its own required arg
         with pytest.raises(ReferenceException3):
             _AcceptsFunctionArg(arg=bad_nested).check_valid()
+
+    def test_str_typed_arg_accepts_interpolated_string(self):
+        # ARG_TYPES = (str,) is auto-widened to also accept
+        # InterpolatedString3 -- a function that takes a plain string
+        # must also accept one containing {...} interpolation.
+        good = InterpolatedString3(parts=["x-", Variable3(name="company")])
+        _OptionalStrArgFunction(arg=good).check_valid()  # should not raise
+
+    def test_nested_interpolated_string_arg_is_recursively_checked(self):
+        # the nested InterpolatedString3 contains a POINTER-role
+        # function call, which is illegal inside {...} -- check_valid()
+        # must recurse into it, not just check the outer arg's type.
+        bad = InterpolatedString3(
+            parts=["x-", FunctionCall3(name="first")]
+        )
+        with pytest.raises(ReferenceException3):
+            _OptionalStrArgFunction(arg=bad).check_valid()
 
 
 class TestProperties:
