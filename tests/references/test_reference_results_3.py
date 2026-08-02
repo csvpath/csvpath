@@ -9,10 +9,16 @@ class TestReferenceResult3:
         with pytest.raises(ValueError):
             ReferenceResult3(path=bad_path, uuid="u1")
 
-    @pytest.mark.parametrize("bad_uuid", [None, ""])
-    def test_rejects_none_or_empty_uuid(self, bad_uuid):
+    def test_rejects_empty_uuid(self):
         with pytest.raises(ValueError):
-            ReferenceResult3(path="p1", uuid=bad_uuid)
+            ReferenceResult3(path="p1", uuid="")
+
+    def test_allows_none_uuid(self):
+        # a directory-level, name_three-absent result has no single
+        # version/registration to identify -- None, not empty string,
+        # is the correct "no uuid" value.
+        r = ReferenceResult3(path="p1", uuid=None)
+        assert r.uuid is None
 
     def test_data_defaults_to_none(self):
         r = ReferenceResult3(path="p1", uuid="u1")

@@ -23,11 +23,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    STRUCTURE table: name_one picks *which file*, name_three picks
     #    *which version*. A literal name_three body (bypassing a
     #    pointer function entirely) is not yet supported. name_three is
-    #    optional (per the STRUCTURE section's later update): when
-    #    absent, name_one alone is the whole reference and query()
-    #    returns every version currently matched, not narrowed to one --
-    #    mirrors the analogous csvpaths case, which the STRUCTURE table
-    #    describes explicitly as "a list of (path, uuid)".
+    #    optional: when absent, name_one alone is a prefix search that
+    #    returns zero or more paths to file-home directories (one per
+    #    distinct file matched, deduplicated across versions) -- per
+    #    "creating references v3.txt"'s "Query Vs. Resolve" section.
+    #    These directory-level results carry uuid=None: a directory
+    #    isn't a specific registered version, so it has no uuid of its
+    #    own in the manifest schema.
     #
     # storage facts this relies on (confirmed against FileManager/
     # FileRegistrar and a real manifest.json, not assumed): a named-
@@ -69,10 +71,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         name_three = reference.name_three
         if name_three is None:
+            file_homes = []
+            for entry in candidates:
+                if entry["file_home"] not in file_homes:
+                    file_homes.append(entry["file_home"])
             return ReferenceResults3(
                 results=[
-                    ReferenceResult3(path=entry["file"], uuid=entry["uuid"])
-                    for entry in candidates
+                    ReferenceResult3(path=file_home, uuid=None)
+                    for file_home in file_homes
                 ]
             )
 
@@ -100,8 +106,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(results=results)
 
     def _extract_data(self, result: ReferenceResult3):
-        kind = self.ref.parsed.resolve_kind
+        reference = self.ref.parsed
+        kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
+            if reference.name_three is None:
+                # name_one-terminal (prefix search) result: result.path
+                # is a file-home directory, not a version file -- no
+                # single unambiguous payload to return, per "creating
+                # references v3.txt"'s "Resolve terminating at
+                # name_one, with no pointer: no default" rule.
+                return None
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
         raise ReferenceException3(
