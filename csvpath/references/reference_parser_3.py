@@ -1,5 +1,7 @@
 import logging
 
+from lark.exceptions import VisitError
+
 from .reference_3 import Reference3
 from .reference_grammar_3 import QueryParser3
 from .reference_transformer_3 import Reference3Transformer
@@ -93,6 +95,17 @@ class ReferenceParser3:
             tree = self._get_query_parser().parse(string)
             self._parsed = Reference3Transformer().transform(tree)
             self._parsed.check_valid()
+        except VisitError as e:
+            # any exception raised from inside a Transformer rule
+            # method (e.g. STRING's interpolation parsing rejecting an
+            # unescaped brace) arrives here wrapped in lark's own
+            # VisitError -- unwrap it so callers see the real
+            # exception (typically ReferenceException3) rather than a
+            # lark-internal type. Same reasoning as why
+            # Reference3.check_valid() is called outside transform()'s
+            # own call stack in the first place.
+            logger.error("Failed to parse reference '%s': %s", string, e.orig_exc)
+            raise e.orig_exc from e
         except Exception as e:
             logger.error("Failed to parse reference '%s': %s", string, e)
             raise

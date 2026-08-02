@@ -42,6 +42,18 @@ class ReferenceFunctionFactory:
         cls._FUNCTIONS[function_cls.NAME] = function_cls
 
     @classmethod
+    def get_registered_class(cls, name: str) -> type | None:
+        """the registered Function3 CLASS for `name`, or None if
+        unknown -- for checking class-level metadata (e.g. ROLE)
+        without constructing/validating an instance. Used by
+        InterpolatedString3.check_valid() to reject non-VALUE
+        functions inside a "{...}" interpolation without needing to
+        evaluate them."""
+        if not cls._FUNCTIONS:
+            cls._load()
+        return cls._FUNCTIONS.get(name)
+
+    @classmethod
     def build(cls, call: FunctionCall3) -> Function3:
         """compiles one FunctionCall3 into a real, validated Function3.
         recurses first if call.arg is itself a FunctionCall3, so a

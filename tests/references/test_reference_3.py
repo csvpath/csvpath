@@ -2,6 +2,7 @@ import pytest
 
 from csvpath.references.reference_3 import (
     FunctionCall3,
+    InterpolatedString3,
     NameOne3,
     NameThree3,
     Reference3,
@@ -131,6 +132,101 @@ class TestFunctionCall3:
 
     def test_contains_function_named_false_with_no_arg(self):
         assert not FunctionCall3(name="all").contains_function_named("idchain")
+
+    def test_check_valid_passes_with_no_arg(self):
+        FunctionCall3(name="all").check_valid()  # should not raise
+
+    def test_check_valid_passes_with_a_plain_string_arg(self):
+        FunctionCall3(name="name", arg="Acme").check_valid()  # should not raise
+
+    def test_check_valid_recurses_into_a_nested_function_arg(self):
+        bad_interpolation = InterpolatedString3(
+            parts=["x-", FunctionCall3(name="first")]
+        )
+        outer = FunctionCall3(
+            name="from", arg=FunctionCall3(name="name", arg=bad_interpolation)
+        )
+        with pytest.raises(ReferenceException3):
+            outer.check_valid()
+
+    def test_check_valid_recurses_into_an_interpolated_string_arg(self):
+        bad_interpolation = InterpolatedString3(
+            parts=["x-", FunctionCall3(name="first")]
+        )
+        f = FunctionCall3(name="name", arg=bad_interpolation)
+        with pytest.raises(ReferenceException3):
+            f.check_valid()
+
+
+class TestInterpolatedString3:
+    def test_rejects_none_or_empty_parts(self):
+        with pytest.raises(ValueError):
+            InterpolatedString3(parts=None)
+        with pytest.raises(ValueError):
+            InterpolatedString3(parts=[])
+
+    def test_check_valid_accepts_a_bare_variable(self):
+        s = InterpolatedString3(parts=["x-", Variable3(name="company")])
+        s.check_valid()  # should not raise
+
+    def test_check_valid_rejects_a_pointer_role_function(self):
+        # :first() is POINTER -- pointers act on scope, not on
+        # producing a plain value to interpolate.
+        s = InterpolatedString3(parts=["x-", FunctionCall3(name="first")])
+        with pytest.raises(ReferenceException3):
+            s.check_valid()
+
+    def test_check_valid_rejects_a_context_setter_role_function(self):
+        # :all() is CONTEXT_SETTER -- same reasoning as pointers.
+        s = InterpolatedString3(parts=["x-", FunctionCall3(name="all")])
+        with pytest.raises(ReferenceException3):
+            s.check_valid()
+
+    def test_check_valid_rejects_an_unknown_function(self):
+        s = InterpolatedString3(
+            parts=["x-", FunctionCall3(name="not_a_real_function")]
+        )
+        with pytest.raises(ReferenceException3):
+            s.check_valid()
+
+    def test_check_valid_accepts_a_value_role_function(self):
+        from csvpath.references.functions.function_3 import Function3
+        from csvpath.references.functions.reference_function_factory_3 import (
+            ReferenceFunctionFactory,
+        )
+
+        class _Year3ForTest(Function3):
+            NAME = "year_for_test"
+            SUMMARY = "test-only value function"
+            ROLE = Function3.VALUE
+            DATATYPES = ()
+            ARG_TYPES = ()
+            ARG_REQUIRED = False
+
+        ReferenceFunctionFactory.add_function(_Year3ForTest)
+        try:
+            s = InterpolatedString3(
+                parts=["x-", FunctionCall3(name="year_for_test")]
+            )
+            s.check_valid()  # should not raise
+        finally:
+            del ReferenceFunctionFactory._FUNCTIONS["year_for_test"]
+
+    def test_equality(self):
+        assert InterpolatedString3(parts=["a"]) == InterpolatedString3(parts=["a"])
+        assert InterpolatedString3(parts=["a"]) != InterpolatedString3(parts=["b"])
+
+    def test_str_renders_variable_in_braces(self):
+        s = InterpolatedString3(parts=["partner-", Variable3(name="company")])
+        assert str(s) == "partner-{@company}"
+
+    def test_str_escapes_literal_braces(self):
+        s = InterpolatedString3(parts=["a{b}c"])
+        assert str(s) == "a{{b}}c"
+
+    def test_str_renders_function_in_braces(self):
+        s = InterpolatedString3(parts=["x-", FunctionCall3(name="first")])
+        assert str(s) == "x-{:first()}"
 
 
 class TestNameOne3:

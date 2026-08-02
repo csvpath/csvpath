@@ -1,6 +1,7 @@
 import pytest
 
 from csvpath.references.reference_3 import Reference3
+from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 
 #
@@ -139,3 +140,91 @@ class TestNameThreeOptional:
     def test_missing_name_three_is_fine_for_every_datatype(self, datatype):
         r = ReferenceParser3(string=f"$acme.{datatype}.a", csvpaths=CSVPATHS)
         assert r.name_three is None
+
+
+class TestStringInterpolationThroughParser:
+    #
+    # exercises the full pipeline (string -> Lark parse -> transform ->
+    # check_valid()) for {...} interpolation, including the error paths
+    # that only surface at this level: lark wraps exceptions raised
+    # inside the STRING terminal transform (unbalanced braces) and
+    # Reference3.check_valid() (non-VALUE function inside {...}) in its
+    # own VisitError -- ReferenceParser3.parse() must unwrap both back
+    # to a plain ReferenceException3. see reference_parser_3.py's
+    # VisitError handling.
+    #
+    def test_bare_variable_interpolation_round_trips(self):
+        original = '$acme.files.a.:name("partner-{@company}-orders")'
+        r = ReferenceParser3(string=original, csvpaths=CSVPATHS)
+        assert r.ref_string == original
+
+    def test_function_interpolation_round_trips(self):
+        # no real VALUE-role function exists yet (evaluation is
+        # deliberately deferred -- see project memory/compendium), so a
+        # test-only one stands in to exercise check_valid()'s acceptance
+        # path plus str() round-tripping through the full pipeline.
+        from csvpath.references.functions.function_3 import Function3
+        from csvpath.references.functions.reference_function_factory_3 import (
+            ReferenceFunctionFactory,
+        )
+
+        class _Year3ForTest(Function3):
+            NAME = "year_for_test"
+            SUMMARY = "test-only value function"
+            ROLE = Function3.VALUE
+            DATATYPES = ()
+            ARG_TYPES = ()
+            ARG_REQUIRED = False
+
+        ReferenceFunctionFactory.add_function(_Year3ForTest)
+        try:
+            original = '$acme.files.a.:name("partner-{:year_for_test()}-{@company}")'
+            r = ReferenceParser3(string=original, csvpaths=CSVPATHS)
+            assert r.ref_string == original
+        finally:
+            del ReferenceFunctionFactory._FUNCTIONS["year_for_test"]
+
+    def test_escaped_braces_round_trip(self):
+        original = '$acme.files.a.:name("literal {{brace}} text")'
+        r = ReferenceParser3(string=original, csvpaths=CSVPATHS)
+        assert r.ref_string == original
+
+    def test_unescaped_open_brace_raises_reference_exception(self):
+        with pytest.raises(ReferenceException3):
+            ReferenceParser3(
+                string='$acme.files.a.:name("oops { unbalanced")',
+                csvpaths=CSVPATHS,
+            )
+
+    def test_unescaped_close_brace_raises_reference_exception(self):
+        with pytest.raises(ReferenceException3):
+            ReferenceParser3(
+                string='$acme.files.a.:name("oops } unbalanced")',
+                csvpaths=CSVPATHS,
+            )
+
+    def test_malformed_interpolation_content_raises_reference_exception(self):
+        with pytest.raises(ReferenceException3):
+            ReferenceParser3(
+                string='$acme.files.a.:name("{not valid syntax!}")',
+                csvpaths=CSVPATHS,
+            )
+
+    def test_pointer_role_function_inside_interpolation_is_rejected(self):
+        # :first() is POINTER -- illegal inside {...}, and this is only
+        # detectable once check_valid() runs against the real function
+        # registry, i.e. at the full-parser level, not the transformer
+        # level (which is structural-only, see
+        # TestStringInterpolation.test_function_interpolation).
+        with pytest.raises(ReferenceException3):
+            ReferenceParser3(
+                string='$acme.files.a.:name("partner-{:first()}-orders")',
+                csvpaths=CSVPATHS,
+            )
+
+    def test_unknown_function_inside_interpolation_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            ReferenceParser3(
+                string='$acme.files.a.:name("partner-{:not_a_real_function()}")',
+                csvpaths=CSVPATHS,
+            )
