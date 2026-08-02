@@ -164,18 +164,3 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if actual != expected:
                 return False
         return True
-
-    @staticmethod
-    def _apply_pointer(pointer, candidates: list) -> dict | None:
-        if not candidates:
-            return None
-        if pointer.name == "first":
-            return candidates[0]
-        if pointer.name == "last":
-            return candidates[-1]
-        if pointer.name == "index":
-            try:
-                return candidates[pointer.arg]
-            except IndexError:
-                return None
-        raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")

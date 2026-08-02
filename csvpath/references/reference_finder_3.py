@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
@@ -68,3 +69,40 @@ class ReferenceFinder3(ABC):
         given already-queried result. datatype-specific -- reading raw
         file bytes vs errors.json vs vars.json differs enough there is
         no generic implementation."""
+
+    @staticmethod
+    def _apply_pointer(pointer, candidates: list) -> dict | None:
+        """reduces a list of manifest-entry dicts to the one a pointer
+        function selects -- :first()/:last()/:index(n) are plain list-
+        position lookups (arrival/registration order is array order,
+        confirmed against real manifests for both files and csvpaths),
+        so this is identical across every datatype that reads a flat
+        manifest array. shared here rather than duplicated per finder."""
+        if not candidates:
+            return None
+        if pointer.name == "first":
+            return candidates[0]
+        if pointer.name == "last":
+            return candidates[-1]
+        if pointer.name == "index":
+            try:
+                return candidates[pointer.arg]
+            except IndexError:
+                return None
+        raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
+
+    @staticmethod
+    def _find_by_identity(identity: str, identities: list) -> int | None:
+        """returns the index of `identity` within `identities` (exact
+        string match), or None if absent. shared by any finder whose
+        name_three does an identity lookup -- csvpaths'
+        named_paths_identities and results' per-statement directory
+        names both name individual csvpath statements the same way: an
+        explicit id/name comment, or the stringified run index if the
+        statement is unnamed -- so a plain list membership check
+        handles both without needing a separate "or try as an int"
+        fallback."""
+        try:
+            return identities.index(identity)
+        except ValueError:
+            return None
