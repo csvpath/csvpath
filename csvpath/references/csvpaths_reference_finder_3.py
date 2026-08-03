@@ -1,3 +1,6 @@
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
+
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
@@ -66,6 +69,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "marker (name_two) -- it is files-only."
             )
 
+        if self._is_bare_pointer_reference(reference, "manifest"):
+            return self._query_manifest(root_major)
+
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
 
@@ -99,11 +105,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         kind = reference.resolve_kind
+        if kind == Reference3.METADATA_FILE and self._is_bare_pointer_reference(
+            reference, "manifest"
+        ):
+            # result.path is already the manifest.json path itself (set
+            # by _query_manifest()).
+            with DataFileReader(path=result.path, mode="rb") as reader:
+                return reader.source.read()
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "
-                f"resolve_kind={kind!r} -- no metadata-access functions are "
-                "registered for csvpaths yet."
+                f"resolve_kind={kind!r} -- only :manifest() is wired up as "
+                "a metadata-file function so far."
             )
         name_three = reference.name_three
         if name_three is None:
@@ -126,6 +139,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return None
         statements = selected.get("named_paths") or []
         return statements[index]
+
+    def _query_manifest(self, root_major: str) -> ReferenceResults3:
+        """the ":manifest()" query() branch -- manifest.json is one
+        fixed resource per named-paths group (root_major), covering
+        every loaded/reloaded version, not scoped to any particular
+        version -- so this bypasses _resolve_versions()'s version-
+        selection logic entirely rather than trying to route :manifest()
+        through it (it is POINTER-role, like :first()/:last()/:index(),
+        but is not a list-position lookup -- _apply_pointer() would not
+        know what to do with it). uuid=None: a manifest file is not
+        itself a registered version."""
+        home = self.csvpaths.paths_manager.named_paths_home(root_major)
+        manifest_path = Nos(home).join("manifest.json")
+        return ReferenceResults3(
+            results=[ReferenceResult3(path=manifest_path, uuid=None)]
+        )
 
     def _resolve_versions(self, name_one, manifest: list) -> list:
         """name_one's sole job for csvpaths is selecting which

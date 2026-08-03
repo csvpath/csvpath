@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from .reference_3 import FunctionCall3, Reference3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -90,6 +91,27 @@ class ReferenceFinder3(ABC):
             except IndexError:
                 return None
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
+
+    @staticmethod
+    def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ":name()" call -- no other path segments, no trailing
+        chain, and no name_three. Detects a reference like
+        "$acme.files.:manifest()", which needs its own query() branch
+        entirely separate from ordinary "which file"/"which version"
+        narrowing, since a metadata-file function like :manifest()
+        points at one fixed resource regardless of any path/version
+        selection. Shared here because both files and csvpaths need the
+        identical check for :manifest()."""
+        name_one = reference.name_one
+        return (
+            reference.name_three is None
+            and not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == name
+            and name_one.path[0].arg is None
+        )
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:

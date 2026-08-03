@@ -1,4 +1,5 @@
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -55,6 +56,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 does not yet support the '#worksheet' "
                 "marker (name_two)."
             )
+
+        if self._is_bare_pointer_reference(reference, "manifest"):
+            return self._query_manifest(root_major)
+
         if name_one.functions:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
@@ -118,10 +123,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return None
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
+        if kind == Reference3.METADATA_FILE and self._is_bare_pointer_reference(
+            reference, "manifest"
+        ):
+            # result.path is already the manifest.json path itself (set
+            # by _query_manifest()) -- same raw-bytes read as the
+            # FIRST_PARTY case above, just a different resource.
+            with DataFileReader(path=result.path, mode="rb") as reader:
+                return reader.source.read()
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
-            "-- no metadata-file/metadata-field functions are registered for "
-            "files yet."
+            "-- only :manifest() is wired up as a metadata-file function "
+            "so far."
+        )
+
+    def _query_manifest(self, root_major: str) -> ReferenceResults3:
+        """the ":manifest()" query() branch -- manifest.json is one
+        fixed resource per named-file (root_major), not scoped to any
+        particular file/version, so this bypasses the "which file"
+        pattern-matching pipeline entirely rather than trying to fit it
+        through _compile_path_pattern/_matches. uuid=None: a manifest
+        file is not itself a registered version."""
+        home = self.csvpaths.file_manager.named_file_home(root_major)
+        manifest_path = Nos(home).join("manifest.json")
+        return ReferenceResults3(
+            results=[ReferenceResult3(path=manifest_path, uuid=None)]
         )
 
     @staticmethod

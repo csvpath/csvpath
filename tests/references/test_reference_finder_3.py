@@ -1,5 +1,6 @@
 import pytest
 
+from csvpath.references.reference_3 import FunctionCall3, NameOne3, NameThree3, Reference3
 from csvpath.references.reference_finder_3 import ReferenceFinder3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -90,6 +91,57 @@ class TestApplyPointer:
             ReferenceFinder3._apply_pointer(
                 type("P", (), {"name": "bogus"})(), ["a"]
             )
+
+
+class TestIsBarePointerReference:
+    # shared by every finder that needs to detect a ":manifest()"-style,
+    # sole-content name_one shape (files, csvpaths) -- see :manifest()'s
+    # own query() branch in each finder, which must bypass ordinary
+    # "which file"/"which version" narrowing entirely for this shape.
+    @staticmethod
+    def _ref(name_one, name_three=None) -> Reference3:
+        return Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=name_one,
+            name_three=name_three,
+        )
+
+    def test_true_for_bare_sole_function(self):
+        r = self._ref(NameOne3(path=[FunctionCall3(name="manifest")]))
+        assert ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_for_different_function_name(self):
+        r = self._ref(NameOne3(path=[FunctionCall3(name="all")]))
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_when_function_has_an_arg(self):
+        r = self._ref(NameOne3(path=[FunctionCall3(name="manifest", arg="x")]))
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_with_extra_path_segment(self):
+        r = self._ref(NameOne3(path=["a", FunctionCall3(name="manifest")]))
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_with_trailing_functions(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="manifest")],
+                functions=[FunctionCall3(name="first")],
+            )
+        )
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_when_name_three_present(self):
+        r = self._ref(
+            NameOne3(path=[FunctionCall3(name="manifest")]),
+            name_three=NameThree3(body="v1"),
+        )
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
+
+    def test_false_for_literal_path_segment(self):
+        r = self._ref(NameOne3(path=["manifest"]))
+        assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
 
 
 class TestFindByIdentity:
