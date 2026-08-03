@@ -1,6 +1,7 @@
 import pytest
 
 from csvpath.references.functions.all_3 import All3
+from csvpath.references.functions.definition_3 import Definition3
 from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.index_3 import Index3
@@ -44,6 +45,10 @@ class TestBuild:
     def test_builds_manifest(self):
         f = ReferenceFunctionFactory.build(FunctionCall3(name="manifest"))
         assert isinstance(f, Manifest3)
+
+    def test_builds_definition(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="definition"))
+        assert isinstance(f, Definition3)
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):

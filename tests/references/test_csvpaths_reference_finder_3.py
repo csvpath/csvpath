@@ -180,6 +180,41 @@ class TestManifestFunction:
             _finder("$acme.csvpaths.:manifest():first()").query()
 
 
+class TestDefinitionFunction:
+    # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
+    # content shape, same query()/_extract_data() routing -- except
+    # definition.json is genuinely optional, so resolving one that was
+    # never written gives None rather than raising.
+    def test_query_returns_the_definition_path_with_no_uuid(self):
+        results = _finder("$acme.csvpaths.:definition()").query()
+        assert results.files == [f"{GROUP_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+        content = b'{"_config": {}}'
+        home = tmp_path / "acme"
+        home.mkdir()
+        (home / "definition.json").write_bytes(content)
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(
+            string="$acme.csvpaths.:definition()", csvpaths=csvpaths
+        )
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_resolve_gives_none_when_never_configured(self, tmp_path):
+        home = tmp_path / "acme"
+        home.mkdir()
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(
+            string="$acme.csvpaths.:definition()", csvpaths=csvpaths
+        )
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+
 class TestScopeLimits:
     def test_star_root_major_not_yet_supported(self):
         finder = _finder("$*.csvpaths.:last().x")

@@ -1,5 +1,4 @@
 from csvpath.util.file_readers import DataFileReader
-from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -57,8 +56,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "marker (name_two)."
             )
 
-        if self._is_bare_pointer_reference(reference, "manifest"):
-            return self._query_manifest(root_major)
+        if self._is_bare_pointer_reference(
+            reference, "manifest"
+        ) or self._is_bare_pointer_reference(reference, "definition"):
+            # both ":manifest()" and ":definition()" are a bare, sole-
+            # content name_one whose function name IS the JSON file's
+            # own name (manifest.json/definition.json) -- see
+            # _query_well_known_file() on the ABC.
+            home = self.csvpaths.file_manager.named_file_home(root_major)
+            filename = f"{name_one.path[0].name}.json"
+            return self._query_well_known_file(home, filename)
 
         if name_one.functions:
             raise ReferenceException3(
@@ -123,31 +130,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return None
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
-        if kind == Reference3.METADATA_FILE and self._is_bare_pointer_reference(
-            reference, "manifest"
+        if kind == Reference3.METADATA_FILE and (
+            self._is_bare_pointer_reference(reference, "manifest")
+            or self._is_bare_pointer_reference(reference, "definition")
         ):
-            # result.path is already the manifest.json path itself (set
-            # by _query_manifest()) -- same raw-bytes read as the
-            # FIRST_PARTY case above, just a different resource.
-            with DataFileReader(path=result.path, mode="rb") as reader:
-                return reader.source.read()
+            # result.path is already the manifest.json/definition.json
+            # path itself (set by query()'s _query_well_known_file()
+            # branch above).
+            return self._read_well_known_file(result.path)
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
-            "-- only :manifest() is wired up as a metadata-file function "
-            "so far."
-        )
-
-    def _query_manifest(self, root_major: str) -> ReferenceResults3:
-        """the ":manifest()" query() branch -- manifest.json is one
-        fixed resource per named-file (root_major), not scoped to any
-        particular file/version, so this bypasses the "which file"
-        pattern-matching pipeline entirely rather than trying to fit it
-        through _compile_path_pattern/_matches. uuid=None: a manifest
-        file is not itself a registered version."""
-        home = self.csvpaths.file_manager.named_file_home(root_major)
-        manifest_path = Nos(home).join("manifest.json")
-        return ReferenceResults3(
-            results=[ReferenceResult3(path=manifest_path, uuid=None)]
+            "-- only :manifest()/:definition() are wired up as metadata-"
+            "file functions so far."
         )
 
     @staticmethod

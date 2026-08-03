@@ -144,6 +144,28 @@ class TestIsBarePointerReference:
         assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
 
 
+class TestQueryWellKnownFile:
+    # shared query() branch for a fixed, home-directory-scoped JSON
+    # resource (manifest.json, definition.json) -- both files and
+    # csvpaths route :manifest()/:definition() through this.
+    def test_returns_one_result_with_no_uuid(self):
+        results = ReferenceFinder3._query_well_known_file("some/home", "manifest.json")
+        assert results.files == ["some/home/manifest.json"]
+        assert results.results[0].uuid is None
+
+
+class TestReadWellKnownFile:
+    def test_reads_raw_bytes_when_the_file_exists(self, tmp_path):
+        content = b'{"a": 1}'
+        path = tmp_path / "definition.json"
+        path.write_bytes(content)
+        assert ReferenceFinder3._read_well_known_file(str(path)) == content
+
+    def test_returns_none_when_the_file_does_not_exist(self, tmp_path):
+        missing = tmp_path / "definition.json"
+        assert ReferenceFinder3._read_well_known_file(str(missing)) is None
+
+
 class TestFindByIdentity:
     # shared by every finder whose name_three does an identity lookup
     # (csvpaths' named_paths_identities, results' per-statement

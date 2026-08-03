@@ -245,6 +245,38 @@ class TestManifestFunction:
             finder.query()
 
 
+class TestDefinitionFunction:
+    # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
+    # content shape, same query()/_extract_data() routing -- except
+    # definition.json is genuinely optional, so resolving one that was
+    # never written gives None rather than raising.
+    def test_query_returns_the_definition_path_with_no_uuid(self):
+        finder = _finder("$alpha.files.:definition()", ALPHA_HOME, ALPHA_MANIFEST)
+        results = finder.query()
+        assert results.files == [f"{ALPHA_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+        content = b'{"sources": {}}'
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "definition.json").write_bytes(content)
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_resolve_gives_none_when_never_configured(self, tmp_path):
+        # a named-file that was never explicitly configured has no
+        # definition.json on disk at all -- this is a normal, expected
+        # absence (matching NamedFileDescriber.get_json()'s own
+        # "return {} if missing" treatment), not an error.
+        home = tmp_path / "alpha"
+        home.mkdir()
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+
 class TestExtractData:
     def test_first_party_returns_raw_file_bytes(self, tmp_path):
         # resolve_kind is FIRST_PARTY by default (no metadata-file/
