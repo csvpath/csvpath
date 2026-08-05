@@ -2,7 +2,7 @@ from csvpath.util.file_readers import DataFileReader
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Reference3, Star3
+from .reference_3 import Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -172,31 +172,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             "-- only :manifest()/:definition() are wired up as metadata-"
             "file functions so far."
         )
-
-    @staticmethod
-    def _compile_path_pattern(path: list) -> list:
-        """turns name_one.path into a list of str/Star3 to match against
-        real file_home segments. a literal str or Star3 segment passes
-        through unchanged; a :name("...") segment is compiled and
-        unwrapped to its literal string, so matching downstream doesn't
-        need to know the difference. any other function-valued segment
-        is explicitly not yet supported."""
-        pattern = []
-        for segment in path:
-            if isinstance(segment, FunctionCall3):
-                if segment.name != "name":
-                    raise ReferenceException3(
-                        f"FilesReferenceFinder3 does not yet support :{segment.name}() "
-                        "as a name_one path segment -- only :name(\"...\") and "
-                        "literal/'*' segments are supported."
-                    )
-                built = ReferenceFunctionFactory.build(segment)
-                pattern.append(built.arg)
-            elif isinstance(segment, (str, Star3)):
-                pattern.append(segment)
-            else:
-                raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
-        return pattern
 
     @staticmethod
     def _matches(entry: dict, home: str, pattern: list) -> bool:
