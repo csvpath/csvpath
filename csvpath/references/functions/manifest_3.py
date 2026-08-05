@@ -4,31 +4,40 @@ from .function_3 import Function3
 
 class Manifest3(Function3):
     #
-    # the first real metadata-file function -- resolves to the raw
-    # contents of the enclosing named-file/named-paths group's own
-    # manifest.json, the append-only record of every version ever
-    # registered/loaded under that name (see "creating references
-    # v3.txt"'s "Resolve terminating at name_one, with file pointer"
-    # row). ROLE is POINTER, matching the established taxonomy for
-    # well-known-file functions ("In name_three, a pointer resolves to
-    # a well-known metadata file (e.g. :errors())") -- it resolves the
-    # current scope down to exactly one concrete resource, it just
-    # doesn't do it by list-position the way :first()/:last()/:index()
-    # do. Only wired in today as a name_one-terminal, bare/sole-content
-    # reference (e.g. "$acme.files.:manifest()") -- see
-    # FilesReferenceFinder3/CsvpathsReferenceFinder3's own
-    # _is_bare_pointer_reference-gated query() branch. Not yet wired in
-    # for name_three (files' name_three is reserved for version
-    # selection; csvpaths' name_three doesn't support a function chain
-    # at all yet).
+    # the first real metadata-file function -- resolves to the manifest
+    # data of the enclosing named-file/named-paths group, or of whatever
+    # more specific scope has already been identified alongside it (see
+    # "creating references v3.txt"'s "Resolve terminating at name_one,
+    # with file pointer" row).
+    #
+    # ROLE is VALUE, not POINTER -- corrected after realizing the
+    # original POINTER assignment was wrong: :manifest() never narrows
+    # or selects anything itself, in any of its usages. Even bare
+    # ("$acme.files.:manifest()") it isn't resolving scope down from
+    # multiple candidates -- root_major already fully identifies the one
+    # named-file: :manifest() just accesses its manifest. This only
+    # became visible as a problem once :manifest() needed to sit
+    # *beside* a real version-selecting pointer in the same chain (e.g.
+    # "$acme.files.a.:last():manifest()") -- as POINTER it would have
+    # been double-counted by ReferenceFunctionFactory.build_chain()'s
+    # "at most one pointer per chain" rule, even though nothing is
+    # actually being narrowed twice. VALUE is excluded from that count,
+    # same as a computed value like a future :year() would be.
+    #
+    # Wired in for two name_one-terminal shapes: bare/sole-content
+    # (e.g. "$acme.files.:manifest()" -- the whole raw manifest.json) and
+    # combined with real path/version narrowing in name_three, where it
+    # resolves to the matched entry/entries instead (see
+    # FilesReferenceFinder3/CsvpathsReferenceFinder3's own handling).
     #
     NAME = "manifest"
     SUMMARY = (
-        "Points at the whole manifest.json for the enclosing named-file "
-        "or named-paths group -- the append-only record of every version "
-        "ever registered/loaded under that name."
+        "Points at the manifest data for the enclosing named-file or "
+        "named-paths group -- the whole file when nothing else narrows "
+        "scope, or the matched entry/entries when combined with real "
+        "path/version narrowing."
     )
-    ROLE = Function3.POINTER
+    ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = ()
     ARG_REQUIRED = False

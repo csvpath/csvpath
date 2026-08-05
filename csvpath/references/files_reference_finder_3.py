@@ -22,7 +22,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    function (:first()/:last()/:index(n)) -- matching the
     #    STRUCTURE table: name_one picks *which file*, name_three picks
     #    *which version*. A literal name_three body (bypassing a
-    #    pointer function entirely) is not yet supported. name_three is
+    #    pointer function entirely) is not yet supported. ":manifest()"
+    #    may ride alongside the pointer (e.g. ":last():manifest()" --
+    #    the matched version's own manifest entry) or appear alone with
+    #    no pointer at all (e.g. ":manifest()" alone -- every matching
+    #    version's entry, unreduced) -- it never narrows/selects itself,
+    #    see functions/manifest_3.py. name_three is
     #    optional: when absent, name_one alone is a prefix search that
     #    returns zero or more paths to file-home directories (one per
     #    distinct file matched, deduplicated across versions) -- per
@@ -102,20 +107,33 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         built = ReferenceFunctionFactory.build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        if len(pointers) != 1:
+        has_manifest = any(f.name == "manifest" for f in built)
+        if not pointers and not has_manifest:
             raise ReferenceException3(
                 "FilesReferenceFinder3 requires name_three to resolve to "
-                "exactly one pointer function (:first()/:last()/:index(n))."
+                "exactly one pointer function (:first()/:last()/:index(n)), "
+                "optionally combined with :manifest()."
             )
-        pointer = pointers[0]
 
-        selected = self._apply_pointer(pointer, candidates)
-        results = []
-        if selected is not None:
-            results.append(
-                ReferenceResult3(path=selected["file"], uuid=selected["uuid"])
-            )
-        return ReferenceResults3(results=results)
+        if pointers:
+            # a pointer (with or without :manifest() riding alongside it)
+            # reduces to one specific version, same as before.
+            selected = self._apply_pointer(pointers[0], candidates)
+            selected_candidates = [selected] if selected is not None else []
+        else:
+            # :manifest() alone, no pointer -- every version matching
+            # name_one's own path narrowing, unreduced. This is how
+            # "$acme.files.orders.:manifest()" (David's own example) is
+            # actually reached: the manifest entries of every
+            # registration under "orders", not just one.
+            selected_candidates = candidates
+
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                for c in selected_candidates
+            ]
+        )
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
@@ -130,14 +148,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return None
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
-        if kind == Reference3.METADATA_FILE and (
-            self._is_bare_pointer_reference(reference, "manifest")
-            or self._is_bare_pointer_reference(reference, "definition")
-        ):
-            # result.path is already the manifest.json/definition.json
-            # path itself (set by query()'s _query_well_known_file()
-            # branch above).
-            return self._read_well_known_file(result.path)
+        if kind == Reference3.METADATA_FILE:
+            if self._is_bare_pointer_reference(
+                reference, "manifest"
+            ) or self._is_bare_pointer_reference(reference, "definition"):
+                # result.path is already the manifest.json/definition.json
+                # path itself (set by query()'s _query_well_known_file()
+                # branch above).
+                return self._read_well_known_file(result.path)
+            if reference.name_three is not None and any(
+                f.contains_function_named("manifest")
+                for f in reference.name_three.functions
+            ):
+                # :manifest() riding alongside a real path/version match
+                # (a pointer, or none at all -- see query()) -- give the
+                # matched entry itself, not the whole raw file.
+                manifest = self.csvpaths.file_manager.get_manifest(
+                    reference.root_major
+                )
+                return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
             "-- only :manifest()/:definition() are wired up as metadata-"

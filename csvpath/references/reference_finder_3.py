@@ -148,6 +148,15 @@ class ReferenceFinder3(ABC):
             return reader.source.read()
 
     @staticmethod
+    def _find_manifest_entry_by_uuid(manifest: list, uuid: str) -> dict | None:
+        """returns the manifest array entry whose "uuid" matches, or None
+        if absent -- shared by any finder resolving a ":manifest()" call
+        that rides alongside a real pointer (the entry the pointer
+        already selected, per Reference3.resolve_kind's METADATA_FILE
+        classification), rather than the whole raw file."""
+        return next((entry for entry in manifest if entry["uuid"] == uuid), None)
+
+    @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:
         """returns the index of `identity` within `identities` (exact
         string match), or None if absent. shared by any finder whose

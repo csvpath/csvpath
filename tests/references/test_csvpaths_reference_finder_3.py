@@ -169,15 +169,24 @@ class TestManifestFunction:
         results = finder.resolve()
         assert results.results[0].data == content
 
-    def test_manifest_combined_with_a_version_pointer_is_two_pointers(self):
-        # :manifest() is POINTER-role but is not a list-position lookup
-        # -- combining it with a real version-selecting function is not
-        # the bare/sole shape, so it falls through to the ordinary
-        # version-selection pipeline, which sees two pointers in one
-        # chain and rejects it (same rule as :first():last() already
-        # being illegal).
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.csvpaths.:manifest():first()").query()
+    def test_manifest_beside_a_version_pointer_gives_the_one_matched_entry(self):
+        # :manifest() never narrows/selects itself (VALUE role, not
+        # POINTER -- see functions/manifest_3.py) -- it can ride
+        # alongside :last() in the same combined chain without tripping
+        # "at most one pointer per chain". :last() still reduces to one
+        # version; :manifest() changes what that version resolves to.
+        results = _finder("$acme.csvpaths.:last():manifest()").resolve()
+        assert results.uuids == ["v1-uuid"]
+        assert results.results[0].data == ACME_MANIFEST[1]
+
+    def test_manifest_with_all_and_no_pointer_gives_every_version_entry(self):
+        # :all() (CONTEXT_SETTER) plus :manifest() (VALUE) -- neither is
+        # a pointer, so every version comes back unreduced, each
+        # resolving to its own manifest entry.
+        results = _finder("$acme.csvpaths.:all():manifest()").resolve()
+        assert results.uuids == ["v0-uuid", "v1-uuid"]
+        assert results.data_for_uuid("v0-uuid") == ACME_MANIFEST[0]
+        assert results.data_for_uuid("v1-uuid") == ACME_MANIFEST[1]
 
 
 class TestDefinitionFunction:

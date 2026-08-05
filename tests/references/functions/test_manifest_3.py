@@ -9,7 +9,10 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 def test_metadata():
     f = Manifest3()
     assert f.name == "manifest"
-    assert f.ROLE == Function3.POINTER
+    # VALUE, not POINTER -- :manifest() never narrows/selects anything,
+    # even bare; it just accesses whatever's already in scope. See
+    # manifest_3.py's own comment for why this was originally wrong.
+    assert f.ROLE == Function3.VALUE
     assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
 
 
