@@ -28,28 +28,20 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #      (a) bare/function-only, no literal path at all (mirrors csvpaths --
 #          the sole path "segment" is itself a version-selecting function,
 #          e.g. :all()/:first()/:last()/:index(n)). Used when there is no
-#          template, or the caller does not care about path narrowing --
-#          the named-results home directory itself is the "prefix".
+#          template, or the caller does not care about path narrowing at
+#          all -- every run discovered for the group is a candidate.
 #      (b) literal/"*"/:name("...") path segments (same semantics as files
 #          -- see ReferenceFinder3._compile_path_pattern) PLUS its own
-#          trailing function chain.
-#    Either way, the combined chain (whichever function(s) are not path-
-#    building) may contain at most one pointer function (:first()/:last()/
-#    :index(n)): if present, it reduces each matched prefix to that
-#    prefix's one specific run; if absent, every run under each matched
-#    prefix comes back, unreduced. This is how "Name_one used alone == path
-#    to run dir" (STRUCTURE table) is reached, matching how
-#    CsvpathsReferenceFinder3 already handles "zero or one pointer" for its
-#    own combined chain. The "#worksheet" marker (name_two, files-only) is
-#    not meaningful here and is rejected.
-#    KNOWN LIMITATION: this finder does not know how many literal path
-#    segments a given named-results group's template actually has before
-#    reaching the run-directory level (that lives in the group's own
-#    template string, e.g. via PathsManager.get_template_for_paths()) --
-#    it simply treats whatever directories the given pattern matches as
-#    "the runs". Under-specifying the path (fewer segments than the real
-#    template) silently treats an intermediate directory's own children as
-#    if they were runs, rather than raising. Not validated in this pass.
+#          trailing function chain -- narrows to runs whose own prefix
+#          (see _discover_run_homes/_matches_prefix below) matches.
+#    Either way, every matching run is pooled into ONE flat list first
+#    (mirroring how a bare "*" already flattens across every match for
+#    files, rather than reducing per matched prefix separately), and the
+#    combined chain's at most one pointer function (:first()/:last()/
+#    :index(n)) reduces that WHOLE pool to one run; absent, every pooled
+#    run comes back unreduced. This is how "Name_one used alone == path to
+#    run dir" (STRUCTURE table) is reached. The "#worksheet" marker
+#    (name_two, files-only) is not meaningful here and is rejected.
 #  - name_three, if present, is an identity lookup into the selected run's
 #    own instance-directory listing (one subdirectory per csvpath statement,
 #    named by that statement's identity -- same convention as csvpaths'
@@ -61,16 +53,32 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    resolve() just has nothing further to extract yet.
 #
 # storage facts this relies on (confirmed against ResultsManager/
-# ResultsRegistrar/ResultRegistrar/ResultSerializer, not assumed): there is
-# no per-named-results-group manifest array the way files/csvpaths have --
-# query() has to walk real directories. Run directories are named
+# ResultsRegistrar/ResultRegistrar/ResultSerializer, and a real archive-root
+# manifest.json entry David pasted, not assumed): there is no per-named-
+# results-group manifest array the way files/csvpaths have -- but there IS
+# a single, archive-wide manifest.json (one entry per csvpath-statement
+# execution, across every named-paths group -- the same one the earlier
+# run-ordering experiment found unreliable as an ORDERING source, owing to
+# cross-group interleaving and stale entries for deleted runs). Each entry
+# already carries "run_home", the exact, already-resolved absolute path a
+# specific run's directory landed at, recorded at the moment that run
+# happened -- discovery, not ordering: this sidesteps ever needing to
+# know/guess a group's own template depth (which lives in the group's own
+# template string, e.g. PathsManager.get_template_for_paths(), and can
+# change over time or be overridden per-run -- neither matters here, since
+# run_home already reflects whatever template was actually in effect for
+# that specific run). Confirmed against v1/v2's own working equivalent
+# (csvpath/util/references/results_tools/resolve_possibles.py), which uses
+# this exact same manifest+run_home+existence-check approach rather than
+# directory-walking. Stale entries are handled by an existence check
+# (Nos(run_home).exists()), same as v2 does. Run directories are named
 # "%Y-%m-%d_%H-%M-%S[_N]" (RunHomeMaker), lexicographically sortable =
-# chronological (confirmed by direct experiment -- see project memory).
-# Each run directory has its own manifest.json (a single dict, not an
-# array -- "run_uuid" identifies the run itself). Each run directory
-# contains one subdirectory per csvpath statement, named by that
-# statement's own identity (ResultSerializer.get_instance_dir), each with
-# its own manifest.json (a single dict; "uuid" identifies that instance).
+# chronological (confirmed separately by direct experiment). Each run
+# directory has its own manifest.json (a single dict; "run_uuid" identifies
+# the run itself). Each run directory contains one subdirectory per csvpath
+# statement, named by that statement's own identity
+# (ResultSerializer.get_instance_dir), each with its own manifest.json (a
+# single dict; "uuid" identifies that instance).
 #
 
 
@@ -93,34 +101,34 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
 
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
+        run_homes = self._discover_run_homes(root_major)
+
         if self._is_bare_function_only(name_one):
             # mirrors csvpaths: no literal path at all, e.g.
-            # "$acme.results.:all()"/"$acme.results.:last()" -- the named-
-            # results home directory itself is the "prefix".
-            prefixes = [home]
+            # "$acme.results.:all()"/"$acme.results.:last()" -- every run
+            # discovered for the group is a candidate, no prefix narrowing.
+            candidates = run_homes
             calls = [name_one.path[0], *name_one.functions]
         else:
             pattern = self._compile_path_pattern(name_one.path)
-            prefixes = self._matching_prefix_dirs(home, pattern)
+            candidates = [
+                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+            ]
             calls = list(name_one.functions)
+        candidates = sorted(candidates)
 
         pointer = self._pointer_from_calls(calls)
         identity, match_all = self._name_three_selector(reference.name_three)
 
-        results = []
-        for prefix in prefixes:
-            run_names = sorted(Nos(prefix).listdir(dirs_only=True))
-            if pointer is not None:
-                selected = self._apply_pointer(pointer, run_names)
-                selected_runs = [selected] if selected is not None else []
-            else:
-                selected_runs = run_names
+        if pointer is not None:
+            selected = self._apply_pointer(pointer, candidates)
+            selected_runs = [selected] if selected is not None else []
+        else:
+            selected_runs = candidates
 
-            for run_name in selected_runs:
-                run_dir = Nos(prefix).join(run_name)
-                results.extend(
-                    self._results_for_run(run_dir, identity, match_all)
-                )
+        results = []
+        for run_dir in selected_runs:
+            results.extend(self._results_for_run(run_dir, identity, match_all))
         return ReferenceResults3(results=results)
 
     def _extract_data(self, result: ReferenceResult3):
@@ -138,6 +146,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # default" applies uniformly here, per "creating references
         # v3.txt"'s resolve table.
         return None
+
+    def _discover_run_homes(self, root_major: str) -> list[str]:
+        """every distinct, still-existing run_home for this group, read
+        from the archive-root manifest.json -- see this module's own
+        docstring for why this replaces directory-walking entirely (no
+        need to know/guess the group's template depth). Many entries can
+        share the same run_home (one entry per csvpath-statement
+        execution, several statements per run), so dedupe; a stale entry
+        (the run since deleted) is dropped via an existence check."""
+        archive = self.csvpaths.config.get(section="results", name="archive")
+        manifest_path = Nos(archive).join("manifest.json")
+        if not Nos(manifest_path).exists():
+            return []
+        with DataFileReader(manifest_path) as reader:
+            entries = json.load(reader.source)
+        homes = []
+        for entry in entries:
+            if entry.get("named_paths_name") != root_major:
+                continue
+            run_home = entry.get("run_home")
+            if run_home and run_home not in homes:
+                homes.append(run_home)
+        return [h for h in homes if Nos(h).exists()]
 
     def _results_for_run(
         self, run_dir: str, identity: str | None, match_all: bool
@@ -221,22 +252,28 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return name_three.body, False
 
     @staticmethod
-    def _matching_prefix_dirs(home: str, pattern: list) -> list[str]:
-        """walks real directories under `home`, matching each literal/
-        Star3 pattern segment against one level of subdirectories --
-        the results-side equivalent of FilesReferenceFinder3's manifest-
-        array matching, needed because there is no per-named-results-
-        group manifest array to scan (confirmed by direct experiment --
-        see project memory) -- only real directories on disk."""
-        current = [home]
-        for segment in pattern:
-            next_level = []
-            for base in current:
-                for name in sorted(Nos(base).listdir(dirs_only=True)):
-                    if isinstance(segment, Star3) or name == segment:
-                        next_level.append(Nos(base).join(name))
-            current = next_level
-        return current
+    def _matches_prefix(run_home: str, home: str, pattern: list) -> bool:
+        """true if run_home's own prefix -- everything between `home`
+        and the run directory's own name (the last path segment) --
+        matches `pattern` position-by-position (Star3 as wildcard).
+        Similar in spirit to FilesReferenceFinder3._matches, but the run
+        directory's own name is excluded from the comparison first,
+        since (unlike a file's file_home) run_home already includes
+        that final, version-identifying segment itself."""
+        home = home.rstrip("/")
+        if not run_home.startswith(home):
+            return False
+        rel = run_home[len(home) :].lstrip("/")
+        segments = rel.split("/") if rel else []
+        prefix_segments = segments[:-1]
+        if len(prefix_segments) != len(pattern):
+            return False
+        for actual, expected in zip(prefix_segments, pattern):
+            if isinstance(expected, Star3):
+                continue
+            if actual != expected:
+                return False
+        return True
 
     @staticmethod
     def _list_instance_identities(run_dir: str) -> list[str]:
