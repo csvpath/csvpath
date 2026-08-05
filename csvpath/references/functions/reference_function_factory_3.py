@@ -17,9 +17,11 @@ class ReferenceFunctionFactory:
     @classmethod
     def _load(cls) -> None:
         from .all_3 import All3
+        from .definition_3 import Definition3
         from .first_3 import First3
         from .index_3 import Index3
         from .last_3 import Last3
+        from .manifest_3 import Manifest3
         from .name_3 import Name3
 
         cls._FUNCTIONS = {
@@ -28,6 +30,8 @@ class ReferenceFunctionFactory:
             Index3.NAME: Index3,
             Name3.NAME: Name3,
             All3.NAME: All3,
+            Manifest3.NAME: Manifest3,
+            Definition3.NAME: Definition3,
         }
 
     @classmethod

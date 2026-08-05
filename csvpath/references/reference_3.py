@@ -458,15 +458,32 @@ class Reference3:
         METADATA_FILE (a whole well-known/named file), or
         METADATA_FIELD (one value drilled out of such a file). computed
         from whichever function chain is terminal: name_three's if
-        name_three is present, else name_one's own trailing chain (a
-        legal terminus now that name_three is optional everywhere).
-        see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_FUNCTIONS
-        placeholder comment above -- both lists are stand-ins for traits
-        the future function registry will own."""
+        name_three is present, else name_one's own complete function
+        chain (a legal terminus now that name_three is optional
+        everywhere) -- which includes any function-valued name_one path
+        segment (e.g. a "path-less, function-only" name_one like
+        ":all()"/":manifest()" occupying the sole segment), not just its
+        trailing chain: a metadata-file function can be the whole of
+        name_one with nothing following it (":manifest()" needs
+        exactly this shape to be recognized at all). Safe to widen this
+        way -- an ordinary path-matching function like :name("...")
+        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS, so including path segments here only lets the real
+        metadata functions be seen, it does not change what gets
+        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS placeholder comment above -- both lists are stand-ins
+        for traits the future function registry will own."""
         terminal_functions = (
             self._name_three.functions
             if self._name_three is not None
-            else self._name_one.functions
+            else [
+                *(
+                    segment
+                    for segment in self._name_one.path
+                    if isinstance(segment, FunctionCall3)
+                ),
+                *self._name_one.functions,
+            ]
         )
         for f in terminal_functions:
             if any(

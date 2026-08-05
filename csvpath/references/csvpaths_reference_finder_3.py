@@ -66,6 +66,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "marker (name_two) -- it is files-only."
             )
 
+        if self._is_bare_pointer_reference(
+            reference, "manifest"
+        ) or self._is_bare_pointer_reference(reference, "definition"):
+            # both ":manifest()" and ":definition()" are a bare, sole-
+            # content name_one whose function name IS the JSON file's
+            # own name (manifest.json/definition.json) -- see
+            # _query_well_known_file() on the ABC.
+            home = self.csvpaths.paths_manager.named_paths_home(root_major)
+            filename = f"{name_one.path[0].name}.json"
+            return self._query_well_known_file(home, filename)
+
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
 
@@ -99,11 +110,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         kind = reference.resolve_kind
+        if kind == Reference3.METADATA_FILE and (
+            self._is_bare_pointer_reference(reference, "manifest")
+            or self._is_bare_pointer_reference(reference, "definition")
+        ):
+            # result.path is already the manifest.json/definition.json
+            # path itself (set by query()'s _query_well_known_file()
+            # branch above).
+            return self._read_well_known_file(result.path)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "
-                f"resolve_kind={kind!r} -- no metadata-access functions are "
-                "registered for csvpaths yet."
+                f"resolve_kind={kind!r} -- only :manifest()/:definition() "
+                "are wired up as metadata-file functions so far."
             )
         name_three = reference.name_three
         if name_three is None:

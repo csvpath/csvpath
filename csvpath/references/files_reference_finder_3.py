@@ -55,6 +55,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 does not yet support the '#worksheet' "
                 "marker (name_two)."
             )
+
+        if self._is_bare_pointer_reference(
+            reference, "manifest"
+        ) or self._is_bare_pointer_reference(reference, "definition"):
+            # both ":manifest()" and ":definition()" are a bare, sole-
+            # content name_one whose function name IS the JSON file's
+            # own name (manifest.json/definition.json) -- see
+            # _query_well_known_file() on the ABC.
+            home = self.csvpaths.file_manager.named_file_home(root_major)
+            filename = f"{name_one.path[0].name}.json"
+            return self._query_well_known_file(home, filename)
+
         if name_one.functions:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
@@ -118,10 +130,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return None
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
+        if kind == Reference3.METADATA_FILE and (
+            self._is_bare_pointer_reference(reference, "manifest")
+            or self._is_bare_pointer_reference(reference, "definition")
+        ):
+            # result.path is already the manifest.json/definition.json
+            # path itself (set by query()'s _query_well_known_file()
+            # branch above).
+            return self._read_well_known_file(result.path)
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
-            "-- no metadata-file/metadata-field functions are registered for "
-            "files yet."
+            "-- only :manifest()/:definition() are wired up as metadata-"
+            "file functions so far."
         )
 
     @staticmethod

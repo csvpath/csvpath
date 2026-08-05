@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 
+from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
+
+from .reference_3 import FunctionCall3, Reference3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -90,6 +94,58 @@ class ReferenceFinder3(ABC):
             except IndexError:
                 return None
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
+
+    @staticmethod
+    def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ":name()" call -- no other path segments, no trailing
+        chain, and no name_three. Detects a reference like
+        "$acme.files.:manifest()", which needs its own query() branch
+        entirely separate from ordinary "which file"/"which version"
+        narrowing, since a metadata-file function like :manifest()
+        points at one fixed resource regardless of any path/version
+        selection. Shared here because both files and csvpaths need the
+        identical check for :manifest()."""
+        name_one = reference.name_one
+        return (
+            reference.name_three is None
+            and not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == name
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _query_well_known_file(home: str, filename: str) -> ReferenceResults3:
+        """query() branch for a fixed, home-directory-scoped JSON
+        resource (manifest.json, definition.json) -- one result,
+        uuid=None (not a registered version), bypassing whatever
+        "which file"/"which version" narrowing the concrete finder
+        would otherwise do for an ordinary reference. Shared by files
+        and csvpaths for both :manifest() and :definition() -- both
+        live at exactly the same named-file/named-paths home directory
+        in either datatype."""
+        path = Nos(home).join(filename)
+        return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
+
+    @staticmethod
+    def _read_well_known_file(path: str):
+        """reads a well-known, home-directory-scoped JSON resource
+        (manifest.json, definition.json) as raw bytes -- None if it
+        does not exist yet. manifest.json is always created once
+        anything is registered/loaded, but definition.json is genuinely
+        optional -- a named-file/named-paths group that was never
+        explicitly configured has no definition.json on disk at all.
+        The describer classes elsewhere in the codebase (NamedFile
+        Describer/NamedPathsDescriber) already treat that absence as
+        normal, not an error (their own get_json() returns {} rather
+        than raising) -- same treatment here, rather than fabricating
+        an empty-JSON default nobody actually wrote."""
+        if not Nos(path).exists():
+            return None
+        with DataFileReader(path=path, mode="rb") as reader:
+            return reader.source.read()
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:

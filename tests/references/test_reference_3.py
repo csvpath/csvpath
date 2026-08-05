@@ -508,3 +508,16 @@ class TestResolveKind:
             name_one=self._name_one("a", functions=[FunctionCall3(name="errors")]),
         )
         assert r.resolve_kind == Reference3.METADATA_FILE
+
+    def test_uses_name_one_path_segment_function_when_it_is_the_sole_content(self):
+        # a "path-less, function-only" name_one (e.g. ":manifest()" or
+        # ":all()" occupying the sole path segment) has its function in
+        # .path, not .functions -- resolve_kind must look there too, not
+        # just at the trailing chain, or a bare "$acme.files.:manifest()"
+        # would be misclassified as FIRST_PARTY.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(FunctionCall3(name="manifest")),
+        )
+        assert r.resolve_kind == Reference3.METADATA_FILE

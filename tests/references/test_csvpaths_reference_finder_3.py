@@ -33,12 +33,19 @@ ACME_MANIFEST = [
 ]
 
 
+GROUP_HOME = "named_paths/acme"
+
+
 class _FakePathsManager:
-    def __init__(self, manifest):
+    def __init__(self, manifest, home=GROUP_HOME):
         self._manifest = manifest
+        self._home = home
 
     def get_manifest_for_name(self, name):
         return self._manifest
+
+    def named_paths_home(self, name):
+        return self._home
 
 
 class _FakeCsvPaths:
@@ -138,6 +145,73 @@ class TestResolve:
     def test_resolving_with_no_name_three_gives_none(self):
         # a whole group version has no single unambiguous payload.
         results = _finder("$acme.csvpaths.:last()").resolve()
+        assert results.results[0].data is None
+
+
+class TestManifestFunction:
+    # ":manifest()" is a name_one-terminal, bare/sole-content shape --
+    # it bypasses _resolve_versions()'s version-selection pipeline
+    # entirely and points at the named-paths group's own manifest.json
+    # instead (one fixed resource per group, covering every version).
+    def test_query_returns_the_manifest_path_with_no_uuid(self):
+        results = _finder("$acme.csvpaths.:manifest()").query()
+        assert results.files == [f"{GROUP_HOME}/manifest.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
+        content = b"[]"
+        home = tmp_path / "acme"
+        home.mkdir()
+        (home / "manifest.json").write_bytes(content)
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(string="$acme.csvpaths.:manifest()", csvpaths=csvpaths)
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_manifest_combined_with_a_version_pointer_is_two_pointers(self):
+        # :manifest() is POINTER-role but is not a list-position lookup
+        # -- combining it with a real version-selecting function is not
+        # the bare/sole shape, so it falls through to the ordinary
+        # version-selection pipeline, which sees two pointers in one
+        # chain and rejects it (same rule as :first():last() already
+        # being illegal).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:manifest():first()").query()
+
+
+class TestDefinitionFunction:
+    # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
+    # content shape, same query()/_extract_data() routing -- except
+    # definition.json is genuinely optional, so resolving one that was
+    # never written gives None rather than raising.
+    def test_query_returns_the_definition_path_with_no_uuid(self):
+        results = _finder("$acme.csvpaths.:definition()").query()
+        assert results.files == [f"{GROUP_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+        content = b'{"_config": {}}'
+        home = tmp_path / "acme"
+        home.mkdir()
+        (home / "definition.json").write_bytes(content)
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(
+            string="$acme.csvpaths.:definition()", csvpaths=csvpaths
+        )
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_resolve_gives_none_when_never_configured(self, tmp_path):
+        home = tmp_path / "acme"
+        home.mkdir()
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(
+            string="$acme.csvpaths.:definition()", csvpaths=csvpaths
+        )
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        results = finder.resolve()
         assert results.results[0].data is None
 
 

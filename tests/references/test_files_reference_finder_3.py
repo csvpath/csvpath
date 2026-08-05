@@ -214,6 +214,69 @@ class TestScopeLimits:
             finder.query()
 
 
+class TestManifestFunction:
+    # ":manifest()" is a name_one-terminal, bare/sole-content shape --
+    # it bypasses the "which file" pattern-matching pipeline entirely
+    # and points at the named-file's own manifest.json instead (one
+    # fixed resource per named-file, not scoped to any particular file/
+    # version).
+    def test_query_returns_the_manifest_path_with_no_uuid(self):
+        finder = _finder("$alpha.files.:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
+        results = finder.query()
+        assert results.files == [f"{ALPHA_HOME}/manifest.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
+        content = b'[{"file_home": "zero.csv"}]'
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "manifest.json").write_bytes(content)
+        finder = _finder("$alpha.files.:manifest()", str(home), ALPHA_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_manifest_with_extra_path_narrowing_is_not_yet_supported(self):
+        # :manifest() must be name_one's entire content -- combining it
+        # with real path narrowing falls through to the ordinary
+        # "which file" pipeline, which does not recognize it as a
+        # function-valued path segment.
+        finder = _finder("$alpha.files.a/:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+
+class TestDefinitionFunction:
+    # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
+    # content shape, same query()/_extract_data() routing -- except
+    # definition.json is genuinely optional, so resolving one that was
+    # never written gives None rather than raising.
+    def test_query_returns_the_definition_path_with_no_uuid(self):
+        finder = _finder("$alpha.files.:definition()", ALPHA_HOME, ALPHA_MANIFEST)
+        results = finder.query()
+        assert results.files == [f"{ALPHA_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+        content = b'{"sources": {}}'
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "definition.json").write_bytes(content)
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_resolve_gives_none_when_never_configured(self, tmp_path):
+        # a named-file that was never explicitly configured has no
+        # definition.json on disk at all -- this is a normal, expected
+        # absence (matching NamedFileDescriber.get_json()'s own
+        # "return {} if missing" treatment), not an error.
+        home = tmp_path / "alpha"
+        home.mkdir()
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+
 class TestExtractData:
     def test_first_party_returns_raw_file_bytes(self, tmp_path):
         # resolve_kind is FIRST_PARTY by default (no metadata-file/
