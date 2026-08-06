@@ -286,6 +286,56 @@ class TestResolve:
         assert results.results[0].data is None
 
 
+class TestManifestOnNameOne:
+    # :manifest() rides beside the run-selecting pointer in name_one
+    # (STRUCTURE table's "Resolve terminating at name_one, with file
+    # pointer" row) -- unlike files/csvpaths, a run's own manifest.json
+    # is already a single dict, not an array, so there is no "filtered
+    # list vs single entry" split: every matched run just resolves to
+    # its own dict.
+    def test_manifest_beside_a_pointer_in_the_literal_path_shape(
+        self, acme_archive
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first():manifest()", acme_archive
+        ).resolve()
+        assert results.results[0].data == {"run_uuid": "run1-uuid"}
+
+    def test_manifest_beside_a_pointer_in_the_bare_shape(self, acme_archive):
+        results = _finder(
+            "$acme.results.:last():manifest()", acme_archive
+        ).resolve()
+        assert results.results[0].data == {"run_uuid": "run2-uuid"}
+
+    def test_manifest_with_no_pointer_gives_every_runs_own_manifest(
+        self, acme_archive
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:manifest()", acme_archive
+        ).resolve()
+        by_uuid = {r.uuid: r.data for r in results.results}
+        assert by_uuid == {
+            "run1-uuid": {"run_uuid": "run1-uuid"},
+            "run2-uuid": {"run_uuid": "run2-uuid"},
+        }
+
+    def test_manifest_does_not_count_as_a_second_pointer(self, acme_archive):
+        # Manifest3 is VALUE-role, not POINTER -- combined with a real
+        # pointer it must not trip "at most one pointer per chain".
+        results = _finder(
+            "$acme.results.customers/2025:first():manifest()", acme_archive
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_manifest_combined_with_name_three_raises(self, acme_archive):
+        finder = _finder(
+            "$acme.results.customers/2025:first():manifest().company_names",
+            acme_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
+
+
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
     # :unmatched() resolve to raw bytes and tolerate absence (None);
@@ -311,6 +361,40 @@ class TestWellKnownFileAccessors:
             acme_archive,
         ).resolve()
         assert results.results[0].data == errors
+
+    def test_errors_with_idchain_filters_to_matching_source(
+        self, acme_archive, instance_dir
+    ):
+        # confirmed against the real Error class: entries are keyed by
+        # "source" (Matchable.my_chain), not literally "idchain" -- the
+        # idchain string is just the value being matched against it.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain("add[0]string[2]"))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
+    def test_errors_with_idchain_no_match_returns_empty_list(
+        self, acme_archive, instance_dir
+    ):
+        # a legitimate empty list, not None and not an error -- the
+        # file was found and read fine, it just has no matching entry.
+        errors = [{"source": "name[1]", "message": "bad name"}]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain("add[0]string[2]"))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == []
 
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}

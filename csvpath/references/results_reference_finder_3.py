@@ -4,6 +4,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
+from .functions.idchain_3 import Idchain3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
@@ -113,15 +114,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # "$acme.results.:all()"/"$acme.results.:last()" -- every run
             # discovered for the group is a candidate, no prefix narrowing.
             candidates = run_homes
-            calls = [name_one.path[0], *name_one.functions]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-            calls = list(name_one.functions)
         candidates = sorted(candidates)
 
+        calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
         identity, match_all, _ = self._name_three_selector(reference.name_three)
 
@@ -148,8 +148,43 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        name_one_calls = self._combined_name_one_calls(reference.name_one)
+        has_manifest = any(
+            seg.contains_function_named("manifest")
+            for seg in name_one_calls
+            if isinstance(seg, FunctionCall3)
+        )
+        if has_manifest:
+            # :manifest() rides beside the run-selecting pointer in
+            # name_one (e.g. "$acme.results.customers/2025:first()
+            # :manifest()") -- the STRUCTURE table's own "Resolve
+            # terminating at name_one, with file pointer: results:
+            # contents of manifest.json" row. Unlike files/csvpaths,
+            # there is no "filtered list vs single entry" distinction
+            # here -- a run's own manifest.json is already a single
+            # dict, not an array, so every matched run (whether reduced
+            # to one by a pointer, or left as many) just resolves to
+            # its own dict, the same way each already gets its own
+            # result via the ordinary resolve() per-result loop.
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining "
+                    ":manifest() on name_one with name_three -- resolve "
+                    "the run's own manifest on its own, without a "
+                    "further instance selector."
+                )
+            return self._read_well_known_json(
+                Nos(result.path).join("manifest.json")
+            )
+
         kind = reference.resolve_kind
-        if kind == Reference3.METADATA_FILE:
+        if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
+            # both land here: :errors() alone classifies as METADATA_FILE,
+            # :errors(:idchain(...)) classifies as METADATA_FIELD (a
+            # nested pointer-like arg -- see Reference3.resolve_kind) --
+            # _read_accessor already handles the idchain-filtering
+            # internally based on accessor.arg, so both kinds resolve
+            # identically from here.
             _, _, accessor = self._name_three_selector(reference.name_three)
             if accessor is not None:
                 return self._read_accessor(result.path, accessor)
@@ -171,10 +206,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """resolves a well-known instance-level file accessor (errors/
         vars/meta -> parsed JSON; data/unmatched -> raw bytes, both
         genuinely optional, None if never written; file("...") -> raw
-        bytes of the user-named file, also optional)."""
+        bytes of the user-named file, also optional). :errors() may
+        carry a nested :idchain(...) argument, filtering the parsed
+        list down to entries whose own "source" field (Error.to_json()
+        -- Matchable.my_chain, recorded once at error time, not walked
+        live) matches -- zero matches is a legitimate empty list, not
+        None or an error; the file itself was found and read fine."""
         if accessor.name in cls._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
-            return cls._read_well_known_json(path)
+            data = cls._read_well_known_json(path)
+            if (
+                data is not None
+                and accessor.name == "errors"
+                and isinstance(accessor.arg, Idchain3)
+            ):
+                data = [e for e in data if e.get("source") == accessor.arg.arg]
+            return data
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
             return cls._read_well_known_file(path)
@@ -228,6 +275,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
             found.append(ReferenceResult3(path=inst_dir, uuid=uuid))
         return found
+
+    @classmethod
+    def _combined_name_one_calls(cls, name_one) -> list:
+        """name_one's own effective function chain, used for both
+        pointer-detection (query()) and ":manifest()"-detection
+        (_extract_data()) -- the bare/function-only shape's path[0] is
+        itself part of the chain (mirrors csvpaths); the literal-path
+        shape's path segments are never functions (except :name(...),
+        which is path-building, not chain content), so only its
+        trailing .functions counts there."""
+        if cls._is_bare_function_only(name_one):
+            return [name_one.path[0], *name_one.functions]
+        return list(name_one.functions)
 
     @staticmethod
     def _is_bare_function_only(name_one) -> bool:

@@ -22,6 +22,7 @@ class ReferenceFunctionFactory:
         from .errors_3 import Errors3
         from .file_3 import File3
         from .first_3 import First3
+        from .idchain_3 import Idchain3
         from .index_3 import Index3
         from .last_3 import Last3
         from .manifest_3 import Manifest3
@@ -43,6 +44,7 @@ class ReferenceFunctionFactory:
             Meta3.NAME: Meta3,
             Data3.NAME: Data3,
             Unmatched3.NAME: Unmatched3,
+            Idchain3.NAME: Idchain3,
             File3.NAME: File3,
         }
 
