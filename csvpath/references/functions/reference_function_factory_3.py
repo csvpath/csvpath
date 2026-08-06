@@ -17,12 +17,18 @@ class ReferenceFunctionFactory:
     @classmethod
     def _load(cls) -> None:
         from .all_3 import All3
+        from .data_3 import Data3
         from .definition_3 import Definition3
+        from .errors_3 import Errors3
+        from .file_3 import File3
         from .first_3 import First3
         from .index_3 import Index3
         from .last_3 import Last3
         from .manifest_3 import Manifest3
+        from .meta_3 import Meta3
         from .name_3 import Name3
+        from .unmatched_3 import Unmatched3
+        from .vars_3 import Vars3
 
         cls._FUNCTIONS = {
             First3.NAME: First3,
@@ -32,6 +38,12 @@ class ReferenceFunctionFactory:
             All3.NAME: All3,
             Manifest3.NAME: Manifest3,
             Definition3.NAME: Definition3,
+            Errors3.NAME: Errors3,
+            Vars3.NAME: Vars3,
+            Meta3.NAME: Meta3,
+            Data3.NAME: Data3,
+            Unmatched3.NAME: Unmatched3,
+            File3.NAME: File3,
         }
 
     @classmethod

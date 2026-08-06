@@ -46,11 +46,16 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    own instance-directory listing (one subdirectory per csvpath statement,
 #    named by that statement's identity -- same convention as csvpaths'
 #    named_paths_identities) -- matched by identity string, or by :all() for
-#    every instance in the run. Well-known instance-level file functions
-#    (:data()/:vars()/:meta()/:unmatched()/:errors()) are not yet
-#    registered, so resolving a matched instance always gives None for now
-#    (no default) -- query() still finds every matched path+uuid correctly,
-#    resolve() just has nothing further to extract yet.
+#    every instance in the run. A well-known instance-level file function
+#    (:errors()/:vars()/:meta()/:data()/:unmatched(), or the arbitrary-named
+#    :file("...")) may ride alongside the identity/:all() selector in the
+#    same chain (e.g. "$acme.results.customers/2025:first().invoices:data()")
+#    -- these functions never narrow/select anything themselves (ROLE is
+#    VALUE, matching :manifest()/:definition()'s own corrected role), they
+#    just say what to resolve to once an instance is already identified.
+#    Resolving a matched instance with NO accessor present still gives None
+#    (no default) -- only the identity/:all() selection was made, nothing
+#    further was asked for.
 #
 # storage facts this relies on (confirmed against ResultsManager/
 # ResultsRegistrar/ResultRegistrar/ResultSerializer, and a real archive-root
@@ -118,7 +123,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         candidates = sorted(candidates)
 
         pointer = self._pointer_from_calls(calls)
-        identity, match_all = self._name_three_selector(reference.name_three)
+        identity, match_all, _ = self._name_three_selector(reference.name_three)
 
         if pointer is not None:
             selected = self._apply_pointer(pointer, candidates)
@@ -131,21 +136,50 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             results.extend(self._results_for_run(run_dir, identity, match_all))
         return ReferenceResults3(results=results)
 
+    _JSON_ACCESSOR_FILES = {
+        "errors": "errors.json",
+        "vars": "vars.json",
+        "meta": "meta.json",
+    }
+    _BYTES_ACCESSOR_FILES = {
+        "data": "data.csv",
+        "unmatched": "unmatched.csv",
+    }
+
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         kind = reference.resolve_kind
+        if kind == Reference3.METADATA_FILE:
+            _, _, accessor = self._name_three_selector(reference.name_three)
+            if accessor is not None:
+                return self._read_accessor(result.path, accessor)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
-                f"resolve_kind={kind!r} -- no metadata-file/metadata-field "
-                "functions are registered for results yet."
+                f"resolve_kind={kind!r} -- only :errors()/:vars()/:meta()/"
+                ":data()/:unmatched()/:file() are wired up as metadata-"
+                "file functions so far."
             )
-        # neither a whole run directory nor an instance directory matched
-        # by identity/:all() has a single unambiguous payload without a
-        # well-known-file function -- none registered yet, so "no
-        # default" applies uniformly here, per "creating references
-        # v3.txt"'s resolve table.
+        # a run directory (no name_three) or an instance directory matched
+        # by identity/:all() with no accessor riding alongside has no
+        # single unambiguous payload -- "no default", per "creating
+        # references v3.txt"'s resolve table.
         return None
+
+    @classmethod
+    def _read_accessor(cls, instance_dir: str, accessor):
+        """resolves a well-known instance-level file accessor (errors/
+        vars/meta -> parsed JSON; data/unmatched -> raw bytes, both
+        genuinely optional, None if never written; file("...") -> raw
+        bytes of the user-named file, also optional)."""
+        if accessor.name in cls._JSON_ACCESSOR_FILES:
+            path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
+            return cls._read_well_known_json(path)
+        if accessor.name in cls._BYTES_ACCESSOR_FILES:
+            path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
+            return cls._read_well_known_file(path)
+        path = Nos(instance_dir).join(accessor.arg)
+        return cls._read_well_known_file(path)
 
     def _discover_run_homes(self, root_major: str) -> list[str]:
         """every distinct, still-existing run_home for this group, read
@@ -222,34 +256,58 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         return pointers[0] if pointers else None
 
+    _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
+
     @staticmethod
-    def _name_three_selector(name_three) -> tuple[str | None, bool]:
-        """returns (identity, match_all) for name_three -- identity is a
-        literal statement-identity string to look up, match_all is True
-        for a bare :all() (every instance in the run, unfiltered). Any
-        other function (well-known instance-level files -- :data()/
-        :vars()/:meta()/:unmatched()/:errors()) is not yet registered
-        and raises via build_chain() itself ("Unknown reference
-        function"); any registered function other than :all() (there is
-        no other one that makes sense here) is explicitly rejected too."""
+    def _name_three_selector(name_three) -> tuple[str | None, bool, object]:
+        """returns (identity, match_all, accessor) for name_three --
+        identity is a literal statement-identity string to look up (None
+        if match_all, or if no identity/:all() selector is present at
+        all); match_all is True for :all() (every instance in the run);
+        accessor is the built well-known-file Function3 riding alongside
+        the identity/:all() selector, or None if none was requested
+        (resolving then gives None -- "no default"). An unrecognized
+        function raises via build_chain() itself ("Unknown reference
+        function") if it is not registered at all, or is rejected here
+        directly if it is registered but not meaningful as a name_three
+        function (e.g. :manifest())."""
         if name_three is None:
-            return None, False
+            return None, False, None
+
+        match_all = False
+        accessor = None
         if name_three.functions:
             built = ReferenceFunctionFactory.build_chain(name_three.functions)
-            if not (len(built) == 1 and built[0].name == "all"):
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 only supports :all() as a "
-                    "name_three function for now -- well-known instance "
-                    "files (:data()/:vars()/:meta()/:unmatched()/"
-                    ":errors()) are not yet registered for results."
-                )
-            return None, True
-        if isinstance(name_three.body, Star3):
+            for f in built:
+                if f.name == "all":
+                    match_all = True
+                elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
+                    accessor = f
+                else:
+                    raise ReferenceException3(
+                        f"ResultsReferenceFinder3 does not yet support "
+                        f":{f.name}() as a name_three function."
+                    )
+
+        body = name_three.body
+        if isinstance(body, Star3):
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not support a bare '*' as "
                 "name_three's body -- use :all() instead."
             )
-        return name_three.body, False
+        if body is not None and match_all:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 cannot combine a literal "
+                "identity with :all() -- they select instances two "
+                "different, contradictory ways."
+            )
+        if body is None and not match_all:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 requires name_three to be a "
+                "literal statement identity or :all() to select which "
+                "instance(s) a well-known-file function applies to."
+            )
+        return body, match_all, accessor
 
     @staticmethod
     def _matches_prefix(run_home: str, home: str, pattern: list) -> bool:
@@ -287,17 +345,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if name != "_extra_data"
         ]
 
-    @staticmethod
-    def _read_json_field(path: str, field: str):
+    @classmethod
+    def _read_json_field(cls, path: str, field: str):
         """reads one field from a small JSON file (a run's or an
         instance's own manifest.json), tolerating absence -- None if the
         file does not exist rather than raising or fabricating a
-        default. Deliberately does not reuse ResultFileReader.json_file()
-        here -- that helper writes a fresh empty JSON file when one is
-        missing, a write side effect a read-only reference query must
-        never trigger."""
-        if not Nos(path).exists():
-            return None
-        with DataFileReader(path) as reader:
-            data = json.load(reader.source)
-        return data.get(field)
+        default. Built on the shared _read_well_known_json rather than
+        reusing ResultFileReader.json_file() -- that helper writes a
+        fresh empty JSON file when one is missing, a write side effect a
+        read-only reference query must never trigger."""
+        data = cls._read_well_known_json(path)
+        return data.get(field) if data else None
