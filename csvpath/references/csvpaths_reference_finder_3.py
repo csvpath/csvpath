@@ -22,7 +22,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    absent (e.g. a bare :all()), every version in the manifest is
     #    returned, unreduced -- this is how "list of versions in the
     #    form: (path-to-group.csvpaths, uuid)" (STRUCTURE table) is
-    #    actually reached. Literal/"*"/path-building content, and the
+    #    actually reached. ":manifest()" may ride alongside the version
+    #    pointer in this same combined chain (e.g. ":last():manifest()")
+    #    -- it never narrows/selects itself (see functions/manifest_3.py),
+    #    it just changes what _extract_data() resolves to: the matched
+    #    version's own manifest entry, instead of its statement text.
+    #    Literal/"*"/path-building content, and the
     #    "#worksheet" marker (name_two, files-only), are not meaningful
     #    for csvpaths and are rejected. :uuid() is not yet a registered
     #    function, so it is "not yet supported" for now like any other
@@ -110,14 +115,29 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         kind = reference.resolve_kind
-        if kind == Reference3.METADATA_FILE and (
-            self._is_bare_pointer_reference(reference, "manifest")
-            or self._is_bare_pointer_reference(reference, "definition")
-        ):
-            # result.path is already the manifest.json/definition.json
-            # path itself (set by query()'s _query_well_known_file()
-            # branch above).
-            return self._read_well_known_file(result.path)
+        if kind == Reference3.METADATA_FILE:
+            if self._is_bare_pointer_reference(
+                reference, "manifest"
+            ) or self._is_bare_pointer_reference(reference, "definition"):
+                # result.path is already the manifest.json/definition.json
+                # path itself (set by query()'s _query_well_known_file()
+                # branch above).
+                return self._read_well_known_file(result.path)
+            name_one = reference.name_one
+            has_manifest = any(
+                seg.contains_function_named("manifest")
+                for seg in (name_one.path[0], *name_one.functions)
+                if isinstance(seg, FunctionCall3)
+            )
+            if has_manifest:
+                # :manifest() riding alongside the real version-selecting
+                # pointer already in name_one's own combined chain (e.g.
+                # ":last():manifest()") -- give the matched version's own
+                # manifest entry, not the whole raw file.
+                manifest = self.csvpaths.paths_manager.get_manifest_for_name(
+                    reference.root_major
+                )
+                return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "
@@ -134,9 +154,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(
             reference.root_major
         )
-        selected = next(
-            (entry for entry in manifest if entry["uuid"] == result.uuid), None
-        )
+        selected = self._find_manifest_entry_by_uuid(manifest, result.uuid)
         if selected is None:
             return None
         identities = selected.get("named_paths_identities") or []

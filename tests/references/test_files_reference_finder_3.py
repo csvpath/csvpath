@@ -245,6 +245,46 @@ class TestManifestFunction:
             finder.query()
 
 
+class TestManifestCombinedWithNameThree:
+    # :manifest() never narrows/selects anything itself -- combined with
+    # real name_one path narrowing plus name_three, it either rides
+    # alongside a real version pointer (giving that one matched entry)
+    # or appears alone with no pointer at all (giving every matching
+    # entry, unreduced). Neither shape routes through
+    # _is_bare_pointer_reference -- that is only for the sole-content
+    # "$acme.files.:manifest()" case.
+    def test_manifest_alone_in_name_three_gives_every_matching_entry(self):
+        # "one.csv" has two versions in ALPHA_MANIFEST -- no pointer, so
+        # both come back, each resolving to its own manifest entry dict.
+        finder = _finder(
+            '$alpha.files.:name("one.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        results = finder.resolve()
+        assert results.uuids == ["u-one-1", "u-one-2"]
+        assert results.data_for_uuid("u-one-1") == ALPHA_MANIFEST[1]
+        assert results.data_for_uuid("u-one-2") == ALPHA_MANIFEST[2]
+
+    def test_manifest_beside_a_pointer_gives_the_one_matched_entry(self):
+        finder = _finder(
+            '$alpha.files.:name("one.csv").:last():manifest()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.uuids == ["u-one-2"]
+        assert results.results[0].data == ALPHA_MANIFEST[2]
+
+    def test_name_three_with_neither_pointer_nor_manifest_still_raises(self):
+        # a context setter alone (:name(...) is not meaningful in
+        # name_three for files, but exercises the same "requires a
+        # pointer or :manifest()" gate either function would hit).
+        finder = _finder(
+            '$alpha.files.*.:name("x")', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+
 class TestDefinitionFunction:
     # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
     # content shape, same query()/_extract_data() routing -- except

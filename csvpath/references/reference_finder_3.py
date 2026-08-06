@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
-from .reference_3 import FunctionCall3, Reference3
+from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -146,6 +147,46 @@ class ReferenceFinder3(ABC):
             return None
         with DataFileReader(path=path, mode="rb") as reader:
             return reader.source.read()
+
+    @staticmethod
+    def _find_manifest_entry_by_uuid(manifest: list, uuid: str) -> dict | None:
+        """returns the manifest array entry whose "uuid" matches, or None
+        if absent -- shared by any finder resolving a ":manifest()" call
+        that rides alongside a real pointer (the entry the pointer
+        already selected, per Reference3.resolve_kind's METADATA_FILE
+        classification), rather than the whole raw file."""
+        return next((entry for entry in manifest if entry["uuid"] == uuid), None)
+
+    @staticmethod
+    def _compile_path_pattern(path: list) -> list:
+        """turns a name_one path into a list of str/Star3 to match
+        against real path segments (a manifest entry's file_home for
+        files, real directory names for results). a literal str or
+        Star3 segment passes through unchanged; a :name("...") segment
+        is compiled and unwrapped to its literal string, so matching
+        downstream doesn't need to know the difference -- built
+        specifically because a literal name containing characters a
+        bare PATH_SEGMENT cannot hold (e.g. a real filename's ".") has
+        no other way to appear. any other function-valued segment is
+        explicitly not yet supported. shared by files and results --
+        both have a real, literal/star/:name(...) path to match; csvpaths
+        does not (its whole name_one is version-selecting functions)."""
+        pattern = []
+        for segment in path:
+            if isinstance(segment, FunctionCall3):
+                if segment.name != "name":
+                    raise ReferenceException3(
+                        f"Does not yet support :{segment.name}() as a "
+                        "name_one path segment -- only :name(\"...\") and "
+                        "literal/'*' segments are supported."
+                    )
+                built = ReferenceFunctionFactory.build(segment)
+                pattern.append(built.arg)
+            elif isinstance(segment, (str, Star3)):
+                pattern.append(segment)
+            else:
+                raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
+        return pattern
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:
