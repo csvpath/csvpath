@@ -1,13 +1,19 @@
 import pytest
 
 from csvpath.references.functions.all_3 import All3
+from csvpath.references.functions.data_3 import Data3
 from csvpath.references.functions.definition_3 import Definition3
+from csvpath.references.functions.errors_3 import Errors3
+from csvpath.references.functions.file_3 import File3
 from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.index_3 import Index3
 from csvpath.references.functions.last_3 import Last3
 from csvpath.references.functions.manifest_3 import Manifest3
+from csvpath.references.functions.meta_3 import Meta3
 from csvpath.references.functions.name_3 import Name3
+from csvpath.references.functions.unmatched_3 import Unmatched3
+from csvpath.references.functions.vars_3 import Vars3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )
@@ -49,6 +55,33 @@ class TestBuild:
     def test_builds_definition(self):
         f = ReferenceFunctionFactory.build(FunctionCall3(name="definition"))
         assert isinstance(f, Definition3)
+
+    def test_builds_errors(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="errors"))
+        assert isinstance(f, Errors3)
+
+    def test_builds_vars(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="vars"))
+        assert isinstance(f, Vars3)
+
+    def test_builds_meta(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="meta"))
+        assert isinstance(f, Meta3)
+
+    def test_builds_data(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="data"))
+        assert isinstance(f, Data3)
+
+    def test_builds_unmatched(self):
+        f = ReferenceFunctionFactory.build(FunctionCall3(name="unmatched"))
+        assert isinstance(f, Unmatched3)
+
+    def test_builds_file(self):
+        f = ReferenceFunctionFactory.build(
+            FunctionCall3(name="file", arg="orders.parquet")
+        )
+        assert isinstance(f, File3)
+        assert f.arg == "orders.parquet"
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):

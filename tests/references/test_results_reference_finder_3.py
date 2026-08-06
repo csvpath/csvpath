@@ -276,13 +276,129 @@ class TestResolve:
         assert results.results[0].data is None
 
     def test_resolving_a_named_identity_gives_none(self, acme_archive):
-        # no well-known instance-level file function is registered yet
-        # (:data()/:vars()/:meta()/:unmatched()/:errors()) -- "no
-        # default" applies uniformly until one exists.
+        # an identity alone, with no well-known-file accessor riding
+        # alongside it, has no single unambiguous payload -- "no
+        # default" (see TestWellKnownFileAccessors for the accessor
+        # case, which does resolve to something).
         results = _finder(
             "$acme.results.customers/2025:first().company_names", acme_archive
         ).resolve()
         assert results.results[0].data is None
+
+
+class TestWellKnownFileAccessors:
+    # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
+    # :unmatched() resolve to raw bytes and tolerate absence (None);
+    # :file("...") resolves an arbitrary user-named file the same way,
+    # with a bare-filename-only guard against path traversal. All ride
+    # alongside the identity/:all() selector already in name_three --
+    # they do not select the instance themselves.
+    @pytest.fixture
+    def instance_dir(self, acme_archive):
+        path = (
+            f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+            "/company_names"
+        )
+        os.makedirs(path, exist_ok=True)
+        return path
+
+    def test_errors_resolves_parsed_json(self, acme_archive, instance_dir):
+        errors = [{"error": "bad row", "line": 3}]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:errors()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == errors
+
+    def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
+        variables = {"count": 5, "label": "totals"}
+        with open(os.path.join(instance_dir, "vars.json"), "w") as f:
+            json.dump(variables, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:vars()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == variables
+
+    def test_meta_resolves_parsed_json(self, acme_archive, instance_dir):
+        meta = {"identity": "company_names", "run_index": 0}
+        with open(os.path.join(instance_dir, "meta.json"), "w") as f:
+            json.dump(meta, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:meta()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == meta
+
+    def test_data_resolves_raw_bytes(self, acme_archive, instance_dir):
+        content = b"a,b\n1,2\n"
+        with open(os.path.join(instance_dir, "data.csv"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:data()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_data_resolves_none_when_never_written(
+        self, acme_archive, instance_dir
+    ):
+        # data.csv is only written if at least one line matched --
+        # genuinely optional, same as definition.json.
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:data()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_unmatched_resolves_raw_bytes(self, acme_archive, instance_dir):
+        content = b"x,y\n9,9\n"
+        with open(os.path.join(instance_dir, "unmatched.csv"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:unmatched()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_file_resolves_a_user_named_output(self, acme_archive, instance_dir):
+        content = b"custom output"
+        with open(os.path.join(instance_dir, "orders.parquet"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':file("orders.parquet")',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_file_rejects_a_path_valued_argument(self, acme_archive, instance_dir):
+        finder = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':file("../escape.txt")',
+            acme_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_accessor_combined_with_all_reads_each_instance_own_file(
+        self, acme_archive
+    ):
+        # run1 has two instances: company_names and "1".
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        os.makedirs(f"{base}/company_names", exist_ok=True)
+        os.makedirs(f"{base}/1", exist_ok=True)
+        with open(f"{base}/company_names/meta.json", "w") as f:
+            json.dump({"which": "company_names"}, f)
+        with open(f"{base}/1/meta.json", "w") as f:
+            json.dump({"which": "1"}, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().:all():meta()", acme_archive
+        ).resolve()
+        by_which = {r.data["which"] for r in results.results}
+        assert by_which == {"company_names", "1"}
 
 
 class TestScopeLimits:
@@ -310,20 +426,40 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_unregistered_function_on_name_three_not_yet_supported(
-        self, acme_archive
-    ):
+    def test_truly_unregistered_function_on_name_three_raises(self, acme_archive):
+        finder = _finder(
+            "$acme.results.customers/2025:first().:quarter()", acme_archive
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_accessor_alone_with_no_identity_or_all_raises(self, acme_archive):
+        # :data() is registered and meaningful for results, but it does
+        # not itself select which instance it applies to -- it needs a
+        # literal identity or :all() riding alongside it.
         finder = _finder(
             "$acme.results.customers/2025:first().:data()", acme_archive
         )
         with pytest.raises(ReferenceException3):
             finder.query()
 
+    def test_identity_combined_with_all_raises(self, acme_archive):
+        # contradictory: a literal identity selects one instance, :all()
+        # selects every instance.
+        finder = _finder(
+            "$acme.results.customers/2025:first().company_names:all()",
+            acme_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
     def test_manifest_function_on_name_three_not_yet_supported(self, acme_archive):
         # :manifest() is registered, but not meaningful as a name_three
-        # function for results in this pass -- only :all() is accepted.
+        # function for results in this pass -- only :all() and the
+        # well-known-file accessors are accepted there.
         finder = _finder(
-            "$acme.results.customers/2025:first().:manifest()", acme_archive
+            "$acme.results.customers/2025:first().company_names:manifest()",
+            acme_archive,
         )
         with pytest.raises(ReferenceException3):
             finder.query()

@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 
 from csvpath.util.file_readers import DataFileReader
@@ -147,6 +148,20 @@ class ReferenceFinder3(ABC):
             return None
         with DataFileReader(path=path, mode="rb") as reader:
             return reader.source.read()
+
+    @staticmethod
+    def _read_well_known_json(path: str):
+        """reads a well-known, JSON-shaped resource (results' errors.json/
+        vars.json/meta.json) as a parsed Python structure -- None if it
+        does not exist yet, same tolerant treatment as
+        _read_well_known_file, just parsed rather than raw bytes (per
+        the spec's own "Following a reference" section: resolving a
+        reference gives bytes, if binary, or a string or JSON
+        structure -- these are the JSON-structure case)."""
+        if not Nos(path).exists():
+            return None
+        with DataFileReader(path) as reader:
+            return json.load(reader.source)
 
     @staticmethod
     def _find_manifest_entry_by_uuid(manifest: list, uuid: str) -> dict | None:

@@ -9,7 +9,10 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 def test_metadata():
     f = Definition3()
     assert f.name == "definition"
-    assert f.ROLE == Function3.POINTER
+    # VALUE, not POINTER -- :definition() never narrows/selects
+    # anything, even bare; same reasoning as Manifest3's own role fix
+    # (this one was missed in that earlier pass).
+    assert f.ROLE == Function3.VALUE
     # unlike Manifest3, results has no definition.json equivalent.
     assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS)
 

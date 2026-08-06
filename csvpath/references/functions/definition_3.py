@@ -18,6 +18,15 @@ class Definition3(Function3):
     # just not yet prioritized). Named-results has no definition.json
     # equivalent, so this is FILES/CSVPATHS only, unlike Manifest3.
     #
+    # ROLE is VALUE, not POINTER, for the same reason Manifest3's own
+    # ROLE was corrected: :definition() never narrows or selects
+    # anything, even bare -- it only ever accesses what root_major
+    # already fully identifies. This one was missed in that earlier fix
+    # (only Manifest3 got corrected) -- caught while re-checking every
+    # existing "accessor" function's role for consistency ahead of
+    # adding the well-known-file functions below, which share the
+    # exact same trait.
+    #
     NAME = "definition"
     SUMMARY = (
         "Points at the whole definition.json for the enclosing named-file "
@@ -26,7 +35,7 @@ class Definition3(Function3):
         "versioned; resolves to None if the group/file was never "
         "explicitly configured (no definition.json written yet)."
     )
-    ROLE = Function3.POINTER
+    ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS)
     ARG_TYPES = ()
     ARG_REQUIRED = False
