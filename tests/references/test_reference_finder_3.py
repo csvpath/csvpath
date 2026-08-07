@@ -180,6 +180,65 @@ class TestFindByIdentity:
         assert ReferenceFinder3._find_by_identity("nope", ["a", "b"]) is None
 
 
+class TestExtractFieldValue:
+    # shared by every finder resolving a field-accessor function's KEY
+    # against a resolved manifest entry or definition.json dict -- see
+    # manifest_field_functions_proposal.md, Part A/B.
+    def test_reads_a_top_level_key(self):
+        assert (
+            ReferenceFinder3._extract_field_value({"uuid": "u1"}, "uuid") == "u1"
+        )
+
+    def test_walks_a_dotted_path(self):
+        container = {"on_arrival": {"named_paths_group": "acme"}}
+        assert (
+            ReferenceFinder3._extract_field_value(
+                container, "on_arrival.named_paths_group"
+            )
+            == "acme"
+        )
+
+    def test_missing_top_level_key_gives_none(self):
+        assert ReferenceFinder3._extract_field_value({"uuid": "u1"}, "nope") is None
+
+    def test_missing_nested_key_gives_none(self):
+        container = {"on_arrival": {}}
+        assert (
+            ReferenceFinder3._extract_field_value(
+                container, "on_arrival.named_paths_group"
+            )
+            is None
+        )
+
+    def test_none_container_gives_none(self):
+        assert ReferenceFinder3._extract_field_value(None, "uuid") is None
+
+    def test_none_key_path_gives_none(self):
+        assert ReferenceFinder3._extract_field_value({"uuid": "u1"}, None) is None
+
+
+class TestFindFieldFunctionCall:
+    # shared by files/csvpaths finders to detect a registered field-
+    # accessor function (e.g. :uuid()) riding in the same terminal
+    # position :manifest() already rides in.
+    def test_finds_a_registered_field_function(self):
+        calls = [FunctionCall3(name="first"), FunctionCall3(name="uuid")]
+        found = ReferenceFinder3._find_field_function_call(calls)
+        assert found is not None
+        assert found.name == "uuid"
+
+    def test_returns_none_when_no_field_function_present(self):
+        calls = [FunctionCall3(name="first"), FunctionCall3(name="manifest")]
+        assert ReferenceFinder3._find_field_function_call(calls) is None
+
+    def test_returns_none_for_an_unregistered_name(self):
+        calls = [FunctionCall3(name="bogus")]
+        assert ReferenceFinder3._find_field_function_call(calls) is None
+
+    def test_empty_list_returns_none(self):
+        assert ReferenceFinder3._find_field_function_call([]) is None
+
+
 class TestResolve:
     # resolve_from() always calls _extract_data() for every result now
     # -- the old resolves_to_data gate is gone from the ABC (it moved

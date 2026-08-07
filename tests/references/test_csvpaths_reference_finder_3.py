@@ -36,10 +36,21 @@ ACME_MANIFEST = [
 GROUP_HOME = "named_paths/acme"
 
 
+class _FakePathsDescriber:
+    def __init__(self, definition: dict):
+        self._definition = definition
+
+    def get_config(self, name):
+        from csvpath.managers.paths.paths_descriptor import GroupConfig
+
+        return GroupConfig(**self._definition)
+
+
 class _FakePathsManager:
-    def __init__(self, manifest, home=GROUP_HOME):
+    def __init__(self, manifest, home=GROUP_HOME, definition: dict | None = None):
         self._manifest = manifest
         self._home = home
+        self._definition = definition or {}
 
     def get_manifest_for_name(self, name):
         return self._manifest
@@ -47,14 +58,20 @@ class _FakePathsManager:
     def named_paths_home(self, name):
         return self._home
 
+    @property
+    def describer(self):
+        return _FakePathsDescriber(self._definition)
+
 
 class _FakeCsvPaths:
     def __init__(self, paths_manager):
         self.paths_manager = paths_manager
 
 
-def _finder(reference: str, manifest: list = ACME_MANIFEST) -> CsvpathsReferenceFinder3:
-    csvpaths = _FakeCsvPaths(_FakePathsManager(manifest))
+def _finder(
+    reference: str, manifest: list = ACME_MANIFEST, definition: dict | None = None
+) -> CsvpathsReferenceFinder3:
+    csvpaths = _FakeCsvPaths(_FakePathsManager(manifest, definition=definition))
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -222,6 +239,182 @@ class TestDefinitionFunction:
         finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
         results = finder.resolve()
         assert results.results[0].data is None
+
+
+RICH_MANIFEST = [
+    {
+        "group_file_path": GROUP_FILE_PATH,
+        "uuid": "v0-uuid",
+        "named_paths": ["stmt text A", "stmt text B"],
+        "named_paths_identities": ["company_names", "1"],
+        "named_paths_count": 2,
+        "time": "2026-01-01T00:00:00+00:00",
+        "fingerprint": "aaaa",
+        "source_path": "/staging/acme",
+        "named_paths_home": GROUP_HOME,
+    },
+    {
+        "group_file_path": GROUP_FILE_PATH,
+        "uuid": "v1-uuid",
+        "named_paths": ["stmt text C"],
+        "named_paths_identities": ["0"],
+        "named_paths_count": 1,
+        "time": "2026-02-01T00:00:00+00:00",
+        "fingerprint": "bbbb",
+        "source_path": "/staging/acme",
+        "named_paths_home": GROUP_HOME,
+    },
+]
+
+
+class TestFieldAccessorFunctions:
+    # generalized field-accessor wiring (see manifest_field_functions_
+    # proposal.md, Part A/B): each of these rides in name_one's own
+    # combined chain exactly where :manifest() already rides, either
+    # alone (every version, unreduced) or beside a version pointer (one
+    # reduced version) -- but extracts one key from the matched entry
+    # instead of the whole thing.
+    def test_bare_uuid_with_no_pointer_gives_every_versions_uuid(self):
+        results = _finder("$acme.csvpaths.:uuid()", RICH_MANIFEST).resolve()
+        assert [r.data for r in results.results] == ["v0-uuid", "v1-uuid"]
+
+    def test_uuid_beside_a_pointer_gives_the_one_matched_value(self):
+        results = _finder("$acme.csvpaths.:last():uuid()", RICH_MANIFEST).resolve()
+        assert results.results[0].data == "v1-uuid"
+
+    def test_time(self):
+        results = _finder("$acme.csvpaths.:first():time()", RICH_MANIFEST).resolve()
+        assert results.results[0].data == "2026-01-01T00:00:00+00:00"
+
+    def test_fingerprint(self):
+        results = _finder(
+            "$acme.csvpaths.:first():fingerprint()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == "aaaa"
+
+    def test_home(self):
+        results = _finder("$acme.csvpaths.:first():home()", RICH_MANIFEST).resolve()
+        assert results.results[0].data == GROUP_HOME
+
+    def test_origin_reads_the_source_path_key(self):
+        results = _finder("$acme.csvpaths.:first():origin()", RICH_MANIFEST).resolve()
+        assert results.results[0].data == "/staging/acme"
+
+    def test_named_paths_identities(self):
+        results = _finder(
+            "$acme.csvpaths.:first():named_paths_identities()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ["company_names", "1"]
+
+    def test_named_paths_count(self):
+        results = _finder(
+            "$acme.csvpaths.:last():named_paths_count()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == 1
+
+    def test_field_function_combined_with_all_gives_every_version(self):
+        results = _finder(
+            "$acme.csvpaths.:all():named_paths_count()", RICH_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == [2, 1]
+
+    def test_function_with_no_key_for_this_datatype_gives_none_not_a_crash(self):
+        # :mark()'s own DATATYPES is FILES-only, but nothing currently
+        # enforces DATATYPES against the reference it is actually used
+        # in (a pre-existing gap, not introduced here) -- so this reaches
+        # _extract_data() and must degrade to None rather than crashing
+        # on a KEY lookup that has no CSVPATHS entry.
+        results = _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).resolve()
+        assert results.results[0].data is None
+
+
+class TestDefinitionFieldAccessorFunctions:
+    # :scripts()/:webhooks()/:transfers()/:destinations() are
+    # SOURCE="definition" -- resolved against the named-paths group's
+    # definition.json config, not a manifest entry, and not affected by
+    # which version a pointer happens to select.
+    DEFINITION = {
+        "scripts": {"on_complete_all": "notify.sh"},
+        "webhooks": {"on_complete_valid": {"url": "https://example.com/hook"}},
+        "transfers": {
+            "path_transfers": {
+                "company_names": {
+                    "on_complete_all": [{"file": "data", "transfer_to": "@out"}]
+                }
+            }
+        },
+        "destinations": {"main": {"address": "example.com", "port": 22}},
+    }
+
+    def test_scripts(self):
+        results = _finder(
+            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == {"on_complete_all": "notify.sh"}
+
+    def test_webhooks(self):
+        # headers defaults to [], not None, so exclude_none leaves it in
+        # -- an empty list is not the same as an unset field.
+        results = _finder(
+            "$acme.csvpaths.:first():webhooks()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == {
+            "on_complete_valid": {"url": "https://example.com/hook", "headers": []}
+        }
+
+    def test_transfers_reads_the_nested_path_transfers_key(self):
+        results = _finder(
+            "$acme.csvpaths.:first():transfers()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == {
+            "company_names": {
+                "on_complete_all": [{"file": "data", "transfer_to": "@out"}]
+            }
+        }
+
+    def test_destinations(self):
+        results = _finder(
+            "$acme.csvpaths.:last():destinations()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == {"main": {"address": "example.com", "port": 22}}
+
+    def test_never_configured_gives_none_not_an_error(self):
+        results = _finder(
+            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_same_value_regardless_of_which_version_is_selected(self):
+        first = _finder(
+            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        last = _finder(
+            "$acme.csvpaths.:last():scripts()", RICH_MANIFEST, self.DEFINITION
+        ).resolve()
+        assert first.results[0].data == last.results[0].data
+
+
+class TestPathFunction:
+    # :path(inner) returns the filesystem path to whatever well-known
+    # resource `inner` points at, instead of its content.
+    def test_path_wrapping_manifest(self):
+        results = _finder("$acme.csvpaths.:first():path(:manifest())").resolve()
+        assert results.results[0].data == f"{GROUP_HOME}/manifest.json"
+
+    def test_path_wrapping_definition(self):
+        results = _finder("$acme.csvpaths.:first():path(:definition())").resolve()
+        assert results.results[0].data == f"{GROUP_HOME}/definition.json"
+
+    def test_path_alone_with_no_pointer_gives_every_version(self):
+        results = _finder("$acme.csvpaths.:path(:manifest())").resolve()
+        assert [r.data for r in results.results] == [
+            f"{GROUP_HOME}/manifest.json",
+            f"{GROUP_HOME}/manifest.json",
+        ]
+
+    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:first():path(:uuid())").resolve()
 
 
 class TestScopeLimits:

@@ -108,11 +108,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         built = ReferenceFunctionFactory.build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         has_manifest = any(f.name == "manifest" for f in built)
-        if not pointers and not has_manifest:
+        has_field_function = self._find_field_function_call(built) is not None
+        has_path = self._find_path_call(built) is not None
+        if not pointers and not has_manifest and not has_field_function and not has_path:
             raise ReferenceException3(
                 "FilesReferenceFinder3 requires name_three to resolve to "
                 "exactly one pointer function (:first()/:last()/:index(n)), "
-                "optionally combined with :manifest()."
+                "optionally combined with :manifest(), :path(), or a "
+                "registered field-accessor function (e.g. :uuid())."
             )
 
         if pointers:
@@ -137,6 +140,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        # :path(...) is checked before resolve_kind's content-oriented
+        # dispatch, since resolve_kind cannot tell ":path(:manifest())"
+        # apart from bare ":manifest()" -- both contain "manifest" via
+        # FunctionCall3.contains_function_named's recursive search, but
+        # :path() wants the resource's PATH, not its content.
+        if reference.name_three is not None:
+            path_call = self._find_path_call(reference.name_three.functions)
+            if path_call is not None:
+                home = self.csvpaths.file_manager.named_file_home(
+                    reference.root_major
+                )
+                return self._resolve_path_call(path_call, home)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:
@@ -167,10 +182,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
+        if kind == Reference3.METADATA_FIELD and reference.name_three is not None:
+            field_call = self._find_field_function_call(
+                reference.name_three.functions
+            )
+            if field_call is not None:
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    field_call.name
+                )
+                key_path = function_cls.KEY.get(reference.datatype)
+                if function_cls.SOURCE == "definition":
+                    config = self.csvpaths.file_manager.describer.get_config(
+                        reference.root_major
+                    )
+                    entry = config.model_dump(exclude_none=True)
+                else:
+                    manifest = self.csvpaths.file_manager.get_manifest(
+                        reference.root_major
+                    )
+                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                return self._extract_field_value(entry, key_path)
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
-            "-- only :manifest()/:definition() are wired up as metadata-"
-            "file functions so far."
+            "-- only :manifest()/:definition() and registered field-accessor "
+            "functions are wired up as metadata-file/field functions so far."
         )
 
     @staticmethod

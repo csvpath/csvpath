@@ -114,6 +114,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        # :path(...) is checked before resolve_kind's content-oriented
+        # dispatch -- see FilesReferenceFinder3._extract_data() for why.
+        name_one = reference.name_one
+        combined_for_path = [
+            seg
+            for seg in (name_one.path[0], *name_one.functions)
+            if isinstance(seg, FunctionCall3)
+        ]
+        path_call = self._find_path_call(combined_for_path)
+        if path_call is not None:
+            home = self.csvpaths.paths_manager.named_paths_home(
+                reference.root_major
+            )
+            return self._resolve_path_call(path_call, home)
         kind = reference.resolve_kind
         if kind == Reference3.METADATA_FILE:
             if self._is_bare_pointer_reference(
@@ -138,11 +152,35 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
+        if kind == Reference3.METADATA_FIELD:
+            # a registered field-accessor function (e.g. :uuid()) in the
+            # same combined chain :manifest() itself rides in -- extracts
+            # one key from the matched version's manifest entry (or, for
+            # a definition.json-backed field, the group's definition
+            # config) instead of the whole entry.
+            field_call = self._find_field_function_call(combined_for_path)
+            if field_call is not None:
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    field_call.name
+                )
+                key_path = function_cls.KEY.get(reference.datatype)
+                if function_cls.SOURCE == "definition":
+                    config = self.csvpaths.paths_manager.describer.get_config(
+                        reference.root_major
+                    )
+                    entry = config.model_dump(exclude_none=True)
+                else:
+                    manifest = self.csvpaths.paths_manager.get_manifest_for_name(
+                        reference.root_major
+                    )
+                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                return self._extract_field_value(entry, key_path)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "
                 f"resolve_kind={kind!r} -- only :manifest()/:definition() "
-                "are wired up as metadata-file functions so far."
+                "and registered field-accessor functions are wired up as "
+                "metadata-file/field functions so far."
             )
         name_three = reference.name_three
         if name_three is None:

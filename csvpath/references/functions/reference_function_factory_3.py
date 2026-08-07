@@ -16,20 +16,39 @@ class ReferenceFunctionFactory:
 
     @classmethod
     def _load(cls) -> None:
-        from .all_3 import All3
-        from .data_3 import Data3
-        from .definition_3 import Definition3
-        from .errors_3 import Errors3
-        from .file_3 import File3
-        from .first_3 import First3
-        from .idchain_3 import Idchain3
-        from .index_3 import Index3
-        from .last_3 import Last3
-        from .manifest_3 import Manifest3
-        from .meta_3 import Meta3
-        from .name_3 import Name3
-        from .unmatched_3 import Unmatched3
-        from .vars_3 import Vars3
+        from .selectors.all_3 import All3
+        from .selectors.first_3 import First3
+        from .selectors.index_3 import Index3
+        from .selectors.last_3 import Last3
+        from .selectors.name_3 import Name3
+
+        from .well_known_files.data_3 import Data3
+        from .well_known_files.definition_3 import Definition3
+        from .well_known_files.errors_3 import Errors3
+        from .well_known_files.file_3 import File3
+        from .well_known_files.manifest_3 import Manifest3
+        from .well_known_files.meta_3 import Meta3
+        from .well_known_files.unmatched_3 import Unmatched3
+        from .well_known_files.vars_3 import Vars3
+
+        from .fields.destinations_3 import Destinations3
+        from .fields.fingerprint_3 import Fingerprint3
+        from .fields.home_3 import Home3
+        from .fields.mark_3 import Mark3
+        from .fields.named_paths_count_3 import NamedPathsCount3
+        from .fields.named_paths_identities_3 import NamedPathsIdentities3
+        from .fields.on_arrival_3 import OnArrival3
+        from .fields.origin_3 import Origin3
+        from .fields.scripts_3 import Scripts3
+        from .fields.sources_3 import Sources3
+        from .fields.time_3 import Time3
+        from .fields.transfers_3 import Transfers3
+        from .fields.uuid_3 import Uuid3
+        from .fields.webhooks_3 import Webhooks3
+
+        from .filters.idchain_3 import Idchain3
+
+        from .wrappers.path_3 import Path3
 
         cls._FUNCTIONS = {
             First3.NAME: First3,
@@ -46,6 +65,21 @@ class ReferenceFunctionFactory:
             Unmatched3.NAME: Unmatched3,
             Idchain3.NAME: Idchain3,
             File3.NAME: File3,
+            Uuid3.NAME: Uuid3,
+            Time3.NAME: Time3,
+            Fingerprint3.NAME: Fingerprint3,
+            Home3.NAME: Home3,
+            Origin3.NAME: Origin3,
+            Mark3.NAME: Mark3,
+            NamedPathsIdentities3.NAME: NamedPathsIdentities3,
+            NamedPathsCount3.NAME: NamedPathsCount3,
+            OnArrival3.NAME: OnArrival3,
+            Sources3.NAME: Sources3,
+            Scripts3.NAME: Scripts3,
+            Webhooks3.NAME: Webhooks3,
+            Transfers3.NAME: Transfers3,
+            Destinations3.NAME: Destinations3,
+            Path3.NAME: Path3,
         }
 
     @classmethod

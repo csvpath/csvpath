@@ -43,10 +43,21 @@ TEMPLATED_MANIFEST = [
 ]
 
 
+class _FakeFileDescriber:
+    def __init__(self, definition: dict):
+        self._definition = definition
+
+    def get_config(self, name):
+        from csvpath.managers.files.file_descriptor import Config
+
+        return Config(**self._definition)
+
+
 class _FakeFileManager:
-    def __init__(self, home, manifest):
+    def __init__(self, home, manifest, definition: dict | None = None):
         self._home = home
         self._manifest = manifest
+        self._definition = definition or {}
 
     def named_file_home(self, name):
         return self._home
@@ -54,14 +65,20 @@ class _FakeFileManager:
     def get_manifest(self, name):
         return self._manifest
 
+    @property
+    def describer(self):
+        return _FakeFileDescriber(self._definition)
+
 
 class _FakeCsvPaths:
     def __init__(self, file_manager):
         self.file_manager = file_manager
 
 
-def _finder(reference: str, home: str, manifest: list) -> FilesReferenceFinder3:
-    csvpaths = _FakeCsvPaths(_FakeFileManager(home, manifest))
+def _finder(
+    reference: str, home: str, manifest: list, definition: dict | None = None
+) -> FilesReferenceFinder3:
+    csvpaths = _FakeCsvPaths(_FakeFileManager(home, manifest, definition))
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -315,6 +332,223 @@ class TestDefinitionFunction:
         finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
         results = finder.resolve()
         assert results.results[0].data is None
+
+
+RICH_HOME = "inputs/named_files/rich"
+RICH_MANIFEST = [
+    {
+        "file": "inputs/named_files/rich/orders.csv/aaaa.csv",
+        "file_home": "inputs/named_files/rich/orders.csv",
+        "uuid": "u-rich-1",
+        "time": "2026-01-01T00:00:00+00:00",
+        "fingerprint": "aaaa",
+        "from": "/staging/orders.csv",
+        "mark": "Sheet1",
+    },
+    {
+        "file": "inputs/named_files/rich/orders.csv/bbbb.csv",
+        "file_home": "inputs/named_files/rich/orders.csv",
+        "uuid": "u-rich-2",
+        "time": "2026-02-01T00:00:00+00:00",
+        "fingerprint": "bbbb",
+        "from": "/staging/orders.csv",
+    },
+]
+
+
+class TestFieldAccessorFunctions:
+    # generalized field-accessor wiring (see manifest_field_functions_
+    # proposal.md, Part A/B): each of these rides in name_three exactly
+    # where :manifest() already rides, either alone (every matching
+    # entry, unreduced) or beside a pointer (one reduced entry) -- but
+    # extracts one key from the matched entry instead of the whole thing.
+    def test_bare_uuid_with_no_pointer_gives_every_matching_entrys_uuid(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:uuid()', RICH_HOME, RICH_MANIFEST
+        )
+        results = finder.resolve()
+        assert [r.data for r in results.results] == ["u-rich-1", "u-rich-2"]
+
+    def test_uuid_beside_a_pointer_gives_the_one_matched_value(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():uuid()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "u-rich-2"
+
+    def test_time(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():time()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "2026-01-01T00:00:00+00:00"
+
+    def test_fingerprint(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():fingerprint()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "aaaa"
+
+    def test_home(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():home()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "inputs/named_files/rich/orders.csv"
+
+    def test_origin_reads_the_from_key(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():origin()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "/staging/orders.csv"
+
+    def test_mark_present(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():mark()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "Sheet1"
+
+    def test_mark_absent_gives_none_not_an_error(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():mark()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+    def test_query_does_not_require_a_pointer_when_a_field_function_is_present(self):
+        # this is the same "self-completing, no pointer needed" gate
+        # :manifest() already gets -- a bare field function satisfies it
+        # too.
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:uuid()', RICH_HOME, RICH_MANIFEST
+        )
+        results = finder.query()
+        assert len(results.results) == 2
+
+
+class TestDefinitionFieldAccessorFunctions:
+    # :on_arrival()/:sources() are SOURCE="definition" -- resolved
+    # against the named-file's definition.json config, not a manifest
+    # entry, and not affected by which version a pointer happens to
+    # select (definition.json is not versioned).
+    DEFINITION = {
+        "on_arrival": {
+            "named_paths_group": "order validations",
+            "run_method": "collect_paths",
+        },
+        "sources": {"a": {"address": "localhost", "port": 22}},
+    }
+
+    def test_on_arrival_whole_object(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():on_arrival()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == {
+            "named_paths_group": "order validations",
+            "run_method": "collect_paths",
+        }
+
+    def test_sources_whole_object(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():sources()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == {"a": {"address": "localhost", "port": 22}}
+
+    def test_never_configured_gives_none_not_an_error(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():on_arrival()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+    def test_same_value_regardless_of_which_version_is_selected(self):
+        # definition.json is not versioned -- :last() picks a different
+        # manifest entry than :first(), but :on_arrival() gives the same
+        # answer either way.
+        first = _finder(
+            '$rich.files.:name("orders.csv").:first():on_arrival()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        last = _finder(
+            '$rich.files.:name("orders.csv").:last():on_arrival()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert first.results[0].data == last.results[0].data
+
+
+class TestPathFunction:
+    # :path(inner) returns the filesystem path to whatever well-known
+    # resource `inner` points at, instead of its content -- and, unlike
+    # :manifest()/:definition() themselves, is meant to be poolable
+    # across "*"/unresolved versions (not exercised here, since "*" as
+    # root_major is not yet supported -- see manifest_field_functions_
+    # proposal.md's Rule 2).
+    def test_path_wrapping_manifest(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():path(:manifest())',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == f"{RICH_HOME}/manifest.json"
+
+    def test_path_wrapping_definition(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():path(:definition())',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == f"{RICH_HOME}/definition.json"
+
+    def test_path_alone_satisfies_the_no_pointer_gate(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:path(:manifest())',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.query()
+        assert len(results.results) == 2
+
+    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():path(:uuid())',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
 
 
 class TestExtractData:

@@ -1,20 +1,20 @@
 import pytest
 
-from csvpath.references.functions.all_3 import All3
-from csvpath.references.functions.data_3 import Data3
-from csvpath.references.functions.definition_3 import Definition3
-from csvpath.references.functions.errors_3 import Errors3
-from csvpath.references.functions.file_3 import File3
-from csvpath.references.functions.first_3 import First3
+from csvpath.references.functions.selectors.all_3 import All3
+from csvpath.references.functions.well_known_files.data_3 import Data3
+from csvpath.references.functions.well_known_files.definition_3 import Definition3
+from csvpath.references.functions.well_known_files.errors_3 import Errors3
+from csvpath.references.functions.well_known_files.file_3 import File3
+from csvpath.references.functions.selectors.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
-from csvpath.references.functions.idchain_3 import Idchain3
-from csvpath.references.functions.index_3 import Index3
-from csvpath.references.functions.last_3 import Last3
-from csvpath.references.functions.manifest_3 import Manifest3
-from csvpath.references.functions.meta_3 import Meta3
-from csvpath.references.functions.name_3 import Name3
-from csvpath.references.functions.unmatched_3 import Unmatched3
-from csvpath.references.functions.vars_3 import Vars3
+from csvpath.references.functions.filters.idchain_3 import Idchain3
+from csvpath.references.functions.selectors.index_3 import Index3
+from csvpath.references.functions.selectors.last_3 import Last3
+from csvpath.references.functions.well_known_files.manifest_3 import Manifest3
+from csvpath.references.functions.well_known_files.meta_3 import Meta3
+from csvpath.references.functions.selectors.name_3 import Name3
+from csvpath.references.functions.well_known_files.unmatched_3 import Unmatched3
+from csvpath.references.functions.well_known_files.vars_3 import Vars3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )

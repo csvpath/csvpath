@@ -346,7 +346,23 @@ _METADATA_FILE_FUNCTIONS = (
     "definition",
     "manifest",
 )
-_METADATA_FIELD_FUNCTIONS = ("idchain",)
+_METADATA_FIELD_FUNCTIONS = (
+    "idchain",
+    "uuid",
+    "time",
+    "fingerprint",
+    "home",
+    "origin",
+    "mark",
+    "named_paths_identities",
+    "named_paths_count",
+    "on_arrival",
+    "sources",
+    "scripts",
+    "webhooks",
+    "transfers",
+    "destinations",
+)
 
 
 class Reference3:

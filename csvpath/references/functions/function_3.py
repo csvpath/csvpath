@@ -39,6 +39,19 @@ class Function3:
     ARG_TYPES: tuple = ()
     ARG_REQUIRED: bool = False
 
+    #
+    # field-accessor functions only (e.g. :uuid(), :time(), :on_arrival())
+    # -- both left unset (None/{}) for every other function. SOURCE names
+    # which well-known, per-entity resource this field lives in ("manifest"
+    # or "definition"); KEY is a dict of datatype -> dotted key path within
+    # that resource's dict for this specific field (e.g. {Reference3.FILES:
+    # "on_arrival.named_paths_group"}). A finder uses these to resolve and
+    # extract the field generically, without per-function special-casing --
+    # see ReferenceFinder3._extract_field_value().
+    #
+    SOURCE: str = None
+    KEY: dict = {}
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 
