@@ -40,9 +40,16 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    files, rather than reducing per matched prefix separately), and the
 #    combined chain's at most one pointer function (:first()/:last()/
 #    :index(n)) reduces that WHOLE pool to one run; absent, every pooled
-#    run comes back unreduced. This is how "Name_one used alone == path to
-#    run dir" (STRUCTURE table) is reached. The "#worksheet" marker
-#    (name_two, files-only) is not meaningful here and is rejected.
+#    run comes back unreduced -- for query()'s own purposes (just listing
+#    paths/uuids). This is how "Name_one used alone == path to run dir"
+#    (STRUCTURE table) is reached. The "#worksheet" marker (name_two,
+#    files-only) is not meaningful here and is rejected. Resolving full
+#    content (:manifest(), or an instance-level accessor -- see below) is
+#    a stricter case: if no pointer narrows the pool and more than one run
+#    matched, query() raises rather than pooling several runs' content --
+#    settled 2026-08-07, see manifest_field_functions_proposal.md's
+#    "Entity resolution and pooling" section. Listing (query() alone) is
+#    unaffected either way.
 #  - name_three, if present, is an identity lookup into the selected run's
 #    own instance-directory listing (one subdirectory per csvpath statement,
 #    named by that statement's identity -- same convention as csvpaths'
@@ -56,7 +63,12 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    just say what to resolve to once an instance is already identified.
 #    Resolving a matched instance with NO accessor present still gives None
 #    (no default) -- only the identity/:all() selection was made, nothing
-#    further was asked for.
+#    further was asked for. An accessor riding alongside :all() specifically
+#    (rather than one specific identity) is illegal, for the same single-
+#    entity reason as the run-level case above: :all() means every instance
+#    in the run, each with its own separate well-known file on disk, so
+#    reading their content all at once is exactly the "more than one entity"
+#    case the rule forbids.
 #
 # storage facts this relies on (confirmed against ResultsManager/
 # ResultsRegistrar/ResultRegistrar/ResultSerializer, and a real archive-root
@@ -123,13 +135,46 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
-        identity, match_all, _ = self._name_three_selector(reference.name_three)
+        identity, match_all, accessor = self._name_three_selector(reference.name_three)
+        has_manifest = any(
+            seg.contains_function_named("manifest")
+            for seg in calls
+            if isinstance(seg, FunctionCall3)
+        )
+        wants_full_content = has_manifest or accessor is not None
 
         if pointer is not None:
             selected = self._apply_pointer(pointer, candidates)
             selected_runs = [selected] if selected is not None else []
         else:
             selected_runs = candidates
+            if len(selected_runs) > 1 and wants_full_content:
+                # Resolving full manifest/well-known-file content always
+                # touches exactly one entity (settled 2026-08-07, see
+                # manifest_field_functions_proposal.md's "Entity
+                # resolution and pooling" section) -- more than one run
+                # here needs a pointer to pick which one, whether the
+                # content lives at the run level (:manifest()) or the
+                # instance level (an accessor riding on name_three).
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 requires a pointer (:first()/"
+                    ":last()/:index(n)) to pick one run when reading full "
+                    "content and more than one run matches -- resolving "
+                    "full content always touches exactly one entity."
+                )
+
+        if match_all and accessor is not None:
+            # :all() pools every instance in the run -- each instance has
+            # its own separate well-known file on disk, so this is the
+            # same "more than one entity" case as above, just one level
+            # down. A specific identity is still fine: that is already
+            # exactly one instance.
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 requires a specific statement "
+                "identity, not :all(), to read full well-known-file "
+                "content -- resolving full content always touches "
+                "exactly one entity."
+            )
 
         results = []
         for run_dir in selected_runs:
@@ -159,13 +204,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # name_one (e.g. "$acme.results.customers/2025:first()
             # :manifest()") -- the STRUCTURE table's own "Resolve
             # terminating at name_one, with file pointer: results:
-            # contents of manifest.json" row. Unlike files/csvpaths,
-            # there is no "filtered list vs single entry" distinction
-            # here -- a run's own manifest.json is already a single
-            # dict, not an array, so every matched run (whether reduced
-            # to one by a pointer, or left as many) just resolves to
-            # its own dict, the same way each already gets its own
-            # result via the ordinary resolve() per-result loop.
+            # contents of manifest.json" row.
+            #
+            # Files/csvpaths share ONE manifest.json array across every
+            # version of a named-file/named-paths group, so resolving
+            # several matched versions' :manifest() means filtering that
+            # one shared array down to several entries (see
+            # _find_manifest_entry_by_uuid). Results is different: each
+            # matched run has its OWN separate manifest.json file on
+            # disk -- reading more than one would mean opening more than
+            # one file, which query()'s own guard above already forbids
+            # (a pointer is required whenever more than one run would
+            # otherwise match). So by the time we get here, result.path
+            # is always exactly one run's directory, and we just read
+            # its own manifest.json directly (below), the same as any
+            # other per-result payload via the ordinary resolve() loop.
             if reference.name_three is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 does not support combining "
