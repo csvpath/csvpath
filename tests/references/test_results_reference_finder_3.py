@@ -396,6 +396,26 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == []
 
+    def test_errors_with_idchain_regex_filters_by_search_not_full_match(
+        self, acme_archive, instance_dir
+    ):
+        # a regex idchain arg uses search(), so it does not need to
+        # anchor to the whole source string -- it just needs to find
+        # the match-component pattern somewhere within it.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "add[1]string[2]", "message": "different add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain(/add\\[\\d\\]/))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0], errors[1]]
+
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}
         with open(os.path.join(instance_dir, "vars.json"), "w") as f:

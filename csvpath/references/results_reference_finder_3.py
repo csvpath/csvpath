@@ -220,7 +220,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 and accessor.name == "errors"
                 and isinstance(accessor.arg, Idchain3)
             ):
-                data = [e for e in data if e.get("source") == accessor.arg.arg]
+                data = [e for e in data if accessor.arg.matches(e.get("source"))]
             return data
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
