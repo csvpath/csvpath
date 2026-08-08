@@ -7,6 +7,7 @@ from csvpath.references.functions.errors_3 import Errors3
 from csvpath.references.functions.file_3 import File3
 from csvpath.references.functions.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
+from csvpath.references.functions.idchain_3 import Idchain3
 from csvpath.references.functions.index_3 import Index3
 from csvpath.references.functions.last_3 import Last3
 from csvpath.references.functions.manifest_3 import Manifest3
@@ -82,6 +83,24 @@ class TestBuild:
         )
         assert isinstance(f, File3)
         assert f.arg == "orders.parquet"
+
+    def test_builds_idchain(self):
+        f = ReferenceFunctionFactory.build(
+            FunctionCall3(name="idchain", arg="add[0]string[2]")
+        )
+        assert isinstance(f, Idchain3)
+        assert f.arg == "add[0]string[2]"
+
+    def test_builds_errors_with_nested_idchain(self):
+        f = ReferenceFunctionFactory.build(
+            FunctionCall3(
+                name="errors",
+                arg=FunctionCall3(name="idchain", arg="add[0]string[2]"),
+            )
+        )
+        assert isinstance(f, Errors3)
+        assert isinstance(f.arg, Idchain3)
+        assert f.arg.arg == "add[0]string[2]"
 
     def test_unknown_function_raises(self):
         with pytest.raises(ReferenceException3):

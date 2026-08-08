@@ -4,6 +4,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
+from .functions.idchain_3 import Idchain3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
@@ -39,9 +40,16 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    files, rather than reducing per matched prefix separately), and the
 #    combined chain's at most one pointer function (:first()/:last()/
 #    :index(n)) reduces that WHOLE pool to one run; absent, every pooled
-#    run comes back unreduced. This is how "Name_one used alone == path to
-#    run dir" (STRUCTURE table) is reached. The "#worksheet" marker
-#    (name_two, files-only) is not meaningful here and is rejected.
+#    run comes back unreduced -- for query()'s own purposes (just listing
+#    paths/uuids). This is how "Name_one used alone == path to run dir"
+#    (STRUCTURE table) is reached. The "#worksheet" marker (name_two,
+#    files-only) is not meaningful here and is rejected. Resolving full
+#    content (:manifest(), or an instance-level accessor -- see below) is
+#    a stricter case: if no pointer narrows the pool and more than one run
+#    matched, query() raises rather than pooling several runs' content --
+#    settled 2026-08-07, see manifest_field_functions_proposal.md's
+#    "Entity resolution and pooling" section. Listing (query() alone) is
+#    unaffected either way.
 #  - name_three, if present, is an identity lookup into the selected run's
 #    own instance-directory listing (one subdirectory per csvpath statement,
 #    named by that statement's identity -- same convention as csvpaths'
@@ -55,7 +63,12 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    just say what to resolve to once an instance is already identified.
 #    Resolving a matched instance with NO accessor present still gives None
 #    (no default) -- only the identity/:all() selection was made, nothing
-#    further was asked for.
+#    further was asked for. An accessor riding alongside :all() specifically
+#    (rather than one specific identity) is illegal, for the same single-
+#    entity reason as the run-level case above: :all() means every instance
+#    in the run, each with its own separate well-known file on disk, so
+#    reading their content all at once is exactly the "more than one entity"
+#    case the rule forbids.
 #
 # storage facts this relies on (confirmed against ResultsManager/
 # ResultsRegistrar/ResultRegistrar/ResultSerializer, and a real archive-root
@@ -113,23 +126,55 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # "$acme.results.:all()"/"$acme.results.:last()" -- every run
             # discovered for the group is a candidate, no prefix narrowing.
             candidates = run_homes
-            calls = [name_one.path[0], *name_one.functions]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-            calls = list(name_one.functions)
         candidates = sorted(candidates)
 
+        calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
-        identity, match_all, _ = self._name_three_selector(reference.name_three)
+        identity, match_all, accessor = self._name_three_selector(reference.name_three)
+        has_manifest = any(
+            seg.contains_function_named("manifest")
+            for seg in calls
+            if isinstance(seg, FunctionCall3)
+        )
+        wants_full_content = has_manifest or accessor is not None
 
         if pointer is not None:
             selected = self._apply_pointer(pointer, candidates)
             selected_runs = [selected] if selected is not None else []
         else:
             selected_runs = candidates
+            if len(selected_runs) > 1 and wants_full_content:
+                # Resolving full manifest/well-known-file content always
+                # touches exactly one entity (settled 2026-08-07, see
+                # manifest_field_functions_proposal.md's "Entity
+                # resolution and pooling" section) -- more than one run
+                # here needs a pointer to pick which one, whether the
+                # content lives at the run level (:manifest()) or the
+                # instance level (an accessor riding on name_three).
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 requires a pointer (:first()/"
+                    ":last()/:index(n)) to pick one run when reading full "
+                    "content and more than one run matches -- resolving "
+                    "full content always touches exactly one entity."
+                )
+
+        if match_all and accessor is not None:
+            # :all() pools every instance in the run -- each instance has
+            # its own separate well-known file on disk, so this is the
+            # same "more than one entity" case as above, just one level
+            # down. A specific identity is still fine: that is already
+            # exactly one instance.
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 requires a specific statement "
+                "identity, not :all(), to read full well-known-file "
+                "content -- resolving full content always touches "
+                "exactly one entity."
+            )
 
         results = []
         for run_dir in selected_runs:
@@ -148,8 +193,51 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        name_one_calls = self._combined_name_one_calls(reference.name_one)
+        has_manifest = any(
+            seg.contains_function_named("manifest")
+            for seg in name_one_calls
+            if isinstance(seg, FunctionCall3)
+        )
+        if has_manifest:
+            # :manifest() rides beside the run-selecting pointer in
+            # name_one (e.g. "$acme.results.customers/2025:first()
+            # :manifest()") -- the STRUCTURE table's own "Resolve
+            # terminating at name_one, with file pointer: results:
+            # contents of manifest.json" row.
+            #
+            # Files/csvpaths share ONE manifest.json array across every
+            # version of a named-file/named-paths group, so resolving
+            # several matched versions' :manifest() means filtering that
+            # one shared array down to several entries (see
+            # _find_manifest_entry_by_uuid). Results is different: each
+            # matched run has its OWN separate manifest.json file on
+            # disk -- reading more than one would mean opening more than
+            # one file, which query()'s own guard above already forbids
+            # (a pointer is required whenever more than one run would
+            # otherwise match). So by the time we get here, result.path
+            # is always exactly one run's directory, and we just read
+            # its own manifest.json directly (below), the same as any
+            # other per-result payload via the ordinary resolve() loop.
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining "
+                    ":manifest() on name_one with name_three -- resolve "
+                    "the run's own manifest on its own, without a "
+                    "further instance selector."
+                )
+            return self._read_well_known_json(
+                Nos(result.path).join("manifest.json")
+            )
+
         kind = reference.resolve_kind
-        if kind == Reference3.METADATA_FILE:
+        if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
+            # both land here: :errors() alone classifies as METADATA_FILE,
+            # :errors(:idchain(...)) classifies as METADATA_FIELD (a
+            # nested pointer-like arg -- see Reference3.resolve_kind) --
+            # _read_accessor already handles the idchain-filtering
+            # internally based on accessor.arg, so both kinds resolve
+            # identically from here.
             _, _, accessor = self._name_three_selector(reference.name_three)
             if accessor is not None:
                 return self._read_accessor(result.path, accessor)
@@ -171,10 +259,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """resolves a well-known instance-level file accessor (errors/
         vars/meta -> parsed JSON; data/unmatched -> raw bytes, both
         genuinely optional, None if never written; file("...") -> raw
-        bytes of the user-named file, also optional)."""
+        bytes of the user-named file, also optional). :errors() may
+        carry a nested :idchain(...) argument, filtering the parsed
+        list down to entries whose own "source" field (Error.to_json()
+        -- Matchable.my_chain, recorded once at error time, not walked
+        live) matches -- zero matches is a legitimate empty list, not
+        None or an error; the file itself was found and read fine."""
         if accessor.name in cls._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
-            return cls._read_well_known_json(path)
+            data = cls._read_well_known_json(path)
+            if (
+                data is not None
+                and accessor.name == "errors"
+                and isinstance(accessor.arg, Idchain3)
+            ):
+                data = [e for e in data if accessor.arg.matches(e.get("source"))]
+            return data
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
             return cls._read_well_known_file(path)
@@ -228,6 +328,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
             found.append(ReferenceResult3(path=inst_dir, uuid=uuid))
         return found
+
+    @classmethod
+    def _combined_name_one_calls(cls, name_one) -> list:
+        """name_one's own effective function chain, used for both
+        pointer-detection (query()) and ":manifest()"-detection
+        (_extract_data()) -- the bare/function-only shape's path[0] is
+        itself part of the chain (mirrors csvpaths); the literal-path
+        shape's path segments are never functions (except :name(...),
+        which is path-building, not chain content), so only its
+        trailing .functions counts there."""
+        if cls._is_bare_function_only(name_one):
+            return [name_one.path[0], *name_one.functions]
+        return list(name_one.functions)
 
     @staticmethod
     def _is_bare_function_only(name_one) -> bool:
