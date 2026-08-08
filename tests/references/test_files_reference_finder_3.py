@@ -270,16 +270,26 @@ class TestManifestCombinedWithNameThree:
     # entry, unreduced). Neither shape routes through
     # _is_bare_pointer_reference -- that is only for the sole-content
     # "$acme.files.:manifest()" case.
-    def test_manifest_alone_in_name_three_gives_every_matching_entry(self):
-        # "one.csv" has two versions in ALPHA_MANIFEST -- no pointer, so
-        # both come back, each resolving to its own manifest entry dict.
+    def test_manifest_alone_with_more_than_one_matching_version_raises(self):
+        # "one.csv" has two versions in ALPHA_MANIFEST -- resolving full
+        # manifest content always touches exactly one entity (settled
+        # 2026-08-07), so no pointer to pick between them is illegal now,
+        # not "every entry, unreduced" as it used to be.
         finder = _finder(
             '$alpha.files.:name("one.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
         )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_manifest_alone_with_exactly_one_matching_version_still_works(self):
+        # "zero.csv" has only one version -- no pointer needed, since
+        # there is nothing to pick between.
+        finder = _finder(
+            '$alpha.files.:name("zero.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        )
         results = finder.resolve()
-        assert results.uuids == ["u-one-1", "u-one-2"]
-        assert results.data_for_uuid("u-one-1") == ALPHA_MANIFEST[1]
-        assert results.data_for_uuid("u-one-2") == ALPHA_MANIFEST[2]
+        assert results.uuids == ["u-zero-1"]
+        assert results.results[0].data == ALPHA_MANIFEST[0]
 
     def test_manifest_beside_a_pointer_gives_the_one_matched_entry(self):
         finder = _finder(

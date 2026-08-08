@@ -307,17 +307,30 @@ class TestManifestOnNameOne:
         ).resolve()
         assert results.results[0].data == {"run_uuid": "run2-uuid"}
 
-    def test_manifest_with_no_pointer_gives_every_runs_own_manifest(
+    def test_manifest_with_no_pointer_and_more_than_one_matching_run_raises(
         self, acme_archive
     ):
+        # "customers/2025" matches both run1 and run2. Resolving full
+        # manifest content always touches exactly one entity (settled
+        # 2026-08-07), so this is illegal now, not "every run's own
+        # manifest, pooled" as it used to be -- a pointer is required to
+        # pick one run.
+        finder = _finder("$acme.results.customers/2025:manifest()", acme_archive)
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_manifest_with_no_pointer_and_exactly_one_matching_run_still_works(
+        self, tmp_path
+    ):
+        # a prefix that only ever matches one run needs no pointer --
+        # there is nothing to pick between.
+        base = tmp_path / "solo" / "customers" / "2025"
+        run = _make_run(base, "2026-01-01_00-00-00", "solo-uuid", {})
+        _write_archive_manifest(tmp_path, "solo", [run])
         results = _finder(
-            "$acme.results.customers/2025:manifest()", acme_archive
+            "$solo.results.customers/2025:manifest()", str(tmp_path)
         ).resolve()
-        by_uuid = {r.uuid: r.data for r in results.results}
-        assert by_uuid == {
-            "run1-uuid": {"run_uuid": "run1-uuid"},
-            "run2-uuid": {"run_uuid": "run2-uuid"},
-        }
+        assert results.results[0].data == {"run_uuid": "solo-uuid"}
 
     def test_manifest_does_not_count_as_a_second_pointer(self, acme_archive):
         # Manifest3 is VALUE-role, not POINTER -- combined with a real
@@ -396,6 +409,26 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == []
 
+    def test_errors_with_idchain_regex_filters_by_search_not_full_match(
+        self, acme_archive, instance_dir
+    ):
+        # a regex idchain arg uses search(), so it does not need to
+        # anchor to the whole source string -- it just needs to find
+        # the match-component pattern somewhere within it.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "add[1]string[2]", "message": "different add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain(/add\\[\\d\\]/))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0], errors[1]]
+
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}
         with open(os.path.join(instance_dir, "vars.json"), "w") as f:
@@ -467,10 +500,13 @@ class TestWellKnownFileAccessors:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_accessor_combined_with_all_reads_each_instance_own_file(
-        self, acme_archive
-    ):
-        # run1 has two instances: company_names and "1".
+    def test_accessor_combined_with_all_raises(self, acme_archive):
+        # run1 has two instances: company_names and "1", each with its
+        # own separate meta.json. Resolving full content always touches
+        # exactly one entity (settled 2026-08-07), so :all() (every
+        # instance in the run) combined with an accessor is illegal now,
+        # not "each instance's own file, pooled" as it used to be -- a
+        # specific identity is required to pick one instance.
         base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
         os.makedirs(f"{base}/company_names", exist_ok=True)
         os.makedirs(f"{base}/1", exist_ok=True)
@@ -478,11 +514,24 @@ class TestWellKnownFileAccessors:
             json.dump({"which": "company_names"}, f)
         with open(f"{base}/1/meta.json", "w") as f:
             json.dump({"which": "1"}, f)
-        results = _finder(
+        finder = _finder(
             "$acme.results.customers/2025:first().:all():meta()", acme_archive
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_accessor_combined_with_a_specific_identity_still_works(
+        self, acme_archive
+    ):
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        os.makedirs(f"{base}/company_names", exist_ok=True)
+        with open(f"{base}/company_names/meta.json", "w") as f:
+            json.dump({"which": "company_names"}, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:meta()",
+            acme_archive,
         ).resolve()
-        by_which = {r.data["which"] for r in results.results}
-        assert by_which == {"company_names", "1"}
+        assert results.results[0].data == {"which": "company_names"}
 
 
 class TestScopeLimits:

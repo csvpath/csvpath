@@ -1,4 +1,7 @@
-from ...reference_3 import Reference3
+import re
+
+from ...reference_3 import Reference3, Regex3
+from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
 
 
@@ -19,13 +22,46 @@ class Idchain3(Function3):
     # so far: it does not narrow/select anything itself, it is a value
     # fed to :errors()'s own filtering logic.
     #
+    # arg may be a plain str (exact match against an entry's "source",
+    # the original behavior) or a Regex3 (":idchain(/pattern/)") for a
+    # minimally-searchable match -- David's own call after weighing
+    # search()/match()/fullmatch(): search(), so the pattern does not
+    # need to anchor to the whole idchain string, just find something
+    # within it (e.g. matching one match-component among several
+    # chained together). The grammar already allowed a REGEX arg
+    # everywhere a STRING is allowed, including here -- this is the
+    # first real consumer of Regex3 as an actual matching value rather
+    # than just a parsed/held object, so the compile-and-apply behavior
+    # lives here (matches()), not on the finder that calls it.
+    #
     NAME = "idchain"
     SUMMARY = (
         "Addresses one specific match component within a well-known "
-        "file's own entries (e.g. errors.json) by its idchain string -- "
-        "only meaningful nested inside :errors()."
+        "file's own entries (e.g. errors.json) by its idchain string, "
+        "either an exact match (a plain string) or a search (a /regex/) "
+        "-- only meaningful nested inside :errors()."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = (str,)
+    ARG_TYPES = (str, Regex3)
     ARG_REQUIRED = True
+
+    def __init__(self, *, arg=None) -> None:
+        super().__init__(arg=arg)
+        self._compiled = None
+        if isinstance(arg, Regex3):
+            try:
+                self._compiled = re.compile(arg.pattern)
+            except re.error as e:
+                raise ReferenceException3(f":idchain() regex is invalid: {e}") from e
+
+    def matches(self, value: str) -> bool:
+        """true if `value` (an error entry's own "source" idchain
+        string) matches this idchain's arg -- exact equality for a
+        plain string, or a regex search (not anchored to the start/
+        whole string) when the arg is a Regex3."""
+        if value is None:
+            return False
+        if self._compiled is not None:
+            return self._compiled.search(value) is not None
+        return value == self._arg

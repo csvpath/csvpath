@@ -85,6 +85,33 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
 
+        if len(selected_versions) > 1:
+            combined = [
+                seg
+                for seg in (name_one.path[0], *name_one.functions)
+                if isinstance(seg, FunctionCall3)
+            ]
+            # checked by direct name, not contains_function_named's
+            # recursive search -- :manifest() is never itself nested
+            # inside another function's arg except :path()'s (e.g.
+            # :path(:manifest())), which is deliberately exempt from
+            # this rule (Rule 2, poolable). A recursive check would
+            # incorrectly flag that case too.
+            has_manifest = any(seg.name == "manifest" for seg in combined)
+            if has_manifest:
+                # Resolving full manifest content always touches exactly
+                # one entity (settled 2026-08-07, see manifest_field_
+                # functions_proposal.md's "Entity resolution and pooling"
+                # section) -- more than one version here needs a pointer
+                # to pick which one.
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 requires a pointer (:first()/"
+                    ":last()/:index(n)) to pick one version when combining "
+                    ":manifest() with no pointer matches more than one "
+                    "version -- resolving full manifest content always "
+                    "touches exactly one entity."
+                )
+
         name_three = reference.name_three
         if name_three is not None:
             if name_three.functions:
