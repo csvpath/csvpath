@@ -179,14 +179,22 @@ class TestManifestFunction:
         assert results.uuids == ["v1-uuid"]
         assert results.results[0].data == ACME_MANIFEST[1]
 
-    def test_manifest_with_all_and_no_pointer_gives_every_version_entry(self):
+    def test_manifest_with_all_and_no_pointer_raises(self):
         # :all() (CONTEXT_SETTER) plus :manifest() (VALUE) -- neither is
-        # a pointer, so every version comes back unreduced, each
-        # resolving to its own manifest entry.
-        results = _finder("$acme.csvpaths.:all():manifest()").resolve()
-        assert results.uuids == ["v0-uuid", "v1-uuid"]
-        assert results.data_for_uuid("v0-uuid") == ACME_MANIFEST[0]
-        assert results.data_for_uuid("v1-uuid") == ACME_MANIFEST[1]
+        # a pointer, and ACME_MANIFEST has two versions. Resolving full
+        # manifest content always touches exactly one entity (settled
+        # 2026-08-07), so this is illegal now, not "every version,
+        # unreduced" as it used to be -- a pointer is required to pick
+        # one version.
+        finder = _finder("$acme.csvpaths.:all():manifest()")
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_manifest_with_no_pointer_and_exactly_one_version_still_works(self):
+        single_version = [ACME_MANIFEST[0]]
+        results = _finder("$acme.csvpaths.:all():manifest()", single_version).resolve()
+        assert results.uuids == ["v0-uuid"]
+        assert results.results[0].data == single_version[0]
 
 
 class TestDefinitionFunction:

@@ -121,11 +121,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             selected = self._apply_pointer(pointers[0], candidates)
             selected_candidates = [selected] if selected is not None else []
         else:
-            # :manifest() alone, no pointer -- every version matching
-            # name_one's own path narrowing, unreduced. This is how
-            # "$acme.files.orders.:manifest()" (David's own example) is
-            # actually reached: the manifest entries of every
-            # registration under "orders", not just one.
+            # :manifest() alone, no pointer -- legal only when name_one's
+            # own path narrowing already resolves to at most one version.
+            # Resolving full manifest content always touches exactly one
+            # entity (settled 2026-08-07, see manifest_field_functions_
+            # proposal.md's "Entity resolution and pooling" section) --
+            # more than one candidate here needs a pointer to pick which
+            # one, the same as it would for any other version-selecting
+            # reference.
+            if len(candidates) > 1:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 requires a pointer (:first()/"
+                    ":last()/:index(n)) to pick one version when combining "
+                    ":manifest() with path narrowing that matches more "
+                    "than one version -- resolving full manifest content "
+                    "always touches exactly one entity."
+                )
             selected_candidates = candidates
 
         return ReferenceResults3(
