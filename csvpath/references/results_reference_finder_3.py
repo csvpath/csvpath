@@ -4,7 +4,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
-from .functions.idchain_3 import Idchain3
+from .functions.filters.idchain_3 import Idchain3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3

@@ -204,6 +204,76 @@ class ReferenceFinder3(ABC):
         return pattern
 
     @staticmethod
+    def _extract_field_value(container: dict | None, key_path: str) -> object:
+        """walks a dotted key path (e.g. "on_arrival.named_paths_group")
+        through a dict, returning None the moment any segment is missing
+        or the container itself is None -- tolerant on purpose, matching
+        the same "absence is normal, not an error" treatment already used
+        for definition.json's own genuine optionality (see
+        _read_well_known_file). Shared by every finder resolving a field-
+        accessor function's Function3.KEY against either a manifest
+        entry or a definition.json dict -- both are plain dicts by the
+        time this is called, so the walk itself does not need to know
+        which kind of resource it came from."""
+        if container is None or key_path is None:
+            return None
+        value = container
+        for segment in key_path.split("."):
+            if not isinstance(value, dict) or segment not in value:
+                return None
+            value = value[segment]
+        return value
+
+    @staticmethod
+    def _find_field_function_call(functions: list) -> "FunctionCall3 | None":
+        """returns the first function in `functions` that is a
+        registered field-accessor (its class declares a SOURCE), or None
+        if none of them are. Shared by files/csvpaths finders to detect
+        a field function (e.g. :uuid(), :on_arrival()) riding in the same
+        terminal position :manifest() already rides in -- generalizing
+        the existing bare-":manifest()"-name check without hardcoding
+        each new field function's name at every call site."""
+        for f in functions:
+            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
+            if function_cls is not None and function_cls.SOURCE is not None:
+                return f
+        return None
+
+    @staticmethod
+    def _find_path_call(functions: list) -> "FunctionCall3 | None":
+        """returns the first ":path(...)" call in `functions`, or None
+        if absent. Checked by literal name rather than a registry
+        lookup, since ":path()" is a single fixed name, not a growing
+        list of field-accessor names -- matching how ":manifest()"
+        itself is already detected by name elsewhere in these finders."""
+        for f in functions:
+            if f.name == "path":
+                return f
+        return None
+
+    @staticmethod
+    def _resolve_path_call(path_call, home: str) -> str:
+        """given a raw ":path(inner)" FunctionCall3 and the already-
+        computed home directory for the enclosing entity, returns the
+        filesystem path to whatever well-known file `inner` names.
+        :manifest()/:definition() are the only ones available at the
+        FILES/CSVPATHS datatypes this covers so far -- see wrappers/
+        path_3.py. Shared by files/csvpaths: home is computed
+        differently per datatype (named_file_home vs named_paths_home),
+        but the join is identical once you have it."""
+        inner = path_call.arg
+        inner_name = inner.name if inner is not None else None
+        if inner_name not in ("manifest", "definition"):
+            raise ReferenceException3(
+                f":path() does not yet support wrapping :{inner_name}() -- "
+                "only :manifest()/:definition() are supported so far."
+            )
+        filename = f"{inner_name}.json"
+        return ReferenceFinder3._query_well_known_file(home, filename).results[
+            0
+        ].path
+
+    @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:
         """returns the index of `identity` within `identities` (exact
         string match), or None if absent. shared by any finder whose
