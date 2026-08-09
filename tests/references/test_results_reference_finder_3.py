@@ -798,6 +798,33 @@ class TestWellKnownFileAccessors:
         assert results.results[0].data == {"which": "company_names"}
 
 
+class TestGlobalArchiveLedger:
+    # Rule 1a: "*" at root_major combined with a bare :manifest() is the
+    # one exception to root_major=="*" being unsupported -- it resolves
+    # to the Archive Run Manifest, the single global ledger at the
+    # archive root already used internally to discover runs.
+    def test_query_returns_the_global_ledger_path_with_no_uuid(self, acme_archive):
+        results = _finder("$*.results.:manifest()", acme_archive).query()
+        assert results.files == [f"{acme_archive}/manifest.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_global_ledger_as_parsed_json(self, acme_archive):
+        results = _finder("$*.results.:manifest()", acme_archive).resolve()
+        data = results.results[0].data
+        assert isinstance(data, list)
+        assert {e["named_paths_name"] for e in data} == {"acme"}
+
+    def test_star_with_a_pointer_is_still_not_supported(self, acme_archive):
+        finder = _finder("$*.results.:last()", acme_archive)
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_star_with_path_narrowing_is_still_not_supported(self, acme_archive):
+        finder = _finder("$*.results.customers/2025:last()", acme_archive)
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+
 class TestScopeLimits:
     def test_star_root_major_not_yet_supported(self, acme_archive):
         finder = _finder("$*.results.customers/2025:last()", acme_archive)

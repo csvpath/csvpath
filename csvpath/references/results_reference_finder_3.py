@@ -105,10 +105,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         reference = self.ref.parsed
         root_major = reference.root_major
         if isinstance(root_major, Star3):
+            if self._is_bare_pointer_reference(reference, "manifest"):
+                # Rule 1a (manifest_field_functions_proposal.md): "*" at
+                # root_major combined with a bare :manifest() is the one
+                # exception -- it resolves to the Archive Run Manifest,
+                # the single global ledger at the archive root already
+                # used internally by _discover_run_homes() to find every
+                # run across every named-results group.
+                archive = self.csvpaths.config.get(section="results", name="archive")
+                return self._query_well_known_file(archive, "manifest.json")
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not yet support '*' as "
                 "root_major (querying every named-results group) -- use a "
-                "literal group name."
+                "literal group name, or a bare ':manifest()' to read the "
+                "global archive ledger."
             )
 
         name_one = reference.name_one
@@ -195,6 +205,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        if isinstance(reference.root_major, Star3):
+            # global-ledger case (Rule 1a) -- query()'s
+            # _query_well_known_file() branch already pointed result.path
+            # at the archive-root manifest.json itself, not a run
+            # directory, so read it directly rather than joining
+            # "manifest.json" onto it again (the ordinary, per-group
+            # has_manifest branch below does that join, but only
+            # because it deals with a run directory, not a file).
+            return self._read_well_known_json(result.path)
         name_one_calls = self._combined_name_one_calls(reference.name_one)
         has_manifest = any(
             seg.contains_function_named("manifest")

@@ -49,9 +49,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
         reference = self.ref.parsed
         root_major = reference.root_major
         if isinstance(root_major, Star3):
+            if self._is_bare_pointer_reference(reference, "manifest"):
+                # Rule 1a (manifest_field_functions_proposal.md): "*" at
+                # root_major combined with a bare :manifest() is the one
+                # exception -- it resolves to the Named-File Arrivals
+                # Manifest, a single global ledger at the named-files
+                # root tracking every arrival across every named-file
+                # (see files_listener.py). :definition() has no
+                # equivalent global resource, so it stays unsupported
+                # here, same as any other function.
+                home = self.csvpaths.config.inputs_files_path
+                return self._query_well_known_file(home, "manifest.json")
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support '*' as root_major "
-                "(querying every named-file) -- use a literal named-file name."
+                "(querying every named-file) -- use a literal named-file name, "
+                "or a bare ':manifest()' to read the global arrivals ledger."
             )
 
         name_one = reference.name_one
