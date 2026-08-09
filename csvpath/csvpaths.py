@@ -867,6 +867,7 @@ Cache: {cache}
             file=file,
             run_uuid=run_uuid,
             method="collect_paths",
+            template=template,
             extra_data=extra_data,
         )
         #
@@ -1038,6 +1039,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="fast_forward_paths",
+            template=template,
             extra_data=extra_data,
         )
         #
@@ -1157,6 +1159,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="next_paths",
+            template=template,
             extra_data=extra_data,
         )
         #
@@ -1652,6 +1655,7 @@ Cache: {cache}
             filename=filename,
             run_uuid=run_uuid,
             method="next_paths",
+            template=template,
             extra_data=extra_data,
         )
         #

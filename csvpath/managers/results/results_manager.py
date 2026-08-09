@@ -112,6 +112,7 @@ class ResultsManager:  # pylint: disable=C0115
         file: str = None,
         run_uuid: UUID,
         method: str,
+        template: str = None,
         extra_data: Optional[dict[str, str]] = None,
     ) -> ResultsMetadata:
         """@private"""
@@ -158,6 +159,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_paths_uuid_string = np_uuid
         mdata.named_results_name = pathsname
         mdata.method = method
+        mdata.template = template or ""
         rr.register_start(mdata)
         return mdata
 
