@@ -349,6 +349,127 @@ class TestManifestOnNameOne:
             finder.resolve()
 
 
+class TestFieldAccessorFunctions:
+    # generalized field-accessor wiring for RESULTS -- run-level field
+    # accessors ride in name_one's combined chain, the same slot
+    # :manifest() rides in; instance-level ones ride in name_three, the
+    # same slot :errors()/etc. ride in. Reference3.RESULTS picks the
+    # run-scope key, Reference3.RESULT the instance-scope key.
+    def test_run_uuid_at_run_scope(self, acme_archive):
+        results = _finder(
+            "$acme.results.customers/2025:first():run_uuid()", acme_archive
+        ).resolve()
+        assert results.results[0].data == "run1-uuid"
+
+    def test_run_uuid_at_instance_scope(self, tmp_path):
+        # _make_run's default fixture instance manifests only carry
+        # "uuid" -- run_uuid at instance scope needs its own manifest
+        # data with a "run_uuid" field actually present.
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst1-uuid", "run_uuid": "run1-uuid"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        results = _finder(
+            "$widgets.results.:first().company_names:run_uuid()",
+            str(tmp_path),
+        ).resolve()
+        assert results.results[0].data == "run1-uuid"
+
+    def test_uuid_at_instance_scope(self, acme_archive):
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:uuid()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == "inst1-uuid"
+
+    def test_uuid_at_run_scope_gives_none_not_the_deprecated_field(
+        self, acme_archive
+    ):
+        # :uuid()'s KEY has no Reference3.RESULTS entry at all -- run
+        # scope's own bare "uuid" is the deprecated field (see #225-
+        # adjacent findings) -- this must not accidentally surface it.
+        results = _finder(
+            "$acme.results.customers/2025:first():uuid()", acme_archive
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_run_level_field_accessor_combined_with_name_three_raises(
+        self, acme_archive
+    ):
+        finder = _finder(
+            "$acme.results.customers/2025:first():run_uuid().company_names",
+            acme_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
+
+    def test_run_uuid_with_no_pointer_and_multiple_runs_is_poolable(
+        self, acme_archive
+    ):
+        # unlike :manifest(), a field accessor stays poolable across
+        # multiple matched runs with no pointer -- Rule 3.
+        results = _finder(
+            "$acme.results.customers/2025:run_uuid()", acme_archive
+        ).resolve()
+        assert sorted(r.data for r in results.results) == [
+            "run1-uuid",
+            "run2-uuid",
+        ]
+
+    def test_uuid_combined_with_all_is_poolable(self, acme_archive):
+        # unlike an :errors()-style content accessor, a field accessor
+        # combined with :all() is legal -- Rule 3.
+        results = _finder(
+            "$acme.results.customers/2025:first().:all():uuid()", acme_archive
+        ).resolve()
+        assert sorted(r.data for r in results.results) == [
+            "inst1-uuid",
+            "inst2-uuid",
+        ]
+
+    def test_serial_and_valid_scope_dependent_keys(self, tmp_path):
+        # serial: same literal key at both scopes. valid: genuinely
+        # different keys (all_valid at run scope, valid at instance
+        # scope) -- the case Reference3.RESULT/RESULTS actually exists
+        # for.
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run-uuid", "serial": True, "all_valid": False},
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "serial": True, "valid": True},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_serial = _finder(
+            "$widgets.results.:first():serial()", str(tmp_path)
+        ).resolve()
+        assert run_serial.results[0].data is True
+
+        instance_serial = _finder(
+            "$widgets.results.:first().company_names:serial()", str(tmp_path)
+        ).resolve()
+        assert instance_serial.results[0].data is True
+
+        run_valid = _finder(
+            "$widgets.results.:first():valid()", str(tmp_path)
+        ).resolve()
+        assert run_valid.results[0].data is False
+
+        instance_valid = _finder(
+            "$widgets.results.:first().company_names:valid()", str(tmp_path)
+        ).resolve()
+        assert instance_valid.results[0].data is True
+
+
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
     # :unmatched() resolve to raw bytes and tolerate absence (None);

@@ -362,6 +362,9 @@ _METADATA_FIELD_FUNCTIONS = (
     "webhooks",
     "transfers",
     "destinations",
+    "run_uuid",
+    "serial",
+    "valid",
 )
 
 
@@ -378,6 +381,22 @@ class Reference3:
     FILES = "files"
     CSVPATHS = "csvpaths"
     RESULTS = "results"
+
+    #
+    # RESULT (singular) is NOT a real datatype -- it is never a value
+    # reference.datatype actually holds (the grammar has no "result"
+    # keyword; a reference is always written "$acme.results...."). It
+    # exists purely as a second key a field-accessor function's KEY dict
+    # can use, for the one datatype (RESULTS) that has two genuinely
+    # separate manifests at two different scopes: the run's own
+    # (Results-shaped, e.g. ResultsMetadata/ResultsRegistrar) and one
+    # per csvpath-statement instance within it (Result-shaped, e.g.
+    # ResultMetadata/ResultRegistrar) -- mirrors that exact plural/
+    # singular class-naming split already used throughout csvpath/
+    # managers/results/. Settled 2026-08-08/09, see
+    # manifest_field_functions_proposal.md.
+    #
+    RESULT = "result"
 
     FIRST_PARTY = "first_party"
     METADATA_FILE = "metadata_file"

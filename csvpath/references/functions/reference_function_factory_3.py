@@ -39,11 +39,14 @@ class ReferenceFunctionFactory:
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
         from .fields.on_arrival_3 import OnArrival3
         from .fields.origin_3 import Origin3
+        from .fields.run_uuid_3 import RunUuid3
         from .fields.scripts_3 import Scripts3
+        from .fields.serial_3 import Serial3
         from .fields.sources_3 import Sources3
         from .fields.time_3 import Time3
         from .fields.transfers_3 import Transfers3
         from .fields.uuid_3 import Uuid3
+        from .fields.valid_3 import Valid3
         from .fields.webhooks_3 import Webhooks3
 
         from .filters.idchain_3 import Idchain3
@@ -80,6 +83,9 @@ class ReferenceFunctionFactory:
             Transfers3.NAME: Transfers3,
             Destinations3.NAME: Destinations3,
             Path3.NAME: Path3,
+            RunUuid3.NAME: RunUuid3,
+            Serial3.NAME: Serial3,
+            Valid3.NAME: Valid3,
         }
 
     @classmethod

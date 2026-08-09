@@ -135,7 +135,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
-        identity, match_all, accessor = self._name_three_selector(reference.name_three)
+        identity, match_all, accessor, _ = self._name_three_selector(
+            reference.name_three
+        )
         has_manifest = any(
             seg.contains_function_named("manifest")
             for seg in calls
@@ -230,6 +232,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 Nos(result.path).join("manifest.json")
             )
 
+        run_field_call = self._find_field_function_call(name_one_calls)
+        if run_field_call is not None:
+            # a registered field-accessor (e.g. :run_uuid()) riding
+            # beside the run-selecting pointer in name_one, the same
+            # slot :manifest() rides in -- extracts one key from the
+            # run's own manifest.json instead of the whole dict. Same
+            # "no name_three" restriction as :manifest(), for the same
+            # reason: asking for both a run-level field and a specific
+            # instance at once is not a supported combination.
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining "
+                    "a run-level field accessor on name_one with "
+                    "name_three -- resolve the run's own field on its "
+                    "own, without a further instance selector."
+                )
+            function_cls = ReferenceFunctionFactory.get_registered_class(
+                run_field_call.name
+            )
+            entry = self._read_well_known_json(
+                Nos(result.path).join("manifest.json")
+            )
+            key_path = function_cls.KEY.get(Reference3.RESULTS)
+            return self._extract_field_value(entry, key_path)
+
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
             # both land here: :errors() alone classifies as METADATA_FILE,
@@ -238,9 +265,25 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # _read_accessor already handles the idchain-filtering
             # internally based on accessor.arg, so both kinds resolve
             # identically from here.
-            _, _, accessor = self._name_three_selector(reference.name_three)
+            _, _, accessor, field_call = self._name_three_selector(
+                reference.name_three
+            )
             if accessor is not None:
                 return self._read_accessor(result.path, accessor)
+            if field_call is not None:
+                # a registered field-accessor (e.g. :uuid()) riding
+                # alongside the identity/:all() selector, the same slot
+                # :errors() etc. ride in -- extracts one key from the
+                # matched instance's own manifest.json instead of a
+                # well-known file.
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    field_call.name
+                )
+                entry = self._read_well_known_json(
+                    Nos(result.path).join("manifest.json")
+                )
+                key_path = function_cls.KEY.get(Reference3.RESULT)
+                return self._extract_field_value(entry, key_path)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
@@ -372,30 +415,40 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
 
     @staticmethod
-    def _name_three_selector(name_three) -> tuple[str | None, bool, object]:
-        """returns (identity, match_all, accessor) for name_three --
-        identity is a literal statement-identity string to look up (None
-        if match_all, or if no identity/:all() selector is present at
-        all); match_all is True for :all() (every instance in the run);
-        accessor is the built well-known-file Function3 riding alongside
-        the identity/:all() selector, or None if none was requested
-        (resolving then gives None -- "no default"). An unrecognized
-        function raises via build_chain() itself ("Unknown reference
-        function") if it is not registered at all, or is rejected here
-        directly if it is registered but not meaningful as a name_three
-        function (e.g. :manifest())."""
+    def _name_three_selector(name_three) -> tuple[str | None, bool, object, object]:
+        """returns (identity, match_all, accessor, field_call) for
+        name_three -- identity is a literal statement-identity string to
+        look up (None if match_all, or if no identity/:all() selector is
+        present at all); match_all is True for :all() (every instance in
+        the run); accessor is the built well-known-file Function3 riding
+        alongside the identity/:all() selector; field_call is a
+        registered field-accessor Function3 (e.g. :uuid()) riding there
+        instead -- kept separate from accessor rather than one shared
+        variable, since field accessors are exempt from the single-
+        entity pooling rule (see query()) and content accessors are not;
+        conflating them would risk the same "field accessor accidentally
+        restricted like a content accessor" bug already hit twice during
+        the #228 merge. Resolving with neither present gives None -- "no
+        default". An unrecognized function raises via build_chain()
+        itself ("Unknown reference function") if it is not registered at
+        all, or is rejected here directly if it is registered but not
+        meaningful as a name_three function (e.g. :manifest())."""
         if name_three is None:
-            return None, False, None
+            return None, False, None, None
 
         match_all = False
         accessor = None
+        field_call = None
         if name_three.functions:
             built = ReferenceFunctionFactory.build_chain(name_three.functions)
+            field_call = ResultsReferenceFinder3._find_field_function_call(built)
             for f in built:
                 if f.name == "all":
                     match_all = True
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
+                elif f is field_call:
+                    continue
                 else:
                     raise ReferenceException3(
                         f"ResultsReferenceFinder3 does not yet support "
@@ -420,7 +473,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "literal statement identity or :all() to select which "
                 "instance(s) a well-known-file function applies to."
             )
-        return body, match_all, accessor
+        return body, match_all, accessor, field_call
 
     @staticmethod
     def _matches_prefix(run_home: str, home: str, pattern: list) -> bool:
