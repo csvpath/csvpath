@@ -10,11 +10,17 @@ def test_metadata():
     f = Home3()
     assert f.name == "home"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS)
+    assert f.DATATYPES == (
+        Reference3.FILES,
+        Reference3.CSVPATHS,
+        Reference3.RESULTS,
+    )
     assert f.SOURCE == "manifest"
     assert f.KEY == {
         Reference3.FILES: "file_home",
         Reference3.CSVPATHS: "named_paths_home",
+        Reference3.RESULTS: "run_home",
+        Reference3.RESULT: "instance_home",
     }
 
 

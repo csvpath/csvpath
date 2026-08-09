@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -468,6 +469,148 @@ class TestFieldAccessorFunctions:
             "$widgets.results.:first().company_names:valid()", str(tmp_path)
         ).resolve()
         assert instance_valid.results[0].data is True
+
+    def test_run_only_field_accessors(self, tmp_path):
+        # status/method/hostname/username/time_completed/manifest_path/
+        # named_paths_name -- run scope only, confirmed real keys in
+        # results_registrar.py.
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {
+                "run_uuid": "run-uuid",
+                "status": "complete",
+                "method": "collect",
+                "hostname": "box1",
+                "username": "auser",
+                "time_completed": "2026-08-09T00:00:00",
+                "manifest_path": str(run_dir / "manifest.json"),
+                "named_paths_name": "widgets",
+            },
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        def resolve(fn):
+            return _finder(
+                f"$widgets.results.:first():{fn}()", str(tmp_path)
+            ).resolve().results[0].data
+
+        assert resolve("status") == "complete"
+        assert resolve("method") == "collect"
+        assert resolve("hostname") == "box1"
+        assert resolve("username") == "auser"
+        assert resolve("time_completed") == "2026-08-09T00:00:00"
+        assert resolve("manifest_path") == str(run_dir / "manifest.json")
+        assert resolve("named_paths_name") == "widgets"
+
+    def test_completed_and_files_complete_scope_dependent_keys(self, tmp_path):
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {
+                "run_uuid": "run-uuid",
+                "all_completed": True,
+                "all_expected_files": False,
+            },
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "completed": True, "files_expected": True},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_completed = _finder(
+            "$widgets.results.:first():completed()", str(tmp_path)
+        ).resolve()
+        assert run_completed.results[0].data is True
+
+        run_files_complete = _finder(
+            "$widgets.results.:first():files_complete()", str(tmp_path)
+        ).resolve()
+        assert run_files_complete.results[0].data is False
+
+        instance_completed = _finder(
+            "$widgets.results.:first().company_names:completed()", str(tmp_path)
+        ).resolve()
+        assert instance_completed.results[0].data is True
+
+        instance_files_complete = _finder(
+            "$widgets.results.:first().company_names:files_complete()",
+            str(tmp_path),
+        ).resolve()
+        assert instance_files_complete.results[0].data is True
+
+    def test_named_file_name_shared_key_both_scopes(self, tmp_path):
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run-uuid", "named_file_name": "orders.csv"},
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "named_file_name": "orders.csv"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_name = _finder(
+            "$widgets.results.:first():named_file_name()", str(tmp_path)
+        ).resolve()
+        assert run_name.results[0].data == "orders.csv"
+
+        instance_name = _finder(
+            "$widgets.results.:first().company_names:named_file_name()",
+            str(tmp_path),
+        ).resolve()
+        assert instance_name.results[0].data == "orders.csv"
+
+    def test_instance_only_field_accessors(self, acme_archive):
+        run_dir = acme_archive + "/acme/customers/2025/2026-01-01_00-00-00"
+        _write_json(
+            Path(run_dir) / "company_names" / "manifest.json",
+            {
+                "uuid": "inst1-uuid",
+                "instance_identity": "company_names",
+                "actual_data_file": "/data/acme/actual.csv",
+                "origin_data_file": "/data/acme/origin.csv",
+                "file_fingerprints": {"data.csv": "abc123"},
+                "source_mode_preceding": True,
+                "preceding_instance_identity": "0",
+            },
+        )
+
+        def resolve(fn):
+            ref = f"$acme.results.customers/2025:first().company_names:{fn}()"
+            return _finder(ref, acme_archive).resolve().results[0].data
+
+        assert resolve("identity") == "company_names"
+        assert resolve("actual_data_file") == "/data/acme/actual.csv"
+        assert resolve("origin_data_file") == "/data/acme/origin.csv"
+        assert resolve("file_fingerprints") == {"data.csv": "abc123"}
+        assert resolve("source_mode_preceding") is True
+        assert resolve("preceding_instance_identity") == "0"
+
+    def test_manifest_path_reachable_at_instance_scope_too(self, tmp_path):
+        # confirmed present in the real Result Instance Manifest despite
+        # manifest_field_functions_proposal.md flagging it as a gap when
+        # that doc was written.
+        base = tmp_path / "acme" / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        instance_manifest_path = str(run_dir / "company_names" / "manifest.json")
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run-uuid"})
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "manifest_path": instance_manifest_path},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        result = _finder(
+            "$widgets.results.:first().company_names:manifest_path()",
+            str(tmp_path),
+        ).resolve()
+        assert result.results[0].data == instance_manifest_path
 
 
 class TestWellKnownFileAccessors:

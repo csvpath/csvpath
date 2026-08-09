@@ -10,9 +10,18 @@ def test_metadata():
     f = Time3()
     assert f.name == "time"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS)
+    assert f.DATATYPES == (
+        Reference3.FILES,
+        Reference3.CSVPATHS,
+        Reference3.RESULTS,
+    )
     assert f.SOURCE == "manifest"
-    assert f.KEY == {Reference3.FILES: "time", Reference3.CSVPATHS: "time"}
+    assert f.KEY == {
+        Reference3.FILES: "time",
+        Reference3.CSVPATHS: "time",
+        Reference3.RESULTS: "time",
+        Reference3.RESULT: "time",
+    }
 
 
 def test_no_arg_is_valid():
