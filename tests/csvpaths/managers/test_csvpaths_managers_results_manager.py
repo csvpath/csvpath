@@ -118,6 +118,33 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         results = paths.results_manager.get_named_results("print_test")
         assert results
 
+    def test_result_instance_manifest_persists_error_count(self):
+        # issue #227: error_count is computed by ResultRegistrar.
+        # register_complete() but was never written into the Result
+        # Instance Manifest by metadata_update() -- confirms the fix.
+        paths = Builder().build()
+        paths.file_manager.add_named_files_from_dir(FILES_DIR)
+        paths.paths_manager.add_named_paths(
+            name="error_count_test",
+            paths=[
+                """
+                ~ validation-mode: no-raise, print
+                $[3][
+                    add( "test", none() )
+                ]"""
+            ],
+        )
+        paths.fast_forward_paths(pathsname="error_count_test", filename="food")
+        results = paths.results_manager.get_named_results("error_count_test")
+        assert results
+        result = results[0]
+        assert result.errors_count > 0
+
+        m = Nos(result.instance_dir).join("manifest.json")
+        with DataFileReader(m) as file:
+            js = json.load(file.source)
+        assert js["error_count"] == result.errors_count
+
     def test_results_template_captured(self):
         paths = Builder().build()
 
