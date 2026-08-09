@@ -10,7 +10,7 @@ def test_metadata():
     f = NamedFileName3()
     assert f.name == "named_file_name"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.RESULTS,)
+    assert f.DATATYPES == (Reference3.RESULTS, Reference3.FILES)
     assert f.SOURCE == "manifest"
     assert f.KEY == {
         Reference3.RESULTS: "named_file_name",

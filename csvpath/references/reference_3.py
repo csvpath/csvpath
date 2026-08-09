@@ -368,6 +368,7 @@ _METADATA_FIELD_FUNCTIONS = (
     "completed",
     "files_complete",
     "named_file_name",
+    "named_file_home",
     "named_results_name",
     "named_paths_name",
     "status",

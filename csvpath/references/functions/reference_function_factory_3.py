@@ -43,6 +43,7 @@ class ReferenceFunctionFactory:
         from .fields.manifest_path_3 import ManifestPath3
         from .fields.mark_3 import Mark3
         from .fields.method_3 import Method3
+        from .fields.named_file_home_3 import NamedFileHome3
         from .fields.named_file_name_3 import NamedFileName3
         from .fields.named_paths_count_3 import NamedPathsCount3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
@@ -108,6 +109,7 @@ class ReferenceFunctionFactory:
             Completed3.NAME: Completed3,
             FilesComplete3.NAME: FilesComplete3,
             NamedFileName3.NAME: NamedFileName3,
+            NamedFileHome3.NAME: NamedFileHome3,
             NamedResultsName3.NAME: NamedResultsName3,
             NamedPathsName3.NAME: NamedPathsName3,
             Status3.NAME: Status3,
