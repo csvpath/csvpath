@@ -10,13 +10,10 @@ class Valid3(Function3):
     # written only once the run completes (optional -- absent for an
     # in-progress run, which _extract_field_value's own tolerance for a
     # missing key already handles as None, not an error). Instance scope
-    # (table 6) has "valid", this one statement's own validity. Same
-    # concept -- was everything OK -- but an aggregate and an individual
-    # are genuinely different questions, not just the same value stored
-    # two ways, per the 2026-08-08 discussion in manifest_field_
-    # functions_proposal.md: a case *for* splitting these into separately
-    # named functions was raised there and left open, not yet decided --
-    # kept as one shared name here for now, revisit if that changes.
+    # (table 6) has "valid", this one statement's own validity. An
+    # aggregate and an individual are different questions, so one shared
+    # function name reading two different manifest keys by scope is the
+    # right shape here -- settled 2026-08-09, not revisiting.
     #
     NAME = "valid"
     SUMMARY = (
