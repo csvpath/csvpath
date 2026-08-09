@@ -131,6 +131,7 @@ class FileRegistrar(Registrar, Listener):
         if mark is not None:
             mani["mark"] = mark
         mani["template"] = mdata.template or ""
+        mani["manifest_path"] = manifest_path
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)
