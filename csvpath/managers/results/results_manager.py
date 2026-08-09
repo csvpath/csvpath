@@ -61,6 +61,15 @@ class ResultsManager:  # pylint: disable=C0115
         """@private"""
         self._csvpaths = cs
 
+    def get_archive_ledger(self) -> list:
+        """the Archive Run Manifest -- a single global ledger tracking
+        every run across every named-results group, at the archive
+        root. distinct from any per-group results manifest. used by
+        ResultsReferenceFinder3 to resolve "*" root_major references
+        (bare :manifest(), optionally with a pointer to select one
+        entry by ordinal)."""
+        return RunRegistrar(self.csvpaths).manifest
+
     def complete_run(self, *, run_dir, pathsname, results) -> None:
         """@private"""
         rr = ResultsRegistrar(

@@ -37,6 +37,10 @@ class _FakeResultsManager:
     def get_named_results_home(self, name):
         return os.path.join(self._archive, name)
 
+    def get_archive_ledger(self):
+        with open(os.path.join(self._archive, "manifest.json")) as f:
+            return json.load(f)
+
 
 class _FakeCsvPaths:
     def __init__(self, archive: str):
@@ -823,6 +827,48 @@ class TestGlobalArchiveLedger:
         finder = _finder("$*.results.customers/2025:last()", acme_archive)
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+class TestGlobalArchiveLedgerOrdinalIndexing:
+    # Rule 1b: a pointer (:first()/:last()/:index(n)) riding before the
+    # bare :manifest() selects one entry out of the ledger by ordinal
+    # position, instead of dumping the whole thing. The archive ledger
+    # has no "uuid" key of its own (only "run_uuid"), unlike the files/
+    # csvpaths ledgers -- a separate, minimal fixture is used here rather
+    # than the shared acme_archive fixture, which does not write
+    # "run_uuid" into its entries at all.
+    LEDGER = [
+        {"named_paths_name": "acme", "run_uuid": "run-1"},
+        {"named_paths_name": "acme", "run_uuid": "run-2"},
+        {"named_paths_name": "acme", "run_uuid": "run-3"},
+    ]
+
+    def _archive(self, tmp_path) -> str:
+        _write_json(tmp_path / "manifest.json", self.LEDGER)
+        return str(tmp_path)
+
+    def test_last_gives_the_most_recent_run(self, tmp_path):
+        archive = self._archive(tmp_path)
+        results = _finder("$*.results.:last():manifest()", archive).resolve()
+        assert results.results[0].data == self.LEDGER[-1]
+
+    def test_index_gives_the_nth_run(self, tmp_path):
+        archive = self._archive(tmp_path)
+        results = _finder("$*.results.:index(1):manifest()", archive).resolve()
+        assert results.results[0].data == self.LEDGER[1]
+
+    def test_out_of_range_index_gives_no_results(self, tmp_path):
+        archive = self._archive(tmp_path)
+        results = _finder("$*.results.:index(99):manifest()", archive).query()
+        assert len(results.results) == 0
+
+    def test_query_gives_the_ledger_path_with_the_entrys_own_run_uuid(
+        self, tmp_path
+    ):
+        archive = self._archive(tmp_path)
+        results = _finder("$*.results.:last():manifest()", archive).query()
+        assert results.files == [f"{archive}/manifest.json"]
+        assert results.results[0].uuid == "run-3"
 
 
 class TestScopeLimits:

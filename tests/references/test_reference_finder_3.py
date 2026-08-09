@@ -144,6 +144,95 @@ class TestIsBarePointerReference:
         assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
 
 
+class TestPointerBeforeManifest:
+    # shared by every finder that supports ordinal indexing into a
+    # global ledger (Rule 1b) -- files/csvpaths/results all read a flat
+    # array in arrival order, so a pointer riding before the bare
+    # :manifest() (e.g. ":last():manifest()", parsed as name_one.path
+    # == [:last()], name_one.functions == [:manifest()]) means the same
+    # thing everywhere.
+    @staticmethod
+    def _ref(name_one, name_three=None) -> Reference3:
+        return Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=name_one,
+            name_three=name_three,
+        )
+
+    def test_true_for_pointer_then_bare_manifest(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last")],
+                functions=[FunctionCall3(name="manifest")],
+            )
+        )
+        pointer = ReferenceFinder3._pointer_before_manifest(r, "manifest")
+        assert pointer is not None
+        assert pointer.name == "last"
+
+    def test_index_pointer_keeps_its_arg(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="index", arg=3)],
+                functions=[FunctionCall3(name="manifest")],
+            )
+        )
+        pointer = ReferenceFinder3._pointer_before_manifest(r, "manifest")
+        assert pointer.name == "index"
+        assert pointer.arg == 3
+
+    def test_none_when_no_trailing_function(self):
+        r = self._ref(NameOne3(path=[FunctionCall3(name="last")]))
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_none_when_path_segment_is_not_a_pointer(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="all")],
+                functions=[FunctionCall3(name="manifest")],
+            )
+        )
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_none_when_trailing_function_is_not_the_named_one(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last")],
+                functions=[FunctionCall3(name="definition")],
+            )
+        )
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_none_when_trailing_function_has_an_arg(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last")],
+                functions=[FunctionCall3(name="manifest", arg="x")],
+            )
+        )
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_none_when_name_three_present(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last")],
+                functions=[FunctionCall3(name="manifest")],
+            ),
+            name_three=NameThree3(body="v1"),
+        )
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_none_with_extra_path_segments(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last"), "extra"],
+                functions=[FunctionCall3(name="manifest")],
+            )
+        )
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+
 class TestQueryWellKnownFile:
     # shared query() branch for a fixed, home-directory-scoped JSON
     # resource (manifest.json, definition.json) -- both files and

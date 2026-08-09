@@ -199,6 +199,16 @@ class FileManager:
                 return _["reference"]
         return None
 
+    def get_arrivals_ledger(self) -> list:
+        """the Named-File Arrivals Manifest -- a single global ledger
+        tracking every named-file arrival across every name, distinct
+        from get_manifest()'s per-name manifest. used by
+        FilesReferenceFinder3 to resolve "*" root_major references
+        (bare :manifest(), optionally with a pointer to select one
+        entry by ordinal)."""
+        lst = FilesListener(self.csvpaths)
+        return lst.get_manifest(lst.manifest_path())
+
     def get_manifest(self, name: NamedFileName) -> json:
         if name is None:
             raise ValueError("Paths name cannot be None")
