@@ -128,6 +128,29 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert paths.file_manager.remove_named_file(nf)
         assert not paths.file_manager.has_named_file(nf)
 
+    def test_named_file_manifest_persists_manifest_path(self) -> None:
+        # manifest_path was computed by FileRegistrar.metadata_update() to
+        # know where to write, but was never written into the manifest
+        # entry itself -- same self-referential field that ResultsRegistrar
+        # and ResultRegistrar already persist for their own manifests.
+        paths = Builder().build()
+        nf = "orders"
+        if paths.file_manager.has_named_file(nf):
+            paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
+        paths.file_manager.add_named_file(name=nf, path=FILE)
+        assert paths.file_manager.has_named_file(nf)
+
+        home = paths.file_manager.named_file_home(nf)
+        mpath = Nos(home).join("manifest.json")
+        with DataFileReader(mpath) as file:
+            js = json.load(file.source)
+        assert js[-1]["manifest_path"] == mpath
+
+        assert paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
     #
     # base case. add zap, find zap
     #
