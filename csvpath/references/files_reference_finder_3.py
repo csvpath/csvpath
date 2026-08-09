@@ -216,6 +216,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
                 )
+                if function_cls.SOURCE == "computed":
+                    # never stored -- comes straight from the already-
+                    # resolved reference, no manifest/definition read at
+                    # all. see function_3.py's SOURCE comment.
+                    return self._compute_field(field_call.name, reference)
+                if field_call.name == "named_file_name":
+                    # a real, stored field at RESULTS/RESULT scope, but at
+                    # FILES scope this is just the already-known resolved
+                    # name -- reading it back from the manifest would be
+                    # redundant, so it is computed here instead, same
+                    # reasoning as the "computed" SOURCE branch above.
+                    return reference.root_major
                 key_path = function_cls.KEY.get(reference.datatype)
                 if function_cls.SOURCE == "definition":
                     config = self.csvpaths.file_manager.describer.get_config(
@@ -232,6 +244,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
             "-- only :manifest()/:definition() and registered field-accessor "
             "functions are wired up as metadata-file/field functions so far."
+        )
+
+    def _compute_field(self, name: str, reference: "Reference3") -> object:
+        """values for SOURCE == "computed" field-accessor functions --
+        never read from a manifest/definition, always derived from the
+        already-resolved reference. See function_3.py's SOURCE comment
+        and named_file_home_3.py."""
+        if name == "named_file_home":
+            return self.csvpaths.file_manager.named_file_home(reference.root_major)
+        raise ReferenceException3(
+            f"FilesReferenceFinder3 has no computed-field handling for :{name}()"
         )
 
     @staticmethod

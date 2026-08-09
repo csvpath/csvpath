@@ -151,6 +151,33 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         assert paths.file_manager.remove_named_file(nf)
         assert not paths.file_manager.has_named_file(nf)
 
+    def test_named_file_manifest_persists_file_name_and_registrant(self) -> None:
+        # file_name, username, and hostname were already captured on
+        # FileMetadata before FileRegistrar.metadata_update() ran, and are
+        # already persisted in the global arrivals ledger (files_listener.py),
+        # but metadata_update() never wrote them into the named-file's own
+        # per-version manifest entry.
+        paths = Builder().build()
+        nf = "orders"
+        if paths.file_manager.has_named_file(nf):
+            paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
+        paths.file_manager.add_named_file(name=nf, path=FILE)
+        assert paths.file_manager.has_named_file(nf)
+
+        home = paths.file_manager.named_file_home(nf)
+        mpath = Nos(home).join("manifest.json")
+        with DataFileReader(mpath) as file:
+            js = json.load(file.source)
+        entry = js[-1]
+        assert entry["file_name"] == os.path.basename(FILE)
+        assert entry["username"]
+        assert entry["hostname"]
+
+        assert paths.file_manager.remove_named_file(nf)
+        assert not paths.file_manager.has_named_file(nf)
+
     #
     # base case. add zap, find zap
     #

@@ -132,6 +132,9 @@ class FileRegistrar(Registrar, Listener):
             mani["mark"] = mark
         mani["template"] = mdata.template or ""
         mani["manifest_path"] = manifest_path
+        mani["file_name"] = mdata.file_name
+        mani["username"] = mdata.username
+        mani["hostname"] = mdata.hostname
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)

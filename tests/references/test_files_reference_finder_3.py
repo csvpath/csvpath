@@ -508,6 +508,30 @@ class TestFieldAccessorFunctions:
         results = finder.resolve()
         assert results.results[0].data is None
 
+    def test_named_file_name_is_computed_not_read(self):
+        # never stored in the Named-File Manifest -- reference.root_major
+        # is already the answer, so both matched entries give the same
+        # value with no pointer needed (see manifest_field_functions_
+        # proposal.md, settled 2026-08-09).
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:named_file_name()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert [r.data for r in results.results] == ["rich", "rich"]
+
+    def test_named_file_home_is_computed_not_read(self):
+        # SOURCE == "computed" -- file_manager.named_file_home(), not any
+        # manifest key, same reasoning as named_file_name above.
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():named_file_home()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == RICH_HOME
+
     def test_query_does_not_require_a_pointer_when_a_field_function_is_present(self):
         # this is the same "self-completing, no pointer needed" gate
         # :manifest() already gets -- a bare field function satisfies it

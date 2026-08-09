@@ -47,7 +47,13 @@ class Function3:
     # that resource's dict for this specific field (e.g. {Reference3.FILES:
     # "on_arrival.named_paths_group"}). A finder uses these to resolve and
     # extract the field generically, without per-function special-casing --
-    # see ReferenceFinder3._extract_field_value().
+    # see ReferenceFinder3._extract_field_value(). A third SOURCE value,
+    # "computed", marks a field that is never stored at all -- its value
+    # comes straight from the already-resolved reference/finder state
+    # (e.g. named_file_home). KEY is left empty ({}) for these; the owning
+    # finder computes the value itself, by function NAME, instead of doing
+    # a manifest/definition lookup. See named_file_home_3.py and
+    # FilesReferenceFinder3._extract_data().
     #
     SOURCE: str = None
     KEY: dict = {}
