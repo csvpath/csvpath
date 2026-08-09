@@ -58,10 +58,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         reference = self.ref.parsed
         root_major = reference.root_major
         if isinstance(root_major, Star3):
+            if self._is_bare_pointer_reference(reference, "manifest"):
+                # Rule 1a (manifest_field_functions_proposal.md): "*" at
+                # root_major combined with a bare :manifest() is the one
+                # exception -- it resolves to the Named-Paths Loads
+                # Manifest, a single global ledger at the named-paths
+                # root tracking every load across every named-paths
+                # group (see paths_listener.py). :definition() has no
+                # equivalent global resource, so it stays unsupported
+                # here, same as any other function.
+                home = self.csvpaths.config.inputs_csvpaths_path
+                return self._query_well_known_file(home, "manifest.json")
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not yet support '*' as "
                 "root_major (querying every named-paths group) -- use a "
-                "literal group name."
+                "literal group name, or a bare ':manifest()' to read the "
+                "global loads ledger."
             )
 
         name_one = reference.name_one

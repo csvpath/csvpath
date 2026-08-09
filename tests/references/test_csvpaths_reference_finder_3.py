@@ -63,15 +63,27 @@ class _FakePathsManager:
         return _FakePathsDescriber(self._definition)
 
 
+class _FakeConfig:
+    def __init__(self, inputs_csvpaths_path: str | None = None):
+        self.inputs_csvpaths_path = inputs_csvpaths_path
+
+
 class _FakeCsvPaths:
-    def __init__(self, paths_manager):
+    def __init__(self, paths_manager, inputs_csvpaths_path: str | None = None):
         self.paths_manager = paths_manager
+        self.config = _FakeConfig(inputs_csvpaths_path)
 
 
 def _finder(
-    reference: str, manifest: list = ACME_MANIFEST, definition: dict | None = None
+    reference: str,
+    manifest: list = ACME_MANIFEST,
+    definition: dict | None = None,
+    inputs_csvpaths_path: str | None = None,
 ) -> CsvpathsReferenceFinder3:
-    csvpaths = _FakeCsvPaths(_FakePathsManager(manifest, definition=definition))
+    csvpaths = _FakeCsvPaths(
+        _FakePathsManager(manifest, definition=definition),
+        inputs_csvpaths_path=inputs_csvpaths_path,
+    )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -212,6 +224,47 @@ class TestManifestFunction:
         results = _finder("$acme.csvpaths.:all():manifest()", single_version).resolve()
         assert results.uuids == ["v0-uuid"]
         assert results.results[0].data == single_version[0]
+
+
+class TestGlobalLoadsLedger:
+    # Rule 1a: "*" at root_major combined with a bare :manifest() is the
+    # one exception to root_major=="*" being unsupported -- it resolves
+    # to the Named-Paths Loads Manifest, a single global ledger at the
+    # named-paths root tracking every load across every named-paths
+    # group.
+    def test_query_returns_the_global_ledger_path_with_no_uuid(self):
+        results = _finder(
+            "$*.csvpaths.:manifest()",
+            inputs_csvpaths_path="inputs/named_paths",
+        ).query()
+        assert results.files == ["inputs/named_paths/manifest.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
+        content = b'[{"named_paths_name": "acme"}, {"named_paths_name": "beta"}]'
+        root = tmp_path / "named_paths"
+        root.mkdir()
+        (root / "manifest.json").write_bytes(content)
+        finder = _finder(
+            "$*.csvpaths.:manifest()", inputs_csvpaths_path=str(root)
+        )
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_star_with_definition_is_still_not_supported(self):
+        finder = _finder(
+            "$*.csvpaths.:definition()",
+            inputs_csvpaths_path="inputs/named_paths",
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_star_with_version_pointer_is_still_not_supported(self):
+        finder = _finder(
+            "$*.csvpaths.:last()", inputs_csvpaths_path="inputs/named_paths"
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
 
 
 class TestDefinitionFunction:

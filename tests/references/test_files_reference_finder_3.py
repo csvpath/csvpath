@@ -70,15 +70,28 @@ class _FakeFileManager:
         return _FakeFileDescriber(self._definition)
 
 
+class _FakeConfig:
+    def __init__(self, inputs_files_path: str | None = None):
+        self.inputs_files_path = inputs_files_path
+
+
 class _FakeCsvPaths:
-    def __init__(self, file_manager):
+    def __init__(self, file_manager, inputs_files_path: str | None = None):
         self.file_manager = file_manager
+        self.config = _FakeConfig(inputs_files_path)
 
 
 def _finder(
-    reference: str, home: str, manifest: list, definition: dict | None = None
+    reference: str,
+    home: str,
+    manifest: list,
+    definition: dict | None = None,
+    inputs_files_path: str | None = None,
 ) -> FilesReferenceFinder3:
-    csvpaths = _FakeCsvPaths(_FakeFileManager(home, manifest, definition))
+    csvpaths = _FakeCsvPaths(
+        _FakeFileManager(home, manifest, definition),
+        inputs_files_path=inputs_files_path,
+    )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -258,6 +271,59 @@ class TestManifestFunction:
         # "which file" pipeline, which does not recognize it as a
         # function-valued path segment.
         finder = _finder("$alpha.files.a/:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+
+class TestGlobalArrivalsLedger:
+    # Rule 1a: "*" at root_major combined with a bare :manifest() is the
+    # one exception to root_major=="*" being unsupported -- it resolves
+    # to the Named-File Arrivals Manifest, a single global ledger at the
+    # named-files root tracking every arrival across every named-file.
+    def test_query_returns_the_global_ledger_path_with_no_uuid(self):
+        finder = _finder(
+            "$*.files.:manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+        )
+        results = finder.query()
+        assert results.files == ["inputs/named_files/manifest.json"]
+        assert results.results[0].uuid is None
+
+    def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
+        content = b'[{"named_file_name": "alpha"}, {"named_file_name": "beta"}]'
+        root = tmp_path / "named_files"
+        root.mkdir()
+        (root / "manifest.json").write_bytes(content)
+        finder = _finder(
+            "$*.files.:manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path=str(root),
+        )
+        results = finder.resolve()
+        assert results.results[0].data == content
+
+    def test_star_with_definition_is_still_not_supported(self):
+        # :definition() has no equivalent global resource anywhere in
+        # the codebase -- stays unsupported at "*" root_major.
+        finder = _finder(
+            "$*.files.:definition()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+        )
+        with pytest.raises(ReferenceException3):
+            finder.query()
+
+    def test_star_with_path_narrowing_is_still_not_supported(self):
+        finder = _finder(
+            "$*.files.*.:last()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+        )
         with pytest.raises(ReferenceException3):
             finder.query()
 
