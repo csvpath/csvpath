@@ -28,6 +28,7 @@ class ResultsMetadata(Metadata):
         self.by_line: bool = False
         self._run_uuid: UUID = None
         self._method: str = None
+        self.template: str = None
 
     @property
     def extra_data(self) -> dict[str, str]:
@@ -131,3 +132,4 @@ class ResultsMetadata(Metadata):
         self.error_count = m.get("error_count")
         self.all_expected_files = m.get("all_expected_files")
         self.method = m.get("method")
+        self.template = m.get("template")

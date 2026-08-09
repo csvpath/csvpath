@@ -149,6 +149,7 @@ class ResultRegistrar(Registrar, Listener):
         m["valid"] = mdata.valid if mdata.valid is not None else ""
         m["completed"] = mdata.completed
         m["error_count"] = mdata.error_count
+        m["method"] = mdata.method
         m["source_mode_preceding"] = mdata.source_mode_preceding
         if mdata.source_mode_preceding:
             m["preceding_instance_identity"] = mdata.preceding_instance_identity

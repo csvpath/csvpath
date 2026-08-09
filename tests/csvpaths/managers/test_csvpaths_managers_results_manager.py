@@ -145,6 +145,49 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
             js = json.load(file.source)
         assert js["error_count"] == result.errors_count
 
+    def test_result_instance_manifest_persists_method(self):
+        # method is set on ResultMetadata but was never written into the
+        # Result Instance Manifest by ResultRegistrar.metadata_update() --
+        # confirms the fix (same bug shape as error_count / issue #227).
+        paths = Builder().build()
+        paths.file_manager.add_named_files_from_dir(FILES_DIR)
+        paths.paths_manager.add_named_paths(
+            name="method_persist_test",
+            paths=[""" ~ validation-mode: no-raise, print~ $[3][ print( "test" ) ]"""],
+        )
+        paths.fast_forward_paths(pathsname="method_persist_test", filename="food")
+        results = paths.results_manager.get_named_results("method_persist_test")
+        assert results
+        result = results[0]
+
+        m = Nos(result.instance_dir).join("manifest.json")
+        with DataFileReader(m) as file:
+            js = json.load(file.source)
+        assert js["method"] == "fast_forward_paths"
+
+    def test_results_run_manifest_persists_template(self):
+        # template was never captured on ResultsMetadata at all, so the
+        # per-run manifest.json in the run_dir (Results Run Manifest,
+        # table 5) never had a "template" key, unlike the archive-root
+        # ledger manifest (table 7, see test_results_template_captured).
+        paths = Builder().build()
+        paths.file_manager.add_named_file(name="food", path=PATH)
+        paths.paths_manager.add_named_paths(
+            name="run_template_capture",
+            paths=[""" ~ validation-mode: no-raise, print~ $[0][ print( "test" ) ]"""],
+        )
+        paths.fast_forward_paths(
+            pathsname="run_template_capture", filename="food", template=":0/:run_dir"
+        )
+        results = paths.results_manager.get_named_results("run_template_capture")
+        assert results
+        result = results[0]
+
+        m = Nos(result.run_dir).join("manifest.json")
+        with DataFileReader(m) as file:
+            js = json.load(file.source)
+        assert js["template"] == ":0/:run_dir"
+
     def test_results_template_captured(self):
         paths = Builder().build()
 

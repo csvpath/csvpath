@@ -118,6 +118,7 @@ class ResultsRegistrar(Registrar, Listener):
         m["username"] = mdata.username
         m["ip_address"] = mdata.ip_address
         m["method"] = mdata.method
+        m["template"] = mdata.template or ""
         mp = mdata.manifest_path
         m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
