@@ -61,6 +61,9 @@ class ResultsMetadata(Metadata):
         if u and not isinstance(u, UUID):
             raise ValueError("Must be a UUID")
         self._run_uuid = u
+        # uuid is a vestigial duplicate of run_uuid at this (run) scope --
+        # keep it mirrored here so it is a no-op to remove later.
+        self._uuid = u
 
     @property
     def run_uuid_string(self) -> str:
@@ -69,6 +72,7 @@ class ResultsMetadata(Metadata):
     @run_uuid_string.setter
     def run_uuid_string(self, u: str) -> None:
         self._run_uuid = UUID(u)
+        self._uuid = self._run_uuid
 
     @property
     def named_paths_uuid(self) -> UUID:
