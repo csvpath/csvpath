@@ -31,20 +31,39 @@ class ReferenceFunctionFactory:
         from .well_known_files.unmatched_3 import Unmatched3
         from .well_known_files.vars_3 import Vars3
 
+        from .fields.actual_data_file_3 import ActualDataFile3
+        from .fields.completed_3 import Completed3
         from .fields.destinations_3 import Destinations3
+        from .fields.file_fingerprints_3 import FileFingerprints3
+        from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
         from .fields.home_3 import Home3
+        from .fields.hostname_3 import Hostname3
+        from .fields.identity_3 import Identity3
+        from .fields.manifest_path_3 import ManifestPath3
         from .fields.mark_3 import Mark3
+        from .fields.method_3 import Method3
+        from .fields.named_file_name_3 import NamedFileName3
         from .fields.named_paths_count_3 import NamedPathsCount3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
+        from .fields.named_paths_name_3 import NamedPathsName3
+        from .fields.named_results_name_3 import NamedResultsName3
         from .fields.on_arrival_3 import OnArrival3
         from .fields.origin_3 import Origin3
+        from .fields.origin_data_file_3 import OriginDataFile3
+        from .fields.preceding_instance_identity_3 import (
+            PrecedingInstanceIdentity3,
+        )
         from .fields.run_uuid_3 import RunUuid3
         from .fields.scripts_3 import Scripts3
         from .fields.serial_3 import Serial3
+        from .fields.source_mode_preceding_3 import SourceModePreceding3
         from .fields.sources_3 import Sources3
+        from .fields.status_3 import Status3
         from .fields.time_3 import Time3
+        from .fields.time_completed_3 import TimeCompleted3
         from .fields.transfers_3 import Transfers3
+        from .fields.username_3 import Username3
         from .fields.uuid_3 import Uuid3
         from .fields.valid_3 import Valid3
         from .fields.webhooks_3 import Webhooks3
@@ -86,6 +105,23 @@ class ReferenceFunctionFactory:
             RunUuid3.NAME: RunUuid3,
             Serial3.NAME: Serial3,
             Valid3.NAME: Valid3,
+            Completed3.NAME: Completed3,
+            FilesComplete3.NAME: FilesComplete3,
+            NamedFileName3.NAME: NamedFileName3,
+            NamedResultsName3.NAME: NamedResultsName3,
+            NamedPathsName3.NAME: NamedPathsName3,
+            Status3.NAME: Status3,
+            Method3.NAME: Method3,
+            Hostname3.NAME: Hostname3,
+            Username3.NAME: Username3,
+            TimeCompleted3.NAME: TimeCompleted3,
+            ManifestPath3.NAME: ManifestPath3,
+            Identity3.NAME: Identity3,
+            ActualDataFile3.NAME: ActualDataFile3,
+            OriginDataFile3.NAME: OriginDataFile3,
+            FileFingerprints3.NAME: FileFingerprints3,
+            SourceModePreceding3.NAME: SourceModePreceding3,
+            PrecedingInstanceIdentity3.NAME: PrecedingInstanceIdentity3,
         }
 
     @classmethod

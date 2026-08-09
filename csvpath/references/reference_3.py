@@ -365,6 +365,23 @@ _METADATA_FIELD_FUNCTIONS = (
     "run_uuid",
     "serial",
     "valid",
+    "completed",
+    "files_complete",
+    "named_file_name",
+    "named_results_name",
+    "named_paths_name",
+    "status",
+    "method",
+    "hostname",
+    "username",
+    "time_completed",
+    "manifest_path",
+    "identity",
+    "actual_data_file",
+    "origin_data_file",
+    "file_fingerprints",
+    "source_mode_preceding",
+    "preceding_instance_identity",
 )
 
 

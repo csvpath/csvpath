@@ -9,20 +9,24 @@ class Home3(Function3):
     # concept across every datatype (file_home, named_paths_home,
     # run_home, instance_home) -- strong natural fit for one shared name,
     # per manifest_field_functions_proposal.md's Part A. RESULTS scopes
-    # (run_home/instance_home) are deferred with the rest of RESULTS.
+    # widened in now that the run-vs-instance dispatch (Reference3.RESULT)
+    # exists.
     #
     NAME = "home"
     SUMMARY = (
         "The path to the resolved entity's own root/working directory -- "
         "file_home for a named-file version, named_paths_home for a "
-        "named-paths group."
+        "named-paths group, run_home for a results run, instance_home "
+        "for a results instance."
     )
     ROLE = Function3.VALUE
-    DATATYPES = (Reference3.FILES, Reference3.CSVPATHS)
+    DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KEY = {
         Reference3.FILES: "file_home",
         Reference3.CSVPATHS: "named_paths_home",
+        Reference3.RESULTS: "run_home",
+        Reference3.RESULT: "instance_home",
     }
