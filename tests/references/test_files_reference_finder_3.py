@@ -54,17 +54,38 @@ class _FakeFileDescriber:
 
 
 class _FakeFileManager:
-    def __init__(self, home, manifest, definition: dict | None = None, ledger=None):
+    def __init__(
+        self,
+        home,
+        manifest,
+        definition: dict | None = None,
+        ledger=None,
+        by_name: dict | None = None,
+    ):
         self._home = home
         self._manifest = manifest
         self._definition = definition or {}
         self._ledger = manifest if ledger is None else ledger
+        # by_name: {name: (home, manifest)} -- only used by '*' traversal
+        # tests, which need more than one distinct named-file. Every
+        # other test uses the single (home, manifest) pair above.
+        self._by_name = by_name
 
     def named_file_home(self, name):
+        if self._by_name is not None:
+            return self._by_name[name][0]
         return self._home
 
     def get_manifest(self, name):
+        if self._by_name is not None:
+            return self._by_name[name][1]
         return self._manifest
+
+    @property
+    def named_file_names(self):
+        if self._by_name is not None:
+            return list(self._by_name.keys())
+        return []
 
     @property
     def files_root_manifest(self):
@@ -93,9 +114,10 @@ def _finder(
     definition: dict | None = None,
     inputs_files_path: str | None = None,
     ledger: list | None = None,
+    by_name: dict | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakeFileManager(home, manifest, definition, ledger=ledger),
+        _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
         inputs_files_path=inputs_files_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -213,10 +235,12 @@ class TestNameThreeAbsent:
 
 
 class TestScopeLimits:
-    def test_star_root_major_not_yet_supported(self):
+    def test_star_root_major_with_no_named_files_gives_empty_results(self):
+        # '*' traversal is supported now (see TestStarTraversal below) --
+        # with zero named-files to enumerate (no by_name given here), it
+        # correctly finds nothing rather than raising.
         finder = _finder("$*.files.*.:last()", ALPHA_HOME, ALPHA_MANIFEST)
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        assert finder.query().results == []
 
     def test_name_two_worksheet_marker_not_yet_supported(self):
         finder = _finder(
@@ -323,17 +347,6 @@ class TestGlobalArrivalsLedger:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_with_path_narrowing_is_still_not_supported(self):
-        finder = _finder(
-            "$*.files.*.:last()",
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-            inputs_files_path="inputs/named_files",
-        )
-        with pytest.raises(ReferenceException3):
-            finder.query()
-
-
 LEDGER = [
     {"named_file_name": "alpha", "uuid": "u-ledger-1"},
     {"named_file_name": "beta", "uuid": "u-ledger-2"},
@@ -411,6 +424,128 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         results = finder.query()
         assert results.files == ["inputs/named_files/manifest.json"]
         assert results.results[0].uuid == "u-ledger-3"
+
+
+#
+# matches the spec compendium's own EXAMPLE SCENARIO exactly ("Why a
+# trailing bare '*' is illegal but bare ':all()' is fine"): named-file
+# alpha (zero.csv x1 version, one.csv x2 versions), named-file beta
+# (two.csv x2 versions). beta is listed FIRST here on purpose -- naive
+# concatenation with no time-sort would put alpha's own entries last in
+# the pooled list, so a test asserting beta's true-latest entry wins
+# would fail if the flatten case's time-sort were ever removed/broken.
+#
+STAR_ALPHA_HOME = "inputs/named_files/alpha"
+STAR_ALPHA_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/zero.csv/aaa.csv",
+        "file_home": "inputs/named_files/alpha/zero.csv",
+        "uuid": "u-zero-1",
+        "time": "2026-01-01T00:00:00+00:00",
+    },
+    {
+        "file": "inputs/named_files/alpha/one.csv/bbb.csv",
+        "file_home": "inputs/named_files/alpha/one.csv",
+        "uuid": "u-one-1",
+        "time": "2026-01-02T00:00:00+00:00",
+    },
+    {
+        "file": "inputs/named_files/alpha/one.csv/ccc.csv",
+        "file_home": "inputs/named_files/alpha/one.csv",
+        "uuid": "u-one-2",
+        "time": "2026-01-03T00:00:00+00:00",
+    },
+]
+STAR_BETA_HOME = "inputs/named_files/beta"
+STAR_BETA_MANIFEST = [
+    {
+        "file": "inputs/named_files/beta/two.csv/ddd.csv",
+        "file_home": "inputs/named_files/beta/two.csv",
+        "uuid": "u-two-1",
+        "time": "2026-01-04T00:00:00+00:00",
+    },
+    {
+        "file": "inputs/named_files/beta/two.csv/eee.csv",
+        "file_home": "inputs/named_files/beta/two.csv",
+        "uuid": "u-two-2",
+        "time": "2026-01-05T00:00:00+00:00",
+    },
+]
+STAR_BY_NAME = {
+    "beta": (STAR_BETA_HOME, STAR_BETA_MANIFEST),
+    "alpha": (STAR_ALPHA_HOME, STAR_ALPHA_MANIFEST),
+}
+
+
+def _star_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(reference, STAR_ALPHA_HOME, STAR_ALPHA_MANIFEST, by_name=STAR_BY_NAME)
+
+
+class TestStarTraversalFlatten:
+    # bare '*'/path narrowing pools every named-file's matches into one
+    # combined list, sorted by true chronological order (each entry's
+    # own "time"), reduced by one terminal pointer.
+    def test_last_across_every_named_file_is_the_true_most_recent(self):
+        # beta's two.csv v2 (2026-01-05) is the global most-recent, not
+        # alpha's own last entry (2026-01-03) -- proves pooling crosses
+        # named-files and is truly time-sorted, not just concatenated.
+        results = _star_finder("$*.files.*.:last()").query()
+        assert results.uuids == ["u-two-2"]
+
+    def test_first_across_every_named_file_is_the_true_earliest(self):
+        results = _star_finder("$*.files.*.:first()").query()
+        assert results.uuids == ["u-zero-1"]
+
+    def test_index_selects_by_chronological_position(self):
+        # chronological order: zero-1, one-1, one-2, two-1, two-2
+        results = _star_finder("$*.files.*.:index(2)").query()
+        assert results.uuids == ["u-one-2"]
+
+    # Note: a bare, trailing "*" with no name_three (e.g. "$*.files.*")
+    # is illegal grammar -- same rule that already rejects "$alpha.
+    # files.*" alone (Reference3.check_valid()). The "no name_three"
+    # dedupe path is exercised via ':all()' instead, see
+    # TestStarTraversalGroup below.
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.files.*.:last():manifest()").query()
+
+    def test_combining_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.files.*.:last():uuid()").query()
+
+    def test_functions_directly_on_name_one_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.files.*:last().v1").query()
+
+
+class TestStarTraversalGroup:
+    # bare ':all()' as name_one's entire content partitions every
+    # named-file's matches by file_home (already unique per named-file+
+    # path), applying the terminal pointer independently within each
+    # group -- one result per (named-file, path) pair.
+    def test_all_with_last_gives_one_result_per_named_file_and_path(self):
+        results = _star_finder("$*.files.:all().:last()").query()
+        assert len(results.results) == 3
+        assert set(results.uuids) == {"u-zero-1", "u-one-2", "u-two-2"}
+
+    def test_all_with_first_gives_each_groups_earliest_version(self):
+        results = _star_finder("$*.files.:all().:first()").query()
+        assert len(results.results) == 3
+        assert set(results.uuids) == {"u-zero-1", "u-one-1", "u-two-1"}
+
+    def test_all_with_no_name_three_dedupes_to_file_home_directories(self):
+        results = _star_finder("$*.files.:all()").query()
+        assert set(results.files) == {
+            "inputs/named_files/alpha/zero.csv",
+            "inputs/named_files/alpha/one.csv",
+            "inputs/named_files/beta/two.csv",
+        }
+
+    def test_all_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.files.:all().:last():manifest()").query()
 
 
 class TestManifestCombinedWithNameThree:
