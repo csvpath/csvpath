@@ -294,6 +294,85 @@ class TestBareFunctionOnlyNameOne:
         assert results.uuids == ["flat-uuid"]
 
 
+class TestFlatten:
+    # ':flatten()' is the any-depth pooling counterpart of what a bare
+    # pointer used to do before it was redefined to zero-level-only
+    # (settled 2026-08-10) -- unlike a bare pointer (zero levels) or
+    # '*' (exactly one level), ':flatten()' matches any remaining depth.
+    def test_bare_flatten_finds_the_true_latest_regardless_of_depth(
+        self, tmp_path
+    ):
+        base = tmp_path / "mixed"
+        flat_run = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
+        deep_run = _make_run(
+            base / "customers" / "2025", "2026-01-02_00-00-00", "deep-uuid", {}
+        )
+        _write_archive_manifest(tmp_path, "mixed", [flat_run, deep_run])
+        results = _finder(
+            "$mixed.results.:flatten():last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["deep-uuid"]
+
+    def test_bare_flatten_still_finds_a_flat_run_when_it_is_latest(
+        self, tmp_path
+    ):
+        base = tmp_path / "mixed2"
+        flat_run = _make_run(base, "2026-01-02_00-00-00", "flat-uuid", {})
+        deep_run = _make_run(
+            base / "customers" / "2025", "2026-01-01_00-00-00", "deep-uuid", {}
+        )
+        _write_archive_manifest(tmp_path, "mixed2", [flat_run, deep_run])
+        results = _finder(
+            "$mixed2.results.:flatten():last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["flat-uuid"]
+
+    def test_prefixed_flatten_matches_any_depth_beyond_the_prefix(
+        self, tmp_path
+    ):
+        base = tmp_path / "beta_group"
+        shallow_run = _make_run(
+            base / "beta" / "x", "2026-01-01_00-00-00", "shallow-uuid", {}
+        )
+        deep_run = _make_run(
+            base / "beta" / "y" / "z", "2026-01-02_00-00-00", "deep-uuid", {}
+        )
+        other_run = _make_run(
+            base / "gamma", "2026-01-03_00-00-00", "other-uuid", {}
+        )
+        _write_archive_manifest(
+            tmp_path, "beta_group", [shallow_run, deep_run, other_run]
+        )
+        results = _finder(
+            "$beta_group.results.beta/:flatten():last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["deep-uuid"]
+
+    def test_bare_flatten_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.:flatten("x"):last()', str(tmp_path)
+            ).query()
+
+    def test_prefixed_flatten_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "run1-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.beta/:flatten("x"):last()', str(tmp_path)
+            ).query()
+
+    def test_flatten_combined_with_traversal_is_not_yet_supported(
+        self, two_group_archive
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder("$*.results.:flatten():last()", two_group_archive).query()
+
+
 class TestDiscoveryFromArchiveManifest:
     def test_dedupes_multiple_entries_sharing_one_run_home(self, tmp_path):
         # a real run_home is written once per csvpath-statement

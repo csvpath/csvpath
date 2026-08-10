@@ -193,24 +193,49 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             is_grouped = any(
                 isinstance(c, FunctionCall3) and c.name == "all" for c in calls
             )
-            if is_grouped:
-                # ':all()' present (bare, or bare + a pointer) -- every
-                # run discovered for the group is a candidate, any
-                # depth, no prefix narrowing. Grouping-by-observed-value
-                # (David's three-templates example) is a later stage of
-                # this same refactor, not built in this commit -- for
-                # now this just preserves the existing "every run"
-                # candidate set unreduced-per-group.
+            is_flattened = any(
+                isinstance(c, FunctionCall3) and c.name == "flatten" for c in calls
+            )
+            if is_grouped or is_flattened:
+                # ':all()' or ':flatten()' present (bare, or bare + a
+                # pointer) -- every run discovered for the group is a
+                # candidate, any depth, no prefix narrowing. This is
+                # exactly what a bare pointer alone used to do before
+                # 2026-08-10 -- ':flatten()' is now its explicit name;
+                # ':all()' additionally groups-by-observed-value once a
+                # pointer reduces it (a later stage of this same
+                # refactor, not built in this commit -- for now this
+                # just preserves the "every run" candidate set,
+                # unreduced-per-group, same as before that stage lands).
                 candidates = run_homes
             else:
                 # a plain pointer alone, e.g. "$acme.results.:last()" --
                 # zero-level (direct children of the group's own root)
                 # only, NOT "ignore depth entirely" -- settled
-                # 2026-08-10. ':flatten()' is the new home for the any-
-                # depth case this used to cover; see that function.
+                # 2026-08-10. ':flatten()' above is the new home for
+                # the any-depth case this used to cover.
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, [])
                 ]
+        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "flatten":
+            # a literal/wildcard prefix, then ':flatten()' as the last
+            # segment, e.g. "beta/:flatten():last()" -- matches this
+            # prefix, then anything, at any remaining depth, instead of
+            # requiring an exact segment count the way a plain literal/
+            # '*' pattern does.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':flatten()' does not take "
+                    "an argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
+            candidates = [
+                rh
+                for rh in run_homes
+                if self._matches_prefix_at_least(rh, home, prefix_pattern)
+            ]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
@@ -336,12 +361,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         calls = self._combined_name_one_calls(name_one)
         built = ReferenceFunctionFactory.build_chain(calls)
-        if any(f.name in ("all", "manifest") for f in built):
+        if any(f.name in ("all", "flatten", "manifest") for f in built):
+            # ':flatten()' would be a no-op here anyway -- traversal
+            # already pools every discovered run at the same (zero)
+            # level, unlike the literal-root case's plain bare pointer
+            # -- but rejecting it explicitly avoids silently applying
+            # the zero-level filter to what should be an any-depth
+            # query, rather than quietly doing the wrong thing.
             raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support ':all()' or "
-                "':manifest()' combined with '*' traversal -- only a "
-                "bare pointer (:first()/:last()/:index(n)) is supported "
-                "so far."
+                "ResultsReferenceFinder3 does not yet support ':all()', "
+                "':flatten()', or ':manifest()' combined with '*' "
+                "traversal -- only a bare pointer (:first()/:last()/"
+                ":index(n)) is supported so far."
             )
         if self._find_field_function_call(calls) is not None:
             raise ReferenceException3(
@@ -716,6 +747,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         segments = rel.split("/") if rel else []
         prefix_segments = segments[:-1]
         if len(prefix_segments) != len(pattern):
+            return False
+        for actual, expected in zip(prefix_segments, pattern):
+            if isinstance(expected, Star3):
+                continue
+            if actual != expected:
+                return False
+        return True
+
+    @staticmethod
+    def _matches_prefix_at_least(run_home: str, home: str, pattern: list) -> bool:
+        """like _matches_prefix, but matches when run_home's own prefix
+        has AT LEAST len(pattern) segments matching `pattern` position-
+        by-position, with any number of additional segments (including
+        zero) allowed after them before the run's own trailing name --
+        the ':flatten()' case (see that function and its own docstring):
+        match this literal/wildcard prefix, then anything, at any
+        remaining depth, instead of requiring an exact segment count."""
+        home = home.rstrip("/")
+        if not run_home.startswith(home):
+            return False
+        rel = run_home[len(home) :].lstrip("/")
+        segments = rel.split("/") if rel else []
+        prefix_segments = segments[:-1]
+        if len(prefix_segments) < len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
             if isinstance(expected, Star3):
