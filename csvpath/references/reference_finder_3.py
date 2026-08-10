@@ -119,6 +119,42 @@ class ReferenceFinder3(ABC):
         )
 
     @staticmethod
+    def _pointer_before_manifest(
+        reference: Reference3, name: str
+    ) -> "FunctionCall3 | None":
+        """returns the pointer function call riding immediately before a
+        bare ":name()" call in name_one (e.g. "$*.files.:last():manifest()"
+        parses as name_one.path == [:last()], name_one.functions ==
+        [:manifest()]), or None if this reference is not shaped that
+        way. Ordinal indexing into a global ledger (Rule 1b,
+        manifest_field_functions_proposal.md) -- a pointer here selects
+        one entry out of the whole ledger array, same position-based
+        selection _apply_pointer() already does for a named entitys own
+        manifest, just applied to the ledger instead. Shared by files/
+        csvpaths/results since all three ledgers are flat arrays in
+        arrival order."""
+        name_one = reference.name_one
+        if reference.name_three is not None:
+            return None
+        if len(name_one.path) != 1 or len(name_one.functions) != 1:
+            return None
+        pointer_call = name_one.path[0]
+        manifest_call = name_one.functions[0]
+        if not isinstance(pointer_call, FunctionCall3) or pointer_call.name not in (
+            "first",
+            "last",
+            "index",
+        ):
+            return None
+        if (
+            not isinstance(manifest_call, FunctionCall3)
+            or manifest_call.name != name
+            or manifest_call.arg is not None
+        ):
+            return None
+        return pointer_call
+
+    @staticmethod
     def _query_well_known_file(home: str, filename: str) -> ReferenceResults3:
         """query() branch for a fixed, home-directory-scoped JSON
         resource (manifest.json, definition.json) -- one result,

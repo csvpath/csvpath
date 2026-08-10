@@ -1,4 +1,5 @@
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -60,10 +61,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # here, same as any other function.
                 home = self.csvpaths.config.inputs_files_path
                 return self._query_well_known_file(home, "manifest.json")
+            pointer_call = self._pointer_before_manifest(reference, "manifest")
+            if pointer_call is not None:
+                # Rule 1b -- a pointer riding before the bare :manifest()
+                # (e.g. "$*.files.:last():manifest()") selects one entry
+                # out of the global ledger by ordinal position, instead
+                # of dumping the whole thing.
+                home = self.csvpaths.config.inputs_files_path
+                path = Nos(home).join("manifest.json")
+                ledger = self.csvpaths.file_manager.files_root_manifest
+                selected = self._apply_pointer(pointer_call, ledger)
+                if selected is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
+                )
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support '*' as root_major "
                 "(querying every named-file) -- use a literal named-file name, "
-                "or a bare ':manifest()' to read the global arrivals ledger."
+                "or a bare ':manifest()' to read the global arrivals ledger, "
+                "optionally with a pointer (:first()/:last()/:index(n)) to "
+                "pick one entry by ordinal."
             )
 
         name_one = reference.name_one
@@ -197,6 +215,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # path itself (set by query()'s _query_well_known_file()
                 # branch above).
                 return self._read_well_known_file(result.path)
+            if isinstance(reference.root_major, Star3) and result.uuid is not None:
+                # Rule 1b -- a pointer already reduced the global ledger
+                # to one entry in query(); re-derive it the same way the
+                # per-entity branch below does, just against the ledger
+                # instead of a named-file's own manifest.
+                ledger = self.csvpaths.file_manager.files_root_manifest
+                return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             if reference.name_three is not None and any(
                 f.contains_function_named("manifest")
                 for f in reference.name_three.functions

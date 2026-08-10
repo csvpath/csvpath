@@ -1,3 +1,5 @@
+from csvpath.util.nos import Nos
+
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
@@ -69,11 +71,27 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # here, same as any other function.
                 home = self.csvpaths.config.inputs_csvpaths_path
                 return self._query_well_known_file(home, "manifest.json")
+            pointer_call = self._pointer_before_manifest(reference, "manifest")
+            if pointer_call is not None:
+                # Rule 1b -- a pointer riding before the bare :manifest()
+                # (e.g. "$*.csvpaths.:last():manifest()") selects one
+                # entry out of the global ledger by ordinal position,
+                # instead of dumping the whole thing.
+                home = self.csvpaths.config.inputs_csvpaths_path
+                path = Nos(home).join("manifest.json")
+                ledger = self.csvpaths.paths_manager.paths_root_manifest
+                selected = self._apply_pointer(pointer_call, ledger)
+                if selected is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
+                )
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not yet support '*' as "
                 "root_major (querying every named-paths group) -- use a "
                 "literal group name, or a bare ':manifest()' to read the "
-                "global loads ledger."
+                "global loads ledger, optionally with a pointer "
+                "(:first()/:last()/:index(n)) to pick one entry by ordinal."
             )
 
         name_one = reference.name_one
@@ -176,6 +194,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # path itself (set by query()'s _query_well_known_file()
                 # branch above).
                 return self._read_well_known_file(result.path)
+            if isinstance(reference.root_major, Star3) and result.uuid is not None:
+                # Rule 1b -- a pointer already reduced the global ledger
+                # to one entry in query(); re-derive it the same way the
+                # per-group branch below does, just against the ledger
+                # instead of a named-paths groups own manifest.
+                ledger = self.csvpaths.paths_manager.paths_root_manifest
+                return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             name_one = reference.name_one
             has_manifest = any(
                 seg.contains_function_named("manifest")

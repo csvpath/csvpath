@@ -1,4 +1,5 @@
 # pylint: disable=C0114
+import json
 import os
 import re
 from uuid import UUID
@@ -10,6 +11,7 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
+from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
@@ -60,6 +62,32 @@ class ResultsManager:  # pylint: disable=C0115
     def csvpaths(self, cs) -> None:  # noqa: F821
         """@private"""
         self._csvpaths = cs
+
+    @property
+    def results_root_manifest_path(self) -> str:
+        """@private"""
+        r = self.csvpaths.config.get(section="results", name="archive")
+        p = Nos(r).join("manifest.json")
+        nos = Nos(r)
+        if not nos.dir_exists():
+            nos.makedirs()
+        nos.path = p
+        if not nos.exists():
+            with DataFileWriter(path=p) as file:
+                file.write("[]")
+        return p
+
+    @property
+    def results_root_manifest(self) -> list:
+        """the Archive Run Manifest -- a single global ledger tracking
+        every run across every named-results group, at the archive
+        root. distinct from any per-group results manifest. mirrors
+        PathsManager's paths_root_manifest. used by
+        ResultsReferenceFinder3 to resolve "*" root_major references
+        (bare :manifest(), optionally with a pointer to select one
+        entry by ordinal)."""
+        with DataFileReader(self.results_root_manifest_path) as reader:
+            return json.load(reader.source)
 
     def complete_run(self, *, run_dir, pathsname, results) -> None:
         """@private"""

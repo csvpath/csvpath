@@ -47,16 +47,23 @@ class _FakePathsDescriber:
 
 
 class _FakePathsManager:
-    def __init__(self, manifest, home=GROUP_HOME, definition: dict | None = None):
+    def __init__(
+        self, manifest, home=GROUP_HOME, definition: dict | None = None, ledger=None
+    ):
         self._manifest = manifest
         self._home = home
         self._definition = definition or {}
+        self._ledger = manifest if ledger is None else ledger
 
     def get_manifest_for_name(self, name):
         return self._manifest
 
     def named_paths_home(self, name):
         return self._home
+
+    @property
+    def paths_root_manifest(self):
+        return self._ledger
 
     @property
     def describer(self):
@@ -79,9 +86,10 @@ def _finder(
     manifest: list = ACME_MANIFEST,
     definition: dict | None = None,
     inputs_csvpaths_path: str | None = None,
+    ledger: list | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakePathsManager(manifest, definition=definition),
+        _FakePathsManager(manifest, definition=definition, ledger=ledger),
         inputs_csvpaths_path=inputs_csvpaths_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -265,6 +273,55 @@ class TestGlobalLoadsLedger:
         )
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+LOADS_LEDGER = [
+    {"named_paths_name": "acme", "uuid": "u-loads-1"},
+    {"named_paths_name": "beta", "uuid": "u-loads-2"},
+    {"named_paths_name": "gamma", "uuid": "u-loads-3"},
+]
+
+
+class TestGlobalLoadsLedgerOrdinalIndexing:
+    # Rule 1b: a pointer (:first()/:last()/:index(n)) riding before the
+    # bare :manifest() selects one entry out of the ledger by ordinal
+    # position, instead of dumping the whole thing.
+    def test_last_gives_the_most_recent_load(self):
+        finder = _finder(
+            "$*.csvpaths.:last():manifest()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LOADS_LEDGER[-1]
+
+    def test_index_gives_the_nth_load(self):
+        finder = _finder(
+            "$*.csvpaths.:index(0):manifest()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LOADS_LEDGER[0]
+
+    def test_out_of_range_index_gives_no_results(self):
+        finder = _finder(
+            "$*.csvpaths.:index(99):manifest()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.query()
+        assert len(results.results) == 0
+
+    def test_query_gives_the_ledger_path_with_the_entrys_own_uuid(self):
+        finder = _finder(
+            "$*.csvpaths.:last():manifest()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.query()
+        assert results.files == ["inputs/named_paths/manifest.json"]
+        assert results.results[0].uuid == "u-loads-3"
 
 
 class TestDefinitionFunction:

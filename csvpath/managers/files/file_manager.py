@@ -199,6 +199,31 @@ class FileManager:
                 return _["reference"]
         return None
 
+    @property
+    def files_root_manifest_path(self) -> str:
+        """@private"""
+        r = self.csvpaths.config.get(section="inputs", name="files")
+        p = Nos(r).join("manifest.json")
+        nos = Nos(r)
+        if not nos.dir_exists():
+            nos.makedirs()
+        nos.path = p
+        if not nos.exists():
+            with DataFileWriter(path=p) as file:
+                file.write("[]")
+        return p
+
+    @property
+    def files_root_manifest(self) -> list:
+        """the Named-File Arrivals Manifest -- a single global ledger
+        tracking every named-file arrival across every name, distinct
+        from get_manifest()'s per-name manifest. mirrors PathsManager's
+        paths_root_manifest. used by FilesReferenceFinder3 to resolve
+        "*" root_major references (bare :manifest(), optionally with a
+        pointer to select one entry by ordinal)."""
+        with DataFileReader(self.files_root_manifest_path) as reader:
+            return json.load(reader.source)
+
     def get_manifest(self, name: NamedFileName) -> json:
         if name is None:
             raise ValueError("Paths name cannot be None")

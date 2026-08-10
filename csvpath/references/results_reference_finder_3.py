@@ -114,11 +114,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # run across every named-results group.
                 archive = self.csvpaths.config.get(section="results", name="archive")
                 return self._query_well_known_file(archive, "manifest.json")
+            pointer_call = self._pointer_before_manifest(reference, "manifest")
+            if pointer_call is not None:
+                # Rule 1b -- a pointer riding before the bare :manifest()
+                # (e.g. "$*.results.:last():manifest()") selects one
+                # entry out of the global ledger by ordinal position,
+                # instead of dumping the whole thing. the archive ledger
+                # has no "uuid" key of its own (only "run_uuid" -- see
+                # RunRegistrar.metadata_update()), so run_uuid is used as
+                # the locator instead of the usual uuid.
+                archive = self.csvpaths.config.get(section="results", name="archive")
+                path = Nos(archive).join("manifest.json")
+                ledger = self.csvpaths.results_manager.results_root_manifest
+                selected = self._apply_pointer(pointer_call, ledger)
+                if selected is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[ReferenceResult3(path=path, uuid=selected["run_uuid"])]
+                )
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not yet support '*' as "
                 "root_major (querying every named-results group) -- use a "
                 "literal group name, or a bare ':manifest()' to read the "
-                "global archive ledger."
+                "global archive ledger, optionally with a pointer "
+                "(:first()/:last()/:index(n)) to pick one entry by ordinal."
             )
 
         name_one = reference.name_one
@@ -206,6 +225,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         if isinstance(reference.root_major, Star3):
+            if result.uuid is not None:
+                # Rule 1b -- a pointer already reduced the global ledger
+                # to one entry in query(); re-derive it by run_uuid
+                # (the archive ledgers own locator -- see query()).
+                ledger = self.csvpaths.results_manager.results_root_manifest
+                return next(
+                    (e for e in ledger if e["run_uuid"] == result.uuid), None
+                )
             # global-ledger case (Rule 1a) -- query()'s
             # _query_well_known_file() branch already pointed result.path
             # at the archive-root manifest.json itself, not a run

@@ -54,16 +54,21 @@ class _FakeFileDescriber:
 
 
 class _FakeFileManager:
-    def __init__(self, home, manifest, definition: dict | None = None):
+    def __init__(self, home, manifest, definition: dict | None = None, ledger=None):
         self._home = home
         self._manifest = manifest
         self._definition = definition or {}
+        self._ledger = manifest if ledger is None else ledger
 
     def named_file_home(self, name):
         return self._home
 
     def get_manifest(self, name):
         return self._manifest
+
+    @property
+    def files_root_manifest(self):
+        return self._ledger
 
     @property
     def describer(self):
@@ -87,9 +92,10 @@ def _finder(
     manifest: list,
     definition: dict | None = None,
     inputs_files_path: str | None = None,
+    ledger: list | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakeFileManager(home, manifest, definition),
+        _FakeFileManager(home, manifest, definition, ledger=ledger),
         inputs_files_path=inputs_files_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -326,6 +332,85 @@ class TestGlobalArrivalsLedger:
         )
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+LEDGER = [
+    {"named_file_name": "alpha", "uuid": "u-ledger-1"},
+    {"named_file_name": "beta", "uuid": "u-ledger-2"},
+    {"named_file_name": "gamma", "uuid": "u-ledger-3"},
+]
+
+
+class TestGlobalArrivalsLedgerOrdinalIndexing:
+    # Rule 1b: a pointer (:first()/:last()/:index(n)) riding before the
+    # bare :manifest() selects one entry out of the ledger by ordinal
+    # position, instead of dumping the whole thing.
+    def test_last_gives_the_most_recent_arrival(self):
+        finder = _finder(
+            "$*.files.:last():manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LEDGER[-1]
+
+    def test_first_gives_the_earliest_arrival(self):
+        finder = _finder(
+            "$*.files.:first():manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LEDGER[0]
+
+    def test_index_gives_the_nth_arrival(self):
+        finder = _finder(
+            "$*.files.:index(1):manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LEDGER[1]
+
+    def test_negative_index_counts_from_the_end(self):
+        finder = _finder(
+            "$*.files.:index(-1):manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == LEDGER[-1]
+
+    def test_out_of_range_index_gives_no_results(self):
+        finder = _finder(
+            "$*.files.:index(99):manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.query()
+        assert len(results.results) == 0
+
+    def test_query_gives_the_ledger_path_with_the_entrys_own_uuid(self):
+        finder = _finder(
+            "$*.files.:last():manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.query()
+        assert results.files == ["inputs/named_files/manifest.json"]
+        assert results.results[0].uuid == "u-ledger-3"
 
 
 class TestManifestCombinedWithNameThree:
