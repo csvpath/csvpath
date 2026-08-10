@@ -125,7 +125,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # the locator instead of the usual uuid.
                 archive = self.csvpaths.config.get(section="results", name="archive")
                 path = Nos(archive).join("manifest.json")
-                ledger = self.csvpaths.results_manager.get_archive_ledger()
+                ledger = self.csvpaths.results_manager.results_root_manifest
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -229,7 +229,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # Rule 1b -- a pointer already reduced the global ledger
                 # to one entry in query(); re-derive it by run_uuid
                 # (the archive ledgers own locator -- see query()).
-                ledger = self.csvpaths.results_manager.get_archive_ledger()
+                ledger = self.csvpaths.results_manager.results_root_manifest
                 return next(
                     (e for e in ledger if e["run_uuid"] == result.uuid), None
                 )

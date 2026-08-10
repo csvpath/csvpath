@@ -37,7 +37,8 @@ class _FakeResultsManager:
     def get_named_results_home(self, name):
         return os.path.join(self._archive, name)
 
-    def get_archive_ledger(self):
+    @property
+    def results_root_manifest(self):
         with open(os.path.join(self._archive, "manifest.json")) as f:
             return json.load(f)
 

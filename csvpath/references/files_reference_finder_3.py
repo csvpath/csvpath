@@ -69,7 +69,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # of dumping the whole thing.
                 home = self.csvpaths.config.inputs_files_path
                 path = Nos(home).join("manifest.json")
-                ledger = self.csvpaths.file_manager.get_arrivals_ledger()
+                ledger = self.csvpaths.file_manager.files_root_manifest
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -220,7 +220,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # to one entry in query(); re-derive it the same way the
                 # per-entity branch below does, just against the ledger
                 # instead of a named-file's own manifest.
-                ledger = self.csvpaths.file_manager.get_arrivals_ledger()
+                ledger = self.csvpaths.file_manager.files_root_manifest
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             if reference.name_three is not None and any(
                 f.contains_function_named("manifest")

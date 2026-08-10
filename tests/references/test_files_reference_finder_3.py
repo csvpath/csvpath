@@ -66,7 +66,8 @@ class _FakeFileManager:
     def get_manifest(self, name):
         return self._manifest
 
-    def get_arrivals_ledger(self):
+    @property
+    def files_root_manifest(self):
         return self._ledger
 
     @property
