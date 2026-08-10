@@ -188,25 +188,42 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
         run_homes = [rh for rh, _ in self._discover_run_homes(root_major)]
         calls = self._combined_name_one_calls(name_one)
+        pointer = self._pointer_from_calls(calls)
+        is_grouped = any(
+            isinstance(c, FunctionCall3) and c.name == "all" for c in calls
+        )
+        # group_key_for: set only when ':all()' + a pointer together
+        # mean "partition by observed value, reduce each partition" --
+        # David's three-templates example (three different one-level
+        # templates all group correctly by whatever directory each run
+        # actually landed in, not by which template produced it).
+        # Left None otherwise -- including ':all()' with NO pointer,
+        # which keeps its own separate, unchanged precedent (every run,
+        # any depth, unreduced, mirroring csvpaths' own bare ':all()').
+        group_key_for = None
 
         if self._is_bare_function_only(name_one):
-            is_grouped = any(
-                isinstance(c, FunctionCall3) and c.name == "all" for c in calls
-            )
             is_flattened = any(
                 isinstance(c, FunctionCall3) and c.name == "flatten" for c in calls
             )
-            if is_grouped or is_flattened:
-                # ':all()' or ':flatten()' present (bare, or bare + a
-                # pointer) -- every run discovered for the group is a
-                # candidate, any depth, no prefix narrowing. This is
+            if is_grouped and pointer is not None:
+                # bare ':all()' + a pointer -- exactly one level,
+                # wildcarded, grouped by the run's own actual value
+                # there (peer of a bare '*', which is illegal on its
+                # own but this is the same one-level restriction).
+                pattern = [Star3()]
+                candidates = [
+                    rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+                ]
+                group_key_for = {
+                    rh: self._prefix_segments(rh, home)[-1] for rh in candidates
+                }
+            elif is_grouped or is_flattened:
+                # ':all()' with no pointer, or ':flatten()' (with or
+                # without one) -- every run discovered for the group is
+                # a candidate, any depth, no prefix narrowing. This is
                 # exactly what a bare pointer alone used to do before
-                # 2026-08-10 -- ':flatten()' is now its explicit name;
-                # ':all()' additionally groups-by-observed-value once a
-                # pointer reduces it (a later stage of this same
-                # refactor, not built in this commit -- for now this
-                # just preserves the "every run" candidate set,
-                # unreduced-per-group, same as before that stage lands).
+                # 2026-08-10 -- ':flatten()' is now its explicit name.
                 candidates = run_homes
             else:
                 # a plain pointer alone, e.g. "$acme.results.:last()" --
@@ -236,6 +253,27 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in run_homes
                 if self._matches_prefix_at_least(rh, home, prefix_pattern)
             ]
+        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "all":
+            # a literal/wildcard prefix, then ':all()' as the last
+            # segment, e.g. "beta/:all():last()" -- matches exactly one
+            # level beyond the prefix (like "beta/*" would), grouped by
+            # the run's own actual value at that position instead of
+            # pooled.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':all()' does not take an "
+                    "argument."
+                )
+            pattern = self._compile_path_pattern(name_one.path[:-1]) + [Star3()]
+            candidates = [
+                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+            ]
+            if pointer is not None:
+                group_key_for = {
+                    rh: self._prefix_segments(rh, home)[-1] for rh in candidates
+                }
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
@@ -243,7 +281,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ]
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
-        pointer = self._pointer_from_calls(calls)
         identity, match_all, accessor, _ = self._name_three_selector(
             reference.name_three
         )
@@ -253,8 +290,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         )
         wants_full_content = has_manifest or accessor is not None
+        if group_key_for and (
+            wants_full_content or self._find_field_function_call(calls) is not None
+        ):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support combining "
+                "':all()' grouping with :manifest() or a run-level field "
+                "accessor -- resolve the grouped runs on their own first."
+            )
 
-        if pointer is not None:
+        if group_key_for:
+            # partition candidates by their own observed group key,
+            # apply the pointer independently within each partition --
+            # one result per distinct value observed. candidates is
+            # already sorted by _run_dir_sort_key, so each partition
+            # keeps correct arrival order internally.
+            groups: dict = {}
+            for rh in candidates:
+                groups.setdefault(group_key_for[rh], []).append(rh)
+            selected_runs = []
+            for key in sorted(groups):
+                selected = self._apply_pointer(pointer, groups[key])
+                if selected is not None:
+                    selected_runs.append(selected)
+        elif pointer is not None:
             selected = self._apply_pointer(pointer, candidates)
             selected_runs = [selected] if selected is not None else []
         else:
@@ -732,21 +791,32 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return body, match_all, accessor, field_call
 
     @staticmethod
-    def _matches_prefix(run_home: str, home: str, pattern: list) -> bool:
-        """true if run_home's own prefix -- everything between `home`
-        and the run directory's own name (the last path segment) --
-        matches `pattern` position-by-position (Star3 as wildcard).
-        Similar in spirit to FilesReferenceFinder3._matches, but the run
-        directory's own name is excluded from the comparison first,
-        since (unlike a file's file_home) run_home already includes
-        that final, version-identifying segment itself."""
+    def _prefix_segments(run_home: str, home: str) -> "list[str] | None":
+        """everything between `home` and the run directory's own name
+        (the last path segment), split into segments -- None if
+        run_home is not even under `home` at all. Shared by
+        _matches_prefix/_matches_prefix_at_least (matching) and
+        query()'s ':all()' grouping (extracting the actual value at a
+        wildcarded position, once a candidate is already known to
+        match)."""
         home = home.rstrip("/")
         if not run_home.startswith(home):
-            return False
+            return None
         rel = run_home[len(home) :].lstrip("/")
         segments = rel.split("/") if rel else []
-        prefix_segments = segments[:-1]
-        if len(prefix_segments) != len(pattern):
+        return segments[:-1]
+
+    @classmethod
+    def _matches_prefix(cls, run_home: str, home: str, pattern: list) -> bool:
+        """true if run_home's own prefix matches `pattern` position-by-
+        position (Star3 as wildcard), with EXACTLY len(pattern) segments
+        -- no more, no fewer. Similar in spirit to
+        FilesReferenceFinder3._matches, but the run directory's own name
+        is excluded from the comparison first, since (unlike a file's
+        file_home) run_home already includes that final, version-
+        identifying segment itself."""
+        prefix_segments = cls._prefix_segments(run_home, home)
+        if prefix_segments is None or len(prefix_segments) != len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
             if isinstance(expected, Star3):
@@ -755,8 +825,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
-    @staticmethod
-    def _matches_prefix_at_least(run_home: str, home: str, pattern: list) -> bool:
+    @classmethod
+    def _matches_prefix_at_least(cls, run_home: str, home: str, pattern: list) -> bool:
         """like _matches_prefix, but matches when run_home's own prefix
         has AT LEAST len(pattern) segments matching `pattern` position-
         by-position, with any number of additional segments (including
@@ -764,13 +834,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         the ':flatten()' case (see that function and its own docstring):
         match this literal/wildcard prefix, then anything, at any
         remaining depth, instead of requiring an exact segment count."""
-        home = home.rstrip("/")
-        if not run_home.startswith(home):
-            return False
-        rel = run_home[len(home) :].lstrip("/")
-        segments = rel.split("/") if rel else []
-        prefix_segments = segments[:-1]
-        if len(prefix_segments) < len(pattern):
+        prefix_segments = cls._prefix_segments(run_home, home)
+        if prefix_segments is None or len(prefix_segments) < len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
             if isinstance(expected, Star3):

@@ -373,6 +373,81 @@ class TestFlatten:
             _finder("$*.results.:flatten():last()", two_group_archive).query()
 
 
+class TestAllGrouping:
+    # ':all()' and '*' stay depth peers (exactly one level) --
+    # ':all()' additionally groups by whatever value actually occupies
+    # that one wildcarded position, unlike '*' (which pools). Settled
+    # 2026-08-10, directly from David's own example: three different
+    # one-level templates, each nesting runs one level deep via a
+    # different substitution source, still group correctly by whatever
+    # directory each run actually landed in -- not by which template
+    # produced it.
+    def test_davids_three_templates_example(self, tmp_path):
+        base = tmp_path / "alpha"
+        zero_run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        zero_run2 = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-2", {})
+        one_run1 = _make_run(base / "one", "2026-01-03_00-00-00", "one-1", {})
+        one_run2 = _make_run(base / "one", "2026-01-04_00-00-00", "one-2", {})
+        two_run1 = _make_run(base / "two", "2026-01-05_00-00-00", "two-1", {})
+        two_run2 = _make_run(base / "two", "2026-01-06_00-00-00", "two-2", {})
+        _write_archive_manifest(
+            tmp_path,
+            "alpha",
+            [zero_run1, zero_run2, one_run1, one_run2, two_run1, two_run2],
+        )
+        results = _finder("$alpha.results.:all():last()", str(tmp_path)).query()
+        assert len(results.results) == 3
+        assert set(results.uuids) == {"zero-2", "one-2", "two-2"}
+
+    def test_all_with_first_gives_each_groups_earliest(self, tmp_path):
+        base = tmp_path / "alpha"
+        zero_run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        zero_run2 = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-2", {})
+        one_run1 = _make_run(base / "one", "2026-01-03_00-00-00", "one-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [zero_run1, zero_run2, one_run1])
+        results = _finder("$alpha.results.:all():first()", str(tmp_path)).query()
+        assert set(results.uuids) == {"zero-1", "one-1"}
+
+    def test_all_with_no_pointer_keeps_its_own_unchanged_precedent(
+        self, tmp_path
+    ):
+        # ':all()' alone (no pointer) is unaffected by grouping -- still
+        # every run for the group, any depth, unreduced, mirroring
+        # csvpaths' own bare ':all()' precedent.
+        base = tmp_path / "alpha"
+        zero_run = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        flat_run = _make_run(base, "2026-01-02_00-00-00", "flat-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [zero_run, flat_run])
+        results = _finder("$alpha.results.:all()", str(tmp_path)).query()
+        assert set(results.uuids) == {"zero-1", "flat-1"}
+
+    def test_prefixed_all_groups_by_the_next_level(self, tmp_path):
+        base = tmp_path / "acme"
+        x_run1 = _make_run(base / "beta" / "x", "2026-01-01_00-00-00", "x-1", {})
+        x_run2 = _make_run(base / "beta" / "x", "2026-01-02_00-00-00", "x-2", {})
+        y_run1 = _make_run(base / "beta" / "y", "2026-01-03_00-00-00", "y-1", {})
+        other_run = _make_run(base / "gamma" / "z", "2026-01-04_00-00-00", "z-1", {})
+        _write_archive_manifest(
+            tmp_path, "acme", [x_run1, x_run2, y_run1, other_run]
+        )
+        results = _finder(
+            "$acme.results.beta/:all():last()", str(tmp_path)
+        ).query()
+        assert len(results.results) == 2
+        assert set(results.uuids) == {"x-2", "y-1"}
+
+    def test_all_grouping_combined_with_manifest_is_not_yet_supported(
+        self, tmp_path
+    ):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.results.:all():last():manifest()", str(tmp_path)
+            ).query()
+
+
 class TestDiscoveryFromArchiveManifest:
     def test_dedupes_multiple_entries_sharing_one_run_home(self, tmp_path):
         # a real run_home is written once per csvpath-statement
