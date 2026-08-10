@@ -102,13 +102,18 @@ def acme_archive(tmp_path):
 
 @pytest.fixture
 def two_group_archive(tmp_path):
-    # acme (2 runs) + widgets (1 run, chronologically LATEST overall).
+    # acme (2 runs) + widgets (1 run, chronologically LATEST overall) --
+    # both groups' runs are flat (zero-level, direct children of their
+    # own group's home), since a bare pointer now only considers
+    # zero-level runs (settled 2026-08-10) -- a nested group here would
+    # be silently excluded from traversal entirely, defeating this
+    # fixture's whole point (proving pooling crosses groups correctly).
     # widgets is written FIRST in the merged manifest on purpose -- a
     # naive (unsorted) "last" would give acme's own last run
     # (2026-01-02) instead of the true global-latest (widgets',
     # 2026-01-03), so this fails if the '*' traversal sort-by-trailing-
     # segment logic is ever removed/broken.
-    acme_base = tmp_path / "acme" / "customers" / "2025"
+    acme_base = tmp_path / "acme"
     acme_run1 = _make_run(acme_base, "2026-01-01_00-00-00", "acme-run1-uuid", {})
     acme_run2 = _make_run(acme_base, "2026-01-02_00-00-00", "acme-run2-uuid", {})
     widgets_base = tmp_path / "widgets"
@@ -233,10 +238,11 @@ class TestPathMatching:
 
 class TestBareFunctionOnlyNameOne:
     # mirrors csvpaths: no literal path at all -- the sole path
-    # "segment" is itself a version-selecting function. Every run
-    # discovered for the group is a candidate, regardless of how deep
-    # its own prefix happens to be (unlike the literal-path shape, which
-    # requires an exact segment-count match).
+    # "segment" is itself a version-selecting function. A bare pointer
+    # alone (no ':all()') means zero-level only -- direct children of
+    # the group's own root -- settled 2026-08-10; see :flatten() for
+    # the any-depth case this used to cover. A bare ':all()' is
+    # unaffected: still every run for the group, any depth.
     @pytest.fixture
     def flat_archive(self, tmp_path):
         base = tmp_path / "flat"
@@ -257,13 +263,35 @@ class TestBareFunctionOnlyNameOne:
         results = _finder("$flat.results.:all()", flat_archive).query()
         assert set(results.uuids) == {"run1-uuid", "run2-uuid"}
 
-    def test_bare_pointer_still_finds_a_run_under_a_deep_template(
+    def test_bare_pointer_does_not_find_a_run_under_a_deep_template(
         self, acme_archive
     ):
-        # bare :last() ignores prefix depth entirely -- it still finds
-        # the group's runs even though they sit under "customers/2025".
+        # bare :last() means zero-level only -- acme_archive's runs sit
+        # under "customers/2025", two levels deep, so a bare pointer no
+        # longer finds them at all (settled 2026-08-10). Reaching them
+        # needs an explicit path prefix (customers/2025:last(), already
+        # covered by TestVersionPointer) or :flatten().
         results = _finder("$acme.results.:last()", acme_archive).query()
-        assert results.uuids == ["run2-uuid"]
+        assert results.uuids == []
+
+    def test_bare_pointer_finds_a_flat_run_alongside_a_deep_one(
+        self, tmp_path
+    ):
+        # confirms the new restriction is specifically "zero levels",
+        # not "broken entirely" -- a genuinely flat run for the same
+        # group as a deep one is still found, and correctly preferred
+        # over it even when the deep one is chronologically later.
+        flat_base = tmp_path / "mixed"
+        flat_run = _make_run(flat_base, "2026-01-01_00-00-00", "flat-uuid", {})
+        deep_run = _make_run(
+            flat_base / "customers" / "2025",
+            "2026-01-02_00-00-00",
+            "deep-uuid",
+            {},
+        )
+        _write_archive_manifest(tmp_path, "mixed", [flat_run, deep_run])
+        results = _finder("$mixed.results.:last()", str(tmp_path)).query()
+        assert results.uuids == ["flat-uuid"]
 
 
 class TestDiscoveryFromArchiveManifest:
@@ -383,9 +411,17 @@ class TestManifestOnNameOne:
         ).resolve()
         assert results.results[0].data == {"run_uuid": "run1-uuid"}
 
-    def test_manifest_beside_a_pointer_in_the_bare_shape(self, acme_archive):
+    def test_manifest_beside_a_pointer_in_the_bare_shape(self, tmp_path):
+        # a bare pointer now means zero-level only (settled 2026-08-10)
+        # -- acme_archive's runs are nested under "customers/2025", so
+        # this needs its own flat fixture rather than reusing acme_archive
+        # the way the literal-path sibling test above does.
+        base = tmp_path / "flatgroup"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run2-uuid", {})
+        _write_archive_manifest(tmp_path, "flatgroup", [run1, run2])
         results = _finder(
-            "$acme.results.:last():manifest()", acme_archive
+            "$flatgroup.results.:last():manifest()", str(tmp_path)
         ).resolve()
         assert results.results[0].data == {"run_uuid": "run2-uuid"}
 
@@ -447,7 +483,7 @@ class TestFieldAccessorFunctions:
         # _make_run's default fixture instance manifests only carry
         # "uuid" -- run_uuid at instance scope needs its own manifest
         # data with a "run_uuid" field actually present.
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
         _write_json(
@@ -519,7 +555,7 @@ class TestFieldAccessorFunctions:
         # different keys (all_valid at run scope, valid at instance
         # scope) -- the case Reference3.RESULT/RESULTS actually exists
         # for.
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
             run_dir / "manifest.json",
@@ -555,7 +591,7 @@ class TestFieldAccessorFunctions:
         # status/method/hostname/username/time_completed/manifest_path/
         # named_paths_name -- run scope only, confirmed real keys in
         # results_registrar.py.
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
             run_dir / "manifest.json",
@@ -586,7 +622,7 @@ class TestFieldAccessorFunctions:
         assert resolve("named_paths_name") == "widgets"
 
     def test_completed_and_files_complete_scope_dependent_keys(self, tmp_path):
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
             run_dir / "manifest.json",
@@ -624,7 +660,7 @@ class TestFieldAccessorFunctions:
         assert instance_files_complete.results[0].data is True
 
     def test_named_file_name_shared_key_both_scopes(self, tmp_path):
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
             run_dir / "manifest.json",
@@ -677,7 +713,7 @@ class TestFieldAccessorFunctions:
         # confirmed present in the real Result Instance Manifest despite
         # manifest_field_functions_proposal.md flagging it as a gap when
         # that doc was written.
-        base = tmp_path / "acme" / "widgets"
+        base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         instance_manifest_path = str(run_dir / "company_names" / "manifest.json")
         _write_json(run_dir / "manifest.json", {"run_uuid": "run-uuid"})
@@ -895,15 +931,30 @@ class TestGlobalArchiveLedger:
         assert isinstance(data, list)
         assert {e["named_paths_name"] for e in data} == {"acme"}
 
-    def test_star_with_a_bare_pointer_is_supported(self, acme_archive):
+    def test_star_with_a_bare_pointer_is_supported(self, tmp_path):
         # '*' traversal is supported now for the bare-pointer case (see
-        # TestStarTraversal below) -- with only one named-results group
-        # in this fixture, this just confirms it resolves to that
-        # group's own last run rather than raising.
-        finder = _finder("$*.results.:last()", acme_archive)
+        # TestStarTraversal below) -- with only one named-results group,
+        # its runs flat (zero-level, per the 2026-08-10 semantics),
+        # this confirms it resolves to that group's own last run rather
+        # than raising.
+        base = tmp_path / "acme"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run2-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2])
+        finder = _finder("$*.results.:last()", str(tmp_path))
         results = finder.query()
         assert len(results.results) == 1
         assert results.results[0].uuid == "run2-uuid"
+
+    def test_star_with_a_bare_pointer_excludes_a_deep_templated_run(
+        self, acme_archive
+    ):
+        # acme_archive's only group has its runs nested under
+        # "customers/2025" -- with no zero-level runs anywhere, '*'
+        # traversal correctly finds nothing, same restriction the
+        # single-group case now applies.
+        results = _finder("$*.results.:last()", acme_archive).query()
+        assert results.results == []
 
     def test_star_with_path_narrowing_is_still_not_supported(self, acme_archive):
         finder = _finder("$*.results.customers/2025:last()", acme_archive)

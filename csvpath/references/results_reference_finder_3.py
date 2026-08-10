@@ -35,9 +35,14 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    "$acme.results.customers/2025:first()"):
 #      (a) bare/function-only, no literal path at all (mirrors csvpaths --
 #          the sole path "segment" is itself a version-selecting function,
-#          e.g. :all()/:first()/:last()/:index(n)). Used when there is no
-#          template, or the caller does not care about path narrowing at
-#          all -- every run discovered for the group is a candidate.
+#          e.g. :all()/:first()/:last()/:index(n)). A bare POINTER alone
+#          (no :all()) means zero-level only -- direct children of the
+#          group's own root, no template -- settled 2026-08-10; see
+#          :flatten() for the any-depth case this used to cover. A bare
+#          ':all()' (with or without a trailing pointer) is unaffected by
+#          that change -- every run discovered for the group is still a
+#          candidate, any depth (grouping by observed template value is a
+#          later stage of the same refactor, not this one).
 #      (b) literal/"*"/:name("...") path segments (same semantics as files
 #          -- see ReferenceFinder3._compile_path_pattern) PLUS its own
 #          trailing function chain -- narrows to runs whose own prefix
@@ -181,13 +186,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
 
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
-        run_homes = self._discover_run_homes(root_major)
+        run_homes = [rh for rh, _ in self._discover_run_homes(root_major)]
+        calls = self._combined_name_one_calls(name_one)
 
         if self._is_bare_function_only(name_one):
-            # mirrors csvpaths: no literal path at all, e.g.
-            # "$acme.results.:all()"/"$acme.results.:last()" -- every run
-            # discovered for the group is a candidate, no prefix narrowing.
-            candidates = run_homes
+            is_grouped = any(
+                isinstance(c, FunctionCall3) and c.name == "all" for c in calls
+            )
+            if is_grouped:
+                # ':all()' present (bare, or bare + a pointer) -- every
+                # run discovered for the group is a candidate, any
+                # depth, no prefix narrowing. Grouping-by-observed-value
+                # (David's three-templates example) is a later stage of
+                # this same refactor, not built in this commit -- for
+                # now this just preserves the existing "every run"
+                # candidate set unreduced-per-group.
+                candidates = run_homes
+            else:
+                # a plain pointer alone, e.g. "$acme.results.:last()" --
+                # zero-level (direct children of the group's own root)
+                # only, NOT "ignore depth entirely" -- settled
+                # 2026-08-10. ':flatten()' is the new home for the any-
+                # depth case this used to cover; see that function.
+                candidates = [
+                    rh for rh in run_homes if self._matches_prefix(rh, home, [])
+                ]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
@@ -195,7 +218,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ]
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
-        calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
         identity, match_all, accessor, _ = self._name_three_selector(
             reference.name_three
@@ -249,38 +271,50 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """root_major == "*" -- query across every named-results group,
         not just one. Deliberately the narrowest '*' traversal of the
         three datatypes: only a bare pointer (:first()/:last()/
-        :index(n)), no path narrowing, no name_three, no ':all()', no
-        :manifest()/a field-accessor function. Two things make the
-        wider cases genuinely harder here, not just unbuilt yet (unlike
-        files/csvpaths, where the same shapes were straightforward
-        generalizations):
+        :index(n)), no literal/'*' path narrowing, no name_three, no
+        ':all()', no :manifest()/a field-accessor function. A bare
+        pointer here means the same zero-level-only ("direct children
+        of each run's own group's home") restriction the literal-root
+        query() case now applies -- settled 2026-08-10, see that
+        method's own comments and :flatten() for the any-depth case.
+        Two things make the wider cases genuinely harder here, not just
+        unbuilt yet (unlike files/csvpaths, where the same shapes were
+        straightforward generalizations):
 
         - RESULTS' own ':all()' already means something different --
           pooling every csvpath-statement instance WITHIN one already-
           selected run, at name_three (see _name_three_selector) -- so
           there is no existing syntactic home for a "group by named-
           results-group" trigger the way files/csvpaths both have via
-          a bare ':all()' in name_one.
-        - Path narrowing (_matches_prefix) needs a candidate's own
-          group's home directory to compute a relative match -- a bare
-          run_home string, once pooled from _discover_run_homes(), no
-          longer carries which group it came from. Generalizing that
-          safely needs real design work, not reuse.
+          a bare ':all()' in name_one. (Grouping by observed template
+          value WITHIN one already-literal group, David's three-
+          templates example, is a different, narrower thing and is
+          handled in the literal-root query() case, not here.)
+        - Literal/'*' path narrowing (_matches_prefix) needs a
+          candidate's own group's home directory to compute a relative
+          match -- a bare run_home string, once pooled from
+          _discover_run_homes(), no longer carries which group it came
+          from on its own. _discover_run_homes() now keeps each pair's
+          group name specifically so the zero-level check above can
+          compute the right home per candidate; genuine non-zero path
+          narrowing across every group still needs more design work
+          than reusing that, and stays out of scope here.
 
         So this only generalizes _discover_run_homes() (root_major=None
         skips its group filter -- it already reads the same archive-
         wide ledger Rule 1a/1b use, so no separate group-name
         enumeration is needed at all) and reuses _results_for_run()'s
-        existing no-name_three case unchanged. The one real design
-        decision: chronological order across every group cannot use a
-        full-path string sort the way one group's own query() case can
-        get away with (different groups' run directories live under
-        different prefixes, so a full-path sort would sort by group
-        name first, not by timestamp) -- _run_dir_sort_key() extracts
-        just the trailing directory-name segment, AND handles that
-        segment's own disambiguating "_N" suffix numerically rather
-        than as a string (see this module's own docstring for why that
-        suffix specifically cannot be sorted as a plain string).
+        existing no-name_three case unchanged. One real design
+        decision, independent of the zero-level change: chronological
+        order across every group cannot use a full-path string sort the
+        way one group's own query() case can get away with (different
+        groups' run directories live under different prefixes, so a
+        full-path sort would sort by group name first, not by
+        timestamp) -- _run_dir_sort_key() extracts just the trailing
+        directory-name segment, AND handles that segment's own
+        disambiguating "_N" suffix numerically rather than as a string
+        (see this module's own docstring for why that suffix
+        specifically cannot be sorted as a plain string).
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -322,7 +356,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "group with '*'."
             )
 
-        run_homes = self._discover_run_homes(None)
+        # zero-level (direct children of each run's own group's home)
+        # only -- same restriction the literal-root query() case now
+        # applies to a plain bare pointer, settled 2026-08-10. Each
+        # candidate's own group name (kept by _discover_run_homes since
+        # this is the traversal case) is needed to compute the right
+        # "home" per candidate -- different groups have different homes.
+        run_homes = [
+            rh
+            for rh, group in self._discover_run_homes(None)
+            if self._matches_prefix(
+                rh, self.csvpaths.results_manager.get_named_results_home(group), []
+            )
+        ]
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
@@ -489,19 +535,25 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         path = Nos(instance_dir).join(accessor.arg)
         return cls._read_well_known_file(path)
 
-    def _discover_run_homes(self, root_major: str | None) -> list[str]:
-        """every distinct, still-existing run_home, read from the
-        archive-root manifest.json -- see this module's own docstring
-        for why this replaces directory-walking entirely (no need to
-        know/guess a group's template depth). root_major is a literal
-        group name to filter to (the ordinary, single-group case), or
-        None to skip the filter entirely and discover across every
-        group -- used by '*' traversal, which already has this same
-        archive-wide ledger in hand for Rule 1a/1b, so no separate
-        group-name enumeration is needed. Many entries can share the
-        same run_home (one entry per csvpath-statement execution,
-        several statements per run), so dedupe; a stale entry (the run
-        since deleted) is dropped via an existence check."""
+    def _discover_run_homes(self, root_major: str | None) -> list[tuple[str, str]]:
+        """every distinct, still-existing (run_home, named_paths_name)
+        pair, read from the archive-root manifest.json -- see this
+        module's own docstring for why this replaces directory-walking
+        entirely (no need to know/guess a group's template depth).
+        root_major is a literal group name to filter to (the ordinary,
+        single-group case), or None to skip the filter entirely and
+        discover across every group -- used by '*' traversal, which
+        already has this same archive-wide ledger in hand for Rule
+        1a/1b, so no separate group-name enumeration is needed. Each
+        pair's own group name is kept (not just the run_home) so '*'
+        traversal can tell whether a given run is a direct child of
+        *its own* group's home -- needed once a plain bare pointer
+        means zero-level-only (settled 2026-08-10, see :flatten() for
+        the any-depth case) rather than "ignore depth entirely." Many
+        entries can share the same run_home (one entry per csvpath-
+        statement execution, several statements per run), so dedupe; a
+        stale entry (the run since deleted) is dropped via an
+        existence check."""
         archive = self.csvpaths.config.get(section="results", name="archive")
         manifest_path = Nos(archive).join("manifest.json")
         if not Nos(manifest_path).exists():
@@ -509,13 +561,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         with DataFileReader(manifest_path) as reader:
             entries = json.load(reader.source)
         homes = []
+        seen = set()
         for entry in entries:
-            if root_major is not None and entry.get("named_paths_name") != root_major:
+            group = entry.get("named_paths_name")
+            if root_major is not None and group != root_major:
                 continue
             run_home = entry.get("run_home")
-            if run_home and run_home not in homes:
-                homes.append(run_home)
-        return [h for h in homes if Nos(h).exists()]
+            if run_home and run_home not in seen:
+                seen.add(run_home)
+                homes.append((run_home, group))
+        return [pair for pair in homes if Nos(pair[0]).exists()]
 
     def _results_for_run(
         self, run_dir: str, identity: str | None, match_all: bool
