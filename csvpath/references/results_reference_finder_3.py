@@ -21,8 +21,14 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 # result directory within the selected run(s).
 #
 #  - root_major is a literal named-results name (the same name as the named-
-#    paths group that was run). "*" (every named-results group) is a
-#    different traversal problem, not yet built.
+#    paths group that was run), or "*" (every named-results group). "*" has
+#    two exceptions carved out before general traversal (Rule 1a/1b, a
+#    bare/ordinal-indexed :manifest() reads the global archive ledger); any
+#    other use of "*" goes through _query_star_traversal(), which is
+#    deliberately the narrowest of the three datatypes' traversals (bare
+#    pointer only, no path narrowing/:all()/name_three/:manifest()/field
+#    accessors) -- see that method's own docstring for why the wider cases
+#    are genuinely harder here, not just unbuilt yet.
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
@@ -132,13 +138,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return ReferenceResults3(
                     results=[ReferenceResult3(path=path, uuid=selected["run_uuid"])]
                 )
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support '*' as "
-                "root_major (querying every named-results group) -- use a "
-                "literal group name, or a bare ':manifest()' to read the "
-                "global archive ledger, optionally with a pointer "
-                "(:first()/:last()/:index(n)) to pick one entry by ordinal."
-            )
+            return self._query_star_traversal(reference)
 
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -211,6 +211,92 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for run_dir in selected_runs:
             results.extend(self._results_for_run(run_dir, identity, match_all))
         return ReferenceResults3(results=results)
+
+    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+        """root_major == "*" -- query across every named-results group,
+        not just one. Deliberately the narrowest '*' traversal of the
+        three datatypes: only a bare pointer (:first()/:last()/
+        :index(n)), no path narrowing, no name_three, no ':all()', no
+        :manifest()/a field-accessor function. Two things make the
+        wider cases genuinely harder here, not just unbuilt yet (unlike
+        files/csvpaths, where the same shapes were straightforward
+        generalizations):
+
+        - RESULTS' own ':all()' already means something different --
+          pooling every csvpath-statement instance WITHIN one already-
+          selected run, at name_three (see _name_three_selector) -- so
+          there is no existing syntactic home for a "group by named-
+          results-group" trigger the way files/csvpaths both have via
+          a bare ':all()' in name_one.
+        - Path narrowing (_matches_prefix) needs a candidate's own
+          group's home directory to compute a relative match -- a bare
+          run_home string, once pooled from _discover_run_homes(), no
+          longer carries which group it came from. Generalizing that
+          safely needs real design work, not reuse.
+
+        So this only generalizes _discover_run_homes() (root_major=None
+        skips its group filter -- it already reads the same archive-
+        wide ledger Rule 1a/1b use, so no separate group-name
+        enumeration is needed at all) and reuses _results_for_run()'s
+        existing no-name_three case unchanged. The one real design
+        decision: chronological order across every group cannot be a
+        plain sort of full run_home path strings the way one group's
+        own query() does (line ~163 above) -- different groups' run
+        directories live under different prefixes, so a full-path sort
+        would sort by group name first, not by timestamp. Sorting by
+        each run_home's own trailing directory-name segment (the
+        "%Y-%m-%d_%H-%M-%S[_N]" timestamp itself) fixes this.
+        """
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) -- it is files-only."
+            )
+        if not self._is_bare_function_only(name_one):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support path "
+                "narrowing combined with '*' traversal -- only a bare "
+                "pointer (:first()/:last()/:index(n)) is supported so "
+                "far, e.g. '$*.results.:last()'."
+            )
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support name_three "
+                "(an instance selector) combined with '*' traversal."
+            )
+        calls = self._combined_name_one_calls(name_one)
+        built = ReferenceFunctionFactory.build_chain(calls)
+        if any(f.name in ("all", "manifest") for f in built):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support ':all()' or "
+                "':manifest()' combined with '*' traversal -- only a "
+                "bare pointer (:first()/:last()/:index(n)) is supported "
+                "so far."
+            )
+        if self._find_field_function_call(calls) is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support a field-"
+                "accessor function combined with '*' traversal."
+            )
+        pointer = self._pointer_from_calls(calls)
+        if pointer is None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 requires a pointer (:first()/"
+                ":last()/:index(n)) when traversing every named-results "
+                "group with '*'."
+            )
+
+        run_homes = self._discover_run_homes(None)
+        run_homes = sorted(
+            run_homes, key=lambda rh: rh.rstrip("/").rsplit("/", 1)[-1]
+        )
+        selected = self._apply_pointer(pointer, run_homes)
+        if selected is None:
+            return ReferenceResults3(results=[])
+        return ReferenceResults3(
+            results=self._results_for_run(selected, None, False)
+        )
 
     _JSON_ACCESSOR_FILES = {
         "errors": "errors.json",
@@ -370,14 +456,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         path = Nos(instance_dir).join(accessor.arg)
         return cls._read_well_known_file(path)
 
-    def _discover_run_homes(self, root_major: str) -> list[str]:
-        """every distinct, still-existing run_home for this group, read
-        from the archive-root manifest.json -- see this module's own
-        docstring for why this replaces directory-walking entirely (no
-        need to know/guess the group's template depth). Many entries can
-        share the same run_home (one entry per csvpath-statement
-        execution, several statements per run), so dedupe; a stale entry
-        (the run since deleted) is dropped via an existence check."""
+    def _discover_run_homes(self, root_major: str | None) -> list[str]:
+        """every distinct, still-existing run_home, read from the
+        archive-root manifest.json -- see this module's own docstring
+        for why this replaces directory-walking entirely (no need to
+        know/guess a group's template depth). root_major is a literal
+        group name to filter to (the ordinary, single-group case), or
+        None to skip the filter entirely and discover across every
+        group -- used by '*' traversal, which already has this same
+        archive-wide ledger in hand for Rule 1a/1b, so no separate
+        group-name enumeration is needed. Many entries can share the
+        same run_home (one entry per csvpath-statement execution,
+        several statements per run), so dedupe; a stale entry (the run
+        since deleted) is dropped via an existence check."""
         archive = self.csvpaths.config.get(section="results", name="archive")
         manifest_path = Nos(archive).join("manifest.json")
         if not Nos(manifest_path).exists():
@@ -386,7 +477,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             entries = json.load(reader.source)
         homes = []
         for entry in entries:
-            if entry.get("named_paths_name") != root_major:
+            if root_major is not None and entry.get("named_paths_name") != root_major:
                 continue
             run_home = entry.get("run_home")
             if run_home and run_home not in homes:

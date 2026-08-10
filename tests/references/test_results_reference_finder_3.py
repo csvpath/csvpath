@@ -69,6 +69,17 @@ def _write_archive_manifest(archive, group: str, run_homes: list[str]) -> None:
     _write_json(archive / "manifest.json", entries)
 
 
+def _write_archive_manifest_multi(archive, groups: dict) -> None:
+    """like _write_archive_manifest, but merges more than one group's
+    entries into a single archive manifest.json write -- needed for '*'
+    traversal tests, since _write_archive_manifest overwrites rather
+    than appends. groups: {group_name: [run_home, ...]}."""
+    entries = []
+    for group, run_homes in groups.items():
+        entries.extend({"named_paths_name": group, "run_home": rh} for rh in run_homes)
+    _write_json(archive / "manifest.json", entries)
+
+
 def _finder(reference: str, archive: str) -> ResultsReferenceFinder3:
     csvpaths = _FakeCsvPaths(archive)
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -86,6 +97,31 @@ def acme_archive(tmp_path):
     )
     run2 = _make_run(base, "2026-01-02_00-00-00", "run2-uuid", {"0": "inst3-uuid"})
     _write_archive_manifest(tmp_path, "acme", [run1, run2])
+    return str(tmp_path)
+
+
+@pytest.fixture
+def two_group_archive(tmp_path):
+    # acme (2 runs) + widgets (1 run, chronologically LATEST overall).
+    # widgets is written FIRST in the merged manifest on purpose -- a
+    # naive (unsorted) "last" would give acme's own last run
+    # (2026-01-02) instead of the true global-latest (widgets',
+    # 2026-01-03), so this fails if the '*' traversal sort-by-trailing-
+    # segment logic is ever removed/broken.
+    acme_base = tmp_path / "acme" / "customers" / "2025"
+    acme_run1 = _make_run(acme_base, "2026-01-01_00-00-00", "acme-run1-uuid", {})
+    acme_run2 = _make_run(acme_base, "2026-01-02_00-00-00", "acme-run2-uuid", {})
+    widgets_base = tmp_path / "widgets"
+    widgets_run1 = _make_run(
+        widgets_base, "2026-01-03_00-00-00", "widgets-run1-uuid", {}
+    )
+    _write_archive_manifest_multi(
+        tmp_path,
+        {
+            "widgets": [widgets_run1],
+            "acme": [acme_run1, acme_run2],
+        },
+    )
     return str(tmp_path)
 
 
@@ -819,10 +855,15 @@ class TestGlobalArchiveLedger:
         assert isinstance(data, list)
         assert {e["named_paths_name"] for e in data} == {"acme"}
 
-    def test_star_with_a_pointer_is_still_not_supported(self, acme_archive):
+    def test_star_with_a_bare_pointer_is_supported(self, acme_archive):
+        # '*' traversal is supported now for the bare-pointer case (see
+        # TestStarTraversal below) -- with only one named-results group
+        # in this fixture, this just confirms it resolves to that
+        # group's own last run rather than raising.
         finder = _finder("$*.results.:last()", acme_archive)
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        results = finder.query()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "run2-uuid"
 
     def test_star_with_path_narrowing_is_still_not_supported(self, acme_archive):
         finder = _finder("$*.results.customers/2025:last()", acme_archive)
@@ -870,6 +911,45 @@ class TestGlobalArchiveLedgerOrdinalIndexing:
         results = _finder("$*.results.:last():manifest()", archive).query()
         assert results.files == [f"{archive}/manifest.json"]
         assert results.results[0].uuid == "run-3"
+
+
+class TestStarTraversal:
+    # only the bare-pointer flatten case is supported for results (see
+    # _query_star_traversal's own docstring for why) -- every named-
+    # results group's discovered runs pool into one combined list,
+    # sorted by each run directory's own trailing timestamp segment
+    # (not the full path, which would sort by group name first when
+    # pooling across groups), reduced by one terminal pointer.
+    def test_last_across_every_group_is_the_true_most_recent(self, two_group_archive):
+        # widgets' only run (2026-01-03) is the global most-recent, not
+        # acme's own last run (2026-01-02) -- proves pooling crosses
+        # groups and is truly sorted by timestamp, not enumeration
+        # order (widgets is written first in the merged manifest).
+        results = _finder("$*.results.:last()", two_group_archive).query()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "widgets-run1-uuid"
+
+    def test_first_across_every_group_is_the_true_earliest(self, two_group_archive):
+        results = _finder("$*.results.:first()", two_group_archive).query()
+        assert results.results[0].uuid == "acme-run1-uuid"
+
+    def test_index_selects_by_chronological_position(self, two_group_archive):
+        # chronological order: acme-run1, acme-run2, widgets-run1
+        results = _finder("$*.results.:index(1)", two_group_archive).query()
+        assert results.results[0].uuid == "acme-run2-uuid"
+
+    def test_all_is_not_yet_supported(self, two_group_archive):
+        # results' own :all() already means "every instance within one
+        # run" (name_three) -- no syntactic home for group-by-group
+        # traversal semantics exists yet, unlike files/csvpaths.
+        with pytest.raises(ReferenceException3):
+            _finder("$*.results.:all()", two_group_archive).query()
+
+    def test_name_three_combined_with_traversal_is_not_yet_supported(
+        self, two_group_archive
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder("$*.results.:last().0", two_group_archive).query()
 
 
 class TestScopeLimits:
