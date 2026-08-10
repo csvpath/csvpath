@@ -343,6 +343,17 @@ class TestGlobalLoadsLedgerOrdinalIndexing:
         assert results.files == ["inputs/named_paths/manifest.json"]
         assert results.results[0].uuid == "u-loads-3"
 
+    def test_manifest_then_pointer_order_also_works(self):
+        # order-insensitivity was missing on _pointer_before_manifest
+        # and fixed 2026-08-10.
+        finder = _finder(
+            "$*.csvpaths.:manifest():last()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.query()
+        assert results.results[0].uuid == "u-loads-3"
+
 
 #
 # named-paths group alpha (2 versions) + beta (1 version). beta is

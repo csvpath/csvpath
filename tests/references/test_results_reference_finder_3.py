@@ -952,6 +952,15 @@ class TestGlobalArchiveLedgerOrdinalIndexing:
         assert results.files == [f"{archive}/manifest.json"]
         assert results.results[0].uuid == "run-3"
 
+    def test_manifest_then_pointer_order_also_works(self, tmp_path):
+        # order-insensitivity was missing on _pointer_before_manifest
+        # and fixed 2026-08-10 -- this exact shape previously fell
+        # through to _query_star_traversal's own "not yet supported"
+        # raise instead of being recognized as Rule 1b.
+        archive = self._archive(tmp_path)
+        results = _finder("$*.results.:manifest():last()", archive).query()
+        assert results.results[0].uuid == "run-3"
+
 
 class TestStarTraversal:
     # only the bare-pointer flatten case is supported for results (see
