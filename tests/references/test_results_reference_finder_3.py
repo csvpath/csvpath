@@ -125,6 +125,46 @@ def two_group_archive(tmp_path):
     return str(tmp_path)
 
 
+class TestRunDirSortKey:
+    # run directories collide within the same group+prefix+second more
+    # often than you would expect during test suite runs (confirmed by
+    # David) -- RunHomeMaker disambiguates with a plain, unpadded "_N"
+    # suffix starting at "_0". A naive lexicographic sort of the full
+    # directory name breaks once a collision count reaches double
+    # digits ("_10" sorts before "_9" as strings) -- these tests use
+    # "_9"/"_10" specifically to catch that, not just "does sorting
+    # work at all".
+    def test_double_digit_suffix_sorts_after_single_digit_within_one_group(
+        self, tmp_path
+    ):
+        base = tmp_path / "acme"
+        run_base = _make_run(base, "2026-01-01_00-00-00", "run-base-uuid", {})
+        run_9 = _make_run(base, "2026-01-01_00-00-00_9", "run-9-uuid", {})
+        run_10 = _make_run(base, "2026-01-01_00-00-00_10", "run-10-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run_10, run_9, run_base])
+        results = _finder("$acme.results.:last()", str(tmp_path)).query()
+        assert results.uuids == ["run-10-uuid"]
+
+    def test_double_digit_suffix_sorts_after_single_digit_across_groups(
+        self, tmp_path
+    ):
+        base = tmp_path / "acme"
+        run_base = _make_run(base, "2026-01-01_00-00-00", "run-base-uuid", {})
+        run_9 = _make_run(base, "2026-01-01_00-00-00_9", "run-9-uuid", {})
+        run_10 = _make_run(base, "2026-01-01_00-00-00_10", "run-10-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run_10, run_9, run_base])
+        results = _finder("$*.results.:last()", str(tmp_path)).query()
+        assert results.uuids == ["run-10-uuid"]
+
+    def test_unsuffixed_run_sorts_before_any_suffixed_collision(self, tmp_path):
+        base = tmp_path / "acme"
+        run_base = _make_run(base, "2026-01-01_00-00-00", "run-base-uuid", {})
+        run_0 = _make_run(base, "2026-01-01_00-00-00_0", "run-0-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run_0, run_base])
+        results = _finder("$acme.results.:first()", str(tmp_path)).query()
+        assert results.uuids == ["run-base-uuid"]
+
+
 class TestVersionPointer:
     def test_last(self, acme_archive):
         results = _finder(

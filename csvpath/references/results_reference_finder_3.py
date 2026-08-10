@@ -1,4 +1,5 @@
 import json
+import re
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -96,8 +97,15 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 # this exact same manifest+run_home+existence-check approach rather than
 # directory-walking. Stale entries are handled by an existence check
 # (Nos(run_home).exists()), same as v2 does. Run directories are named
-# "%Y-%m-%d_%H-%M-%S[_N]" (RunHomeMaker), lexicographically sortable =
-# chronological (confirmed separately by direct experiment). Each run
+# "%Y-%m-%d_%H-%M-%S[_N]" (RunHomeMaker) -- the timestamp itself is
+# fixed-width/zero-padded, so plain lexicographic sort is safe for it,
+# but "_N" (RunHomeMaker.get_run_dir, appended starting at "_0" when a
+# run collides with one already claimed for the same group+prefix
+# within the same second -- confirmed by David not to be rare during
+# test suite runs) is a plain, unpadded integer -- lexicographic sort
+# of THAT alone is not safe ("_10" sorts before "_9" as strings). See
+# _run_dir_sort_key(), used everywhere a list of run_home paths/
+# segments needs true chronological order. Each run
 # directory has its own manifest.json (a single dict; "run_uuid" identifies
 # the run itself). Each run directory contains one subdirectory per csvpath
 # statement, named by that statement's own identity
@@ -107,6 +115,31 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
 
 class ResultsReferenceFinder3(ReferenceFinder3):
+    #
+    # matches a run directory's disambiguating "_N" suffix (RunHomeMaker
+    # -- appended starting at "_0" when a run collides with one already
+    # claimed for the same group+prefix within the same second). Requires
+    # the WHOLE tail after the last "_" to be digits, which the plain
+    # "%H-%M-%S" timestamp tail (always containing "-") never is -- so
+    # this only ever matches a genuine disambiguation suffix, never a
+    # bare timestamp.
+    #
+    _RUN_SUFFIX_RE = re.compile(r"^(.*)_(\d+)$")
+
+    @classmethod
+    def _run_dir_sort_key(cls, run_home: str) -> tuple:
+        """true chronological sort key for a run directory path or bare
+        segment -- see this module's own docstring for why plain
+        lexicographic sort of the full string is not safe once a "_N"
+        disambiguation suffix is involved. A run with no suffix at all
+        sorts before any suffixed collision for the same timestamp
+        (suffixes start at "_0", so -1 correctly sorts before 0)."""
+        seg = run_home.rstrip("/").rsplit("/", 1)[-1]
+        m = cls._RUN_SUFFIX_RE.match(seg)
+        if m:
+            return (m.group(1), int(m.group(2)))
+        return (seg, -1)
+
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
         root_major = reference.root_major
@@ -160,7 +193,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-        candidates = sorted(candidates)
+        candidates = sorted(candidates, key=self._run_dir_sort_key)
 
         calls = self._combined_name_one_calls(name_one)
         pointer = self._pointer_from_calls(calls)
@@ -239,13 +272,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         wide ledger Rule 1a/1b use, so no separate group-name
         enumeration is needed at all) and reuses _results_for_run()'s
         existing no-name_three case unchanged. The one real design
-        decision: chronological order across every group cannot be a
-        plain sort of full run_home path strings the way one group's
-        own query() does (line ~163 above) -- different groups' run
-        directories live under different prefixes, so a full-path sort
-        would sort by group name first, not by timestamp. Sorting by
-        each run_home's own trailing directory-name segment (the
-        "%Y-%m-%d_%H-%M-%S[_N]" timestamp itself) fixes this.
+        decision: chronological order across every group cannot use a
+        full-path string sort the way one group's own query() case can
+        get away with (different groups' run directories live under
+        different prefixes, so a full-path sort would sort by group
+        name first, not by timestamp) -- _run_dir_sort_key() extracts
+        just the trailing directory-name segment, AND handles that
+        segment's own disambiguating "_N" suffix numerically rather
+        than as a string (see this module's own docstring for why that
+        suffix specifically cannot be sorted as a plain string).
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -288,9 +323,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
 
         run_homes = self._discover_run_homes(None)
-        run_homes = sorted(
-            run_homes, key=lambda rh: rh.rstrip("/").rsplit("/", 1)[-1]
-        )
+        run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])
