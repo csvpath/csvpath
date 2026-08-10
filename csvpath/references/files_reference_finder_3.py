@@ -3,7 +3,7 @@ from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import Reference3, Star3
+from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -12,8 +12,17 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 class FilesReferenceFinder3(ReferenceFinder3):
     #
     # first pass, deliberately narrow:
-    #  - root_major is a literal named-file name. "*" (every named-file)
-    #    is a different traversal problem, not yet built.
+    #  - root_major is a literal named-file name, or "*" (every named-
+    #    file). "*" has two exceptions carved out before general
+    #    traversal (Rule 1a/1b, a bare/ordinal-indexed :manifest() reads
+    #    the global arrivals ledger, see _pointer_before_manifest); any
+    #    other use of "*" goes through _query_star_traversal(), which
+    #    implements the spec's flatten (bare '*'/path narrowing, pooled
+    #    and reduced by one pointer) vs. group (bare ':all()', one
+    #    result per named-file+path pair) semantics -- deliberately
+    #    narrow itself: combining '*' traversal with :manifest()/:path()/
+    #    a field-accessor function is not yet supported, see that
+    #    method's own docstring.
     #  - name_one is "*", a literal path segment, or :name("...") (for a
     #    literal name containing characters -- e.g. a real filename's
     #    "." -- that cannot appear in a bare PATH_SEGMENT). any other
@@ -76,13 +85,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return ReferenceResults3(
                     results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
                 )
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support '*' as root_major "
-                "(querying every named-file) -- use a literal named-file name, "
-                "or a bare ':manifest()' to read the global arrivals ledger, "
-                "optionally with a pointer (:first()/:last()/:index(n)) to "
-                "pick one entry by ordinal."
-            )
+            return self._query_star_traversal(reference)
 
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -109,12 +112,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "name_three instead."
             )
         pattern = self._compile_path_pattern(name_one.path)
-
-        manifest = self.csvpaths.file_manager.get_manifest(root_major)
-        home = self.csvpaths.file_manager.named_file_home(root_major).rstrip("/")
-        candidates = [
-            entry for entry in manifest if self._matches(entry, home, pattern)
-        ]
+        candidates = self._candidates_for_name(root_major, pattern)
 
         name_three = reference.name_three
         if name_three is None:
@@ -180,6 +178,151 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ReferenceResult3(path=c["file"], uuid=c["uuid"])
                 for c in selected_candidates
             ]
+        )
+
+    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+        """root_major == "*" -- query across every named-file, not just
+        one. Two distinct semantics (per "Why a trailing bare '*' is
+        illegal but bare ':all()' is fine" in the spec compendium):
+
+        - bare '*'/literal path narrowing (FLATTEN): every named-file's
+          matching candidates pool into one combined list, sorted by
+          each entry's own "time" so a terminal pointer means true
+          chronological order across everything, not enumeration order.
+        - bare ':all()' as name_one's entire content (GROUP): every
+          matching candidate across every named-file is partitioned by
+          its own "file_home" (already unique per named-file+path, since
+          file_home embeds the named-file's name as a path prefix), and
+          the terminal pointer is applied independently within each
+          group -- one result per (named-file, path) pair, each that
+          pair's own last/first/nth version in its own array order (no
+          time-sort needed within one already-single-manifest group).
+
+        Deliberately narrow for now, matching only the spec's own worked
+        examples: combining '*' traversal with :manifest()/:path()/a
+        field-accessor function in name_three is not yet supported --
+        those all assume exactly one already-known manifest to re-read
+        in _extract_data(), which does not hold when a result could have
+        come from any of several named-files' manifests.
+        """
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support the '#worksheet' "
+                "marker (name_two)."
+            )
+        is_grouped = self._is_bare_all_reference(name_one)
+        if is_grouped:
+            candidates = []
+            for name in self.csvpaths.file_manager.named_file_names:
+                candidates.extend(self._all_candidates_for_name(name))
+        else:
+            if name_one.functions:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support functions "
+                    "attached directly to name_one for '*' traversal -- put "
+                    "the version-selecting function in name_three instead."
+                )
+            pattern = self._compile_path_pattern(name_one.path)
+            candidates = []
+            for name in self.csvpaths.file_manager.named_file_names:
+                candidates.extend(self._candidates_for_name(name, pattern))
+
+        name_three = reference.name_three
+        if name_three is None:
+            file_homes = []
+            for entry in candidates:
+                if entry["file_home"] not in file_homes:
+                    file_homes.append(entry["file_home"])
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=file_home, uuid=None)
+                    for file_home in file_homes
+                ]
+            )
+
+        if name_three.body is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support a literal name_three "
+                "body -- name_three must resolve to a pointer function "
+                "(:first()/:last()/:index(n))."
+            )
+        built = ReferenceFunctionFactory.build_chain(name_three.functions)
+        pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        unsupported = (
+            any(f.name == "manifest" for f in built)
+            or self._find_field_function_call(built) is not None
+            or self._find_path_call(built) is not None
+        )
+        if unsupported:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support combining '*' "
+                "traversal with :manifest(), :path(), or a field-accessor "
+                "function -- only a plain pointer (:first()/:last()/"
+                ":index(n)) is supported so far."
+            )
+        if not pointers:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 requires name_three to resolve to "
+                "exactly one pointer function (:first()/:last()/:index(n)) "
+                "when traversing every named-file with '*'."
+            )
+        pointer = pointers[0]
+
+        if is_grouped:
+            by_file_home = {}
+            for entry in candidates:
+                by_file_home.setdefault(entry["file_home"], []).append(entry)
+            selected_candidates = []
+            for file_home in sorted(by_file_home):
+                selected = self._apply_pointer(pointer, by_file_home[file_home])
+                if selected is not None:
+                    selected_candidates.append(selected)
+        else:
+            pooled = sorted(candidates, key=lambda e: e["time"])
+            selected = self._apply_pointer(pointer, pooled)
+            selected_candidates = [selected] if selected is not None else []
+
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                for c in selected_candidates
+            ]
+        )
+
+    def _candidates_for_name(self, name: str, pattern: list) -> list:
+        """every manifest entry for one named-file whose file_home
+        matches `pattern` relative to that name's own home directory --
+        the per-name-file work shared by both the literal-root_major
+        path and '*' traversal's flatten mode."""
+        manifest = self.csvpaths.file_manager.get_manifest(name)
+        home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+        return [entry for entry in manifest if self._matches(entry, home, pattern)]
+
+    def _all_candidates_for_name(self, name: str) -> list:
+        """every manifest entry for one named-file, at any path depth --
+        ':all()' matches unconditionally, unlike a pattern (which must
+        match an exact segment count), so this skips _matches entirely."""
+        manifest = self.csvpaths.file_manager.get_manifest(name)
+        home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+        return [
+            entry
+            for entry in manifest
+            if entry["file_home"].rstrip("/").startswith(home)
+        ]
+
+    @staticmethod
+    def _is_bare_all_reference(name_one) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ':all()' call, with no trailing function chain -- name_three
+        (the per-group reduction function) is independent and may or may
+        not be present, unlike _is_bare_pointer_reference's shape."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "all"
+            and name_one.path[0].arg is None
         )
 
     def _extract_data(self, result: ReferenceResult3):
