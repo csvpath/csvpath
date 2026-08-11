@@ -19,6 +19,7 @@ def test_metadata():
     assert f.KEY == {
         Reference3.FILES: "uuid",
         Reference3.CSVPATHS: "uuid",
+        Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "uuid",
     }
 
