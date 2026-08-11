@@ -259,9 +259,18 @@ class TestBareFunctionOnlyNameOne:
         results = _finder("$flat.results.:first()", flat_archive).query()
         assert results.uuids == ["run1-uuid"]
 
-    def test_bare_all_returns_every_run(self, flat_archive):
-        results = _finder("$flat.results.:all()", flat_archive).query()
+    def test_bare_flatten_returns_every_run(self, flat_archive):
+        # ':all()' now requires exactly one level (settled 2026-08-11,
+        # same restriction '*' has) -- ':flatten()' is the right tool
+        # for "every run regardless of depth", including flat ones.
+        results = _finder("$flat.results.:flatten()", flat_archive).query()
         assert set(results.uuids) == {"run1-uuid", "run2-uuid"}
+
+    def test_bare_all_excludes_flat_runs(self, flat_archive):
+        # both of flat_archive's runs are zero-level (direct children) --
+        # ':all()' requires exactly one level, so it finds neither.
+        results = _finder("$flat.results.:all()", flat_archive).query()
+        assert results.uuids == []
 
     def test_bare_pointer_does_not_find_a_run_under_a_deep_template(
         self, acme_archive
@@ -408,18 +417,19 @@ class TestAllGrouping:
         results = _finder("$alpha.results.:all():first()", str(tmp_path)).query()
         assert set(results.uuids) == {"zero-1", "one-1"}
 
-    def test_all_with_no_pointer_keeps_its_own_unchanged_precedent(
+    def test_all_with_no_pointer_still_requires_exactly_one_level(
         self, tmp_path
     ):
-        # ':all()' alone (no pointer) is unaffected by grouping -- still
-        # every run for the group, any depth, unreduced, mirroring
-        # csvpaths' own bare ':all()' precedent.
+        # settled 2026-08-11: ':all()' stays '*'s one-level peer whether
+        # or not a pointer follows it -- the flat run is excluded here,
+        # same as it would be for "*" (illegal on its own, but this is
+        # the same restriction), unreduced since there is no pointer.
         base = tmp_path / "alpha"
         zero_run = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
         flat_run = _make_run(base, "2026-01-02_00-00-00", "flat-1", {})
         _write_archive_manifest(tmp_path, "alpha", [zero_run, flat_run])
         results = _finder("$alpha.results.:all()", str(tmp_path)).query()
-        assert set(results.uuids) == {"zero-1", "flat-1"}
+        assert results.uuids == ["zero-1"]
 
     def test_prefixed_all_groups_by_the_next_level(self, tmp_path):
         base = tmp_path / "acme"
@@ -452,11 +462,14 @@ class TestDiscoveryFromArchiveManifest:
     def test_dedupes_multiple_entries_sharing_one_run_home(self, tmp_path):
         # a real run_home is written once per csvpath-statement
         # execution -- several entries in the archive manifest can share
-        # the same run_home for one run with multiple statements.
+        # the same run_home for one run with multiple statements. Uses
+        # ':flatten()' rather than ':all()' -- run1 here is flat/zero-
+        # level, and this test is about discovery/dedup, not depth
+        # semantics.
         base = tmp_path / "acme"
         run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
         _write_archive_manifest(tmp_path, "acme", [run1, run1, run1])
-        results = _finder("$acme.results.:all()", str(tmp_path)).query()
+        results = _finder("$acme.results.:flatten()", str(tmp_path)).query()
         assert results.uuids == ["run1-uuid"]
 
     def test_stale_entry_for_a_deleted_run_is_dropped(self, tmp_path):
@@ -464,7 +477,7 @@ class TestDiscoveryFromArchiveManifest:
         run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
         deleted_run_home = str(base / "2025-06-06_00-00-00")
         _write_archive_manifest(tmp_path, "acme", [run1, deleted_run_home])
-        results = _finder("$acme.results.:all()", str(tmp_path)).query()
+        results = _finder("$acme.results.:flatten()", str(tmp_path)).query()
         assert results.uuids == ["run1-uuid"]
 
     def test_other_groups_entries_are_ignored(self, tmp_path):
@@ -481,7 +494,7 @@ class TestDiscoveryFromArchiveManifest:
                 {"named_paths_name": "other", "run_home": other_run},
             ],
         )
-        results = _finder("$acme.results.:all()", str(tmp_path)).query()
+        results = _finder("$acme.results.:flatten()", str(tmp_path)).query()
         assert results.uuids == ["acme-run-uuid"]
 
     def test_no_archive_manifest_yet_returns_empty_not_an_error(self, tmp_path):

@@ -36,13 +36,14 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #      (a) bare/function-only, no literal path at all (mirrors csvpaths --
 #          the sole path "segment" is itself a version-selecting function,
 #          e.g. :all()/:first()/:last()/:index(n)). A bare POINTER alone
-#          (no :all()) means zero-level only -- direct children of the
-#          group's own root, no template -- settled 2026-08-10; see
-#          :flatten() for the any-depth case this used to cover. A bare
-#          ':all()' (with or without a trailing pointer) is unaffected by
-#          that change -- every run discovered for the group is still a
-#          candidate, any depth (grouping by observed template value is a
-#          later stage of the same refactor, not this one).
+#          (no :all()/:flatten()) means zero-level only -- direct children
+#          of the group's own root, no template -- settled 2026-08-10. A
+#          bare ':all()' means exactly one level, wildcarded -- the same
+#          restriction '*' has, and unaffected by whether a pointer
+#          follows it (settled 2026-08-11, correcting an earlier version
+#          that let a pointer-less ':all()' fall through to any-depth
+#          behavior). ':flatten()' is the any-depth case -- see that
+#          function's own docstring.
 #      (b) literal/"*"/:name("...") path segments (same semantics as files
 #          -- see ReferenceFinder3._compile_path_pattern) PLUS its own
 #          trailing function chain -- narrows to runs whose own prefix
@@ -192,38 +193,50 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         is_grouped = any(
             isinstance(c, FunctionCall3) and c.name == "all" for c in calls
         )
-        # group_key_for: set only when ':all()' + a pointer together
-        # mean "partition by observed value, reduce each partition" --
-        # David's three-templates example (three different one-level
+        # group_key_for: set only when ':all()' partitions candidates by
+        # observed value AND a pointer exists to reduce each partition
+        # (David's three-templates example -- three different one-level
         # templates all group correctly by whatever directory each run
-        # actually landed in, not by which template produced it).
-        # Left None otherwise -- including ':all()' with NO pointer,
-        # which keeps its own separate, unchanged precedent (every run,
-        # any depth, unreduced, mirroring csvpaths' own bare ':all()').
+        # actually landed in, not by which template produced it). Left
+        # None when there is no pointer -- grouping only matters at the
+        # reduce step, so with no pointer the "grouped" and "pooled"
+        # candidate sets are identical anyway (every one-level match,
+        # unreduced).
         group_key_for = None
 
         if self._is_bare_function_only(name_one):
             is_flattened = any(
                 isinstance(c, FunctionCall3) and c.name == "flatten" for c in calls
             )
-            if is_grouped and pointer is not None:
-                # bare ':all()' + a pointer -- exactly one level,
-                # wildcarded, grouped by the run's own actual value
-                # there (peer of a bare '*', which is illegal on its
-                # own but this is the same one-level restriction).
+            if is_grouped and is_flattened:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining "
+                    "':all()' and ':flatten()' -- one level, grouped, or "
+                    "any depth, pooled, but not both at once."
+                )
+            if is_grouped:
+                # bare ':all()' -- exactly one level, wildcarded, peer of
+                # a bare '*' (illegal on its own, but this is the same
+                # one-level restriction) -- settled 2026-08-11,
+                # regardless of whether a pointer follows. Corrected
+                # from an earlier version that let a pointer-less
+                # ':all()' fall through to ':flatten()'s any-depth
+                # candidate set by mistake, mirroring csvpaths' own
+                # depth-less ':all()' precedent -- which does not apply
+                # here, since csvpaths has no path dimension at all to
+                # be wrong about, but results does.
                 pattern = [Star3()]
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
                 ]
-                group_key_for = {
-                    rh: self._prefix_segments(rh, home)[-1] for rh in candidates
-                }
-            elif is_grouped or is_flattened:
-                # ':all()' with no pointer, or ':flatten()' (with or
-                # without one) -- every run discovered for the group is
-                # a candidate, any depth, no prefix narrowing. This is
-                # exactly what a bare pointer alone used to do before
-                # 2026-08-10 -- ':flatten()' is now its explicit name.
+                if pointer is not None:
+                    group_key_for = {
+                        rh: self._prefix_segments(rh, home)[-1] for rh in candidates
+                    }
+            elif is_flattened:
+                # ':flatten()', with or without a pointer -- every run
+                # discovered for the group is a candidate, any depth, no
+                # prefix narrowing.
                 candidates = run_homes
             else:
                 # a plain pointer alone, e.g. "$acme.results.:last()" --
