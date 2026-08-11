@@ -25,21 +25,16 @@ Excluded doc lines and why (checked directly against the doc as of
     :type()) -- Name3 is str-arg only today; :choice()/:type() do not
     exist yet.
   - lines 96-111 (:from(), :date(), :year(), :type()) -- none built yet.
-  - line 93 (.:all():data(), "data.csv output of each csvpath statement")
-    -- raises today: Rule 1 (settled, see manifest_field_functions_
-    proposal.md's "Entity resolution and pooling") forbids combining
-    ':all()' with any content accessor, since full content always
-    resolves to exactly one entity. David said this example was removed
-    from the doc during review -- it was still present as of this
-    writing, so this is flagged as an open discrepancy to reconcile, not
-    silently resolved either way.
 
-Known doc/code discrepancy, not yet reconciled (see test below): line 54's
-description ("every run having no template") does not match either the old
-or the corrected ':all()' behavior -- ':all()' is a one-level operator
-(peer of '*'), not a zero-level ("no template") one; "no template" is what
-line 30's bare pointer means. The test below asserts the actual, correct
-one-level behavior, not the doc's current wording.
+Both discrepancies flagged in an earlier version of this docstring are now
+resolved directly in the doc itself (confirmed 2026-08-11, not assumed):
+line 54's description now correctly says "1-level template" (':all()' is
+a one-level operator, peer of '*', not zero-level/"no template"); the
+`.:all():data()` example (which raised, since Rule 1 forbids combining
+':all()' with any content accessor) has been removed from the doc
+entirely. No corresponding test lives here for either -- there is nothing
+left to encode for the removed example, and line 54 is covered by
+TestAllIsAOneLevelOperator below using the doc's own, now-correct wording.
 """
 
 import json
@@ -200,11 +195,9 @@ class TestFindingTheLastRun:
 
 
 class TestAllIsAOneLevelOperator:
-    # doc line 54: $acme.results.:all() -- the doc's own description
-    # ("every run having no template") does not match ':all()'s actual,
-    # correct behavior (one level, peer of '*') -- see this file's own
-    # module docstring. This test asserts the CORRECT behavior, not the
-    # doc's current wording, which is flagged as needing a fix.
+    # doc line 54: $acme.results.:all() >> every run having a 1-level
+    # template -- description fixed by David 2026-08-11 (was "no
+    # template", which is bare :last()'s job, not ':all()'s).
     def test_line_54_all_with_no_pointer_is_still_one_level_only(self, tmp_path):
         base = tmp_path / "acme"
         flat = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
@@ -365,22 +358,58 @@ class TestPathNarrowingAndInstanceSelection:
         assert results.results[0].data["run_uuid"] == "one-level-uuid"
 
 
-class TestKnownExcludedOrContestedExamples:
-    # locks in the CURRENT, real limitation for line 93 so this test
-    # file notices if/when that changes (either by Rule 1 being
-    # revisited, or the doc line being removed/rewritten) -- not a
-    # statement that this is desired, permanent behavior.
-    def test_line_93_all_combined_with_data_still_raises(self, tmp_path):
-        base = tmp_path / "acme"
-        run1 = _make_run(
-            base / "customers" / "2025",
-            "2026-01-01_00-00-00",
-            "run1-uuid",
-            {"invoices": "invoices-uuid", "receipts": "receipts-uuid"},
+class TestHomeAsAZeroLevelSelector:
+    # decided jointly 2026-08-11, added to the doc under its own new
+    # "## :home() as a zero-level selector" heading -- fills the one
+    # real gap in the depth model: no existing mechanism returned
+    # "every zero-level run, unreduced" (bare pointer always reduces to
+    # one; ':all()' is one-level not zero; ':flatten()' is any depth
+    # not zero). Works because ':home()' is VALUE-role, never a
+    # POINTER -- when it is the only function present, nothing reduces
+    # the candidate set.
+    def test_bare_home_lists_every_no_template_run(self, tmp_path):
+        base = tmp_path / "alpha"
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        one_level = _make_run(
+            base / "zero", "2026-01-03_00-00-00", "one-level", {}
         )
-        _write_archive_manifest(tmp_path, "acme", [run1])
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$acme.results.customers/2025:first().:all():data()",
-                str(tmp_path),
-            ).resolve()
+        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2, one_level])
+        results = _finder("$alpha.results.:home()", str(tmp_path)).query()
+        assert set(results.uuids) == {"flat-1", "flat-2"}
+
+    def test_home_then_pointer_order_independent(self, tmp_path):
+        base = tmp_path / "alpha"
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
+        home_first = _finder(
+            "$alpha.results.:home():last()", str(tmp_path)
+        ).query()
+        pointer_first = _finder(
+            "$alpha.results.:last():home()", str(tmp_path)
+        ).query()
+        assert home_first.uuids == pointer_first.uuids == ["flat-2"]
+
+    def test_prefixed_home_lists_every_run_directly_under_the_prefix(
+        self, tmp_path
+    ):
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        deeper = _make_run(
+            base / "beta" / "x", "2026-01-03_00-00-00", "deeper", {}
+        )
+        _write_archive_manifest(tmp_path, "acme", [beta1, beta2, deeper])
+        results = _finder("$acme.results.beta/:home()", str(tmp_path)).query()
+        assert set(results.uuids) == {"beta-1", "beta-2"}
+
+    def test_prefixed_home_then_pointer(self, tmp_path):
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
+        results = _finder(
+            "$acme.results.beta/:home():last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["beta-2"]

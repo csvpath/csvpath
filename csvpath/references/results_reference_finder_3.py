@@ -243,7 +243,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # zero-level (direct children of the group's own root)
                 # only, NOT "ignore depth entirely" -- settled
                 # 2026-08-10. ':flatten()' above is the new home for
-                # the any-depth case this used to cover.
+                # the any-depth case this used to cover. A bare
+                # ':home()' ALONE (no pointer/:all()/:flatten() also
+                # present) reaches this same branch and needs no
+                # special-casing at all -- settled 2026-08-11: ':home()'
+                # is a VALUE-role field accessor, never a POINTER, so
+                # _pointer_from_calls() below naturally finds none,
+                # leaving every zero-level candidate unreduced -- "every
+                # run whose home is right here" (David's own framing).
+                # The moment a real pointer joins the chain (either
+                # order -- ":home():last()" or ":last():home()"), that
+                # pointer reduces to one and ':home()' reverts to its
+                # ordinary job (reading the field off whatever got
+                # selected) -- no order-sensitivity trap, since nothing
+                # here depends on which of the two is written first.
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, [])
                 ]
@@ -287,6 +300,28 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 group_key_for = {
                     rh: self._prefix_segments(rh, home)[-1] for rh in candidates
                 }
+        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "home":
+            # a literal/wildcard prefix, then ':home()' as the last
+            # segment, e.g. "beta/:home()" -- every run directly under
+            # `beta`, no additional nesting -- the same "zero
+            # ADDITIONAL levels beyond the prefix" idea as the bare
+            # case above, just relative to a prefix instead of the
+            # group's own root. Settled 2026-08-11, alongside the bare
+            # case. Uses the exact-length _matches_prefix (like '*'/
+            # ':all()' do), not _matches_prefix_at_least (':flatten()'s
+            # any-depth matcher) -- ':home()' never means "any depth,"
+            # only "stop exactly here."
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':home()' does not take "
+                    "an argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
+            candidates = [
+                rh for rh in run_homes if self._matches_prefix(rh, home, prefix_pattern)
+            ]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [

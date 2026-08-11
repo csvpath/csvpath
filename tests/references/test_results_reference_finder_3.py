@@ -458,6 +458,92 @@ class TestAllGrouping:
             ).query()
 
 
+class TestHomeAsAZeroLevelSelector:
+    # settled 2026-08-11: bare ':home()' (David's own framing --
+    # "everything that has its home here") fills the one real gap left
+    # in the depth model -- there was no way to ask for "every zero-
+    # level run, unreduced" (bare pointer always reduces to one, ':all()'
+    # is one-level not zero, ':flatten()' is any depth not zero). Works
+    # at both the root (no code change needed -- ':home()' is VALUE-
+    # role, never a pointer, so it naturally falls through to the
+    # existing zero-level, no-pointer candidate set) and prefixed
+    # (new code, mirrors :all()/:flatten()'s own prefixed branches).
+    def test_bare_home_lists_every_zero_level_run_unreduced(self, tmp_path):
+        base = tmp_path / "alpha"
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        one_level = _make_run(base / "zero", "2026-01-03_00-00-00", "one-level", {})
+        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2, one_level])
+        results = _finder("$alpha.results.:home()", str(tmp_path)).query()
+        assert set(results.uuids) == {"flat-1", "flat-2"}
+
+    def test_home_then_pointer_reduces_to_one(self, tmp_path):
+        base = tmp_path / "alpha"
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
+        results = _finder("$alpha.results.:home():last()", str(tmp_path)).query()
+        assert results.uuids == ["flat-2"]
+
+    def test_pointer_then_home_gives_the_same_result_either_order(
+        self, tmp_path
+    ):
+        # order-independence: ':home()' is not a pointer, so its own
+        # presence never competes with a real pointer for which one
+        # "wins" -- both orders mean the same thing.
+        base = tmp_path / "alpha"
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
+        home_then_pointer = _finder(
+            "$alpha.results.:home():last()", str(tmp_path)
+        ).query()
+        pointer_then_home = _finder(
+            "$alpha.results.:last():home()", str(tmp_path)
+        ).query()
+        assert home_then_pointer.uuids == pointer_then_home.uuids == ["flat-2"]
+
+    def test_prefixed_home_lists_every_run_directly_under_the_prefix(
+        self, tmp_path
+    ):
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        beta_deep = _make_run(
+            base / "beta" / "x", "2026-01-03_00-00-00", "beta-deep", {}
+        )
+        other = _make_run(base / "gamma", "2026-01-04_00-00-00", "other", {})
+        _write_archive_manifest(
+            tmp_path, "acme", [beta1, beta2, beta_deep, other]
+        )
+        results = _finder("$acme.results.beta/:home()", str(tmp_path)).query()
+        assert set(results.uuids) == {"beta-1", "beta-2"}
+
+    def test_prefixed_home_then_pointer_reduces_to_one(self, tmp_path):
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
+        results = _finder(
+            "$acme.results.beta/:home():last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["beta-2"]
+
+    def test_bare_home_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder('$alpha.results.:home("x")', str(tmp_path)).query()
+
+    def test_prefixed_home_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "run1", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.results.beta/:home("x")', str(tmp_path)).query()
+
+
 class TestDiscoveryFromArchiveManifest:
     def test_dedupes_multiple_entries_sharing_one_run_home(self, tmp_path):
         # a real run_home is written once per csvpath-statement
