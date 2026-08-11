@@ -393,16 +393,17 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "inst1-uuid"
 
-    def test_uuid_at_run_scope_gives_none_not_the_deprecated_field(
+    def test_uuid_at_run_scope_mirrors_run_uuid_not_the_deprecated_field(
         self, acme_archive
     ):
-        # :uuid()'s KEY has no Reference3.RESULTS entry at all -- run
-        # scope's own bare "uuid" is the deprecated field (see #225-
-        # adjacent findings) -- this must not accidentally surface it.
+        # settled 2026-08-11: :uuid()'s KEY reads "run_uuid" at RESULTS
+        # run scope, not the run's own bare "uuid" field (deprecated,
+        # see #225-adjacent findings) -- this must give the same value
+        # :run_uuid() gives, not None and not the deprecated field.
         results = _finder(
             "$acme.results.customers/2025:first():uuid()", acme_archive
         ).resolve()
-        assert results.results[0].data is None
+        assert results.results[0].data == "run1-uuid"
 
     def test_run_level_field_accessor_combined_with_name_three_raises(
         self, acme_archive
