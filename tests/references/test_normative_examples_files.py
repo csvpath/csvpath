@@ -248,6 +248,32 @@ class TestFlattenForOneNamedFile:
         }
 
 
+class TestGroupsForOneNamedFile:
+    # doc lines "### ':groups()' for ONE named-file" -- the any-depth
+    # GROUP peer of ':all()' (one-level GROUP)/':flatten()' (any-depth
+    # POOL), added 2026-08-12. Reaches both of MIXED_MANIFEST's distinct
+    # depths, each independently reduced -- the mixed-depth case ':all()'
+    # cannot reach on its own.
+    def test_groups_last_gives_each_paths_own_latest_at_any_depth(self):
+        results = _finder(
+            "$mixed.files.:groups().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_groups_first_gives_each_paths_own_earliest_at_any_depth(self):
+        results = _finder(
+            "$mixed.files.:groups().:first()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-zero-1", "u-deep-1"}
+
+    def test_groups_alone_gives_every_distinct_path_any_depth_unreduced(self):
+        results = _finder("$mixed.files.:groups()", MIXED_HOME, MIXED_MANIFEST).query()
+        assert set(results.files) == {
+            "inputs/named_files/mixed/zero.csv",
+            "inputs/named_files/mixed/nested/deep.csv",
+        }
+
+
 class TestManifestEitherOrder:
     # doc lines "### The version's own manifest entry, either order"
     def test_pointer_then_manifest(self):
@@ -482,6 +508,20 @@ class TestStarTraversalFlattenAnyDepth:
         assert star_results.uuids == ["u-two-2"]
         flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
         assert flatten_results.uuids == ["u-gamma-deep-1"]
+
+
+class TestStarTraversalGroupsAnyDepth:
+    # doc line "### '*' traversal, GROUP, any depth" -- one result per
+    # (named-file, path) pair regardless of depth, including gamma's
+    # two-level entry that ':all()' cannot reach.
+    def test_last_gives_one_result_per_named_file_and_path_any_depth(self):
+        groups_results = _flatten_star_finder("$*.files.:groups().:last()").query()
+        assert set(groups_results.uuids) == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
 
 
 class TestFieldAccessorsOnOneMatchedVersion:

@@ -656,6 +656,29 @@ class TestStarTraversalFlattenAnyDepth:
             _flatten_star_finder("$*.files.:flatten().:last():manifest()").query()
 
 
+class TestStarTraversalGroupsAnyDepth:
+    # bare ':groups()' as name_one's entire content -- added 2026-08-12,
+    # the any-depth GROUP peer of ':all()' (one-level GROUP)/':flatten()'
+    # (any-depth POOL) across every named-file. Same any-depth candidate
+    # gathering as ':flatten()' (reaches gamma's two-level entry, which
+    # ':all()' cannot), partitioned by file_home like ':all()' instead of
+    # pooled into one answer.
+    def test_last_gives_one_result_per_named_file_and_path_any_depth(self):
+        all_results = _flatten_star_finder("$*.files.:all().:last()").query()
+        assert set(all_results.uuids) == {"u-zero-1", "u-one-2", "u-two-2"}
+        groups_results = _flatten_star_finder("$*.files.:groups().:last()").query()
+        assert set(groups_results.uuids) == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _flatten_star_finder("$*.files.:groups().:last():manifest()").query()
+
+
 class TestAllForOneNamedFile:
     # bare ':all()' as name_one's entire content, for a LITERAL (non-'*')
     # root_major -- settled 2026-08-12, CORRECTED same day: ':all()' is
@@ -753,6 +776,59 @@ class TestFlattenForOneNamedFile:
         )
         r = results.resolve()
         assert r.results[0].data == MIXED_MANIFEST[3]
+
+
+class TestGroupsForOneNamedFile:
+    # bare ':groups()' as name_one's entire content, for a LITERAL
+    # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer
+    # of ':all()' (one-level GROUP)/':flatten()' (any-depth POOL). Same
+    # any-depth candidate gathering as ':flatten()' (MIXED_MANIFEST's two
+    # different-depth file_homes), but partitioned like ':all()' instead
+    # of pooled -- reaches BOTH distinct paths, each own reduction,
+    # exactly the case a literal/'*' pattern and ':all()' (both one
+    # level) cannot reach on their own.
+    def test_groups_last_gives_each_paths_own_latest_at_any_depth(self):
+        results = _finder("$mixed.files.:groups().:last()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_groups_first_gives_each_paths_own_earliest_at_any_depth(self):
+        results = _finder("$mixed.files.:groups().:first()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-deep-1"}
+
+    def test_groups_with_no_name_three_is_the_same_as_flatten(self):
+        # with no pointer, "partitioned" and "pooled" candidate sets are
+        # identical -- both just dedupe by file_home over the same
+        # any-depth gathering, same as ':all()'/'*' already coincide
+        # with no pointer.
+        groups_results = _finder("$mixed.files.:groups()", MIXED_HOME, MIXED_MANIFEST).query()
+        flatten_results = _finder(
+            "$mixed.files.:flatten()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(groups_results.files) == set(flatten_results.files)
+
+    def test_a_literal_all_misses_the_two_level_entry_groups_does_not(self):
+        all_results = _finder(
+            "$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(all_results.uuids) == {"u-zero-2"}
+        groups_results = _finder(
+            "$mixed.files.:groups().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(groups_results.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_groups_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:groups().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
+
+    def test_groups_combined_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:groups().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
 
 
 class TestManifestCombinedWithNameThree:
