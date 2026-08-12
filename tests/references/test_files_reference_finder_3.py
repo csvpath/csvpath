@@ -778,6 +778,113 @@ class TestFlattenForOneNamedFile:
         assert r.results[0].data == MIXED_MANIFEST[3]
 
 
+ANCHOR_HOME = "inputs/named_files/anchor"
+ANCHOR_MANIFEST = [
+    {
+        "file": "inputs/named_files/anchor/2025/orders.csv/aaa.csv",
+        "file_home": "inputs/named_files/anchor/2025/orders.csv",
+        "uuid": "u-one-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/orders.csv/bbb.csv",
+        "file_home": "inputs/named_files/anchor/orders.csv",
+        "uuid": "u-zero-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/returns.csv/ccc.csv",
+        "file_home": "inputs/named_files/anchor/returns.csv",
+        "uuid": "u-returns",
+    },
+    {
+        "file": "inputs/named_files/anchor/2025/returns.csv/ddd.csv",
+        "file_home": "inputs/named_files/anchor/2025/returns.csv",
+        "uuid": "u-nested-returns",
+    },
+]
+
+
+class TestFlattenPrefixedWithSuffix:
+    # ':flatten()' as name_one's FIRST segment, followed by more path --
+    # added 2026-08-12, David: "the last version of all orders.csv no
+    # matter how many template levels from 0 to n"
+    # ($alpha.files.:flatten()/:name("orders.csv").:last()). ANCHOR_
+    # MANIFEST has "orders.csv" at both zero segments preceding
+    # (directly under anchor's home) and one segment preceding
+    # ("2025/orders.csv"), plus "returns.csv" at both depths too (to
+    # prove the suffix anchor actually filters by name, not just by
+    # depth).
+    def test_last_pools_across_every_depth_including_zero(self):
+        # array order: one-pre, zero-pre, returns, nested-returns --
+        # zero-pre is LAST among the orders.csv-suffix matches, so it
+        # wins -- proves a zero-segment-preceding match is genuinely
+        # included, not just tolerated.
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv").:last()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-zero-pre-1"]
+
+    def test_first_pools_across_every_depth_including_zero(self):
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv").:first()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-pre-1"]
+
+    def test_only_matches_the_named_suffix_not_every_path(self):
+        # "returns.csv" entries at both depths must NOT appear.
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv")',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/anchor/orders.csv",
+            "inputs/named_files/anchor/2025/orders.csv",
+        }
+
+    def test_a_literal_name_alone_misses_the_deeper_entry(self):
+        # contrast: bare ':name("orders.csv")' alone is position-
+        # anchored (exactly one level), so it only sees the zero-
+        # preceding-segment match, never the "2025/orders.csv" one.
+        results = _finder(
+            '$anchor.files.:name("orders.csv")', ANCHOR_HOME, ANCHOR_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/anchor/orders.csv"]
+
+    def test_flatten_prefixed_rejects_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$anchor.files.:flatten("x")/:name("orders.csv").:last()',
+                ANCHOR_HOME,
+                ANCHOR_MANIFEST,
+            ).query()
+
+    def test_a_literal_prefix_before_flatten_is_not_yet_supported(self):
+        # a THIRD shape -- literal prefix, THEN ':flatten()', THEN a
+        # literal/:name(...) suffix (e.g. "2025/:flatten()/:name(...)"
+        # -- "any orders.csv below 2025, at any depth") -- is a real,
+        # separate extension David flagged wanting eventually, deferred
+        # 2026-08-12 rather than built now. ':flatten()' is only
+        # recognized as name_one's FIRST segment today
+        # (_is_flatten_prefixed_reference); anywhere else it falls
+        # through to the ordinary _compile_path_pattern path, which
+        # raises cleanly rather than silently matching wrong -- adding
+        # this later is expected to be additive (a new elif branch
+        # keyed on ':flatten()' appearing at some OTHER position in
+        # name_one.path) and should not touch any non-prefixed shape's
+        # behavior, including the bare/no-prefix ':flatten()/...' shape
+        # this class already covers.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$anchor.files.2025/:flatten()/:name("orders.csv").:last()',
+                ANCHOR_HOME,
+                ANCHOR_MANIFEST,
+            ).query()
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer

@@ -170,6 +170,38 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = self._candidates_for_name(root_major, [Star3()])
         elif is_flattened or is_deep_grouped:
             candidates = self._all_candidates_for_name(root_major)
+        elif self._is_flatten_prefixed_reference(name_one):
+            # ':flatten()' as name_one's FIRST segment, followed by more
+            # path -- settled 2026-08-12, David: "the last version of
+            # all orders.csv no matter how many template levels from 0
+            # to n" ($alpha.files.:flatten()/:name("orders.csv").:last()).
+            # The mirror image of RESULTS' own prefixed ':flatten()'
+            # (literal-prefix, THEN any depth) -- here the any-depth
+            # part comes first and a fixed literal/'*'/:name(...) suffix
+            # pattern (everything after it) anchors the end. Matches ANY
+            # number of segments, including zero, before that suffix --
+            # same "any depth, including a direct/zero-level match"
+            # convention bare ':flatten()' already uses.
+            if name_one.path[0].arg is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3's ':flatten()' does not take an "
+                    "argument."
+                )
+            suffix_pattern = self._compile_path_pattern(name_one.path[1:])
+            candidates = self._candidates_for_name_by_suffix(root_major, suffix_pattern)
+        # NOT YET BUILT, deferred 2026-08-12 (David wants it eventually,
+        # not now): a literal prefix BEFORE ':flatten()', e.g.
+        # "2025/:flatten()/:name('orders.csv')" -- "any orders.csv
+        # below 2025, at any depth in between." Falls through to the
+        # ordinary _compile_path_pattern branch below today, which
+        # raises cleanly (":flatten() as a name_one path segment" is
+        # unsupported there) rather than matching silently wrong -- see
+        # TestFlattenPrefixedWithSuffix::
+        # test_a_literal_prefix_before_flatten_is_not_yet_supported.
+        # Expected to be additive when built (a new elif keyed on
+        # ':flatten()' appearing at some position other than first),
+        # not a change to this bare-":flatten()"-first shape or to any
+        # non-prefixed path.
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = self._candidates_for_name(root_major, pattern)
@@ -414,6 +446,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [entry for entry in manifest if self._matches(entry, home, pattern)]
 
+    def _candidates_for_name_by_suffix(self, name: str, suffix_pattern: list) -> list:
+        """every manifest entry for one named-file whose file_home's
+        TRAILING segments match `suffix_pattern` position-by-position
+        (Star3 as wildcard), with any number of additional segments
+        (including zero) allowed before them -- the suffix-anchored
+        counterpart to _candidates_for_name's exact-length match, used
+        by the ':flatten()/...' prefixed shape (any depth, THEN a fixed
+        literal/'*'/:name(...) anchor at the end)."""
+        manifest = self.csvpaths.file_manager.get_manifest(name)
+        home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+        return [
+            entry
+            for entry in manifest
+            if self._matches_suffix(entry, home, suffix_pattern)
+        ]
+
     def _all_candidates_for_name(self, name: str) -> list:
         """every manifest entry for one named-file, at any path depth --
         ':flatten()'/':groups()' both match unconditionally, unlike a
@@ -473,6 +521,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name == "groups"
             and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_flatten_prefixed_reference(name_one) -> bool:
+        """true when name_one's path STARTS with a bare ':flatten()'
+        followed by at least one more segment -- the mirror image of
+        _is_bare_flatten_reference (which requires ':flatten()' to be
+        the ONLY segment). Does not check the arg here -- query() raises
+        its own clear error for that, mirroring how the bare-shape
+        checks fold the arg check into the boolean instead (this one
+        needs to distinguish "wrong arg" from "not this shape at all"
+        for a better error message, so it is checked by the caller)."""
+        return (
+            len(name_one.path) > 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "flatten"
         )
 
     @staticmethod
@@ -616,6 +680,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if len(segments) != len(pattern):
             return False
         for actual, expected in zip(segments, pattern):
+            if isinstance(expected, Star3):
+                continue
+            if actual != expected:
+                return False
+        return True
+
+    @staticmethod
+    def _matches_suffix(entry: dict, home: str, pattern: list) -> bool:
+        """like _matches, but matches when file_home's own relative
+        segments END WITH `pattern` position-by-position (Star3 as
+        wildcard), with any number of additional segments (including
+        zero) allowed BEFORE them -- the ':flatten()/...' prefixed
+        shape's own matcher: any depth, then a fixed literal/'*'/
+        :name(...) anchor at the end. `pattern` is never empty here (the
+        caller only reaches this with at least one segment after the
+        leading ':flatten()')."""
+        file_home = entry["file_home"].rstrip("/")
+        if not file_home.startswith(home):
+            return False
+        rel = file_home[len(home) :].lstrip("/")
+        segments = rel.split("/") if rel else []
+        if len(segments) < len(pattern):
+            return False
+        trailing = segments[len(segments) - len(pattern) :]
+        for actual, expected in zip(trailing, pattern):
             if isinstance(expected, Star3):
                 continue
             if actual != expected:

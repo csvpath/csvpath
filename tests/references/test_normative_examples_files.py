@@ -248,6 +248,64 @@ class TestFlattenForOneNamedFile:
         }
 
 
+ANCHOR_HOME = "inputs/named_files/anchor"
+ANCHOR_MANIFEST = [
+    {
+        "file": "inputs/named_files/anchor/2025/orders.csv/aaa.csv",
+        "file_home": "inputs/named_files/anchor/2025/orders.csv",
+        "uuid": "u-one-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/orders.csv/bbb.csv",
+        "file_home": "inputs/named_files/anchor/orders.csv",
+        "uuid": "u-zero-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/returns.csv/ccc.csv",
+        "file_home": "inputs/named_files/anchor/returns.csv",
+        "uuid": "u-returns",
+    },
+]
+
+
+class TestFlattenPrefixedWithSuffix:
+    # doc lines "### ':flatten()' as name_one's FIRST segment, followed
+    # by a fixed literal/:name(...) suffix" -- built 2026-08-12. Reaches
+    # "orders.csv" at both zero segments preceding (directly under
+    # anchor's own home) and one segment preceding ("2025/orders.csv"),
+    # correctly excluding "returns.csv" at either depth.
+    def test_last_pools_across_every_depth_including_zero(self):
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv").:last()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-zero-pre-1"]
+
+    def test_alone_gives_only_the_named_suffix_at_any_depth(self):
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv")',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/anchor/orders.csv",
+            "inputs/named_files/anchor/2025/orders.csv",
+        }
+
+    def test_a_literal_prefix_before_flatten_is_not_yet_supported(self):
+        # doc note: a literal prefix BEFORE ':flatten()' (e.g. "2025/
+        # :flatten()/:name(...)") is a real, deliberately deferred
+        # extension -- not built yet, confirmed to raise cleanly rather
+        # than match silently wrong.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$anchor.files.2025/:flatten()/:name("orders.csv").:first()',
+                ANCHOR_HOME,
+                ANCHOR_MANIFEST,
+            ).query()
+
+
 class TestGroupsForOneNamedFile:
     # doc lines "### ':groups()' for ONE named-file" -- the any-depth
     # GROUP peer of ':all()' (one-level GROUP)/':flatten()' (any-depth
