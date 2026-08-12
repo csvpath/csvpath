@@ -855,6 +855,42 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "run1-uuid"
 
+    def test_home_at_run_scope_reads_run_home(self, tmp_path):
+        # doc line ~171: "$widgets.results.:first():home() >> run_home"
+        # -- no committed test locked this in before (found during the
+        # 2026-08-12 normative-doc sweep); confirmed against
+        # results_registrar.py that "run_home" is a real, written field,
+        # not just documented.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run1-uuid", "run_home": str(run_dir)},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first():home()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == str(run_dir)
+
+    def test_home_at_instance_scope_reads_instance_home(self, tmp_path):
+        # doc line ~192: "$widgets.results.:first().company_names:home()
+        # >> instance_home" -- same gap as above, confirmed against
+        # result_registrar.py that "instance_home" is a real field.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        instance_dir = run_dir / "company_names"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            instance_dir / "manifest.json",
+            {"uuid": "inst1-uuid", "instance_home": str(instance_dir)},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first().company_names:home()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == str(instance_dir)
+
     def test_uuid_at_instance_scope(self, acme_archive):
         results = _finder(
             "$acme.results.customers/2025:first().company_names:uuid()",
