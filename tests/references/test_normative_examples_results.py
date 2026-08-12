@@ -14,8 +14,9 @@ supported, add/move the corresponding test here -- this file is meant to
 grow in lockstep with the doc, not be written once and left behind.
 
 Excluded doc lines and why (checked directly against the doc as of
-2026-08-11, not assumed):
-  - line 39 (:groups()) -- not built, explicitly deferred.
+2026-08-12, not assumed):
+  - line 39 (:groups()) -- built 2026-08-12 (was excluded/deferred as of
+    this file's original writing); see TestFindingTheLastRun.
   - lines 42/48/51 (:from()/:yesterday()/:hour()/:message()/:count()/
     :above()) -- none of these functions are built yet. Lines 42/51 also
     use a bare '*' in name_three, which is illegal (see
@@ -192,6 +193,23 @@ class TestFindingTheLastRun:
         _write_json(tmp_path / "manifest.json", ledger)
         results = _finder("$*.results.:manifest():last()", str(tmp_path)).resolve()
         assert results.results[0].data["run_uuid"] == "run-2"
+
+    def test_line_39_groups_reaches_every_template_and_non_template_run_dir(
+        self, alpha_archive
+    ):
+        # $alpha.results.:groups():last() >> runs for every template and
+        # non-template run dir -- added 2026-08-12 (was excluded/not
+        # built as of this file's original writing). alpha_archive has
+        # four distinct groups (zero-level, "zero", "beta/x", "beta/y"),
+        # each with exactly one run here, so ':last()' of each group is
+        # just that one run.
+        results = _finder("$alpha.results.:groups():last()", alpha_archive).query()
+        assert set(results.uuids) == {
+            "flat-uuid",
+            "zero-uuid",
+            "beta-x-uuid",
+            "beta-y-uuid",
+        }
 
 
 class TestAllIsAOneLevelOperator:

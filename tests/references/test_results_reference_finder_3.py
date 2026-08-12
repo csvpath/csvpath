@@ -458,6 +458,116 @@ class TestAllGrouping:
             ).query()
 
 
+class TestGroups:
+    # ':groups()' -- added 2026-08-12, the any-depth GROUP peer of
+    # ':all()' (one-level GROUP)/':flatten()' (any-depth POOL), built
+    # alongside FILES' own ':groups()' in the same pass (David: keep
+    # functions meaning the same thing across datatypes). Same any-depth
+    # candidate set as ':flatten()', but partitioned by _group_key
+    # (each run's FULL relative path, not just its last segment -- see
+    # that method's own docstring for why: two runs at different depths
+    # sharing a common trailing segment, e.g. "beta/x" vs. "gamma/x",
+    # must never be conflated into one group).
+    def test_groups_reaches_every_depth_independently_no_collisions(
+        self, tmp_path
+    ):
+        base = tmp_path / "alpha"
+        flat_run = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
+        beta_x_1 = _make_run(base / "beta" / "x", "2026-01-02_00-00-00", "beta-x-1", {})
+        beta_x_2 = _make_run(base / "beta" / "x", "2026-01-03_00-00-00", "beta-x-2", {})
+        gamma_x = _make_run(base / "gamma" / "x", "2026-01-04_00-00-00", "gamma-x-1", {})
+        _write_archive_manifest(
+            tmp_path, "alpha", [flat_run, beta_x_1, beta_x_2, gamma_x]
+        )
+        results = _finder("$alpha.results.:groups():last()", str(tmp_path)).query()
+        # three distinct groups: zero-level (flat), "beta/x", "gamma/x" --
+        # "beta/x" and "gamma/x" both end in "x" but are NOT conflated.
+        assert len(results.results) == 3
+        assert set(results.uuids) == {"flat-uuid", "beta-x-2", "gamma-x-1"}
+
+    def test_groups_with_first_gives_each_groups_earliest_at_any_depth(
+        self, tmp_path
+    ):
+        base = tmp_path / "alpha"
+        flat_run = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
+        beta_x_1 = _make_run(base / "beta" / "x", "2026-01-02_00-00-00", "beta-x-1", {})
+        beta_x_2 = _make_run(base / "beta" / "x", "2026-01-03_00-00-00", "beta-x-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [flat_run, beta_x_1, beta_x_2])
+        results = _finder("$alpha.results.:groups():first()", str(tmp_path)).query()
+        assert set(results.uuids) == {"flat-uuid", "beta-x-1"}
+
+    def test_groups_with_no_pointer_is_the_same_as_flatten(self, tmp_path):
+        # with no pointer, grouped/pooled candidate sets are identical --
+        # same reasoning already documented for ':all()' vs. '*'.
+        base = tmp_path / "alpha"
+        flat_run = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
+        deep_run = _make_run(
+            base / "beta" / "x", "2026-01-02_00-00-00", "deep-uuid", {}
+        )
+        _write_archive_manifest(tmp_path, "alpha", [flat_run, deep_run])
+        groups_results = _finder("$alpha.results.:groups()", str(tmp_path)).query()
+        flatten_results = _finder("$alpha.results.:flatten()", str(tmp_path)).query()
+        assert set(groups_results.uuids) == set(flatten_results.uuids)
+
+    def test_prefixed_groups_reaches_every_depth_beyond_the_prefix(
+        self, tmp_path
+    ):
+        base = tmp_path / "acme"
+        beta_only = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-only", {})
+        beta_x_1 = _make_run(base / "beta" / "x", "2026-01-02_00-00-00", "beta-x-1", {})
+        beta_x_2 = _make_run(base / "beta" / "x", "2026-01-03_00-00-00", "beta-x-2", {})
+        other = _make_run(base / "gamma", "2026-01-04_00-00-00", "other", {})
+        _write_archive_manifest(
+            tmp_path, "acme", [beta_only, beta_x_1, beta_x_2, other]
+        )
+        results = _finder(
+            "$acme.results.beta/:groups():last()", str(tmp_path)
+        ).query()
+        # zero additional segments beyond "beta/" is its own group too.
+        assert set(results.uuids) == {"beta-only", "beta-x-2"}
+
+    def test_bare_groups_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder('$alpha.results.:groups("x"):last()', str(tmp_path)).query()
+
+    def test_prefixed_groups_rejects_an_argument(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "run1-uuid", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.beta/:groups("x"):last()', str(tmp_path)
+            ).query()
+
+    def test_groups_combined_with_all_is_rejected(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder("$alpha.results.:all():groups():last()", str(tmp_path)).query()
+
+    def test_groups_combined_with_flatten_is_rejected(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.results.:flatten():groups():last()", str(tmp_path)
+            ).query()
+
+    def test_groups_combined_with_manifest_is_not_yet_supported(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.results.:groups():last():manifest()", str(tmp_path)
+            ).query()
+
+
 class TestHomeAsAZeroLevelSelector:
     # settled 2026-08-11: bare ':home()' (David's own framing --
     # "everything that has its home here") fills the one real gap left

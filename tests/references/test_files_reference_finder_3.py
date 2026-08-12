@@ -42,6 +42,36 @@ TEMPLATED_MANIFEST = [
     },
 ]
 
+# for TestAllForOneNamedFile -- one named-file (mixed) with two distinct
+# file_homes at DIFFERENT depths (one segment, two segments) under the
+# same home, each with more than one version. A literal/'*' pattern
+# always requires an exact segment count, so nothing before this could
+# reach both at once -- exactly the gap bare ':all()' fills for a single
+# named-file (settled 2026-08-12).
+MIXED_HOME = "inputs/named_files/mixed"
+MIXED_MANIFEST = [
+    {
+        "file": "inputs/named_files/mixed/zero.csv/aaa.csv",
+        "file_home": "inputs/named_files/mixed/zero.csv",
+        "uuid": "u-zero-1",
+    },
+    {
+        "file": "inputs/named_files/mixed/zero.csv/bbb.csv",
+        "file_home": "inputs/named_files/mixed/zero.csv",
+        "uuid": "u-zero-2",
+    },
+    {
+        "file": "inputs/named_files/mixed/nested/deep.csv/ccc.csv",
+        "file_home": "inputs/named_files/mixed/nested/deep.csv",
+        "uuid": "u-deep-1",
+    },
+    {
+        "file": "inputs/named_files/mixed/nested/deep.csv/ddd.csv",
+        "file_home": "inputs/named_files/mixed/nested/deep.csv",
+        "uuid": "u-deep-2",
+    },
+]
+
 
 class _FakeFileDescriber:
     def __init__(self, definition: dict):
@@ -536,9 +566,15 @@ class TestStarTraversalFlatten:
 
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
-    # named-file's matches by file_home (already unique per named-file+
-    # path), applying the terminal pointer independently within each
-    # group -- one result per (named-file, path) pair.
+    # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
+    # require the same [Star3()] pattern '*' does -- an earlier version
+    # matched any depth, which diverged from ResultsReferenceFinder3's
+    # own ':all()'/'*' depth-peer vocabulary) by file_home (already
+    # unique per named-file+path), applying the terminal pointer
+    # independently within each group -- one result per (named-file,
+    # path) pair. STAR_ALPHA/STAR_BETA are already all one level deep,
+    # so these assertions are unaffected by the correction -- see
+    # TestStarTraversalFlattenAnyDepth below for the any-depth case.
     def test_all_with_last_gives_one_result_per_named_file_and_path(self):
         results = _star_finder("$*.files.:all().:last()").query()
         assert len(results.results) == 3
@@ -560,6 +596,453 @@ class TestStarTraversalGroup:
     def test_all_combined_with_manifest_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.:all().:last():manifest()").query()
+
+
+#
+# adds one named-file ("gamma") with a TWO-level entry, chronologically
+# latest of everything, to STAR_ALPHA/STAR_BETA's existing one-level
+# fixtures -- '*'/':all()' (both restricted to exactly one level) never
+# see it; ':flatten()' (any depth, pooled across every named-file) does.
+#
+FLATTEN_GAMMA_HOME = "inputs/named_files/gamma"
+FLATTEN_GAMMA_MANIFEST = [
+    {
+        "file": "inputs/named_files/gamma/nested/deep.csv/fff.csv",
+        "file_home": "inputs/named_files/gamma/nested/deep.csv",
+        "uuid": "u-gamma-deep-1",
+        "time": "2026-01-06T00:00:00+00:00",
+    },
+]
+FLATTEN_BY_NAME = dict(STAR_BY_NAME, gamma=(FLATTEN_GAMMA_HOME, FLATTEN_GAMMA_MANIFEST))
+
+
+def _flatten_star_finder(reference: str) -> FilesReferenceFinder3:
+    csvpaths = _FakeCsvPaths(_FakeFileManager(None, None, by_name=FLATTEN_BY_NAME))
+    ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
+    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
+
+
+class TestStarTraversalFlattenAnyDepth:
+    # bare ':flatten()' as name_one's entire content -- added 2026-08-12,
+    # the any-depth POOL peer of '*' (one-level POOL)/':all()' (one-level
+    # GROUP) across every named-file, mirroring ResultsReferenceFinder3's
+    # own ':flatten()'. Pools every named-file's candidates at any depth
+    # into one combined list, time-sorted, same as '*' traversal's own
+    # pool branch -- just without the exact-one-level restriction.
+    def test_last_reaches_a_two_level_entry_star_cannot(self):
+        star_results = _flatten_star_finder("$*.files.*.:last()").query()
+        assert star_results.uuids == ["u-two-2"]
+        flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
+        assert flatten_results.uuids == ["u-gamma-deep-1"]
+
+    def test_first_across_every_named_file_and_depth(self):
+        results = _flatten_star_finder("$*.files.:flatten().:first()").query()
+        assert results.uuids == ["u-zero-1"]
+
+    def test_with_no_name_three_dedupes_to_file_home_directories_any_depth(self):
+        results = _flatten_star_finder("$*.files.:flatten()").query()
+        assert set(results.files) == {
+            "inputs/named_files/alpha/zero.csv",
+            "inputs/named_files/alpha/one.csv",
+            "inputs/named_files/beta/two.csv",
+            "inputs/named_files/gamma/nested/deep.csv",
+        }
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        # same structural reason '*' traversal has this restriction --
+        # root_major is "*" here, so _extract_data() cannot know which
+        # named-file's manifest to re-read.
+        with pytest.raises(ReferenceException3):
+            _flatten_star_finder("$*.files.:flatten().:last():manifest()").query()
+
+
+class TestStarTraversalGroupsAnyDepth:
+    # bare ':groups()' as name_one's entire content -- added 2026-08-12,
+    # the any-depth GROUP peer of ':all()' (one-level GROUP)/':flatten()'
+    # (any-depth POOL) across every named-file. Same any-depth candidate
+    # gathering as ':flatten()' (reaches gamma's two-level entry, which
+    # ':all()' cannot), partitioned by file_home like ':all()' instead of
+    # pooled into one answer.
+    def test_last_gives_one_result_per_named_file_and_path_any_depth(self):
+        all_results = _flatten_star_finder("$*.files.:all().:last()").query()
+        assert set(all_results.uuids) == {"u-zero-1", "u-one-2", "u-two-2"}
+        groups_results = _flatten_star_finder("$*.files.:groups().:last()").query()
+        assert set(groups_results.uuids) == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _flatten_star_finder("$*.files.:groups().:last():manifest()").query()
+
+
+class TestAllForOneNamedFile:
+    # bare ':all()' as name_one's entire content, for a LITERAL (non-'*')
+    # root_major -- settled 2026-08-12, CORRECTED same day: ':all()' is
+    # a one-level GROUP, an exact peer of '*' (same [Star3()] pattern),
+    # not an any-depth match -- kept in lockstep with
+    # ResultsReferenceFinder3's own ':all()'/'*' depth-peer vocabulary.
+    # ALPHA_MANIFEST has two distinct one-level paths (zero.csv x1
+    # version, one.csv x2) -- exactly what ':all()' groups by.
+    def test_all_with_last_gives_each_paths_own_latest(self):
+        results = _finder("$alpha.files.:all().:last()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-one-2"}
+
+    def test_all_with_first_gives_each_paths_own_earliest(self):
+        results = _finder("$alpha.files.:all().:first()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-one-1"}
+
+    def test_all_with_no_name_three_dedupes_to_file_home_directories(self):
+        results = _finder("$alpha.files.:all()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.files) == {
+            "inputs/named_files/alpha/zero.csv",
+            "inputs/named_files/alpha/one.csv",
+        }
+
+    def test_all_does_not_reach_a_two_level_entry(self):
+        # ':all()' is now restricted to exactly one level, same as '*'
+        # -- a two-level path is invisible to it, same as to '*'. Use
+        # ':flatten()' (TestFlattenForOneNamedFile below) to reach it.
+        results = _finder("$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-2"}
+
+    def test_all_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_all_combined_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all().:last():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+
+class TestFlattenForOneNamedFile:
+    # bare ':flatten()' as name_one's entire content, for a LITERAL
+    # (non-'*') root_major -- added 2026-08-12, the any-depth POOL peer
+    # of ':all()' (one-level GROUP)/'*' (one-level POOL). MIXED_MANIFEST
+    # has two distinct file_homes at DIFFERENT depths (zero.csv one
+    # level, nested/deep.csv two levels) -- exactly what '*' cannot
+    # reach (an exact segment count) and ':flatten()' pools into one
+    # answer, in manifest-array order (arrival order for FILES, not a
+    # "time" field -- this is one already-known manifest, same as any
+    # other single-name pooled reduction).
+    def test_flatten_last_pools_across_every_depth(self):
+        results = _finder("$mixed.files.:flatten().:last()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert r.uuids == ["u-deep-2"]
+
+    def test_flatten_first_pools_across_every_depth(self):
+        results = _finder(
+            "$mixed.files.:flatten().:first()", MIXED_HOME, MIXED_MANIFEST
+        )
+        r = results.query()
+        assert r.uuids == ["u-zero-1"]
+
+    def test_flatten_with_no_name_three_dedupes_to_file_homes_any_depth(self):
+        results = _finder("$mixed.files.:flatten()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.files) == {
+            "inputs/named_files/mixed/zero.csv",
+            "inputs/named_files/mixed/nested/deep.csv",
+        }
+
+    def test_a_literal_star_misses_the_two_level_entry_flatten_does_not(self):
+        star_results = _finder(
+            "$mixed.files.*.:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert star_results.uuids == ["u-zero-2"]
+        flatten_results = _finder(
+            "$mixed.files.:flatten().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert flatten_results.uuids == ["u-deep-2"]
+
+    def test_flatten_combined_with_manifest_is_supported(self):
+        # unlike ':all()' grouping, ':flatten()' pooling has no
+        # under-specified-interaction restriction -- root_major is
+        # always known here (unlike '*' traversal), so it reduces to
+        # one entity same as an ordinary pointer would.
+        results = _finder(
+            "$mixed.files.:flatten().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+        )
+        r = results.resolve()
+        assert r.results[0].data == MIXED_MANIFEST[3]
+
+
+ANCHOR_HOME = "inputs/named_files/anchor"
+ANCHOR_MANIFEST = [
+    {
+        "file": "inputs/named_files/anchor/2025/orders.csv/aaa.csv",
+        "file_home": "inputs/named_files/anchor/2025/orders.csv",
+        "uuid": "u-one-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/orders.csv/bbb.csv",
+        "file_home": "inputs/named_files/anchor/orders.csv",
+        "uuid": "u-zero-pre-1",
+    },
+    {
+        "file": "inputs/named_files/anchor/returns.csv/ccc.csv",
+        "file_home": "inputs/named_files/anchor/returns.csv",
+        "uuid": "u-returns",
+    },
+    {
+        "file": "inputs/named_files/anchor/2025/returns.csv/ddd.csv",
+        "file_home": "inputs/named_files/anchor/2025/returns.csv",
+        "uuid": "u-nested-returns",
+    },
+]
+
+
+class TestFlattenPrefixedWithSuffix:
+    # ':flatten()' as name_one's FIRST segment, followed by more path --
+    # added 2026-08-12, David: "the last version of all orders.csv no
+    # matter how many template levels from 0 to n"
+    # ($alpha.files.:flatten()/:name("orders.csv").:last()). ANCHOR_
+    # MANIFEST has "orders.csv" at both zero segments preceding
+    # (directly under anchor's home) and one segment preceding
+    # ("2025/orders.csv"), plus "returns.csv" at both depths too (to
+    # prove the suffix anchor actually filters by name, not just by
+    # depth).
+    def test_last_pools_across_every_depth_including_zero(self):
+        # array order: one-pre, zero-pre, returns, nested-returns --
+        # zero-pre is LAST among the orders.csv-suffix matches, so it
+        # wins -- proves a zero-segment-preceding match is genuinely
+        # included, not just tolerated.
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv").:last()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-zero-pre-1"]
+
+    def test_first_pools_across_every_depth_including_zero(self):
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv").:first()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-pre-1"]
+
+    def test_only_matches_the_named_suffix_not_every_path(self):
+        # "returns.csv" entries at both depths must NOT appear.
+        results = _finder(
+            '$anchor.files.:flatten()/:name("orders.csv")',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/anchor/orders.csv",
+            "inputs/named_files/anchor/2025/orders.csv",
+        }
+
+    def test_a_literal_name_alone_misses_the_deeper_entry(self):
+        # contrast: bare ':name("orders.csv")' alone is position-
+        # anchored (exactly one level), so it only sees the zero-
+        # preceding-segment match, never the "2025/orders.csv" one.
+        results = _finder(
+            '$anchor.files.:name("orders.csv")', ANCHOR_HOME, ANCHOR_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/anchor/orders.csv"]
+
+    def test_flatten_prefixed_rejects_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$anchor.files.:flatten("x")/:name("orders.csv").:last()',
+                ANCHOR_HOME,
+                ANCHOR_MANIFEST,
+            ).query()
+
+    def test_a_literal_prefix_before_flatten_is_not_yet_supported(self):
+        # a THIRD shape -- literal prefix, THEN ':flatten()', THEN a
+        # literal/:name(...) suffix (e.g. "2025/:flatten()/:name(...)"
+        # -- "any orders.csv below 2025, at any depth") -- is a real,
+        # separate extension David flagged wanting eventually, deferred
+        # 2026-08-12 rather than built now. ':flatten()' is only
+        # recognized as name_one's FIRST segment today
+        # (_is_flatten_prefixed_reference); anywhere else it falls
+        # through to the ordinary _compile_path_pattern path, which
+        # raises cleanly rather than silently matching wrong -- adding
+        # this later is expected to be additive (a new elif branch
+        # keyed on ':flatten()' appearing at some OTHER position in
+        # name_one.path) and should not touch any non-prefixed shape's
+        # behavior, including the bare/no-prefix ':flatten()/...' shape
+        # this class already covers.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$anchor.files.2025/:flatten()/:name("orders.csv").:last()',
+                ANCHOR_HOME,
+                ANCHOR_MANIFEST,
+            ).query()
+
+
+HOME_TEST_HOME = "inputs/named_files/homer"
+HOME_TEST_MANIFEST = [
+    {
+        "file": "inputs/named_files/homer/aaa.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-1",
+    },
+    {
+        "file": "inputs/named_files/homer/bbb.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-2",
+    },
+    {
+        "file": "inputs/named_files/homer/orders.csv/ccc.csv",
+        "file_home": "inputs/named_files/homer/orders.csv",
+        "uuid": "u-one-level",
+    },
+]
+
+
+class TestHomeAsAZeroLevelSelector:
+    # bare ':home()' as name_one's entire content -- added 2026-08-12,
+    # a zero-level selector mirroring ResultsReferenceFinder3's own
+    # ':home()' (David: keep functions meaning the same thing across
+    # datatypes). Unlike RESULTS, this needed real new code -- FILES'
+    # name_one can never be empty, so there is no pre-existing "no
+    # pattern" path for a bare pointer to fall into the way RESULTS'
+    # did. HOME_TEST_MANIFEST has both zero-level entries (directly at
+    # homer's own home) and a one-level "orders.csv" entry that must be
+    # excluded.
+    def test_home_then_pointer_gives_the_latest_zero_level_entry(self):
+        results = _finder(
+            "$homer.files.:home().:last()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.uuids == ["u-zero-2"]
+
+    def test_bare_home_dedupes_to_the_named_files_own_home_directory(self):
+        results = _finder(
+            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.files == [HOME_TEST_HOME]
+        assert results.results[0].uuid is None
+
+    def test_home_excludes_the_one_level_entry(self):
+        results = _finder(
+            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert "u-one-level" not in results.uuids
+
+    def test_home_rejects_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$homer.files.:home("x").:last()', HOME_TEST_HOME, HOME_TEST_MANIFEST
+            ).query()
+
+    def test_home_in_name_three_position_is_unaffected(self):
+        # ':home()' keeps its ordinary field-accessor job (SOURCE ==
+        # "manifest", reading "file_home") when it appears in name_three
+        # instead of bare in name_one -- different position, no collision.
+        results = _finder(
+            '$homer.files.:name("orders.csv").:first():home()',
+            HOME_TEST_HOME,
+            HOME_TEST_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == "inputs/named_files/homer/orders.csv"
+
+
+class TestAllOnNameThree:
+    # ':all()' as (part of) name_three's function chain -- added
+    # 2026-08-12, mirroring CsvpathsReferenceFinder3's own ':all()'
+    # precedent exactly: it is not a POINTER, so its whole effect is
+    # simply NOT reducing -- every matched candidate comes back with its
+    # own real path/uuid, unlike name_three being absent entirely (which
+    # dedupes to directory-level results with uuid=None instead).
+    def test_all_gives_every_matched_version_with_real_uuids(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv").:all()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-one-1", "u-one-2"}
+        assert None not in results.uuids
+
+    def test_all_differs_from_no_name_three_at_all(self):
+        # no name_three: deduped to ONE directory-level result, uuid=None.
+        no_name_three = _finder(
+            '$alpha.files.:name("one.csv")', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(no_name_three.results) == 1
+        assert no_name_three.results[0].uuid is None
+        # :all(): every version, unreduced, real uuids.
+        with_all = _finder(
+            '$alpha.files.:name("one.csv").:all()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(with_all.results) == 2
+        assert all(u is not None for u in with_all.uuids)
+
+    def test_all_combined_with_a_pointer_is_redundant_pointer_wins(self):
+        # mirrors CSVPATHS' own "the same outcome as writing no pointer
+        # at all" framing -- :all() alongside a real pointer does not
+        # error, the pointer just reduces as normal.
+        results = _finder(
+            '$alpha.files.:name("one.csv").:all():last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-2"]
+
+
+class TestGroupsForOneNamedFile:
+    # bare ':groups()' as name_one's entire content, for a LITERAL
+    # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer
+    # of ':all()' (one-level GROUP)/':flatten()' (any-depth POOL). Same
+    # any-depth candidate gathering as ':flatten()' (MIXED_MANIFEST's two
+    # different-depth file_homes), but partitioned like ':all()' instead
+    # of pooled -- reaches BOTH distinct paths, each own reduction,
+    # exactly the case a literal/'*' pattern and ':all()' (both one
+    # level) cannot reach on their own.
+    def test_groups_last_gives_each_paths_own_latest_at_any_depth(self):
+        results = _finder("$mixed.files.:groups().:last()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_groups_first_gives_each_paths_own_earliest_at_any_depth(self):
+        results = _finder("$mixed.files.:groups().:first()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-deep-1"}
+
+    def test_groups_with_no_name_three_is_the_same_as_flatten(self):
+        # with no pointer, "partitioned" and "pooled" candidate sets are
+        # identical -- both just dedupe by file_home over the same
+        # any-depth gathering, same as ':all()'/'*' already coincide
+        # with no pointer.
+        groups_results = _finder("$mixed.files.:groups()", MIXED_HOME, MIXED_MANIFEST).query()
+        flatten_results = _finder(
+            "$mixed.files.:flatten()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(groups_results.files) == set(flatten_results.files)
+
+    def test_a_literal_all_misses_the_two_level_entry_groups_does_not(self):
+        all_results = _finder(
+            "$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(all_results.uuids) == {"u-zero-2"}
+        groups_results = _finder(
+            "$mixed.files.:groups().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(groups_results.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_groups_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:groups().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
+
+    def test_groups_combined_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:groups().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
 
 
 class TestManifestCombinedWithNameThree:
@@ -839,6 +1322,47 @@ class TestDefinitionFieldAccessorFunctions:
             self.DEFINITION,
         ).resolve()
         assert first.results[0].data == last.results[0].data
+
+    def test_bare_on_arrival_needs_no_name_or_version(self):
+        # settled 2026-08-12: on_arrival lives in the named-file's own
+        # definition.json (root_major-scoped), not any particular file/
+        # version, so it needs no :name(...)/pointer at all to resolve
+        # -- matches ":definition()" itself, which already gets this
+        # same bare treatment.
+        finder = _finder(
+            "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.resolve()
+        assert results.results[0].data == self.DEFINITION["on_arrival"]
+        assert results.results[0].uuid is None
+
+    def test_bare_sources_needs_no_name_or_version(self):
+        finder = _finder(
+            "$rich.files.:sources()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.resolve()
+        assert results.results[0].data == self.DEFINITION["sources"]
+
+    def test_bare_on_arrival_never_configured_gives_none(self):
+        finder = _finder("$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+    def test_bare_on_arrival_query_gives_the_definition_path_no_uuid(self):
+        finder = _finder(
+            "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.query()
+        assert results.files == [f"{RICH_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_bare_manifest_sourced_field_accessor_still_requires_a_match(self):
+        # contrast case: SOURCE == "manifest" field accessors (e.g.
+        # :uuid()) genuinely vary by which version matched, so they are
+        # NOT given the same bare treatment -- still requires :name(...)
+        # (or '*') to identify a real candidate.
+        with pytest.raises(ReferenceException3):
+            _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
 
 
 class TestPathFunction:
