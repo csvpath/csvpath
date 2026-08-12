@@ -391,25 +391,18 @@ class TestHomeAsAZeroLevelSelector:
         ).query()
         assert home_first.uuids == pointer_first.uuids == ["flat-2"]
 
-    def test_prefixed_home_lists_every_run_directly_under_the_prefix(
+    # NOTE: there is no prefixed equivalent ("beta/:home()") -- a plain
+    # literal prefix with nothing trailing already means "every run
+    # under this exact prefix, unreduced" (confirmed identical results
+    # in every case tested), so ':home()' is root-only.
+    def test_prefixed_home_is_not_a_thing_use_the_literal_prefix_alone(
         self, tmp_path
     ):
         base = tmp_path / "acme"
         beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
         beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
-        deeper = _make_run(
-            base / "beta" / "x", "2026-01-03_00-00-00", "deeper", {}
-        )
-        _write_archive_manifest(tmp_path, "acme", [beta1, beta2, deeper])
-        results = _finder("$acme.results.beta/:home()", str(tmp_path)).query()
-        assert set(results.uuids) == {"beta-1", "beta-2"}
-
-    def test_prefixed_home_then_pointer(self, tmp_path):
-        base = tmp_path / "acme"
-        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
-        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
         _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
-        results = _finder(
-            "$acme.results.beta/:home():last()", str(tmp_path)
-        ).query()
-        assert results.uuids == ["beta-2"]
+        plain_prefix = _finder("$acme.results.beta", str(tmp_path)).query()
+        assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.beta/:home()", str(tmp_path)).query()

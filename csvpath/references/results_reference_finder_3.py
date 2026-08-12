@@ -257,6 +257,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # ordinary job (reading the field off whatever got
                 # selected) -- no order-sensitivity trap, since nothing
                 # here depends on which of the two is written first.
+                # There is NO prefixed equivalent ("beta/:home()") --
+                # considered and removed 2026-08-12: a literal prefix
+                # segment with nothing trailing already means "every
+                # run under this exact prefix, unreduced" (long-
+                # standing, pre-dates this whole depth refactor --
+                # confirmed "$acme.results.beta" and
+                # "$acme.results.beta/:home()" give identical results
+                # in every case tested). ':home()' is only load-bearing
+                # at the bare/root position, where the grammar cannot
+                # express "zero segments" any other way -- a literal
+                # prefix already covers every other depth, so adding
+                # ':home()' there would just be a second, more
+                # confusing spelling of something that already has one
+                # (David: explicit felt "more mysterious than the
+                # default," and collided with the unrelated ":run_dir"
+                # template token in a reader's head).
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, [])
                 ]
@@ -300,28 +316,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 group_key_for = {
                     rh: self._prefix_segments(rh, home)[-1] for rh in candidates
                 }
-        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
-            -1
-        ].name == "home":
-            # a literal/wildcard prefix, then ':home()' as the last
-            # segment, e.g. "beta/:home()" -- every run directly under
-            # `beta`, no additional nesting -- the same "zero
-            # ADDITIONAL levels beyond the prefix" idea as the bare
-            # case above, just relative to a prefix instead of the
-            # group's own root. Settled 2026-08-11, alongside the bare
-            # case. Uses the exact-length _matches_prefix (like '*'/
-            # ':all()' do), not _matches_prefix_at_least (':flatten()'s
-            # any-depth matcher) -- ':home()' never means "any depth,"
-            # only "stop exactly here."
-            if name_one.path[-1].arg is not None:
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3's ':home()' does not take "
-                    "an argument."
-                )
-            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
-            candidates = [
-                rh for rh in run_homes if self._matches_prefix(rh, home, prefix_pattern)
-            ]
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [

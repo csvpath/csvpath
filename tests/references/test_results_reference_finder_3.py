@@ -463,11 +463,20 @@ class TestHomeAsAZeroLevelSelector:
     # "everything that has its home here") fills the one real gap left
     # in the depth model -- there was no way to ask for "every zero-
     # level run, unreduced" (bare pointer always reduces to one, ':all()'
-    # is one-level not zero, ':flatten()' is any depth not zero). Works
-    # at both the root (no code change needed -- ':home()' is VALUE-
-    # role, never a pointer, so it naturally falls through to the
-    # existing zero-level, no-pointer candidate set) and prefixed
-    # (new code, mirrors :all()/:flatten()'s own prefixed branches).
+    # is one-level not zero, ':flatten()' is any depth not zero). Needed
+    # no code change at all -- ':home()' is VALUE-role, never a pointer,
+    # so when it is the only function in the bare chain, nothing reduces
+    # the candidate set and every zero-level run comes back unreduced
+    # for free.
+    #
+    # settled 2026-08-12: there is NO prefixed equivalent
+    # ("beta/:home()") -- a plain literal prefix segment with nothing
+    # trailing already means "every run under this exact prefix,
+    # unreduced" (confirmed identical results to a prefixed ':home()'
+    # in every case tested), so a prefixed ':home()' would just be a
+    # second, more confusing spelling of something that already has
+    # one. ':home()' is only load-bearing at the bare/root position,
+    # where the grammar has no other way to say "zero segments."
     def test_bare_home_lists_every_zero_level_run_unreduced(self, tmp_path):
         base = tmp_path / "alpha"
         flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
@@ -503,32 +512,6 @@ class TestHomeAsAZeroLevelSelector:
         ).query()
         assert home_then_pointer.uuids == pointer_then_home.uuids == ["flat-2"]
 
-    def test_prefixed_home_lists_every_run_directly_under_the_prefix(
-        self, tmp_path
-    ):
-        base = tmp_path / "acme"
-        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
-        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
-        beta_deep = _make_run(
-            base / "beta" / "x", "2026-01-03_00-00-00", "beta-deep", {}
-        )
-        other = _make_run(base / "gamma", "2026-01-04_00-00-00", "other", {})
-        _write_archive_manifest(
-            tmp_path, "acme", [beta1, beta2, beta_deep, other]
-        )
-        results = _finder("$acme.results.beta/:home()", str(tmp_path)).query()
-        assert set(results.uuids) == {"beta-1", "beta-2"}
-
-    def test_prefixed_home_then_pointer_reduces_to_one(self, tmp_path):
-        base = tmp_path / "acme"
-        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
-        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
-        _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
-        results = _finder(
-            "$acme.results.beta/:home():last()", str(tmp_path)
-        ).query()
-        assert results.uuids == ["beta-2"]
-
     def test_bare_home_rejects_an_argument(self, tmp_path):
         base = tmp_path / "alpha"
         run1 = _make_run(base, "2026-01-01_00-00-00", "run1", {})
@@ -536,12 +519,23 @@ class TestHomeAsAZeroLevelSelector:
         with pytest.raises(ReferenceException3):
             _finder('$alpha.results.:home("x")', str(tmp_path)).query()
 
-    def test_prefixed_home_rejects_an_argument(self, tmp_path):
+    def test_prefixed_home_is_not_a_thing_use_the_literal_prefix_alone(
+        self, tmp_path
+    ):
+        # a literal prefix segment with nothing trailing already means
+        # "every run under this exact prefix, unreduced" -- confirmed
+        # this gives identical results to a would-be prefixed ':home()'
+        # in every case tested, so ':home()' was never wired up as a
+        # legal non-first path segment. This locks in that "beta/
+        # :home()" is simply unsupported syntax, not a silent no-op.
         base = tmp_path / "acme"
-        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "run1", {})
-        _write_archive_manifest(tmp_path, "acme", [run1])
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
+        plain_prefix = _finder("$acme.results.beta", str(tmp_path)).query()
+        assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
         with pytest.raises(ReferenceException3):
-            _finder('$acme.results.beta/:home("x")', str(tmp_path)).query()
+            _finder("$acme.results.beta/:home()", str(tmp_path)).query()
 
 
 class TestDiscoveryFromArchiveManifest:
