@@ -42,6 +42,36 @@ TEMPLATED_MANIFEST = [
     },
 ]
 
+# for TestAllForOneNamedFile -- one named-file (mixed) with two distinct
+# file_homes at DIFFERENT depths (one segment, two segments) under the
+# same home, each with more than one version. A literal/'*' pattern
+# always requires an exact segment count, so nothing before this could
+# reach both at once -- exactly the gap bare ':all()' fills for a single
+# named-file (settled 2026-08-12).
+MIXED_HOME = "inputs/named_files/mixed"
+MIXED_MANIFEST = [
+    {
+        "file": "inputs/named_files/mixed/zero.csv/aaa.csv",
+        "file_home": "inputs/named_files/mixed/zero.csv",
+        "uuid": "u-zero-1",
+    },
+    {
+        "file": "inputs/named_files/mixed/zero.csv/bbb.csv",
+        "file_home": "inputs/named_files/mixed/zero.csv",
+        "uuid": "u-zero-2",
+    },
+    {
+        "file": "inputs/named_files/mixed/nested/deep.csv/ccc.csv",
+        "file_home": "inputs/named_files/mixed/nested/deep.csv",
+        "uuid": "u-deep-1",
+    },
+    {
+        "file": "inputs/named_files/mixed/nested/deep.csv/ddd.csv",
+        "file_home": "inputs/named_files/mixed/nested/deep.csv",
+        "uuid": "u-deep-2",
+    },
+]
+
 
 class _FakeFileDescriber:
     def __init__(self, definition: dict):
@@ -560,6 +590,58 @@ class TestStarTraversalGroup:
     def test_all_combined_with_manifest_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.:all().:last():manifest()").query()
+
+
+class TestAllForOneNamedFile:
+    # bare ':all()' as name_one's entire content, for a LITERAL (non-'*')
+    # root_major -- settled 2026-08-12. Mirrors TestStarTraversalGroup's
+    # own semantics exactly, just scoped to one named-file: every
+    # distinct file_home under this name, at ANY depth (not the exact
+    # one-level match a literal/'*' pattern always requires), each
+    # independently reduced by name_three's own pointer.
+    def test_all_with_last_gives_each_distinct_paths_own_latest(self):
+        results = _finder("$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert len(r.results) == 2
+        assert set(r.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_all_with_first_gives_each_distinct_paths_own_earliest(self):
+        results = _finder("$mixed.files.:all().:first()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert len(r.results) == 2
+        assert set(r.uuids) == {"u-zero-1", "u-deep-1"}
+
+    def test_all_with_no_name_three_dedupes_to_file_home_directories_any_depth(self):
+        results = _finder("$mixed.files.:all()", MIXED_HOME, MIXED_MANIFEST)
+        r = results.query()
+        assert set(r.files) == {
+            "inputs/named_files/mixed/zero.csv",
+            "inputs/named_files/mixed/nested/deep.csv",
+        }
+
+    def test_a_literal_star_misses_the_two_level_entry_all_does_not(self):
+        # proves ':all()' is genuinely reaching further than '*' can --
+        # '*' requires exactly one level, so it only ever sees zero.csv.
+        star_results = _finder(
+            "$mixed.files.*.:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert star_results.uuids == ["u-zero-2"]
+        all_results = _finder(
+            "$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert set(all_results.uuids) == {"u-zero-2", "u-deep-2"}
+
+    def test_all_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:all().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
+
+    def test_all_combined_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$mixed.files.:all().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
+            ).query()
 
 
 class TestManifestCombinedWithNameThree:

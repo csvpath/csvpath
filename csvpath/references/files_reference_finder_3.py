@@ -23,9 +23,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    narrow itself: combining '*' traversal with :manifest()/:path()/
     #    a field-accessor function is not yet supported, see that
     #    method's own docstring.
-    #  - name_one is "*", a literal path segment, or :name("...") (for a
+    #  - name_one is "*", a literal path segment, :name("...") (for a
     #    literal name containing characters -- e.g. a real filename's
-    #    "." -- that cannot appear in a bare PATH_SEGMENT). any other
+    #    "." -- that cannot appear in a bare PATH_SEGMENT), or a bare
+    #    ':all()' -- settled 2026-08-12: every distinct file_home under
+    #    this ONE named-file, at any depth, each independently reduced
+    #    by name_three's own pointer (mirrors _query_star_traversal's
+    #    own is_grouped branch, just scoped to one name instead of
+    #    every named-file). A literal/'*' pattern always requires an
+    #    EXACT segment count, so ':all()' is the only way to reach a
+    #    file whose depth is not known/uniform in advance. Combining it
+    #    with :manifest()/:path()/a field-accessor function is not yet
+    #    supported (same under-specified-interaction reasoning as
+    #    ResultsReferenceFinder3's own ':all()' restriction). Any other
     #    function-valued segment (e.g. :quarter()) and the "#worksheet"
     #    marker (name_two) are not yet supported.
     #  - name_three, if present, must resolve to exactly one pointer
@@ -111,8 +121,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "directly to name_one -- put the version-selecting function in "
                 "name_three instead."
             )
-        pattern = self._compile_path_pattern(name_one.path)
-        candidates = self._candidates_for_name(root_major, pattern)
+        # bare ':all()' for ONE named-file (settled 2026-08-12) -- every
+        # distinct file_home under root_major, at ANY depth, each
+        # reduced independently by name_three's own pointer (if any).
+        # Fills the same real gap '*' traversal's own is_grouped branch
+        # already fills across every named-file: a literal/'*' pattern
+        # here always requires an EXACT segment count (via _matches), so
+        # there was no way to ask for "each distinct path's own latest
+        # version" for a single named-file whose files do not all sit at
+        # the same depth. Mirrors _query_star_traversal's grouping
+        # exactly, just scoped to one name instead of every name.
+        is_grouped = self._is_bare_all_reference(name_one)
+        if is_grouped:
+            candidates = self._all_candidates_for_name(root_major)
+        else:
+            pattern = self._compile_path_pattern(name_one.path)
+            candidates = self._candidates_for_name(root_major, pattern)
 
         name_three = reference.name_three
         if name_three is None:
@@ -146,11 +170,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "registered field-accessor function (e.g. :uuid())."
             )
 
+        if is_grouped and pointers and (has_manifest or has_field_function or has_path):
+            # mirrors ResultsReferenceFinder3's own ':all()'-grouping
+            # restriction (settled 2026-08-11 there): grouping plus
+            # :manifest()/:path()/a field-accessor is an under-specified
+            # interaction, not decided -- resolve the grouped versions
+            # on their own first, rather than guessing what "the
+            # manifest entry of every group's own latest version, all at
+            # once" should even resolve to.
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support combining "
+                "':all()' grouping with :manifest(), :path(), or a "
+                "field-accessor function -- resolve the grouped versions "
+                "on their own first."
+            )
+
         if pointers:
-            # a pointer (with or without :manifest() riding alongside it)
-            # reduces to one specific version, same as before.
-            selected = self._apply_pointer(pointers[0], candidates)
-            selected_candidates = [selected] if selected is not None else []
+            if is_grouped:
+                # one independent reduction per distinct file_home, not
+                # one pooled answer across all of them -- mirrors
+                # _query_star_traversal's own is_grouped branch, scoped
+                # to this one named-file's own candidates instead of
+                # every named-file's.
+                by_file_home = {}
+                for entry in candidates:
+                    by_file_home.setdefault(entry["file_home"], []).append(entry)
+                selected_candidates = []
+                for file_home in sorted(by_file_home):
+                    selected = self._apply_pointer(pointers[0], by_file_home[file_home])
+                    if selected is not None:
+                        selected_candidates.append(selected)
+            else:
+                # a pointer (with or without :manifest() riding alongside
+                # it) reduces to one specific version, same as before.
+                selected = self._apply_pointer(pointers[0], candidates)
+                selected_candidates = [selected] if selected is not None else []
         else:
             # :manifest() alone, no pointer -- legal only when name_one's
             # own path narrowing already resolves to at most one version.
@@ -302,7 +356,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _all_candidates_for_name(self, name: str) -> list:
         """every manifest entry for one named-file, at any path depth --
         ':all()' matches unconditionally, unlike a pattern (which must
-        match an exact segment count), so this skips _matches entirely."""
+        match an exact segment count), so this skips _matches entirely.
+        Shared by '*' traversal's own is_grouped branch (every named-
+        file) and query()'s literal-root_major is_grouped branch (this
+        one named-file only)."""
         manifest = self.csvpaths.file_manager.get_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [
