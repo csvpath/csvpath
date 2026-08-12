@@ -336,26 +336,20 @@ RICH_DEFINITION = {
 }
 
 
-class TestDefinitionFieldAccessorsNeedAMatchedVersion:
-    # doc lines "### on_arrival/sources sub-objects DO need a matched
-    # version + '.' + accessor, even though the value is the same
-    # regardless of which version matched" -- SOURCE="definition", not
-    # versioned, but still syntactically hangs off a matched version.
+class TestBareDefinitionFieldAccessors:
+    # doc lines "### on_arrival/sources" -- corrected 2026-08-12, David:
+    # an arrival activation lives in the named-file's own description.
+    # json, it does not go to the version level -- bare, no :name(.../
+    # version needed, matching ":definition()" itself.
     def test_on_arrival(self):
         results = _finder(
-            '$rich.files.:name("orders.csv").:first():on_arrival()',
-            RICH_HOME,
-            RICH_MANIFEST,
-            RICH_DEFINITION,
+            "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, RICH_DEFINITION
         ).resolve()
         assert results.results[0].data == RICH_DEFINITION["on_arrival"]
 
     def test_sources(self):
         results = _finder(
-            '$rich.files.:name("orders.csv").:first():sources()',
-            RICH_HOME,
-            RICH_MANIFEST,
-            RICH_DEFINITION,
+            "$rich.files.:sources()", RICH_HOME, RICH_MANIFEST, RICH_DEFINITION
         ).resolve()
         assert results.results[0].data == RICH_DEFINITION["sources"]
 

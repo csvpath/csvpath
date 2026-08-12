@@ -128,6 +128,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
             filename = f"{name_one.path[0].name}.json"
             return self._query_well_known_file(home, filename)
 
+        bare_field_call = self._bare_definition_field_call(name_one)
+        if bare_field_call is not None:
+            # ":on_arrival()"/":sources()" bare -- settled 2026-08-12,
+            # David: an arrival activation lives in the named-file's own
+            # definition.json, it "doesn't go to the version level" --
+            # confirmed by direct testing that the value is identical
+            # regardless of which version a :name(...)+pointer combo
+            # narrowed to (SOURCE == "definition" means _extract_data()
+            # never reads result.uuid for these), so requiring either
+            # was a real inconsistency with :definition() itself, which
+            # already gets this same bare treatment. No :name(...)/
+            # version needed at all -- matches :definition()'s own
+            # precedent exactly, this just extracts one key from it
+            # instead of returning the whole file.
+            home = self.csvpaths.file_manager.named_file_home(root_major)
+            path = Nos(home).join("definition.json")
+            return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
+
         if name_one.functions:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
@@ -457,6 +475,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and name_one.path[0].arg is None
         )
 
+    @staticmethod
+    def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
+        """returns the field-accessor FunctionCall3 when name_one's
+        entire content is a single, argument-less function whose
+        registered class is SOURCE == "definition" (":on_arrival()"/
+        ":sources()" today) -- these values live in the named-file's own
+        definition.json, not any particular file/version's manifest
+        entry, so (like ":definition()" itself) they need no
+        :name(...)/matched-version context to resolve. None for every
+        other shape, including SOURCE == "manifest" field accessors
+        (":uuid()"/":time()"/etc.), which DO vary by which version
+        matched and still need a real candidate."""
+        if name_one.functions or len(name_one.path) != 1:
+            return None
+        segment = name_one.path[0]
+        if not isinstance(segment, FunctionCall3) or segment.arg is not None:
+            return None
+        function_cls = ReferenceFunctionFactory.get_registered_class(segment.name)
+        if function_cls is not None and function_cls.SOURCE == "definition":
+            return segment
+        return None
+
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
         # :path(...) is checked before resolve_kind's content-oriented
@@ -508,10 +548,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
-        if kind == Reference3.METADATA_FIELD and reference.name_three is not None:
-            field_call = self._find_field_function_call(
-                reference.name_three.functions
-            )
+        if kind == Reference3.METADATA_FIELD:
+            if reference.name_three is not None:
+                field_call = self._find_field_function_call(
+                    reference.name_three.functions
+                )
+            else:
+                # a bare, SOURCE == "definition" field accessor occupying
+                # name_one's entire content (":on_arrival()"/":sources()")
+                # -- settled 2026-08-12, see query()'s own comment. Never
+                # reads result.uuid below (function_cls.SOURCE is always
+                # "definition" for anything _bare_definition_field_call
+                # returns), so result.uuid being None here is fine.
+                field_call = self._bare_definition_field_call(reference.name_one)
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name

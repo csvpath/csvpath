@@ -1109,6 +1109,47 @@ class TestDefinitionFieldAccessorFunctions:
         ).resolve()
         assert first.results[0].data == last.results[0].data
 
+    def test_bare_on_arrival_needs_no_name_or_version(self):
+        # settled 2026-08-12: on_arrival lives in the named-file's own
+        # definition.json (root_major-scoped), not any particular file/
+        # version, so it needs no :name(...)/pointer at all to resolve
+        # -- matches ":definition()" itself, which already gets this
+        # same bare treatment.
+        finder = _finder(
+            "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.resolve()
+        assert results.results[0].data == self.DEFINITION["on_arrival"]
+        assert results.results[0].uuid is None
+
+    def test_bare_sources_needs_no_name_or_version(self):
+        finder = _finder(
+            "$rich.files.:sources()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.resolve()
+        assert results.results[0].data == self.DEFINITION["sources"]
+
+    def test_bare_on_arrival_never_configured_gives_none(self):
+        finder = _finder("$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST)
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+    def test_bare_on_arrival_query_gives_the_definition_path_no_uuid(self):
+        finder = _finder(
+            "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
+        )
+        results = finder.query()
+        assert results.files == [f"{RICH_HOME}/definition.json"]
+        assert results.results[0].uuid is None
+
+    def test_bare_manifest_sourced_field_accessor_still_requires_a_match(self):
+        # contrast case: SOURCE == "manifest" field accessors (e.g.
+        # :uuid()) genuinely vary by which version matched, so they are
+        # NOT given the same bare treatment -- still requires :name(...)
+        # (or '*') to identify a real candidate.
+        with pytest.raises(ReferenceException3):
+            _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
+
 
 class TestPathFunction:
     # :path(inner) returns the filesystem path to whatever well-known
